@@ -121,6 +121,18 @@ interface ReportData {
     occupancy: number
     dues: number
   }
+
+  // Expenses
+  totalExpensesThisMonth: number
+  totalExpensesLastMonth: number
+  expenseGrowth: number
+  netIncome: number
+
+  // Expense by category
+  expensesByCategory: {
+    name: string
+    value: number
+  }[]
 }
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -186,7 +198,8 @@ export default function ReportsPage() {
         tenantsRes,
         paymentsRes,
         billsRes,
-        complaintsRes
+        complaintsRes,
+        expensesRes
       ] = await Promise.all([
         supabase.from("properties").select("id, name"),
         supabase.from("rooms").select("id, property_id, status, total_beds"),
@@ -194,6 +207,7 @@ export default function ReportsPage() {
         supabase.from("payments").select("id, property_id, amount, payment_method, payment_date, created_at"),
         supabase.from("bills").select("id, property_id, tenant_id, total_amount, balance_due, status, bill_date, due_date"),
         supabase.from("complaints").select("id, property_id, status, created_at, resolved_at"),
+        supabase.from("expenses").select("id, property_id, amount, expense_date, expense_type_id, expense_type:expense_types(name)"),
       ])
 
       const propertiesData = propertiesRes.data || []
@@ -202,6 +216,10 @@ export default function ReportsPage() {
       const paymentsData = paymentsRes.data || []
       const billsData = billsRes.data || []
       const complaintsData = complaintsRes.data || []
+      const expensesData = (expensesRes.data || []).map((e: any) => ({
+        ...e,
+        expense_type: Array.isArray(e.expense_type) ? e.expense_type[0] : e.expense_type,
+      }))
 
       setProperties(propertiesData)
 
@@ -216,6 +234,7 @@ export default function ReportsPage() {
       const filteredPayments = filterByProperty(paymentsData)
       const filteredBills = filterByProperty(billsData)
       const filteredComplaints = filterByProperty(complaintsData)
+      const filteredExpenses = filterByProperty(expensesData)
 
       // Date calculations
       const now = new Date()
@@ -399,6 +418,34 @@ export default function ReportsPage() {
         count: data.count,
       }))
 
+      // Expense calculations
+      const periodExpenses = filteredExpenses.filter((e: any) => {
+        const expenseDate = new Date(e.expense_date)
+        return expenseDate >= startDate && expenseDate <= endDate
+      })
+      const lastMonthExpenses = filteredExpenses.filter((e: any) => {
+        const expenseDate = new Date(e.expense_date)
+        return expenseDate >= lastMonthStart && expenseDate <= lastMonthEnd
+      })
+
+      const totalExpensesThisMonth = periodExpenses.reduce((sum: number, e: any) => sum + Number(e.amount), 0)
+      const totalExpensesLastMonth = lastMonthExpenses.reduce((sum: number, e: any) => sum + Number(e.amount), 0)
+      const expenseGrowth = totalExpensesLastMonth > 0
+        ? ((totalExpensesThisMonth - totalExpensesLastMonth) / totalExpensesLastMonth) * 100
+        : 0
+      const netIncome = totalCollectedThisMonth - totalExpensesThisMonth
+
+      // Expense by category
+      const categoryTotals: Record<string, number> = {}
+      periodExpenses.forEach((e: any) => {
+        const categoryName = e.expense_type?.name || "Uncategorized"
+        categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + Number(e.amount)
+      })
+      const expensesByCategory = Object.entries(categoryTotals)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6) // Top 6 categories
+
       // Previous period comparison
       const prevPeriodStart = new Date(startDate)
       prevPeriodStart.setMonth(prevPeriodStart.getMonth() - 1)
@@ -451,6 +498,11 @@ export default function ReportsPage() {
         monthlyRevenue,
         paymentMethods,
         previousPeriod,
+        totalExpensesThisMonth,
+        totalExpensesLastMonth,
+        expenseGrowth,
+        netIncome,
+        expensesByCategory,
       })
     } catch (error) {
       console.error("Error fetching report data:", error)
@@ -601,7 +653,7 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Occupancy Rate */}
         <Card>
@@ -644,6 +696,52 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
+        {/* Total Expenses */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Expenses</p>
+                <p className="text-2xl font-bold">{formatCurrency(reportData.totalExpensesThisMonth)}</p>
+                <div className={`flex items-center text-xs ${reportData.expenseGrowth <= 0 ? "text-green-600" : "text-red-600"}`}>
+                  {reportData.expenseGrowth <= 0 ? (
+                    <ArrowDownRight className="h-3 w-3 mr-1" />
+                  ) : (
+                    <ArrowUpRight className="h-3 w-3 mr-1" />
+                  )}
+                  {Math.abs(reportData.expenseGrowth).toFixed(1)}% vs last month
+                </div>
+              </div>
+              <div className="p-3 rounded-full bg-rose-100">
+                <TrendingDown className="h-5 w-5 text-rose-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Net Income */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Net Income</p>
+                <p className={`text-2xl font-bold ${reportData.netIncome >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  {formatCurrency(reportData.netIncome)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Revenue - Expenses
+                </p>
+              </div>
+              <div className={`p-3 rounded-full ${reportData.netIncome >= 0 ? "bg-green-100" : "bg-red-100"}`}>
+                <TrendingUp className={`h-5 w-5 ${reportData.netIncome >= 0 ? "text-green-600" : "text-red-600"}`} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* KPI Cards - Row 2 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Active Tenants */}
         <Card>
           <CardContent className="p-4">
@@ -675,6 +773,42 @@ export default function ReportsPage() {
               </div>
               <div className={`p-3 rounded-full ${reportData.totalPendingDues > 0 ? "bg-red-100" : "bg-green-100"}`}>
                 <AlertCircle className={`h-5 w-5 ${reportData.totalPendingDues > 0 ? "text-red-600" : "text-green-600"}`} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Rooms */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Rooms</p>
+                <p className="text-2xl font-bold">{reportData.totalRooms}</p>
+                <p className="text-xs text-muted-foreground">
+                  {reportData.availableRooms} available
+                </p>
+              </div>
+              <div className="p-3 rounded-full bg-purple-100">
+                <Building2 className="h-5 w-5 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Open Complaints */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Open Complaints</p>
+                <p className="text-2xl font-bold">{reportData.openComplaints}</p>
+                <p className="text-xs text-green-600">
+                  {reportData.resolvedThisMonth} resolved
+                </p>
+              </div>
+              <div className={`p-3 rounded-full ${reportData.openComplaints > 0 ? "bg-amber-100" : "bg-green-100"}`}>
+                <Clock className={`h-5 w-5 ${reportData.openComplaints > 0 ? "text-amber-600" : "text-green-600"}`} />
               </div>
             </div>
           </CardContent>
@@ -765,6 +899,30 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Expense by Category */}
+      {reportData.expensesByCategory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Expenses by Category</CardTitle>
+            <CardDescription>Top expense categories for the period</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={reportData.expensesByCategory} layout="vertical">
+                <XAxis type="number" tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                <Bar dataKey="value" fill="#F43F5E" radius={[0, 4, 4, 0]}>
+                  {reportData.expensesByCategory.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[(index + 3) % CHART_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Dues Aging & Collection Efficiency */}
       <div className="grid md:grid-cols-2 gap-6">
