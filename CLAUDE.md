@@ -116,6 +116,15 @@ ManageKar is a platform for multiple management products targeting Indian busine
 - Share bills via WhatsApp with formatted message
 - Files: `src/app/(dashboard)/dashboard/bills/`
 
+### Automated Monthly Bill Generation
+- Cron job generates bills automatically on configured day each month
+- Configurable: billing day, due date offset, include pending charges
+- Includes monthly rent + pending electricity/water/custom charges
+- Carries over previous balance from unpaid bills
+- Settings UI in Dashboard → Settings → Billing tab
+- Vercel Cron runs at 6 AM UTC (11:30 AM IST) daily
+- Files: `src/app/api/cron/generate-bills/route.ts`
+
 ### Meter Readings with Auto-Charge Generation
 - Record meter readings (Electricity, Water, Gas)
 - Auto-fetch previous reading to calculate units consumed
@@ -187,6 +196,31 @@ vercel --prod
 ---
 
 ## Changelog
+
+### 2025-12-28 - Automated Monthly Bill Generation
+- Added automated bill generation via Vercel Cron job
+- Database migration: `008_auto_billing.sql` with:
+  - `auto_billing_settings` JSONB column on owner_config
+  - `bill_generation_log` table for tracking cron runs
+  - `get_next_bill_number` function for sequential bill numbers
+- Auto Billing Settings UI in Settings → Billing tab:
+  - Enable/disable auto billing toggle
+  - Bill generation day (1-28 of month)
+  - Due date offset (5-30 days after bill date)
+  - Include pending charges toggle
+  - Send notification toggle
+  - Last generated month display
+- Cron endpoint `/api/cron/generate-bills` (runs 6 AM UTC / 11:30 AM IST):
+  - Processes all owners with auto-billing enabled
+  - Generates bills for active tenants on configured day
+  - Includes monthly rent + pending charges
+  - Carries over previous balance from unpaid bills
+  - Logs generation results for audit trail
+- Files created/modified:
+  - `src/app/api/cron/generate-bills/route.ts`
+  - `src/app/(dashboard)/dashboard/settings/page.tsx`
+  - `supabase/migrations/008_auto_billing.sql`
+  - `vercel.json` (added cron schedule)
 
 ### 2025-12-28 - Tenant Re-joining & Room Switching
 - Added tenant history tracking for re-joining tenants

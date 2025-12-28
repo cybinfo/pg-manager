@@ -63,6 +63,24 @@ interface NotificationSettings {
   overdue_alert_frequency: "daily" | "weekly"
 }
 
+interface AutoBillingSettings {
+  enabled: boolean
+  billing_day: number
+  due_day_offset: number
+  include_pending_charges: boolean
+  auto_send_notification: boolean
+  last_generated_month: string | null
+}
+
+const defaultAutoBillingSettings: AutoBillingSettings = {
+  enabled: false,
+  billing_day: 1,
+  due_day_offset: 10,
+  include_pending_charges: true,
+  auto_send_notification: true,
+  last_generated_month: null,
+}
+
 const defaultNotificationSettings: NotificationSettings = {
   email_reminders_enabled: true,
   reminder_days_before: 5,
@@ -100,6 +118,9 @@ export default function SettingsPage() {
   // Notification Settings
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(defaultNotificationSettings)
   const [sendingTestEmail, setSendingTestEmail] = useState(false)
+
+  // Auto Billing Settings
+  const [autoBillingSettings, setAutoBillingSettings] = useState<AutoBillingSettings>(defaultAutoBillingSettings)
 
   useEffect(() => {
     fetchData()
@@ -143,6 +164,13 @@ export default function SettingsPage() {
           setNotificationSettings({
             ...defaultNotificationSettings,
             ...configRes.data.notification_settings,
+          })
+        }
+        // Load auto billing settings if available
+        if (configRes.data.auto_billing_settings) {
+          setAutoBillingSettings({
+            ...defaultAutoBillingSettings,
+            ...configRes.data.auto_billing_settings,
           })
         }
       }
@@ -282,6 +310,30 @@ export default function SettingsPage() {
       toast.success("Notification settings saved")
     } catch (error) {
       toast.error("Failed to save notification settings")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const saveAutoBillingSettings = async () => {
+    if (!config) return
+
+    setSaving(true)
+    try {
+      const supabase = createClient()
+
+      const { error } = await supabase
+        .from("owner_config")
+        .update({
+          auto_billing_settings: autoBillingSettings,
+        })
+        .eq("id", config.id)
+
+      if (error) throw error
+
+      toast.success("Auto billing settings saved")
+    } catch (error) {
+      toast.error("Failed to save auto billing settings")
     } finally {
       setSaving(false)
     }
@@ -593,6 +645,178 @@ export default function SettingsPage() {
                   <p className="text-xs text-muted-foreground">Of each month</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Auto Billing Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Automatic Bill Generation
+              </CardTitle>
+              <CardDescription>Configure automated monthly bill generation for all active tenants</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Master Toggle */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${autoBillingSettings.enabled ? "bg-primary/10" : "bg-muted"}`}>
+                    <CreditCard className={`h-5 w-5 ${autoBillingSettings.enabled ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div>
+                    <p className="font-medium">Enable Auto Billing</p>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically generate monthly bills for all active tenants
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setAutoBillingSettings({
+                    ...autoBillingSettings,
+                    enabled: !autoBillingSettings.enabled
+                  })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    autoBillingSettings.enabled ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      autoBillingSettings.enabled ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {autoBillingSettings.enabled && (
+                <>
+                  {/* Billing Schedule */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Billing Schedule</h4>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="billing_day">Bill Generation Day</Label>
+                        <select
+                          id="billing_day"
+                          value={autoBillingSettings.billing_day}
+                          onChange={(e) => setAutoBillingSettings({
+                            ...autoBillingSettings,
+                            billing_day: parseInt(e.target.value)
+                          })}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        >
+                          {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                            <option key={day} value={day}>
+                              {day}{day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-muted-foreground">
+                          Day when bills are automatically generated
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="due_day_offset">Due Date (Days After)</Label>
+                        <select
+                          id="due_day_offset"
+                          value={autoBillingSettings.due_day_offset}
+                          onChange={(e) => setAutoBillingSettings({
+                            ...autoBillingSettings,
+                            due_day_offset: parseInt(e.target.value)
+                          })}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        >
+                          {[5, 7, 10, 15, 20, 30].map((days) => (
+                            <option key={days} value={days}>
+                              {days} days after bill date
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-muted-foreground">
+                          Payment due date offset from bill date
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bill Options */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Bill Options</h4>
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">Include Pending Charges</p>
+                        <p className="text-xs text-muted-foreground">Add pending electricity, water, and other charges to the bill</p>
+                      </div>
+                      <button
+                        onClick={() => setAutoBillingSettings({
+                          ...autoBillingSettings,
+                          include_pending_charges: !autoBillingSettings.include_pending_charges
+                        })}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          autoBillingSettings.include_pending_charges ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                            autoBillingSettings.include_pending_charges ? "translate-x-5" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">Send Notification</p>
+                        <p className="text-xs text-muted-foreground">Send email notification when bill is generated</p>
+                      </div>
+                      <button
+                        onClick={() => setAutoBillingSettings({
+                          ...autoBillingSettings,
+                          auto_send_notification: !autoBillingSettings.auto_send_notification
+                        })}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          autoBillingSettings.auto_send_notification ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                            autoBillingSettings.auto_send_notification ? "translate-x-5" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Last Generated Info */}
+                  {autoBillingSettings.last_generated_month && (
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-600" />
+                        <span className="text-sm text-green-700">
+                          Last generated: <strong>{autoBillingSettings.last_generated_month}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <Button onClick={saveAutoBillingSettings} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Auto Billing Settings
+              </Button>
+
+              <p className="text-xs text-muted-foreground">
+                Note: Bills are generated automatically at 11:30 AM IST on the configured day each month.
+                This includes monthly rent and any pending charges for active tenants.
+              </p>
             </CardContent>
           </Card>
         </div>

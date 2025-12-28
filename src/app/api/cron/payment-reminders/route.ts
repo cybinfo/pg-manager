@@ -2,12 +2,6 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendPaymentReminder, sendOverdueAlert } from "@/lib/email"
 
-// Create admin Supabase client for cron job
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 interface NotificationSettings {
   email_reminders_enabled: boolean
   reminder_days_before: number
@@ -53,6 +47,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
   }
+
+  // Create admin Supabase client for cron job
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
   const results = {
     processed: 0,
