@@ -1,5 +1,7 @@
 # PG Manager - Project Context
 
+> **IMPORTANT FOR CLAUDE:** When new features are added, bugs are fixed, or significant changes are made during a session, UPDATE this file to reflect those changes. Keep this file as the single source of truth for project context. Add new features to the "Key Features" section and log significant changes in the "Changelog" section at the bottom.
+
 ## Overview
 PG Manager is a SaaS application for managing Paying Guest (PG) accommodations and hostels in India. It helps property owners manage tenants, rooms, payments, meter readings, and more.
 
@@ -132,3 +134,14 @@ vercel --prod
 - **Developer:** Rajat Seth
 - **Email:** sethrajat0711@gmail.com
 - **GitHub:** cybinfo
+
+---
+
+## Changelog
+
+### 2025-12-28 - Initial Release
+- Created full PG Manager application
+- Implemented: Properties, Rooms, Tenants, Staff, Payments, Notices, Complaints, Visitors, Exit Clearance
+- Added Meter Readings module with auto-charge generation
+- Deployed to Vercel with custom domain (managekar.com)
+- Created CLAUDE.md for project context
