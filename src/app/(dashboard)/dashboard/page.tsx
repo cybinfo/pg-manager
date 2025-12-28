@@ -15,7 +15,13 @@ import {
   Plus,
   ArrowRight,
   CheckCircle,
-  Loader2
+  Loader2,
+  Sun,
+  Moon,
+  Sunrise,
+  Receipt,
+  TrendingDown,
+  BarChart3
 } from "lucide-react"
 
 interface DashboardStats {
@@ -23,6 +29,8 @@ interface DashboardStats {
   rooms: number
   tenants: number
   pendingDues: number
+  totalRevenue: number
+  totalExpenses: number
 }
 
 interface GettingStartedItem {
@@ -32,11 +40,18 @@ interface GettingStartedItem {
 }
 
 const quickActions = [
-  { name: "Add Property", href: "/dashboard/properties/new", icon: Building2 },
-  { name: "Add Room", href: "/dashboard/rooms/new", icon: Home },
-  { name: "Add Tenant", href: "/dashboard/tenants/new", icon: Users },
-  { name: "Record Payment", href: "/dashboard/payments/new", icon: CreditCard },
+  { name: "Add Property", href: "/dashboard/properties/new", icon: Building2, color: "from-teal-500 to-emerald-500" },
+  { name: "Add Room", href: "/dashboard/rooms/new", icon: Home, color: "from-violet-500 to-purple-500" },
+  { name: "Add Tenant", href: "/dashboard/tenants/new", icon: Users, color: "from-sky-500 to-blue-500" },
+  { name: "Record Payment", href: "/dashboard/payments/new", icon: CreditCard, color: "from-amber-500 to-orange-500" },
 ]
+
+function getGreeting(): { text: string; icon: typeof Sun } {
+  const hour = new Date().getHours()
+  if (hour < 12) return { text: "Good morning", icon: Sunrise }
+  if (hour < 17) return { text: "Good afternoon", icon: Sun }
+  return { text: "Good evening", icon: Moon }
+}
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState("")
@@ -46,6 +61,8 @@ export default function DashboardPage() {
     rooms: 0,
     tenants: 0,
     pendingDues: 0,
+    totalRevenue: 0,
+    totalExpenses: 0,
   })
   const [gettingStarted, setGettingStarted] = useState<GettingStartedItem[]>([
     { task: "Add your first property", href: "/dashboard/properties/new", done: false },
@@ -53,6 +70,9 @@ export default function DashboardPage() {
     { task: "Add your first tenant", href: "/dashboard/tenants/new", done: false },
     { task: "Configure charge types", href: "/dashboard/settings/charges", done: false },
   ])
+
+  const greeting = getGreeting()
+  const GreetingIcon = greeting.icon
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -67,12 +87,14 @@ export default function DashboardPage() {
       }
 
       // Fetch counts in parallel
-      const [propertiesRes, roomsRes, tenantsRes, chargesRes, chargeTypesRes] = await Promise.all([
+      const [propertiesRes, roomsRes, tenantsRes, chargesRes, chargeTypesRes, paymentsRes, expensesRes] = await Promise.all([
         supabase.from("properties").select("id", { count: "exact", head: true }),
         supabase.from("rooms").select("id", { count: "exact", head: true }),
         supabase.from("tenants").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("charges").select("amount, paid_amount").in("status", ["pending", "partial", "overdue"]),
         supabase.from("charge_types").select("id", { count: "exact", head: true }),
+        supabase.from("payments").select("amount"),
+        supabase.from("expenses").select("amount"),
       ])
 
       // Calculate pending dues
@@ -83,11 +105,25 @@ export default function DashboardPage() {
         }, 0)
       }
 
+      // Calculate total revenue
+      let totalRevenue = 0
+      if (paymentsRes.data) {
+        totalRevenue = paymentsRes.data.reduce((sum, payment) => sum + Number(payment.amount), 0)
+      }
+
+      // Calculate total expenses
+      let totalExpenses = 0
+      if (expensesRes.data) {
+        totalExpenses = expensesRes.data.reduce((sum, expense) => sum + Number(expense.amount), 0)
+      }
+
       setStats({
         properties: propertiesRes.count || 0,
         rooms: roomsRes.count || 0,
         tenants: tenantsRes.count || 0,
         pendingDues,
+        totalRevenue,
+        totalExpenses,
       })
 
       // Update getting started checklist
@@ -111,15 +147,8 @@ export default function DashboardPage() {
       icon: Building2,
       href: "/dashboard/properties",
       color: "text-teal-600",
-      bgColor: "bg-teal-50",
-    },
-    {
-      name: "Total Rooms",
-      value: stats.rooms.toString(),
-      icon: Home,
-      href: "/dashboard/rooms",
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
+      bgColor: "bg-gradient-to-br from-teal-50 to-emerald-50",
+      iconBg: "bg-gradient-to-br from-teal-500 to-emerald-500",
     },
     {
       name: "Active Tenants",
@@ -127,7 +156,8 @@ export default function DashboardPage() {
       icon: Users,
       href: "/dashboard/tenants",
       color: "text-violet-600",
-      bgColor: "bg-violet-50",
+      bgColor: "bg-gradient-to-br from-violet-50 to-purple-50",
+      iconBg: "bg-gradient-to-br from-violet-500 to-purple-500",
     },
     {
       name: "Pending Dues",
@@ -135,7 +165,18 @@ export default function DashboardPage() {
       icon: CreditCard,
       href: "/dashboard/payments",
       color: "text-amber-600",
-      bgColor: "bg-amber-50",
+      bgColor: "bg-gradient-to-br from-amber-50 to-orange-50",
+      iconBg: "bg-gradient-to-br from-amber-500 to-orange-500",
+      highlight: stats.pendingDues > 0,
+    },
+    {
+      name: "Net Income",
+      value: `₹${(stats.totalRevenue - stats.totalExpenses).toLocaleString("en-IN")}`,
+      icon: BarChart3,
+      href: "/dashboard/reports",
+      color: "text-emerald-600",
+      bgColor: "bg-gradient-to-br from-emerald-50 to-green-50",
+      iconBg: "bg-gradient-to-br from-emerald-500 to-green-500",
     },
   ]
 
@@ -144,34 +185,42 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Welcome header */}
-      <div>
-        <h1 className="text-3xl font-bold">
-          Welcome back{userName ? `, ${userName}` : ""}!
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Here&apos;s what&apos;s happening with your PG today.
-        </p>
+      {/* Welcome header with greeting */}
+      <div className="flex items-center gap-4">
+        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 animate-float">
+          <GreetingIcon className="h-6 w-6 text-white" />
+        </div>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">
+            {greeting.text}{userName ? `, ${userName}` : ""}!
+          </h1>
+          <p className="text-muted-foreground">
+            Here&apos;s what&apos;s happening with your PG today.
+          </p>
+        </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Stats grid with animations */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 stagger-children">
         {statCards.map((stat) => (
           <Link key={stat.name} href={stat.href}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card
+              variant="interactive"
+              className={`${stat.bgColor} border-0 overflow-hidden ${stat.highlight ? "ring-2 ring-amber-300" : ""}`}
+            >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {stat.name}
                 </CardTitle>
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                <div className={`p-2 rounded-xl ${stat.iconBg} shadow-lg`}>
+                  <stat.icon className="h-4 w-4 text-white" />
                 </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 ) : (
-                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="text-2xl font-bold tabular-nums">{stat.value}</div>
                 )}
               </CardContent>
             </Card>
@@ -182,10 +231,12 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Getting Started */}
         {!allTasksDone && (
-          <Card>
+          <Card variant="elevated">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-white" />
+                </div>
                 Getting Started
                 <span className="ml-auto text-sm font-normal text-muted-foreground">
                   {completedTasks}/{gettingStarted.length} completed
@@ -194,6 +245,13 @@ export default function DashboardPage() {
               <CardDescription>
                 Complete these steps to set up your PG management
               </CardDescription>
+              {/* Progress bar */}
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-2">
+                <div
+                  className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500 ease-out"
+                  style={{ width: `${(completedTasks / gettingStarted.length) * 100}%` }}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -201,21 +259,27 @@ export default function DashboardPage() {
                   <Link
                     key={i}
                     href={item.href}
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${
+                      item.done
+                        ? "bg-teal-50/50 border-teal-100"
+                        : "hover:bg-muted/50 hover:border-teal-200 hover:shadow-sm"
+                    }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-1 rounded-full ${item.done ? "bg-teal-50" : "bg-muted"}`}>
+                      <div className={`p-1.5 rounded-full transition-colors ${
+                        item.done ? "bg-gradient-to-br from-teal-500 to-emerald-500" : "bg-muted"
+                      }`}>
                         {item.done ? (
-                          <CheckCircle className="h-4 w-4 text-teal-600" />
+                          <CheckCircle className="h-4 w-4 text-white" />
                         ) : (
                           <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
                         )}
                       </div>
-                      <span className={item.done ? "text-muted-foreground line-through" : ""}>
+                      <span className={item.done ? "text-muted-foreground line-through" : "font-medium"}>
                         {item.task}
                       </span>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    {!item.done && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
                   </Link>
                 ))}
               </div>
@@ -224,10 +288,12 @@ export default function DashboardPage() {
         )}
 
         {/* Quick Actions */}
-        <Card className={allTasksDone ? "lg:col-span-2" : ""}>
+        <Card variant="elevated" className={allTasksDone ? "lg:col-span-2" : ""}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" />
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+                <Plus className="h-4 w-4 text-white" />
+              </div>
               Quick Actions
             </CardTitle>
             <CardDescription>
@@ -235,15 +301,17 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className={`grid gap-3 ${allTasksDone ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2"}`}>
+            <div className={`grid gap-4 ${allTasksDone ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2"}`}>
               {quickActions.map((action) => (
                 <Link key={action.name} href={action.href}>
                   <Button
                     variant="outline"
-                    className="w-full h-auto py-4 flex flex-col gap-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="w-full h-auto py-6 flex flex-col gap-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"
                   >
-                    <action.icon className="h-5 w-5" />
-                    <span className="text-sm">{action.name}</span>
+                    <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                      <action.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="text-sm font-medium">{action.name}</span>
                   </Button>
                 </Link>
               ))}
@@ -252,33 +320,83 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Recent Activity - Placeholder */}
-      <Card>
+      {/* Revenue & Expenses Summary */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card variant="elevated">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-emerald-600" />
+              Total Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            ) : (
+              <div className="text-3xl font-bold text-emerald-600 tabular-nums">
+                ₹{stats.totalRevenue.toLocaleString("en-IN")}
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground mt-1">All time collected payments</p>
+          </CardContent>
+        </Card>
+
+        <Card variant="elevated">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <TrendingDown className="h-4 w-4 text-rose-600" />
+              Total Expenses
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            ) : (
+              <div className="text-3xl font-bold text-rose-600 tabular-nums">
+                ₹{stats.totalExpenses.toLocaleString("en-IN")}
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground mt-1">All time recorded expenses</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity */}
+      <Card variant="elevated">
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center">
+              <AlertCircle className="h-4 w-4 text-white" />
+            </div>
+            Recent Activity
+          </CardTitle>
           <CardDescription>
             Latest updates from your properties
           </CardDescription>
         </CardHeader>
         <CardContent>
           {stats.properties === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <AlertCircle className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">No recent activity yet</p>
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center mb-4">
+                <AlertCircle className="h-8 w-8 text-muted-foreground/50" />
+              </div>
+              <p className="text-muted-foreground font-medium">No recent activity yet</p>
+              <p className="text-sm text-muted-foreground mb-4">
                 Start by adding your first property and tenants
               </p>
-              <Link href="/dashboard/properties/new" className="mt-4">
-                <Button>
+              <Link href="/dashboard/properties/new">
+                <Button variant="gradient">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Property
                 </Button>
               </Link>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <CheckCircle className="h-12 w-12 text-teal-500/50 mb-4" />
-              <p className="text-muted-foreground">You&apos;re all set up!</p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center mb-4 shadow-lg shadow-teal-500/20">
+                <CheckCircle className="h-8 w-8 text-white" />
+              </div>
+              <p className="text-foreground font-medium">You&apos;re all set up!</p>
               <p className="text-sm text-muted-foreground">
                 Activity feed coming soon...
               </p>

@@ -19,13 +19,13 @@ import {
   Loader2,
   Menu,
   X,
-  ChevronDown,
   UserMinus,
   UserPlus,
   Gauge,
   UserCog,
   Receipt,
-  TrendingDown
+  TrendingDown,
+  MoreHorizontal
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -45,6 +45,15 @@ const navigation = [
   { name: "Notices", href: "/dashboard/notices", icon: Bell },
   { name: "Reports", href: "/dashboard/reports", icon: FileText },
   { name: "Staff", href: "/dashboard/staff", icon: UserCog },
+]
+
+// Mobile bottom nav items (5 most used)
+const mobileNavItems = [
+  { name: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Tenants", href: "/dashboard/tenants", icon: Users },
+  { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
+  { name: "Bills", href: "/dashboard/bills", icon: Receipt },
+  { name: "More", href: "#more", icon: MoreHorizontal },
 ]
 
 export default function DashboardLayout({
@@ -86,35 +95,46 @@ export default function DashboardLayout({
     router.refresh()
   }
 
+  const handleMobileNavClick = (href: string) => {
+    if (href === "#more") {
+      setSidebarOpen(true)
+    }
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-emerald-50">
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
+          <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
+            <Building2 className="h-6 w-6 text-white" />
+          </div>
+          <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-muted/50">
-      {/* Mobile sidebar backdrop */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Mobile sidebar backdrop with glass effect */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-background border-r transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white/95 backdrop-blur-md border-r shadow-xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-4 border-b bg-gradient-to-r from-teal-500 to-emerald-500">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center">
+            <Link href="/dashboard" className="flex items-center gap-2 group">
+              <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                 <Building2 className="h-5 w-5 text-teal-600" />
               </div>
               <span className="text-xl font-bold text-white">ManageKar</span>
@@ -130,7 +150,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4">
+          <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <ul className="space-y-1">
               {navigation.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
@@ -138,14 +158,14 @@ export default function DashboardLayout({
                   <li key={item.name}>
                     <Link
                       href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                         isActive
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
                           : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       }`}
                       onClick={() => setSidebarOpen(false)}
                     >
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className={`h-5 w-5 ${isActive ? "animate-scale-in" : ""}`} />
                       {item.name}
                     </Link>
                   </li>
@@ -155,10 +175,14 @@ export default function DashboardLayout({
           </nav>
 
           {/* Settings & Logout */}
-          <div className="border-t p-4 space-y-1">
+          <div className="border-t p-4 space-y-1 bg-muted/30">
             <Link
               href="/dashboard/settings"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                pathname === "/dashboard/settings"
+                  ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
               onClick={() => setSidebarOpen(false)}
             >
               <Settings className="h-5 w-5" />
@@ -166,7 +190,7 @@ export default function DashboardLayout({
             </Link>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-rose-50 hover:text-rose-600 transition-all duration-200"
             >
               <LogOutIcon className="h-5 w-5" />
               Logout
@@ -176,13 +200,13 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 h-16 bg-background border-b flex items-center justify-between px-4">
+      <div className="lg:pl-64 pb-20 lg:pb-0">
+        {/* Top bar with glass effect */}
+        <header className="sticky top-0 z-30 h-16 glass-nav border-b flex items-center justify-between px-4">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden hover:bg-muted"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-5 w-5" />
@@ -191,13 +215,13 @@ export default function DashboardLayout({
           <div className="flex-1" />
 
           {/* User menu */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-medium">{user?.full_name || "User"}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
             <Button variant="ghost" size="icon" className="rounded-full">
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-sm font-medium shadow-md shadow-teal-500/20">
                 {(user?.full_name || user?.email || "U")[0].toUpperCase()}
               </div>
             </Button>
@@ -205,10 +229,37 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="p-4 md:p-6 lg:p-8">
+        <main className="p-4 md:p-6 lg:p-8 animate-fade-in-up">
           {children}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-nav lg:hidden">
+        <div className="flex items-center justify-around h-16">
+          {mobileNavItems.map((item) => {
+            const isActive = item.href !== "#more" && (pathname === item.href || pathname.startsWith(item.href + "/"))
+            return (
+              <Link
+                key={item.name}
+                href={item.href === "#more" ? "#" : item.href}
+                onClick={() => handleMobileNavClick(item.href)}
+                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                  isActive
+                    ? "text-teal-600"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <item.icon className={`h-5 w-5 ${isActive ? "animate-bounce-soft" : ""}`} />
+                <span className="text-xs font-medium">{item.name}</span>
+                {isActive && (
+                  <div className="absolute bottom-1 w-1 h-1 rounded-full bg-teal-500" />
+                )}
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />

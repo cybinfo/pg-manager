@@ -28,14 +28,20 @@ PG Manager is a SaaS application for managing Paying Guest (PG) accommodations a
 ```
 src/
 ├── app/
+│   ├── page.tsx          # Platform homepage (ManageKar)
+│   ├── pricing/          # Freemium pricing page
+│   ├── products/
+│   │   └── pg-manager/   # PG Manager product page
 │   ├── (auth)/           # Login, Register pages
 │   ├── (dashboard)/      # Owner dashboard pages
 │   │   └── dashboard/
 │   │       ├── properties/
 │   │       ├── rooms/
 │   │       ├── tenants/
-│   │       ├── meter-readings/  # With auto-charge generation
+│   │       ├── bills/           # Billing system
 │   │       ├── payments/
+│   │       ├── expenses/        # Expense tracking
+│   │       ├── meter-readings/  # With auto-charge generation
 │   │       ├── staff/
 │   │       ├── notices/
 │   │       ├── complaints/
@@ -44,7 +50,10 @@ src/
 │   │       ├── reports/
 │   │       └── settings/
 │   ├── (tenant)/         # Tenant portal pages
-│   └── (setup)/          # Initial setup wizard
+│   ├── (setup)/          # Initial setup wizard
+│   ├── pg/[slug]/        # Public PG websites
+│   ├── contact/          # Contact page
+│   └── help/             # FAQ/Help page
 ├── components/
 │   ├── ui/               # shadcn/ui components (button, card, input, label)
 │   └── pwa-install-prompt.tsx
@@ -196,6 +205,65 @@ vercel --prod
 ---
 
 ## Changelog
+
+### 2025-12-28 - Platform Rebrand & UI/UX Overhaul
+- **Homepage Restructure** - Repositioned ManageKar as a platform, not just PG software:
+  - New platform-focused homepage at `/` showcasing all products
+  - PG Manager product page at `/products/pg-manager` with full feature details
+  - Pricing page at `/pricing` with freemium model (3 months free, then free tier forever)
+  - Products grid: PG Manager (Live), Shop Manager, Rent Manager, Society Manager (Coming Soon)
+  - Why ManageKar section highlighting Indian market focus
+  - Testimonial section with Hindi quote
+  - "3 Months Free" promotional banner throughout
+- **Freemium Pricing Model**:
+  - Free Trial: 3 months full access
+  - Free Forever: 1 PG, 10 rooms, 20 tenants (no deactivated data)
+  - Pro: ₹499/month (3 PGs, 50 rooms, unlimited tenants)
+  - Business: ₹999/month (unlimited everything + priority support)
+  - Monthly/Yearly toggle with 20% yearly discount
+- **UI/UX Enhancements**:
+  - Glassmorphism effects (glass-nav, glass-card) with backdrop blur
+  - Animation keyframes: fadeInUp, fadeInDown, slideInLeft, scaleIn, pulse-soft, float, shimmer
+  - Animation utility classes with delays (100ms-500ms)
+  - Staggered animations for lists (stagger-children)
+  - Hover effects: hover-lift, hover-scale, hover-glow
+  - Gradient utilities: gradient-primary, gradient-text
+  - Custom scrollbar styling
+- **Button Component Enhanced**:
+  - New `gradient` variant (teal to emerald gradient with shadow)
+  - New `gradient-outline` variant
+  - New `xl` size for larger CTAs
+  - Added active:scale press effect
+  - Enhanced hover states with shadow
+- **Card Component Enhanced**:
+  - New variants: glass, elevated, interactive, highlight
+  - Smooth transitions on all variants
+  - Interactive cards with hover lift effect
+- **Dashboard Layout Improvements**:
+  - Glassmorphism sidebar and header
+  - Gradient active state for navigation items
+  - Animated loading screen with branded logo
+  - Mobile bottom navigation (5 quick access items)
+  - Custom scrollbar in navigation
+  - Rose-tinted logout hover state
+- **Dashboard Home Page**:
+  - Time-based greeting (Good morning/afternoon/evening)
+  - Animated floating greeting icon
+  - Gradient stat cards with shadows
+  - Net Income card (Revenue - Expenses)
+  - Progress bar for Getting Started checklist
+  - Revenue & Expenses summary cards
+  - Staggered animation on card grid
+- Files created:
+  - `/src/app/products/pg-manager/page.tsx`
+  - `/src/app/pricing/page.tsx`
+- Files modified:
+  - `/src/app/page.tsx` (complete rewrite)
+  - `/src/app/globals.css` (added 300+ lines of animations/effects)
+  - `/src/components/ui/button.tsx` (new variants)
+  - `/src/components/ui/card.tsx` (new variants with CVA)
+  - `/src/app/(dashboard)/layout.tsx` (glass effects, mobile nav)
+  - `/src/app/(dashboard)/dashboard/page.tsx` (enhanced UI)
 
 ### 2025-12-28 - Expense Tracking Feature
 - Complete expense management system for tracking property costs
