@@ -23,7 +23,8 @@ import {
   UserMinus,
   UserPlus,
   Gauge,
-  UserCog
+  UserCog,
+  Receipt
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -33,6 +34,7 @@ const navigation = [
   { name: "Properties", href: "/dashboard/properties", icon: Building2 },
   { name: "Rooms", href: "/dashboard/rooms", icon: Home },
   { name: "Tenants", href: "/dashboard/tenants", icon: Users },
+  { name: "Bills", href: "/dashboard/bills", icon: Receipt },
   { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
   { name: "Meter Readings", href: "/dashboard/meter-readings", icon: Gauge },
   { name: "Exit Clearance", href: "/dashboard/exit-clearance", icon: UserMinus },

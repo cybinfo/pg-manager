@@ -99,6 +99,15 @@ ManageKar is a platform for multiple management products targeting Indian busine
 
 ## Key Features
 
+### Billing System
+- Generate monthly bills for tenants with itemized charges
+- Line items for rent, electricity, water, and custom charges
+- Support for discounts, late fees, and previous balance carry-over
+- Link payments to specific bills for accurate tracking
+- Auto-update bill status (pending/partial/paid/overdue) via database triggers
+- Share bills via WhatsApp with formatted message
+- Files: `src/app/(dashboard)/dashboard/bills/`
+
 ### Meter Readings with Auto-Charge Generation
 - Record meter readings (Electricity, Water, Gas)
 - Auto-fetch previous reading to calculate units consumed
@@ -170,6 +179,33 @@ vercel --prod
 ---
 
 ## Changelog
+
+### 2025-12-28 - Billing System
+- Added comprehensive billing system for generating monthly bills
+- Created bills table with line items, discounts, late fees, previous balance tracking
+- Database migration: `006_billing_system.sql` with:
+  - Bills table with JSONB line_items for flexible charge breakdown
+  - Trigger to auto-update bill status based on payments
+  - Function to mark overdue bills
+- Bills dashboard (`/dashboard/bills`) with:
+  - Stats cards (Total Billed, Collected, Pending, Overdue)
+  - Search and filter by status
+  - List view with tenant info and amounts
+- Bill generation page (`/dashboard/bills/new`) with:
+  - Tenant selection with auto-populated charges
+  - Editable line items (type, description, amount)
+  - Discount, previous balance, and total calculation
+  - Auto-generated bill number (INV-YYYY-XXXX format)
+- Bill detail page (`/dashboard/bills/[id]`) with:
+  - Full bill breakdown with line items
+  - Payment history for the bill
+  - Record payment directly from bill
+  - Share via WhatsApp
+- Payment linking:
+  - Payments can now be linked to specific bills
+  - Bill selection dropdown on payment form
+  - Auto-updates bill status (pending/partial/paid)
+- Added "Bills" to sidebar navigation
 
 ### 2025-12-28 - PG Website Builder
 - Added public PG website feature for each property

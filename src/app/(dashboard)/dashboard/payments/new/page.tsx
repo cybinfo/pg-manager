@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, CreditCard, Loader2, User, IndianRupee } from "lucide-react"
+import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
 import { toast } from "sonner"
 
 interface Tenant {
@@ -49,19 +49,31 @@ interface ChargeType {
   code: string
 }
 
+interface Bill {
+  id: string
+  bill_number: string
+  for_month: string
+  total_amount: number
+  balance_due: number
+  status: string
+}
+
 function NewPaymentForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedTenantId = searchParams.get("tenant")
+  const preselectedBillId = searchParams.get("bill")
 
   const [loading, setLoading] = useState(false)
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [chargeTypes, setChargeTypes] = useState<ChargeType[]>([])
+  const [bills, setBills] = useState<Bill[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null)
 
   const [formData, setFormData] = useState({
     tenant_id: preselectedTenantId || "",
+    bill_id: preselectedBillId || "",
     charge_type_id: "",
     amount: "",
     payment_method: "cash",
@@ -134,7 +146,7 @@ function NewPaymentForm() {
     fetchData()
   }, [preselectedTenantId])
 
-  // Update selected tenant and amount when tenant changes
+  // Update selected tenant and fetch bills when tenant changes
   useEffect(() => {
     if (formData.tenant_id) {
       const tenant = tenants.find((t) => t.id === formData.tenant_id)
@@ -144,11 +156,45 @@ function NewPaymentForm() {
           ...prev,
           amount: tenant.monthly_rent.toString(),
         }))
+
+        // Fetch pending bills for this tenant
+        const fetchBills = async () => {
+          const supabase = createClient()
+          const { data: billsData, error } = await supabase
+            .from("bills")
+            .select("id, bill_number, for_month, total_amount, balance_due, status")
+            .eq("tenant_id", tenant.id)
+            .in("status", ["pending", "partial", "overdue"])
+            .gt("balance_due", 0)
+            .order("bill_date", { ascending: false })
+
+          if (!error && billsData) {
+            setBills(billsData)
+          } else {
+            setBills([])
+          }
+        }
+        fetchBills()
       }
     } else {
       setSelectedTenant(null)
+      setBills([])
     }
   }, [formData.tenant_id, tenants])
+
+  // Update amount when bill is selected
+  useEffect(() => {
+    if (formData.bill_id) {
+      const bill = bills.find((b) => b.id === formData.bill_id)
+      if (bill) {
+        setFormData((prev) => ({
+          ...prev,
+          amount: bill.balance_due.toString(),
+          for_period: bill.for_month,
+        }))
+      }
+    }
+  }, [formData.bill_id, bills])
 
   // Generate current month period
   useEffect(() => {
@@ -195,6 +241,7 @@ function NewPaymentForm() {
         owner_id: user.id,
         tenant_id: formData.tenant_id,
         property_id: selectedTenant?.property_id,
+        bill_id: formData.bill_id || null,
         charge_type_id: formData.charge_type_id || null,
         amount: parseFloat(formData.amount),
         payment_method: formData.payment_method,
@@ -326,6 +373,51 @@ function NewPaymentForm() {
             )}
           </CardContent>
         </Card>
+
+        {/* Bill Selection (if tenant has pending bills) */}
+        {selectedTenant && bills.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <FileText className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <CardTitle>Link to Bill (Optional)</CardTitle>
+                  <CardDescription>Select a pending bill to apply this payment</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="bill_id">Select Bill</Label>
+                <select
+                  id="bill_id"
+                  name="bill_id"
+                  value={formData.bill_id}
+                  onChange={handleChange}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                  disabled={loading}
+                >
+                  <option value="">No bill (standalone payment)</option>
+                  {bills.map((bill) => (
+                    <option key={bill.id} value={bill.id}>
+                      {bill.bill_number} - {bill.for_month} (Due: ₹{bill.balance_due.toLocaleString("en-IN")})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {formData.bill_id && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                  <p className="text-amber-800">
+                    Payment will be linked to the selected bill and automatically update the bill status.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Payment Details */}
         <Card>
