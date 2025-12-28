@@ -1,6 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
-  <g transform="translate(96, 96) scale(0.625)">
-    <path d="M256 48L32 176v304h192V352h64v128h192V176L256 48zm-64 272h-64v-64h64v64zm0-96h-64v-64h64v64zm128 96h-64v-64h64v64zm0-96h-64v-64h64v64zm128 96h-64v-64h64v64zm0-96h-64v-64h64v64z" fill="white"/>
+  <defs>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#14B8A6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10B981;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Rounded rectangle background with gradient -->
+  <rect width="512" height="512" rx="108" fill="url(#brandGradient)"/>
+  <!-- Building icon (from Lucide Building2) -->
+  <g transform="translate(96, 80) scale(1.25)">
+    <!-- Main building structure -->
+    <path d="M160 32H96a32 32 0 0 0-32 32v224a32 32 0 0 0 32 32h64" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M160 32h64a32 32 0 0 1 32 32v224a32 32 0 0 1-32 32h-64" stroke="white" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- Center line -->
+    <path d="M160 32v288" stroke="white" stroke-width="20" stroke-linecap="round"/>
+    <!-- Windows left side -->
+    <rect x="96" y="80" width="32" height="32" rx="4" fill="white"/>
+    <rect x="96" y="144" width="32" height="32" rx="4" fill="white"/>
+    <rect x="96" y="208" width="32" height="32" rx="4" fill="white"/>
+    <!-- Windows right side -->
+    <rect x="192" y="80" width="32" height="32" rx="4" fill="white"/>
+    <rect x="192" y="144" width="32" height="32" rx="4" fill="white"/>
+    <rect x="192" y="208" width="32" height="32" rx="4" fill="white"/>
+    <!-- Door -->
+    <rect x="136" y="256" width="48" height="64" rx="4" fill="white"/>
   </g>
 </svg>
