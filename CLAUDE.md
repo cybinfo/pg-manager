@@ -197,6 +197,24 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-28 - Enhanced Reports Dashboard with Recharts
+- Replaced custom CSS progress bars with professional Recharts components
+- Charts implemented:
+  - **LineChart**: Revenue trend showing Collected vs Billed over 6 months
+  - **PieChart**: Payment methods breakdown with percentages
+  - **BarChart**: Property performance comparison (Occupancy vs Revenue)
+- New features:
+  - **Date Range Selector**: This Month, Last Month, Last 3/6 Months, This Year
+  - **Dues Aging Report**: Color-coded buckets (Current, 1-30, 31-60, 60+ days)
+  - **Collection Status**: Horizontal bar showing Paid, Late, Overdue distribution
+  - Enhanced KPI cards with overdue amount indicators
+  - Critical overdue alerts in Quick Insights section
+- Technical improvements:
+  - Proper TypeScript types for Recharts formatters
+  - Responsive charts using ResponsiveContainer
+  - Indian Rupee formatting throughout (₹)
+- File modified: `src/app/(dashboard)/dashboard/reports/page.tsx`
+
 ### 2025-12-28 - Automated Monthly Bill Generation
 - Added automated bill generation via Vercel Cron job
 - Database migration: `008_auto_billing.sql` with:
