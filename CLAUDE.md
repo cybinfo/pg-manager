@@ -171,6 +171,19 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-28 - Automated Email Payment Reminders
+- Added automated email payment reminders via Vercel Cron
+- Created email service library using Resend (100 emails/day FREE)
+- Created professional HTML email templates (reminder, overdue, receipt)
+- Added "Notifications" tab in Settings with configurable options:
+  - Enable/disable email reminders
+  - Days before due date (1-10)
+  - Send on due date toggle
+  - Overdue alerts toggle (daily/weekly)
+  - Test email button
+- Created cron job at `/api/cron/payment-reminders` (runs daily 9 AM UTC)
+- Added `vercel.json` for cron configuration
+
 ### 2025-12-28 - WhatsApp Payment Notifications
 - Added FREE WhatsApp notifications for payments (via wa.me click-to-chat)
 - Created `/src/lib/notifications.ts` with message templates

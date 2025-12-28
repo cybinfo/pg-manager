@@ -11,23 +11,21 @@ import {
   Loader2,
   Save,
   User,
-  Building2,
   Phone,
   Mail,
   CreditCard,
   Calendar,
   Clock,
   Bell,
-  Shield,
-  Palette,
   Check,
-  X,
   Plus,
   Trash2,
-  GripVertical,
-  IndianRupee
+  IndianRupee,
+  Send,
+  MailCheck
 } from "lucide-react"
 import { toast } from "sonner"
+import { sendTestEmail } from "@/lib/email"
 
 interface Owner {
   id: string
@@ -54,6 +52,23 @@ interface OwnerConfig {
   default_rent_due_day: number
   default_grace_period: number
   currency: string
+  notification_settings?: NotificationSettings
+}
+
+interface NotificationSettings {
+  email_reminders_enabled: boolean
+  reminder_days_before: number
+  send_on_due_date: boolean
+  send_overdue_alerts: boolean
+  overdue_alert_frequency: "daily" | "weekly"
+}
+
+const defaultNotificationSettings: NotificationSettings = {
+  email_reminders_enabled: true,
+  reminder_days_before: 5,
+  send_on_due_date: true,
+  send_overdue_alerts: true,
+  overdue_alert_frequency: "weekly",
 }
 
 export default function SettingsPage() {
@@ -81,6 +96,10 @@ export default function SettingsPage() {
     default_rent_due_day: 1,
     default_grace_period: 5,
   })
+
+  // Notification Settings
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(defaultNotificationSettings)
+  const [sendingTestEmail, setSendingTestEmail] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -119,6 +138,13 @@ export default function SettingsPage() {
           default_rent_due_day: configRes.data.default_rent_due_day || 1,
           default_grace_period: configRes.data.default_grace_period || 5,
         })
+        // Load notification settings if available
+        if (configRes.data.notification_settings) {
+          setNotificationSettings({
+            ...defaultNotificationSettings,
+            ...configRes.data.notification_settings,
+          })
+        }
       }
     } catch (error) {
       console.error("Error fetching settings:", error)
@@ -236,6 +262,52 @@ export default function SettingsPage() {
     }
   }
 
+  const saveNotificationSettings = async () => {
+    if (!config) return
+
+    setSaving(true)
+    try {
+      const supabase = createClient()
+
+      const { error } = await supabase
+        .from("owner_config")
+        .update({
+          notification_settings: notificationSettings,
+        })
+        .eq("id", config.id)
+
+      if (error) throw error
+
+      setConfig({ ...config, notification_settings: notificationSettings })
+      toast.success("Notification settings saved")
+    } catch (error) {
+      toast.error("Failed to save notification settings")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSendTestEmail = async () => {
+    if (!owner?.email) {
+      toast.error("No email address found")
+      return
+    }
+
+    setSendingTestEmail(true)
+    try {
+      const result = await sendTestEmail(owner.email, owner.name || "User")
+      if (result.success) {
+        toast.success("Test email sent! Check your inbox.")
+      } else {
+        toast.error(result.error || "Failed to send test email")
+      }
+    } catch (error) {
+      toast.error("Failed to send test email")
+    } finally {
+      setSendingTestEmail(false)
+    }
+  }
+
   const deleteChargeType = async (chargeType: ChargeType) => {
     if (chargeType.category !== "custom") {
       toast.error("Cannot delete system charge types")
@@ -263,6 +335,7 @@ export default function SettingsPage() {
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
     { id: "billing", label: "Billing & Charges", icon: CreditCard },
+    { id: "notifications", label: "Notifications", icon: Bell },
     { id: "defaults", label: "Default Settings", icon: Settings },
   ]
 
@@ -518,6 +591,214 @@ export default function SettingsPage() {
                   </div>
                   <p className="text-2xl font-bold">{configForm.default_rent_due_day}</p>
                   <p className="text-xs text-muted-foreground">Of each month</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Notifications Tab */}
+      {activeTab === "notifications" && (
+        <div className="grid gap-6 max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Email Notifications
+              </CardTitle>
+              <CardDescription>Configure automated email reminders for tenants</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Master Toggle */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${notificationSettings.email_reminders_enabled ? "bg-primary/10" : "bg-muted"}`}>
+                    <Bell className={`h-5 w-5 ${notificationSettings.email_reminders_enabled ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div>
+                    <p className="font-medium">Email Reminders</p>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically send payment reminders to tenants
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setNotificationSettings({
+                    ...notificationSettings,
+                    email_reminders_enabled: !notificationSettings.email_reminders_enabled
+                  })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    notificationSettings.email_reminders_enabled ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      notificationSettings.email_reminders_enabled ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {notificationSettings.email_reminders_enabled && (
+                <>
+                  {/* Reminder Schedule */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Reminder Schedule</h4>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="reminder_days">Days Before Due Date</Label>
+                      <select
+                        id="reminder_days"
+                        value={notificationSettings.reminder_days_before}
+                        onChange={(e) => setNotificationSettings({
+                          ...notificationSettings,
+                          reminder_days_before: parseInt(e.target.value)
+                        })}
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                      >
+                        {[1, 2, 3, 5, 7, 10].map((days) => (
+                          <option key={days} value={days}>
+                            {days} day{days > 1 ? "s" : ""} before
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-muted-foreground">
+                        Send reminder this many days before rent is due
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">Send on Due Date</p>
+                        <p className="text-xs text-muted-foreground">Remind tenants on the day rent is due</p>
+                      </div>
+                      <button
+                        onClick={() => setNotificationSettings({
+                          ...notificationSettings,
+                          send_on_due_date: !notificationSettings.send_on_due_date
+                        })}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          notificationSettings.send_on_due_date ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                            notificationSettings.send_on_due_date ? "translate-x-5" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Overdue Alerts */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Overdue Alerts</h4>
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">Send Overdue Alerts</p>
+                        <p className="text-xs text-muted-foreground">Alert tenants when payment is overdue</p>
+                      </div>
+                      <button
+                        onClick={() => setNotificationSettings({
+                          ...notificationSettings,
+                          send_overdue_alerts: !notificationSettings.send_overdue_alerts
+                        })}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          notificationSettings.send_overdue_alerts ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                            notificationSettings.send_overdue_alerts ? "translate-x-5" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {notificationSettings.send_overdue_alerts && (
+                      <div className="space-y-2">
+                        <Label htmlFor="overdue_frequency">Overdue Alert Frequency</Label>
+                        <select
+                          id="overdue_frequency"
+                          value={notificationSettings.overdue_alert_frequency}
+                          onChange={(e) => setNotificationSettings({
+                            ...notificationSettings,
+                            overdue_alert_frequency: e.target.value as "daily" | "weekly"
+                          })}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        >
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              <Button onClick={saveNotificationSettings} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Settings
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Test Email */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Send className="h-5 w-5" />
+                Test Email
+              </CardTitle>
+              <CardDescription>Send a test email to verify your setup</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <p className="font-medium">Send Test Email</p>
+                  <p className="text-sm text-muted-foreground">
+                    Send to: {owner?.email}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleSendTestEmail}
+                  disabled={sendingTestEmail}
+                >
+                  {sendingTestEmail ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <MailCheck className="mr-2 h-4 w-4" />
+                  )}
+                  Send Test
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Note: Email reminders run automatically every day at 2:30 PM IST.
+                Only tenants with pending dues and valid email addresses will receive reminders.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* WhatsApp Info */}
+          <Card className="bg-green-50 border-green-200">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Phone className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-green-900">WhatsApp Notifications</h4>
+                  <p className="text-sm text-green-700 mt-1">
+                    WhatsApp reminders are available via manual send buttons on the Payments page.
+                    Go to Payments → Send Reminders to send WhatsApp messages to tenants with pending dues.
+                  </p>
                 </div>
               </div>
             </CardContent>
