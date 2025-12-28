@@ -15,7 +15,8 @@ import {
   Phone,
   Home,
   CheckCircle,
-  MessageCircle
+  MessageCircle,
+  Download
 } from "lucide-react"
 import { toast } from "sonner"
 import { WhatsAppButton } from "@/components/whatsapp-button"
@@ -158,6 +159,33 @@ export default function PaymentReceiptPage() {
     window.print()
   }
 
+  const handleDownloadPDF = async () => {
+    try {
+      toast.loading("Generating PDF...")
+      const response = await fetch(`/api/receipts/${params.id}/pdf`)
+
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF")
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `receipt-${payment?.receipt_number || payment?.id.slice(0, 8).toUpperCase()}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.dismiss()
+      toast.success("PDF downloaded successfully!")
+    } catch (error) {
+      console.error("Error downloading PDF:", error)
+      toast.dismiss()
+      toast.error("Failed to download PDF")
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {
       day: "numeric",
@@ -250,6 +278,10 @@ export default function PaymentReceiptPage() {
               variant="default"
             />
           )}
+          <Button variant="outline" onClick={handleDownloadPDF}>
+            <Download className="mr-2 h-4 w-4" />
+            Download PDF
+          </Button>
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             Print

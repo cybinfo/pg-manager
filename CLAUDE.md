@@ -171,6 +171,19 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-28 - PDF Rent Receipts & Homepage Rebrand
+- Added professional PDF rent receipts using @react-pdf/renderer
+- Created `/src/lib/pdf-receipt.tsx` with branded receipt template
+- Added `/api/receipts/[id]/pdf` API endpoint for PDF generation
+- "Download PDF" button on payment receipt page
+- Receipts include: ManageKar branding, property details, tenant info, amount in words
+- **Homepage Rebrand:**
+  - Updated hero: "From Chaos to Clarity" - positioning as platform for Indian small businesses
+  - Added "Platform Vision" section showcasing future products (Shop Manager, Rent Manager, Society Manager)
+  - Updated features to highlight: Your Own PG Website, Smart Billing, PDF Receipts, Automated Reminders
+  - New messaging: "Simple Software for Indian Small Businesses"
+  - Updated footer with platform badge
+
 ### 2025-12-28 - Automated Email Payment Reminders
 - Added automated email payment reminders via Vercel Cron
 - Created email service library using Resend (100 emails/day FREE)
