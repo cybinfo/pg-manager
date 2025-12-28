@@ -171,6 +171,34 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-28 - PG Website Builder
+- Added public PG website feature for each property
+- Created `/pg/[slug]` route for public PG pages
+- Beautiful responsive template with:
+  - Hero section with cover photo
+  - Amenities grid
+  - Rooms & pricing cards
+  - House rules
+  - Location with nearby landmarks
+  - Contact form for inquiries
+  - WhatsApp & Call buttons
+- Property edit page now has "Website Settings" tab with:
+  - Enable/disable toggle
+  - Custom slug configuration
+  - Tagline & description
+  - Property type (PG/Hostel/Co-living)
+  - Cover photo URL
+  - Amenity selection (14 options)
+  - House rules
+  - Google Maps URL
+  - Nearby landmarks
+  - Contact info (WhatsApp, Email)
+  - Display toggles (rooms, pricing, contact form)
+- Database migration: `005_property_website.sql`
+  - Added website_slug, website_enabled, website_config to properties
+  - Created website_inquiries table for lead capture
+- Website URL format: managekar.com/pg/your-pg-slug
+
 ### 2025-12-28 - PDF Rent Receipts & Homepage Rebrand
 - Added professional PDF rent receipts using @react-pdf/renderer
 - Created `/src/lib/pdf-receipt.tsx` with branded receipt template

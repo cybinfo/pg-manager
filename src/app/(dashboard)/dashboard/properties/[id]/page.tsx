@@ -20,7 +20,9 @@ import {
   Plus,
   Bed,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Globe,
+  ExternalLink
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -35,6 +37,8 @@ interface Property {
   manager_phone: string | null
   is_active: boolean
   created_at: string
+  website_slug: string | null
+  website_enabled: boolean
 }
 
 interface Room {
@@ -197,6 +201,15 @@ export default function PropertyDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {property.website_enabled && property.website_slug && (
+            <Link href={`/pg/${property.website_slug}`} target="_blank">
+              <Button variant="outline" className="text-teal-600 border-teal-200 hover:bg-teal-50">
+                <Globe className="mr-2 h-4 w-4" />
+                View Website
+                <ExternalLink className="ml-1 h-3 w-3" />
+              </Button>
+            </Link>
+          )}
           <Link href={`/dashboard/properties/${property.id}/edit`}>
             <Button variant="outline">
               <Pencil className="mr-2 h-4 w-4" />
