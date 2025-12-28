@@ -110,32 +110,32 @@ export default function DashboardPage() {
       value: stats.properties.toString(),
       icon: Building2,
       href: "/dashboard/properties",
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      color: "text-teal-600",
+      bgColor: "bg-teal-50",
     },
     {
       name: "Total Rooms",
       value: stats.rooms.toString(),
       icon: Home,
       href: "/dashboard/rooms",
-      color: "text-green-600",
-      bgColor: "bg-green-100",
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50",
     },
     {
       name: "Active Tenants",
       value: stats.tenants.toString(),
       icon: Users,
       href: "/dashboard/tenants",
-      color: "text-purple-600",
-      bgColor: "bg-purple-100",
+      color: "text-violet-600",
+      bgColor: "bg-violet-50",
     },
     {
       name: "Pending Dues",
       value: `₹${stats.pendingDues.toLocaleString("en-IN")}`,
       icon: CreditCard,
       href: "/dashboard/payments",
-      color: "text-orange-600",
-      bgColor: "bg-orange-100",
+      color: "text-amber-600",
+      bgColor: "bg-amber-50",
     },
   ]
 
@@ -204,9 +204,9 @@ export default function DashboardPage() {
                     className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-1 rounded-full ${item.done ? "bg-green-100" : "bg-muted"}`}>
+                      <div className={`p-1 rounded-full ${item.done ? "bg-teal-50" : "bg-muted"}`}>
                         {item.done ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-teal-600" />
                         ) : (
                           <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
                         )}
@@ -277,7 +277,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <CheckCircle className="h-12 w-12 text-green-500/50 mb-4" />
+              <CheckCircle className="h-12 w-12 text-teal-500/50 mb-4" />
               <p className="text-muted-foreground">You&apos;re all set up!</p>
               <p className="text-sm text-muted-foreground">
                 Activity feed coming soon...

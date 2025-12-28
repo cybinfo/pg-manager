@@ -1,6 +1,6 @@
-# PG Manager
+# ManageKar
 
-A modern SaaS application for managing Paying Guest (PG) accommodations and hostels in India.
+India's smartest PG & hostel management software. "Kar" means "do" in Hindi - ManageKar = "Let's Manage".
 
 **Live:** [https://managekar.com](https://managekar.com)
 
@@ -26,6 +26,8 @@ A modern SaaS application for managing Paying Guest (PG) accommodations and host
 - **Database:** Supabase (PostgreSQL)
 - **Auth:** Supabase Auth with Row Level Security
 - **Styling:** Tailwind CSS + shadcn/ui
+- **Typography:** Inter (Google Fonts)
+- **Icons:** Lucide React
 - **Hosting:** Vercel
 
 ## Getting Started

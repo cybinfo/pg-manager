@@ -1,25 +1,21 @@
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Inter } from "next/font/google"
 import { Toaster } from "sonner"
 import "./globals.css"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-})
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 })
 
 export const metadata: Metadata = {
   title: {
-    default: "PG Manager - Free PG Management Software",
-    template: "%s | PG Manager",
+    default: "ManageKar - Smart PG Management Software",
+    template: "%s | ManageKar",
   },
   description:
-    "The most flexible PG management software for Indian market. Manage tenants, billing, complaints, and more. 100% free.",
+    "India's smartest PG & hostel management software. Manage tenants, billing, meter readings, complaints, and more. Free forever.",
   keywords: [
     "PG management",
     "paying guest software",
@@ -27,14 +23,15 @@ export const metadata: Metadata = {
     "tenant management",
     "rent collection",
     "India",
+    "ManageKar",
   ],
-  authors: [{ name: "PG Manager" }],
-  creator: "PG Manager",
+  authors: [{ name: "ManageKar" }],
+  creator: "ManageKar",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "PG Manager",
+    title: "ManageKar",
   },
   formatDetection: {
     telephone: false,
@@ -43,8 +40,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#10B981" },
+    { media: "(prefers-color-scheme: dark)", color: "#059669" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -64,10 +61,10 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="PG Manager" />
+        <meta name="apple-mobile-web-app-title" content="ManageKar" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} font-sans antialiased`}
       >
         {children}
         <Toaster position="top-right" richColors closeButton />

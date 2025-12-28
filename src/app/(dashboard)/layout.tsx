@@ -108,15 +108,17 @@ export default function DashboardLayout({
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 border-b">
+          <div className="flex items-center justify-between h-16 px-4 border-b bg-gradient-to-r from-teal-500 to-emerald-500">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <Building2 className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold">PG Manager</span>
+              <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-teal-600" />
+              </div>
+              <span className="text-xl font-bold text-white">ManageKar</span>
             </Link>
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden text-white hover:bg-white/20"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-5 w-5" />

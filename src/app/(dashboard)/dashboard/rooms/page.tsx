@@ -39,10 +39,10 @@ interface Room {
 }
 
 const statusColors: Record<string, string> = {
-  available: "bg-green-100 text-green-700",
-  occupied: "bg-red-100 text-red-700",
-  partially_occupied: "bg-yellow-100 text-yellow-700",
-  maintenance: "bg-gray-100 text-gray-700",
+  available: "bg-teal-50 text-teal-700",
+  occupied: "bg-rose-50 text-rose-700",
+  partially_occupied: "bg-amber-50 text-amber-700",
+  maintenance: "bg-slate-100 text-slate-700",
 }
 
 export default function RoomsPage() {

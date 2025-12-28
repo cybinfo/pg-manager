@@ -60,9 +60,9 @@ interface RawTenant {
 }
 
 const statusColors: Record<string, string> = {
-  active: "bg-green-100 text-green-700",
-  notice_period: "bg-yellow-100 text-yellow-700",
-  checked_out: "bg-gray-100 text-gray-700",
+  active: "bg-teal-50 text-teal-700",
+  notice_period: "bg-amber-50 text-amber-700",
+  checked_out: "bg-slate-100 text-slate-700",
 }
 
 export default function TenantsPage() {

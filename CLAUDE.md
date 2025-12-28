@@ -70,6 +70,28 @@ Key tables (see `supabase/migrations/` for full schema):
 - **staff** - Staff members
 - **staff_roles** - Role definitions with permissions
 
+## Brand Identity
+
+### Brand Name: ManageKar
+"Kar" means "do" in Hindi - "Manage Kar" = "Let's Manage" / "Start Managing"
+
+### Color Palette
+- **Primary:** Teal (#10B981) - Trust, energy, modern
+- **Accent:** Amber (#F59E0B) - Action, urgency
+- **Success:** Teal shades for positive states
+- **Warning:** Amber shades for pending/due items
+- **Error:** Rose shades for critical states
+
+### Typography
+- **Font Family:** Inter (Google Fonts)
+- **Weights:** 400 (body), 500 (labels), 600 (titles), 700 (headings)
+
+### Visual Elements
+- Gradient headers on sidebars (teal to emerald)
+- White logo on gradient backgrounds
+- Soft colored backgrounds for stat cards (teal-50, emerald-50, violet-50, amber-50)
+- Modern rounded corners (rounded-lg, rounded-xl)
+
 ## Key Features
 
 ### Meter Readings with Auto-Charge Generation
@@ -143,6 +165,16 @@ vercel --prod
 ---
 
 ## Changelog
+
+### 2025-12-28 - Brand Identity & UI Overhaul
+- Rebranded application from "PG Manager" to "ManageKar"
+- Implemented new teal/emerald color palette for brand identity
+- Switched from Geist to Inter font family for better readability
+- Added gradient headers to sidebars (teal → emerald)
+- Updated all status badges to use brand colors (teal, amber, rose, slate)
+- Redesigned auth pages with gradient backgrounds and modern logo
+- Updated dashboard stat cards with softer brand-aligned colors
+- Consistent color system using CSS variables for easy theming
 
 ### 2025-12-28 - Initial Release
 - Created full PG Manager application

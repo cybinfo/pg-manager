@@ -127,15 +127,18 @@ export default function TenantLayout({
   return (
     <div className="min-h-screen bg-muted/50">
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 bg-background border-b lg:hidden">
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-teal-500 to-emerald-500 lg:hidden">
         <div className="flex items-center justify-between h-14 px-4">
           <div className="flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-primary" />
-            <span className="font-bold">Tenant Portal</span>
+            <div className="h-7 w-7 bg-white rounded-lg flex items-center justify-center">
+              <Building2 className="h-4 w-4 text-teal-600" />
+            </div>
+            <span className="font-bold text-white">Tenant Portal</span>
           </div>
           <Button
             variant="ghost"
             size="icon"
+            className="text-white hover:bg-white/20"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -180,9 +183,11 @@ export default function TenantLayout({
         {/* Desktop Sidebar */}
         <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-background border-r">
           {/* Logo */}
-          <div className="flex items-center gap-2 h-16 px-6 border-b">
-            <Building2 className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">Tenant Portal</span>
+          <div className="flex items-center gap-2 h-16 px-6 border-b bg-gradient-to-r from-teal-500 to-emerald-500">
+            <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center">
+              <Building2 className="h-5 w-5 text-teal-600" />
+            </div>
+            <span className="text-xl font-bold text-white">Tenant Portal</span>
           </div>
 
           {/* Tenant Info */}

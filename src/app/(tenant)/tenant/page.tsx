@@ -191,8 +191,8 @@ export default function TenantHomePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-emerald-50 rounded-lg">
+                <IndianRupee className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Monthly Rent</p>
@@ -205,8 +205,8 @@ export default function TenantHomePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-sky-50 rounded-lg">
+                <Calendar className="h-5 w-5 text-sky-600" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Days Stayed</p>
@@ -219,8 +219,8 @@ export default function TenantHomePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <CreditCard className="h-5 w-5 text-purple-600" />
+              <div className="p-2 bg-violet-50 rounded-lg">
+                <CreditCard className="h-5 w-5 text-violet-600" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Paid This Year</p>
@@ -264,7 +264,7 @@ export default function TenantHomePage() {
               </div>
               <div>
                 <p className="text-muted-foreground">Status</p>
-                <span className="inline-flex items-center gap-1 text-green-600 font-medium">
+                <span className="inline-flex items-center gap-1 text-teal-600 font-medium">
                   <CheckCircle className="h-4 w-4" />
                   Active
                 </span>
@@ -298,8 +298,8 @@ export default function TenantHomePage() {
             <Link href="/tenant/payments" className="block">
               <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <CreditCard className="h-4 w-4 text-green-600" />
+                  <div className="p-2 bg-emerald-50 rounded-lg">
+                    <CreditCard className="h-4 w-4 text-emerald-600" />
                   </div>
                   <div>
                     <p className="font-medium">View Payments</p>
@@ -313,8 +313,8 @@ export default function TenantHomePage() {
             <Link href="/tenant/complaints" className="block">
               <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <MessageSquare className="h-4 w-4 text-orange-600" />
+                  <div className="p-2 bg-amber-50 rounded-lg">
+                    <MessageSquare className="h-4 w-4 text-amber-600" />
                   </div>
                   <div>
                     <p className="font-medium">Submit Complaint</p>
@@ -332,8 +332,8 @@ export default function TenantHomePage() {
             <Link href="/tenant/notices" className="block">
               <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Bell className="h-4 w-4 text-blue-600" />
+                  <div className="p-2 bg-sky-50 rounded-lg">
+                    <Bell className="h-4 w-4 text-sky-600" />
                   </div>
                   <div>
                     <p className="font-medium">View Notices</p>
@@ -351,8 +351,8 @@ export default function TenantHomePage() {
             <Link href="/tenant/profile" className="block">
               <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <User className="h-4 w-4 text-purple-600" />
+                  <div className="p-2 bg-violet-50 rounded-lg">
+                    <User className="h-4 w-4 text-violet-600" />
                   </div>
                   <div>
                     <p className="font-medium">My Profile</p>
@@ -391,8 +391,8 @@ export default function TenantHomePage() {
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-full">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    <div className="p-2 bg-teal-50 rounded-full">
+                      <CheckCircle className="h-4 w-4 text-teal-600" />
                     </div>
                     <div>
                       <p className="font-medium">{formatCurrency(payment.amount)}</p>
