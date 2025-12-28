@@ -1,6 +1,11 @@
 # PG Manager - Project Context
 
-> **IMPORTANT FOR CLAUDE:** When new features are added, bugs are fixed, or significant changes are made during a session, UPDATE this file to reflect those changes. Keep this file as the single source of truth for project context. Add new features to the "Key Features" section and log significant changes in the "Changelog" section at the bottom.
+> **IMPORTANT FOR CLAUDE - FOLLOW THESE RULES:**
+> 1. **Update CLAUDE.md** - When new features are added, bugs are fixed, or significant changes are made, UPDATE this file. Add features to "Key Features" section and log changes in "Changelog" section.
+> 2. **Update README.md** - Keep README.md updated with user-facing documentation when features change.
+> 3. **Detailed Git Commits** - When committing code, write detailed commit messages explaining what was changed and why.
+> 4. **Run /compact** - After completing a feature or significant task, run `/compact` to save session context.
+> 5. **Keep this file as the single source of truth** for project context.
 
 ## Overview
 PG Manager is a SaaS application for managing Paying Guest (PG) accommodations and hostels in India. It helps property owners manage tenants, rooms, payments, meter readings, and more.
