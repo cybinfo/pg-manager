@@ -73,7 +73,12 @@ Key tables (see `supabase/migrations/` for full schema):
 ## Brand Identity
 
 ### Brand Name: ManageKar
-"Kar" means "do" in Hindi - "Manage Kar" = "Let's Manage" / "Start Managing"
+"Kar" means "do/karo" in Hindi - "ManageKar" = "Manage Karo" (Do Manage / Start Managing)
+
+### Platform Vision
+ManageKar is a platform for multiple management products targeting Indian businesses:
+- **PG Manager** (Current) - PG & hostel management
+- Future products: Shop Manager, Rent Manager, Society Manager, etc.
 
 ### Color Palette
 - **Primary:** Teal (#10B981) - Trust, energy, modern

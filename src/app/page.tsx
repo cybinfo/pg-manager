@@ -139,7 +139,7 @@ export default function LandingPage() {
                 ManageKar
               </span>
               <span className="block text-foreground mt-2">
-                Your PG, Simplified
+                Manage Karo, Tension Chhodo!
               </span>
             </h1>
 
@@ -413,8 +413,11 @@ export default function LandingPage() {
                 </div>
                 <span className="text-xl font-bold">ManageKar</span>
               </div>
-              <p className="text-muted-foreground text-sm">
-                India&apos;s smartest PG management software. Free forever.
+              <p className="text-muted-foreground text-sm mb-2">
+                &quot;Manage Karo&quot; - Management solutions for Indian businesses.
+              </p>
+              <p className="text-muted-foreground text-xs">
+                PG Manager is our first product. More coming soon!
               </p>
             </div>
 
@@ -438,8 +441,8 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-muted-foreground text-sm">
-                <li><Link href="#" className="hover:text-background">Privacy Policy</Link></li>
-                <li><Link href="#" className="hover:text-background">Terms of Service</Link></li>
+                <li><Link href="/privacy" className="hover:text-background">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-background">Terms of Service</Link></li>
               </ul>
             </div>
           </div>
