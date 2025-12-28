@@ -316,23 +316,40 @@ export default function SettingsPage() {
   }
 
   const saveAutoBillingSettings = async () => {
-    if (!config) return
-
     setSaving(true)
     try {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
 
-      const { error } = await supabase
-        .from("owner_config")
-        .update({
-          auto_billing_settings: autoBillingSettings,
-        })
-        .eq("id", config.id)
+      if (config) {
+        // Update existing config
+        const { error } = await supabase
+          .from("owner_config")
+          .update({
+            auto_billing_settings: autoBillingSettings,
+          })
+          .eq("id", config.id)
 
-      if (error) throw error
+        if (error) throw error
+      } else {
+        // Create new config if doesn't exist
+        const { data, error } = await supabase
+          .from("owner_config")
+          .insert({
+            owner_id: user.id,
+            auto_billing_settings: autoBillingSettings,
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+        setConfig(data)
+      }
 
       toast.success("Auto billing settings saved")
     } catch (error) {
+      console.error("Save error:", error)
       toast.error("Failed to save auto billing settings")
     } finally {
       setSaving(false)

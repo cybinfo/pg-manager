@@ -36,11 +36,10 @@ export async function GET(request: Request) {
 
     console.log(`[Auto-Billing] Running for ${currentMonth}, day ${currentDay}`)
 
-    // Get all owners with auto-billing enabled
+    // Get all owners with auto-billing settings
     const { data: configs, error: configError } = await supabaseAdmin
       .from("owner_config")
       .select("owner_id, auto_billing_settings")
-      .not("auto_billing_settings", "is", null)
 
     if (configError) {
       console.error("[Auto-Billing] Error fetching configs:", configError)
