@@ -171,6 +171,15 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-28 - WhatsApp Payment Notifications
+- Added FREE WhatsApp notifications for payments (via wa.me click-to-chat)
+- Created `/src/lib/notifications.ts` with message templates
+- Created `/src/components/whatsapp-button.tsx` reusable component
+- Added "Send Receipt" button on payment receipt page
+- Added WhatsApp icon button on payments list for quick receipt sharing
+- Created `/dashboard/payments/reminders` page for bulk payment reminders
+- Message templates: payment receipt, reminder, overdue alert
+
 ### 2025-12-28 - Contact & Help Pages
 - Added `/contact` page with contact form, email/phone/WhatsApp options
 - Added `/help` page with comprehensive FAQ (20+ questions across 8 categories)

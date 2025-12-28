@@ -10,15 +10,16 @@ import {
   ArrowLeft,
   Loader2,
   Printer,
-  Download,
   Building2,
-  Calendar,
   User,
   Phone,
   Home,
-  CheckCircle
+  CheckCircle,
+  MessageCircle
 } from "lucide-react"
 import { toast } from "sonner"
+import { WhatsAppButton } from "@/components/whatsapp-button"
+import { messageTemplates } from "@/lib/notifications"
 
 interface Payment {
   id: string
@@ -232,6 +233,23 @@ export default function PaymentReceiptPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          {payment.tenant?.phone && (
+            <WhatsAppButton
+              phone={payment.tenant.phone}
+              message={messageTemplates.paymentReceipt({
+                tenantName: payment.tenant.name,
+                amount: Number(payment.amount),
+                receiptNumber: payment.receipt_number || payment.id.slice(0, 8).toUpperCase(),
+                propertyName: payment.property?.name || "Property",
+                paymentDate: payment.payment_date,
+                paymentMethod: payment.payment_method,
+                ownerName: payment.owner.business_name || payment.owner.name,
+                forPeriod: payment.for_period || undefined,
+              })}
+              label="Send Receipt"
+              variant="default"
+            />
+          )}
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             Print

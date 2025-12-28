@@ -13,12 +13,14 @@ import {
   Loader2,
   IndianRupee,
   Calendar,
-  User,
   Building2,
   Receipt,
-  Filter
+  Filter,
+  Bell
 } from "lucide-react"
 import { toast } from "sonner"
+import { WhatsAppIconButton } from "@/components/whatsapp-button"
+import { messageTemplates } from "@/lib/notifications"
 
 interface Payment {
   id: string
@@ -144,12 +146,20 @@ export default function PaymentsPage() {
             Track and manage all tenant payments
           </p>
         </div>
-        <Link href="/dashboard/payments/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Record Payment
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/dashboard/payments/reminders">
+            <Button variant="outline">
+              <Bell className="mr-2 h-4 w-4" />
+              Send Reminders
+            </Button>
+          </Link>
+          <Link href="/dashboard/payments/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Record Payment
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
@@ -291,6 +301,14 @@ export default function PaymentsPage() {
                         )}
                       </div>
                     </div>
+                    <WhatsAppIconButton
+                      phone={payment.tenant.phone}
+                      message={messageTemplates.simpleReceipt({
+                        tenantName: payment.tenant.name,
+                        amount: Number(payment.amount),
+                        receiptNumber: payment.receipt_number || payment.id.slice(0, 8).toUpperCase(),
+                      })}
+                    />
                     <Link href={`/dashboard/payments/${payment.id}`}>
                       <Button variant="outline" size="sm">
                         <Receipt className="h-4 w-4" />
