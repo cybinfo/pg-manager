@@ -197,6 +197,27 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-28 - Expense Tracking Feature
+- Complete expense management system for tracking property costs
+- Database migration `009_expense_tracking.sql`:
+  - `expense_types` table with 13 default categories
+  - `expenses` table with vendor, reference, payment method
+  - RLS policies and auto-create default types function
+- Expense Management Pages:
+  - `/dashboard/expenses` - List with stats, filters, CSV export
+  - `/dashboard/expenses/new` - Add expense with category selection
+  - `/dashboard/expenses/[id]` - Detail view with edit/delete
+  - `/dashboard/expenses/[id]/edit` - Edit expense form
+- Settings Integration:
+  - New "Expense Categories" tab
+  - Add/toggle/delete expense categories
+- Reports Integration:
+  - Total Expenses KPI with % change vs last month
+  - Net Income KPI (Revenue - Expenses)
+  - Expenses by Category horizontal bar chart
+- Default categories: Maintenance, Electricity/Water (Owner), Cleaning, Security, Internet, Supplies, Furniture, Staff Salary, Property Tax, Insurance, Marketing, Miscellaneous
+- Added "Expenses" to sidebar navigation
+
 ### 2025-12-28 - Enhanced Reports Dashboard with Recharts
 - Replaced custom CSS progress bars with professional Recharts components
 - Charts implemented:
