@@ -5,7 +5,20 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  FileText,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from "recharts"
+import {
   Loader2,
   Building2,
   Users,
@@ -18,10 +31,9 @@ import {
   Clock,
   Download,
   Calendar,
-  PieChart,
-  BarChart3,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Filter,
 } from "lucide-react"
 
 interface Property {
@@ -51,11 +63,27 @@ interface ReportData {
   totalCollectedLastMonth: number
   revenueGrowth: number
   averageRent: number
+  totalBilled: number
 
   // Dues
   totalPendingDues: number
   tenantsWithDues: number
   overdueAmount: number
+
+  // Dues Aging
+  duesAging: {
+    current: number
+    days30: number
+    days60: number
+    days90Plus: number
+  }
+
+  // Collection Efficiency
+  collectionEfficiency: {
+    onTime: number
+    late: number
+    overdue: number
+  }
 
   // Complaints
   openComplaints: number
@@ -75,18 +103,37 @@ interface ReportData {
   // Monthly revenue trend
   monthlyRevenue: {
     month: string
-    amount: number
+    collected: number
+    billed: number
   }[]
 
   // Payment method breakdown
   paymentMethods: {
-    method: string
+    name: string
+    value: number
     count: number
-    amount: number
   }[]
+
+  // Previous period for comparison
+  previousPeriod: {
+    revenue: number
+    tenants: number
+    occupancy: number
+    dues: number
+  }
 }
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+const CHART_COLORS = ["#10B981", "#6366F1", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]
+
+const dateRangeOptions = [
+  { value: "this_month", label: "This Month" },
+  { value: "last_month", label: "Last Month" },
+  { value: "last_3_months", label: "Last 3 Months" },
+  { value: "last_6_months", label: "Last 6 Months" },
+  { value: "this_year", label: "This Year" },
+]
 
 export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
@@ -99,23 +146,53 @@ export default function ReportsPage() {
     fetchReportData()
   }, [selectedProperty, dateRange])
 
+  const getDateRange = () => {
+    const now = new Date()
+    let startDate: Date
+    let endDate: Date = now
+
+    switch (dateRange) {
+      case "last_month":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0)
+        break
+      case "last_3_months":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+        break
+      case "last_6_months":
+        startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+        break
+      case "this_year":
+        startDate = new Date(now.getFullYear(), 0, 1)
+        break
+      default: // this_month
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+    }
+
+    return { startDate, endDate }
+  }
+
   const fetchReportData = async () => {
     setLoading(true)
     const supabase = createClient()
 
     try {
+      const { startDate, endDate } = getDateRange()
+
       // Fetch all required data in parallel
       const [
         propertiesRes,
         roomsRes,
         tenantsRes,
         paymentsRes,
+        billsRes,
         complaintsRes
       ] = await Promise.all([
         supabase.from("properties").select("id, name"),
         supabase.from("rooms").select("id, property_id, status, total_beds"),
         supabase.from("tenants").select("id, property_id, status, monthly_rent, check_in_date, check_out_date, created_at"),
         supabase.from("payments").select("id, property_id, amount, payment_method, payment_date, created_at"),
+        supabase.from("bills").select("id, property_id, tenant_id, total_amount, balance_due, status, bill_date, due_date"),
         supabase.from("complaints").select("id, property_id, status, created_at, resolved_at"),
       ])
 
@@ -123,6 +200,7 @@ export default function ReportsPage() {
       const roomsData = roomsRes.data || []
       const tenantsData = tenantsRes.data || []
       const paymentsData = paymentsRes.data || []
+      const billsData = billsRes.data || []
       const complaintsData = complaintsRes.data || []
 
       setProperties(propertiesData)
@@ -136,6 +214,7 @@ export default function ReportsPage() {
       const filteredRooms = filterByProperty(roomsData)
       const filteredTenants = filterByProperty(tenantsData)
       const filteredPayments = filterByProperty(paymentsData)
+      const filteredBills = filterByProperty(billsData)
       const filteredComplaints = filterByProperty(complaintsData)
 
       // Date calculations
@@ -146,7 +225,7 @@ export default function ReportsPage() {
 
       // Occupancy calculations
       const totalRooms = filteredRooms.length
-      const occupiedRooms = filteredRooms.filter((r) => r.status === "occupied").length
+      const occupiedRooms = filteredRooms.filter((r) => r.status === "occupied" || r.status === "partially_occupied").length
       const availableRooms = filteredRooms.filter((r) => r.status === "available").length
       const maintenanceRooms = filteredRooms.filter((r) => r.status === "maintenance").length
       const totalBeds = filteredRooms.reduce((sum, r) => sum + (r.total_beds || 1), 0)
@@ -158,39 +237,82 @@ export default function ReportsPage() {
       const tenantsOnNotice = filteredTenants.filter((t) => t.status === "notice_period").length
       const newTenantsThisMonth = filteredTenants.filter((t) => {
         const createdAt = new Date(t.created_at)
-        return createdAt >= thisMonthStart
+        return createdAt >= startDate && createdAt <= endDate
       }).length
       const exitsThisMonth = filteredTenants.filter((t) => {
         if (!t.check_out_date) return false
         const checkOut = new Date(t.check_out_date)
-        return checkOut >= thisMonthStart && checkOut <= now
+        return checkOut >= startDate && checkOut <= endDate
       }).length
 
       // Revenue calculations
-      const thisMonthPayments = filteredPayments.filter((p) => {
+      const periodPayments = filteredPayments.filter((p) => {
         const paymentDate = new Date(p.payment_date)
-        return paymentDate >= thisMonthStart && paymentDate <= now
+        return paymentDate >= startDate && paymentDate <= endDate
       })
       const lastMonthPayments = filteredPayments.filter((p) => {
         const paymentDate = new Date(p.payment_date)
         return paymentDate >= lastMonthStart && paymentDate <= lastMonthEnd
       })
 
-      const totalCollectedThisMonth = thisMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+      const totalCollectedThisMonth = periodPayments.reduce((sum, p) => sum + Number(p.amount), 0)
       const totalCollectedLastMonth = lastMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0)
       const revenueGrowth = totalCollectedLastMonth > 0
         ? ((totalCollectedThisMonth - totalCollectedLastMonth) / totalCollectedLastMonth) * 100
         : 0
+
+      // Total billed in period
+      const periodBills = filteredBills.filter((b) => {
+        const billDate = new Date(b.bill_date)
+        return billDate >= startDate && billDate <= endDate
+      })
+      const totalBilled = periodBills.reduce((sum, b) => sum + Number(b.total_amount), 0)
 
       const activeTenantsWithRent = filteredTenants.filter((t) => t.status === "active" && t.monthly_rent)
       const averageRent = activeTenantsWithRent.length > 0
         ? activeTenantsWithRent.reduce((sum, t) => sum + Number(t.monthly_rent), 0) / activeTenantsWithRent.length
         : 0
 
-      // Dues calculations (simplified - would need charges table for accurate calculation)
-      const expectedMonthlyRevenue = activeTenantsWithRent.reduce((sum, t) => sum + Number(t.monthly_rent), 0)
-      const totalPendingDues = Math.max(0, expectedMonthlyRevenue - totalCollectedThisMonth)
-      const tenantsWithDues = Math.floor(activeTenants * (totalPendingDues / expectedMonthlyRevenue || 0))
+      // Dues calculations from bills
+      const unpaidBills = filteredBills.filter((b) => b.status !== "paid" && b.status !== "cancelled")
+      const totalPendingDues = unpaidBills.reduce((sum, b) => sum + Number(b.balance_due || 0), 0)
+      const tenantsWithDues = new Set(unpaidBills.map(b => b.tenant_id)).size
+      const overdueBills = unpaidBills.filter((b) => new Date(b.due_date) < now)
+      const overdueAmount = overdueBills.reduce((sum, b) => sum + Number(b.balance_due || 0), 0)
+
+      // Dues Aging calculation
+      const duesAging = { current: 0, days30: 0, days60: 0, days90Plus: 0 }
+      unpaidBills.forEach((bill) => {
+        const dueDate = new Date(bill.due_date)
+        const daysPastDue = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+        const amount = Number(bill.balance_due || 0)
+
+        if (daysPastDue <= 0) {
+          duesAging.current += amount
+        } else if (daysPastDue <= 30) {
+          duesAging.days30 += amount
+        } else if (daysPastDue <= 60) {
+          duesAging.days60 += amount
+        } else {
+          duesAging.days90Plus += amount
+        }
+      })
+
+      // Collection Efficiency calculation
+      const paidBills = filteredBills.filter((b) => b.status === "paid")
+      const collectionEfficiency = { onTime: 0, late: 0, overdue: 0 }
+      // Simplified: count bills paid vs overdue
+      collectionEfficiency.onTime = paidBills.length
+      collectionEfficiency.late = unpaidBills.filter(b => {
+        const dueDate = new Date(b.due_date)
+        const daysPastDue = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+        return daysPastDue > 0 && daysPastDue <= 30
+      }).length
+      collectionEfficiency.overdue = unpaidBills.filter(b => {
+        const dueDate = new Date(b.due_date)
+        const daysPastDue = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+        return daysPastDue > 30
+      }).length
 
       // Complaints calculations
       const openComplaints = filteredComplaints.filter((c) =>
@@ -199,7 +321,7 @@ export default function ReportsPage() {
       const resolvedThisMonth = filteredComplaints.filter((c) => {
         if (!c.resolved_at) return false
         const resolvedAt = new Date(c.resolved_at)
-        return resolvedAt >= thisMonthStart
+        return resolvedAt >= startDate && resolvedAt <= endDate
       }).length
 
       // Average resolution time
@@ -217,18 +339,17 @@ export default function ReportsPage() {
         const propRooms = roomsData.filter((r) => r.property_id === property.id)
         const propPayments = paymentsData.filter((p) => {
           const paymentDate = new Date(p.payment_date)
-          return p.property_id === property.id && paymentDate >= thisMonthStart
+          return p.property_id === property.id && paymentDate >= startDate && paymentDate <= endDate
         })
-        const propTenants = tenantsData.filter((t) => t.property_id === property.id && t.status === "active")
+        const propBills = billsData.filter((b) => b.property_id === property.id && b.status !== "paid" && b.status !== "cancelled")
 
         return {
           id: property.id,
           name: property.name,
           totalRooms: propRooms.length,
-          occupiedRooms: propRooms.filter((r) => r.status === "occupied").length,
+          occupiedRooms: propRooms.filter((r) => r.status === "occupied" || r.status === "partially_occupied").length,
           revenue: propPayments.reduce((sum, p) => sum + Number(p.amount), 0),
-          pendingDues: propTenants.reduce((sum, t) => sum + Number(t.monthly_rent || 0), 0) -
-            propPayments.reduce((sum, p) => sum + Number(p.amount), 0),
+          pendingDues: propBills.reduce((sum, b) => sum + Number(b.balance_due || 0), 0),
         }
       })
 
@@ -241,15 +362,20 @@ export default function ReportsPage() {
           const paymentDate = new Date(p.payment_date)
           return paymentDate >= monthStart && paymentDate <= monthEnd
         })
+        const monthBills = filteredBills.filter((b) => {
+          const billDate = new Date(b.bill_date)
+          return billDate >= monthStart && billDate <= monthEnd
+        })
         monthlyRevenue.push({
           month: monthNames[monthStart.getMonth()],
-          amount: monthPayments.reduce((sum, p) => sum + Number(p.amount), 0),
+          collected: monthPayments.reduce((sum, p) => sum + Number(p.amount), 0),
+          billed: monthBills.reduce((sum, b) => sum + Number(b.total_amount), 0),
         })
       }
 
       // Payment method breakdown
       const methodCounts: Record<string, { count: number; amount: number }> = {}
-      thisMonthPayments.forEach((p) => {
+      periodPayments.forEach((p) => {
         const method = p.payment_method || "other"
         if (!methodCounts[method]) {
           methodCounts[method] = { count: 0, amount: 0 }
@@ -257,11 +383,43 @@ export default function ReportsPage() {
         methodCounts[method].count++
         methodCounts[method].amount += Number(p.amount)
       })
+
+      const methodLabels: Record<string, string> = {
+        cash: "Cash",
+        upi: "UPI",
+        bank_transfer: "Bank Transfer",
+        cheque: "Cheque",
+        card: "Card",
+        other: "Other",
+      }
+
       const paymentMethods = Object.entries(methodCounts).map(([method, data]) => ({
-        method,
+        name: methodLabels[method] || method,
+        value: data.amount,
         count: data.count,
-        amount: data.amount,
       }))
+
+      // Previous period comparison
+      const prevPeriodStart = new Date(startDate)
+      prevPeriodStart.setMonth(prevPeriodStart.getMonth() - 1)
+      const prevPeriodEnd = new Date(endDate)
+      prevPeriodEnd.setMonth(prevPeriodEnd.getMonth() - 1)
+
+      const prevPayments = filteredPayments.filter((p) => {
+        const paymentDate = new Date(p.payment_date)
+        return paymentDate >= prevPeriodStart && paymentDate <= prevPeriodEnd
+      })
+      const prevTenants = filteredTenants.filter((t) => {
+        const createdAt = new Date(t.created_at)
+        return createdAt >= prevPeriodStart && createdAt <= prevPeriodEnd
+      }).length
+
+      const previousPeriod = {
+        revenue: prevPayments.reduce((sum, p) => sum + Number(p.amount), 0),
+        tenants: prevTenants,
+        occupancy: 0, // Would need historical data
+        dues: 0,
+      }
 
       setReportData({
         totalRooms,
@@ -280,15 +438,19 @@ export default function ReportsPage() {
         totalCollectedLastMonth,
         revenueGrowth,
         averageRent,
-        totalPendingDues: Math.max(0, totalPendingDues),
-        tenantsWithDues: Math.max(0, tenantsWithDues),
-        overdueAmount: 0,
+        totalBilled,
+        totalPendingDues,
+        tenantsWithDues,
+        overdueAmount,
+        duesAging,
+        collectionEfficiency,
         openComplaints,
         resolvedThisMonth,
         avgResolutionDays,
         propertyStats,
         monthlyRevenue,
         paymentMethods,
+        previousPeriod,
       })
     } catch (error) {
       console.error("Error fetching report data:", error)
@@ -313,10 +475,11 @@ export default function ReportsPage() {
           ["Available Rooms", reportData.availableRooms],
           ["Occupancy Rate", `${reportData.occupancyRate.toFixed(1)}%`],
           ["Active Tenants", reportData.activeTenants],
-          ["New Tenants (This Month)", reportData.newTenantsThisMonth],
-          ["Revenue (This Month)", `₹${reportData.totalCollectedThisMonth.toLocaleString("en-IN")}`],
-          ["Revenue Growth", `${reportData.revenueGrowth.toFixed(1)}%`],
+          ["New Tenants (Period)", reportData.newTenantsThisMonth],
+          ["Revenue (Period)", `₹${reportData.totalCollectedThisMonth.toLocaleString("en-IN")}`],
+          ["Total Billed", `₹${reportData.totalBilled.toLocaleString("en-IN")}`],
           ["Pending Dues", `₹${reportData.totalPendingDues.toLocaleString("en-IN")}`],
+          ["Overdue Amount", `₹${reportData.overdueAmount.toLocaleString("en-IN")}`],
           ["Open Complaints", reportData.openComplaints],
         ].map((row) => row.join(",")).join("\n")
         break
@@ -339,11 +502,23 @@ export default function ReportsPage() {
       case "revenue":
         filename = "pg-manager-revenue-report.csv"
         csvContent = [
-          ["Month", "Revenue"],
+          ["Month", "Collected", "Billed"],
           ...reportData.monthlyRevenue.map((m) => [
             m.month,
-            `₹${m.amount.toLocaleString("en-IN")}`,
+            `₹${m.collected.toLocaleString("en-IN")}`,
+            `₹${m.billed.toLocaleString("en-IN")}`,
           ]),
+        ].map((row) => row.join(",")).join("\n")
+        break
+
+      case "aging":
+        filename = "pg-manager-aging-report.csv"
+        csvContent = [
+          ["Age Bucket", "Amount"],
+          ["Current (Not Due)", `₹${reportData.duesAging.current.toLocaleString("en-IN")}`],
+          ["1-30 Days", `₹${reportData.duesAging.days30.toLocaleString("en-IN")}`],
+          ["31-60 Days", `₹${reportData.duesAging.days60.toLocaleString("en-IN")}`],
+          ["60+ Days", `₹${reportData.duesAging.days90Plus.toLocaleString("en-IN")}`],
         ].map((row) => row.join(",")).join("\n")
         break
 
@@ -384,17 +559,29 @@ export default function ReportsPage() {
     )
   }
 
-  const maxRevenue = Math.max(...reportData.monthlyRevenue.map((m) => m.amount), 1)
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Reports</h1>
-          <p className="text-muted-foreground">Analytics and insights for your PG business</p>
+          <h1 className="text-3xl font-bold">Reports & Analytics</h1>
+          <p className="text-muted-foreground">Insights and metrics for your PG business</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
+            <Filter className="h-4 w-4 ml-2 text-muted-foreground" />
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="h-9 px-3 rounded-md border-0 bg-transparent text-sm font-medium focus:outline-none"
+            >
+              {dateRangeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <select
             value={selectedProperty}
             onChange={(e) => setSelectedProperty(e.target.value)}
@@ -434,12 +621,12 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        {/* Revenue This Month */}
+        {/* Revenue */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Revenue (This Month)</p>
+                <p className="text-sm text-muted-foreground">Revenue Collected</p>
                 <p className="text-2xl font-bold">{formatCurrency(reportData.totalCollectedThisMonth)}</p>
                 <div className={`flex items-center text-xs ${reportData.revenueGrowth >= 0 ? "text-green-600" : "text-red-600"}`}>
                   {reportData.revenueGrowth >= 0 ? (
@@ -464,8 +651,8 @@ export default function ReportsPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Active Tenants</p>
                 <p className="text-2xl font-bold">{reportData.activeTenants}</p>
-                <p className="text-xs text-muted-foreground">
-                  +{reportData.newTenantsThisMonth} this month
+                <p className="text-xs text-green-600">
+                  +{reportData.newTenantsThisMonth} new
                 </p>
               </div>
               <div className="p-3 rounded-full bg-blue-100">
@@ -482,8 +669,8 @@ export default function ReportsPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Pending Dues</p>
                 <p className="text-2xl font-bold">{formatCurrency(reportData.totalPendingDues)}</p>
-                <p className="text-xs text-muted-foreground">
-                  ~{reportData.tenantsWithDues} tenants
+                <p className="text-xs text-red-600">
+                  {formatCurrency(reportData.overdueAmount)} overdue
                 </p>
               </div>
               <div className={`p-3 rounded-full ${reportData.totalPendingDues > 0 ? "bg-red-100" : "bg-green-100"}`}>
@@ -496,13 +683,13 @@ export default function ReportsPage() {
 
       {/* Charts Row */}
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Revenue Trend */}
+        {/* Revenue Trend Chart */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg">Revenue Trend</CardTitle>
-                <CardDescription>Last 6 months</CardDescription>
+                <CardDescription>Collected vs Billed (Last 6 months)</CardDescription>
               </div>
               <Button variant="ghost" size="sm" onClick={() => exportToCSV("revenue")}>
                 <Download className="h-4 w-4" />
@@ -510,79 +697,173 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {reportData.monthlyRevenue.map((month, index) => (
-                <div key={month.month} className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground w-10">{month.month}</span>
-                  <div className="flex-1 h-8 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all duration-500"
-                      style={{ width: `${(month.amount / maxRevenue) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium w-24 text-right">
-                    {formatCurrency(month.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={reportData.monthlyRevenue}>
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  formatter={(value) => [`₹${Number(value).toLocaleString("en-IN")}`, ""]}
+                  labelStyle={{ fontWeight: "bold" }}
+                />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="collected"
+                  name="Collected"
+                  stroke="#10B981"
+                  strokeWidth={2}
+                  dot={{ fill: "#10B981", strokeWidth: 2 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="billed"
+                  name="Billed"
+                  stroke="#6366F1"
+                  strokeWidth={2}
+                  dot={{ fill: "#6366F1", strokeWidth: 2 }}
+                  strokeDasharray="5 5"
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Payment Methods */}
+        {/* Payment Methods Pie Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Payment Methods</CardTitle>
-            <CardDescription>This month&apos;s breakdown</CardDescription>
+            <CardDescription>Breakdown by payment type</CardDescription>
           </CardHeader>
           <CardContent>
             {reportData.paymentMethods.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-muted-foreground">
-                No payments this month
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                No payments in selected period
               </div>
             ) : (
-              <div className="space-y-4">
-                {reportData.paymentMethods.map((method) => {
-                  const total = reportData.paymentMethods.reduce((sum, m) => sum + m.amount, 0)
-                  const percentage = total > 0 ? (method.amount / total) * 100 : 0
-                  const methodLabels: Record<string, string> = {
-                    cash: "Cash",
-                    upi: "UPI",
-                    bank_transfer: "Bank Transfer",
-                    cheque: "Cheque",
-                    card: "Card",
-                    other: "Other",
-                  }
-                  return (
-                    <div key={method.method} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{methodLabels[method.method] || method.method}</span>
-                        <span className="text-muted-foreground">
-                          {method.count} payments • {formatCurrency(method.amount)}
-                        </span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={reportData.paymentMethods}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {reportData.paymentMethods.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                </PieChart>
+              </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Property-wise Stats */}
+      {/* Dues Aging & Collection Efficiency */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Dues Aging Report */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Dues Aging Report</CardTitle>
+                <CardDescription>Outstanding amounts by age</CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => exportToCSV("aging")}>
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="font-medium">Current (Not Due)</span>
+                </div>
+                <span className="font-bold text-green-700">{formatCurrency(reportData.duesAging.current)}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                  <span className="font-medium">1-30 Days Overdue</span>
+                </div>
+                <span className="font-bold text-yellow-700">{formatCurrency(reportData.duesAging.days30)}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-orange-500" />
+                  <span className="font-medium">31-60 Days Overdue</span>
+                </div>
+                <span className="font-bold text-orange-700">{formatCurrency(reportData.duesAging.days60)}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <span className="font-medium">60+ Days Overdue</span>
+                </div>
+                <span className="font-bold text-red-700">{formatCurrency(reportData.duesAging.days90Plus)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Collection Efficiency */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Collection Status</CardTitle>
+            <CardDescription>Bills by payment status</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart
+                data={[
+                  { name: "Paid", value: reportData.collectionEfficiency.onTime, fill: "#10B981" },
+                  { name: "Late (1-30d)", value: reportData.collectionEfficiency.late, fill: "#F59E0B" },
+                  { name: "Overdue (30d+)", value: reportData.collectionEfficiency.overdue, fill: "#EF4444" },
+                ]}
+                layout="vertical"
+              >
+                <XAxis type="number" tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
+                <Tooltip />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  {[
+                    { name: "Paid", fill: "#10B981" },
+                    { name: "Late (1-30d)", fill: "#F59E0B" },
+                    { name: "Overdue (30d+)", fill: "#EF4444" },
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Total Bills</span>
+                <span className="font-medium">
+                  {reportData.collectionEfficiency.onTime + reportData.collectionEfficiency.late + reportData.collectionEfficiency.overdue}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Property Performance Bar Chart */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg">Property Performance</CardTitle>
-              <CardDescription>Comparison across all properties</CardDescription>
+              <CardDescription>Revenue comparison across properties</CardDescription>
             </div>
             <Button variant="ghost" size="sm" onClick={() => exportToCSV("properties")}>
               <Download className="h-4 w-4 mr-2" />
@@ -596,62 +877,16 @@ export default function ReportsPage() {
               No properties found
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium">Property</th>
-                    <th className="text-center py-3 px-2 font-medium">Rooms</th>
-                    <th className="text-center py-3 px-2 font-medium">Occupancy</th>
-                    <th className="text-right py-3 px-2 font-medium">Revenue</th>
-                    <th className="text-right py-3 px-2 font-medium">Pending</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reportData.propertyStats.map((property) => {
-                    const occupancyRate = property.totalRooms > 0
-                      ? (property.occupiedRooms / property.totalRooms) * 100
-                      : 0
-                    return (
-                      <tr key={property.id} className="border-b last:border-0">
-                        <td className="py-3 px-2">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{property.name}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-2 text-center">
-                          <span className="text-muted-foreground">
-                            {property.occupiedRooms}/{property.totalRooms}
-                          </span>
-                        </td>
-                        <td className="py-3 px-2 text-center">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            occupancyRate >= 80
-                              ? "bg-green-100 text-green-700"
-                              : occupancyRate >= 50
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
-                          }`}>
-                            {occupancyRate.toFixed(0)}%
-                          </span>
-                        </td>
-                        <td className="py-3 px-2 text-right font-medium text-green-600">
-                          {formatCurrency(property.revenue)}
-                        </td>
-                        <td className="py-3 px-2 text-right">
-                          {property.pendingDues > 0 ? (
-                            <span className="text-red-600">{formatCurrency(property.pendingDues)}</span>
-                          ) : (
-                            <span className="text-green-600">-</span>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={reportData.propertyStats}>
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                <Legend />
+                <Bar dataKey="revenue" name="Revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="pendingDues" name="Pending Dues" fill="#EF4444" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           )}
         </CardContent>
       </Card>
@@ -706,11 +941,11 @@ export default function ReportsPage() {
                 <span className="font-medium text-yellow-600">{reportData.tenantsOnNotice}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">New This Month</span>
+                <span className="text-sm text-muted-foreground">New (Period)</span>
                 <span className="font-medium text-green-600">+{reportData.newTenantsThisMonth}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Exits This Month</span>
+                <span className="text-sm text-muted-foreground">Exits (Period)</span>
                 <span className="font-medium text-red-600">-{reportData.exitsThisMonth}</span>
               </div>
             </div>
@@ -731,11 +966,11 @@ export default function ReportsPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Resolved (This Month)</span>
+                <span className="text-sm text-muted-foreground">Resolved (Period)</span>
                 <span className="font-medium text-green-600">{reportData.resolvedThisMonth}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Avg. Resolution Time</span>
+                <span className="text-sm text-muted-foreground">Avg. Resolution</span>
                 <span className="font-medium">
                   {reportData.avgResolutionDays > 0 ? `${reportData.avgResolutionDays.toFixed(1)} days` : "-"}
                 </span>
@@ -763,13 +998,13 @@ export default function ReportsPage() {
                 </div>
               </div>
             )}
-            {reportData.totalPendingDues > 0 && (
+            {reportData.overdueAmount > 0 && (
               <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg">
                 <IndianRupee className="h-5 w-5 text-red-600 mt-0.5" />
                 <div>
-                  <p className="font-medium text-red-800">Pending Collections</p>
+                  <p className="font-medium text-red-800">Overdue Payments</p>
                   <p className="text-sm text-red-700">
-                    {formatCurrency(reportData.totalPendingDues)} in dues. Send payment reminders.
+                    {formatCurrency(reportData.overdueAmount)} is overdue. Send payment reminders.
                   </p>
                 </div>
               </div>
@@ -791,7 +1026,7 @@ export default function ReportsPage() {
                 <div>
                   <p className="font-medium text-green-800">Revenue Growing</p>
                   <p className="text-sm text-green-700">
-                    Revenue increased by {reportData.revenueGrowth.toFixed(1)}% compared to last month!
+                    Revenue increased by {reportData.revenueGrowth.toFixed(1)}% compared to last period!
                   </p>
                 </div>
               </div>
@@ -802,7 +1037,7 @@ export default function ReportsPage() {
                 <div>
                   <p className="font-medium text-blue-800">Positive Tenant Flow</p>
                   <p className="text-sm text-blue-700">
-                    Net gain of {reportData.newTenantsThisMonth - reportData.exitsThisMonth} tenants this month.
+                    Net gain of {reportData.newTenantsThisMonth - reportData.exitsThisMonth} tenants this period.
                   </p>
                 </div>
               </div>
@@ -814,6 +1049,17 @@ export default function ReportsPage() {
                   <p className="font-medium text-green-800">High Occupancy</p>
                   <p className="text-sm text-green-700">
                     Excellent! {reportData.occupancyRate.toFixed(1)}% occupancy. Consider expanding.
+                  </p>
+                </div>
+              </div>
+            )}
+            {reportData.duesAging.days90Plus > 0 && (
+              <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                <div>
+                  <p className="font-medium text-red-800">Critical Overdue</p>
+                  <p className="text-sm text-red-700">
+                    {formatCurrency(reportData.duesAging.days90Plus)} is overdue by 60+ days. Take immediate action.
                   </p>
                 </div>
               </div>
