@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Users, Loader2, Building2, Home } from "lucide-react"
+import { ArrowLeft, Users, Loader2, Building2, Home, UserCheck, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 
 interface Property {
@@ -26,6 +26,18 @@ interface Room {
   property_id: string
 }
 
+interface ReturningTenant {
+  id: string
+  name: string
+  phone: string
+  email: string | null
+  last_property: string | null
+  last_room: string | null
+  exit_date: string | null
+  total_stays: number
+  custom_fields: Record<string, string>
+}
+
 export default function NewTenantPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -33,6 +45,9 @@ export default function NewTenantPage() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [availableRooms, setAvailableRooms] = useState<Room[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  const [returningTenant, setReturningTenant] = useState<ReturningTenant | null>(null)
+  const [checkingPhone, setCheckingPhone] = useState(false)
+  const [isRejoining, setIsRejoining] = useState(false)
 
   const [formData, setFormData] = useState({
     property_id: "",
@@ -132,6 +147,104 @@ export default function NewTenantPage() {
     }))
   }
 
+  // Check for returning tenant when phone changes
+  const checkReturningTenant = async (phone: string) => {
+    if (phone.length < 10) {
+      setReturningTenant(null)
+      return
+    }
+
+    setCheckingPhone(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Find previous tenants with this phone number
+      const { data, error } = await supabase
+        .from("tenants")
+        .select(`
+          id, name, phone, email, custom_fields, exit_date, total_stays,
+          property:properties(name),
+          room:rooms(room_number)
+        `)
+        .eq("owner_id", user.id)
+        .eq("phone", phone)
+        .in("status", ["moved_out", "inactive"])
+        .order("exit_date", { ascending: false })
+        .limit(1)
+
+      if (!error && data && data.length > 0) {
+        const tenant = data[0] as {
+          id: string
+          name: string
+          phone: string
+          email: string | null
+          exit_date: string | null
+          total_stays: number
+          custom_fields: Record<string, string>
+          property: { name: string }[] | { name: string } | null
+          room: { room_number: string }[] | { room_number: string } | null
+        }
+        const propertyName = Array.isArray(tenant.property)
+          ? tenant.property[0]?.name
+          : (tenant.property as { name: string } | null)?.name
+        const roomNumber = Array.isArray(tenant.room)
+          ? tenant.room[0]?.room_number
+          : (tenant.room as { room_number: string } | null)?.room_number
+        setReturningTenant({
+          id: tenant.id,
+          name: tenant.name,
+          phone: tenant.phone,
+          email: tenant.email,
+          last_property: propertyName || null,
+          last_room: roomNumber || null,
+          exit_date: tenant.exit_date,
+          total_stays: tenant.total_stays || 1,
+          custom_fields: tenant.custom_fields || {},
+        })
+      } else {
+        setReturningTenant(null)
+      }
+    } catch (error) {
+      console.error("Error checking returning tenant:", error)
+    } finally {
+      setCheckingPhone(false)
+    }
+  }
+
+  // Handle phone input with debounce
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const phone = e.target.value
+    setFormData((prev) => ({ ...prev, phone }))
+
+    // Debounce the check
+    const timeoutId = setTimeout(() => {
+      checkReturningTenant(phone)
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }
+
+  // Pre-fill form with returning tenant data
+  const handleRejoin = () => {
+    if (!returningTenant) return
+
+    setIsRejoining(true)
+    setFormData((prev) => ({
+      ...prev,
+      name: returningTenant.name,
+      email: returningTenant.email || "",
+      phone: returningTenant.phone,
+      parent_name: returningTenant.custom_fields?.parent_name || "",
+      parent_phone: returningTenant.custom_fields?.parent_phone || "",
+      permanent_address: returningTenant.custom_fields?.permanent_address || "",
+      id_proof_type: returningTenant.custom_fields?.id_proof_type || "",
+      id_proof_number: returningTenant.custom_fields?.id_proof_number || "",
+    }))
+    toast.success("Previous tenant data loaded!")
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -160,18 +273,36 @@ export default function NewTenantPage() {
       if (formData.id_proof_type) customFields.id_proof_type = formData.id_proof_type
       if (formData.id_proof_number) customFields.id_proof_number = formData.id_proof_number
 
-      const { error } = await supabase.from("tenants").insert({
+      const { data: newTenant, error } = await supabase.from("tenants").insert({
         owner_id: user.id,
         property_id: formData.property_id,
         room_id: formData.room_id,
         name: formData.name,
         email: formData.email || null,
         phone: formData.phone,
-        check_in_date: formData.check_in_date,
+        join_date: formData.check_in_date,
         monthly_rent: parseFloat(formData.monthly_rent),
         security_deposit: parseFloat(formData.security_deposit) || 0,
         custom_fields: Object.keys(customFields).length > 0 ? customFields : {},
-      })
+        is_returning: isRejoining,
+        previous_tenant_id: isRejoining && returningTenant ? returningTenant.id : null,
+        total_stays: isRejoining && returningTenant ? (returningTenant.total_stays + 1) : 1,
+      }).select().single()
+
+      // Create tenant stay record
+      if (newTenant) {
+        await supabase.from("tenant_stays").insert({
+          owner_id: user.id,
+          tenant_id: newTenant.id,
+          property_id: formData.property_id,
+          room_id: formData.room_id,
+          join_date: formData.check_in_date,
+          monthly_rent: parseFloat(formData.monthly_rent),
+          security_deposit: parseFloat(formData.security_deposit) || 0,
+          status: "active",
+          stay_number: isRejoining && returningTenant ? (returningTenant.total_stays + 1) : 1,
+        })
+      }
 
       if (error) {
         console.error("Error creating tenant:", error)
@@ -274,16 +405,21 @@ export default function NewTenantPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="e.g., 9876543210"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
+                <div className="relative">
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="e.g., 9876543210"
+                    value={formData.phone}
+                    onChange={handlePhoneChange}
+                    required
+                    disabled={loading}
+                  />
+                  {checkingPhone && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -298,6 +434,45 @@ export default function NewTenantPage() {
                 />
               </div>
             </div>
+
+            {/* Returning Tenant Banner */}
+            {returningTenant && !isRejoining && (
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <UserCheck className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-amber-800">Returning Tenant Found!</h4>
+                    <p className="text-sm text-amber-700 mt-1">
+                      <strong>{returningTenant.name}</strong> was previously a tenant at{" "}
+                      <strong>{returningTenant.last_property}</strong> (Room {returningTenant.last_room})
+                      {returningTenant.exit_date && (
+                        <> until {new Date(returningTenant.exit_date).toLocaleDateString("en-IN")}</>
+                      )}.
+                      This would be their stay #{returningTenant.total_stays + 1}.
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="mt-2 border-amber-300 text-amber-700 hover:bg-amber-100"
+                      onClick={handleRejoin}
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Use Previous Details
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isRejoining && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                <UserCheck className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-green-700">
+                  Re-joining tenant - Stay #{returningTenant?.total_stays ? returningTenant.total_stays + 1 : 2}
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
 

@@ -26,8 +26,13 @@ import {
   CheckCircle,
   Clock,
   LogOut,
-  Bell
+  Bell,
+  ArrowRightLeft,
+  History,
+  RefreshCw
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 
 interface TenantRaw {
@@ -120,6 +125,38 @@ interface Charge {
   } | null
 }
 
+interface TenantStay {
+  id: string
+  join_date: string
+  exit_date: string | null
+  monthly_rent: number
+  status: string
+  stay_number: number
+  property: { name: string } | null
+  room: { room_number: string } | null
+}
+
+interface RoomTransfer {
+  id: string
+  transfer_date: string
+  reason: string | null
+  old_rent: number
+  new_rent: number
+  from_property: { name: string } | null
+  from_room: { room_number: string } | null
+  to_property: { name: string } | null
+  to_room: { room_number: string } | null
+}
+
+interface Room {
+  id: string
+  room_number: string
+  rent_amount: number
+  property_id: string
+  total_beds: number
+  occupied_beds: number
+}
+
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
   active: { bg: "bg-green-100", text: "text-green-700", label: "Active" },
   notice_period: { bg: "bg-yellow-100", text: "text-yellow-700", label: "Notice Period" },
@@ -140,7 +177,17 @@ export default function TenantDetailPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
   const [charges, setCharges] = useState<Charge[]>([])
+  const [stays, setStays] = useState<TenantStay[]>([])
+  const [transfers, setTransfers] = useState<RoomTransfer[]>([])
   const [actionLoading, setActionLoading] = useState(false)
+  const [showTransferModal, setShowTransferModal] = useState(false)
+  const [availableRooms, setAvailableRooms] = useState<Room[]>([])
+  const [transferData, setTransferData] = useState({
+    to_room_id: "",
+    new_rent: "",
+    reason: "",
+    notes: "",
+  })
 
   useEffect(() => {
     const fetchTenant = async () => {
@@ -216,6 +263,51 @@ export default function TenantDetailPage() {
         charge_type: c.charge_type && c.charge_type.length > 0 ? c.charge_type[0] : null,
       }))
       setCharges(transformedCharges)
+
+      // Fetch tenant stays history
+      const { data: staysData } = await supabase
+        .from("tenant_stays")
+        .select(`
+          id, join_date, exit_date, monthly_rent, status, stay_number,
+          property:properties(name),
+          room:rooms(room_number)
+        `)
+        .eq("tenant_id", params.id)
+        .order("stay_number", { ascending: false })
+
+      if (staysData) {
+        const transformedStays: TenantStay[] = staysData.map((s: Record<string, unknown>) => ({
+          ...s,
+          property: Array.isArray(s.property) ? s.property[0] : s.property,
+          room: Array.isArray(s.room) ? s.room[0] : s.room,
+        })) as TenantStay[]
+        setStays(transformedStays)
+      }
+
+      // Fetch room transfers
+      const { data: transfersData } = await supabase
+        .from("room_transfers")
+        .select(`
+          id, transfer_date, reason, old_rent, new_rent,
+          from_property:properties!room_transfers_from_property_id_fkey(name),
+          from_room:rooms!room_transfers_from_room_id_fkey(room_number),
+          to_property:properties!room_transfers_to_property_id_fkey(name),
+          to_room:rooms!room_transfers_to_room_id_fkey(room_number)
+        `)
+        .eq("tenant_id", params.id)
+        .order("transfer_date", { ascending: false })
+
+      if (transfersData) {
+        const transformedTransfers: RoomTransfer[] = transfersData.map((t: Record<string, unknown>) => ({
+          ...t,
+          from_property: Array.isArray(t.from_property) ? t.from_property[0] : t.from_property,
+          from_room: Array.isArray(t.from_room) ? t.from_room[0] : t.from_room,
+          to_property: Array.isArray(t.to_property) ? t.to_property[0] : t.to_property,
+          to_room: Array.isArray(t.to_room) ? t.to_room[0] : t.to_room,
+        })) as RoomTransfer[]
+        setTransfers(transformedTransfers)
+      }
+
       setLoading(false)
     }
 
@@ -264,6 +356,116 @@ export default function TenantDetailPage() {
     router.push(`/dashboard/exit-clearance/new?tenant=${tenant?.id}`)
   }
 
+  const openTransferModal = async () => {
+    if (!tenant) return
+
+    const supabase = createClient()
+
+    // Fetch available rooms (excluding current room)
+    const { data: roomsData } = await supabase
+      .from("rooms")
+      .select("id, room_number, rent_amount, property_id, total_beds, occupied_beds")
+      .neq("id", tenant.room?.id)
+      .order("room_number")
+
+    if (roomsData) {
+      const available = roomsData.filter((r: Room) => r.occupied_beds < r.total_beds)
+      setAvailableRooms(available)
+    }
+
+    setTransferData({
+      to_room_id: "",
+      new_rent: "",
+      reason: "",
+      notes: "",
+    })
+    setShowTransferModal(true)
+  }
+
+  const handleRoomTransfer = async () => {
+    if (!tenant || !transferData.to_room_id) {
+      toast.error("Please select a room")
+      return
+    }
+
+    setActionLoading(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    try {
+      const selectedRoom = availableRooms.find((r) => r.id === transferData.to_room_id)
+      if (!selectedRoom) return
+
+      const newRent = parseFloat(transferData.new_rent) || selectedRoom.rent_amount
+
+      // Create transfer record
+      const { error: transferError } = await supabase.from("room_transfers").insert({
+        owner_id: user.id,
+        tenant_id: tenant.id,
+        from_property_id: tenant.property?.id,
+        from_room_id: tenant.room?.id,
+        to_property_id: selectedRoom.property_id,
+        to_room_id: selectedRoom.id,
+        transfer_date: new Date().toISOString().split("T")[0],
+        reason: transferData.reason || null,
+        notes: transferData.notes || null,
+        old_rent: tenant.monthly_rent,
+        new_rent: newRent,
+      })
+
+      if (transferError) throw transferError
+
+      // Update current stay to transferred
+      await supabase
+        .from("tenant_stays")
+        .update({
+          status: "transferred",
+          exit_date: new Date().toISOString().split("T")[0],
+          exit_reason: "transferred",
+        })
+        .eq("tenant_id", tenant.id)
+        .eq("status", "active")
+
+      // Create new stay record
+      const stayNumber = stays.length > 0 ? Math.max(...stays.map((s) => s.stay_number)) + 1 : 1
+      await supabase.from("tenant_stays").insert({
+        owner_id: user.id,
+        tenant_id: tenant.id,
+        property_id: selectedRoom.property_id,
+        room_id: selectedRoom.id,
+        join_date: new Date().toISOString().split("T")[0],
+        monthly_rent: newRent,
+        security_deposit: tenant.security_deposit,
+        status: "active",
+        stay_number: stayNumber,
+      })
+
+      // Update tenant record
+      const { error: updateError } = await supabase
+        .from("tenants")
+        .update({
+          property_id: selectedRoom.property_id,
+          room_id: selectedRoom.id,
+          monthly_rent: newRent,
+        })
+        .eq("id", tenant.id)
+
+      if (updateError) throw updateError
+
+      toast.success("Room transfer completed!")
+      setShowTransferModal(false)
+
+      // Refresh the page
+      window.location.reload()
+    } catch (error) {
+      console.error("Error transferring room:", error)
+      toast.error("Failed to transfer room")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const totalDues = charges.reduce((sum, c) => sum + c.amount, 0)
   const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0)
 
@@ -305,7 +507,7 @@ export default function TenantDetailPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link href={`/dashboard/tenants/${tenant.id}/edit`}>
             <Button variant="outline">
               <Pencil className="mr-2 h-4 w-4" />
@@ -313,10 +515,16 @@ export default function TenantDetailPage() {
             </Button>
           </Link>
           {tenant.status === "active" && (
-            <Button variant="outline" onClick={handlePutOnNotice} disabled={actionLoading}>
-              <Bell className="mr-2 h-4 w-4" />
-              Put on Notice
-            </Button>
+            <>
+              <Button variant="outline" onClick={openTransferModal} disabled={actionLoading}>
+                <ArrowRightLeft className="mr-2 h-4 w-4" />
+                Transfer Room
+              </Button>
+              <Button variant="outline" onClick={handlePutOnNotice} disabled={actionLoading}>
+                <Bell className="mr-2 h-4 w-4" />
+                Put on Notice
+              </Button>
+            </>
           )}
           {(tenant.status === "active" || tenant.status === "notice_period") && (
             <Button onClick={handleInitiateCheckout} disabled={actionLoading}>
@@ -672,6 +880,205 @@ export default function TenantDetailPage() {
             <p className="text-muted-foreground whitespace-pre-wrap">{tenant.notes}</p>
           </CardContent>
         </Card>
+      )}
+
+      {/* Stay History */}
+      {stays.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-violet-100 rounded-lg">
+                <History className="h-5 w-5 text-violet-600" />
+              </div>
+              <div>
+                <CardTitle>Stay History</CardTitle>
+                <CardDescription>All tenures at your properties</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {stays.map((stay) => (
+                <div key={stay.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Stay #{stay.stay_number}</span>
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        stay.status === "active"
+                          ? "bg-green-100 text-green-700"
+                          : stay.status === "transferred"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}>
+                        {stay.status === "active" ? "Current" : stay.status === "transferred" ? "Transferred" : "Completed"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {stay.property?.name} - Room {stay.room?.room_number}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(stay.join_date)} {stay.exit_date && `→ ${formatDate(stay.exit_date)}`}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatCurrency(stay.monthly_rent)}/mo</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Room Transfer History */}
+      {transfers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <ArrowRightLeft className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <CardTitle>Room Transfers</CardTitle>
+                <CardDescription>History of room changes</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {transfers.map((transfer) => (
+                <div key={transfer.id} className="p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-medium">
+                      {transfer.from_property?.name} Room {transfer.from_room?.room_number}
+                    </span>
+                    <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">
+                      {transfer.to_property?.name} Room {transfer.to_room?.room_number}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatDate(transfer.transfer_date)}
+                    {transfer.reason && ` • ${transfer.reason}`}
+                  </p>
+                  {transfer.old_rent !== transfer.new_rent && (
+                    <p className="text-xs mt-1">
+                      <span className="text-muted-foreground">Rent:</span>{" "}
+                      <span className="line-through text-muted-foreground">{formatCurrency(transfer.old_rent)}</span>{" "}
+                      <span className="text-green-600">{formatCurrency(transfer.new_rent)}</span>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Room Transfer Modal */}
+      {showTransferModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5" />
+                Transfer Room
+              </CardTitle>
+              <CardDescription>
+                Move {tenant.name} to a different room
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 bg-muted rounded-lg text-sm">
+                <p className="text-muted-foreground">Current Room</p>
+                <p className="font-medium">
+                  {tenant.property?.name} - Room {tenant.room?.room_number}
+                </p>
+                <p className="text-muted-foreground">Rent: {formatCurrency(tenant.monthly_rent)}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="to_room_id">New Room *</Label>
+                <select
+                  id="to_room_id"
+                  value={transferData.to_room_id}
+                  onChange={(e) => {
+                    const room = availableRooms.find((r) => r.id === e.target.value)
+                    setTransferData({
+                      ...transferData,
+                      to_room_id: e.target.value,
+                      new_rent: room ? room.rent_amount.toString() : "",
+                    })
+                  }}
+                  className="w-full h-10 px-3 rounded-md border bg-background"
+                >
+                  <option value="">Select a room</option>
+                  {availableRooms.map((room) => (
+                    <option key={room.id} value={room.id}>
+                      Room {room.room_number} ({room.occupied_beds}/{room.total_beds} beds) - {formatCurrency(room.rent_amount)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="new_rent">New Rent (₹)</Label>
+                <Input
+                  id="new_rent"
+                  type="number"
+                  value={transferData.new_rent}
+                  onChange={(e) => setTransferData({ ...transferData, new_rent: e.target.value })}
+                  placeholder="Leave blank to use room's default rent"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reason">Reason</Label>
+                <select
+                  id="reason"
+                  value={transferData.reason}
+                  onChange={(e) => setTransferData({ ...transferData, reason: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border bg-background"
+                >
+                  <option value="">Select reason</option>
+                  <option value="upgrade">Upgrade</option>
+                  <option value="downgrade">Downgrade</option>
+                  <option value="request">Tenant Request</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Input
+                  id="notes"
+                  value={transferData.notes}
+                  onChange={(e) => setTransferData({ ...transferData, notes: e.target.value })}
+                  placeholder="Additional notes"
+                />
+              </div>
+            </CardContent>
+            <div className="flex justify-end gap-2 p-4 pt-0">
+              <Button variant="outline" onClick={() => setShowTransferModal(false)} disabled={actionLoading}>
+                Cancel
+              </Button>
+              <Button onClick={handleRoomTransfer} disabled={actionLoading || !transferData.to_room_id}>
+                {actionLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Transferring...
+                  </>
+                ) : (
+                  <>
+                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                    Transfer
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   )

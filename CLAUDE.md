@@ -99,6 +99,14 @@ ManageKar is a platform for multiple management products targeting Indian busine
 
 ## Key Features
 
+### Tenant Re-joining & Room Switching
+- Automatic detection of returning tenants by phone number
+- Pre-fill previous tenant data when re-joining
+- Track multiple stays/tenures for same person
+- Room transfer with rent adjustment and history
+- Complete stay history timeline on tenant detail page
+- Files: `src/app/(dashboard)/dashboard/tenants/`
+
 ### Billing System
 - Generate monthly bills for tenants with itemized charges
 - Line items for rent, electricity, water, and custom charges
@@ -179,6 +187,27 @@ vercel --prod
 ---
 
 ## Changelog
+
+### 2025-12-28 - Tenant Re-joining & Room Switching
+- Added tenant history tracking for re-joining tenants
+- Database migration: `007_tenant_history.sql` with:
+  - `tenant_stays` table - tracks each tenure/stay of a tenant
+  - `room_transfers` table - tracks room changes within stays
+  - Added `is_returning`, `previous_tenant_id`, `total_stays` columns to tenants
+  - Function to find returning tenants by phone
+- Returning Tenant Detection:
+  - When adding new tenant, system checks phone for previous tenants
+  - Shows banner with previous stay info and option to pre-fill data
+  - Automatically tracks stay number (1st stay, 2nd stay, etc.)
+- Room Transfer Feature:
+  - "Transfer Room" button on tenant detail page
+  - Modal to select new room and update rent
+  - Records transfer reason and history
+  - Automatically creates new stay record
+- Tenant Detail Page Enhancements:
+  - Stay History section showing all tenures
+  - Room Transfer History section
+  - Visual timeline of stays with dates and rent changes
 
 ### 2025-12-28 - Billing System
 - Added comprehensive billing system for generating monthly bills
