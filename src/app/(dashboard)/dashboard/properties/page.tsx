@@ -4,19 +4,17 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageHeader } from "@/components/ui/page-header"
+import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
+import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import {
   Building2,
   Plus,
-  MapPin,
+  Loader2,
   Home,
   Users,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Loader2
+  MapPin
 } from "lucide-react"
-import { toast } from "sonner"
 
 interface Property {
   id: string
@@ -41,7 +39,6 @@ export default function PropertiesPage() {
   const fetchProperties = async () => {
     const supabase = createClient()
 
-    // Fetch properties with room and tenant counts
     const { data: propertiesData, error } = await supabase
       .from("properties")
       .select(`
@@ -53,12 +50,10 @@ export default function PropertiesPage() {
 
     if (error) {
       console.error("Error fetching properties:", error)
-      toast.error("Failed to load properties")
       setLoading(false)
       return
     }
 
-    // Transform data to include counts
     const transformedData = propertiesData?.map((property) => ({
       ...property,
       room_count: property.rooms?.length || 0,
@@ -69,23 +64,73 @@ export default function PropertiesPage() {
     setLoading(false)
   }
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This will also delete all rooms and tenants in this property.`)) {
-      return
-    }
+  // Stats
+  const totalRooms = properties.reduce((sum, p) => sum + (p.room_count || 0), 0)
+  const totalTenants = properties.reduce((sum, p) => sum + (p.tenant_count || 0), 0)
+  const activeProperties = properties.filter(p => p.is_active).length
 
-    const supabase = createClient()
-    const { error } = await supabase.from("properties").delete().eq("id", id)
+  const metricsItems: MetricItem[] = [
+    { label: "Properties", value: properties.length, icon: Building2 },
+    { label: "Active", value: activeProperties, icon: Building2 },
+    { label: "Total Rooms", value: totalRooms, icon: Home },
+    { label: "Total Tenants", value: totalTenants, icon: Users },
+  ]
 
-    if (error) {
-      console.error("Error deleting property:", error)
-      toast.error("Failed to delete property")
-      return
-    }
-
-    toast.success("Property deleted successfully")
-    fetchProperties()
-  }
+  const columns: Column<Property>[] = [
+    {
+      key: "name",
+      header: "Property",
+      width: "2fr",
+      render: (property) => (
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+            <Building2 className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <div className="font-medium">{property.name}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              {property.city}{property.state && `, ${property.state}`}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "room_count",
+      header: "Rooms",
+      width: "80px",
+      render: (property) => (
+        <div className="flex items-center gap-1.5">
+          <Home className="h-4 w-4 text-muted-foreground" />
+          <span>{property.room_count}</span>
+        </div>
+      ),
+    },
+    {
+      key: "tenant_count",
+      header: "Tenants",
+      width: "80px",
+      render: (property) => (
+        <div className="flex items-center gap-1.5">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span>{property.tenant_count}</span>
+        </div>
+      ),
+    },
+    {
+      key: "is_active",
+      header: "Status",
+      width: "100px",
+      hideOnMobile: true,
+      render: (property) => (
+        <StatusDot
+          status={property.is_active ? "success" : "muted"}
+          label={property.is_active ? "Active" : "Inactive"}
+        />
+      ),
+    },
+  ]
 
   if (loading) {
     return (
@@ -97,103 +142,46 @@ export default function PropertiesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Properties</h1>
-          <p className="text-muted-foreground">
-            Manage your PG properties and buildings
-          </p>
-        </div>
-        <Link href="/dashboard/properties/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Property
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Properties"
+        description="Manage your PG properties and buildings"
+        icon={Building2}
+        actions={
+          <Link href="/dashboard/properties/new">
+            <Button variant="gradient">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Property
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Properties Grid */}
-      {properties.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+      {properties.length > 0 && <MetricsBar items={metricsItems} />}
+
+      <DataTable
+        columns={columns}
+        data={properties}
+        keyField="id"
+        href={(property) => `/dashboard/properties/${property.id}`}
+        searchable
+        searchPlaceholder="Search by property name, city..."
+        searchFields={["name", "city"]}
+        emptyState={
+          <div className="flex flex-col items-center py-8">
             <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No properties yet</h3>
             <p className="text-muted-foreground text-center mb-4">
               Add your first property to get started
             </p>
             <Link href="/dashboard/properties/new">
-              <Button>
+              <Button variant="gradient">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Property
               </Button>
             </Link>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {properties.map((property) => (
-            <Card key={property.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Building2 className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{property.name}</CardTitle>
-                      <CardDescription className="flex items-center gap-1 mt-1">
-                        <MapPin className="h-3 w-3" />
-                        {property.city}
-                        {property.state && `, ${property.state}`}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Link href={`/dashboard/properties/${property.id}/edit`}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(property.id, property.name)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {property.address && (
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                    {property.address}
-                  </p>
-                )}
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <Home className="h-4 w-4 text-muted-foreground" />
-                    <span>{property.room_count} Rooms</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span>{property.tenant_count} Tenants</span>
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t">
-                  <Link href={`/dashboard/properties/${property.id}`}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      View Details
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+          </div>
+        }
+      />
     </div>
   )
 }

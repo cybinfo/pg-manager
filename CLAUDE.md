@@ -206,6 +206,36 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-28 - Dashboard UI Cleanup (Box Overload Fix)
+- **Problem Solved**: Removed excessive card/box usage causing visual clutter
+- **New Reusable Components Created**:
+  - `MetricsBar` (`/src/components/ui/metrics-bar.tsx`) - Compact horizontal stats bar replacing multiple stat cards
+  - `DataTable` (`/src/components/ui/data-table.tsx`) - Clean table with search, status dots, row hover, mobile responsive
+  - `PageHeader` (`/src/components/ui/page-header.tsx`) - Consistent page headers with icon, description, actions
+  - `SectionDivider` (`/src/components/ui/section-divider.tsx`) - For form sections with labels and divider lines
+- **Pages Redesigned**:
+  - Dashboard Home: 4 stat cards → 1 MetricsBar, simplified getting started, inline quick actions
+  - Tenants: Card grid → MetricsBar + DataTable with avatar, status dots
+  - Payments: Card list + stat cards → MetricsBar + DataTable with WhatsApp action
+  - Bills: Card list + stat cards → MetricsBar + DataTable with status indicators
+  - Expenses: Card list + stat cards → MetricsBar + DataTable with trend indicators
+  - Properties: Card grid → MetricsBar + DataTable
+  - Rooms: Card grid → MetricsBar + DataTable with occupancy stats
+- **Design Improvements**:
+  - ~70% fewer visible boxes/cards
+  - Clean table rows with hover states
+  - Unified PageHeader across all list pages
+  - Consistent gradient buttons (variant="gradient")
+  - Maintained teal/emerald color scheme and animations
+- **Files Modified**:
+  - `/src/app/(dashboard)/dashboard/page.tsx`
+  - `/src/app/(dashboard)/dashboard/tenants/page.tsx`
+  - `/src/app/(dashboard)/dashboard/payments/page.tsx`
+  - `/src/app/(dashboard)/dashboard/bills/page.tsx`
+  - `/src/app/(dashboard)/dashboard/expenses/page.tsx`
+  - `/src/app/(dashboard)/dashboard/properties/page.tsx`
+  - `/src/app/(dashboard)/dashboard/rooms/page.tsx`
+
 ### 2025-12-28 - Platform Rebrand & UI/UX Overhaul
 - **Homepage Restructure** - Repositioned ManageKar as a platform, not just PG software:
   - New platform-focused homepage at `/` showcasing all products

@@ -4,22 +4,17 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
+import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import {
   Users,
   Plus,
-  Building2,
-  Home,
-  Pencil,
-  Trash2,
   Loader2,
-  Search,
-  Phone,
-  Calendar,
-  IndianRupee
+  UserCheck,
+  UserMinus,
+  Clock
 } from "lucide-react"
-import { toast } from "sonner"
 
 interface Tenant {
   id: string
@@ -59,16 +54,9 @@ interface RawTenant {
   }[] | null
 }
 
-const statusColors: Record<string, string> = {
-  active: "bg-teal-50 text-teal-700",
-  notice_period: "bg-amber-50 text-amber-700",
-  checked_out: "bg-slate-100 text-slate-700",
-}
-
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     fetchTenants()
@@ -88,12 +76,10 @@ export default function TenantsPage() {
 
     if (error) {
       console.error("Error fetching tenants:", error)
-      toast.error("Failed to load tenants")
       setLoading(false)
       return
     }
 
-    // Transform the data from arrays to single objects
     const transformedData = ((data as RawTenant[]) || []).map((tenant) => ({
       ...tenant,
       property: tenant.property && tenant.property.length > 0 ? tenant.property[0] : null,
@@ -103,31 +89,6 @@ export default function TenantsPage() {
     setLoading(false)
   }
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete tenant "${name}"? This action cannot be undone.`)) {
-      return
-    }
-
-    const supabase = createClient()
-    const { error } = await supabase.from("tenants").delete().eq("id", id)
-
-    if (error) {
-      console.error("Error deleting tenant:", error)
-      toast.error("Failed to delete tenant")
-      return
-    }
-
-    toast.success("Tenant deleted successfully")
-    fetchTenants()
-  }
-
-  const filteredTenants = tenants.filter((tenant) =>
-    tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.phone.includes(searchQuery) ||
-    tenant.property?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.room?.room_number.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {
       day: "numeric",
@@ -135,6 +96,87 @@ export default function TenantsPage() {
       year: "numeric",
     })
   }
+
+  const getStatusInfo = (status: string): { status: "success" | "warning" | "muted"; label: string } => {
+    switch (status) {
+      case "active":
+        return { status: "success", label: "Active" }
+      case "notice_period":
+        return { status: "warning", label: "Notice" }
+      case "checked_out":
+        return { status: "muted", label: "Moved Out" }
+      default:
+        return { status: "muted", label: status }
+    }
+  }
+
+  // Stats
+  const activeTenants = tenants.filter(t => t.status === "active").length
+  const noticePeriod = tenants.filter(t => t.status === "notice_period").length
+  const movedOut = tenants.filter(t => t.status === "checked_out").length
+  const totalRent = tenants.filter(t => t.status === "active").reduce((sum, t) => sum + t.monthly_rent, 0)
+
+  const metricsItems: MetricItem[] = [
+    { label: "Total", value: tenants.length, icon: Users },
+    { label: "Active", value: activeTenants, icon: UserCheck },
+    { label: "Notice Period", value: noticePeriod, icon: Clock, highlight: noticePeriod > 0 },
+    { label: "Moved Out", value: movedOut, icon: UserMinus },
+    { label: "Monthly Rent", value: `₹${totalRent.toLocaleString("en-IN")}` },
+  ]
+
+  const columns: Column<Tenant>[] = [
+    {
+      key: "name",
+      header: "Tenant",
+      width: "2fr",
+      render: (tenant) => (
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium">
+            {tenant.name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div className="font-medium">{tenant.name}</div>
+            <div className="text-xs text-muted-foreground">{tenant.phone}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "property",
+      header: "Property / Room",
+      width: "1.5fr",
+      render: (tenant) => (
+        <div className="text-sm">
+          <div>{tenant.property?.name || "—"}</div>
+          <div className="text-muted-foreground text-xs">Room {tenant.room?.room_number || "—"}</div>
+        </div>
+      ),
+    },
+    {
+      key: "monthly_rent",
+      header: "Rent",
+      width: "1fr",
+      render: (tenant) => (
+        <span className="font-medium tabular-nums">₹{tenant.monthly_rent.toLocaleString("en-IN")}</span>
+      ),
+    },
+    {
+      key: "check_in_date",
+      header: "Since",
+      width: "1fr",
+      hideOnMobile: true,
+      render: (tenant) => formatDate(tenant.check_in_date),
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "100px",
+      render: (tenant) => {
+        const info = getStatusInfo(tenant.status)
+        return <StatusDot status={info.status} label={info.label} />
+      },
+    },
+  ]
 
   if (loading) {
     return (
@@ -146,144 +188,46 @@ export default function TenantsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Tenants</h1>
-          <p className="text-muted-foreground">
-            Manage all your tenants across properties
-          </p>
-        </div>
-        <Link href="/dashboard/tenants/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Tenant
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Tenants"
+        description="Manage all your tenants across properties"
+        icon={Users}
+        actions={
+          <Link href="/dashboard/tenants/new">
+            <Button variant="gradient">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Tenant
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Search */}
-      {tenants.length > 0 && (
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, phone, property..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      )}
+      {tenants.length > 0 && <MetricsBar items={metricsItems} />}
 
-      {/* Tenants List */}
-      {tenants.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+      <DataTable
+        columns={columns}
+        data={tenants}
+        keyField="id"
+        href={(tenant) => `/dashboard/tenants/${tenant.id}`}
+        searchable
+        searchPlaceholder="Search by name, phone, property..."
+        searchFields={["name", "phone"]}
+        emptyState={
+          <div className="flex flex-col items-center py-8">
             <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No tenants yet</h3>
             <p className="text-muted-foreground text-center mb-4">
               Add your first tenant to start managing your PG
             </p>
             <Link href="/dashboard/tenants/new">
-              <Button>
+              <Button variant="gradient">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Tenant
               </Button>
             </Link>
-          </CardContent>
-        </Card>
-      ) : filteredTenants.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No tenants found</h3>
-            <p className="text-muted-foreground text-center">
-              Try a different search term
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredTenants.map((tenant) => (
-            <Card key={tenant.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                      {tenant.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{tenant.name}</CardTitle>
-                      <CardDescription className="flex items-center gap-1 mt-1">
-                        <Phone className="h-3 w-3" />
-                        {tenant.phone}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Link href={`/dashboard/tenants/${tenant.id}/edit`}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(tenant.id, tenant.name)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {/* Status Badge */}
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[tenant.status] || statusColors.active}`}>
-                      {tenant.status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                    </span>
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span>{tenant.property?.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Home className="h-4 w-4 text-muted-foreground" />
-                      <span>Room {tenant.room?.room_number}</span>
-                    </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>Since {formatDate(tenant.check_in_date)}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 text-sm font-medium">
-                    <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                    <span>₹{tenant.monthly_rent.toLocaleString("en-IN")}/month</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t">
-                  <Link href={`/dashboard/tenants/${tenant.id}`}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      View Profile
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+          </div>
+        }
+      />
     </div>
   )
 }

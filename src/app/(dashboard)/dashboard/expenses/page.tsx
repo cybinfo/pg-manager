@@ -4,20 +4,18 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
+import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import {
   Loader2,
   Plus,
   Receipt,
-  Search,
   TrendingDown,
-  Building2,
-  Calendar,
   Download,
-  Filter,
-  Wallet,
+  Calendar,
   BarChart3,
+  Wallet,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -47,38 +45,17 @@ interface Expense {
   created_at: string
 }
 
-interface Stats {
-  thisMonth: number
-  lastMonth: number
-  ytd: number
-  topCategory: string | null
-  topCategoryAmount: number
-}
-
 const paymentMethodLabels: Record<string, string> = {
   cash: "Cash",
   upi: "UPI",
-  bank_transfer: "Bank Transfer",
+  bank_transfer: "Bank",
   card: "Card",
   cheque: "Cheque",
 }
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
-  const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
-  const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filterCategory, setFilterCategory] = useState<string>("all")
-  const [filterProperty, setFilterProperty] = useState<string>("all")
-  const [filterMethod, setFilterMethod] = useState<string>("all")
-  const [stats, setStats] = useState<Stats>({
-    thisMonth: 0,
-    lastMonth: 0,
-    ytd: 0,
-    topCategory: null,
-    topCategoryAmount: 0,
-  })
 
   useEffect(() => {
     fetchData()
@@ -88,7 +65,6 @@ export default function ExpensesPage() {
     try {
       const supabase = createClient()
 
-      // Fetch expenses with relations
       const { data: expensesData, error: expensesError } = await supabase
         .from("expenses")
         .select(`
@@ -100,7 +76,6 @@ export default function ExpensesPage() {
 
       if (expensesError) throw expensesError
 
-      // Transform Supabase array joins to single objects
       const transformedExpenses = (expensesData || []).map((expense) => ({
         ...expense,
         expense_type: Array.isArray(expense.expense_type)
@@ -112,73 +87,6 @@ export default function ExpensesPage() {
       }))
 
       setExpenses(transformedExpenses)
-
-      // Fetch expense types
-      const { data: typesData } = await supabase
-        .from("expense_types")
-        .select("id, name, code")
-        .eq("is_enabled", true)
-        .order("display_order")
-
-      setExpenseTypes(typesData || [])
-
-      // Fetch properties
-      const { data: propertiesData } = await supabase
-        .from("properties")
-        .select("id, name")
-        .order("name")
-
-      setProperties(propertiesData || [])
-
-      // Calculate stats
-      const now = new Date()
-      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
-      const yearStart = new Date(now.getFullYear(), 0, 1)
-
-      const thisMonthExpenses = transformedExpenses.filter(
-        (e) => new Date(e.expense_date) >= thisMonthStart
-      )
-      const lastMonthExpenses = transformedExpenses.filter((e) => {
-        const date = new Date(e.expense_date)
-        return date >= lastMonthStart && date <= lastMonthEnd
-      })
-      const ytdExpenses = transformedExpenses.filter(
-        (e) => new Date(e.expense_date) >= yearStart
-      )
-
-      const thisMonthTotal = thisMonthExpenses.reduce(
-        (sum, e) => sum + Number(e.amount),
-        0
-      )
-      const lastMonthTotal = lastMonthExpenses.reduce(
-        (sum, e) => sum + Number(e.amount),
-        0
-      )
-      const ytdTotal = ytdExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
-
-      // Find top category this month
-      const categoryTotals: Record<string, { name: string; total: number }> = {}
-      thisMonthExpenses.forEach((e) => {
-        const catName = e.expense_type?.name || "Unknown"
-        if (!categoryTotals[catName]) {
-          categoryTotals[catName] = { name: catName, total: 0 }
-        }
-        categoryTotals[catName].total += Number(e.amount)
-      })
-
-      const sortedCategories = Object.values(categoryTotals).sort(
-        (a, b) => b.total - a.total
-      )
-
-      setStats({
-        thisMonth: thisMonthTotal,
-        lastMonth: lastMonthTotal,
-        ytd: ytdTotal,
-        topCategory: sortedCategories[0]?.name || null,
-        topCategoryAmount: sortedCategories[0]?.total || 0,
-      })
     } catch (error) {
       console.error("Error fetching expenses:", error)
       toast.error("Failed to load expenses")
@@ -187,38 +95,60 @@ export default function ExpensesPage() {
     }
   }
 
-  const filteredExpenses = expenses.filter((expense) => {
-    const matchesSearch =
-      expense.vendor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      expense.reference_number?.toLowerCase().includes(searchQuery.toLowerCase())
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+    })
+  }
 
-    const matchesCategory =
-      filterCategory === "all" || expense.expense_type_id === filterCategory
+  // Calculate stats
+  const now = new Date()
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+  const yearStart = new Date(now.getFullYear(), 0, 1)
 
-    const matchesProperty =
-      filterProperty === "all" ||
-      (filterProperty === "none" && !expense.property_id) ||
-      expense.property_id === filterProperty
-
-    const matchesMethod =
-      filterMethod === "all" || expense.payment_method === filterMethod
-
-    return matchesSearch && matchesCategory && matchesProperty && matchesMethod
+  const thisMonthExpenses = expenses.filter(e => new Date(e.expense_date) >= thisMonthStart)
+  const lastMonthExpenses = expenses.filter(e => {
+    const date = new Date(e.expense_date)
+    return date >= lastMonthStart && date <= lastMonthEnd
   })
+  const ytdExpenses = expenses.filter(e => new Date(e.expense_date) >= yearStart)
+
+  const thisMonthTotal = thisMonthExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  const lastMonthTotal = lastMonthExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  const ytdTotal = ytdExpenses.reduce((sum, e) => sum + Number(e.amount), 0)
+
+  // Find top category this month
+  const categoryTotals: Record<string, { name: string; total: number }> = {}
+  thisMonthExpenses.forEach((e) => {
+    const catName = e.expense_type?.name || "Unknown"
+    if (!categoryTotals[catName]) {
+      categoryTotals[catName] = { name: catName, total: 0 }
+    }
+    categoryTotals[catName].total += Number(e.amount)
+  })
+  const topCategory = Object.values(categoryTotals).sort((a, b) => b.total - a.total)[0]
+
+  const metricsItems: MetricItem[] = [
+    {
+      label: "This Month",
+      value: `₹${thisMonthTotal.toLocaleString("en-IN")}`,
+      icon: TrendingDown,
+      trend: lastMonthTotal > 0 ? {
+        value: Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100),
+        isPositive: thisMonthTotal < lastMonthTotal
+      } : undefined
+    },
+    { label: "Last Month", value: `₹${lastMonthTotal.toLocaleString("en-IN")}`, icon: Calendar },
+    { label: "Year to Date", value: `₹${ytdTotal.toLocaleString("en-IN")}`, icon: BarChart3 },
+    { label: "Top Category", value: topCategory?.name || "—", icon: Wallet },
+  ]
 
   const exportToCSV = () => {
-    const headers = [
-      "Date",
-      "Category",
-      "Description",
-      "Vendor",
-      "Property",
-      "Amount",
-      "Payment Method",
-      "Reference",
-    ]
-    const rows = filteredExpenses.map((e) => [
+    const headers = ["Date", "Category", "Description", "Vendor", "Property", "Amount", "Payment Method", "Reference"]
+    const rows = expenses.map((e) => [
       e.expense_date,
       e.expense_type?.name || "",
       e.description || "",
@@ -240,6 +170,61 @@ export default function ExpensesPage() {
     toast.success("Expenses exported to CSV")
   }
 
+  const columns: Column<Expense>[] = [
+    {
+      key: "expense_type",
+      header: "Category",
+      width: "1.5fr",
+      render: (expense) => (
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-rose-100 flex items-center justify-center">
+            <Receipt className="h-4 w-4 text-rose-600" />
+          </div>
+          <div>
+            <div className="font-medium">{expense.expense_type?.name || "Expense"}</div>
+            <div className="text-xs text-muted-foreground">
+              {expense.vendor_name || expense.description || "No description"}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "amount",
+      header: "Amount",
+      width: "1fr",
+      render: (expense) => (
+        <span className="font-semibold text-rose-600 tabular-nums">
+          -₹{Number(expense.amount).toLocaleString("en-IN")}
+        </span>
+      ),
+    },
+    {
+      key: "payment_method",
+      header: "Method",
+      width: "90px",
+      hideOnMobile: true,
+      render: (expense) => (
+        <TableBadge variant="muted">
+          {paymentMethodLabels[expense.payment_method] || expense.payment_method}
+        </TableBadge>
+      ),
+    },
+    {
+      key: "property",
+      header: "Property",
+      width: "1fr",
+      hideOnMobile: true,
+      render: (expense) => expense.property?.name || "General",
+    },
+    {
+      key: "expense_date",
+      header: "Date",
+      width: "80px",
+      render: (expense) => formatDate(expense.expense_date),
+    },
+  ]
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -250,239 +235,52 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Expenses</h1>
-          <p className="text-muted-foreground">Track and manage property expenses</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportToCSV}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Link href="/dashboard/expenses/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Expense
+      <PageHeader
+        title="Expenses"
+        description="Track and manage property expenses"
+        icon={Receipt}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={exportToCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
             </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">This Month</CardTitle>
-            <TrendingDown className="h-4 w-4 text-rose-500" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              ₹{stats.thisMonth.toLocaleString("en-IN")}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {stats.lastMonth > 0 && (
-                <>
-                  {stats.thisMonth > stats.lastMonth ? "↑" : "↓"}{" "}
-                  {Math.abs(
-                    Math.round(
-                      ((stats.thisMonth - stats.lastMonth) / stats.lastMonth) * 100
-                    )
-                  )}
-                  % vs last month
-                </>
-              )}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Last Month</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              ₹{stats.lastMonth.toLocaleString("en-IN")}
-            </p>
-            <p className="text-xs text-muted-foreground">Previous month total</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Year to Date</CardTitle>
-            <BarChart3 className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              ₹{stats.ytd.toLocaleString("en-IN")}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {new Date().getFullYear()} total expenses
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Top Category</CardTitle>
-            <Wallet className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {stats.topCategory || "N/A"}
-            </p>
-            {stats.topCategoryAmount > 0 && (
-              <p className="text-xs text-muted-foreground">
-                ₹{stats.topCategoryAmount.toLocaleString("en-IN")} this month
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search vendor, description, reference..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="h-10 px-3 rounded-md border border-input bg-background text-sm"
-              >
-                <option value="all">All Categories</option>
-                {expenseTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={filterProperty}
-                onChange={(e) => setFilterProperty(e.target.value)}
-                className="h-10 px-3 rounded-md border border-input bg-background text-sm"
-              >
-                <option value="all">All Properties</option>
-                <option value="none">General (No Property)</option>
-                {properties.map((prop) => (
-                  <option key={prop.id} value={prop.id}>
-                    {prop.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={filterMethod}
-                onChange={(e) => setFilterMethod(e.target.value)}
-                className="h-10 px-3 rounded-md border border-input bg-background text-sm"
-              >
-                <option value="all">All Methods</option>
-                <option value="cash">Cash</option>
-                <option value="upi">UPI</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="card">Card</option>
-                <option value="cheque">Cheque</option>
-              </select>
-            </div>
+            <Link href="/dashboard/expenses/new">
+              <Button variant="gradient">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Expense
+              </Button>
+            </Link>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
 
-      {/* Expenses List */}
-      {expenses.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Receipt className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+      {expenses.length > 0 && <MetricsBar items={metricsItems} />}
+
+      <DataTable
+        columns={columns}
+        data={expenses}
+        keyField="id"
+        href={(expense) => `/dashboard/expenses/${expense.id}`}
+        searchable
+        searchPlaceholder="Search vendor, description, reference..."
+        searchFields={["vendor_name", "description", "reference_number"]}
+        emptyState={
+          <div className="flex flex-col items-center py-8">
+            <Receipt className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No expenses yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Start tracking your property expenses to understand your costs better.
+            <p className="text-muted-foreground text-center mb-4">
+              Start tracking your property expenses
             </p>
             <Link href="/dashboard/expenses/new">
-              <Button>
+              <Button variant="gradient">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Expense
               </Button>
             </Link>
-          </CardContent>
-        </Card>
-      ) : filteredExpenses.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Filter className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-muted-foreground">
-              No expenses match your filters
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filteredExpenses.map((expense) => (
-            <Link key={expense.id} href={`/dashboard/expenses/${expense.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="p-2 bg-rose-100 rounded-lg">
-                        <Receipt className="h-5 w-5 text-rose-600" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">
-                            {expense.expense_type?.name || "Expense"}
-                          </p>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            {paymentMethodLabels[expense.payment_method]}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {expense.vendor_name || expense.description || "No description"}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(expense.expense_date).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </span>
-                          {expense.property && (
-                            <span className="flex items-center gap-1">
-                              <Building2 className="h-3 w-3" />
-                              {expense.property.name}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-semibold text-rose-600">
-                        -₹{Number(expense.amount).toLocaleString("en-IN")}
-                      </p>
-                      {expense.reference_number && (
-                        <p className="text-xs text-muted-foreground">
-                          Ref: {expense.reference_number}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+          </div>
+        }
+      />
     </div>
   )
 }

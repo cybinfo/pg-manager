@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import Link from "next/link"
 import {
   Building2,
   Users,
   CreditCard,
-  AlertCircle,
-  TrendingUp,
   Home,
   Plus,
   ArrowRight,
@@ -21,7 +19,9 @@ import {
   Sunrise,
   Receipt,
   TrendingDown,
-  BarChart3
+  BarChart3,
+  FileText,
+  Wallet
 } from "lucide-react"
 
 interface DashboardStats {
@@ -40,10 +40,12 @@ interface GettingStartedItem {
 }
 
 const quickActions = [
-  { name: "Add Property", href: "/dashboard/properties/new", icon: Building2, color: "from-teal-500 to-emerald-500" },
-  { name: "Add Room", href: "/dashboard/rooms/new", icon: Home, color: "from-violet-500 to-purple-500" },
-  { name: "Add Tenant", href: "/dashboard/tenants/new", icon: Users, color: "from-sky-500 to-blue-500" },
-  { name: "Record Payment", href: "/dashboard/payments/new", icon: CreditCard, color: "from-amber-500 to-orange-500" },
+  { name: "Add Property", href: "/dashboard/properties/new", icon: Building2 },
+  { name: "Add Room", href: "/dashboard/rooms/new", icon: Home },
+  { name: "Add Tenant", href: "/dashboard/tenants/new", icon: Users },
+  { name: "Record Payment", href: "/dashboard/payments/new", icon: CreditCard },
+  { name: "Create Bill", href: "/dashboard/bills/new", icon: FileText },
+  { name: "Add Expense", href: "/dashboard/expenses/new", icon: Wallet },
 ]
 
 function getGreeting(): { text: string; icon: typeof Sun } {
@@ -140,43 +142,43 @@ export default function DashboardPage() {
     fetchDashboardData()
   }, [])
 
-  const statCards = [
+  const metricsItems: MetricItem[] = [
     {
-      name: "Total Properties",
-      value: stats.properties.toString(),
+      label: "Properties",
+      value: stats.properties,
       icon: Building2,
       href: "/dashboard/properties",
-      color: "text-teal-600",
-      bgColor: "bg-gradient-to-br from-teal-50 to-emerald-50",
-      iconBg: "bg-gradient-to-br from-teal-500 to-emerald-500",
     },
     {
-      name: "Active Tenants",
-      value: stats.tenants.toString(),
+      label: "Tenants",
+      value: stats.tenants,
       icon: Users,
       href: "/dashboard/tenants",
-      color: "text-violet-600",
-      bgColor: "bg-gradient-to-br from-violet-50 to-purple-50",
-      iconBg: "bg-gradient-to-br from-violet-500 to-purple-500",
     },
     {
-      name: "Pending Dues",
+      label: "Revenue",
+      value: `₹${stats.totalRevenue.toLocaleString("en-IN")}`,
+      icon: Receipt,
+      href: "/dashboard/reports",
+    },
+    {
+      label: "Pending Dues",
       value: `₹${stats.pendingDues.toLocaleString("en-IN")}`,
       icon: CreditCard,
-      href: "/dashboard/payments",
-      color: "text-amber-600",
-      bgColor: "bg-gradient-to-br from-amber-50 to-orange-50",
-      iconBg: "bg-gradient-to-br from-amber-500 to-orange-500",
       highlight: stats.pendingDues > 0,
+      href: "/dashboard/payments",
     },
     {
-      name: "Net Income",
+      label: "Expenses",
+      value: `₹${stats.totalExpenses.toLocaleString("en-IN")}`,
+      icon: TrendingDown,
+      href: "/dashboard/expenses",
+    },
+    {
+      label: "Net Income",
       value: `₹${(stats.totalRevenue - stats.totalExpenses).toLocaleString("en-IN")}`,
       icon: BarChart3,
       href: "/dashboard/reports",
-      color: "text-emerald-600",
-      bgColor: "bg-gradient-to-br from-emerald-50 to-green-50",
-      iconBg: "bg-gradient-to-br from-emerald-500 to-green-500",
     },
   ]
 
@@ -184,226 +186,117 @@ export default function DashboardPage() {
   const allTasksDone = completedTasks === gettingStarted.length
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Welcome header with greeting */}
-      <div className="flex items-center gap-4">
-        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 animate-float">
-          <GreetingIcon className="h-6 w-6 text-white" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 animate-float">
+            <GreetingIcon className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">
+              {greeting.text}{userName ? `, ${userName}` : ""}!
+            </h1>
+            <p className="text-muted-foreground">
+              Here&apos;s what&apos;s happening with your PG today.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">
-            {greeting.text}{userName ? `, ${userName}` : ""}!
-          </h1>
-          <p className="text-muted-foreground">
-            Here&apos;s what&apos;s happening with your PG today.
-          </p>
+      </div>
+
+      {/* Metrics Bar - replaces 4 separate stat cards */}
+      {loading ? (
+        <div className="bg-white rounded-xl border shadow-sm p-8 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      </div>
+      ) : (
+        <MetricsBar items={metricsItems} />
+      )}
 
-      {/* Stats grid with animations */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 stagger-children">
-        {statCards.map((stat) => (
-          <Link key={stat.name} href={stat.href}>
-            <Card
-              variant="interactive"
-              className={`${stat.bgColor} border-0 overflow-hidden ${stat.highlight ? "ring-2 ring-amber-300" : ""}`}
-            >
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.name}
-                </CardTitle>
-                <div className={`p-2 rounded-xl ${stat.iconBg} shadow-lg`}>
-                  <stat.icon className="h-4 w-4 text-white" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                ) : (
-                  <div className="text-2xl font-bold tabular-nums">{stat.value}</div>
-                )}
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Getting Started */}
-        {!allTasksDone && (
-          <Card variant="elevated">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
-                  <TrendingUp className="h-4 w-4 text-white" />
-                </div>
-                Getting Started
-                <span className="ml-auto text-sm font-normal text-muted-foreground">
-                  {completedTasks}/{gettingStarted.length} completed
-                </span>
-              </CardTitle>
-              <CardDescription>
-                Complete these steps to set up your PG management
-              </CardDescription>
-              {/* Progress bar */}
-              <div className="w-full h-2 bg-muted rounded-full overflow-hidden mt-2">
-                <div
-                  className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500 ease-out"
-                  style={{ width: `${(completedTasks / gettingStarted.length) * 100}%` }}
-                />
+      {/* Getting Started - only show if not complete */}
+      {!allTasksDone && (
+        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b bg-slate-50/80 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+                <CheckCircle className="h-4 w-4 text-white" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {gettingStarted.map((item, i) => (
-                  <Link
-                    key={i}
-                    href={item.href}
-                    className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${
-                      item.done
-                        ? "bg-teal-50/50 border-teal-100"
-                        : "hover:bg-muted/50 hover:border-teal-200 hover:shadow-sm"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`p-1.5 rounded-full transition-colors ${
-                        item.done ? "bg-gradient-to-br from-teal-500 to-emerald-500" : "bg-muted"
-                      }`}>
-                        {item.done ? (
-                          <CheckCircle className="h-4 w-4 text-white" />
-                        ) : (
-                          <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
-                        )}
-                      </div>
-                      <span className={item.done ? "text-muted-foreground line-through" : "font-medium"}>
-                        {item.task}
-                      </span>
-                    </div>
-                    {!item.done && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
-                  </Link>
-                ))}
+              <div>
+                <h2 className="font-semibold">Getting Started</h2>
+                <p className="text-xs text-muted-foreground">
+                  {completedTasks} of {gettingStarted.length} completed
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Quick Actions */}
-        <Card variant="elevated" className={allTasksDone ? "lg:col-span-2" : ""}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
-                <Plus className="h-4 w-4 text-white" />
-              </div>
-              Quick Actions
-            </CardTitle>
-            <CardDescription>
-              Common tasks you can do right now
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className={`grid gap-4 ${allTasksDone ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2"}`}>
-              {quickActions.map((action) => (
-                <Link key={action.name} href={action.href}>
-                  <Button
-                    variant="outline"
-                    className="w-full h-auto py-6 flex flex-col gap-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group"
-                  >
-                    <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
-                      <action.icon className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-sm font-medium">{action.name}</span>
-                  </Button>
-                </Link>
-              ))}
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Revenue & Expenses Summary */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card variant="elevated">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-emerald-600" />
-              Total Revenue
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <div className="text-3xl font-bold text-emerald-600 tabular-nums">
-                ₹{stats.totalRevenue.toLocaleString("en-IN")}
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground mt-1">All time collected payments</p>
-          </CardContent>
-        </Card>
-
-        <Card variant="elevated">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-rose-600" />
-              Total Expenses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            ) : (
-              <div className="text-3xl font-bold text-rose-600 tabular-nums">
-                ₹{stats.totalExpenses.toLocaleString("en-IN")}
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground mt-1">All time recorded expenses</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <Card variant="elevated">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center">
-              <AlertCircle className="h-4 w-4 text-white" />
+            {/* Progress bar */}
+            <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500"
+                style={{ width: `${(completedTasks / gettingStarted.length) * 100}%` }}
+              />
             </div>
-            Recent Activity
-          </CardTitle>
-          <CardDescription>
-            Latest updates from your properties
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {stats.properties === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center mb-4">
-                <AlertCircle className="h-8 w-8 text-muted-foreground/50" />
-              </div>
-              <p className="text-muted-foreground font-medium">No recent activity yet</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Start by adding your first property and tenants
-              </p>
-              <Link href="/dashboard/properties/new">
-                <Button variant="gradient">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Property
-                </Button>
+          </div>
+          <div className="divide-y">
+            {gettingStarted.map((item, i) => (
+              <Link
+                key={i}
+                href={item.href}
+                className={`flex items-center justify-between px-4 py-3 transition-colors ${
+                  item.done ? "bg-teal-50/30" : "hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {item.done ? (
+                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+                      <CheckCircle className="h-3 w-3 text-white" />
+                    </div>
+                  ) : (
+                    <div className="h-5 w-5 rounded-full border-2 border-slate-300" />
+                  )}
+                  <span className={`text-sm ${item.done ? "text-muted-foreground line-through" : "font-medium"}`}>
+                    {item.task}
+                  </span>
+                </div>
+                {!item.done && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
               </Link>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center mb-4 shadow-lg shadow-teal-500/20">
-                <CheckCircle className="h-8 w-8 text-white" />
-              </div>
-              <p className="text-foreground font-medium">You&apos;re all set up!</p>
-              <p className="text-sm text-muted-foreground">
-                Activity feed coming soon...
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions - cleaner inline buttons */}
+      <div>
+        <h2 className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</h2>
+        <div className="flex flex-wrap gap-2">
+          {quickActions.map((action) => (
+            <Link key={action.name} href={action.href}>
+              <Button variant="outline" size="sm" className="gap-2 hover:bg-slate-50">
+                <action.icon className="h-4 w-4 text-slate-600" />
+                {action.name}
+              </Button>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Empty state for new users */}
+      {stats.properties === 0 && (
+        <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/20">
+            <Building2 className="h-8 w-8 text-white" />
+          </div>
+          <h3 className="font-semibold text-lg mb-1">Welcome to ManageKar!</h3>
+          <p className="text-muted-foreground text-sm mb-4">
+            Get started by adding your first property
+          </p>
+          <Link href="/dashboard/properties/new">
+            <Button variant="gradient">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Your First Property
+            </Button>
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

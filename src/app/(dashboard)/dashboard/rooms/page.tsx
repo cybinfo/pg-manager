@@ -4,21 +4,18 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import {
   Home,
   Plus,
-  Building2,
-  Users,
-  Pencil,
-  Trash2,
   Loader2,
-  Search,
   Bed,
-  IndianRupee
+  Building2,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react"
-import { toast } from "sonner"
 
 interface Room {
   id: string
@@ -38,17 +35,9 @@ interface Room {
   }
 }
 
-const statusColors: Record<string, string> = {
-  available: "bg-teal-50 text-teal-700",
-  occupied: "bg-rose-50 text-rose-700",
-  partially_occupied: "bg-amber-50 text-amber-700",
-  maintenance: "bg-slate-100 text-slate-700",
-}
-
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     fetchRooms()
@@ -68,7 +57,6 @@ export default function RoomsPage() {
 
     if (error) {
       console.error("Error fetching rooms:", error)
-      toast.error("Failed to load rooms")
       setLoading(false)
       return
     }
@@ -77,28 +65,92 @@ export default function RoomsPage() {
     setLoading(false)
   }
 
-  const handleDelete = async (id: string, roomNumber: string) => {
-    if (!confirm(`Are you sure you want to delete Room ${roomNumber}? This will also remove any tenant assignments.`)) {
-      return
+  const getStatusInfo = (status: string): { status: "success" | "warning" | "error" | "muted"; label: string } => {
+    switch (status) {
+      case "available":
+        return { status: "success", label: "Available" }
+      case "occupied":
+        return { status: "error", label: "Occupied" }
+      case "partially_occupied":
+        return { status: "warning", label: "Partial" }
+      case "maintenance":
+        return { status: "muted", label: "Maintenance" }
+      default:
+        return { status: "muted", label: status }
     }
-
-    const supabase = createClient()
-    const { error } = await supabase.from("rooms").delete().eq("id", id)
-
-    if (error) {
-      console.error("Error deleting room:", error)
-      toast.error("Failed to delete room. Make sure no tenants are assigned.")
-      return
-    }
-
-    toast.success("Room deleted successfully")
-    fetchRooms()
   }
 
-  const filteredRooms = rooms.filter((room) =>
-    room.room_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    room.property.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Stats
+  const totalBeds = rooms.reduce((sum, r) => sum + r.total_beds, 0)
+  const occupiedBeds = rooms.reduce((sum, r) => sum + r.occupied_beds, 0)
+  const availableBeds = totalBeds - occupiedBeds
+  const availableRooms = rooms.filter(r => r.status === "available").length
+  const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
+
+  const metricsItems: MetricItem[] = [
+    { label: "Total Rooms", value: rooms.length, icon: Home },
+    { label: "Available Rooms", value: availableRooms, icon: CheckCircle },
+    { label: "Total Beds", value: totalBeds, icon: Bed },
+    { label: "Occupied Beds", value: `${occupiedBeds} (${occupancyRate}%)`, icon: AlertCircle },
+  ]
+
+  const columns: Column<Room>[] = [
+    {
+      key: "room_number",
+      header: "Room",
+      width: "1.5fr",
+      render: (room) => (
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-violet-100 flex items-center justify-center">
+            <Home className="h-4 w-4 text-violet-600" />
+          </div>
+          <div>
+            <div className="font-medium">Room {room.room_number}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Building2 className="h-3 w-3" />
+              {room.property.name}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "room_type",
+      header: "Type",
+      width: "100px",
+      hideOnMobile: true,
+      render: (room) => (
+        <TableBadge variant="default">
+          {room.room_type.charAt(0).toUpperCase() + room.room_type.slice(1)}
+        </TableBadge>
+      ),
+    },
+    {
+      key: "beds",
+      header: "Beds",
+      width: "80px",
+      render: (room) => (
+        <span className="tabular-nums">{room.occupied_beds}/{room.total_beds}</span>
+      ),
+    },
+    {
+      key: "rent_amount",
+      header: "Rent",
+      width: "100px",
+      render: (room) => (
+        <span className="font-medium tabular-nums">₹{room.rent_amount.toLocaleString("en-IN")}</span>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "100px",
+      render: (room) => {
+        const info = getStatusInfo(room.status)
+        return <StatusDot status={info.status} label={info.label} />
+      },
+    },
+  ]
 
   if (loading) {
     return (
@@ -110,153 +162,46 @@ export default function RoomsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Rooms</h1>
-          <p className="text-muted-foreground">
-            Manage rooms across all your properties
-          </p>
-        </div>
-        <Link href="/dashboard/rooms/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Room
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Rooms"
+        description="Manage rooms across all your properties"
+        icon={Home}
+        actions={
+          <Link href="/dashboard/rooms/new">
+            <Button variant="gradient">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Room
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Search */}
-      {rooms.length > 0 && (
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search rooms..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      )}
+      {rooms.length > 0 && <MetricsBar items={metricsItems} />}
 
-      {/* Rooms Grid */}
-      {rooms.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+      <DataTable
+        columns={columns}
+        data={rooms}
+        keyField="id"
+        href={(room) => `/dashboard/rooms/${room.id}`}
+        searchable
+        searchPlaceholder="Search by room number, property..."
+        searchFields={["room_number"]}
+        emptyState={
+          <div className="flex flex-col items-center py-8">
             <Home className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No rooms yet</h3>
             <p className="text-muted-foreground text-center mb-4">
               Add rooms to your properties to start managing tenants
             </p>
             <Link href="/dashboard/rooms/new">
-              <Button>
+              <Button variant="gradient">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Room
               </Button>
             </Link>
-          </CardContent>
-        </Card>
-      ) : filteredRooms.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Search className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No rooms found</h3>
-            <p className="text-muted-foreground text-center">
-              Try a different search term
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredRooms.map((room) => (
-            <Card key={room.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Home className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Room {room.room_number}</CardTitle>
-                      <CardDescription className="flex items-center gap-1 mt-1">
-                        <Building2 className="h-3 w-3" />
-                        {room.property.name}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Link href={`/dashboard/rooms/${room.id}/edit`}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(room.id, room.room_number)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {/* Status Badge */}
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[room.status] || statusColors.available}`}>
-                      {room.status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                    </span>
-                    <span className="text-sm text-muted-foreground capitalize">
-                      {room.room_type}
-                    </span>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-1.5">
-                      <Bed className="h-4 w-4 text-muted-foreground" />
-                      <span>{room.occupied_beds}/{room.total_beds} Beds</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                      <span>₹{room.rent_amount.toLocaleString("en-IN")}</span>
-                    </div>
-                  </div>
-
-                  {/* Amenities */}
-                  <div className="flex gap-2 flex-wrap">
-                    {room.has_ac && (
-                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                        AC
-                      </span>
-                    )}
-                    {room.has_attached_bathroom && (
-                      <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
-                        Attached Bath
-                      </span>
-                    )}
-                    {room.floor > 0 && (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
-                        Floor {room.floor}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t">
-                  <Link href={`/dashboard/rooms/${room.id}`}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      View Details
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+          </div>
+        }
+      />
     </div>
   )
 }
