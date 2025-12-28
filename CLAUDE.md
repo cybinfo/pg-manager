@@ -171,6 +171,12 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-28 - Contact & Help Pages
+- Added `/contact` page with contact form, email/phone/WhatsApp options
+- Added `/help` page with comprehensive FAQ (20+ questions across 8 categories)
+- FAQ features: search, category filters, expandable answers
+- Updated footer links on landing page to point to new pages
+
 ### 2025-12-28 - Brand Identity & UI Overhaul
 - Rebranded application from "PG Manager" to "ManageKar"
 - Implemented new teal/emerald color palette for brand identity

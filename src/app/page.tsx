@@ -433,8 +433,8 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-muted-foreground text-sm">
-                <li><a href="mailto:support@managekar.com" className="hover:text-background">Contact Us</a></li>
-                <li><Link href="#" className="hover:text-background">Help Center</Link></li>
+                <li><Link href="/contact" className="hover:text-background">Contact Us</Link></li>
+                <li><Link href="/help" className="hover:text-background">Help Center</Link></li>
               </ul>
             </div>
 
