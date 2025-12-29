@@ -206,6 +206,42 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-29 - Centralized UI Component Library & Detail Page Redesign
+- **Problem Solved**: Created comprehensive reusable component library for consistent UI across application
+- **New Components Created**:
+  - **StatusBadge** (`/src/components/ui/status-badge.tsx`) - Pre-configured status badges for tenant, payment, complaint statuses with icons, colors, and variants (success/warning/error/info/muted)
+  - **FormComponents** (`/src/components/ui/form-components.tsx`) - FormField wrapper, styled Select, CurrencyInput, PhoneInput, EmailInput, DateInput, SearchInput, Textarea with character count, FormSection divider, ToggleSwitch
+  - **DetailComponents** (`/src/components/ui/detail-components.tsx`) - DetailHero (page header with avatar/status), InfoCard (stat cards), DetailSection (content sections), InfoRow (key-value rows), ActionMenu dropdown, QuickActions bar
+  - **EmptyState** (`/src/components/ui/empty-state.tsx`) - Standardized empty states with variants (default/search/error/minimal), NoResultsState, NoDataState, ErrorState
+  - **Loading** (`/src/components/ui/loading.tsx`) - Spinner, PageLoading, Skeleton variants (SkeletonText, SkeletonCard, SkeletonTable, SkeletonMetricsBar, SkeletonPageHeader, PageSkeleton)
+  - **Currency** (`/src/components/ui/currency.tsx`) - Currency formatter, AmountDisplay, AmountWithTrend, DuesSummary progress bar, PaymentAmount with status colors
+  - **Index** (`/src/components/ui/index.ts`) - Central export file for all UI components
+- **Tenant Detail Page Redesigned**:
+  - DetailHero with gradient avatar, status badge, quick actions
+  - InfoCard grid for quick stats (rent, deposit, dues, check-in)
+  - DetailSection components for organized content
+  - InfoRow for consistent key-value display
+  - Currency components for all money values
+  - PageLoading for loading state
+  - FormField and Select for modal forms
+  - Animations: fade-in, scale-in for modals
+- **Design System Benefits**:
+  - Import from `@/components/ui` for all UI needs
+  - Consistent colors using design tokens (emerald, amber, rose, teal)
+  - Pre-configured status mappings (active, pending, paid, overdue, etc.)
+  - TypeScript support with proper interfaces
+  - Reusable across all pages
+- **Files Created**:
+  - `/src/components/ui/status-badge.tsx`
+  - `/src/components/ui/form-components.tsx`
+  - `/src/components/ui/detail-components.tsx`
+  - `/src/components/ui/empty-state.tsx`
+  - `/src/components/ui/loading.tsx`
+  - `/src/components/ui/currency.tsx`
+  - `/src/components/ui/index.ts`
+- **Files Modified**:
+  - `/src/app/(dashboard)/dashboard/tenants/[id]/page.tsx` - Complete redesign with new components
+
 ### 2025-12-29 - Complete UI Unification (All Dashboard Pages)
 - **Problem Solved**: Unified UI across ALL dashboard pages for consistent design
 - **Pages Updated with MetricsBar + DataTable + PageHeader**:
