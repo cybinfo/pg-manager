@@ -4,18 +4,17 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import {
   MessageSquare,
   Plus,
-  Search,
   Loader2,
   AlertCircle,
   Clock,
   CheckCircle,
   Wrench,
-  Eye,
   Building2,
   User
 } from "lucide-react"
@@ -66,19 +65,19 @@ interface RawComplaint {
   }[] | null
 }
 
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  open: { label: "Open", color: "bg-red-100 text-red-700", icon: AlertCircle },
-  acknowledged: { label: "Acknowledged", color: "bg-blue-100 text-blue-700", icon: Eye },
-  in_progress: { label: "In Progress", color: "bg-yellow-100 text-yellow-700", icon: Wrench },
-  resolved: { label: "Resolved", color: "bg-green-100 text-green-700", icon: CheckCircle },
-  closed: { label: "Closed", color: "bg-gray-100 text-gray-700", icon: CheckCircle },
+const statusConfig: Record<string, { label: string; variant: "success" | "warning" | "error" | "muted" }> = {
+  open: { label: "Open", variant: "error" },
+  acknowledged: { label: "Acknowledged", variant: "warning" },
+  in_progress: { label: "In Progress", variant: "warning" },
+  resolved: { label: "Resolved", variant: "success" },
+  closed: { label: "Closed", variant: "muted" },
 }
 
-const priorityConfig: Record<string, { label: string; color: string }> = {
-  low: { label: "Low", color: "bg-gray-100 text-gray-600" },
-  medium: { label: "Medium", color: "bg-blue-100 text-blue-600" },
-  high: { label: "High", color: "bg-orange-100 text-orange-600" },
-  urgent: { label: "Urgent", color: "bg-red-100 text-red-600" },
+const priorityConfig: Record<string, { label: string; variant: "default" | "success" | "warning" | "error" | "muted" }> = {
+  low: { label: "Low", variant: "muted" },
+  medium: { label: "Medium", variant: "default" },
+  high: { label: "High", variant: "warning" },
+  urgent: { label: "Urgent", variant: "error" },
 }
 
 const categoryLabels: Record<string, string> = {
@@ -95,7 +94,6 @@ const categoryLabels: Record<string, string> = {
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [priorityFilter, setPriorityFilter] = useState<string>("all")
 
@@ -116,7 +114,6 @@ export default function ComplaintsPage() {
       if (error) {
         console.error("Error fetching complaints:", error)
       } else {
-        // Transform the data from arrays to single objects
         const transformedData = ((data as RawComplaint[]) || []).map((complaint) => ({
           ...complaint,
           tenant: complaint.tenant && complaint.tenant.length > 0 ? complaint.tenant[0] : null,
@@ -132,15 +129,9 @@ export default function ComplaintsPage() {
   }, [])
 
   const filteredComplaints = complaints.filter((complaint) => {
-    const matchesSearch =
-      complaint.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      complaint.tenant?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      complaint.property?.name.toLowerCase().includes(searchQuery.toLowerCase())
-
     const matchesStatus = statusFilter === "all" || complaint.status === statusFilter
     const matchesPriority = priorityFilter === "all" || complaint.priority === priorityFilter
-
-    return matchesSearch && matchesStatus && matchesPriority
+    return matchesStatus && matchesPriority
   })
 
   // Stats
@@ -148,14 +139,6 @@ export default function ComplaintsPage() {
   const inProgressCount = complaints.filter((c) => c.status === "in_progress" || c.status === "acknowledged").length
   const resolvedCount = complaints.filter((c) => c.status === "resolved" || c.status === "closed").length
   const urgentCount = complaints.filter((c) => c.priority === "urgent" && c.status !== "resolved" && c.status !== "closed").length
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
 
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -171,6 +154,81 @@ export default function ComplaintsPage() {
     return "Just now"
   }
 
+  const metricsItems: MetricItem[] = [
+    { label: "Open", value: openCount, icon: AlertCircle, highlight: openCount > 0 },
+    { label: "In Progress", value: inProgressCount, icon: Wrench },
+    { label: "Resolved", value: resolvedCount, icon: CheckCircle },
+    { label: "Urgent", value: urgentCount, icon: Clock, highlight: urgentCount > 0 },
+  ]
+
+  const columns: Column<Complaint>[] = [
+    {
+      key: "title",
+      header: "Complaint",
+      width: "300px",
+      render: (row) => (
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <TableBadge variant={priorityConfig[row.priority]?.variant || "default"}>
+              {priorityConfig[row.priority]?.label || row.priority}
+            </TableBadge>
+            <span className="text-xs text-muted-foreground">
+              {categoryLabels[row.category] || row.category}
+            </span>
+          </div>
+          <div className="font-medium truncate">{row.title}</div>
+          {row.description && (
+            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+              {row.description}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "tenant",
+      header: "Tenant",
+      width: "150px",
+      render: (row) => (
+        <div className="text-sm">
+          {row.tenant && (
+            <div className="flex items-center gap-1">
+              <User className="h-3 w-3 text-muted-foreground" />
+              {row.tenant.name}
+            </div>
+          )}
+          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+            <Building2 className="h-3 w-3" />
+            {row.property?.name}
+            {row.room && `, ${row.room.room_number}`}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "120px",
+      render: (row) => (
+        <StatusDot
+          status={statusConfig[row.status]?.variant || "muted"}
+          label={statusConfig[row.status]?.label || row.status}
+        />
+      ),
+    },
+    {
+      key: "created_at",
+      header: "Created",
+      width: "100px",
+      hideOnMobile: true,
+      render: (row) => (
+        <span className="text-sm text-muted-foreground">
+          {getTimeAgo(row.created_at)}
+        </span>
+      ),
+    },
+  ]
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -181,120 +239,59 @@ export default function ComplaintsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Complaints</h1>
-          <p className="text-muted-foreground">Manage tenant complaints and issues</p>
-        </div>
-        <Link href="/dashboard/complaints/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Complaint
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Complaints"
+        description="Manage tenant complaints and issues"
+        icon={MessageSquare}
+        actions={
+          <Link href="/dashboard/complaints/new">
+            <Button variant="gradient">
+              <Plus className="mr-2 h-4 w-4" />
+              New Complaint
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{openCount}</p>
-                <p className="text-xs text-muted-foreground">Open</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Wrench className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{inProgressCount}</p>
-                <p className="text-xs text-muted-foreground">In Progress</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{resolvedCount}</p>
-                <p className="text-xs text-muted-foreground">Resolved</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <Clock className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{urgentCount}</p>
-                <p className="text-xs text-muted-foreground">Urgent</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <MetricsBar items={metricsItems} />
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by title, tenant, or property..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 px-3 rounded-md border border-input bg-background text-sm min-w-[140px]"
-            >
-              <option value="all">All Status</option>
-              <option value="open">Open</option>
-              <option value="acknowledged">Acknowledged</option>
-              <option value="in_progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
-            </select>
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="h-10 px-3 rounded-md border border-input bg-background text-sm min-w-[140px]"
-            >
-              <option value="all">All Priority</option>
-              <option value="urgent">Urgent</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-wrap gap-3">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[140px]"
+        >
+          <option value="all">All Status</option>
+          <option value="open">Open</option>
+          <option value="acknowledged">Acknowledged</option>
+          <option value="in_progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+        <select
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value)}
+          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[140px]"
+        >
+          <option value="all">All Priority</option>
+          <option value="urgent">Urgent</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
 
-      {/* Complaints List */}
-      {filteredComplaints.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+      <DataTable
+        columns={columns}
+        data={filteredComplaints}
+        keyField="id"
+        href={(row) => `/dashboard/complaints/${row.id}`}
+        searchable
+        searchPlaceholder="Search by title, tenant, or property..."
+        searchFields={["title", "description"] as (keyof Complaint)[]}
+        emptyState={
+          <div className="flex flex-col items-center py-8">
             <MessageSquare className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No complaints found</h3>
             <p className="text-muted-foreground text-center mb-4">
@@ -310,66 +307,9 @@ export default function ComplaintsPage() {
                 </Button>
               </Link>
             )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filteredComplaints.map((complaint) => {
-            const StatusIcon = statusConfig[complaint.status]?.icon || AlertCircle
-            return (
-              <Link key={complaint.id} href={`/dashboard/complaints/${complaint.id}`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      {/* Main Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${priorityConfig[complaint.priority]?.color || "bg-gray-100"}`}>
-                            {priorityConfig[complaint.priority]?.label || complaint.priority}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {categoryLabels[complaint.category] || complaint.category}
-                          </span>
-                        </div>
-                        <h3 className="font-semibold truncate">{complaint.title}</h3>
-                        {complaint.description && (
-                          <p className="text-sm text-muted-foreground truncate mt-1">
-                            {complaint.description}
-                          </p>
-                        )}
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                          {complaint.tenant && (
-                            <span className="flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              {complaint.tenant.name}
-                            </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />
-                            {complaint.property?.name}
-                            {complaint.room && `, Room ${complaint.room.room_number}`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Status & Time */}
-                      <div className="flex items-center gap-4 md:flex-col md:items-end">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${statusConfig[complaint.status]?.color || "bg-gray-100"}`}>
-                          <StatusIcon className="h-3 w-3" />
-                          {statusConfig[complaint.status]?.label || complaint.status}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {getTimeAgo(complaint.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-          })}
-        </div>
-      )}
+          </div>
+        }
+      />
     </div>
   )
 }

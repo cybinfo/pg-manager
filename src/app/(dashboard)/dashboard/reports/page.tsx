@@ -34,7 +34,9 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Filter,
+  BarChart3,
 } from "lucide-react"
+import { PageHeader } from "@/components/ui/page-header"
 
 interface Property {
   id: string
@@ -613,45 +615,45 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Reports & Analytics</h1>
-          <p className="text-muted-foreground">Insights and metrics for your PG business</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
-            <Filter className="h-4 w-4 ml-2 text-muted-foreground" />
+      <PageHeader
+        title="Reports & Analytics"
+        description="Insights and metrics for your PG business"
+        icon={BarChart3}
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
+              <Filter className="h-4 w-4 ml-2 text-muted-foreground" />
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="h-9 px-3 rounded-md border-0 bg-transparent text-sm font-medium focus:outline-none"
+              >
+                {dateRangeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="h-9 px-3 rounded-md border-0 bg-transparent text-sm font-medium focus:outline-none"
+              value={selectedProperty}
+              onChange={(e) => setSelectedProperty(e.target.value)}
+              className="h-10 px-3 rounded-md border border-input bg-white text-sm"
             >
-              {dateRangeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
+              <option value="all">All Properties</option>
+              {properties.map((property) => (
+                <option key={property.id} value={property.id}>
+                  {property.name}
                 </option>
               ))}
             </select>
+            <Button variant="outline" onClick={() => exportToCSV("summary")}>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
           </div>
-          <select
-            value={selectedProperty}
-            onChange={(e) => setSelectedProperty(e.target.value)}
-            className="h-10 px-3 rounded-md border border-input bg-background text-sm"
-          >
-            <option value="all">All Properties</option>
-            {properties.map((property) => (
-              <option key={property.id} value={property.id}>
-                {property.name}
-              </option>
-            ))}
-          </select>
-          <Button variant="outline" onClick={() => exportToCSV("summary")}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

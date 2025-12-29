@@ -4,12 +4,12 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import {
   Bell,
   Plus,
-  Search,
   Loader2,
   Megaphone,
   AlertTriangle,
@@ -43,7 +43,7 @@ interface Notice {
   } | null
 }
 
-const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
+const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: typeof Megaphone }> = {
   general: { label: "General", color: "text-blue-700", bgColor: "bg-blue-100", icon: Megaphone },
   maintenance: { label: "Maintenance", color: "text-orange-700", bgColor: "bg-orange-100", icon: Wrench },
   payment_reminder: { label: "Payment Reminder", color: "text-green-700", bgColor: "bg-green-100", icon: CreditCard },
@@ -59,7 +59,6 @@ const audienceLabels: Record<string, string> = {
 export default function NoticesPage() {
   const [notices, setNotices] = useState<Notice[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null)
@@ -88,7 +87,8 @@ export default function NoticesPage() {
     fetchNotices()
   }, [])
 
-  const toggleActive = async (notice: Notice) => {
+  const toggleActive = async (e: React.MouseEvent, notice: Notice) => {
+    e.stopPropagation()
     const supabase = createClient()
 
     const { error } = await supabase
@@ -108,7 +108,8 @@ export default function NoticesPage() {
     setActionMenuOpen(null)
   }
 
-  const deleteNotice = async (notice: Notice) => {
+  const deleteNotice = async (e: React.MouseEvent, notice: Notice) => {
+    e.stopPropagation()
     if (!confirm("Are you sure you want to delete this notice?")) return
 
     const supabase = createClient()
@@ -134,10 +135,6 @@ export default function NoticesPage() {
   }
 
   const filteredNotices = notices.filter((notice) => {
-    const matchesSearch =
-      notice.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notice.content.toLowerCase().includes(searchQuery.toLowerCase())
-
     const matchesType = typeFilter === "all" || notice.type === typeFilter
 
     let matchesStatus = true
@@ -147,7 +144,7 @@ export default function NoticesPage() {
       matchesStatus = !notice.is_active || isExpired(notice.expires_at)
     }
 
-    return matchesSearch && matchesType && matchesStatus
+    return matchesType && matchesStatus
   })
 
   // Stats
@@ -161,14 +158,6 @@ export default function NoticesPage() {
     return expiresAt > now && expiresAt.getTime() - now.getTime() < threeDays
   }).length
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
-
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -181,6 +170,157 @@ export default function NoticesPage() {
     return "Just now"
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+  }
+
+  const metricsItems: MetricItem[] = [
+    { label: "Total Notices", value: notices.length, icon: Bell },
+    { label: "Active", value: activeCount, icon: Eye },
+    { label: "Emergency", value: emergencyCount, icon: AlertTriangle, highlight: emergencyCount > 0 },
+    { label: "Expiring Soon", value: expiringCount, icon: Clock },
+  ]
+
+  const columns: Column<Notice>[] = [
+    {
+      key: "title",
+      header: "Notice",
+      width: "300px",
+      render: (row) => {
+        const TypeIcon = typeConfig[row.type]?.icon || Megaphone
+        const expired = isExpired(row.expires_at)
+        const isActive = row.is_active && !expired
+        return (
+          <div className={`flex items-start gap-3 ${!isActive ? "opacity-60" : ""}`}>
+            <div className={`p-2 rounded-lg shrink-0 ${typeConfig[row.type]?.bgColor || "bg-gray-100"}`}>
+              <TypeIcon className={`h-4 w-4 ${typeConfig[row.type]?.color || "text-gray-600"}`} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                <TableBadge variant={row.type === "emergency" ? "error" : "default"}>
+                  {typeConfig[row.type]?.label || row.type}
+                </TableBadge>
+                {!isActive && (
+                  <TableBadge variant="muted">
+                    {expired ? "Expired" : "Inactive"}
+                  </TableBadge>
+                )}
+              </div>
+              <div className="font-medium truncate">{row.title}</div>
+              <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                {row.content}
+              </p>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      key: "property",
+      header: "Property",
+      width: "120px",
+      hideOnMobile: true,
+      render: (row) => (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Building2 className="h-3 w-3" />
+          {row.property?.name || "All"}
+        </div>
+      ),
+    },
+    {
+      key: "target_audience",
+      header: "Audience",
+      width: "120px",
+      hideOnMobile: true,
+      render: (row) => (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Users className="h-3 w-3" />
+          {audienceLabels[row.target_audience] || row.target_audience}
+        </div>
+      ),
+    },
+    {
+      key: "created_at",
+      header: "Posted",
+      width: "100px",
+      hideOnMobile: true,
+      render: (row) => (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Calendar className="h-3 w-3" />
+          {getTimeAgo(row.created_at)}
+        </div>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      width: "80px",
+      render: (row) => (
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation()
+              setActionMenuOpen(actionMenuOpen === row.id ? null : row.id)
+            }}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+
+          {actionMenuOpen === row.id && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setActionMenuOpen(null)
+                }}
+              />
+              <div className="absolute right-0 top-full mt-1 w-40 bg-popover border rounded-md shadow-lg z-20">
+                <Link
+                  href={`/dashboard/notices/${row.id}`}
+                  className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Link>
+                <button
+                  onClick={(e) => toggleActive(e, row)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
+                >
+                  {row.is_active ? (
+                    <>
+                      <EyeOff className="h-4 w-4" />
+                      Deactivate
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-4 w-4" />
+                      Activate
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={(e) => deleteNotice(e, row)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      ),
+    },
+  ]
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -191,117 +331,56 @@ export default function NoticesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Notices</h1>
-          <p className="text-muted-foreground">Announcements and notifications for tenants</p>
-        </div>
-        <Link href="/dashboard/notices/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Notice
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Notices"
+        description="Announcements and notifications for tenants"
+        icon={Bell}
+        actions={
+          <Link href="/dashboard/notices/new">
+            <Button variant="gradient">
+              <Plus className="mr-2 h-4 w-4" />
+              New Notice
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Bell className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{notices.length}</p>
-                <p className="text-xs text-muted-foreground">Total Notices</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Eye className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{activeCount}</p>
-                <p className="text-xs text-muted-foreground">Active</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{emergencyCount}</p>
-                <p className="text-xs text-muted-foreground">Emergency</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Clock className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{expiringCount}</p>
-                <p className="text-xs text-muted-foreground">Expiring Soon</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <MetricsBar items={metricsItems} />
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search notices..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-10 px-3 rounded-md border border-input bg-background text-sm min-w-[160px]"
-            >
-              <option value="all">All Types</option>
-              <option value="general">General</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="payment_reminder">Payment Reminder</option>
-              <option value="emergency">Emergency</option>
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 px-3 rounded-md border border-input bg-background text-sm min-w-[140px]"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive/Expired</option>
-            </select>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-wrap gap-3">
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[160px]"
+        >
+          <option value="all">All Types</option>
+          <option value="general">General</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="payment_reminder">Payment Reminder</option>
+          <option value="emergency">Emergency</option>
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[140px]"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive/Expired</option>
+        </select>
+      </div>
 
-      {/* Notices List */}
-      {filteredNotices.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+      <DataTable
+        columns={columns}
+        data={filteredNotices}
+        keyField="id"
+        href={(row) => `/dashboard/notices/${row.id}`}
+        searchable
+        searchPlaceholder="Search notices..."
+        searchFields={["title", "content"] as (keyof Notice)[]}
+        emptyState={
+          <div className="flex flex-col items-center py-8">
             <Bell className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No notices found</h3>
             <p className="text-muted-foreground text-center mb-4">
@@ -317,133 +396,9 @@ export default function NoticesPage() {
                 </Button>
               </Link>
             )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filteredNotices.map((notice) => {
-            const TypeIcon = typeConfig[notice.type]?.icon || Megaphone
-            const expired = isExpired(notice.expires_at)
-            const isActive = notice.is_active && !expired
-
-            return (
-              <Card
-                key={notice.id}
-                className={`transition-all ${!isActive ? "opacity-60" : ""}`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex flex-col md:flex-row md:items-start gap-4">
-                    {/* Icon */}
-                    <div className={`p-2 rounded-lg shrink-0 ${typeConfig[notice.type]?.bgColor || "bg-gray-100"}`}>
-                      <TypeIcon className={`h-5 w-5 ${typeConfig[notice.type]?.color || "text-gray-600"}`} />
-                    </div>
-
-                    {/* Main Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeConfig[notice.type]?.bgColor} ${typeConfig[notice.type]?.color}`}>
-                          {typeConfig[notice.type]?.label || notice.type}
-                        </span>
-                        {!isActive && (
-                          <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                            {expired ? "Expired" : "Inactive"}
-                          </span>
-                        )}
-                        {notice.property && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />
-                            {notice.property.name}
-                          </span>
-                        )}
-                      </div>
-
-                      <Link href={`/dashboard/notices/${notice.id}`}>
-                        <h3 className="font-semibold hover:text-primary transition-colors">
-                          {notice.title}
-                        </h3>
-                      </Link>
-
-                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                        {notice.content}
-                      </p>
-
-                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {audienceLabels[notice.target_audience] || notice.target_audience}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {getTimeAgo(notice.created_at)}
-                        </span>
-                        {notice.expires_at && (
-                          <span className={`flex items-center gap-1 ${expired ? "text-red-500" : ""}`}>
-                            <Clock className="h-3 w-3" />
-                            {expired ? "Expired" : `Expires ${formatDate(notice.expires_at)}`}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="relative">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setActionMenuOpen(actionMenuOpen === notice.id ? null : notice.id)}
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-
-                      {actionMenuOpen === notice.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setActionMenuOpen(null)}
-                          />
-                          <div className="absolute right-0 top-full mt-1 w-48 bg-popover border rounded-md shadow-lg z-20">
-                            <Link
-                              href={`/dashboard/notices/${notice.id}`}
-                              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
-                              onClick={() => setActionMenuOpen(null)}
-                            >
-                              <Edit className="h-4 w-4" />
-                              Edit Notice
-                            </Link>
-                            <button
-                              onClick={() => toggleActive(notice)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted transition-colors"
-                            >
-                              {notice.is_active ? (
-                                <>
-                                  <EyeOff className="h-4 w-4" />
-                                  Deactivate
-                                </>
-                              ) : (
-                                <>
-                                  <Eye className="h-4 w-4" />
-                                  Activate
-                                </>
-                              )}
-                            </button>
-                            <button
-                              onClick={() => deleteNotice(notice)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      )}
+          </div>
+        }
+      />
     </div>
   )
 }

@@ -22,8 +22,10 @@ import {
   Trash2,
   IndianRupee,
   Send,
-  MailCheck
+  MailCheck,
+  Cog
 } from "lucide-react"
+import { PageHeader } from "@/components/ui/page-header"
 import { toast } from "sonner"
 import { sendTestEmail } from "@/lib/email"
 
@@ -511,11 +513,11 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and preferences</p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description="Manage your account and preferences"
+        icon={Cog}
+      />
 
       {/* Tabs */}
       <div className="flex gap-2 border-b">

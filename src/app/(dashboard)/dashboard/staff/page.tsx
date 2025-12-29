@@ -4,17 +4,16 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import {
   Users,
   Plus,
-  Search,
   Loader2,
   Shield,
   Mail,
   Phone,
-  Building2,
   CheckCircle,
   XCircle,
   Settings,
@@ -77,7 +76,6 @@ export default function StaffPage() {
   const [loading, setLoading] = useState(true)
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [roles, setRoles] = useState<Role[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
 
   useEffect(() => {
@@ -109,7 +107,6 @@ export default function StaffPage() {
       console.error("Error fetching staff:", staffRes.error)
       toast.error("Failed to load staff members")
     } else {
-      // Transform the data from arrays to single objects
       const transformedData = ((staffRes.data as RawStaffMember[]) || []).map((member) => ({
         ...member,
         roles: (member.roles || []).map((userRole) => ({
@@ -128,7 +125,8 @@ export default function StaffPage() {
     setLoading(false)
   }
 
-  const handleToggleStatus = async (staffId: string, currentStatus: boolean) => {
+  const handleToggleStatus = async (e: React.MouseEvent, staffId: string, currentStatus: boolean) => {
+    e.stopPropagation()
     const supabase = createClient()
 
     const { error } = await supabase
@@ -145,23 +143,130 @@ export default function StaffPage() {
   }
 
   const filteredStaff = staff.filter((member) => {
-    const matchesSearch =
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (member.phone && member.phone.includes(searchQuery))
-
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && member.is_active) ||
-      (statusFilter === "inactive" && !member.is_active)
-
-    return matchesSearch && matchesStatus
+    if (statusFilter === "all") return true
+    if (statusFilter === "active") return member.is_active
+    if (statusFilter === "inactive") return !member.is_active
+    return true
   })
 
   // Stats
   const activeStaff = staff.filter((s) => s.is_active).length
   const inactiveStaff = staff.filter((s) => !s.is_active).length
   const totalRoles = roles.filter((r) => !r.is_system_role).length
+
+  const metricsItems: MetricItem[] = [
+    { label: "Total Staff", value: staff.length, icon: Users },
+    { label: "Active", value: activeStaff, icon: CheckCircle },
+    { label: "Inactive", value: inactiveStaff, icon: XCircle },
+    { label: "Custom Roles", value: totalRoles, icon: Shield },
+  ]
+
+  const columns: Column<StaffMember>[] = [
+    {
+      key: "name",
+      header: "Staff Member",
+      width: "220px",
+      render: (row) => (
+        <div className="flex items-center gap-3">
+          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${row.is_active ? "bg-primary/10" : "bg-gray-100"}`}>
+            <span className={`text-lg font-semibold ${row.is_active ? "text-primary" : "text-gray-500"}`}>
+              {row.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className={!row.is_active ? "opacity-60" : ""}>
+            <div className="font-medium flex items-center gap-2">
+              {row.name}
+              {!row.is_active && (
+                <TableBadge variant="muted">Inactive</TableBadge>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Mail className="h-3 w-3" />
+              {row.email}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "phone",
+      header: "Phone",
+      width: "130px",
+      hideOnMobile: true,
+      render: (row) => row.phone ? (
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Phone className="h-3 w-3" />
+          {row.phone}
+        </div>
+      ) : (
+        <span className="text-muted-foreground">-</span>
+      ),
+    },
+    {
+      key: "roles",
+      header: "Roles",
+      width: "180px",
+      render: (row) => (
+        <div className="flex flex-wrap gap-1">
+          {row.roles && row.roles.length > 0 ? (
+            row.roles.slice(0, 2).map((userRole) => (
+              <TableBadge key={userRole.id} variant="default">
+                {userRole.role?.name}
+              </TableBadge>
+            ))
+          ) : (
+            <span className="text-sm text-muted-foreground">No roles</span>
+          )}
+          {row.roles && row.roles.length > 2 && (
+            <TableBadge variant="muted">+{row.roles.length - 2}</TableBadge>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      width: "100px",
+      render: (row) => (
+        <StatusDot
+          status={row.is_active ? "success" : "muted"}
+          label={row.is_active ? "Active" : "Inactive"}
+        />
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      width: "180px",
+      render: (row) => (
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => handleToggleStatus(e, row.id, row.is_active)}
+          >
+            {row.is_active ? (
+              <>
+                <XCircle className="mr-1 h-3 w-3" />
+                Deactivate
+              </>
+            ) : (
+              <>
+                <CheckCircle className="mr-1 h-3 w-3" />
+                Activate
+              </>
+            )}
+          </Button>
+          <Link href={`/dashboard/staff/${row.id}`} onClick={(e) => e.stopPropagation()}>
+            <Button size="sm">
+              <Settings className="mr-1 h-3 w-3" />
+              Manage
+            </Button>
+          </Link>
+        </div>
+      ),
+    },
+  ]
 
   if (loading) {
     return (
@@ -173,114 +278,53 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Staff Management</h1>
-          <p className="text-muted-foreground">Manage staff members and their access</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/dashboard/staff/roles">
-            <Button variant="outline">
-              <Shield className="mr-2 h-4 w-4" />
-              Manage Roles
-            </Button>
-          </Link>
-          <Link href="/dashboard/staff/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Staff
-            </Button>
-          </Link>
-        </div>
+      <PageHeader
+        title="Staff Management"
+        description="Manage staff members and their access"
+        icon={UserCog}
+        actions={
+          <>
+            <Link href="/dashboard/staff/roles">
+              <Button variant="outline">
+                <Shield className="mr-2 h-4 w-4" />
+                Manage Roles
+              </Button>
+            </Link>
+            <Link href="/dashboard/staff/new">
+              <Button variant="gradient">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Staff
+              </Button>
+            </Link>
+          </>
+        }
+      />
+
+      <MetricsBar items={metricsItems} />
+
+      {/* Filter */}
+      <div className="flex flex-wrap gap-3">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[140px]"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{staff.length}</p>
-                <p className="text-xs text-muted-foreground">Total Staff</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{activeStaff}</p>
-                <p className="text-xs text-muted-foreground">Active</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <XCircle className="h-5 w-5 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{inactiveStaff}</p>
-                <p className="text-xs text-muted-foreground">Inactive</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Shield className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalRoles}</p>
-                <p className="text-xs text-muted-foreground">Custom Roles</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 px-3 rounded-md border border-input bg-background text-sm min-w-[140px]"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Staff List */}
-      {filteredStaff.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+      <DataTable
+        columns={columns}
+        data={filteredStaff}
+        keyField="id"
+        href={(row) => `/dashboard/staff/${row.id}`}
+        searchable
+        searchPlaceholder="Search by name, email, or phone..."
+        searchFields={["name", "email", "phone"] as (keyof StaffMember)[]}
+        emptyState={
+          <div className="flex flex-col items-center py-8">
             <UserCog className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No staff members found</h3>
             <p className="text-muted-foreground text-center mb-4">
@@ -296,97 +340,9 @@ export default function StaffPage() {
                 </Button>
               </Link>
             )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filteredStaff.map((member) => (
-            <Card key={member.id} className={!member.is_active ? "opacity-60" : ""}>
-              <CardContent className="p-4">
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  {/* Staff Info */}
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={`h-12 w-12 rounded-full flex items-center justify-center ${member.is_active ? "bg-primary/10" : "bg-gray-100"}`}>
-                      <span className={`text-lg font-semibold ${member.is_active ? "text-primary" : "text-gray-500"}`}>
-                        {member.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{member.name}</h3>
-                        {!member.is_active && (
-                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium">
-                            Inactive
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {member.email}
-                        </span>
-                        {member.phone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {member.phone}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Roles */}
-                  <div className="flex flex-wrap gap-2">
-                    {member.roles && member.roles.length > 0 ? (
-                      member.roles.map((userRole) => (
-                        <div key={userRole.id} className="flex items-center gap-1">
-                          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
-                            {userRole.role?.name}
-                          </span>
-                          {userRole.property && (
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                              {userRole.property.name}
-                            </span>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <span className="text-sm text-muted-foreground">No roles assigned</span>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleToggleStatus(member.id, member.is_active)}
-                    >
-                      {member.is_active ? (
-                        <>
-                          <XCircle className="mr-1 h-3 w-3" />
-                          Deactivate
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="mr-1 h-3 w-3" />
-                          Activate
-                        </>
-                      )}
-                    </Button>
-                    <Link href={`/dashboard/staff/${member.id}`}>
-                      <Button size="sm">
-                        <Settings className="mr-1 h-3 w-3" />
-                        Manage
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+          </div>
+        }
+      />
     </div>
   )
 }

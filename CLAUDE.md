@@ -206,6 +206,31 @@ vercel --prod
 
 ## Changelog
 
+### 2025-12-29 - Complete UI Unification (All Dashboard Pages)
+- **Problem Solved**: Unified UI across ALL dashboard pages for consistent design
+- **Pages Updated with MetricsBar + DataTable + PageHeader**:
+  - **Meter Readings**: Added PageHeader with Gauge icon, MetricsBar (This Month, Electricity, Water, Total kWh), DataTable with meter type icons, consumption indicators, property/room filters
+  - **Visitors**: Added PageHeader, MetricsBar (Currently Here, Today, Overnight, This Month), DataTable with check-in/check-out status, "Check Out" action button
+  - **Notices**: Added PageHeader, MetricsBar (Total, Active, Emergency, Expiring Soon), DataTable with type badges, action menu (Edit, Activate/Deactivate, Delete)
+  - **Complaints**: Added PageHeader, MetricsBar (Open, In Progress, Resolved, Urgent), DataTable with priority badges, status dots, category labels
+  - **Staff**: Added PageHeader, MetricsBar (Total Staff, Active, Inactive, Custom Roles), DataTable with role badges, Activate/Deactivate buttons
+  - **Reports**: Added PageHeader with BarChart3 icon (kept existing charts and KPIs)
+  - **Settings**: Added PageHeader with Cog icon (kept existing tabbed interface)
+- **Design Consistency Achieved**:
+  - All 14 main dashboard pages now use unified components
+  - Consistent PageHeader with gradient icon across all pages
+  - MetricsBar replaces stat card grids
+  - DataTable replaces card lists with search, filters, and row actions
+  - Consistent button variants (gradient for primary, outline for secondary)
+- **Files Modified**:
+  - `/src/app/(dashboard)/dashboard/meter-readings/page.tsx`
+  - `/src/app/(dashboard)/dashboard/visitors/page.tsx`
+  - `/src/app/(dashboard)/dashboard/notices/page.tsx`
+  - `/src/app/(dashboard)/dashboard/complaints/page.tsx`
+  - `/src/app/(dashboard)/dashboard/staff/page.tsx`
+  - `/src/app/(dashboard)/dashboard/reports/page.tsx`
+  - `/src/app/(dashboard)/dashboard/settings/page.tsx`
+
 ### 2025-12-28 - Dashboard UI Cleanup (Box Overload Fix)
 - **Problem Solved**: Removed excessive card/box usage causing visual clutter
 - **New Reusable Components Created**:
