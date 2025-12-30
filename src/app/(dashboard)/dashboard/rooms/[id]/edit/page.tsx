@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Home, Loader2, Building2, Image } from "lucide-react"
-import { FileUpload } from "@/components/ui/file-upload"
+import { ArrowLeft, Home, Loader2, Building2 } from "lucide-react"
+import { PhotoGallery } from "@/components/forms"
 import { toast } from "sonner"
 
 interface Property {
@@ -354,52 +354,16 @@ export default function EditRoomPage() {
 
             {/* Room Photos Section */}
             <div className="border-t pt-4 mt-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Image className="h-4 w-4 text-muted-foreground" />
-                <h3 className="font-medium">Room Photos</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Add photos of the room (up to 8 photos)
-              </p>
-              <FileUpload
+              <PhotoGallery
+                photos={formData.photos}
+                onChange={(photos) => setFormData(prev => ({ ...prev, photos }))}
+                label="Room Photos"
+                description="Add photos of the room (up to 8 photos)"
+                maxPhotos={8}
                 bucket="room-photos"
                 folder="rooms"
-                value={formData.photos}
-                onChange={(urls) => {
-                  const urlArr = Array.isArray(urls) ? urls : urls ? [urls] : []
-                  setFormData(prev => ({
-                    ...prev,
-                    photos: urlArr.slice(0, 8)
-                  }))
-                }}
-                multiple
-                accept="image/*"
+                disabled={loading}
               />
-              {formData.photos.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {formData.photos.map((photo, idx) => (
-                    <div key={idx} className="relative">
-                      <img
-                        src={photo}
-                        alt={`Room photo ${idx + 1}`}
-                        className="w-20 h-20 object-cover rounded-lg border"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            photos: prev.photos.filter((_, i) => i !== idx)
-                          }))
-                        }}
-                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
