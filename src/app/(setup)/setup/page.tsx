@@ -130,6 +130,56 @@ export default function SetupPage() {
         throw propertyError
       }
 
+      // Step 4: Create workspace for the owner (unified identity system)
+      const workspaceName = businessName || propertyName || "My PG Business"
+      const { data: workspace, error: workspaceError } = await supabase
+        .from("workspaces")
+        .insert({
+          owner_user_id: user.id,
+          name: workspaceName,
+          slug: workspaceName.toLowerCase().replace(/\s+/g, '-') + '-' + user.id.substring(0, 8),
+        })
+        .select()
+        .single()
+
+      if (workspaceError) {
+        console.error("Workspace creation error:", workspaceError)
+        // Non-fatal - might already exist
+      }
+
+      // Step 5: Create owner context if workspace was created
+      if (workspace) {
+        const { error: contextError } = await supabase
+          .from("user_contexts")
+          .insert({
+            user_id: user.id,
+            workspace_id: workspace.id,
+            context_type: "owner",
+            is_active: true,
+            is_default: true,
+            accepted_at: new Date().toISOString(),
+          })
+
+        if (contextError) {
+          console.error("Context creation error:", contextError)
+          // Non-fatal
+        }
+      }
+
+      // Step 6: Update user profile if needed
+      const { error: profileError } = await supabase
+        .from("user_profiles")
+        .upsert({
+          user_id: user.id,
+          name: userName || user.email?.split("@")[0] || "User",
+          email: user.email,
+        }, { onConflict: "user_id" })
+
+      if (profileError) {
+        console.error("Profile update error:", profileError)
+        // Non-fatal
+      }
+
       toast.success("Setup complete! Welcome to PG Manager!")
       router.push("/dashboard")
       router.refresh()
