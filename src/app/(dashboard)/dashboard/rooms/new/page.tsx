@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Home, Loader2, Building2, Info } from "lucide-react"
+import { ArrowLeft, Home, Loader2, Building2, Info, Image } from "lucide-react"
+import { FileUpload } from "@/components/ui/file-upload"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
 
@@ -76,6 +77,8 @@ export default function NewRoomPage() {
     has_wardrobe: false,
     has_study_table: false,
     has_refrigerator: false,
+    // Photos
+    photos: [] as string[],
   })
 
   useEffect(() => {
@@ -188,6 +191,7 @@ export default function NewRoomPage() {
         has_ac: formData.has_ac,
         has_attached_bathroom: formData.has_attached_bathroom,
         amenities: amenities,
+        photos: formData.photos.length > 0 ? formData.photos : null,
       })
 
       if (error) {
@@ -438,6 +442,56 @@ export default function NewRoomPage() {
               <p className="text-xs text-muted-foreground mt-2">
                 Configure available amenities in Settings → Default Settings
               </p>
+            </div>
+
+            {/* Room Photos Section */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Image className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-medium">Room Photos</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Add photos of the room (up to 8 photos)
+              </p>
+              <FileUpload
+                bucket="room-photos"
+                folder="rooms"
+                value={formData.photos}
+                onChange={(urls) => {
+                  const urlArr = Array.isArray(urls) ? urls : urls ? [urls] : []
+                  setFormData(prev => ({
+                    ...prev,
+                    photos: urlArr.slice(0, 8)
+                  }))
+                }}
+                multiple
+                accept="image/*"
+              />
+              {formData.photos.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {formData.photos.map((photo, idx) => (
+                    <div key={idx} className="relative">
+                      <img
+                        src={photo}
+                        alt={`Room photo ${idx + 1}`}
+                        className="w-20 h-20 object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            photos: prev.photos.filter((_, i) => i !== idx)
+                          }))
+                        }}
+                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

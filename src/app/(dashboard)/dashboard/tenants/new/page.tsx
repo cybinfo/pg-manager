@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ProfilePhotoUpload } from "@/components/ui/file-upload"
+import { ProfilePhotoUpload, FileUpload } from "@/components/ui/file-upload"
 import {
   ArrowLeft, Users, Loader2, Building2, Home, UserCheck, RefreshCw,
   Phone, Mail, MapPin, Plus, Trash2, Contact, FileText
@@ -75,13 +75,21 @@ interface GuardianContact {
   is_primary: boolean
 }
 
+interface IdDocument {
+  type: string
+  number: string
+  file_urls: string[]
+}
+
 const defaultPhone: PhoneEntry = { number: "", type: "primary", is_primary: true, is_whatsapp: true }
 const defaultEmail: EmailEntry = { email: "", type: "primary", is_primary: true }
 const defaultAddress: AddressEntry = { type: "Permanent", line1: "", line2: "", city: "", state: "", zip: "", is_primary: true }
 const defaultGuardian: GuardianContact = { name: "", relation: "Parent", phone: "", email: "", is_primary: true }
+const defaultIdDocument: IdDocument = { type: "Aadhaar", number: "", file_urls: [] }
 
 const addressTypes = ["Permanent", "Current", "Office", "Native", "Other"]
 const relationTypes = ["Parent", "Guardian", "Spouse", "Sibling", "Other"]
+const idDocumentTypes = ["Aadhaar", "PAN Card", "Passport", "Driving License", "Voter ID", "Other"]
 
 export default function NewTenantPage() {
   const router = useRouter()
@@ -113,6 +121,7 @@ export default function NewTenantPage() {
   const [emails, setEmails] = useState<EmailEntry[]>([{ ...defaultEmail }])
   const [addresses, setAddresses] = useState<AddressEntry[]>([{ ...defaultAddress }])
   const [guardians, setGuardians] = useState<GuardianContact[]>([{ ...defaultGuardian }])
+  const [idDocuments, setIdDocuments] = useState<IdDocument[]>([{ ...defaultIdDocument }])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -292,6 +301,41 @@ export default function NewTenantPage() {
     }
   }
 
+  // ID Document handlers
+  const updateIdDocument = (index: number, field: keyof IdDocument, value: string | string[]) => {
+    const updated = [...idDocuments]
+    updated[index] = { ...updated[index], [field]: value }
+    setIdDocuments(updated)
+  }
+
+  const addIdDocument = () => {
+    setIdDocuments([...idDocuments, { ...defaultIdDocument, type: "PAN Card" }])
+  }
+
+  const removeIdDocument = (index: number) => {
+    if (idDocuments.length > 1) {
+      setIdDocuments(idDocuments.filter((_, i) => i !== index))
+    }
+  }
+
+  const addDocumentFiles = (index: number, urls: string[]) => {
+    const updated = [...idDocuments]
+    updated[index] = {
+      ...updated[index],
+      file_urls: [...updated[index].file_urls, ...urls].slice(0, 5) // Max 5 files per document
+    }
+    setIdDocuments(updated)
+  }
+
+  const removeDocumentFile = (docIndex: number, fileIndex: number) => {
+    const updated = [...idDocuments]
+    updated[docIndex] = {
+      ...updated[docIndex],
+      file_urls: updated[docIndex].file_urls.filter((_, i) => i !== fileIndex)
+    }
+    setIdDocuments(updated)
+  }
+
   // Check for returning tenant
   const checkReturningTenant = async (phone: string) => {
     if (phone.length < 10) {
@@ -469,8 +513,11 @@ export default function NewTenantPage() {
       if (primaryGuardian?.phone) customFields.parent_phone = primaryGuardian.phone
       const primaryAddress = addresses.find(a => a.is_primary) || addresses[0]
       if (primaryAddress?.line1) customFields.permanent_address = [primaryAddress.line1, primaryAddress.line2, primaryAddress.city, primaryAddress.state, primaryAddress.zip].filter(Boolean).join(", ")
-      if (formData.id_proof_type) customFields.id_proof_type = formData.id_proof_type
-      if (formData.id_proof_number) customFields.id_proof_number = formData.id_proof_number
+
+      // Use first ID document for backwards compatibility
+      const primaryIdDoc = idDocuments.find(d => d.number.trim()) || idDocuments[0]
+      if (primaryIdDoc?.type) customFields.id_proof_type = primaryIdDoc.type
+      if (primaryIdDoc?.number) customFields.id_proof_number = primaryIdDoc.number
 
       // Filter out empty entries
       const validPhones = phones.filter(p => p.number.trim())
@@ -575,6 +622,31 @@ export default function NewTenantPage() {
       }
 
       debugLog("Tenant created successfully", newTenant)
+
+      // Save ID documents with uploaded files
+      if (newTenant) {
+        const validIdDocs = idDocuments.filter(d => d.number.trim() || d.file_urls.length > 0)
+        if (validIdDocs.length > 0) {
+          debugLog("Saving ID documents", validIdDocs)
+
+          const docInserts = validIdDocs.map(doc => ({
+            tenant_id: newTenant.id,
+            document_type: doc.type.toLowerCase().replace(/\s+/g, "_"),
+            document_number: doc.number || null,
+            document_name: doc.type,
+            file_urls: doc.file_urls.length > 0 ? doc.file_urls : null,
+            verified: false,
+          }))
+
+          const { error: docError } = await supabase.from("tenant_documents").insert(docInserts)
+          if (docError) {
+            console.warn("Warning: Failed to save ID documents:", docError)
+            // Don't fail the whole operation, just warn
+          } else {
+            debugLog("ID documents saved successfully", docInserts.length)
+          }
+        }
+      }
 
       // Create tenant stay record
       if (newTenant) {
@@ -1119,7 +1191,7 @@ export default function NewTenantPage() {
           </CardContent>
         </Card>
 
-        {/* ID Proof */}
+        {/* ID Documents */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -1127,46 +1199,97 @@ export default function NewTenantPage() {
                 <FileText className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>ID Proof</CardTitle>
-                <CardDescription>Identity verification document</CardDescription>
+                <CardTitle>ID Documents</CardTitle>
+                <CardDescription>Identity verification documents with upload</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="id_proof_type">ID Type</Label>
-                <select
-                  id="id_proof_type"
-                  name="id_proof_type"
-                  value={formData.id_proof_type}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  disabled={loading}
-                >
-                  <option value="">Select ID type</option>
-                  <option value="Aadhaar">Aadhaar</option>
-                  <option value="PAN">PAN Card</option>
-                  <option value="Passport">Passport</option>
-                  <option value="Driving License">Driving License</option>
-                  <option value="Voter ID">Voter ID</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="id_proof_number">ID Number</Label>
-                <Input
-                  id="id_proof_number"
-                  name="id_proof_number"
-                  placeholder="e.g., XXXX-XXXX-XXXX"
-                  value={formData.id_proof_number}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-              </div>
+            <div className="flex items-center justify-between">
+              <Label>Documents</Label>
+              <Button type="button" variant="ghost" size="sm" onClick={addIdDocument} disabled={loading}>
+                <Plus className="h-4 w-4 mr-1" /> Add Document
+              </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              You can upload document images from the tenant detail page after adding the tenant.
-            </p>
+            {idDocuments.map((doc, index) => (
+              <div key={index} className="p-4 border rounded-lg space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Document {index + 1}</span>
+                  {idDocuments.length > 1 && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => removeIdDocument(index)} disabled={loading}>
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>ID Type</Label>
+                    <select
+                      value={doc.type}
+                      onChange={(e) => updateIdDocument(index, "type", e.target.value)}
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                      disabled={loading}
+                    >
+                      {idDocumentTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>ID Number</Label>
+                    <Input
+                      placeholder="e.g., XXXX-XXXX-XXXX"
+                      value={doc.number}
+                      onChange={(e) => updateIdDocument(index, "number", e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+
+                {/* File Upload Section */}
+                <div className="space-y-2">
+                  <Label>Upload Document Images</Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Upload photos of the document (front & back). Max 5 files per document.
+                  </p>
+                  <FileUpload
+                    bucket="tenant-documents"
+                    folder={`docs/${doc.type.toLowerCase().replace(/\s+/g, "-")}`}
+                    value={doc.file_urls}
+                    onChange={(urls) => {
+                      const urlArr = Array.isArray(urls) ? urls : urls ? [urls] : []
+                      updateIdDocument(index, "file_urls", urlArr.slice(0, 5))
+                    }}
+                    multiple
+                    accept="image/*,.pdf"
+                  />
+                  {doc.file_urls.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {doc.file_urls.map((url, fileIdx) => (
+                        <div key={fileIdx} className="relative group">
+                          {url.endsWith(".pdf") ? (
+                            <div className="w-20 h-20 bg-muted rounded-lg border flex items-center justify-center">
+                              <FileText className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          ) : (
+                            <img
+                              src={url}
+                              alt={`${doc.type} ${fileIdx + 1}`}
+                              className="w-20 h-20 object-cover rounded-lg border"
+                            />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeDocumentFile(index, fileIdx)}
+                            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
