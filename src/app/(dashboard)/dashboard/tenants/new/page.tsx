@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ProfilePhotoUpload, FileUpload } from "@/components/ui/file-upload"
 import {
   ArrowLeft, Users, Loader2, Building2, Home, UserCheck, RefreshCw,
-  Phone, Mail, MapPin, Plus, Trash2, Contact, FileText
+  Phone, Mail, MapPin, Plus, Trash2, Contact, FileText, Shield
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
@@ -111,9 +111,10 @@ export default function NewTenantPage() {
     monthly_rent: "",
     security_deposit: "",
     profile_photo: "",
-    // ID Proof (basic - can add more via documents table later)
-    id_proof_type: "",
-    id_proof_number: "",
+    // Status & Verification
+    police_verification_status: "pending",
+    agreement_signed: false,
+    notes: "",
   })
 
   // Multiple entries
@@ -197,9 +198,10 @@ export default function NewTenantPage() {
   }, [formData.room_id, rooms])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }))
   }
 
@@ -540,6 +542,9 @@ export default function NewTenantPage() {
         security_deposit: parseFloat(formData.security_deposit) || 0,
         custom_fields: Object.keys(customFields).length > 0 ? customFields : {},
         profile_photo: formData.profile_photo || null,
+        police_verification_status: formData.police_verification_status,
+        agreement_signed: formData.agreement_signed,
+        notes: formData.notes || null,
         // New JSONB fields
         phone_numbers: validPhones.length > 0 ? validPhones : null,
         emails: validEmails.length > 0 ? validEmails : null,
@@ -732,7 +737,7 @@ export default function NewTenantPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/dashboard/tenants">
@@ -762,34 +767,28 @@ export default function NewTenantPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-6">
-              {/* Profile Photo */}
-              <div className="shrink-0">
-                <Label className="text-sm mb-2 block">Profile Photo</Label>
+            <div className="flex items-start gap-6">
+              <div className="space-y-2">
+                <Label>Profile Photo</Label>
                 <ProfilePhotoUpload
                   bucket="tenant-photos"
                   folder="profiles"
                   value={formData.profile_photo}
                   onChange={(url) => setFormData(prev => ({ ...prev, profile_photo: url }))}
                   size="lg"
-                  disabled={loading}
                 />
               </div>
-
-              {/* Name */}
-              <div className="flex-1 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    placeholder="e.g., Rahul Sharma"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    disabled={loading}
-                  />
-                </div>
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="name">Full Name *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="e.g., Rahul Sharma"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
               </div>
             </div>
 
@@ -847,93 +846,99 @@ export default function NewTenantPage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
             {/* Phone Numbers */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>Phone Numbers *</Label>
-                <Button type="button" variant="ghost" size="sm" onClick={addPhone} disabled={loading}>
-                  <Plus className="h-4 w-4 mr-1" /> Add Phone
+                <Label className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Phone Numbers *
+                </Label>
+                <Button type="button" variant="ghost" size="sm" onClick={addPhone}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Phone
                 </Button>
               </div>
               {phones.map((phone, index) => (
-                <div key={index} className="flex gap-2 items-start">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Input
-                        type="tel"
-                        placeholder="e.g., 9876543210"
-                        value={phone.number}
-                        onChange={(e) => handlePhoneChange(index, e.target.value)}
-                        disabled={loading}
-                        className="pr-20"
-                      />
-                      {index === 0 && checkingPhone && (
-                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                      )}
-                    </div>
+                <div key={index} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
+                  <div className="flex-1 relative">
+                    <Input
+                      type="tel"
+                      placeholder="e.g., 9876543210"
+                      value={phone.number}
+                      onChange={(e) => handlePhoneChange(index, e.target.value)}
+                      disabled={loading}
+                    />
+                    {index === 0 && checkingPhone && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
                   </div>
-                  <select
-                    value={phone.type}
-                    onChange={(e) => updatePhone(index, "type", e.target.value)}
-                    className="h-10 px-2 rounded-md border border-input bg-background text-sm w-28"
-                    disabled={loading}
-                  >
-                    <option value="primary">Primary</option>
-                    <option value="secondary">Secondary</option>
-                    <option value="work">Work</option>
-                  </select>
                   <label className="flex items-center gap-1 text-sm whitespace-nowrap">
                     <input
                       type="checkbox"
                       checked={phone.is_whatsapp}
                       onChange={(e) => updatePhone(index, "is_whatsapp", e.target.checked)}
-                      disabled={loading}
                       className="h-4 w-4"
+                      disabled={loading}
                     />
                     WhatsApp
                   </label>
+                  <label className="flex items-center gap-1 text-sm whitespace-nowrap">
+                    <input
+                      type="radio"
+                      name="primaryPhone"
+                      checked={phone.is_primary}
+                      onChange={() => updatePhone(index, "is_primary", true)}
+                      className="h-4 w-4"
+                      disabled={loading}
+                    />
+                    Primary
+                  </label>
                   {phones.length > 1 && (
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removePhone(index)} disabled={loading}>
-                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removePhone(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   )}
                 </div>
               ))}
             </div>
 
-            {/* Emails */}
-            <div className="space-y-3">
+            {/* Email Addresses */}
+            <div className="space-y-3 border-t pt-4">
               <div className="flex items-center justify-between">
-                <Label>Email Addresses</Label>
-                <Button type="button" variant="ghost" size="sm" onClick={addEmail} disabled={loading}>
-                  <Plus className="h-4 w-4 mr-1" /> Add Email
+                <Label className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Addresses
+                </Label>
+                <Button type="button" variant="ghost" size="sm" onClick={addEmail}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Email
                 </Button>
               </div>
               {emails.map((email, index) => (
-                <div key={index} className="flex gap-2 items-center">
-                  <div className="flex-1">
-                    <Input
-                      type="email"
-                      placeholder="e.g., rahul@example.com"
-                      value={email.email}
-                      onChange={(e) => updateEmail(index, "email", e.target.value)}
+                <div key={index} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
+                  <Input
+                    type="email"
+                    placeholder="e.g., tenant@example.com"
+                    value={email.email}
+                    onChange={(e) => updateEmail(index, "email", e.target.value)}
+                    className="flex-1"
+                    disabled={loading}
+                  />
+                  <label className="flex items-center gap-1 text-sm whitespace-nowrap">
+                    <input
+                      type="radio"
+                      name="primaryEmail"
+                      checked={email.is_primary}
+                      onChange={() => updateEmail(index, "is_primary", true)}
+                      className="h-4 w-4"
                       disabled={loading}
                     />
-                  </div>
-                  <select
-                    value={email.type}
-                    onChange={(e) => updateEmail(index, "type", e.target.value)}
-                    className="h-10 px-2 rounded-md border border-input bg-background text-sm w-28"
-                    disabled={loading}
-                  >
-                    <option value="primary">Primary</option>
-                    <option value="work">Work</option>
-                    <option value="other">Other</option>
-                  </select>
+                    Primary
+                  </label>
                   {emails.length > 1 && (
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeEmail(index)} disabled={loading}>
-                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeEmail(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   )}
                 </div>
@@ -942,7 +947,7 @@ export default function NewTenantPage() {
           </CardContent>
         </Card>
 
-        {/* Guardian Contacts */}
+        {/* Guardian/Parent Contacts */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -951,42 +956,56 @@ export default function NewTenantPage() {
               </div>
               <div>
                 <CardTitle>Guardian/Parent Contacts</CardTitle>
-                <CardDescription>Emergency contacts for the tenant</CardDescription>
+                <CardDescription>Emergency contacts and guardians</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Contacts</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={addGuardian} disabled={loading}>
-                <Plus className="h-4 w-4 mr-1" /> Add Contact
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <Label>Guardians</Label>
+              <Button type="button" variant="ghost" size="sm" onClick={addGuardian}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add Guardian
               </Button>
             </div>
             {guardians.map((guardian, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Contact {index + 1}</span>
-                  {guardians.length > 1 && (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeGuardian(index)} disabled={loading}>
-                      <Trash2 className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
+              <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-3">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={guardian.relation}
+                    onChange={(e) => updateGuardian(index, "relation", e.target.value)}
+                    className="h-10 px-3 rounded-md border bg-background text-sm"
+                    disabled={loading}
+                  >
+                    {relationTypes.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
                   <Input
                     placeholder="Name"
                     value={guardian.name}
                     onChange={(e) => updateGuardian(index, "name", e.target.value)}
+                    className="flex-1"
                     disabled={loading}
                   />
-                  <select
-                    value={guardian.relation}
-                    onChange={(e) => updateGuardian(index, "relation", e.target.value)}
-                    className="h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    disabled={loading}
-                  >
-                    {relationTypes.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
+                  <label className="flex items-center gap-1 text-sm whitespace-nowrap">
+                    <input
+                      type="radio"
+                      name="primaryGuardian"
+                      checked={guardian.is_primary}
+                      onChange={() => updateGuardian(index, "is_primary", true)}
+                      className="h-4 w-4"
+                      disabled={loading}
+                    />
+                    Primary
+                  </label>
+                  {guardians.length > 1 && (
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeGuardian(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
                   <Input
                     type="tel"
                     placeholder="Phone"
@@ -1016,31 +1035,45 @@ export default function NewTenantPage() {
               </div>
               <div>
                 <CardTitle>Addresses</CardTitle>
-                <CardDescription>Permanent and current addresses</CardDescription>
+                <CardDescription>Permanent and other addresses</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Addresses</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={addAddress} disabled={loading}>
-                <Plus className="h-4 w-4 mr-1" /> Add Address
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <Label>Address List</Label>
+              <Button type="button" variant="ghost" size="sm" onClick={addAddress}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add Address
               </Button>
             </div>
             {addresses.map((address, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-3">
-                <div className="flex items-center justify-between">
+              <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-3">
+                <div className="flex items-center gap-2">
                   <select
                     value={address.type}
                     onChange={(e) => updateAddress(index, "type", e.target.value)}
-                    className="h-9 px-3 rounded-md border border-input bg-background text-sm"
+                    className="h-10 px-3 rounded-md border bg-background text-sm"
                     disabled={loading}
                   >
-                    {addressTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                    {addressTypes.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
                   </select>
+                  <label className="flex items-center gap-1 text-sm whitespace-nowrap ml-auto">
+                    <input
+                      type="radio"
+                      name="primaryAddress"
+                      checked={address.is_primary}
+                      onChange={() => updateAddress(index, "is_primary", true)}
+                      className="h-4 w-4"
+                      disabled={loading}
+                    />
+                    Primary
+                  </label>
                   {addresses.length > 1 && (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeAddress(index)} disabled={loading}>
-                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeAddress(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   )}
                 </div>
@@ -1056,7 +1089,7 @@ export default function NewTenantPage() {
                   onChange={(e) => updateAddress(index, "line2", e.target.value)}
                   disabled={loading}
                 />
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <Input
                     placeholder="City"
                     value={address.city}
@@ -1070,7 +1103,7 @@ export default function NewTenantPage() {
                     disabled={loading}
                   />
                   <Input
-                    placeholder="ZIP Code"
+                    placeholder="PIN Code"
                     value={address.zip}
                     onChange={(e) => updateAddress(index, "zip", e.target.value)}
                     disabled={loading}
@@ -1200,59 +1233,49 @@ export default function NewTenantPage() {
               </div>
               <div>
                 <CardTitle>ID Documents</CardTitle>
-                <CardDescription>Identity verification documents with upload</CardDescription>
+                <CardDescription>Identity proofs and documents</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between mb-2">
               <Label>Documents</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={addIdDocument} disabled={loading}>
-                <Plus className="h-4 w-4 mr-1" /> Add Document
+              <Button type="button" variant="ghost" size="sm" onClick={addIdDocument}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add Document
               </Button>
             </div>
             {idDocuments.map((doc, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Document {index + 1}</span>
+              <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-3">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={doc.type}
+                    onChange={(e) => updateIdDocument(index, "type", e.target.value)}
+                    className="h-10 px-3 rounded-md border bg-background text-sm"
+                    disabled={loading}
+                  >
+                    {idDocumentTypes.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  <Input
+                    placeholder="Document Number (e.g., XXXX-XXXX-XXXX)"
+                    value={doc.number}
+                    onChange={(e) => updateIdDocument(index, "number", e.target.value)}
+                    className="flex-1"
+                    disabled={loading}
+                  />
                   {idDocuments.length > 1 && (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeIdDocument(index)} disabled={loading}>
-                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeIdDocument(index)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>ID Type</Label>
-                    <select
-                      value={doc.type}
-                      onChange={(e) => updateIdDocument(index, "type", e.target.value)}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                      disabled={loading}
-                    >
-                      {idDocumentTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>ID Number</Label>
-                    <Input
-                      placeholder="e.g., XXXX-XXXX-XXXX"
-                      value={doc.number}
-                      onChange={(e) => updateIdDocument(index, "number", e.target.value)}
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-
-                {/* File Upload Section */}
                 <div className="space-y-2">
-                  <Label>Upload Document Images</Label>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Upload photos of the document (front & back). Max 5 files per document.
-                  </p>
+                  <Label className="text-sm">Upload Document (optional)</Label>
                   <FileUpload
                     bucket="tenant-documents"
-                    folder={`docs/${doc.type.toLowerCase().replace(/\s+/g, "-")}`}
+                    folder={`id-docs/${doc.type.toLowerCase().replace(/ /g, "-")}`}
                     value={doc.file_urls}
                     onChange={(urls) => {
                       const urlArr = Array.isArray(urls) ? urls : urls ? [urls] : []
@@ -1262,18 +1285,18 @@ export default function NewTenantPage() {
                     accept="image/*,.pdf"
                   />
                   {doc.file_urls.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 mt-2">
                       {doc.file_urls.map((url, fileIdx) => (
                         <div key={fileIdx} className="relative group">
-                          {url.endsWith(".pdf") ? (
-                            <div className="w-20 h-20 bg-muted rounded-lg border flex items-center justify-center">
-                              <FileText className="h-8 w-8 text-muted-foreground" />
+                          {url.toLowerCase().endsWith(".pdf") ? (
+                            <div className="w-16 h-16 rounded-lg border bg-muted flex items-center justify-center">
+                              <FileText className="h-6 w-6 text-muted-foreground" />
                             </div>
                           ) : (
                             <img
                               src={url}
                               alt={`${doc.type} ${fileIdx + 1}`}
-                              className="w-20 h-20 object-cover rounded-lg border"
+                              className="w-16 h-16 object-cover rounded-lg border"
                             />
                           )}
                           <button
@@ -1290,6 +1313,83 @@ export default function NewTenantPage() {
                 </div>
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        {/* Status & Verification */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Shield className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Status & Verification</CardTitle>
+                <CardDescription>Tenant status and documents</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="police_verification_status">Police Verification</Label>
+              <select
+                id="police_verification_status"
+                name="police_verification_status"
+                value={formData.police_verification_status}
+                onChange={handleChange}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                disabled={loading}
+              >
+                <option value="pending">Pending</option>
+                <option value="submitted">Submitted</option>
+                <option value="verified">Verified</option>
+                <option value="na">N/A</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                id="agreement_signed"
+                name="agreement_signed"
+                type="checkbox"
+                checked={formData.agreement_signed}
+                onChange={handleChange}
+                disabled={loading}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="agreement_signed" className="font-normal cursor-pointer">
+                Agreement signed
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notes */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Additional Notes</CardTitle>
+                <CardDescription>Any other important information</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <textarea
+                id="notes"
+                name="notes"
+                placeholder="Any additional notes about the tenant..."
+                value={formData.notes}
+                onChange={handleChange}
+                disabled={loading}
+                className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+              />
+            </div>
           </CardContent>
         </Card>
 
