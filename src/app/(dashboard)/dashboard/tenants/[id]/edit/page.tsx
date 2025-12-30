@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ProfilePhotoUpload, FileUpload } from "@/components/ui/file-upload"
+import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { ArrowLeft, Users, Loader2, Building2, Home, Shield, FileText, Phone, Mail, MapPin, Contact, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -18,7 +18,7 @@ import {
   EmailData, DEFAULT_EMAIL,
   AddressData, ADDRESS_TYPES,
   GuardianData, RELATION_TYPES, DEFAULT_GUARDIAN,
-  IdDocumentData, ID_DOCUMENT_TYPES, DEFAULT_ID_DOCUMENT,
+  IdDocumentEntry, IdDocumentData, ID_DOCUMENT_TYPES, DEFAULT_ID_DOCUMENT,
 } from "@/components/forms"
 
 interface Property {
@@ -946,72 +946,15 @@ export default function EditTenantPage() {
               </Button>
             </div>
             {idDocuments.map((doc, index) => (
-              <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-3">
-                <div className="flex items-center gap-2">
-                  <select
-                    value={doc.type}
-                    onChange={(e) => updateIdDocument(index, "type", e.target.value)}
-                    className="h-10 px-3 rounded-md border bg-background text-sm"
-                    disabled={loading}
-                  >
-                    {ID_DOCUMENT_TYPES.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                  <Input
-                    placeholder="Document Number (e.g., XXXX-XXXX-XXXX)"
-                    value={doc.number}
-                    onChange={(e) => updateIdDocument(index, "number", e.target.value)}
-                    className="flex-1"
-                    disabled={loading}
-                  />
-                  {idDocuments.length > 1 && (
-                    <Button type="button" variant="ghost" size="icon" onClick={() => removeIdDocument(index)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm">Upload Document (optional)</Label>
-                  <FileUpload
-                    bucket="tenant-documents"
-                    folder={`id-docs/${doc.type.toLowerCase().replace(/ /g, "-")}`}
-                    value={doc.file_urls}
-                    onChange={(urls) => {
-                      const urlArr = Array.isArray(urls) ? urls : urls ? [urls] : []
-                      updateIdDocument(index, "file_urls", urlArr.slice(0, 5))
-                    }}
-                    multiple
-                    accept="image/*,.pdf"
-                  />
-                  {doc.file_urls.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {doc.file_urls.map((url, fileIdx) => (
-                        <div key={fileIdx} className="relative group">
-                          {url.toLowerCase().endsWith(".pdf") ? (
-                            <div className="w-16 h-16 rounded-lg border bg-muted flex items-center justify-center">
-                              <FileText className="h-6 w-6 text-muted-foreground" />
-                            </div>
-                          ) : (
-                            <img
-                              src={url}
-                              alt={`${doc.type} ${fileIdx + 1}`}
-                              className="w-16 h-16 object-cover rounded-lg border"
-                            />
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => removeDocumentFile(index, fileIdx)}
-                            className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <IdDocumentEntry
+                key={index}
+                value={doc}
+                onChange={(field, value) => updateIdDocument(index, field, value)}
+                onRemove={idDocuments.length > 1 ? () => removeIdDocument(index) : undefined}
+                onRemoveFile={(fileIdx) => removeDocumentFile(index, fileIdx)}
+                showRemove={idDocuments.length > 1}
+                disabled={loading}
+              />
             ))}
           </CardContent>
         </Card>
