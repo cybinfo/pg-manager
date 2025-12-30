@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileUpload } from "@/components/ui/file-upload"
 import {
   ArrowLeft,
   Building2,
@@ -19,10 +18,12 @@ import {
   CheckCircle,
   X,
   Plus,
-  Sparkles,
-  Image
+  Sparkles
 } from "lucide-react"
 import { toast } from "sonner"
+
+// Shared form components
+import { PropertyAddressInput, CoverImageUpload, PhotoGallery } from "@/components/forms"
 
 interface WebsiteConfig {
   tagline: string
@@ -363,139 +364,39 @@ export default function EditPropertyPage() {
                 />
               </div>
 
-              {/* Address Section - Unified style matching tenant address */}
-              <div className="space-y-3">
-                <Label>Property Address</Label>
-                <div className="p-3 border rounded-lg bg-muted/30 space-y-3">
-                  <Input
-                    name="address_line1"
-                    placeholder="Address Line 1"
-                    value={formData.address_line1}
-                    onChange={handleChange}
-                    disabled={loading}
-                  />
-                  <Input
-                    name="address_line2"
-                    placeholder="Address Line 2 (optional)"
-                    value={formData.address_line2}
-                    onChange={handleChange}
-                    disabled={loading}
-                  />
-                  <div className="grid grid-cols-3 gap-2">
-                    <Input
-                      name="city"
-                      placeholder="City *"
-                      value={formData.city}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                    />
-                    <Input
-                      name="state"
-                      placeholder="State"
-                      value={formData.state}
-                      onChange={handleChange}
-                      disabled={loading}
-                    />
-                    <Input
-                      name="pincode"
-                      placeholder="PIN Code"
-                      value={formData.pincode}
-                      onChange={handleChange}
-                      disabled={loading}
-                      maxLength={6}
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Address Section - Using shared component */}
+              <PropertyAddressInput
+                line1={formData.address_line1}
+                line2={formData.address_line2}
+                city={formData.city}
+                state={formData.state}
+                pincode={formData.pincode}
+                onChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+                disabled={loading}
+              />
 
-              {/* Property Photos Section */}
-              <div className="border-t pt-4 mt-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Image className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-medium">Property Photos</h3>
-                </div>
+              {/* Property Photos Section - Using shared components */}
+              <div className="border-t pt-4 mt-4 space-y-4">
+                <CoverImageUpload
+                  value={formData.cover_image}
+                  onChange={(url) => setFormData(prev => ({ ...prev, cover_image: url }))}
+                  label="Cover Image"
+                  description="Main photo shown in property listings"
+                  bucket="property-photos"
+                  folder="covers"
+                  disabled={loading}
+                />
 
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Cover Image</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Main photo shown in property listings
-                    </p>
-                    <FileUpload
-                      bucket="property-photos"
-                      folder="covers"
-                      value={formData.cover_image}
-                      onChange={(url) => {
-                        const urlStr = Array.isArray(url) ? url[0] : url
-                        setFormData(prev => ({ ...prev, cover_image: urlStr || "" }))
-                      }}
-                      accept="image/*"
-                    />
-                    {formData.cover_image && (
-                      <div className="mt-2 relative inline-block">
-                        <img
-                          src={formData.cover_image}
-                          alt="Cover preview"
-                          className="w-32 h-24 object-cover rounded-lg border"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, cover_image: "" }))}
-                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Gallery Photos</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Additional photos of the property (up to 10)
-                    </p>
-                    <FileUpload
-                      bucket="property-photos"
-                      folder="gallery"
-                      value={formData.photos}
-                      onChange={(urls) => {
-                        const urlArr = Array.isArray(urls) ? urls : urls ? [urls] : []
-                        setFormData(prev => ({
-                          ...prev,
-                          photos: urlArr.slice(0, 10)
-                        }))
-                      }}
-                      multiple
-                      accept="image/*"
-                    />
-                    {formData.photos.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {formData.photos.map((photo, idx) => (
-                          <div key={idx} className="relative">
-                            <img
-                              src={photo}
-                              alt={`Gallery ${idx + 1}`}
-                              className="w-20 h-20 object-cover rounded-lg border"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  photos: prev.photos.filter((_, i) => i !== idx)
-                                }))
-                              }}
-                              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <PhotoGallery
+                  photos={formData.photos}
+                  onChange={(photos) => setFormData(prev => ({ ...prev, photos }))}
+                  label="Gallery Photos"
+                  description="Additional photos of the property (up to 10)"
+                  maxPhotos={10}
+                  bucket="property-photos"
+                  folder="gallery"
+                  disabled={loading}
+                />
               </div>
 
               <div className="border-t pt-4 mt-4">

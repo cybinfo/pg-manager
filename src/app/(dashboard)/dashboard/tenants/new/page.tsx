@@ -17,6 +17,16 @@ import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-utils"
 
+// Shared form components
+import {
+  MultiEntryList,
+  PhoneEntry, PhoneData, DEFAULT_PHONE,
+  EmailEntry, EmailData, DEFAULT_EMAIL,
+  AddressInput, AddressData, ADDRESS_TYPES,
+  GuardianEntry, GuardianData, RELATION_TYPES, DEFAULT_GUARDIAN,
+  IdDocumentEntry, IdDocumentData, ID_DOCUMENT_TYPES, DEFAULT_ID_DOCUMENT,
+} from "@/components/forms"
+
 interface Property {
   id: string
   name: string
@@ -44,52 +54,11 @@ interface ReturningTenant {
   custom_fields: Record<string, string>
 }
 
-interface PhoneEntry {
-  number: string
-  type: string
-  is_primary: boolean
-  is_whatsapp: boolean
-}
-
-interface EmailEntry {
-  email: string
-  type: string
-  is_primary: boolean
-}
-
-interface AddressEntry {
-  type: string
-  line1: string
-  line2: string
-  city: string
-  state: string
+// Extended address type with zip alias for pincode
+interface TenantAddress extends Omit<AddressData, 'pincode'> {
   zip: string
   is_primary: boolean
 }
-
-interface GuardianContact {
-  name: string
-  relation: string
-  phone: string
-  email: string
-  is_primary: boolean
-}
-
-interface IdDocument {
-  type: string
-  number: string
-  file_urls: string[]
-}
-
-const defaultPhone: PhoneEntry = { number: "", type: "primary", is_primary: true, is_whatsapp: true }
-const defaultEmail: EmailEntry = { email: "", type: "primary", is_primary: true }
-const defaultAddress: AddressEntry = { type: "Permanent", line1: "", line2: "", city: "", state: "", zip: "", is_primary: true }
-const defaultGuardian: GuardianContact = { name: "", relation: "Parent", phone: "", email: "", is_primary: true }
-const defaultIdDocument: IdDocument = { type: "Aadhaar", number: "", file_urls: [] }
-
-const addressTypes = ["Permanent", "Current", "Office", "Native", "Other"]
-const relationTypes = ["Parent", "Guardian", "Spouse", "Sibling", "Other"]
-const idDocumentTypes = ["Aadhaar", "PAN Card", "Passport", "Driving License", "Voter ID", "Other"]
 
 export default function NewTenantPage() {
   const router = useRouter()
@@ -117,12 +86,14 @@ export default function NewTenantPage() {
     notes: "",
   })
 
-  // Multiple entries
-  const [phones, setPhones] = useState<PhoneEntry[]>([{ ...defaultPhone }])
-  const [emails, setEmails] = useState<EmailEntry[]>([{ ...defaultEmail }])
-  const [addresses, setAddresses] = useState<AddressEntry[]>([{ ...defaultAddress }])
-  const [guardians, setGuardians] = useState<GuardianContact[]>([{ ...defaultGuardian }])
-  const [idDocuments, setIdDocuments] = useState<IdDocument[]>([{ ...defaultIdDocument }])
+  // Multiple entries using shared component types
+  const [phones, setPhones] = useState<PhoneData[]>([{ ...DEFAULT_PHONE }])
+  const [emails, setEmails] = useState<EmailData[]>([{ ...DEFAULT_EMAIL }])
+  const [addresses, setAddresses] = useState<TenantAddress[]>([{
+    type: "Permanent", line1: "", line2: "", city: "", state: "", zip: "", is_primary: true
+  }])
+  const [guardians, setGuardians] = useState<GuardianData[]>([{ ...DEFAULT_GUARDIAN }])
+  const [idDocuments, setIdDocuments] = useState<IdDocumentData[]>([{ ...DEFAULT_ID_DOCUMENT }])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -206,7 +177,7 @@ export default function NewTenantPage() {
   }
 
   // Phone handlers
-  const updatePhone = (index: number, field: keyof PhoneEntry, value: string | boolean) => {
+  const updatePhone = (index: number, field: keyof PhoneData, value: string | boolean) => {
     const updated = [...phones]
     updated[index] = { ...updated[index], [field]: value }
     // If setting as primary, unset others
@@ -217,7 +188,7 @@ export default function NewTenantPage() {
   }
 
   const addPhone = () => {
-    setPhones([...phones, { ...defaultPhone, is_primary: false }])
+    setPhones([...phones, { ...DEFAULT_PHONE, is_primary: false }])
   }
 
   const removePhone = (index: number) => {
@@ -232,7 +203,7 @@ export default function NewTenantPage() {
   }
 
   // Email handlers
-  const updateEmail = (index: number, field: keyof EmailEntry, value: string | boolean) => {
+  const updateEmail = (index: number, field: keyof EmailData, value: string | boolean) => {
     const updated = [...emails]
     updated[index] = { ...updated[index], [field]: value }
     if (field === "is_primary" && value === true) {
@@ -242,7 +213,7 @@ export default function NewTenantPage() {
   }
 
   const addEmail = () => {
-    setEmails([...emails, { ...defaultEmail, is_primary: false }])
+    setEmails([...emails, { ...DEFAULT_EMAIL, is_primary: false }])
   }
 
   const removeEmail = (index: number) => {
@@ -256,7 +227,7 @@ export default function NewTenantPage() {
   }
 
   // Address handlers
-  const updateAddress = (index: number, field: keyof AddressEntry, value: string | boolean) => {
+  const updateAddress = (index: number, field: keyof TenantAddress, value: string | boolean) => {
     const updated = [...addresses]
     updated[index] = { ...updated[index], [field]: value }
     if (field === "is_primary" && value === true) {
@@ -266,7 +237,9 @@ export default function NewTenantPage() {
   }
 
   const addAddress = () => {
-    setAddresses([...addresses, { ...defaultAddress, is_primary: false, type: "Current" }])
+    setAddresses([...addresses, {
+      type: "Current", line1: "", line2: "", city: "", state: "", zip: "", is_primary: false
+    }])
   }
 
   const removeAddress = (index: number) => {
@@ -280,7 +253,7 @@ export default function NewTenantPage() {
   }
 
   // Guardian handlers
-  const updateGuardian = (index: number, field: keyof GuardianContact, value: string | boolean) => {
+  const updateGuardian = (index: number, field: keyof GuardianData, value: string | boolean) => {
     const updated = [...guardians]
     updated[index] = { ...updated[index], [field]: value }
     if (field === "is_primary" && value === true) {
@@ -290,7 +263,7 @@ export default function NewTenantPage() {
   }
 
   const addGuardian = () => {
-    setGuardians([...guardians, { ...defaultGuardian, is_primary: false }])
+    setGuardians([...guardians, { ...DEFAULT_GUARDIAN, is_primary: false }])
   }
 
   const removeGuardian = (index: number) => {
@@ -304,29 +277,20 @@ export default function NewTenantPage() {
   }
 
   // ID Document handlers
-  const updateIdDocument = (index: number, field: keyof IdDocument, value: string | string[]) => {
+  const updateIdDocument = (index: number, field: keyof IdDocumentData, value: string | string[]) => {
     const updated = [...idDocuments]
     updated[index] = { ...updated[index], [field]: value }
     setIdDocuments(updated)
   }
 
   const addIdDocument = () => {
-    setIdDocuments([...idDocuments, { ...defaultIdDocument, type: "PAN Card" }])
+    setIdDocuments([...idDocuments, { ...DEFAULT_ID_DOCUMENT, type: "PAN Card" }])
   }
 
   const removeIdDocument = (index: number) => {
     if (idDocuments.length > 1) {
       setIdDocuments(idDocuments.filter((_, i) => i !== index))
     }
-  }
-
-  const addDocumentFiles = (index: number, urls: string[]) => {
-    const updated = [...idDocuments]
-    updated[index] = {
-      ...updated[index],
-      file_urls: [...updated[index].file_urls, ...urls].slice(0, 5) // Max 5 files per document
-    }
-    setIdDocuments(updated)
   }
 
   const removeDocumentFile = (docIndex: number, fileIndex: number) => {
@@ -977,7 +941,7 @@ export default function NewTenantPage() {
                     className="h-10 px-3 rounded-md border bg-background text-sm"
                     disabled={loading}
                   >
-                    {relationTypes.map((r) => (
+                    {RELATION_TYPES.map((r) => (
                       <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
@@ -1056,7 +1020,7 @@ export default function NewTenantPage() {
                     className="h-10 px-3 rounded-md border bg-background text-sm"
                     disabled={loading}
                   >
-                    {addressTypes.map((t) => (
+                    {ADDRESS_TYPES.map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
@@ -1254,7 +1218,7 @@ export default function NewTenantPage() {
                     className="h-10 px-3 rounded-md border bg-background text-sm"
                     disabled={loading}
                   >
-                    {idDocumentTypes.map((t) => (
+                    {ID_DOCUMENT_TYPES.map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
