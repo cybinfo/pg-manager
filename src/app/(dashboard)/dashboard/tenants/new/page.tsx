@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
+import { showDetailedError, debugLog } from "@/lib/error-utils"
 
 interface Property {
   id: string
@@ -422,21 +423,44 @@ export default function NewTenantPage() {
     // Validate required fields
     const primaryPhone = phones.find(p => p.is_primary)?.number || phones[0]?.number
     if (!formData.property_id || !formData.room_id || !formData.name || !primaryPhone || !formData.monthly_rent) {
-      toast.error("Please fill in all required fields (Name, Phone, Property, Room, Rent)")
+      toast.error("Validation Error: Please fill in all required fields", {
+        description: `Missing: ${[
+          !formData.name && "Name",
+          !primaryPhone && "Phone",
+          !formData.property_id && "Property",
+          !formData.room_id && "Room",
+          !formData.monthly_rent && "Rent"
+        ].filter(Boolean).join(", ")}`,
+        duration: 8000,
+      })
       return
     }
 
     setLoading(true)
+    debugLog("Starting tenant creation", { name: formData.name, phone: primaryPhone })
 
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+      if (authError) {
+        showDetailedError(authError, {
+          operation: "checking authentication",
+          table: "auth.users"
+        })
+        return
+      }
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        toast.error("Authentication Error", {
+          description: "No user session found. Please login again.\n\nThis usually happens when:\n- Session has expired\n- Cookies were cleared\n- You were logged out",
+          duration: 10000,
+        })
         router.push("/login")
         return
       }
+
+      debugLog("User authenticated", { userId: user.id, email: user.email })
 
       // Build custom fields for backwards compatibility
       const customFields: Record<string, string> = {}
@@ -480,6 +504,61 @@ export default function NewTenantPage() {
         total_stays: isRejoining && returningTenant ? (returningTenant.total_stays + 1) : 1,
       }
 
+      debugLog("Tenant data prepared", tenantData)
+
+      // First, verify the property and room exist and belong to this owner
+      const { data: propertyCheck, error: propertyError } = await supabase
+        .from("properties")
+        .select("id, name")
+        .eq("id", formData.property_id)
+        .eq("owner_id", user.id)
+        .single()
+
+      if (propertyError || !propertyCheck) {
+        showDetailedError(propertyError || { message: "Property not found or doesn't belong to you" }, {
+          operation: "verifying property ownership",
+          table: "properties",
+          data: { property_id: formData.property_id, owner_id: user.id }
+        })
+        return
+      }
+
+      debugLog("Property verified", propertyCheck)
+
+      const { data: roomCheck, error: roomError } = await supabase
+        .from("rooms")
+        .select("id, room_number, property_id, occupied_beds, total_beds")
+        .eq("id", formData.room_id)
+        .single()
+
+      if (roomError || !roomCheck) {
+        showDetailedError(roomError || { message: "Room not found" }, {
+          operation: "verifying room",
+          table: "rooms",
+          data: { room_id: formData.room_id }
+        })
+        return
+      }
+
+      if (roomCheck.property_id !== formData.property_id) {
+        toast.error("Room Mismatch Error", {
+          description: `Room ${roomCheck.room_number} doesn't belong to the selected property.\n\nRoom's property_id: ${roomCheck.property_id}\nSelected property_id: ${formData.property_id}`,
+          duration: 10000,
+        })
+        return
+      }
+
+      if (roomCheck.occupied_beds >= roomCheck.total_beds) {
+        toast.error("Room Full Error", {
+          description: `Room ${roomCheck.room_number} is already full.\n\nOccupied beds: ${roomCheck.occupied_beds}\nTotal beds: ${roomCheck.total_beds}`,
+          duration: 10000,
+        })
+        return
+      }
+
+      debugLog("Room verified", roomCheck)
+
+      // Now insert the tenant
       const { data: newTenant, error } = await supabase
         .from("tenants")
         .insert(tenantData)
@@ -487,23 +566,19 @@ export default function NewTenantPage() {
         .single()
 
       if (error) {
-        console.error("Error creating tenant:", error)
-        // Provide specific error messages
-        if (error.code === "23505") {
-          toast.error("A tenant with this phone number already exists in this room")
-        } else if (error.code === "23503") {
-          toast.error("Invalid property or room selection")
-        } else if (error.message.includes("violates row-level security")) {
-          toast.error("Permission denied. Please try logging in again.")
-        } else {
-          toast.error(`Failed to add tenant: ${error.message}`)
-        }
+        showDetailedError(error, {
+          operation: "creating tenant",
+          table: "tenants",
+          data: tenantData
+        })
         return
       }
 
+      debugLog("Tenant created successfully", newTenant)
+
       // Create tenant stay record
       if (newTenant) {
-        const { error: stayError } = await supabase.from("tenant_stays").insert({
+        const stayData = {
           owner_id: user.id,
           tenant_id: newTenant.id,
           property_id: formData.property_id,
@@ -513,19 +588,33 @@ export default function NewTenantPage() {
           security_deposit: parseFloat(formData.security_deposit) || 0,
           status: "active",
           stay_number: isRejoining && returningTenant ? (returningTenant.total_stays + 1) : 1,
-        })
+        }
+
+        debugLog("Creating tenant stay record", stayData)
+
+        const { error: stayError } = await supabase.from("tenant_stays").insert(stayData)
 
         if (stayError) {
+          // Show warning but don't fail
+          toast.warning("Tenant created but stay record failed", {
+            description: `Tenant was added successfully, but stay record failed.\n\nError: ${stayError.message}\nCode: ${stayError.code || "N/A"}\n\nThis is not critical - tenant is still created.`,
+            duration: 10000,
+          })
           console.error("Error creating tenant stay:", stayError)
-          // Don't fail the whole operation for this
+        } else {
+          debugLog("Tenant stay created successfully", null)
         }
       }
 
-      toast.success("Tenant added successfully!")
+      toast.success("Tenant added successfully!", {
+        description: `${formData.name} has been added to Room ${roomCheck.room_number}`,
+      })
       router.push("/dashboard/tenants")
     } catch (error) {
-      console.error("Error:", error)
-      toast.error("An unexpected error occurred. Please try again.")
+      showDetailedError(error, {
+        operation: "creating tenant (unexpected error)",
+        table: "tenants"
+      })
     } finally {
       setLoading(false)
     }
