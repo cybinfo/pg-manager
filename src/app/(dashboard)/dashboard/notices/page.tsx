@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   Bell,
   Plus,
@@ -56,15 +57,27 @@ const audienceLabels: Record<string, string> = {
   specific_rooms: "Specific Rooms",
 }
 
+interface Property {
+  id: string
+  name: string
+}
+
 export default function NoticesPage() {
   const [notices, setNotices] = useState<Notice[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
-  const [typeFilter, setTypeFilter] = useState<string>("all")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [filters, setFilters] = useState<Record<string, string>>({})
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null)
 
   const fetchNotices = async () => {
     const supabase = createClient()
+
+    // Fetch properties for filter
+    const { data: propertiesData } = await supabase
+      .from("properties")
+      .select("id, name")
+      .order("name")
+    setProperties(propertiesData || [])
 
     const { data, error } = await supabase
       .from("notices")
@@ -134,17 +147,52 @@ export default function NoticesPage() {
     return new Date(expiresAt) < new Date()
   }
 
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "type",
+      label: "Type",
+      type: "select",
+      placeholder: "All Types",
+      options: [
+        { value: "general", label: "General" },
+        { value: "maintenance", label: "Maintenance" },
+        { value: "payment_reminder", label: "Payment Reminder" },
+        { value: "emergency", label: "Emergency" },
+      ],
+    },
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "All Status",
+      options: [
+        { value: "active", label: "Active" },
+        { value: "inactive", label: "Inactive/Expired" },
+      ],
+    },
+  ]
+
   const filteredNotices = notices.filter((notice) => {
-    const matchesType = typeFilter === "all" || notice.type === typeFilter
-
-    let matchesStatus = true
-    if (statusFilter === "active") {
-      matchesStatus = notice.is_active && !isExpired(notice.expires_at)
-    } else if (statusFilter === "inactive") {
-      matchesStatus = !notice.is_active || isExpired(notice.expires_at)
+    if (filters.property && filters.property !== "all" && notice.property?.id !== filters.property) {
+      return false
     }
-
-    return matchesType && matchesStatus
+    if (filters.type && filters.type !== "all" && notice.type !== filters.type) {
+      return false
+    }
+    if (filters.status && filters.status !== "all") {
+      const isActive = notice.is_active && !isExpired(notice.expires_at)
+      if (filters.status === "active" && !isActive) return false
+      if (filters.status === "inactive" && isActive) return false
+    }
+    return true
   })
 
   // Stats
@@ -348,28 +396,12 @@ export default function NoticesPage() {
       <MetricsBar items={metricsItems} />
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[160px]"
-        >
-          <option value="all">All Types</option>
-          <option value="general">General</option>
-          <option value="maintenance">Maintenance</option>
-          <option value="payment_reminder">Payment Reminder</option>
-          <option value="emergency">Emergency</option>
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[140px]"
-        >
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive/Expired</option>
-        </select>
-      </div>
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
 
       <DataTable
         columns={columns}

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   FileText,
   Plus,
@@ -34,14 +35,22 @@ interface Bill {
     phone: string
   } | null
   property: {
+    id: string
     name: string
   } | null
+}
+
+interface Property {
+  id: string
+  name: string
 }
 
 export default function BillsPage() {
   const router = useRouter()
   const [bills, setBills] = useState<Bill[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const fetchBills = async () => {
@@ -53,12 +62,19 @@ export default function BillsPage() {
         return
       }
 
+      // Fetch properties for filter
+      const { data: propertiesData } = await supabase
+        .from("properties")
+        .select("id, name")
+        .order("name")
+      setProperties(propertiesData || [])
+
       const { data, error } = await supabase
         .from("bills")
         .select(`
           *,
           tenant:tenants(name, phone),
-          property:properties(name)
+          property:properties(id, name)
         `)
         .eq("owner_id", user.id)
         .order("bill_date", { ascending: false })
@@ -120,6 +136,53 @@ export default function BillsPage() {
     { label: "Pending", value: formatCurrency(pending), icon: Clock, highlight: pending > 0 },
     { label: "Overdue", value: formatCurrency(overdue), icon: AlertCircle, highlight: overdue > 0 },
   ]
+
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "All Status",
+      options: [
+        { value: "pending", label: "Pending" },
+        { value: "partial", label: "Partial" },
+        { value: "paid", label: "Paid" },
+        { value: "overdue", label: "Overdue" },
+      ],
+    },
+    {
+      id: "date",
+      label: "Bill Date",
+      type: "date-range",
+    },
+  ]
+
+  // Apply filters
+  const filteredBills = bills.filter((bill) => {
+    if (filters.property && filters.property !== "all" && bill.property?.id !== filters.property) {
+      return false
+    }
+    if (filters.status && filters.status !== "all" && bill.status !== filters.status) {
+      return false
+    }
+    if (filters.date_from) {
+      const billDate = new Date(bill.bill_date)
+      if (billDate < new Date(filters.date_from)) return false
+    }
+    if (filters.date_to) {
+      const billDate = new Date(bill.bill_date)
+      if (billDate > new Date(filters.date_to)) return false
+    }
+    return true
+  })
 
   const columns: Column<Bill>[] = [
     {
@@ -201,9 +264,17 @@ export default function BillsPage() {
 
       {bills.length > 0 && <MetricsBar items={metricsItems} />}
 
+      {/* Filters */}
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
+
       <DataTable
         columns={columns}
-        data={bills}
+        data={filteredBills}
         keyField="id"
         href={(bill) => `/dashboard/bills/${bill.id}`}
         searchable
@@ -212,16 +283,20 @@ export default function BillsPage() {
         emptyState={
           <div className="flex flex-col items-center py-8">
             <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No bills yet</h3>
+            <h3 className="text-lg font-medium mb-2">No bills found</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Generate your first bill to get started
+              {bills.length === 0
+                ? "Generate your first bill to get started"
+                : "No bills match your filters"}
             </p>
-            <Link href="/dashboard/bills/new">
-              <Button variant="gradient">
-                <Plus className="mr-2 h-4 w-4" />
-                Generate Bill
-              </Button>
-            </Link>
+            {bills.length === 0 && (
+              <Link href="/dashboard/bills/new">
+                <Button variant="gradient">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Generate Bill
+                </Button>
+              </Link>
+            )}
           </div>
         }
       />

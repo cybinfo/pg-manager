@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   Building2,
   Plus,
@@ -31,6 +32,7 @@ interface Property {
 export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchProperties()
@@ -75,6 +77,53 @@ export default function PropertiesPage() {
     { label: "Total Rooms", value: totalRooms, icon: Home },
     { label: "Total Tenants", value: totalTenants, icon: Users },
   ]
+
+  // Get unique cities and states for filters
+  const uniqueCities = [...new Set(properties.map(p => p.city).filter(Boolean))].sort()
+  const uniqueStates = [...new Set(properties.map(p => p.state).filter(Boolean))].sort()
+
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "city",
+      label: "City",
+      type: "select",
+      placeholder: "All Cities",
+      options: uniqueCities.map(c => ({ value: c, label: c })),
+    },
+    {
+      id: "state",
+      label: "State",
+      type: "select",
+      placeholder: "All States",
+      options: uniqueStates.map(s => ({ value: s as string, label: s as string })),
+    },
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "All Status",
+      options: [
+        { value: "active", label: "Active" },
+        { value: "inactive", label: "Inactive" },
+      ],
+    },
+  ]
+
+  // Apply filters
+  const filteredProperties = properties.filter((property) => {
+    if (filters.city && filters.city !== "all" && property.city !== filters.city) {
+      return false
+    }
+    if (filters.state && filters.state !== "all" && property.state !== filters.state) {
+      return false
+    }
+    if (filters.status && filters.status !== "all") {
+      const isActive = filters.status === "active"
+      if (property.is_active !== isActive) return false
+    }
+    return true
+  })
 
   const columns: Column<Property>[] = [
     {
@@ -158,9 +207,17 @@ export default function PropertiesPage() {
 
       {properties.length > 0 && <MetricsBar items={metricsItems} />}
 
+      {/* Filters */}
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
+
       <DataTable
         columns={columns}
-        data={properties}
+        data={filteredProperties}
         keyField="id"
         href={(property) => `/dashboard/properties/${property.id}`}
         searchable
@@ -169,16 +226,20 @@ export default function PropertiesPage() {
         emptyState={
           <div className="flex flex-col items-center py-8">
             <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No properties yet</h3>
+            <h3 className="text-lg font-medium mb-2">No properties found</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Add your first property to get started
+              {properties.length === 0
+                ? "Add your first property to get started"
+                : "No properties match your filters"}
             </p>
-            <Link href="/dashboard/properties/new">
-              <Button variant="gradient">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Property
-              </Button>
-            </Link>
+            {properties.length === 0 && (
+              <Link href="/dashboard/properties/new">
+                <Button variant="gradient">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Property
+                </Button>
+              </Link>
+            )}
           </div>
         }
       />

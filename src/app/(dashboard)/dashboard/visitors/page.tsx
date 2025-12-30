@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   UserPlus,
   Plus,
@@ -42,10 +43,16 @@ interface Visitor {
   }
 }
 
+interface Property {
+  id: string
+  name: string
+}
+
 export default function VisitorsPage() {
   const [loading, setLoading] = useState(true)
   const [visitors, setVisitors] = useState<Visitor[]>([])
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [properties, setProperties] = useState<Property[]>([])
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchVisitors()
@@ -53,6 +60,13 @@ export default function VisitorsPage() {
 
   const fetchVisitors = async () => {
     const supabase = createClient()
+
+    // Fetch properties for filter
+    const { data: propertiesData } = await supabase
+      .from("properties")
+      .select("id, name")
+      .order("name")
+    setProperties(propertiesData || [])
 
     const { data, error } = await supabase
       .from("visitors")
@@ -114,12 +128,52 @@ export default function VisitorsPage() {
     return `${diffMins}m ago`
   }
 
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "All Status",
+      options: [
+        { value: "checked_in", label: "Currently Here" },
+        { value: "checked_out", label: "Checked Out" },
+        { value: "overnight", label: "Overnight" },
+      ],
+    },
+    {
+      id: "date",
+      label: "Date",
+      type: "date-range",
+    },
+  ]
+
   const filteredVisitors = visitors.filter((visitor) => {
     const isCheckedIn = !visitor.check_out_time
-    if (statusFilter === "all") return true
-    if (statusFilter === "checked_in") return isCheckedIn
-    if (statusFilter === "checked_out") return !isCheckedIn
-    if (statusFilter === "overnight") return visitor.is_overnight
+
+    if (filters.property && filters.property !== "all" && visitor.property?.id !== filters.property) {
+      return false
+    }
+    if (filters.status && filters.status !== "all") {
+      if (filters.status === "checked_in" && !isCheckedIn) return false
+      if (filters.status === "checked_out" && isCheckedIn) return false
+      if (filters.status === "overnight" && !visitor.is_overnight) return false
+    }
+    if (filters.date_from) {
+      const visitDate = new Date(visitor.check_in_time)
+      if (visitDate < new Date(filters.date_from)) return false
+    }
+    if (filters.date_to) {
+      const visitDate = new Date(visitor.check_in_time)
+      if (visitDate > new Date(filters.date_to)) return false
+    }
     return true
   })
 
@@ -266,19 +320,13 @@ export default function VisitorsPage() {
 
       <MetricsBar items={metricsItems} />
 
-      {/* Filter */}
-      <div className="flex flex-wrap gap-3">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[160px]"
-        >
-          <option value="all">All Visitors</option>
-          <option value="checked_in">Currently Here</option>
-          <option value="checked_out">Checked Out</option>
-          <option value="overnight">Overnight</option>
-        </select>
-      </div>
+      {/* Filters */}
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
 
       <DataTable
         columns={columns}

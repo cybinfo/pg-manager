@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   Users,
   Plus,
@@ -76,7 +77,7 @@ export default function StaffPage() {
   const [loading, setLoading] = useState(true)
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [roles, setRoles] = useState<Role[]>([])
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchData()
@@ -142,10 +143,36 @@ export default function StaffPage() {
     }
   }
 
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "All Status",
+      options: [
+        { value: "active", label: "Active" },
+        { value: "inactive", label: "Inactive" },
+      ],
+    },
+    {
+      id: "role",
+      label: "Role",
+      type: "select",
+      placeholder: "All Roles",
+      options: roles.map(r => ({ value: r.id, label: r.name })),
+    },
+  ]
+
   const filteredStaff = staff.filter((member) => {
-    if (statusFilter === "all") return true
-    if (statusFilter === "active") return member.is_active
-    if (statusFilter === "inactive") return !member.is_active
+    if (filters.status && filters.status !== "all") {
+      if (filters.status === "active" && !member.is_active) return false
+      if (filters.status === "inactive" && member.is_active) return false
+    }
+    if (filters.role && filters.role !== "all") {
+      const hasRole = member.roles?.some(r => r.role?.id === filters.role)
+      if (!hasRole) return false
+    }
     return true
   })
 
@@ -302,18 +329,13 @@ export default function StaffPage() {
 
       <MetricsBar items={metricsItems} />
 
-      {/* Filter */}
-      <div className="flex flex-wrap gap-3">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[140px]"
-        >
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-      </div>
+      {/* Filters */}
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
 
       <DataTable
         columns={columns}

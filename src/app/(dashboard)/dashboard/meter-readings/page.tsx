@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   Gauge,
   Plus,
@@ -82,8 +83,7 @@ export default function MeterReadingsPage() {
   const [loading, setLoading] = useState(true)
   const [readings, setReadings] = useState<MeterReading[]>([])
   const [properties, setProperties] = useState<Property[]>([])
-  const [propertyFilter, setPropertyFilter] = useState<string>("all")
-  const [typeFilter, setTypeFilter] = useState<string>("all")
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchData()
@@ -134,11 +134,50 @@ export default function MeterReadingsPage() {
     })
   }
 
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "type",
+      label: "Meter Type",
+      type: "select",
+      placeholder: "All Types",
+      options: [
+        { value: "electricity", label: "Electricity" },
+        { value: "water", label: "Water" },
+        { value: "gas", label: "Gas" },
+      ],
+    },
+    {
+      id: "date",
+      label: "Date",
+      type: "date-range",
+    },
+  ]
+
   const filteredReadings = readings.filter((reading) => {
-    const matchesProperty = propertyFilter === "all" || reading.property?.id === propertyFilter
+    if (filters.property && filters.property !== "all" && reading.property?.id !== filters.property) {
+      return false
+    }
     const meterType = reading.charge_type?.name?.toLowerCase() || ""
-    const matchesType = typeFilter === "all" || meterType === typeFilter
-    return matchesProperty && matchesType
+    if (filters.type && filters.type !== "all" && meterType !== filters.type) {
+      return false
+    }
+    if (filters.date_from) {
+      const readingDate = new Date(reading.reading_date)
+      if (readingDate < new Date(filters.date_from)) return false
+    }
+    if (filters.date_to) {
+      const readingDate = new Date(reading.reading_date)
+      if (readingDate > new Date(filters.date_to)) return false
+    }
+    return true
   })
 
   // Stats
@@ -262,30 +301,12 @@ export default function MeterReadingsPage() {
       <MetricsBar items={metricsItems} />
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <select
-          value={propertyFilter}
-          onChange={(e) => setPropertyFilter(e.target.value)}
-          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[160px]"
-        >
-          <option value="all">All Properties</option>
-          {properties.map((property) => (
-            <option key={property.id} value={property.id}>
-              {property.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[140px]"
-        >
-          <option value="all">All Types</option>
-          <option value="electricity">Electricity</option>
-          <option value="water">Water</option>
-          <option value="gas">Gas</option>
-        </select>
-      </div>
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
 
       <DataTable
         columns={columns}

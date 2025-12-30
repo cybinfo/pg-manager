@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileUpload } from "@/components/ui/file-upload"
 import {
   ArrowLeft,
   Building2,
@@ -18,7 +19,8 @@ import {
   CheckCircle,
   X,
   Plus,
-  Sparkles
+  Sparkles,
+  Image
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -62,6 +64,8 @@ export default function EditPropertyPage() {
     pincode: "",
     manager_name: "",
     manager_phone: "",
+    cover_image: "",
+    photos: [] as string[],
   })
 
   const [websiteData, setWebsiteData] = useState({
@@ -113,6 +117,8 @@ export default function EditPropertyPage() {
         pincode: data.pincode || "",
         manager_name: data.manager_name || "",
         manager_phone: data.manager_phone || "",
+        cover_image: data.cover_image || "",
+        photos: data.photos || [],
       })
 
       setWebsiteData({
@@ -228,6 +234,8 @@ export default function EditPropertyPage() {
         pincode: formData.pincode || null,
         manager_name: formData.manager_name || null,
         manager_phone: formData.manager_phone || null,
+        cover_image: formData.cover_image || null,
+        photos: formData.photos.length > 0 ? formData.photos : null,
       }
 
       // Add website fields if on website tab
@@ -397,6 +405,95 @@ export default function EditPropertyPage() {
                   disabled={loading}
                   maxLength={6}
                 />
+              </div>
+
+              {/* Property Photos Section */}
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Image className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-medium">Property Photos</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Cover Image</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Main photo shown in property listings
+                    </p>
+                    <FileUpload
+                      bucket="property-photos"
+                      folder="covers"
+                      value={formData.cover_image}
+                      onChange={(url) => {
+                        const urlStr = Array.isArray(url) ? url[0] : url
+                        setFormData(prev => ({ ...prev, cover_image: urlStr || "" }))
+                      }}
+                      accept="image/*"
+                    />
+                    {formData.cover_image && (
+                      <div className="mt-2 relative inline-block">
+                        <img
+                          src={formData.cover_image}
+                          alt="Cover preview"
+                          className="w-32 h-24 object-cover rounded-lg border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, cover_image: "" }))}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Gallery Photos</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Additional photos of the property (up to 10)
+                    </p>
+                    <FileUpload
+                      bucket="property-photos"
+                      folder="gallery"
+                      value={formData.photos}
+                      onChange={(urls) => {
+                        const urlArr = Array.isArray(urls) ? urls : urls ? [urls] : []
+                        setFormData(prev => ({
+                          ...prev,
+                          photos: urlArr.slice(0, 10)
+                        }))
+                      }}
+                      multiple
+                      accept="image/*"
+                    />
+                    {formData.photos.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {formData.photos.map((photo, idx) => (
+                          <div key={idx} className="relative">
+                            <img
+                              src={photo}
+                              alt={`Gallery ${idx + 1}`}
+                              className="w-20 h-20 object-cover rounded-lg border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  photos: prev.photos.filter((_, i) => i !== idx)
+                                }))
+                              }}
+                              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="border-t pt-4 mt-4">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   CreditCard,
   Plus,
@@ -54,9 +55,16 @@ const paymentMethodLabels: Record<string, string> = {
   card: "Card",
 }
 
+interface Property {
+  id: string
+  name: string
+}
+
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchPayments()
@@ -64,6 +72,13 @@ export default function PaymentsPage() {
 
   const fetchPayments = async () => {
     const supabase = createClient()
+
+    // Fetch properties for filter
+    const { data: propertiesData } = await supabase
+      .from("properties")
+      .select("id, name")
+      .order("name")
+    setProperties(propertiesData || [])
 
     const { data, error } = await supabase
       .from("payments")
@@ -112,6 +127,54 @@ export default function PaymentsPage() {
     { label: "Transactions", value: payments.length, icon: Receipt },
     { label: "Top Method", value: topMethod ? paymentMethodLabels[topMethod[0]] || topMethod[0] : "—", icon: Banknote },
   ]
+
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "payment_method",
+      label: "Method",
+      type: "select",
+      placeholder: "All Methods",
+      options: [
+        { value: "cash", label: "Cash" },
+        { value: "upi", label: "UPI" },
+        { value: "bank_transfer", label: "Bank Transfer" },
+        { value: "cheque", label: "Cheque" },
+        { value: "card", label: "Card" },
+      ],
+    },
+    {
+      id: "date",
+      label: "Date",
+      type: "date-range",
+    },
+  ]
+
+  // Apply filters
+  const filteredPayments = payments.filter((payment) => {
+    if (filters.property && filters.property !== "all" && payment.property.id !== filters.property) {
+      return false
+    }
+    if (filters.payment_method && filters.payment_method !== "all" && payment.payment_method !== filters.payment_method) {
+      return false
+    }
+    if (filters.date_from) {
+      const paymentDate = new Date(payment.payment_date)
+      if (paymentDate < new Date(filters.date_from)) return false
+    }
+    if (filters.date_to) {
+      const paymentDate = new Date(payment.payment_date)
+      if (paymentDate > new Date(filters.date_to)) return false
+    }
+    return true
+  })
 
   const columns: Column<Payment>[] = [
     {
@@ -210,9 +273,17 @@ export default function PaymentsPage() {
 
       {payments.length > 0 && <MetricsBar items={metricsItems} />}
 
+      {/* Filters */}
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
+
       <DataTable
         columns={columns}
-        data={payments}
+        data={filteredPayments}
         keyField="id"
         href={(payment) => `/dashboard/payments/${payment.id}`}
         searchable
@@ -221,16 +292,20 @@ export default function PaymentsPage() {
         emptyState={
           <div className="flex flex-col items-center py-8">
             <CreditCard className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No payments recorded</h3>
+            <h3 className="text-lg font-medium mb-2">No payments found</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Start recording payments from your tenants
+              {payments.length === 0
+                ? "Start recording payments from your tenants"
+                : "No payments match your filters"}
             </p>
-            <Link href="/dashboard/payments/new">
-              <Button variant="gradient">
-                <Plus className="mr-2 h-4 w-4" />
-                Record Payment
-              </Button>
-            </Link>
+            {payments.length === 0 && (
+              <Link href="/dashboard/payments/new">
+                <Button variant="gradient">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Record Payment
+                </Button>
+              </Link>
+            )}
           </div>
         }
       />

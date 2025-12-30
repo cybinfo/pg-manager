@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   MessageSquare,
   Plus,
@@ -91,15 +92,27 @@ const categoryLabels: Record<string, string> = {
   other: "Other",
 }
 
+interface Property {
+  id: string
+  name: string
+}
+
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [priorityFilter, setPriorityFilter] = useState<string>("all")
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const fetchComplaints = async () => {
       const supabase = createClient()
+
+      // Fetch properties for filter
+      const { data: propertiesData } = await supabase
+        .from("properties")
+        .select("id, name")
+        .order("name")
+      setProperties(propertiesData || [])
 
       const { data, error } = await supabase
         .from("complaints")
@@ -128,10 +141,63 @@ export default function ComplaintsPage() {
     fetchComplaints()
   }, [])
 
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "All Status",
+      options: [
+        { value: "open", label: "Open" },
+        { value: "acknowledged", label: "Acknowledged" },
+        { value: "in_progress", label: "In Progress" },
+        { value: "resolved", label: "Resolved" },
+        { value: "closed", label: "Closed" },
+      ],
+    },
+    {
+      id: "priority",
+      label: "Priority",
+      type: "select",
+      placeholder: "All Priority",
+      options: [
+        { value: "urgent", label: "Urgent" },
+        { value: "high", label: "High" },
+        { value: "medium", label: "Medium" },
+        { value: "low", label: "Low" },
+      ],
+    },
+    {
+      id: "category",
+      label: "Category",
+      type: "select",
+      placeholder: "All Categories",
+      options: Object.entries(categoryLabels).map(([value, label]) => ({ value, label })),
+    },
+  ]
+
   const filteredComplaints = complaints.filter((complaint) => {
-    const matchesStatus = statusFilter === "all" || complaint.status === statusFilter
-    const matchesPriority = priorityFilter === "all" || complaint.priority === priorityFilter
-    return matchesStatus && matchesPriority
+    if (filters.property && filters.property !== "all" && complaint.property?.id !== filters.property) {
+      return false
+    }
+    if (filters.status && filters.status !== "all" && complaint.status !== filters.status) {
+      return false
+    }
+    if (filters.priority && filters.priority !== "all" && complaint.priority !== filters.priority) {
+      return false
+    }
+    if (filters.category && filters.category !== "all" && complaint.category !== filters.category) {
+      return false
+    }
+    return true
   })
 
   // Stats
@@ -256,31 +322,12 @@ export default function ComplaintsPage() {
       <MetricsBar items={metricsItems} />
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[140px]"
-        >
-          <option value="all">All Status</option>
-          <option value="open">Open</option>
-          <option value="acknowledged">Acknowledged</option>
-          <option value="in_progress">In Progress</option>
-          <option value="resolved">Resolved</option>
-          <option value="closed">Closed</option>
-        </select>
-        <select
-          value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value)}
-          className="h-10 px-3 rounded-md border border-input bg-white text-sm min-w-[140px]"
-        >
-          <option value="all">All Priority</option>
-          <option value="urgent">Urgent</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-      </div>
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
 
       <DataTable
         columns={columns}

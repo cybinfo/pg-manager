@@ -8,13 +8,27 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Home, Loader2, Building2 } from "lucide-react"
+import { ArrowLeft, Home, Loader2, Building2, Image } from "lucide-react"
+import { FileUpload } from "@/components/ui/file-upload"
 import { toast } from "sonner"
 
 interface Property {
   id: string
   name: string
 }
+
+// Extended amenities list - same as new room page
+const availableAmenities = [
+  { key: "has_ac", label: "Air Conditioned (AC)" },
+  { key: "has_attached_bathroom", label: "Attached Bathroom" },
+  { key: "has_wifi", label: "WiFi" },
+  { key: "has_tv", label: "TV" },
+  { key: "has_geyser", label: "Geyser/Hot Water" },
+  { key: "has_balcony", label: "Balcony" },
+  { key: "has_wardrobe", label: "Wardrobe" },
+  { key: "has_study_table", label: "Study Table" },
+  { key: "has_refrigerator", label: "Refrigerator" },
+]
 
 export default function EditRoomPage() {
   const params = useParams()
@@ -31,8 +45,18 @@ export default function EditRoomPage() {
     rent_amount: "",
     deposit_amount: "",
     total_beds: "1",
+    // Amenities
     has_ac: false,
     has_attached_bathroom: false,
+    has_wifi: false,
+    has_tv: false,
+    has_geyser: false,
+    has_balcony: false,
+    has_wardrobe: false,
+    has_study_table: false,
+    has_refrigerator: false,
+    // Photos
+    photos: [] as string[],
   })
 
   useEffect(() => {
@@ -61,8 +85,18 @@ export default function EditRoomPage() {
         rent_amount: room.rent_amount.toString(),
         deposit_amount: (room.deposit_amount || 0).toString(),
         total_beds: (room.total_beds || 1).toString(),
+        // Amenities
         has_ac: room.has_ac || false,
         has_attached_bathroom: room.has_attached_bathroom || false,
+        has_wifi: room.has_wifi || false,
+        has_tv: room.has_tv || false,
+        has_geyser: room.has_geyser || false,
+        has_balcony: room.has_balcony || false,
+        has_wardrobe: room.has_wardrobe || false,
+        has_study_table: room.has_study_table || false,
+        has_refrigerator: room.has_refrigerator || false,
+        // Photos
+        photos: room.photos || [],
       })
 
       if (!propertiesRes.error) {
@@ -96,6 +130,11 @@ export default function EditRoomPage() {
     try {
       const supabase = createClient()
 
+      // Build amenities array from checkboxes
+      const amenities = availableAmenities
+        .filter((amenity) => formData[amenity.key as keyof typeof formData])
+        .map((amenity) => amenity.label.split(" (")[0]) // "Air Conditioned" from "Air Conditioned (AC)"
+
       const { error } = await supabase
         .from("rooms")
         .update({
@@ -108,6 +147,15 @@ export default function EditRoomPage() {
           total_beds: parseInt(formData.total_beds) || 1,
           has_ac: formData.has_ac,
           has_attached_bathroom: formData.has_attached_bathroom,
+          has_wifi: formData.has_wifi,
+          has_tv: formData.has_tv,
+          has_geyser: formData.has_geyser,
+          has_balcony: formData.has_balcony,
+          has_wardrobe: formData.has_wardrobe,
+          has_study_table: formData.has_study_table,
+          has_refrigerator: formData.has_refrigerator,
+          amenities: amenities,
+          photos: formData.photos.length > 0 ? formData.photos : null,
         })
         .eq("id", params.id)
 
@@ -284,30 +332,74 @@ export default function EditRoomPage() {
 
             <div className="border-t pt-4 mt-4">
               <h3 className="font-medium mb-3">Amenities</h3>
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="has_ac"
-                    checked={formData.has_ac}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <span>Air Conditioned (AC)</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="has_attached_bathroom"
-                    checked={formData.has_attached_bathroom}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <span>Attached Bathroom</span>
-                </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {availableAmenities.map((amenity) => (
+                  <label
+                    key={amenity.key}
+                    className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      name={amenity.key}
+                      checked={formData[amenity.key as keyof typeof formData] as boolean}
+                      onChange={handleChange}
+                      disabled={loading}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm">{amenity.label}</span>
+                  </label>
+                ))}
               </div>
+            </div>
+
+            {/* Room Photos Section */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Image className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-medium">Room Photos</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Add photos of the room (up to 8 photos)
+              </p>
+              <FileUpload
+                bucket="room-photos"
+                folder="rooms"
+                value={formData.photos}
+                onChange={(urls) => {
+                  const urlArr = Array.isArray(urls) ? urls : urls ? [urls] : []
+                  setFormData(prev => ({
+                    ...prev,
+                    photos: urlArr.slice(0, 8)
+                  }))
+                }}
+                multiple
+                accept="image/*"
+              />
+              {formData.photos.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {formData.photos.map((photo, idx) => (
+                    <div key={idx} className="relative">
+                      <img
+                        src={photo}
+                        alt={`Room photo ${idx + 1}`}
+                        className="w-20 h-20 object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            photos: prev.photos.filter((_, i) => i !== idx)
+                          }))
+                        }}
+                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

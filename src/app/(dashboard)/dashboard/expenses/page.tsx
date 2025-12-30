@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   Loader2,
   Plus,
@@ -56,7 +57,10 @@ const paymentMethodLabels: Record<string, string> = {
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchData()
@@ -65,6 +69,21 @@ export default function ExpensesPage() {
   const fetchData = async () => {
     try {
       const supabase = createClient()
+
+      // Fetch properties for filter
+      const { data: propertiesData } = await supabase
+        .from("properties")
+        .select("id, name")
+        .order("name")
+      setProperties(propertiesData || [])
+
+      // Fetch expense types for filter
+      const { data: typesData } = await supabase
+        .from("expense_types")
+        .select("id, name, code")
+        .eq("is_active", true)
+        .order("name")
+      setExpenseTypes(typesData || [])
 
       const { data: expensesData, error: expensesError } = await supabase
         .from("expenses")
@@ -146,6 +165,64 @@ export default function ExpensesPage() {
     { label: "Year to Date", value: formatCurrency(ytdTotal), icon: BarChart3 },
     { label: "Top Category", value: topCategory?.name || "—", icon: Wallet },
   ]
+
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "category",
+      label: "Category",
+      type: "select",
+      placeholder: "All Categories",
+      options: expenseTypes.map(t => ({ value: t.id, label: t.name })),
+    },
+    {
+      id: "payment_method",
+      label: "Method",
+      type: "select",
+      placeholder: "All Methods",
+      options: [
+        { value: "cash", label: "Cash" },
+        { value: "upi", label: "UPI" },
+        { value: "bank_transfer", label: "Bank Transfer" },
+        { value: "card", label: "Card" },
+        { value: "cheque", label: "Cheque" },
+      ],
+    },
+    {
+      id: "date",
+      label: "Date",
+      type: "date-range",
+    },
+  ]
+
+  // Apply filters
+  const filteredExpenses = expenses.filter((expense) => {
+    if (filters.property && filters.property !== "all" && expense.property_id !== filters.property) {
+      return false
+    }
+    if (filters.category && filters.category !== "all" && expense.expense_type_id !== filters.category) {
+      return false
+    }
+    if (filters.payment_method && filters.payment_method !== "all" && expense.payment_method !== filters.payment_method) {
+      return false
+    }
+    if (filters.date_from) {
+      const expenseDate = new Date(expense.expense_date)
+      if (expenseDate < new Date(filters.date_from)) return false
+    }
+    if (filters.date_to) {
+      const expenseDate = new Date(expense.expense_date)
+      if (expenseDate > new Date(filters.date_to)) return false
+    }
+    return true
+  })
 
   const exportToCSV = () => {
     const headers = ["Date", "Category", "Description", "Vendor", "Property", "Amount", "Payment Method", "Reference"]
@@ -258,9 +335,17 @@ export default function ExpensesPage() {
 
       {expenses.length > 0 && <MetricsBar items={metricsItems} />}
 
+      {/* Filters */}
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
+
       <DataTable
         columns={columns}
-        data={expenses}
+        data={filteredExpenses}
         keyField="id"
         href={(expense) => `/dashboard/expenses/${expense.id}`}
         searchable
@@ -269,16 +354,20 @@ export default function ExpensesPage() {
         emptyState={
           <div className="flex flex-col items-center py-8">
             <Receipt className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No expenses yet</h3>
+            <h3 className="text-lg font-medium mb-2">No expenses found</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Start tracking your property expenses
+              {expenses.length === 0
+                ? "Start tracking your property expenses"
+                : "No expenses match your filters"}
             </p>
-            <Link href="/dashboard/expenses/new">
-              <Button variant="gradient">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Expense
-              </Button>
-            </Link>
+            {expenses.length === 0 && (
+              <Link href="/dashboard/expenses/new">
+                <Button variant="gradient">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Expense
+                </Button>
+              </Link>
+            )}
           </div>
         }
       />
