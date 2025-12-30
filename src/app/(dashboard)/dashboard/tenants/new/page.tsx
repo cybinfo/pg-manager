@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-utils"
+import { sendInvitationEmail } from "@/lib/email"
 
 // Shared form components
 import {
@@ -698,7 +699,7 @@ export default function NewTenantPage() {
           }
         } else if (workspace && primaryEmail) {
           // User doesn't exist - create invitation for tenant portal
-          await supabase
+          const { data: invitation, error: inviteError } = await supabase
             .from("invitations")
             .insert({
               workspace_id: workspace.id,
@@ -711,8 +712,39 @@ export default function NewTenantPage() {
               status: "pending",
               message: `You've been added as a tenant at ${workspace.name}. Sign up to access your tenant portal.`,
             })
+            .select("id, token")
+            .single()
 
-          debugLog("Invitation created for tenant", { email: primaryEmail })
+          if (!inviteError && invitation) {
+            debugLog("Invitation created for tenant", { email: primaryEmail, invitationId: invitation.id })
+
+            // Get inviter's name for the email
+            const { data: inviterProfile } = await supabase
+              .from("user_profiles")
+              .select("name")
+              .eq("user_id", user.id)
+              .single()
+
+            const inviterName = inviterProfile?.name || "Property Owner"
+
+            // Send invitation email
+            const signupUrl = `${window.location.origin}/register?invite=${invitation.token}&email=${encodeURIComponent(primaryEmail)}`
+            const emailResult = await sendInvitationEmail({
+              to: primaryEmail,
+              inviteeName: formData.name,
+              inviterName: inviterName,
+              workspaceName: workspace.name,
+              contextType: "tenant",
+              signupUrl: signupUrl,
+              message: `You've been added as a tenant at ${workspace.name}. Sign up to access your tenant portal where you can view bills, payments, submit complaints, and more.`,
+            })
+
+            if (emailResult.success) {
+              debugLog("Invitation email sent", { email: primaryEmail })
+            } else {
+              console.warn("Failed to send invitation email:", emailResult.error)
+            }
+          }
         }
       }
 

@@ -18,7 +18,15 @@ import {
   CheckCircle,
   X,
   Plus,
-  Sparkles
+  Sparkles,
+  Users,
+  FileText,
+  CreditCard,
+  MessageSquare,
+  Bell,
+  UserPlus,
+  Download,
+  UserCog
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -43,6 +51,36 @@ interface WebsiteConfig {
   show_contact_form: boolean
 }
 
+interface TenantFeatures {
+  view_bills: boolean
+  view_payments: boolean
+  submit_complaints: boolean
+  view_notices: boolean
+  request_visitors: boolean
+  download_receipts: boolean
+  update_profile: boolean
+}
+
+const defaultTenantFeatures: TenantFeatures = {
+  view_bills: true,
+  view_payments: true,
+  submit_complaints: true,
+  view_notices: true,
+  request_visitors: false,
+  download_receipts: true,
+  update_profile: true,
+}
+
+const tenantFeatureOptions = [
+  { key: "view_bills", label: "View Bills", desc: "Allow tenants to see their bills", icon: FileText },
+  { key: "view_payments", label: "View Payments", desc: "Allow tenants to see payment history", icon: CreditCard },
+  { key: "submit_complaints", label: "Submit Complaints", desc: "Allow tenants to raise complaints", icon: MessageSquare },
+  { key: "view_notices", label: "View Notices", desc: "Allow tenants to see property announcements", icon: Bell },
+  { key: "request_visitors", label: "Request Visitors", desc: "Allow tenants to pre-register visitors", icon: UserPlus },
+  { key: "download_receipts", label: "Download Receipts", desc: "Allow tenants to download payment PDFs", icon: Download },
+  { key: "update_profile", label: "Update Profile", desc: "Allow tenants to edit their own details", icon: UserCog },
+]
+
 const defaultAmenities = [
   "WiFi", "Parking", "Food", "CCTV", "Power Backup",
   "Water Supply", "Laundry", "Housekeeping", "Security",
@@ -54,8 +92,9 @@ export default function EditPropertyPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
-  const [activeTab, setActiveTab] = useState<"details" | "website">("details")
+  const [activeTab, setActiveTab] = useState<"details" | "website" | "tenant">("details")
   const [copied, setCopied] = useState(false)
+  const [tenantFeatures, setTenantFeatures] = useState<TenantFeatures>(defaultTenantFeatures)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -146,6 +185,14 @@ export default function EditPropertyPage() {
         },
       })
 
+      // Load tenant features
+      if (data.tenant_features) {
+        setTenantFeatures({
+          ...defaultTenantFeatures,
+          ...data.tenant_features,
+        })
+      }
+
       setLoadingData(false)
     }
 
@@ -216,6 +263,13 @@ export default function EditPropertyPage() {
     toast.success("Website URL copied!")
   }
 
+  const handleTenantFeatureChange = (key: keyof TenantFeatures, value: boolean) => {
+    setTenantFeatures(prev => ({
+      ...prev,
+      [key]: value,
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -257,6 +311,9 @@ export default function EditPropertyPage() {
             : null,
         }
       }
+
+      // Always save tenant features
+      updateData.tenant_features = tenantFeatures
 
       const { error } = await supabase
         .from("properties")
@@ -302,11 +359,11 @@ export default function EditPropertyPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-2 border-b overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab("details")}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+          className={`px-4 py-2 font-medium border-b-2 transition-colors whitespace-nowrap ${
             activeTab === "details"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -317,8 +374,20 @@ export default function EditPropertyPage() {
         </button>
         <button
           type="button"
+          onClick={() => setActiveTab("tenant")}
+          className={`px-4 py-2 font-medium border-b-2 transition-colors whitespace-nowrap ${
+            activeTab === "tenant"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Users className="h-4 w-4 inline mr-2" />
+          Tenant Portal
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveTab("website")}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+          className={`px-4 py-2 font-medium border-b-2 transition-colors whitespace-nowrap ${
             activeTab === "website"
               ? "border-primary text-primary"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -426,6 +495,64 @@ export default function EditPropertyPage() {
                     />
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tenant Portal Tab */}
+        {activeTab === "tenant" && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-violet-100 rounded-lg">
+                  <Users className="h-5 w-5 text-violet-600" />
+                </div>
+                <div>
+                  <CardTitle>Tenant Portal Features</CardTitle>
+                  <CardDescription>
+                    Control what features tenants can access when they login to their portal for this property
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {tenantFeatureOptions.map((option) => (
+                  <div
+                    key={option.key}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-muted rounded-lg">
+                        <option.icon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{option.label}</p>
+                        <p className="text-sm text-muted-foreground">{option.desc}</p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={tenantFeatures[option.key as keyof TenantFeatures]}
+                        onChange={(e) =>
+                          handleTenantFeatureChange(option.key as keyof TenantFeatures, e.target.checked)
+                        }
+                        className="sr-only peer"
+                        disabled={loading}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500 peer-disabled:opacity-50"></div>
+                    </label>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  <strong>Note:</strong> These settings apply to all tenants of this property.
+                  When a tenant logs into the tenant portal, they will only see the features enabled above.
+                </p>
               </div>
             </CardContent>
           </Card>

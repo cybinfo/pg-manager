@@ -21,6 +21,26 @@ import {
   User
 } from "lucide-react"
 
+interface TenantFeatures {
+  view_bills: boolean
+  view_payments: boolean
+  submit_complaints: boolean
+  view_notices: boolean
+  request_visitors: boolean
+  download_receipts: boolean
+  update_profile: boolean
+}
+
+const defaultTenantFeatures: TenantFeatures = {
+  view_bills: true,
+  view_payments: true,
+  submit_complaints: true,
+  view_notices: true,
+  request_visitors: false,
+  download_receipts: true,
+  update_profile: true,
+}
+
 interface TenantData {
   id: string
   name: string
@@ -28,10 +48,12 @@ interface TenantData {
   monthly_rent: number
   check_in_date: string
   status: string
+  property_id: string
   property: {
     name: string
     address: string | null
     city: string
+    tenant_features: TenantFeatures | null
   }
   room: {
     room_number: string
@@ -65,12 +87,12 @@ export default function TenantHomePage() {
 
       if (!user) return
 
-      // Fetch tenant data
+      // Fetch tenant data with property features
       const { data: tenantData } = await supabase
         .from("tenants")
         .select(`
           *,
-          property:properties(name, address, city),
+          property:properties(name, address, city, tenant_features),
           room:rooms(room_number, room_type, amenities)
         `)
         .eq("user_id", user.id)
@@ -295,122 +317,153 @@ export default function TenantHomePage() {
             <CardTitle className="text-lg">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Link href="/tenant/payments" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-50 rounded-lg">
-                    <CreditCard className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">View Payments</p>
-                    <p className="text-xs text-muted-foreground">Payment history & receipts</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </Link>
+            {/* Get tenant features from property, with defaults */}
+            {(() => {
+              const features: TenantFeatures = {
+                ...defaultTenantFeatures,
+                ...(data.tenant?.property?.tenant_features || {}),
+              }
 
-            <Link href="/tenant/complaints" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-50 rounded-lg">
-                    <MessageSquare className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Submit Complaint</p>
-                    <p className="text-xs text-muted-foreground">
-                      {data.openComplaints > 0
-                        ? `${data.openComplaints} open complaint${data.openComplaints > 1 ? "s" : ""}`
-                        : "Report an issue"}
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </Link>
+              return (
+                <>
+                  {features.view_payments && (
+                    <Link href="/tenant/payments" className="block">
+                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-emerald-50 rounded-lg">
+                            <CreditCard className="h-4 w-4 text-emerald-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium">View Payments</p>
+                            <p className="text-xs text-muted-foreground">Payment history & receipts</p>
+                          </div>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </Link>
+                  )}
 
-            <Link href="/tenant/notices" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-sky-50 rounded-lg">
-                    <Bell className="h-4 w-4 text-sky-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">View Notices</p>
-                    <p className="text-xs text-muted-foreground">
-                      {data.unreadNotices > 0
-                        ? `${data.unreadNotices} active notice${data.unreadNotices > 1 ? "s" : ""}`
-                        : "No new notices"}
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </Link>
+                  {features.submit_complaints && (
+                    <Link href="/tenant/complaints" className="block">
+                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-amber-50 rounded-lg">
+                            <MessageSquare className="h-4 w-4 text-amber-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Submit Complaint</p>
+                            <p className="text-xs text-muted-foreground">
+                              {data.openComplaints > 0
+                                ? `${data.openComplaints} open complaint${data.openComplaints > 1 ? "s" : ""}`
+                                : "Report an issue"}
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </Link>
+                  )}
 
-            <Link href="/tenant/profile" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-violet-50 rounded-lg">
-                    <User className="h-4 w-4 text-violet-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">My Profile</p>
-                    <p className="text-xs text-muted-foreground">View your details</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </Link>
+                  {features.view_notices && (
+                    <Link href="/tenant/notices" className="block">
+                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-sky-50 rounded-lg">
+                            <Bell className="h-4 w-4 text-sky-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium">View Notices</p>
+                            <p className="text-xs text-muted-foreground">
+                              {data.unreadNotices > 0
+                                ? `${data.unreadNotices} active notice${data.unreadNotices > 1 ? "s" : ""}`
+                                : "No new notices"}
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </Link>
+                  )}
+
+                  {features.update_profile && (
+                    <Link href="/tenant/profile" className="block">
+                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-violet-50 rounded-lg">
+                            <User className="h-4 w-4 text-violet-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium">My Profile</p>
+                            <p className="text-xs text-muted-foreground">View & update your details</p>
+                          </div>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </Link>
+                  )}
+                </>
+              )
+            })()}
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Payments */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-lg">Recent Payments</CardTitle>
-            <CardDescription>Your last 3 payments</CardDescription>
-          </div>
-          <Link href="/tenant/payments">
-            <Button variant="ghost" size="sm">
-              View All
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {data.recentPayments.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No payments recorded yet</p>
-          ) : (
-            <div className="space-y-3">
-              {data.recentPayments.map((payment) => (
-                <div
-                  key={payment.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-teal-50 rounded-full">
-                      <CheckCircle className="h-4 w-4 text-teal-600" />
+      {/* Recent Payments - Show only if view_payments is enabled */}
+      {(() => {
+        const features: TenantFeatures = {
+          ...defaultTenantFeatures,
+          ...(data.tenant?.property?.tenant_features || {}),
+        }
+
+        if (!features.view_payments) return null
+
+        return (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Recent Payments</CardTitle>
+                <CardDescription>Your last 3 payments</CardDescription>
+              </div>
+              <Link href="/tenant/payments">
+                <Button variant="ghost" size="sm">
+                  View All
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              {data.recentPayments.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No payments recorded yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {data.recentPayments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-teal-50 rounded-full">
+                          <CheckCircle className="h-4 w-4 text-teal-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{formatCurrency(payment.amount)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {payment.for_period || formatDate(payment.payment_date)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm capitalize">{payment.payment_method}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(payment.payment_date)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{formatCurrency(payment.amount)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {payment.for_period || formatDate(payment.payment_date)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm capitalize">{payment.payment_method}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(payment.payment_date)}</p>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              )}
+            </CardContent>
+          </Card>
+        )
+      })()}
     </div>
   )
 }

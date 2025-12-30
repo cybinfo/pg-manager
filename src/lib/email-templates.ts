@@ -2,6 +2,7 @@ import type {
   PaymentReminderData,
   OverdueAlertData,
   PaymentReceiptData,
+  InvitationEmailData,
 } from "./email"
 
 // Format currency for display
@@ -253,6 +254,87 @@ export function paymentReceiptTemplate(data: PaymentReceiptData): string {
       <p style="color: #6B7280; margin: 0; font-size: 14px;">
         Thank you,<br>
         <strong style="color: #111827;">${data.ownerName}</strong>
+      </p>
+    </div>
+  `
+
+  return emailWrapper(content)
+}
+
+// Invitation Email Template (for Staff/Tenant invitations)
+export function invitationEmailTemplate(data: InvitationEmailData): string {
+  const roleLabels: Record<string, string> = {
+    staff: "Staff Member",
+    tenant: "Tenant",
+  }
+
+  const roleDescriptions: Record<string, string> = {
+    staff: "As a staff member, you'll be able to help manage the property through the ManageKar dashboard.",
+    tenant: "As a tenant, you'll have access to your personal portal where you can view your bills, payments, submit complaints, and more.",
+  }
+
+  const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #DBEAFE; color: #2563EB; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        You're Invited!
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.inviteeName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      <strong style="color: #111827;">${data.inviterName}</strong> has invited you to join
+      <strong style="color: #10B981;">${data.workspaceName}</strong> as a <strong>${roleLabels[data.contextType] || data.contextType}</strong>.
+    </p>
+
+    <!-- Invitation Details Card -->
+    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Property</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.workspaceName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Your Role</td>
+          <td style="padding: 8px 0; color: #2563EB; font-weight: 500; text-align: right;">${roleLabels[data.contextType] || data.contextType}</td>
+        </tr>
+        ${data.roleName ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Position</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.roleName}</td>
+        </tr>
+        ` : ""}
+      </table>
+    </div>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      ${roleDescriptions[data.contextType] || ""}
+    </p>
+
+    ${data.message ? `
+    <div style="background: #F9FAFB; border-left: 4px solid #10B981; padding: 16px; margin-bottom: 24px;">
+      <p style="color: #6B7280; font-size: 14px; margin: 0 0 8px 0;">Message from ${data.inviterName}:</p>
+      <p style="color: #111827; margin: 0; font-style: italic;">"${data.message}"</p>
+    </div>
+    ` : ""}
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 32px 0;">
+      <a href="${data.signupUrl}" style="display: inline-block; background: linear-gradient(135deg, #14B8A6, #10B981); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        Accept Invitation & Sign Up
+      </a>
+    </div>
+
+    <p style="color: #9CA3AF; font-size: 13px; text-align: center; margin: 0 0 24px 0;">
+      If the button doesn't work, copy and paste this link in your browser:<br>
+      <a href="${data.signupUrl}" style="color: #10B981; word-break: break-all;">${data.signupUrl}</a>
+    </p>
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        If you didn't expect this invitation, you can safely ignore this email.
       </p>
     </div>
   `

@@ -21,6 +21,7 @@ import {
   X
 } from "lucide-react"
 import { toast } from "sonner"
+import { sendInvitationEmail } from "@/lib/email"
 
 interface Role {
   id: string
@@ -213,7 +214,7 @@ export default function NewStaffPage() {
         }
       } else if (workspace) {
         // User doesn't exist - create invitation
-        const { error: inviteError } = await supabase
+        const { data: invitation, error: inviteError } = await supabase
           .from("invitations")
           .insert({
             workspace_id: workspace.id,
@@ -227,12 +228,45 @@ export default function NewStaffPage() {
             status: "pending",
             message: `You've been invited to join ${workspace.name} as a staff member.`,
           })
+          .select("id, token")
+          .single()
 
         if (inviteError) {
           console.error("Error creating invitation:", inviteError)
           toast.success("Staff member added! (Invitation could not be created)")
-        } else {
-          toast.success("Staff member added! An invitation has been created. Share the login link with them.")
+        } else if (invitation) {
+          // Get role name for email
+          const selectedRole = roles.find(r => r.id === primaryRoleId)
+          const roleName = selectedRole?.name || "Staff Member"
+
+          // Get inviter's name
+          const { data: inviterProfile } = await supabase
+            .from("user_profiles")
+            .select("name")
+            .eq("user_id", user.id)
+            .single()
+
+          const inviterName = inviterProfile?.name || "Property Owner"
+
+          // Send invitation email
+          const signupUrl = `${window.location.origin}/register?invite=${invitation.token}&email=${encodeURIComponent(formData.email)}`
+          const emailResult = await sendInvitationEmail({
+            to: formData.email,
+            inviteeName: formData.name,
+            inviterName: inviterName,
+            workspaceName: workspace.name,
+            contextType: "staff",
+            roleName: roleName,
+            signupUrl: signupUrl,
+            message: `You've been invited to join ${workspace.name} as a staff member. As ${roleName}, you'll be able to help manage the property through the ManageKar dashboard.`,
+          })
+
+          if (emailResult.success) {
+            toast.success("Staff member added! An invitation email has been sent.")
+          } else {
+            console.warn("Failed to send invitation email:", emailResult.error)
+            toast.success("Staff member added! Invitation created but email failed to send.")
+          }
         }
       } else {
         toast.success("Staff member added successfully!")

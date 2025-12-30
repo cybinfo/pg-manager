@@ -3,6 +3,7 @@ import {
   paymentReminderTemplate,
   overdueAlertTemplate,
   paymentReceiptTemplate,
+  invitationEmailTemplate,
 } from "./email-templates"
 
 // Lazy initialization of Resend client
@@ -57,6 +58,17 @@ export interface PaymentReceiptData {
   paymentMethod: string
   forPeriod?: string
   ownerName: string
+}
+
+export interface InvitationEmailData {
+  to: string
+  inviteeName: string
+  inviterName: string
+  workspaceName: string
+  contextType: "staff" | "tenant"
+  roleName?: string
+  message?: string
+  signupUrl: string
 }
 
 export async function sendPaymentReminder(
@@ -127,6 +139,31 @@ export async function sendPaymentReceipt(
     return { success: true, id: result?.id }
   } catch (err) {
     console.error("Error sending payment receipt:", err)
+    return { success: false, error: String(err) }
+  }
+}
+
+export async function sendInvitationEmail(
+  data: InvitationEmailData
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    const client = getResendClient()
+    const roleLabel = data.contextType === "staff" ? "Staff" : "Tenant"
+    const { data: result, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: data.to,
+      subject: `You're invited to join ${data.workspaceName} as ${roleLabel} - ManageKar`,
+      html: invitationEmailTemplate(data),
+    })
+
+    if (error) {
+      console.error("Failed to send invitation email:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, id: result?.id }
+  } catch (err) {
+    console.error("Error sending invitation email:", err)
     return { success: false, error: String(err) }
   }
 }
