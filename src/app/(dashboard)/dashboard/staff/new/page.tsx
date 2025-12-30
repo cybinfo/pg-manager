@@ -134,7 +134,21 @@ export default function NewStaffPage() {
         return
       }
 
-      // Create staff member
+      // Step 1: Check if email already exists as a user
+      const { data: existingProfile } = await supabase
+        .from("user_profiles")
+        .select("user_id, name")
+        .eq("email", formData.email.toLowerCase())
+        .single()
+
+      // Step 2: Get owner's workspace
+      const { data: workspace } = await supabase
+        .from("workspaces")
+        .select("id, name")
+        .eq("owner_user_id", user.id)
+        .single()
+
+      // Step 3: Create staff member (with user_id if exists)
       const { data: staffData, error: staffError } = await supabase
         .from("staff_members")
         .insert({
@@ -143,6 +157,7 @@ export default function NewStaffPage() {
           email: formData.email,
           phone: formData.phone || null,
           is_active: true,
+          user_id: existingProfile?.user_id || null, // Link if user exists
         })
         .select()
         .single()
@@ -152,8 +167,10 @@ export default function NewStaffPage() {
         throw staffError
       }
 
-      // Assign roles if any
+      // Step 4: Assign roles if any
+      let primaryRoleId: string | null = null
       if (roleAssignments.length > 0) {
+        primaryRoleId = roleAssignments[0].role_id
         const roleInserts = roleAssignments.map((assignment) => ({
           owner_id: user.id,
           staff_member_id: staffData.id,
@@ -167,12 +184,60 @@ export default function NewStaffPage() {
 
         if (roleError) {
           console.error("Error assigning roles:", roleError)
-          // Don't throw - staff was created, just roles failed
           toast.error("Staff created but role assignment failed")
         }
       }
 
-      toast.success("Staff member added successfully!")
+      // Step 5: Handle user context or invitation
+      if (existingProfile?.user_id && workspace) {
+        // User exists - create user_context directly
+        const { error: contextError } = await supabase
+          .from("user_contexts")
+          .insert({
+            user_id: existingProfile.user_id,
+            workspace_id: workspace.id,
+            context_type: "staff",
+            role_id: primaryRoleId,
+            entity_id: staffData.id,
+            is_active: true,
+            is_default: false,
+            invited_by: user.id,
+            invited_at: new Date().toISOString(),
+            accepted_at: new Date().toISOString(), // Auto-accepted since user exists
+          })
+
+        if (contextError) {
+          console.error("Error creating context:", contextError)
+        } else {
+          toast.success(`Staff member added! ${existingProfile.name} can now login and switch to this staff account.`)
+        }
+      } else if (workspace) {
+        // User doesn't exist - create invitation
+        const { error: inviteError } = await supabase
+          .from("invitations")
+          .insert({
+            workspace_id: workspace.id,
+            invited_by: user.id,
+            email: formData.email,
+            phone: formData.phone || null,
+            name: formData.name,
+            context_type: "staff",
+            role_id: primaryRoleId,
+            entity_id: staffData.id,
+            status: "pending",
+            message: `You've been invited to join ${workspace.name} as a staff member.`,
+          })
+
+        if (inviteError) {
+          console.error("Error creating invitation:", inviteError)
+          toast.success("Staff member added! (Invitation could not be created)")
+        } else {
+          toast.success("Staff member added! An invitation has been created. Share the login link with them.")
+        }
+      } else {
+        toast.success("Staff member added successfully!")
+      }
+
       router.push("/dashboard/staff")
     } catch (error) {
       console.error("Error:", error)

@@ -647,6 +647,75 @@ export default function NewTenantPage() {
         }
       }
 
+      // Step: Auto-link to existing user or create invitation for tenant portal access
+      if (newTenant) {
+        const primaryEmail = validEmails.find(e => e.is_primary)?.email || validEmails[0]?.email
+
+        // Check if email exists as a user
+        let existingUserId: string | null = null
+        if (primaryEmail) {
+          const { data: existingProfile } = await supabase
+            .from("user_profiles")
+            .select("user_id, name")
+            .eq("email", primaryEmail.toLowerCase())
+            .single()
+
+          if (existingProfile?.user_id) {
+            existingUserId = existingProfile.user_id
+          }
+        }
+
+        // Get owner's workspace
+        const { data: workspace } = await supabase
+          .from("workspaces")
+          .select("id, name")
+          .eq("owner_user_id", user.id)
+          .single()
+
+        if (existingUserId && workspace) {
+          // User exists - link tenant and create context
+          await supabase
+            .from("tenants")
+            .update({ user_id: existingUserId })
+            .eq("id", newTenant.id)
+
+          const { error: contextError } = await supabase
+            .from("user_contexts")
+            .insert({
+              user_id: existingUserId,
+              workspace_id: workspace.id,
+              context_type: "tenant",
+              entity_id: newTenant.id,
+              is_active: true,
+              is_default: false,
+              invited_by: user.id,
+              invited_at: new Date().toISOString(),
+              accepted_at: new Date().toISOString(),
+            })
+
+          if (!contextError) {
+            debugLog("Tenant linked to existing user", { existingUserId })
+          }
+        } else if (workspace && primaryEmail) {
+          // User doesn't exist - create invitation for tenant portal
+          await supabase
+            .from("invitations")
+            .insert({
+              workspace_id: workspace.id,
+              invited_by: user.id,
+              email: primaryEmail,
+              phone: primaryPhone || null,
+              name: formData.name,
+              context_type: "tenant",
+              entity_id: newTenant.id,
+              status: "pending",
+              message: `You've been added as a tenant at ${workspace.name}. Sign up to access your tenant portal.`,
+            })
+
+          debugLog("Invitation created for tenant", { email: primaryEmail })
+        }
+      }
+
       toast.success("Tenant added successfully!", {
         description: `${formData.name} has been added to Room ${roomCheck.room_number}`,
       })

@@ -250,9 +250,23 @@ vercel --prod
   - `permission-gate.tsx` - PermissionGate, RoleGate, OwnerOnly, StaffOnly, TenantOnly components
   - `invitation-components.tsx` - InvitationForm, InvitationList, AcceptInvitation
   - `index.ts` - Central exports
+- **Auto-Linking on Staff/Tenant Creation**:
+  - When creating staff or tenant, system checks if email exists in `user_profiles`
+  - If exists: Links `user_id` and creates `user_context` immediately (auto-accepted)
+  - If not exists: Creates invitation in `invitations` table for later acceptance
+  - Ensures existing users get context access without manual linking
+- **Dashboard Layout Fix**:
+  - Added handling for users with 0 contexts (new owners without workspace)
+  - Redirects to `/setup` page for initial workspace creation
+- **Setup Page Enhancement**:
+  - Creates workspace + owner context on setup completion
+  - Ensures new owners have proper context for login flow
 - **Updated Files**:
   - `src/app/(auth)/login/page.tsx` - Context picker flow after login
-  - `src/app/(dashboard)/layout.tsx` - AuthProvider wrapper, ContextSwitcher in header
+  - `src/app/(dashboard)/layout.tsx` - Handle 0 contexts, redirect to setup
+  - `src/app/(setup)/setup/page.tsx` - Create workspace + user_context
+  - `src/app/(dashboard)/dashboard/staff/new/page.tsx` - Auto-link existing users or create invitations
+  - `src/app/(dashboard)/dashboard/tenants/new/page.tsx` - Auto-link existing users or create invitations
 - **UI Components Added**: Installed shadcn/ui `checkbox` and `dropdown-menu`
 - **Design Principles Applied**: Standardization, Unified, Modularization, Centralization, Flexibility, AI, BI, Customer Centric
 
