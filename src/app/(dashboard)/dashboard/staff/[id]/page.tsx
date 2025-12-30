@@ -137,18 +137,14 @@ export default function StaffDetailPage() {
       phone: staffRes.data.phone || "",
     })
 
-    if (!rolesRes.error) {
-      console.log("Raw user_roles response:", JSON.stringify(rolesRes.data, null, 2))
-      // Transform user roles (Supabase returns arrays for joins)
-      const transformedRoles: UserRole[] = ((rolesRes.data as UserRoleRaw[]) || []).map((r) => ({
+    if (!rolesRes.error && rolesRes.data) {
+      // Transform user roles - handle both array and object responses from Supabase joins
+      const transformedRoles: UserRole[] = rolesRes.data.map((r: any) => ({
         ...r,
-        role: r.role && r.role.length > 0 ? r.role[0] : null,
-        property: r.property && r.property.length > 0 ? r.property[0] : null,
+        role: Array.isArray(r.role) ? (r.role.length > 0 ? r.role[0] : null) : r.role || null,
+        property: Array.isArray(r.property) ? (r.property.length > 0 ? r.property[0] : null) : r.property || null,
       }))
-      console.log("Transformed roles:", JSON.stringify(transformedRoles, null, 2))
       setUserRoles(transformedRoles)
-    } else {
-      console.log("Error fetching user_roles:", rolesRes.error)
     }
 
     if (!allRolesRes.error) {
