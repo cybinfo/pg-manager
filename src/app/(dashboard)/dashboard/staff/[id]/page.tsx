@@ -138,19 +138,16 @@ export default function StaffDetailPage() {
     })
 
     if (!rolesRes.error) {
-      // Transform user roles
+      // Transform user roles (Supabase returns arrays for joins)
       const transformedRoles: UserRole[] = ((rolesRes.data as UserRoleRaw[]) || []).map((r) => ({
         ...r,
         role: r.role && r.role.length > 0 ? r.role[0] : null,
         property: r.property && r.property.length > 0 ? r.property[0] : null,
       }))
-      console.log("Loaded user roles:", rolesRes.data)
-      console.log("Transformed roles:", transformedRoles)
       setUserRoles(transformedRoles)
     }
 
     if (!allRolesRes.error) {
-      console.log("Available roles:", allRolesRes.data)
       setAllRoles(allRolesRes.data || [])
       if (allRolesRes.data && allRolesRes.data.length > 0) {
         setNewRoleAssignment((prev) => ({ ...prev, role_id: allRolesRes.data[0].id }))
@@ -158,8 +155,11 @@ export default function StaffDetailPage() {
     }
 
     if (!propertiesRes.error) {
-      console.log("Available properties:", propertiesRes.data)
       setProperties(propertiesRes.data || [])
+      // If there's only one property, pre-select it for convenience
+      if (propertiesRes.data && propertiesRes.data.length === 1) {
+        setNewRoleAssignment((prev) => ({ ...prev, property_id: propertiesRes.data[0].id }))
+      }
     }
 
     setLoading(false)
@@ -226,16 +226,6 @@ export default function StaffDetailPage() {
 
   const handleAddRole = async () => {
     if (!staff || !newRoleAssignment.role_id) return
-
-    // Debug: log values being saved
-    console.log("Adding role - current state:", JSON.stringify(newRoleAssignment))
-    console.log("Adding role:", {
-      role_id: newRoleAssignment.role_id,
-      property_id: newRoleAssignment.property_id,
-      property_id_type: typeof newRoleAssignment.property_id,
-      property_id_length: newRoleAssignment.property_id.length,
-      property_id_will_be: newRoleAssignment.property_id || null
-    })
 
     setSaving(true)
     const supabase = createClient()
@@ -562,10 +552,7 @@ export default function StaffDetailPage() {
                 <div className="flex items-center gap-2 mt-2">
                   <select
                     value={newRoleAssignment.role_id}
-                    onChange={(e) => {
-                      console.log("Role dropdown changed to:", e.target.value)
-                      setNewRoleAssignment((prev) => ({ ...prev, role_id: e.target.value }))
-                    }}
+                    onChange={(e) => setNewRoleAssignment((prev) => ({ ...prev, role_id: e.target.value }))}
                     className="flex-1 h-9 px-3 rounded-md border border-input bg-background text-sm"
                     disabled={saving}
                   >
@@ -577,10 +564,7 @@ export default function StaffDetailPage() {
                   </select>
                   <select
                     value={newRoleAssignment.property_id}
-                    onChange={(e) => {
-                      console.log("Property dropdown changed to:", e.target.value)
-                      setNewRoleAssignment((prev) => ({ ...prev, property_id: e.target.value }))
-                    }}
+                    onChange={(e) => setNewRoleAssignment((prev) => ({ ...prev, property_id: e.target.value }))}
                     className="flex-1 h-9 px-3 rounded-md border border-input bg-background text-sm"
                     disabled={saving}
                   >
