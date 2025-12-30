@@ -211,12 +211,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Helper to load user data
   const loadUserData = useCallback(async (sessionUser: User, selectContext: boolean = true) => {
+    console.log('[Auth] loadUserData called for:', sessionUser.email, 'selectContext:', selectContext)
     try {
       // Fetch profile and contexts in parallel
+      console.log('[Auth] Fetching profile and contexts...')
       const [userProfile, userContexts] = await Promise.all([
         fetchProfile(sessionUser.id),
         fetchContexts(sessionUser.id),
       ])
+      console.log('[Auth] Fetched - profile:', !!userProfile, 'contexts:', userContexts?.length)
 
       setProfile(userProfile)
       setContexts(userContexts)
@@ -224,6 +227,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (selectContext) {
         // Determine initial context
         const savedContextId = localStorage.getItem('currentContextId')
+        console.log('[Auth] Saved context ID:', savedContextId)
         let initialContext: ContextWithDetails | null = null
 
         if (savedContextId) {
@@ -235,42 +239,59 @@ export function AuthProvider({ children }: AuthProviderProps) {
           initialContext = userContexts.find(c => c.is_default) || userContexts[0] || null
         }
 
+        console.log('[Auth] Setting current context:', initialContext?.context_type, initialContext?.workspace_name)
         setCurrentContext(initialContext)
       }
     } catch (err) {
-      console.error('Error loading user data:', err)
+      console.error('[Auth] Error loading user data:', err)
     }
   }, [fetchProfile, fetchContexts])
 
   // Initialize auth state
   useEffect(() => {
     let mounted = true
+    console.log('[Auth] useEffect triggered, isLoading:', isLoading)
 
     const initAuth = async () => {
       // Prevent duplicate initialization within same mount cycle
-      if (initializingRef.current) return
+      if (initializingRef.current) {
+        console.log('[Auth] Already initializing, skipping')
+        return
+      }
       initializingRef.current = true
+      console.log('[Auth] Starting initialization')
 
       try {
         // Get current session
+        console.log('[Auth] Getting session...')
         const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('[Auth] Session result:', { hasSession: !!session, hasUser: !!session?.user, error })
 
-        if (!mounted) return
+        if (!mounted) {
+          console.log('[Auth] Component unmounted, aborting')
+          return
+        }
 
         if (error) {
-          console.error('Error getting session:', error)
+          console.error('[Auth] Error getting session:', error)
           setIsLoading(false)
           return
         }
 
         if (session?.user) {
+          console.log('[Auth] User found:', session.user.email)
           setUser(session.user)
+          console.log('[Auth] Loading user data...')
           await loadUserData(session.user, true)
+          console.log('[Auth] User data loaded')
+        } else {
+          console.log('[Auth] No user in session')
         }
       } catch (err) {
-        console.error('Exception during auth init:', err)
+        console.error('[Auth] Exception during auth init:', err)
       } finally {
         if (mounted) {
+          console.log('[Auth] Setting isLoading to false')
           setIsLoading(false)
         }
       }
@@ -300,6 +321,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     })
 
     return () => {
+      console.log('[Auth] Cleanup - unmounting')
       mounted = false
       initializingRef.current = false
       subscription.unsubscribe()
