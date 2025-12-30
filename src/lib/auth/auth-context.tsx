@@ -1,7 +1,7 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
-import { User } from '@supabase/supabase-js'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef, ReactNode } from 'react'
+import { User, SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import {
   ContextWithDetails,
@@ -10,6 +10,16 @@ import {
   Permission,
   TENANT_PERMISSIONS,
 } from './types'
+
+// Singleton supabase client for the entire app
+let supabaseInstance: SupabaseClient | null = null
+
+function getSupabaseClient(): SupabaseClient {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient()
+  }
+  return supabaseInstance
+}
 
 // ============================================
 // Auth Context Types
@@ -53,37 +63,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [contexts, setContexts] = useState<ContextWithDetails[]>([])
   const [currentContext, setCurrentContext] = useState<ContextWithDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const initializingRef = useRef(false)
 
-  const supabase = createClient()
+  // Use singleton supabase client to maintain session state
+  const supabase = useMemo(() => getSupabaseClient(), [])
 
   // Fetch user's contexts from database
   const fetchContexts = useCallback(async (userId: string) => {
-    const { data, error } = await supabase.rpc('get_user_contexts', {
-      p_user_id: userId
-    })
+    try {
+      const { data, error } = await supabase.rpc('get_user_contexts', {
+        p_user_id: userId
+      })
 
-    if (error) {
-      console.error('Error fetching contexts:', error)
+      if (error) {
+        console.error('Error fetching contexts:', error)
+        return []
+      }
+
+      return (data || []) as ContextWithDetails[]
+    } catch (err) {
+      console.error('Exception fetching contexts:', err)
       return []
     }
-
-    return (data || []) as ContextWithDetails[]
   }, [supabase])
 
   // Fetch user profile
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching profile:', error)
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error)
+        return null
+      }
+
+      return data as UserProfile | null
+    } catch (err) {
+      console.error('Exception fetching profile:', err)
       return null
     }
-
-    return data as UserProfile | null
   }, [supabase])
 
   // Refresh all contexts
@@ -187,26 +209,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setCurrentContext(null)
   }, [supabase])
 
-  // Initialize auth state
-  useEffect(() => {
-    const initAuth = async () => {
-      setIsLoading(true)
+  // Helper to load user data
+  const loadUserData = useCallback(async (sessionUser: User, selectContext: boolean = true) => {
+    try {
+      // Fetch profile and contexts in parallel
+      const [userProfile, userContexts] = await Promise.all([
+        fetchProfile(sessionUser.id),
+        fetchContexts(sessionUser.id),
+      ])
 
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession()
+      setProfile(userProfile)
+      setContexts(userContexts)
 
-      if (session?.user) {
-        setUser(session.user)
-
-        // Fetch profile and contexts in parallel
-        const [userProfile, userContexts] = await Promise.all([
-          fetchProfile(session.user.id),
-          fetchContexts(session.user.id),
-        ])
-
-        setProfile(userProfile)
-        setContexts(userContexts)
-
+      if (selectContext) {
         // Determine initial context
         const savedContextId = localStorage.getItem('currentContextId')
         let initialContext: ContextWithDetails | null = null
@@ -222,26 +237,59 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         setCurrentContext(initialContext)
       }
+    } catch (err) {
+      console.error('Error loading user data:', err)
+    }
+  }, [fetchProfile, fetchContexts])
 
-      setIsLoading(false)
+  // Initialize auth state
+  useEffect(() => {
+    let mounted = true
+
+    const initAuth = async () => {
+      // Prevent duplicate initialization within same mount cycle
+      if (initializingRef.current) return
+      initializingRef.current = true
+
+      try {
+        // Get current session
+        const { data: { session }, error } = await supabase.auth.getSession()
+
+        if (!mounted) return
+
+        if (error) {
+          console.error('Error getting session:', error)
+          setIsLoading(false)
+          return
+        }
+
+        if (session?.user) {
+          setUser(session.user)
+          await loadUserData(session.user, true)
+        }
+      } catch (err) {
+        console.error('Exception during auth init:', err)
+      } finally {
+        if (mounted) {
+          setIsLoading(false)
+        }
+      }
     }
 
     initAuth()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return
+
+      console.log('Auth state change:', event)
+
       if (event === 'SIGNED_IN' && session?.user) {
         setUser(session.user)
-
-        const [userProfile, userContexts] = await Promise.all([
-          fetchProfile(session.user.id),
-          fetchContexts(session.user.id),
-        ])
-
-        setProfile(userProfile)
-        setContexts(userContexts)
-
-        // Don't auto-select context here - let login page handle it
+        await loadUserData(session.user, false) // Don't auto-select context on sign in
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        // Token refreshed - update user but keep everything else
+        setUser(session.user)
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         setProfile(null)
@@ -252,9 +300,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     })
 
     return () => {
+      mounted = false
+      initializingRef.current = false
       subscription.unsubscribe()
     }
-  }, [supabase, fetchProfile, fetchContexts])
+  }, [supabase, loadUserData])
 
   const value: AuthState = {
     user,
