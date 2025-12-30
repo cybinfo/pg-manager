@@ -228,9 +228,12 @@ export default function StaffDetailPage() {
     if (!staff || !newRoleAssignment.role_id) return
 
     // Debug: log values being saved
+    console.log("Adding role - current state:", JSON.stringify(newRoleAssignment))
     console.log("Adding role:", {
       role_id: newRoleAssignment.role_id,
       property_id: newRoleAssignment.property_id,
+      property_id_type: typeof newRoleAssignment.property_id,
+      property_id_length: newRoleAssignment.property_id.length,
       property_id_will_be: newRoleAssignment.property_id || null
     })
 
@@ -559,9 +562,10 @@ export default function StaffDetailPage() {
                 <div className="flex items-center gap-2 mt-2">
                   <select
                     value={newRoleAssignment.role_id}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      console.log("Role dropdown changed to:", e.target.value)
                       setNewRoleAssignment((prev) => ({ ...prev, role_id: e.target.value }))
-                    }
+                    }}
                     className="flex-1 h-9 px-3 rounded-md border border-input bg-background text-sm"
                     disabled={saving}
                   >
@@ -573,9 +577,10 @@ export default function StaffDetailPage() {
                   </select>
                   <select
                     value={newRoleAssignment.property_id}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      console.log("Property dropdown changed to:", e.target.value)
                       setNewRoleAssignment((prev) => ({ ...prev, property_id: e.target.value }))
-                    }
+                    }}
                     className="flex-1 h-9 px-3 rounded-md border border-input bg-background text-sm"
                     disabled={saving}
                   >
