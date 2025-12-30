@@ -165,7 +165,7 @@ export default function StaffPage() {
     {
       key: "name",
       header: "Staff Member",
-      width: "220px",
+      width: "primary",
       render: (row) => (
         <div className="flex items-center gap-3">
           <div className={`h-10 w-10 rounded-full flex items-center justify-center ${row.is_active ? "bg-primary/10" : "bg-gray-100"}`}>
@@ -191,7 +191,7 @@ export default function StaffPage() {
     {
       key: "phone",
       header: "Phone",
-      width: "130px",
+      width: "tertiary",
       hideOnMobile: true,
       render: (row) => row.phone ? (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -205,7 +205,7 @@ export default function StaffPage() {
     {
       key: "roles",
       header: "Roles",
-      width: "180px",
+      width: "secondary",
       render: (row) => (
         <div className="flex flex-wrap gap-1">
           {row.roles && row.roles.length > 0 ? (
@@ -226,7 +226,7 @@ export default function StaffPage() {
     {
       key: "status",
       header: "Status",
-      width: "100px",
+      width: "status",
       render: (row) => (
         <StatusDot
           status={row.is_active ? "success" : "muted"}
@@ -237,7 +237,7 @@ export default function StaffPage() {
     {
       key: "actions",
       header: "",
-      width: "180px",
+      width: "actionsWide",
       render: (row) => (
         <div className="flex items-center gap-2">
           <Button

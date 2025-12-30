@@ -116,15 +116,15 @@ export default function PaymentsPage() {
     {
       key: "tenant",
       header: "Tenant",
-      width: "1.5fr",
+      width: "primary",
       render: (payment) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold">
+          <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold shrink-0">
             ₹
           </div>
-          <div>
-            <div className="font-medium">{payment.tenant.name}</div>
-            <div className="text-xs text-muted-foreground">{payment.property.name}</div>
+          <div className="min-w-0">
+            <div className="font-medium truncate">{payment.tenant.name}</div>
+            <div className="text-xs text-muted-foreground truncate">{payment.property.name}</div>
           </div>
         </div>
       ),
@@ -132,7 +132,7 @@ export default function PaymentsPage() {
     {
       key: "amount",
       header: "Amount",
-      width: "1fr",
+      width: "amount",
       render: (payment) => (
         <span className="font-semibold text-emerald-600 tabular-nums">
           ₹{Number(payment.amount).toLocaleString("en-IN")}
@@ -142,7 +142,7 @@ export default function PaymentsPage() {
     {
       key: "payment_method",
       header: "Method",
-      width: "100px",
+      width: "badge",
       hideOnMobile: true,
       render: (payment) => (
         <TableBadge variant="default">
@@ -153,13 +153,13 @@ export default function PaymentsPage() {
     {
       key: "payment_date",
       header: "Date",
-      width: "80px",
+      width: "date",
       render: (payment) => formatDate(payment.payment_date),
     },
     {
       key: "actions",
       header: "",
-      width: "80px",
+      width: "iconAction",
       render: (payment) => (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <WhatsAppIconButton

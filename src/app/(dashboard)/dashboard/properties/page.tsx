@@ -80,7 +80,7 @@ export default function PropertiesPage() {
     {
       key: "name",
       header: "Property",
-      width: "2fr",
+      width: "primary",
       render: (property) => (
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
@@ -99,7 +99,7 @@ export default function PropertiesPage() {
     {
       key: "room_count",
       header: "Rooms",
-      width: "80px",
+      width: "count",
       render: (property) => (
         <div className="flex items-center gap-1.5">
           <Home className="h-4 w-4 text-muted-foreground" />
@@ -110,7 +110,7 @@ export default function PropertiesPage() {
     {
       key: "tenant_count",
       header: "Tenants",
-      width: "80px",
+      width: "count",
       render: (property) => (
         <div className="flex items-center gap-1.5">
           <Users className="h-4 w-4 text-muted-foreground" />
@@ -121,7 +121,7 @@ export default function PropertiesPage() {
     {
       key: "is_active",
       header: "Status",
-      width: "100px",
+      width: "status",
       hideOnMobile: true,
       render: (property) => (
         <StatusDot

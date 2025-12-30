@@ -98,7 +98,7 @@ export default function RoomsPage() {
     {
       key: "room_number",
       header: "Room",
-      width: "1.5fr",
+      width: "primary",
       render: (room) => (
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-violet-100 flex items-center justify-center">
@@ -117,7 +117,7 @@ export default function RoomsPage() {
     {
       key: "room_type",
       header: "Type",
-      width: "100px",
+      width: "badge",
       hideOnMobile: true,
       render: (room) => (
         <TableBadge variant="default">
@@ -128,7 +128,7 @@ export default function RoomsPage() {
     {
       key: "beds",
       header: "Beds",
-      width: "80px",
+      width: "count",
       render: (room) => (
         <span className="tabular-nums">{room.occupied_beds}/{room.total_beds}</span>
       ),
@@ -136,7 +136,7 @@ export default function RoomsPage() {
     {
       key: "rent_amount",
       header: "Rent",
-      width: "100px",
+      width: "amount",
       render: (room) => (
         <span className="font-medium tabular-nums">₹{room.rent_amount.toLocaleString("en-IN")}</span>
       ),
@@ -144,7 +144,7 @@ export default function RoomsPage() {
     {
       key: "status",
       header: "Status",
-      width: "100px",
+      width: "status",
       render: (room) => {
         const info = getStatusInfo(room.status)
         return <StatusDot status={info.status} label={info.label} />

@@ -174,7 +174,7 @@ export default function ExpensesPage() {
     {
       key: "expense_type",
       header: "Category",
-      width: "1.5fr",
+      width: "primary",
       render: (expense) => (
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-rose-100 flex items-center justify-center">
@@ -192,7 +192,7 @@ export default function ExpensesPage() {
     {
       key: "amount",
       header: "Amount",
-      width: "1fr",
+      width: "amount",
       render: (expense) => (
         <span className="font-semibold text-rose-600 tabular-nums">
           -₹{Number(expense.amount).toLocaleString("en-IN")}
@@ -202,7 +202,7 @@ export default function ExpensesPage() {
     {
       key: "payment_method",
       header: "Method",
-      width: "90px",
+      width: "badge",
       hideOnMobile: true,
       render: (expense) => (
         <TableBadge variant="muted">
@@ -213,14 +213,14 @@ export default function ExpensesPage() {
     {
       key: "property",
       header: "Property",
-      width: "1fr",
+      width: "tertiary",
       hideOnMobile: true,
       render: (expense) => expense.property?.name || "General",
     },
     {
       key: "expense_date",
       header: "Date",
-      width: "80px",
+      width: "date",
       render: (expense) => formatDate(expense.expense_date),
     },
   ]

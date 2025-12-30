@@ -165,7 +165,7 @@ export default function ComplaintsPage() {
     {
       key: "title",
       header: "Complaint",
-      width: "300px",
+      width: "primary",
       render: (row) => (
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -188,7 +188,7 @@ export default function ComplaintsPage() {
     {
       key: "tenant",
       header: "Tenant",
-      width: "150px",
+      width: "secondary",
       render: (row) => (
         <div className="text-sm">
           {row.tenant && (
@@ -208,7 +208,7 @@ export default function ComplaintsPage() {
     {
       key: "status",
       header: "Status",
-      width: "120px",
+      width: "status",
       render: (row) => (
         <StatusDot
           status={statusConfig[row.status]?.variant || "muted"}
@@ -219,7 +219,7 @@ export default function ComplaintsPage() {
     {
       key: "created_at",
       header: "Created",
-      width: "100px",
+      width: "date",
       hideOnMobile: true,
       render: (row) => (
         <span className="text-sm text-muted-foreground">

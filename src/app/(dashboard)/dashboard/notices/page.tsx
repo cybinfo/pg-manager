@@ -189,7 +189,7 @@ export default function NoticesPage() {
     {
       key: "title",
       header: "Notice",
-      width: "300px",
+      width: "primary",
       render: (row) => {
         const TypeIcon = typeConfig[row.type]?.icon || Megaphone
         const expired = isExpired(row.expires_at)
@@ -222,7 +222,7 @@ export default function NoticesPage() {
     {
       key: "property",
       header: "Property",
-      width: "120px",
+      width: "tertiary",
       hideOnMobile: true,
       render: (row) => (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -234,7 +234,7 @@ export default function NoticesPage() {
     {
       key: "target_audience",
       header: "Audience",
-      width: "120px",
+      width: "tertiary",
       hideOnMobile: true,
       render: (row) => (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -246,7 +246,7 @@ export default function NoticesPage() {
     {
       key: "created_at",
       header: "Posted",
-      width: "100px",
+      width: "date",
       hideOnMobile: true,
       render: (row) => (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -258,7 +258,7 @@ export default function NoticesPage() {
     {
       key: "actions",
       header: "",
-      width: "80px",
+      width: "iconAction",
       render: (row) => (
         <div className="relative">
           <Button

@@ -128,14 +128,14 @@ export default function TenantsPage() {
     {
       key: "name",
       header: "Tenant",
-      width: "2fr",
+      width: "primary",
       render: (tenant) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
             {tenant.name.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <div className="font-medium">{tenant.name}</div>
+          <div className="min-w-0">
+            <div className="font-medium truncate">{tenant.name}</div>
             <div className="text-xs text-muted-foreground">{tenant.phone}</div>
           </div>
         </div>
@@ -144,10 +144,10 @@ export default function TenantsPage() {
     {
       key: "property",
       header: "Property / Room",
-      width: "1.5fr",
+      width: "secondary",
       render: (tenant) => (
-        <div className="text-sm">
-          <div>{tenant.property?.name || "—"}</div>
+        <div className="text-sm min-w-0">
+          <div className="truncate">{tenant.property?.name || "—"}</div>
           <div className="text-muted-foreground text-xs">Room {tenant.room?.room_number || "—"}</div>
         </div>
       ),
@@ -155,7 +155,7 @@ export default function TenantsPage() {
     {
       key: "monthly_rent",
       header: "Rent",
-      width: "1fr",
+      width: "amount",
       render: (tenant) => (
         <span className="font-medium tabular-nums">₹{tenant.monthly_rent.toLocaleString("en-IN")}</span>
       ),
@@ -163,14 +163,14 @@ export default function TenantsPage() {
     {
       key: "check_in_date",
       header: "Since",
-      width: "1fr",
+      width: "date",
       hideOnMobile: true,
       render: (tenant) => formatDate(tenant.check_in_date),
     },
     {
       key: "status",
       header: "Status",
-      width: "100px",
+      width: "status",
       render: (tenant) => {
         const info = getStatusInfo(tenant.status)
         return <StatusDot status={info.status} label={info.label} />

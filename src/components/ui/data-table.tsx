@@ -6,10 +6,36 @@ import { cn } from "@/lib/utils"
 import { ChevronRight, Search, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
+// ============================================
+// Column Width System
+// All widths use proportional units to ensure
+// tables fill their container properly
+// ============================================
+export const columnWidths = {
+  // Primary columns - flexible, takes remaining space
+  primary: 3,      // Main column (name, title) - largest
+  secondary: 2,    // Secondary info (property, tenant)
+  tertiary: 1.5,   // Tertiary info
+
+  // Fixed-size columns (converted to proportional)
+  status: 1,       // Status badges/dots
+  date: 1,         // Date display
+  dateTime: 1.2,   // DateTime with time
+  badge: 1,        // Small badges (type, method)
+  amount: 1,       // Currency amounts
+  count: 0.8,      // Numeric counts
+  actions: 1,      // Action buttons
+  actionsWide: 1.5, // Multiple action buttons
+  iconAction: 0.6, // Single icon button
+  menu: 0.5,       // Chevron only
+} as const
+
+export type ColumnWidthKey = keyof typeof columnWidths
+
 export interface Column<T> {
   key: string
   header: string
-  width?: string
+  width?: ColumnWidthKey | number
   render?: (row: T) => React.ReactNode
   className?: string
   hideOnMobile?: boolean
@@ -65,11 +91,23 @@ export function DataTable<T extends object>({
   }
 
   const isClickable = Boolean(href || onRowClick)
+  const visibleColumns = columns.filter(c => !c.hideOnMobile)
+
+  // Build grid template using fr units for proper distribution
+  const getColumnFr = (width?: ColumnWidthKey | number): number => {
+    if (typeof width === "number") return width
+    if (width && width in columnWidths) return columnWidths[width]
+    return columnWidths.tertiary // default
+  }
+
+  const gridTemplate = visibleColumns
+    .map(c => `${getColumnFr(c.width)}fr`)
+    .join(" ") + (isClickable ? ` ${columnWidths.menu}fr` : "")
 
   return (
     <div className={cn("space-y-4", className)}>
       {searchable && (
-        <div className="relative">
+        <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
@@ -82,16 +120,12 @@ export function DataTable<T extends object>({
 
       <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
         {/* Header */}
-        <div className="hidden md:grid border-b bg-slate-50/80 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider"
-          style={{
-            gridTemplateColumns: columns
-              .filter(c => !c.hideOnMobile)
-              .map(c => c.width || "1fr")
-              .join(" ") + (isClickable ? " 40px" : "")
-          }}
+        <div
+          className="hidden md:grid gap-4 border-b bg-slate-50/80 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider"
+          style={{ gridTemplateColumns: gridTemplate }}
         >
-          {columns.filter(c => !c.hideOnMobile).map((column) => (
-            <div key={column.key} className={column.className}>
+          {visibleColumns.map((column) => (
+            <div key={column.key} className={cn("truncate", column.className)}>
               {column.header}
             </div>
           ))}
@@ -129,15 +163,10 @@ export function DataTable<T extends object>({
                 {/* Desktop Row */}
                 <div
                   className="hidden md:grid items-center gap-4"
-                  style={{
-                    gridTemplateColumns: columns
-                      .filter(c => !c.hideOnMobile)
-                      .map(c => c.width || "1fr")
-                      .join(" ") + (isClickable ? " 40px" : "")
-                  }}
+                  style={{ gridTemplateColumns: gridTemplate }}
                 >
-                  {columns.filter(c => !c.hideOnMobile).map((column) => (
-                    <div key={column.key} className={cn("text-sm", column.className)}>
+                  {visibleColumns.map((column) => (
+                    <div key={column.key} className={cn("text-sm min-w-0", column.className)}>
                       {column.render
                         ? column.render(row)
                         : String((row as Record<string, unknown>)[column.key] ?? "")}
@@ -155,7 +184,7 @@ export function DataTable<T extends object>({
                   {columns.slice(0, 3).map((column, index) => (
                     <div key={column.key} className="flex items-center justify-between">
                       {index === 0 ? (
-                        <div className="font-medium text-sm">
+                        <div className="font-medium text-sm flex-1 min-w-0">
                           {column.render
                             ? column.render(row)
                             : String((row as Record<string, unknown>)[column.key] ?? "")}
@@ -199,8 +228,8 @@ export function StatusDot({
 
   return (
     <div className="flex items-center gap-2">
-      <span className={cn("h-2 w-2 rounded-full", colors[status])} />
-      {label && <span className="text-sm">{label}</span>}
+      <span className={cn("h-2 w-2 rounded-full shrink-0", colors[status])} />
+      {label && <span className="text-sm truncate">{label}</span>}
     </div>
   )
 }
@@ -223,7 +252,7 @@ export function TableBadge({
 
   return (
     <span className={cn(
-      "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+      "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap",
       variants[variant]
     )}>
       {children}

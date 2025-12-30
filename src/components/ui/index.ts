@@ -76,3 +76,17 @@ export {
   DuesSummary,
   PaymentAmount,
 } from "./currency"
+
+// Design Tokens (centralized styling constants)
+export {
+  colors,
+  statusColors,
+  spacing,
+  typography,
+  borders,
+  shadows,
+  animations,
+  presets,
+  iconSizes,
+  zIndex,
+} from "@/lib/design-tokens"

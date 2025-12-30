@@ -166,7 +166,7 @@ export default function MeterReadingsPage() {
     {
       key: "type",
       header: "Type",
-      width: "200px",
+      width: "primary",
       render: (row) => {
         const meterType = row.charge_type?.name?.toLowerCase() || "electricity"
         const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
@@ -190,7 +190,7 @@ export default function MeterReadingsPage() {
     {
       key: "room",
       header: "Room",
-      width: "120px",
+      width: "tertiary",
       render: (row) => (
         <div className="flex items-center gap-1 text-sm">
           <Home className="h-3 w-3 text-muted-foreground" />
@@ -201,7 +201,7 @@ export default function MeterReadingsPage() {
     {
       key: "reading_value",
       header: "Reading",
-      width: "100px",
+      width: "amount",
       render: (row) => (
         <span className="font-semibold tabular-nums">{row.reading_value.toLocaleString()}</span>
       ),
@@ -209,7 +209,7 @@ export default function MeterReadingsPage() {
     {
       key: "units_consumed",
       header: "Consumed",
-      width: "120px",
+      width: "tertiary",
       render: (row) => {
         if (row.units_consumed === null) return <span className="text-muted-foreground">-</span>
         const hasIncrease = row.units_consumed > 0
@@ -224,7 +224,7 @@ export default function MeterReadingsPage() {
     {
       key: "reading_date",
       header: "Date",
-      width: "120px",
+      width: "date",
       hideOnMobile: true,
       render: (row) => (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">

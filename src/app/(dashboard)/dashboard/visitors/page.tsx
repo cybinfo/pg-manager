@@ -147,7 +147,7 @@ export default function VisitorsPage() {
     {
       key: "visitor_name",
       header: "Visitor",
-      width: "200px",
+      width: "primary",
       render: (row) => {
         const isCheckedIn = !row.check_out_time
         return (
@@ -176,7 +176,7 @@ export default function VisitorsPage() {
     {
       key: "tenant",
       header: "Visiting",
-      width: "150px",
+      width: "secondary",
       render: (row) => (
         <div>
           <div className="text-sm font-medium">{row.tenant?.name}</div>
@@ -190,7 +190,7 @@ export default function VisitorsPage() {
     {
       key: "check_in_time",
       header: "Check-in",
-      width: "140px",
+      width: "dateTime",
       render: (row) => (
         <div className="text-sm">
           <div className="flex items-center gap-1 text-muted-foreground">
@@ -208,7 +208,7 @@ export default function VisitorsPage() {
     {
       key: "status",
       header: "Status",
-      width: "120px",
+      width: "status",
       render: (row) => {
         const isCheckedIn = !row.check_out_time
         return (
@@ -222,7 +222,7 @@ export default function VisitorsPage() {
     {
       key: "actions",
       header: "",
-      width: "100px",
+      width: "actions",
       render: (row) => {
         const isCheckedIn = !row.check_out_time
         if (!isCheckedIn) return null

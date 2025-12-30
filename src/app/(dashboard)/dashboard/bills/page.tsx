@@ -128,15 +128,15 @@ export default function BillsPage() {
     {
       key: "bill_number",
       header: "Bill",
-      width: "1.5fr",
+      width: "primary",
       render: (bill) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
             <FileText className="h-4 w-4 text-blue-600" />
           </div>
-          <div>
-            <div className="font-medium">{bill.bill_number}</div>
-            <div className="text-xs text-muted-foreground">{bill.tenant?.name || "Unknown"}</div>
+          <div className="min-w-0">
+            <div className="font-medium truncate">{bill.bill_number}</div>
+            <div className="text-xs text-muted-foreground truncate">{bill.tenant?.name || "Unknown"}</div>
           </div>
         </div>
       ),
@@ -144,13 +144,13 @@ export default function BillsPage() {
     {
       key: "for_month",
       header: "Period",
-      width: "1fr",
+      width: "tertiary",
       render: (bill) => bill.for_month,
     },
     {
       key: "total_amount",
       header: "Amount",
-      width: "1fr",
+      width: "amount",
       render: (bill) => (
         <div>
           <div className="font-medium tabular-nums">{formatCurrency(bill.total_amount)}</div>
@@ -163,14 +163,14 @@ export default function BillsPage() {
     {
       key: "due_date",
       header: "Due",
-      width: "80px",
+      width: "date",
       hideOnMobile: true,
       render: (bill) => formatDate(bill.due_date),
     },
     {
       key: "status",
       header: "Status",
-      width: "100px",
+      width: "status",
       render: (bill) => {
         const info = getStatusInfo(bill.status)
         return <StatusDot status={info.status} label={info.label} />
