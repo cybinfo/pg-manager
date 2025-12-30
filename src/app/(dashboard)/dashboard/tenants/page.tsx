@@ -15,6 +15,7 @@ import {
   UserMinus,
   Clock
 } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 
 interface Tenant {
   id: string
@@ -121,7 +122,7 @@ export default function TenantsPage() {
     { label: "Active", value: activeTenants, icon: UserCheck },
     { label: "Notice Period", value: noticePeriod, icon: Clock, highlight: noticePeriod > 0 },
     { label: "Moved Out", value: movedOut, icon: UserMinus },
-    { label: "Monthly Rent", value: `₹${totalRent.toLocaleString("en-IN")}` },
+    { label: "Monthly Rent", value: formatCurrency(totalRent) },
   ]
 
   const columns: Column<Tenant>[] = [
@@ -157,7 +158,7 @@ export default function TenantsPage() {
       header: "Rent",
       width: "amount",
       render: (tenant) => (
-        <span className="font-medium tabular-nums">₹{tenant.monthly_rent.toLocaleString("en-IN")}</span>
+        <span className="font-medium tabular-nums">{formatCurrency(tenant.monthly_rent)}</span>
       ),
     },
     {

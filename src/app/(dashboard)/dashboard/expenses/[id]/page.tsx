@@ -20,6 +20,7 @@ import {
   Hash,
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface ExpenseType {
   id: string
@@ -203,7 +204,7 @@ export default function ExpenseDetailPage() {
             <div>
               <p className="text-rose-100 text-sm">Amount</p>
               <p className="text-4xl font-bold">
-                ₹{Number(expense.amount).toLocaleString("en-IN")}
+                {formatCurrency(Number(expense.amount))}
               </p>
             </div>
             <div className="p-4 bg-white/20 rounded-full">

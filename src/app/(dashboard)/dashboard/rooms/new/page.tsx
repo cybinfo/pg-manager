@@ -8,19 +8,55 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Home, Loader2, Building2 } from "lucide-react"
+import { ArrowLeft, Home, Loader2, Building2, Info } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface Property {
   id: string
   name: string
 }
 
+interface RoomTypePricing {
+  single: { rent: number; deposit: number }
+  double: { rent: number; deposit: number }
+  triple: { rent: number; deposit: number }
+  dormitory: { rent: number; deposit: number }
+}
+
+const defaultRoomTypePricing: RoomTypePricing = {
+  single: { rent: 8000, deposit: 16000 },
+  double: { rent: 6000, deposit: 12000 },
+  triple: { rent: 5000, deposit: 10000 },
+  dormitory: { rent: 4000, deposit: 8000 },
+}
+
+const roomTypeBedCounts: Record<string, number> = {
+  single: 1,
+  double: 2,
+  triple: 3,
+  dormitory: 6,
+}
+
+// Extended amenities list
+const availableAmenities = [
+  { key: "has_ac", label: "Air Conditioned (AC)" },
+  { key: "has_attached_bathroom", label: "Attached Bathroom" },
+  { key: "has_wifi", label: "WiFi" },
+  { key: "has_tv", label: "TV" },
+  { key: "has_geyser", label: "Geyser/Hot Water" },
+  { key: "has_balcony", label: "Balcony" },
+  { key: "has_wardrobe", label: "Wardrobe" },
+  { key: "has_study_table", label: "Study Table" },
+  { key: "has_refrigerator", label: "Refrigerator" },
+]
+
 export default function NewRoomPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProperties, setLoadingProperties] = useState(true)
+  const [roomTypePricing, setRoomTypePricing] = useState<RoomTypePricing>(defaultRoomTypePricing)
 
   const [formData, setFormData] = useState({
     property_id: "",
@@ -30,38 +66,88 @@ export default function NewRoomPage() {
     rent_amount: "",
     deposit_amount: "",
     total_beds: "1",
+    // Amenities
     has_ac: false,
     has_attached_bathroom: false,
+    has_wifi: false,
+    has_tv: false,
+    has_geyser: false,
+    has_balcony: false,
+    has_wardrobe: false,
+    has_study_table: false,
+    has_refrigerator: false,
   })
 
   useEffect(() => {
-    const fetchProperties = async () => {
+    const fetchData = async () => {
       const supabase = createClient()
-      const { data, error } = await supabase
-        .from("properties")
-        .select("id, name")
-        .order("name")
+      const { data: { user } } = await supabase.auth.getUser()
 
-      if (error) {
-        console.error("Error fetching properties:", error)
+      // Fetch properties and owner config in parallel
+      const [propertiesRes, configRes] = await Promise.all([
+        supabase.from("properties").select("id, name").order("name"),
+        user ? supabase.from("owner_config").select("room_type_pricing").eq("owner_id", user.id).single() : null,
+      ])
+
+      if (propertiesRes.error) {
+        console.error("Error fetching properties:", propertiesRes.error)
         toast.error("Failed to load properties")
       } else {
-        setProperties(data || [])
-        if (data && data.length > 0) {
-          setFormData((prev) => ({ ...prev, property_id: data[0].id }))
+        setProperties(propertiesRes.data || [])
+        if (propertiesRes.data && propertiesRes.data.length > 0) {
+          setFormData((prev) => ({ ...prev, property_id: propertiesRes.data[0].id }))
         }
       }
+
+      // Load room type pricing from owner config
+      if (configRes?.data?.room_type_pricing) {
+        const pricing = {
+          ...defaultRoomTypePricing,
+          ...configRes.data.room_type_pricing,
+        }
+        setRoomTypePricing(pricing)
+        // Set initial rent/deposit based on default room type (single)
+        setFormData((prev) => ({
+          ...prev,
+          rent_amount: pricing.single.rent.toString(),
+          deposit_amount: pricing.single.deposit.toString(),
+        }))
+      } else {
+        // Use defaults
+        setFormData((prev) => ({
+          ...prev,
+          rent_amount: defaultRoomTypePricing.single.rent.toString(),
+          deposit_amount: defaultRoomTypePricing.single.deposit.toString(),
+        }))
+      }
+
       setLoadingProperties(false)
     }
 
-    fetchProperties()
+    fetchData()
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
+    const newValue = type === "checkbox" ? (e.target as HTMLInputElement).checked : value
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      [name]: newValue,
+    }))
+  }
+
+  const handleRoomTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const roomType = e.target.value as keyof RoomTypePricing
+    const pricing = roomTypePricing[roomType]
+    const beds = roomTypeBedCounts[roomType] || 1
+
+    setFormData((prev) => ({
+      ...prev,
+      room_type: roomType,
+      rent_amount: pricing.rent.toString(),
+      deposit_amount: pricing.deposit.toString(),
+      total_beds: beds.toString(),
     }))
   }
 
@@ -85,6 +171,11 @@ export default function NewRoomPage() {
         return
       }
 
+      // Build amenities array from checkboxes
+      const amenities = availableAmenities
+        .filter((amenity) => formData[amenity.key as keyof typeof formData])
+        .map((amenity) => amenity.label.split(" (")[0]) // "Air Conditioned" from "Air Conditioned (AC)"
+
       const { error } = await supabase.from("rooms").insert({
         owner_id: user.id,
         property_id: formData.property_id,
@@ -96,6 +187,7 @@ export default function NewRoomPage() {
         total_beds: parseInt(formData.total_beds) || 1,
         has_ac: formData.has_ac,
         has_attached_bathroom: formData.has_attached_bathroom,
+        amenities: amenities,
       })
 
       if (error) {
@@ -226,14 +318,14 @@ export default function NewRoomPage() {
                   id="room_type"
                   name="room_type"
                   value={formData.room_type}
-                  onChange={handleChange}
+                  onChange={handleRoomTypeChange}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   disabled={loading}
                 >
-                  <option value="single">Single</option>
-                  <option value="double">Double</option>
-                  <option value="triple">Triple</option>
-                  <option value="dormitory">Dormitory</option>
+                  <option value="single">Single (1 bed)</option>
+                  <option value="double">Double (2 beds)</option>
+                  <option value="triple">Triple (3 beds)</option>
+                  <option value="dormitory">Dormitory (4+ beds)</option>
                 </select>
               </div>
             </div>
@@ -264,68 +356,88 @@ export default function NewRoomPage() {
                   onChange={handleChange}
                   disabled={loading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Auto-set based on room type (adjustable)
+                </p>
               </div>
             </div>
 
             <div className="border-t pt-4 mt-4">
-              <h3 className="font-medium mb-3">Pricing</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium">Pricing</h3>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Info className="h-3 w-3" />
+                  <span>Auto-filled from Settings</span>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="rent_amount">Monthly Rent (₹) *</Label>
-                  <Input
-                    id="rent_amount"
-                    name="rent_amount"
-                    type="number"
-                    min="0"
-                    placeholder="e.g., 8000"
-                    value={formData.rent_amount}
-                    onChange={handleChange}
-                    required
-                    disabled={loading}
-                  />
+                  <Label htmlFor="rent_amount">Monthly Rent *</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                    <Input
+                      id="rent_amount"
+                      name="rent_amount"
+                      type="number"
+                      min="0"
+                      placeholder="e.g., 8000"
+                      className="pl-8"
+                      value={formData.rent_amount}
+                      onChange={handleChange}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Default: {formatCurrency(roomTypePricing[formData.room_type as keyof RoomTypePricing]?.rent || 0)}
+                  </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="deposit_amount">Security Deposit (₹)</Label>
-                  <Input
-                    id="deposit_amount"
-                    name="deposit_amount"
-                    type="number"
-                    min="0"
-                    placeholder="e.g., 16000"
-                    value={formData.deposit_amount}
-                    onChange={handleChange}
-                    disabled={loading}
-                  />
+                  <Label htmlFor="deposit_amount">Security Deposit</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                    <Input
+                      id="deposit_amount"
+                      name="deposit_amount"
+                      type="number"
+                      min="0"
+                      placeholder="e.g., 16000"
+                      className="pl-8"
+                      value={formData.deposit_amount}
+                      onChange={handleChange}
+                      disabled={loading}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Default: {formatCurrency(roomTypePricing[formData.room_type as keyof RoomTypePricing]?.deposit || 0)}
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="border-t pt-4 mt-4">
               <h3 className="font-medium mb-3">Amenities</h3>
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="has_ac"
-                    checked={formData.has_ac}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <span>Air Conditioned (AC)</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="has_attached_bathroom"
-                    checked={formData.has_attached_bathroom}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <span>Attached Bathroom</span>
-                </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {availableAmenities.map((amenity) => (
+                  <label
+                    key={amenity.key}
+                    className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      name={amenity.key}
+                      checked={formData[amenity.key as keyof typeof formData] as boolean}
+                      onChange={handleChange}
+                      disabled={loading}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm">{amenity.label}</span>
+                  </label>
+                ))}
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Configure available amenities in Settings → Default Settings
+              </p>
             </div>
           </CardContent>
         </Card>

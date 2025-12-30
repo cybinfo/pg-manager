@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
+import { formatCurrency } from "@/lib/format"
 
 interface Payment {
   id: string
@@ -376,7 +377,7 @@ export default function PaymentReceiptPage() {
                   </div>
                 </td>
                 <td className="py-3 text-right font-medium">
-                  ₹{Number(payment.amount).toLocaleString("en-IN")}
+                  {formatCurrency(Number(payment.amount))}
                 </td>
               </tr>
             </tbody>
@@ -384,7 +385,7 @@ export default function PaymentReceiptPage() {
               <tr className="font-bold text-lg">
                 <td className="py-3">Total</td>
                 <td className="py-3 text-right text-green-600">
-                  ₹{Number(payment.amount).toLocaleString("en-IN")}
+                  {formatCurrency(Number(payment.amount))}
                 </td>
               </tr>
             </tfoot>

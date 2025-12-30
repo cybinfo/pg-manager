@@ -8,8 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Users, Loader2, Building2, Home, UserCheck, RefreshCw } from "lucide-react"
+import { ProfilePhotoUpload } from "@/components/ui/file-upload"
+import {
+  ArrowLeft, Users, Loader2, Building2, Home, UserCheck, RefreshCw,
+  Phone, Mail, MapPin, Plus, Trash2, Contact, FileText
+} from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface Property {
   id: string
@@ -38,6 +43,45 @@ interface ReturningTenant {
   custom_fields: Record<string, string>
 }
 
+interface PhoneEntry {
+  number: string
+  type: string
+  is_primary: boolean
+  is_whatsapp: boolean
+}
+
+interface EmailEntry {
+  email: string
+  type: string
+  is_primary: boolean
+}
+
+interface AddressEntry {
+  type: string
+  line1: string
+  line2: string
+  city: string
+  state: string
+  zip: string
+  is_primary: boolean
+}
+
+interface GuardianContact {
+  name: string
+  relation: string
+  phone: string
+  email: string
+  is_primary: boolean
+}
+
+const defaultPhone: PhoneEntry = { number: "", type: "primary", is_primary: true, is_whatsapp: true }
+const defaultEmail: EmailEntry = { email: "", type: "primary", is_primary: true }
+const defaultAddress: AddressEntry = { type: "Permanent", line1: "", line2: "", city: "", state: "", zip: "", is_primary: true }
+const defaultGuardian: GuardianContact = { name: "", relation: "Parent", phone: "", email: "", is_primary: true }
+
+const addressTypes = ["Permanent", "Current", "Office", "Native", "Other"]
+const relationTypes = ["Parent", "Guardian", "Spouse", "Sibling", "Other"]
+
 export default function NewTenantPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -49,22 +93,25 @@ export default function NewTenantPage() {
   const [checkingPhone, setCheckingPhone] = useState(false)
   const [isRejoining, setIsRejoining] = useState(false)
 
+  // Basic form data
   const [formData, setFormData] = useState({
     property_id: "",
     room_id: "",
     name: "",
-    email: "",
-    phone: "",
     check_in_date: new Date().toISOString().split("T")[0],
     monthly_rent: "",
     security_deposit: "",
-    // Additional fields
-    parent_name: "",
-    parent_phone: "",
-    permanent_address: "",
+    profile_photo: "",
+    // ID Proof (basic - can add more via documents table later)
     id_proof_type: "",
     id_proof_number: "",
   })
+
+  // Multiple entries
+  const [phones, setPhones] = useState<PhoneEntry[]>([{ ...defaultPhone }])
+  const [emails, setEmails] = useState<EmailEntry[]>([{ ...defaultEmail }])
+  const [addresses, setAddresses] = useState<AddressEntry[]>([{ ...defaultAddress }])
+  const [guardians, setGuardians] = useState<GuardianContact[]>([{ ...defaultGuardian }])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -107,7 +154,6 @@ export default function NewTenantPage() {
       )
       setAvailableRooms(filtered)
 
-      // Auto-select first available room and set rent
       if (filtered.length > 0) {
         setFormData((prev) => ({
           ...prev,
@@ -147,7 +193,105 @@ export default function NewTenantPage() {
     }))
   }
 
-  // Check for returning tenant when phone changes
+  // Phone handlers
+  const updatePhone = (index: number, field: keyof PhoneEntry, value: string | boolean) => {
+    const updated = [...phones]
+    updated[index] = { ...updated[index], [field]: value }
+    // If setting as primary, unset others
+    if (field === "is_primary" && value === true) {
+      updated.forEach((p, i) => { if (i !== index) p.is_primary = false })
+    }
+    setPhones(updated)
+  }
+
+  const addPhone = () => {
+    setPhones([...phones, { ...defaultPhone, is_primary: false }])
+  }
+
+  const removePhone = (index: number) => {
+    if (phones.length > 1) {
+      const updated = phones.filter((_, i) => i !== index)
+      // Ensure at least one is primary
+      if (!updated.some(p => p.is_primary) && updated.length > 0) {
+        updated[0].is_primary = true
+      }
+      setPhones(updated)
+    }
+  }
+
+  // Email handlers
+  const updateEmail = (index: number, field: keyof EmailEntry, value: string | boolean) => {
+    const updated = [...emails]
+    updated[index] = { ...updated[index], [field]: value }
+    if (field === "is_primary" && value === true) {
+      updated.forEach((e, i) => { if (i !== index) e.is_primary = false })
+    }
+    setEmails(updated)
+  }
+
+  const addEmail = () => {
+    setEmails([...emails, { ...defaultEmail, is_primary: false }])
+  }
+
+  const removeEmail = (index: number) => {
+    if (emails.length > 1) {
+      const updated = emails.filter((_, i) => i !== index)
+      if (!updated.some(e => e.is_primary) && updated.length > 0) {
+        updated[0].is_primary = true
+      }
+      setEmails(updated)
+    }
+  }
+
+  // Address handlers
+  const updateAddress = (index: number, field: keyof AddressEntry, value: string | boolean) => {
+    const updated = [...addresses]
+    updated[index] = { ...updated[index], [field]: value }
+    if (field === "is_primary" && value === true) {
+      updated.forEach((a, i) => { if (i !== index) a.is_primary = false })
+    }
+    setAddresses(updated)
+  }
+
+  const addAddress = () => {
+    setAddresses([...addresses, { ...defaultAddress, is_primary: false, type: "Current" }])
+  }
+
+  const removeAddress = (index: number) => {
+    if (addresses.length > 1) {
+      const updated = addresses.filter((_, i) => i !== index)
+      if (!updated.some(a => a.is_primary) && updated.length > 0) {
+        updated[0].is_primary = true
+      }
+      setAddresses(updated)
+    }
+  }
+
+  // Guardian handlers
+  const updateGuardian = (index: number, field: keyof GuardianContact, value: string | boolean) => {
+    const updated = [...guardians]
+    updated[index] = { ...updated[index], [field]: value }
+    if (field === "is_primary" && value === true) {
+      updated.forEach((g, i) => { if (i !== index) g.is_primary = false })
+    }
+    setGuardians(updated)
+  }
+
+  const addGuardian = () => {
+    setGuardians([...guardians, { ...defaultGuardian, is_primary: false }])
+  }
+
+  const removeGuardian = (index: number) => {
+    if (guardians.length > 1) {
+      const updated = guardians.filter((_, i) => i !== index)
+      if (!updated.some(g => g.is_primary) && updated.length > 0) {
+        updated[0].is_primary = true
+      }
+      setGuardians(updated)
+    }
+  }
+
+  // Check for returning tenant
   const checkReturningTenant = async (phone: string) => {
     if (phone.length < 10) {
       setReturningTenant(null)
@@ -160,7 +304,6 @@ export default function NewTenantPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Find previous tenants with this phone number
       const { data, error } = await supabase
         .from("tenants")
         .select(`
@@ -214,16 +357,14 @@ export default function NewTenantPage() {
   }
 
   // Handle phone input with debounce
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const phone = e.target.value
-    setFormData((prev) => ({ ...prev, phone }))
-
-    // Debounce the check
-    const timeoutId = setTimeout(() => {
-      checkReturningTenant(phone)
-    }, 500)
-
-    return () => clearTimeout(timeoutId)
+  const handlePhoneChange = (index: number, value: string) => {
+    updatePhone(index, "number", value)
+    if (index === 0) {
+      const timeoutId = setTimeout(() => {
+        checkReturningTenant(value)
+      }, 500)
+      return () => clearTimeout(timeoutId)
+    }
   }
 
   // Pre-fill form with returning tenant data
@@ -234,22 +375,54 @@ export default function NewTenantPage() {
     setFormData((prev) => ({
       ...prev,
       name: returningTenant.name,
-      email: returningTenant.email || "",
-      phone: returningTenant.phone,
-      parent_name: returningTenant.custom_fields?.parent_name || "",
-      parent_phone: returningTenant.custom_fields?.parent_phone || "",
-      permanent_address: returningTenant.custom_fields?.permanent_address || "",
       id_proof_type: returningTenant.custom_fields?.id_proof_type || "",
       id_proof_number: returningTenant.custom_fields?.id_proof_number || "",
     }))
+
+    // Set phone
+    setPhones([{
+      number: returningTenant.phone,
+      type: "primary",
+      is_primary: true,
+      is_whatsapp: true
+    }])
+
+    // Set email if exists
+    if (returningTenant.email) {
+      setEmails([{ email: returningTenant.email, type: "primary", is_primary: true }])
+    }
+
+    // Set parent info if exists
+    if (returningTenant.custom_fields?.parent_name || returningTenant.custom_fields?.parent_phone) {
+      setGuardians([{
+        name: returningTenant.custom_fields?.parent_name || "",
+        relation: "Parent",
+        phone: returningTenant.custom_fields?.parent_phone || "",
+        email: "",
+        is_primary: true
+      }])
+    }
+
+    // Set address if exists
+    if (returningTenant.custom_fields?.permanent_address) {
+      setAddresses([{
+        type: "Permanent",
+        line1: returningTenant.custom_fields.permanent_address,
+        line2: "", city: "", state: "", zip: "",
+        is_primary: true
+      }])
+    }
+
     toast.success("Previous tenant data loaded!")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.property_id || !formData.room_id || !formData.name || !formData.phone || !formData.monthly_rent) {
-      toast.error("Please fill in all required fields")
+    // Validate required fields
+    const primaryPhone = phones.find(p => p.is_primary)?.number || phones[0]?.number
+    if (!formData.property_id || !formData.room_id || !formData.name || !primaryPhone || !formData.monthly_rent) {
+      toast.error("Please fill in all required fields (Name, Phone, Property, Room, Rent)")
       return
     }
 
@@ -265,33 +438,72 @@ export default function NewTenantPage() {
         return
       }
 
-      // Build custom fields object
+      // Build custom fields for backwards compatibility
       const customFields: Record<string, string> = {}
-      if (formData.parent_name) customFields.parent_name = formData.parent_name
-      if (formData.parent_phone) customFields.parent_phone = formData.parent_phone
-      if (formData.permanent_address) customFields.permanent_address = formData.permanent_address
+      const primaryGuardian = guardians.find(g => g.is_primary) || guardians[0]
+      if (primaryGuardian?.name) customFields.parent_name = primaryGuardian.name
+      if (primaryGuardian?.phone) customFields.parent_phone = primaryGuardian.phone
+      const primaryAddress = addresses.find(a => a.is_primary) || addresses[0]
+      if (primaryAddress?.line1) customFields.permanent_address = [primaryAddress.line1, primaryAddress.line2, primaryAddress.city, primaryAddress.state, primaryAddress.zip].filter(Boolean).join(", ")
       if (formData.id_proof_type) customFields.id_proof_type = formData.id_proof_type
       if (formData.id_proof_number) customFields.id_proof_number = formData.id_proof_number
 
-      const { data: newTenant, error } = await supabase.from("tenants").insert({
+      // Filter out empty entries
+      const validPhones = phones.filter(p => p.number.trim())
+      const validEmails = emails.filter(e => e.email.trim())
+      const validAddresses = addresses.filter(a => a.line1.trim())
+      const validGuardians = guardians.filter(g => g.name.trim() || g.phone.trim())
+
+      // Get primary values for legacy fields
+      const primaryEmail = validEmails.find(e => e.is_primary)?.email || validEmails[0]?.email || null
+
+      const tenantData = {
         owner_id: user.id,
         property_id: formData.property_id,
         room_id: formData.room_id,
         name: formData.name,
-        email: formData.email || null,
-        phone: formData.phone,
-        join_date: formData.check_in_date,
+        email: primaryEmail,
+        phone: primaryPhone,
+        check_in_date: formData.check_in_date,
         monthly_rent: parseFloat(formData.monthly_rent),
         security_deposit: parseFloat(formData.security_deposit) || 0,
         custom_fields: Object.keys(customFields).length > 0 ? customFields : {},
+        profile_photo: formData.profile_photo || null,
+        // New JSONB fields
+        phone_numbers: validPhones.length > 0 ? validPhones : null,
+        emails: validEmails.length > 0 ? validEmails : null,
+        addresses: validAddresses.length > 0 ? validAddresses : null,
+        guardian_contacts: validGuardians.length > 0 ? validGuardians : null,
+        // Re-joining fields
         is_returning: isRejoining,
         previous_tenant_id: isRejoining && returningTenant ? returningTenant.id : null,
         total_stays: isRejoining && returningTenant ? (returningTenant.total_stays + 1) : 1,
-      }).select().single()
+      }
+
+      const { data: newTenant, error } = await supabase
+        .from("tenants")
+        .insert(tenantData)
+        .select()
+        .single()
+
+      if (error) {
+        console.error("Error creating tenant:", error)
+        // Provide specific error messages
+        if (error.code === "23505") {
+          toast.error("A tenant with this phone number already exists in this room")
+        } else if (error.code === "23503") {
+          toast.error("Invalid property or room selection")
+        } else if (error.message.includes("violates row-level security")) {
+          toast.error("Permission denied. Please try logging in again.")
+        } else {
+          toast.error(`Failed to add tenant: ${error.message}`)
+        }
+        return
+      }
 
       // Create tenant stay record
       if (newTenant) {
-        await supabase.from("tenant_stays").insert({
+        const { error: stayError } = await supabase.from("tenant_stays").insert({
           owner_id: user.id,
           tenant_id: newTenant.id,
           property_id: formData.property_id,
@@ -302,18 +514,18 @@ export default function NewTenantPage() {
           status: "active",
           stay_number: isRejoining && returningTenant ? (returningTenant.total_stays + 1) : 1,
         })
-      }
 
-      if (error) {
-        console.error("Error creating tenant:", error)
-        throw error
+        if (stayError) {
+          console.error("Error creating tenant stay:", stayError)
+          // Don't fail the whole operation for this
+        }
       }
 
       toast.success("Tenant added successfully!")
       router.push("/dashboard/tenants")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to add tenant. Please try again.")
+      toast.error("An unexpected error occurred. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -359,7 +571,7 @@ export default function NewTenantPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/dashboard/tenants">
@@ -375,7 +587,7 @@ export default function NewTenantPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
+        {/* Basic Info with Photo */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -389,49 +601,34 @@ export default function NewTenantPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="e.g., Rahul Sharma"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                disabled={loading}
-              />
-            </div>
+            <div className="flex gap-6">
+              {/* Profile Photo */}
+              <div className="shrink-0">
+                <Label className="text-sm mb-2 block">Profile Photo</Label>
+                <ProfilePhotoUpload
+                  bucket="tenant-photos"
+                  folder="profiles"
+                  value={formData.profile_photo}
+                  onChange={(url) => setFormData(prev => ({ ...prev, profile_photo: url }))}
+                  size="lg"
+                  disabled={loading}
+                />
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number *</Label>
-                <div className="relative">
+              {/* Name */}
+              <div className="flex-1 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name *</Label>
                   <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    placeholder="e.g., 9876543210"
-                    value={formData.phone}
-                    onChange={handlePhoneChange}
+                    id="name"
+                    name="name"
+                    placeholder="e.g., Rahul Sharma"
+                    value={formData.name}
+                    onChange={handleChange}
                     required
                     disabled={loading}
                   />
-                  {checkingPhone && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                  )}
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="e.g., rahul@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
               </div>
             </div>
 
@@ -443,12 +640,12 @@ export default function NewTenantPage() {
                   <div className="flex-1">
                     <h4 className="font-medium text-amber-800">Returning Tenant Found!</h4>
                     <p className="text-sm text-amber-700 mt-1">
-                      <strong>{returningTenant.name}</strong> was previously a tenant at{" "}
+                      <strong>{returningTenant.name}</strong> was previously at{" "}
                       <strong>{returningTenant.last_property}</strong> (Room {returningTenant.last_room})
                       {returningTenant.exit_date && (
                         <> until {new Date(returningTenant.exit_date).toLocaleDateString("en-IN")}</>
                       )}.
-                      This would be their stay #{returningTenant.total_stays + 1}.
+                      This would be stay #{returningTenant.total_stays + 1}.
                     </p>
                     <Button
                       type="button"
@@ -473,6 +670,253 @@ export default function NewTenantPage() {
                 </span>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Contact Information */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Phone className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Contact Information</CardTitle>
+                <CardDescription>Phone numbers and email addresses</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Phone Numbers */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Phone Numbers *</Label>
+                <Button type="button" variant="ghost" size="sm" onClick={addPhone} disabled={loading}>
+                  <Plus className="h-4 w-4 mr-1" /> Add Phone
+                </Button>
+              </div>
+              {phones.map((phone, index) => (
+                <div key={index} className="flex gap-2 items-start">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Input
+                        type="tel"
+                        placeholder="e.g., 9876543210"
+                        value={phone.number}
+                        onChange={(e) => handlePhoneChange(index, e.target.value)}
+                        disabled={loading}
+                        className="pr-20"
+                      />
+                      {index === 0 && checkingPhone && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                  <select
+                    value={phone.type}
+                    onChange={(e) => updatePhone(index, "type", e.target.value)}
+                    className="h-10 px-2 rounded-md border border-input bg-background text-sm w-28"
+                    disabled={loading}
+                  >
+                    <option value="primary">Primary</option>
+                    <option value="secondary">Secondary</option>
+                    <option value="work">Work</option>
+                  </select>
+                  <label className="flex items-center gap-1 text-sm whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={phone.is_whatsapp}
+                      onChange={(e) => updatePhone(index, "is_whatsapp", e.target.checked)}
+                      disabled={loading}
+                      className="h-4 w-4"
+                    />
+                    WhatsApp
+                  </label>
+                  {phones.length > 1 && (
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removePhone(index)} disabled={loading}>
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Emails */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Email Addresses</Label>
+                <Button type="button" variant="ghost" size="sm" onClick={addEmail} disabled={loading}>
+                  <Plus className="h-4 w-4 mr-1" /> Add Email
+                </Button>
+              </div>
+              {emails.map((email, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <div className="flex-1">
+                    <Input
+                      type="email"
+                      placeholder="e.g., rahul@example.com"
+                      value={email.email}
+                      onChange={(e) => updateEmail(index, "email", e.target.value)}
+                      disabled={loading}
+                    />
+                  </div>
+                  <select
+                    value={email.type}
+                    onChange={(e) => updateEmail(index, "type", e.target.value)}
+                    className="h-10 px-2 rounded-md border border-input bg-background text-sm w-28"
+                    disabled={loading}
+                  >
+                    <option value="primary">Primary</option>
+                    <option value="work">Work</option>
+                    <option value="other">Other</option>
+                  </select>
+                  {emails.length > 1 && (
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeEmail(index)} disabled={loading}>
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Guardian Contacts */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Contact className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Guardian/Parent Contacts</CardTitle>
+                <CardDescription>Emergency contacts for the tenant</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Contacts</Label>
+              <Button type="button" variant="ghost" size="sm" onClick={addGuardian} disabled={loading}>
+                <Plus className="h-4 w-4 mr-1" /> Add Contact
+              </Button>
+            </div>
+            {guardians.map((guardian, index) => (
+              <div key={index} className="p-4 border rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Contact {index + 1}</span>
+                  {guardians.length > 1 && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => removeGuardian(index)} disabled={loading}>
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    placeholder="Name"
+                    value={guardian.name}
+                    onChange={(e) => updateGuardian(index, "name", e.target.value)}
+                    disabled={loading}
+                  />
+                  <select
+                    value={guardian.relation}
+                    onChange={(e) => updateGuardian(index, "relation", e.target.value)}
+                    className="h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    disabled={loading}
+                  >
+                    {relationTypes.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <Input
+                    type="tel"
+                    placeholder="Phone"
+                    value={guardian.phone}
+                    onChange={(e) => updateGuardian(index, "phone", e.target.value)}
+                    disabled={loading}
+                  />
+                  <Input
+                    type="email"
+                    placeholder="Email (optional)"
+                    value={guardian.email}
+                    onChange={(e) => updateGuardian(index, "email", e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Addresses */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <MapPin className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Addresses</CardTitle>
+                <CardDescription>Permanent and current addresses</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Addresses</Label>
+              <Button type="button" variant="ghost" size="sm" onClick={addAddress} disabled={loading}>
+                <Plus className="h-4 w-4 mr-1" /> Add Address
+              </Button>
+            </div>
+            {addresses.map((address, index) => (
+              <div key={index} className="p-4 border rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <select
+                    value={address.type}
+                    onChange={(e) => updateAddress(index, "type", e.target.value)}
+                    className="h-9 px-3 rounded-md border border-input bg-background text-sm"
+                    disabled={loading}
+                  >
+                    {addressTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  {addresses.length > 1 && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => removeAddress(index)} disabled={loading}>
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                </div>
+                <Input
+                  placeholder="Address Line 1"
+                  value={address.line1}
+                  onChange={(e) => updateAddress(index, "line1", e.target.value)}
+                  disabled={loading}
+                />
+                <Input
+                  placeholder="Address Line 2 (optional)"
+                  value={address.line2}
+                  onChange={(e) => updateAddress(index, "line2", e.target.value)}
+                  disabled={loading}
+                />
+                <div className="grid grid-cols-3 gap-3">
+                  <Input
+                    placeholder="City"
+                    value={address.city}
+                    onChange={(e) => updateAddress(index, "city", e.target.value)}
+                    disabled={loading}
+                  />
+                  <Input
+                    placeholder="State"
+                    value={address.state}
+                    onChange={(e) => updateAddress(index, "state", e.target.value)}
+                    disabled={loading}
+                  />
+                  <Input
+                    placeholder="ZIP Code"
+                    value={address.zip}
+                    onChange={(e) => updateAddress(index, "zip", e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
@@ -548,85 +992,61 @@ export default function NewTenantPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="monthly_rent">Monthly Rent (₹) *</Label>
-                <Input
-                  id="monthly_rent"
-                  name="monthly_rent"
-                  type="number"
-                  min="0"
-                  placeholder="e.g., 8000"
-                  value={formData.monthly_rent}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
+                <Label htmlFor="monthly_rent">Monthly Rent *</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                  <Input
+                    id="monthly_rent"
+                    name="monthly_rent"
+                    type="number"
+                    min="0"
+                    placeholder="e.g., 8000"
+                    className="pl-8"
+                    value={formData.monthly_rent}
+                    onChange={handleChange}
+                    required
+                    disabled={loading}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="security_deposit">Security Deposit (₹)</Label>
-                <Input
-                  id="security_deposit"
-                  name="security_deposit"
-                  type="number"
-                  min="0"
-                  placeholder="e.g., 16000"
-                  value={formData.security_deposit}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
+                <Label htmlFor="security_deposit">Security Deposit</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                  <Input
+                    id="security_deposit"
+                    name="security_deposit"
+                    type="number"
+                    min="0"
+                    placeholder="e.g., 16000"
+                    className="pl-8"
+                    value={formData.security_deposit}
+                    onChange={handleChange}
+                    disabled={loading}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Additional Information */}
+        {/* ID Proof */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Information</CardTitle>
-            <CardDescription>Optional details about the tenant</CardDescription>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <FileText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>ID Proof</CardTitle>
+                <CardDescription>Identity verification document</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="parent_name">Parent/Guardian Name</Label>
-                <Input
-                  id="parent_name"
-                  name="parent_name"
-                  placeholder="e.g., Mr. Sharma"
-                  value={formData.parent_name}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="parent_phone">Parent Phone</Label>
-                <Input
-                  id="parent_phone"
-                  name="parent_phone"
-                  type="tel"
-                  placeholder="e.g., 9876543210"
-                  value={formData.parent_phone}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="permanent_address">Permanent Address</Label>
-              <textarea
-                id="permanent_address"
-                name="permanent_address"
-                placeholder="Enter full permanent address"
-                value={formData.permanent_address}
-                onChange={handleChange}
-                disabled={loading}
-                className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="id_proof_type">ID Proof Type</Label>
+                <Label htmlFor="id_proof_type">ID Type</Label>
                 <select
                   id="id_proof_type"
                   name="id_proof_type"
@@ -644,7 +1064,7 @@ export default function NewTenantPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="id_proof_number">ID Proof Number</Label>
+                <Label htmlFor="id_proof_number">ID Number</Label>
                 <Input
                   id="id_proof_number"
                   name="id_proof_number"
@@ -655,6 +1075,9 @@ export default function NewTenantPage() {
                 />
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">
+              You can upload document images from the tenant detail page after adding the tenant.
+            </p>
           </CardContent>
         </Card>
 

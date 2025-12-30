@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface Tenant {
   id: string
@@ -363,7 +364,7 @@ function NewPaymentForm() {
               <div className="p-3 bg-muted rounded-lg text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Monthly Rent:</span>
-                  <span className="font-medium">₹{selectedTenant.monthly_rent.toLocaleString("en-IN")}</span>
+                  <span className="font-medium">{formatCurrency(selectedTenant.monthly_rent)}</span>
                 </div>
                 <div className="flex justify-between mt-1">
                   <span className="text-muted-foreground">Phone:</span>
@@ -402,7 +403,7 @@ function NewPaymentForm() {
                   <option value="">No bill (standalone payment)</option>
                   {bills.map((bill) => (
                     <option key={bill.id} value={bill.id}>
-                      {bill.bill_number} - {bill.for_month} (Due: ₹{bill.balance_due.toLocaleString("en-IN")})
+                      {bill.bill_number} - {bill.for_month} (Due: {formatCurrency(bill.balance_due)})
                     </option>
                   ))}
                 </select>

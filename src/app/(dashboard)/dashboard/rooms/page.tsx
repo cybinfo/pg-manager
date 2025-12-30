@@ -16,6 +16,7 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 
 interface Room {
   id: string
@@ -138,7 +139,7 @@ export default function RoomsPage() {
       header: "Rent",
       width: "amount",
       render: (room) => (
-        <span className="font-medium tabular-nums">₹{room.rent_amount.toLocaleString("en-IN")}</span>
+        <span className="font-medium tabular-nums">{formatCurrency(room.rent_amount)}</span>
       ),
     },
     {

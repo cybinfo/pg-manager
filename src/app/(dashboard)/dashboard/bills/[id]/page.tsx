@@ -29,6 +29,7 @@ import {
   CreditCard
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface LineItem {
   type: string
@@ -175,14 +176,6 @@ export default function BillDetailPage() {
 
     fetchBill()
   }, [router, billId])
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {

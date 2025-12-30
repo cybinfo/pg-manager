@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface Property {
   id: string
@@ -593,14 +594,14 @@ export default function NewMeterReadingPage() {
                               <IndianRupee className="h-4 w-4" />
                               <div className="text-sm">
                                 <p>
-                                  <span className="font-medium">Rate:</span> ₹{selectedChargeType.calculation_config.rate_per_unit}/unit
+                                  <span className="font-medium">Rate:</span> {formatCurrency(selectedChargeType.calculation_config.rate_per_unit)}/unit
                                 </p>
                                 <p>
-                                  <span className="font-medium">Total Amount:</span> ₹{(calculatedUnits * selectedChargeType.calculation_config.rate_per_unit).toLocaleString("en-IN")}
+                                  <span className="font-medium">Total Amount:</span> {formatCurrency(calculatedUnits * selectedChargeType.calculation_config.rate_per_unit)}
                                 </p>
                                 {roomTenants.length > 1 && selectedChargeType.calculation_config.split_by === "occupants" && (
                                   <p>
-                                    <span className="font-medium">Per Person:</span> ₹{((calculatedUnits * selectedChargeType.calculation_config.rate_per_unit) / roomTenants.length).toLocaleString("en-IN")}
+                                    <span className="font-medium">Per Person:</span> {formatCurrency((calculatedUnits * selectedChargeType.calculation_config.rate_per_unit) / roomTenants.length)}
                                   </p>
                                 )}
                               </div>

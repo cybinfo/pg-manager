@@ -21,6 +21,7 @@ import {
   IndianRupee
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface Tenant {
   id: string
@@ -402,7 +403,7 @@ export default function NewBillPage() {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Monthly Rent:</span>
-                        <span className="ml-2 font-medium">₹{tenant.monthly_rent.toLocaleString()}</span>
+                        <span className="ml-2 font-medium">{formatCurrency(tenant.monthly_rent)}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Phone:</span>
@@ -545,12 +546,12 @@ export default function NewBillPage() {
             <div className="mt-6 pt-4 border-t space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>₹{subtotal.toLocaleString()}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               {Number(formData.previous_balance) > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Previous Balance</span>
-                  <span>₹{Number(formData.previous_balance).toLocaleString()}</span>
+                  <span>{formatCurrency(Number(formData.previous_balance))}</span>
                 </div>
               )}
               <div className="flex justify-between items-center">
@@ -564,11 +565,11 @@ export default function NewBillPage() {
                     min="0"
                   />
                 </div>
-                <span className="text-sm">-₹{Number(formData.discount_amount).toLocaleString()}</span>
+                <span className="text-sm">-{formatCurrency(Number(formData.discount_amount))}</span>
               </div>
               <div className="flex justify-between text-lg font-bold pt-2 border-t">
                 <span>Total Amount</span>
-                <span className="text-primary">₹{total.toLocaleString()}</span>
+                <span className="text-primary">{formatCurrency(total)}</span>
               </div>
             </div>
           </CardContent>

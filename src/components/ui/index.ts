@@ -68,6 +68,9 @@ export {
   LoadingContent,
 } from "./loading"
 
+// File Upload Components
+export { FileUpload, ProfilePhotoUpload } from "./file-upload"
+
 // Currency & Money Display
 export {
   Currency,

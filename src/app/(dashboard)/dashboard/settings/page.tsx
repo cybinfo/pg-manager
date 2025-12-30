@@ -23,8 +23,11 @@ import {
   IndianRupee,
   Send,
   MailCheck,
-  Cog
+  Cog,
+  Home,
+  Bed
 } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 import { PageHeader } from "@/components/ui/page-header"
 import { toast } from "sonner"
 import { sendTestEmail } from "@/lib/email"
@@ -72,6 +75,20 @@ interface NotificationSettings {
   send_on_due_date: boolean
   send_overdue_alerts: boolean
   overdue_alert_frequency: "daily" | "weekly"
+}
+
+interface RoomTypePricing {
+  single: { rent: number; deposit: number }
+  double: { rent: number; deposit: number }
+  triple: { rent: number; deposit: number }
+  dormitory: { rent: number; deposit: number }
+}
+
+const defaultRoomTypePricing: RoomTypePricing = {
+  single: { rent: 8000, deposit: 16000 },
+  double: { rent: 6000, deposit: 12000 },
+  triple: { rent: 5000, deposit: 10000 },
+  dormitory: { rent: 4000, deposit: 8000 },
 }
 
 interface AutoBillingSettings {
@@ -138,6 +155,9 @@ export default function SettingsPage() {
   // Auto Billing Settings
   const [autoBillingSettings, setAutoBillingSettings] = useState<AutoBillingSettings>(defaultAutoBillingSettings)
 
+  // Room Type Pricing
+  const [roomTypePricing, setRoomTypePricing] = useState<RoomTypePricing>(defaultRoomTypePricing)
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -192,6 +212,13 @@ export default function SettingsPage() {
           setAutoBillingSettings({
             ...defaultAutoBillingSettings,
             ...configRes.data.auto_billing_settings,
+          })
+        }
+        // Load room type pricing if available
+        if (configRes.data.room_type_pricing) {
+          setRoomTypePricing({
+            ...defaultRoomTypePricing,
+            ...configRes.data.room_type_pricing,
           })
         }
       }
@@ -377,6 +404,47 @@ export default function SettingsPage() {
     }
   }
 
+  const saveRoomTypePricing = async () => {
+    setSaving(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      if (config) {
+        // Update existing config
+        const { error } = await supabase
+          .from("owner_config")
+          .update({
+            room_type_pricing: roomTypePricing,
+          })
+          .eq("id", config.id)
+
+        if (error) throw error
+      } else {
+        // Create new config if doesn't exist
+        const { data, error } = await supabase
+          .from("owner_config")
+          .insert({
+            owner_id: user.id,
+            room_type_pricing: roomTypePricing,
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+        setConfig(data)
+      }
+
+      toast.success("Room pricing saved")
+    } catch (error) {
+      console.error("Save error:", error)
+      toast.error("Failed to save room pricing")
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleSendTestEmail = async () => {
     if (!owner?.email) {
       toast.error("No email address found")
@@ -497,6 +565,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
+    { id: "room-pricing", label: "Room Pricing", icon: Bed },
     { id: "billing", label: "Billing & Charges", icon: CreditCard },
     { id: "expenses", label: "Expense Categories", icon: IndianRupee },
     { id: "notifications", label: "Notifications", icon: Bell },
@@ -605,6 +674,119 @@ export default function SettingsPage() {
                 )}
                 Save Profile
               </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Room Pricing Tab */}
+      {activeTab === "room-pricing" && (
+        <div className="grid gap-6 max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bed className="h-5 w-5" />
+                Default Room Pricing
+              </CardTitle>
+              <CardDescription>
+                Set default rent and security deposit amounts for each room type.
+                These will auto-populate when adding new rooms.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {(["single", "double", "triple", "dormitory"] as const).map((roomType) => (
+                <div key={roomType} className="p-4 border rounded-lg space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Home className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium capitalize">{roomType} Room</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {roomType === "single" && "1 bed"}
+                        {roomType === "double" && "2 beds"}
+                        {roomType === "triple" && "3 beds"}
+                        {roomType === "dormitory" && "4+ beds"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`${roomType}-rent`}>Monthly Rent</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                        <Input
+                          id={`${roomType}-rent`}
+                          type="number"
+                          min="0"
+                          step="500"
+                          className="pl-8"
+                          value={roomTypePricing[roomType].rent}
+                          onChange={(e) => setRoomTypePricing({
+                            ...roomTypePricing,
+                            [roomType]: {
+                              ...roomTypePricing[roomType],
+                              rent: parseInt(e.target.value) || 0,
+                            },
+                          })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`${roomType}-deposit`}>Security Deposit</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                        <Input
+                          id={`${roomType}-deposit`}
+                          type="number"
+                          min="0"
+                          step="1000"
+                          className="pl-8"
+                          value={roomTypePricing[roomType].deposit}
+                          onChange={(e) => setRoomTypePricing({
+                            ...roomTypePricing,
+                            [roomType]: {
+                              ...roomTypePricing[roomType],
+                              deposit: parseInt(e.target.value) || 0,
+                            },
+                          })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <Button onClick={saveRoomTypePricing} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Room Pricing
+              </Button>
+
+              <p className="text-xs text-muted-foreground">
+                Note: These defaults are used when adding new rooms.
+                Existing room prices won&apos;t be affected.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Quick Reference */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-6">
+              <h4 className="font-medium text-blue-900 mb-3">Current Pricing Summary</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {(["single", "double", "triple", "dormitory"] as const).map((roomType) => (
+                  <div key={roomType} className="flex justify-between text-sm">
+                    <span className="capitalize text-blue-700">{roomType}:</span>
+                    <span className="font-medium text-blue-900">
+                      {formatCurrency(roomTypePricing[roomType].rent)}/mo
+                    </span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
+import { formatCurrency } from "@/lib/format"
 
 interface Payment {
   id: string
@@ -106,8 +107,8 @@ export default function PaymentsPage() {
   const topMethod = Object.entries(methodCounts).sort((a, b) => b[1] - a[1])[0]
 
   const metricsItems: MetricItem[] = [
-    { label: "This Month", value: `₹${totalThisMonth.toLocaleString("en-IN")}`, icon: IndianRupee },
-    { label: "All Time", value: `₹${totalAll.toLocaleString("en-IN")}`, icon: Wallet },
+    { label: "This Month", value: formatCurrency(totalThisMonth), icon: IndianRupee },
+    { label: "All Time", value: formatCurrency(totalAll), icon: Wallet },
     { label: "Transactions", value: payments.length, icon: Receipt },
     { label: "Top Method", value: topMethod ? paymentMethodLabels[topMethod[0]] || topMethod[0] : "—", icon: Banknote },
   ]
@@ -135,7 +136,7 @@ export default function PaymentsPage() {
       width: "amount",
       render: (payment) => (
         <span className="font-semibold text-emerald-600 tabular-nums">
-          ₹{Number(payment.amount).toLocaleString("en-IN")}
+          {formatCurrency(Number(payment.amount))}
         </span>
       ),
     },

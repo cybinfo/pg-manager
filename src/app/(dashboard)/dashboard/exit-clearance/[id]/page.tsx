@@ -28,6 +28,7 @@ import {
   Trash2
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface Deduction {
   reason: string
@@ -504,7 +505,7 @@ export default function ExitClearanceDetailPage() {
                       <span>{deduction.reason}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-red-600">
-                          ₹{deduction.amount.toLocaleString("en-IN")}
+                          {formatCurrency(deduction.amount)}
                         </span>
                         {!isCleared && (
                           <Button
@@ -560,22 +561,22 @@ export default function ExitClearanceDetailPage() {
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Pending Dues</span>
-                <span>₹{clearance.total_dues.toLocaleString("en-IN")}</span>
+                <span>{formatCurrency(clearance.total_dues)}</span>
               </div>
               <div className="flex justify-between text-sm text-green-600">
                 <span>Security Deposit</span>
-                <span>- ₹{clearance.total_refundable.toLocaleString("en-IN")}</span>
+                <span>- {formatCurrency(clearance.total_refundable)}</span>
               </div>
               {deductions.length > 0 && (
                 <div className="flex justify-between text-sm text-red-600">
                   <span>Deductions</span>
-                  <span>+ ₹{deductions.reduce((sum, d) => sum + d.amount, 0).toLocaleString("en-IN")}</span>
+                  <span>+ {formatCurrency(deductions.reduce((sum, d) => sum + d.amount, 0))}</span>
                 </div>
               )}
               <div className="flex justify-between pt-3 border-t font-bold text-lg">
                 <span>{isRefund ? "Refund" : "Due"}</span>
                 <span className={isRefund ? "text-green-600" : "text-red-600"}>
-                  ₹{Math.abs(finalAmount).toLocaleString("en-IN")}
+                  {formatCurrency(Math.abs(finalAmount))}
                 </span>
               </div>
             </CardContent>

@@ -17,6 +17,7 @@ import {
   CheckCircle,
   Clock
 } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 
 interface Bill {
   id: string
@@ -80,10 +81,6 @@ export default function BillsPage() {
 
     fetchBills()
   }, [router])
-
-  const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString("en-IN")}`
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {

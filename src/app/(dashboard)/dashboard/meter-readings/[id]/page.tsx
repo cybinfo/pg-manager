@@ -30,6 +30,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface MeterReadingRaw {
   id: string
@@ -335,10 +336,7 @@ export default function MeterReadingDetailPage() {
     })
   }
 
-  const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString("en-IN")}`
-  }
-
+  
   const totalChargesAmount = charges.reduce((sum, c) => sum + c.amount, 0)
   const totalPaidAmount = charges.reduce((sum, c) => sum + (c.paid_amount || 0), 0)
 
@@ -534,7 +532,7 @@ export default function MeterReadingDetailPage() {
             {ratePerUnit && (
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-muted-foreground">Rate per Unit</span>
-                <span className="font-medium">₹{ratePerUnit.toLocaleString()}</span>
+                <span className="font-medium">{formatCurrency(ratePerUnit)}</span>
               </div>
             )}
             {ratePerUnit && reading.units_consumed !== null && (
@@ -544,7 +542,7 @@ export default function MeterReadingDetailPage() {
                   Estimated Cost
                 </span>
                 <span className="font-bold text-lg text-primary">
-                  ₹{(ratePerUnit * reading.units_consumed).toLocaleString("en-IN")}
+                  {formatCurrency(ratePerUnit * reading.units_consumed)}
                 </span>
               </div>
             )}

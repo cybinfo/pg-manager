@@ -18,6 +18,7 @@ import {
   Wallet,
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
 
 interface ExpenseType {
   id: string
@@ -134,15 +135,15 @@ export default function ExpensesPage() {
   const metricsItems: MetricItem[] = [
     {
       label: "This Month",
-      value: `₹${thisMonthTotal.toLocaleString("en-IN")}`,
+      value: formatCurrency(thisMonthTotal),
       icon: TrendingDown,
       trend: lastMonthTotal > 0 ? {
         value: Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100),
         isPositive: thisMonthTotal < lastMonthTotal
       } : undefined
     },
-    { label: "Last Month", value: `₹${lastMonthTotal.toLocaleString("en-IN")}`, icon: Calendar },
-    { label: "Year to Date", value: `₹${ytdTotal.toLocaleString("en-IN")}`, icon: BarChart3 },
+    { label: "Last Month", value: formatCurrency(lastMonthTotal), icon: Calendar },
+    { label: "Year to Date", value: formatCurrency(ytdTotal), icon: BarChart3 },
     { label: "Top Category", value: topCategory?.name || "—", icon: Wallet },
   ]
 
@@ -195,7 +196,7 @@ export default function ExpensesPage() {
       width: "amount",
       render: (expense) => (
         <span className="font-semibold text-rose-600 tabular-nums">
-          -₹{Number(expense.amount).toLocaleString("en-IN")}
+          -{formatCurrency(Number(expense.amount))}
         </span>
       ),
     },
