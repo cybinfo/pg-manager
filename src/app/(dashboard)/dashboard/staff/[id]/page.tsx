@@ -117,8 +117,8 @@ export default function StaffDetailPage() {
         .eq("staff_member_id", params.id),
       supabase
         .from("roles")
-        .select("id, name, description")
-        .eq("is_system_role", false)
+        .select("id, name, description, is_system_role")
+        .order("is_system_role", { ascending: false }) // System roles first
         .order("name"),
       supabase.from("properties").select("id, name").order("name"),
     ])

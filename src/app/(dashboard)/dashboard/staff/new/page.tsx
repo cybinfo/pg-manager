@@ -62,7 +62,7 @@ export default function NewStaffPage() {
         supabase
           .from("roles")
           .select("id, name, description, is_system_role")
-          .eq("is_system_role", false)
+          .order("is_system_role", { ascending: false }) // System roles first
           .order("name"),
         supabase.from("properties").select("id, name").order("name"),
       ])
