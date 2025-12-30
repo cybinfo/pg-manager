@@ -144,10 +144,13 @@ export default function StaffDetailPage() {
         role: r.role && r.role.length > 0 ? r.role[0] : null,
         property: r.property && r.property.length > 0 ? r.property[0] : null,
       }))
+      console.log("Loaded user roles:", rolesRes.data)
+      console.log("Transformed roles:", transformedRoles)
       setUserRoles(transformedRoles)
     }
 
     if (!allRolesRes.error) {
+      console.log("Available roles:", allRolesRes.data)
       setAllRoles(allRolesRes.data || [])
       if (allRolesRes.data && allRolesRes.data.length > 0) {
         setNewRoleAssignment((prev) => ({ ...prev, role_id: allRolesRes.data[0].id }))
@@ -155,6 +158,7 @@ export default function StaffDetailPage() {
     }
 
     if (!propertiesRes.error) {
+      console.log("Available properties:", propertiesRes.data)
       setProperties(propertiesRes.data || [])
     }
 
@@ -223,20 +227,31 @@ export default function StaffDetailPage() {
   const handleAddRole = async () => {
     if (!staff || !newRoleAssignment.role_id) return
 
+    // Debug: log values being saved
+    console.log("Adding role:", {
+      role_id: newRoleAssignment.role_id,
+      property_id: newRoleAssignment.property_id,
+      property_id_will_be: newRoleAssignment.property_id || null
+    })
+
     setSaving(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       toast.error("Session expired")
+      setSaving(false)
       return
     }
+
+    // Use the property_id directly - empty string should become null
+    const propertyId = newRoleAssignment.property_id === "" ? null : newRoleAssignment.property_id
 
     const { error } = await supabase.from("user_roles").insert({
       owner_id: user.id,
       staff_member_id: staff.id,
       role_id: newRoleAssignment.role_id,
-      property_id: newRoleAssignment.property_id || null,
+      property_id: propertyId,
     })
 
     if (error) {
