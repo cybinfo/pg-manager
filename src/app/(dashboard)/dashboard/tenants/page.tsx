@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   Users,
   Plus,
@@ -55,17 +56,32 @@ interface RawTenant {
   }[] | null
 }
 
+interface Property {
+  id: string
+  name: string
+}
+
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    fetchTenants()
+    fetchData()
   }, [])
 
-  const fetchTenants = async () => {
+  const fetchData = async () => {
     const supabase = createClient()
 
+    // Fetch properties for filter
+    const { data: propertiesData } = await supabase
+      .from("properties")
+      .select("id, name")
+      .order("name")
+    setProperties(propertiesData || [])
+
+    // Fetch tenants
     const { data, error } = await supabase
       .from("tenants")
       .select(`
@@ -111,7 +127,53 @@ export default function TenantsPage() {
     }
   }
 
-  // Stats
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "All Status",
+      options: [
+        { value: "active", label: "Active" },
+        { value: "notice_period", label: "Notice Period" },
+        { value: "checked_out", label: "Moved Out" },
+      ],
+    },
+    {
+      id: "date",
+      label: "Check-in Date",
+      type: "date-range",
+    },
+  ]
+
+  // Apply filters
+  const filteredTenants = tenants.filter((tenant) => {
+    if (filters.property && filters.property !== "all" && tenant.property?.id !== filters.property) {
+      return false
+    }
+    if (filters.status && filters.status !== "all" && tenant.status !== filters.status) {
+      return false
+    }
+    if (filters.date_from) {
+      const checkIn = new Date(tenant.check_in_date)
+      if (checkIn < new Date(filters.date_from)) return false
+    }
+    if (filters.date_to) {
+      const checkIn = new Date(tenant.check_in_date)
+      if (checkIn > new Date(filters.date_to)) return false
+    }
+    return true
+  })
+
+  // Stats (based on all tenants, not filtered)
   const activeTenants = tenants.filter(t => t.status === "active").length
   const noticePeriod = tenants.filter(t => t.status === "notice_period").length
   const movedOut = tenants.filter(t => t.status === "checked_out").length
@@ -205,9 +267,17 @@ export default function TenantsPage() {
 
       {tenants.length > 0 && <MetricsBar items={metricsItems} />}
 
+      {/* Filters */}
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
+
       <DataTable
         columns={columns}
-        data={tenants}
+        data={filteredTenants}
         keyField="id"
         href={(tenant) => `/dashboard/tenants/${tenant.id}`}
         searchable

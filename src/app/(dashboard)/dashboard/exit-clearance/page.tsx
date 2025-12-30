@@ -5,22 +5,22 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   LogOut,
   Plus,
-  Search,
   Loader2,
   Clock,
   CheckCircle,
   AlertCircle,
   User,
   Building2,
-  Home,
-  Calendar,
-  IndianRupee,
   ArrowRight
 } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 
 interface ExitClearanceRaw {
   id: string
@@ -72,7 +72,7 @@ interface TenantOnNoticeRaw {
   check_in_date: string
   monthly_rent: number
   status: string
-  property: { name: string }[] | null
+  property: { id: string; name: string }[] | null
   room: { room_number: string }[] | null
 }
 
@@ -84,6 +84,7 @@ interface TenantOnNotice {
   monthly_rent: number
   status: string
   property: {
+    id: string
     name: string
   }
   room: {
@@ -91,22 +92,31 @@ interface TenantOnNotice {
   }
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
-  initiated: { label: "Initiated", color: "text-blue-700", bgColor: "bg-blue-100", icon: Clock },
-  pending_payment: { label: "Pending Payment", color: "text-yellow-700", bgColor: "bg-yellow-100", icon: AlertCircle },
-  cleared: { label: "Cleared", color: "text-green-700", bgColor: "bg-green-100", icon: CheckCircle },
+interface Property {
+  id: string
+  name: string
 }
 
 export default function ExitClearancePage() {
   const [loading, setLoading] = useState(true)
   const [clearances, setClearances] = useState<ExitClearance[]>([])
   const [tenantsOnNotice, setTenantsOnNotice] = useState<TenantOnNotice[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [properties, setProperties] = useState<Property[]>([])
+
+  // Filter state
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
+
+      // Fetch properties for filter
+      const { data: propertiesData } = await supabase
+        .from("properties")
+        .select("id, name")
+        .order("name")
+
+      setProperties(propertiesData || [])
 
       // Fetch exit clearances
       const { data: clearanceData } = await supabase
@@ -140,7 +150,7 @@ export default function ExitClearancePage() {
           check_in_date,
           monthly_rent,
           status,
-          property:properties(name),
+          property:properties(id, name),
           room:rooms(room_number)
         `)
         .eq("status", "notice_period")
@@ -172,25 +182,162 @@ export default function ExitClearancePage() {
     })
   }
 
-  const formatCurrency = (amount: number) => {
-    const absAmount = Math.abs(amount)
-    return `₹${absAmount.toLocaleString("en-IN")}`
-  }
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "All Status",
+      options: [
+        { value: "initiated", label: "Initiated" },
+        { value: "pending_payment", label: "Pending Payment" },
+        { value: "cleared", label: "Cleared" },
+      ],
+    },
+    {
+      id: "date",
+      label: "Exit Date",
+      type: "date-range",
+    },
+  ]
 
+  // Apply filters
   const filteredClearances = clearances.filter((clearance) => {
-    const matchesSearch =
-      clearance.tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      clearance.property.name.toLowerCase().includes(searchQuery.toLowerCase())
+    // Property filter
+    if (filters.property && filters.property !== "all" && clearance.property.id !== filters.property) {
+      return false
+    }
 
-    const matchesStatus = statusFilter === "all" || clearance.settlement_status === statusFilter
+    // Status filter
+    if (filters.status && filters.status !== "all" && clearance.settlement_status !== filters.status) {
+      return false
+    }
 
-    return matchesSearch && matchesStatus
+    // Date range filter
+    if (filters.date_from) {
+      const exitDate = new Date(clearance.expected_exit_date)
+      const fromDate = new Date(filters.date_from)
+      if (exitDate < fromDate) return false
+    }
+    if (filters.date_to) {
+      const exitDate = new Date(clearance.expected_exit_date)
+      const toDate = new Date(filters.date_to)
+      if (exitDate > toDate) return false
+    }
+
+    return true
   })
 
   // Stats
   const initiatedCount = clearances.filter((c) => c.settlement_status === "initiated").length
   const pendingCount = clearances.filter((c) => c.settlement_status === "pending_payment").length
   const clearedCount = clearances.filter((c) => c.settlement_status === "cleared").length
+
+  const metricsItems: MetricItem[] = [
+    { label: "Total", value: clearances.length, icon: LogOut },
+    { label: "Initiated", value: initiatedCount, icon: Clock },
+    { label: "Pending Payment", value: pendingCount, icon: AlertCircle, highlight: pendingCount > 0 },
+    { label: "Cleared", value: clearedCount, icon: CheckCircle },
+    { label: "On Notice", value: tenantsOnNotice.length, icon: User, highlight: tenantsOnNotice.length > 0 },
+  ]
+
+  // Table columns
+  const columns: Column<ExitClearance>[] = [
+    {
+      key: "tenant",
+      header: "Tenant",
+      width: "primary",
+      render: (clearance) => (
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
+            {clearance.tenant.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="font-medium truncate">{clearance.tenant.name}</div>
+            <div className="text-xs text-muted-foreground">{clearance.tenant.phone}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "property",
+      header: "Property / Room",
+      width: "secondary",
+      render: (clearance) => (
+        <div className="text-sm min-w-0">
+          <div className="flex items-center gap-1 truncate">
+            <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
+            <span className="truncate">{clearance.property.name}</span>
+          </div>
+          <div className="text-xs text-muted-foreground">Room {clearance.room.room_number}</div>
+        </div>
+      ),
+    },
+    {
+      key: "expected_exit_date",
+      header: "Exit Date",
+      width: "tertiary",
+      render: (clearance) => (
+        <span className="text-sm">{formatDate(clearance.expected_exit_date)}</span>
+      ),
+    },
+    {
+      key: "final_amount",
+      header: "Amount",
+      width: "amount",
+      render: (clearance) => {
+        const isRefund = clearance.final_amount < 0
+        return (
+          <div className="text-right">
+            <span className={`font-medium ${isRefund ? "text-green-600" : "text-red-600"}`}>
+              {isRefund ? "-" : "+"}{formatCurrency(Math.abs(clearance.final_amount))}
+            </span>
+            <div className="text-xs text-muted-foreground">
+              {isRefund ? "Refund" : "Due"}
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      key: "settlement_status",
+      header: "Status",
+      width: "status",
+      render: (clearance) => {
+        const statusMap: Record<string, { variant: "success" | "warning" | "error" | "muted"; label: string }> = {
+          initiated: { variant: "muted", label: "Initiated" },
+          pending_payment: { variant: "warning", label: "Pending" },
+          cleared: { variant: "success", label: "Cleared" },
+        }
+        const status = statusMap[clearance.settlement_status] || { variant: "muted", label: clearance.settlement_status }
+        return (
+          <div className="space-y-1">
+            <TableBadge variant={status.variant}>{status.label}</TableBadge>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              {clearance.room_inspection_done && (
+                <span title="Room Inspected">
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                </span>
+              )}
+              {clearance.key_returned && (
+                <span title="Key Returned">
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                </span>
+              )}
+            </div>
+          </div>
+        )
+      },
+    },
+  ]
 
   if (loading) {
     return (
@@ -203,88 +350,36 @@ export default function ExitClearancePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Exit Clearance</h1>
-          <p className="text-muted-foreground">Manage tenant checkouts and settlements</p>
-        </div>
-        <Link href="/dashboard/exit-clearance/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Initiate Checkout
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Exit Clearance"
+        description="Manage tenant checkouts and settlements"
+        icon={LogOut}
+        actions={
+          <Link href="/dashboard/exit-clearance/new">
+            <Button variant="gradient">
+              <Plus className="mr-2 h-4 w-4" />
+              Initiate Checkout
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Clock className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{initiatedCount}</p>
-                <p className="text-xs text-muted-foreground">Initiated</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{pendingCount}</p>
-                <p className="text-xs text-muted-foreground">Pending Payment</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{clearedCount}</p>
-                <p className="text-xs text-muted-foreground">Cleared</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <User className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{tenantsOnNotice.length}</p>
-                <p className="text-xs text-muted-foreground">On Notice</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Metrics */}
+      <MetricsBar items={metricsItems} />
 
-      {/* Tenants on Notice */}
+      {/* Tenants on Notice Alert */}
       {tenantsOnNotice.length > 0 && (
-        <Card>
+        <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-4">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-              Tenants on Notice Period
+            <h3 className="font-semibold mb-3 flex items-center gap-2 text-orange-800">
+              <AlertCircle className="h-4 w-4" />
+              Tenants on Notice Period ({tenantsOnNotice.length})
             </h3>
             <div className="space-y-2">
-              {tenantsOnNotice.map((tenant) => (
+              {tenantsOnNotice.slice(0, 3).map((tenant) => (
                 <div
                   key={tenant.id}
-                  className="flex items-center justify-between p-3 bg-orange-50 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-100"
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
@@ -298,55 +393,48 @@ export default function ExitClearancePage() {
                     </div>
                   </div>
                   <Link href={`/dashboard/exit-clearance/new?tenant=${tenant.id}`}>
-                    <Button size="sm">
+                    <Button size="sm" variant="outline">
                       Start Clearance
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               ))}
+              {tenantsOnNotice.length > 3 && (
+                <p className="text-sm text-muted-foreground text-center pt-2">
+                  +{tenantsOnNotice.length - 3} more tenants on notice
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by tenant or property..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 px-3 rounded-md border border-input bg-background text-sm min-w-[160px]"
-            >
-              <option value="all">All Status</option>
-              <option value="initiated">Initiated</option>
-              <option value="pending_payment">Pending Payment</option>
-              <option value="cleared">Cleared</option>
-            </select>
-          </div>
-        </CardContent>
-      </Card>
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
 
-      {/* Clearances List */}
-      {filteredClearances.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
+      {/* Data Table */}
+      <DataTable
+        columns={columns}
+        data={filteredClearances}
+        keyField="id"
+        searchable
+        searchFields={["tenant", "property"] as any}
+        searchPlaceholder="Search by tenant or property..."
+        href={(clearance) => `/dashboard/exit-clearance/${clearance.id}`}
+        emptyState={
+          <div className="flex flex-col items-center py-12">
             <LogOut className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium mb-2">No exit clearances</h3>
             <p className="text-muted-foreground text-center mb-4">
               {clearances.length === 0
                 ? "No checkout processes have been initiated"
-                : "No clearances match your search criteria"}
+                : "No clearances match your filters"}
             </p>
             {clearances.length === 0 && (
               <Link href="/dashboard/exit-clearance/new">
@@ -356,82 +444,9 @@ export default function ExitClearancePage() {
                 </Button>
               </Link>
             )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {filteredClearances.map((clearance) => {
-            const StatusIcon = statusConfig[clearance.settlement_status]?.icon || Clock
-            const isRefund = clearance.final_amount < 0
-
-            return (
-              <Link key={clearance.id} href={`/dashboard/exit-clearance/${clearance.id}`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      {/* Tenant Info */}
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{clearance.tenant.name}</h3>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Building2 className="h-3 w-3" />
-                            {clearance.property.name}
-                            <Home className="h-3 w-3 ml-1" />
-                            Room {clearance.room.room_number}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Dates */}
-                      <div className="flex items-center gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Exit Date</p>
-                          <p className="font-medium">{formatDate(clearance.expected_exit_date)}</p>
-                        </div>
-                      </div>
-
-                      {/* Amount */}
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">
-                          {isRefund ? "Refund" : "Due"}
-                        </p>
-                        <p className={`text-lg font-bold ${isRefund ? "text-green-600" : "text-red-600"}`}>
-                          {isRefund ? "-" : "+"}{formatCurrency(clearance.final_amount)}
-                        </p>
-                      </div>
-
-                      {/* Status */}
-                      <div>
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${statusConfig[clearance.settlement_status]?.bgColor} ${statusConfig[clearance.settlement_status]?.color}`}>
-                          <StatusIcon className="h-3 w-3" />
-                          {statusConfig[clearance.settlement_status]?.label}
-                        </span>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                          {clearance.room_inspection_done && (
-                            <span className="flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3 text-green-500" />
-                              Inspected
-                            </span>
-                          )}
-                          {clearance.key_returned && (
-                            <span className="flex items-center gap-1">
-                              <CheckCircle className="h-3 w-3 text-green-500" />
-                              Key
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-          })}
-        </div>
-      )}
+          </div>
+        }
+      />
     </div>
   )
 }

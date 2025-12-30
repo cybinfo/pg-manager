@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import {
   Home,
   Plus,
@@ -36,17 +37,32 @@ interface Room {
   }
 }
 
+interface Property {
+  id: string
+  name: string
+}
+
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<Room[]>([])
+  const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    fetchRooms()
+    fetchData()
   }, [])
 
-  const fetchRooms = async () => {
+  const fetchData = async () => {
     const supabase = createClient()
 
+    // Fetch properties for filter
+    const { data: propertiesData } = await supabase
+      .from("properties")
+      .select("id, name")
+      .order("name")
+    setProperties(propertiesData || [])
+
+    // Fetch rooms
     const { data, error } = await supabase
       .from("rooms")
       .select(`
@@ -81,10 +97,71 @@ export default function RoomsPage() {
     }
   }
 
-  // Stats
+  // Get unique floors for filter
+  const uniqueFloors = [...new Set(rooms.map(r => r.floor))].sort((a, b) => a - b)
+
+  // Filter configuration
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "property",
+      label: "Property",
+      type: "select",
+      placeholder: "All Properties",
+      options: properties.map(p => ({ value: p.id, label: p.name })),
+    },
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      placeholder: "All Status",
+      options: [
+        { value: "available", label: "Available" },
+        { value: "occupied", label: "Occupied" },
+        { value: "partially_occupied", label: "Partially Occupied" },
+        { value: "maintenance", label: "Maintenance" },
+      ],
+    },
+    {
+      id: "room_type",
+      label: "Room Type",
+      type: "select",
+      placeholder: "All Types",
+      options: [
+        { value: "single", label: "Single" },
+        { value: "double", label: "Double" },
+        { value: "triple", label: "Triple" },
+        { value: "dormitory", label: "Dormitory" },
+      ],
+    },
+    {
+      id: "floor",
+      label: "Floor",
+      type: "select",
+      placeholder: "All Floors",
+      options: uniqueFloors.map(f => ({ value: String(f), label: `Floor ${f}` })),
+    },
+  ]
+
+  // Apply filters
+  const filteredRooms = rooms.filter((room) => {
+    if (filters.property && filters.property !== "all" && room.property.id !== filters.property) {
+      return false
+    }
+    if (filters.status && filters.status !== "all" && room.status !== filters.status) {
+      return false
+    }
+    if (filters.room_type && filters.room_type !== "all" && room.room_type !== filters.room_type) {
+      return false
+    }
+    if (filters.floor && filters.floor !== "all" && room.floor !== parseInt(filters.floor)) {
+      return false
+    }
+    return true
+  })
+
+  // Stats (based on all rooms)
   const totalBeds = rooms.reduce((sum, r) => sum + r.total_beds, 0)
   const occupiedBeds = rooms.reduce((sum, r) => sum + r.occupied_beds, 0)
-  const availableBeds = totalBeds - occupiedBeds
   const availableRooms = rooms.filter(r => r.status === "available").length
   const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
 
@@ -179,9 +256,17 @@ export default function RoomsPage() {
 
       {rooms.length > 0 && <MetricsBar items={metricsItems} />}
 
+      {/* Filters */}
+      <ListPageFilters
+        filters={filterConfigs}
+        values={filters}
+        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+        onClear={() => setFilters({})}
+      />
+
       <DataTable
         columns={columns}
-        data={rooms}
+        data={filteredRooms}
         keyField="id"
         href={(room) => `/dashboard/rooms/${room.id}`}
         searchable
@@ -190,16 +275,20 @@ export default function RoomsPage() {
         emptyState={
           <div className="flex flex-col items-center py-8">
             <Home className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No rooms yet</h3>
+            <h3 className="text-lg font-medium mb-2">No rooms found</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Add rooms to your properties to start managing tenants
+              {rooms.length === 0
+                ? "Add rooms to your properties to start managing tenants"
+                : "No rooms match your filters"}
             </p>
-            <Link href="/dashboard/rooms/new">
-              <Button variant="gradient">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Room
-              </Button>
-            </Link>
+            {rooms.length === 0 && (
+              <Link href="/dashboard/rooms/new">
+                <Button variant="gradient">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Room
+                </Button>
+              </Link>
+            )}
           </div>
         }
       />
