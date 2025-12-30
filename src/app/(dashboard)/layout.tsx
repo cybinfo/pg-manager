@@ -25,10 +25,13 @@ import {
   UserCog,
   Receipt,
   TrendingDown,
-  MoreHorizontal
+  MoreHorizontal,
+  UserCircle2
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
+import { AuthProvider, useAuth, useCurrentContext } from "@/lib/auth"
+import { ContextSwitcher } from "@/components/auth"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -56,40 +59,18 @@ const mobileNavItems = [
   { name: "More", href: "#more", icon: MoreHorizontal },
 ]
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+// Inner layout component that uses auth context
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [user, setUser] = useState<{ email?: string; full_name?: string } | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push("/login")
-        return
-      }
-
-      setUser({
-        email: user.email,
-        full_name: user.user_metadata?.full_name,
-      })
-      setLoading(false)
-    }
-
-    checkAuth()
-  }, [router])
+  // Use auth context
+  const { user, profile, contexts, isLoading, logout } = useAuth()
+  const currentContext = useCurrentContext()
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    await logout()
     toast.success("Logged out successfully")
     router.push("/login")
     router.refresh()
@@ -101,7 +82,11 @@ export default function DashboardLayout({
     }
   }
 
-  if (loading) {
+  // Get display name from profile or user
+  const displayName = profile?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User"
+  const displayEmail = user?.email
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-emerald-50">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
@@ -112,6 +97,12 @@ export default function DashboardLayout({
         </div>
       </div>
     )
+  }
+
+  // Redirect if not authenticated
+  if (!user) {
+    router.push("/login")
+    return null
   }
 
   return (
@@ -214,15 +205,29 @@ export default function DashboardLayout({
 
           <div className="flex-1" />
 
-          {/* User menu */}
+          {/* Context switcher and user menu */}
           <div className="flex items-center gap-3">
+            {/* Context Switcher - show if user has multiple contexts */}
+            {contexts.length > 1 && (
+              <ContextSwitcher />
+            )}
+
+            {/* Single context indicator - show current workspace/role if only 1 context */}
+            {contexts.length === 1 && currentContext.context && (
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border">
+                <UserCircle2 className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">{currentContext.workspaceName}</span>
+                <span className="text-xs text-muted-foreground capitalize">({currentContext.context.context_type})</span>
+              </div>
+            )}
+
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium">{user?.full_name || "User"}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
+              <p className="text-sm font-medium">{displayName}</p>
+              <p className="text-xs text-muted-foreground">{displayEmail}</p>
             </div>
             <Button variant="ghost" size="icon" className="rounded-full">
               <div className="h-9 w-9 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-sm font-medium shadow-md shadow-teal-500/20">
-                {(user?.full_name || user?.email || "U")[0].toUpperCase()}
+                {displayName[0].toUpperCase()}
               </div>
             </Button>
           </div>
@@ -264,5 +269,18 @@ export default function DashboardLayout({
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
     </div>
+  )
+}
+
+// Main export with AuthProvider wrapper
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <AuthProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </AuthProvider>
   )
 }

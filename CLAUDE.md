@@ -55,11 +55,13 @@ src/
 │   ├── contact/          # Contact page
 │   └── help/             # FAQ/Help page
 ├── components/
-│   ├── ui/               # shadcn/ui components (button, card, input, label)
+│   ├── ui/               # shadcn/ui components (button, card, input, label, checkbox, dropdown-menu)
 │   ├── forms/            # Shared form components (AddressInput, PhotoGallery, etc.)
+│   ├── auth/             # Auth components (ContextPicker, ContextSwitcher, PermissionGate)
 │   └── pwa-install-prompt.tsx
 └── lib/
     ├── supabase/         # Supabase client (client.ts, server.ts, middleware.ts)
+    ├── auth/             # Auth library (AuthProvider, types, AI detection, analytics)
     └── utils.ts
 ```
 
@@ -108,6 +110,21 @@ ManageKar is a platform for multiple management products targeting Indian busine
 - Modern rounded corners (rounded-lg, rounded-xl)
 
 ## Key Features
+
+### Unified Identity & Multi-Context System
+- **Single Login, Multiple Roles**: One email can be owner at one PG, staff at another, tenant at a third
+- **Context Switching**: Header dropdown to switch between workspaces without re-login
+- **Workspaces**: Each PG owner account becomes a "workspace" - staff and tenants are invited to workspaces
+- **Invitation System**: Invite staff/tenants via email/phone - they auto-link on signup
+- **Role-Based Permissions**: Staff have role-specific permissions (manage_tenants, manage_payments, etc.)
+- **Permission Gates**: `<PermissionGate>`, `<OwnerOnly>`, `<StaffOnly>`, `<TenantOnly>` components
+- **AI Identity Detection**: Detect duplicate accounts, suggest account linking
+- **Context Analytics**: Track context switches, permission usage, staff productivity
+- **Database Tables**: `workspaces`, `user_profiles`, `user_contexts`, `invitations`, `context_switches`, `permission_audit_log`
+- **Files**:
+  - `src/lib/auth/` - AuthProvider, types, AI detection, analytics
+  - `src/components/auth/` - ContextPicker, ContextSwitcher, PermissionGate, InvitationForm
+  - `supabase/migrations/012_unified_identity_system.sql`
 
 ### Tenant Re-joining & Room Switching
 - Automatic detection of returning tenants by phone number
@@ -206,6 +223,38 @@ vercel --prod
 ---
 
 ## Changelog
+
+### 2025-12-30 - Unified Identity & Multi-Context System
+- **Problem Solved**: Comprehensive system for handling multi-role users (same person as owner, staff, tenant across different PGs)
+- **Core Architecture**:
+  - **Workspaces**: Each PG owner account is a workspace that staff and tenants are invited to
+  - **User Contexts**: Links users to workspaces with specific roles (owner, staff, tenant)
+  - **Single Authentication**: One login, multiple contexts - no re-authentication needed to switch
+- **Database Migration** (`supabase/migrations/012_unified_identity_system.sql`):
+  - `workspaces` - One per PG owner (auto-created on owner signup)
+  - `user_profiles` - Central identity for all users
+  - `user_contexts` - Links users to workspaces with roles and permissions
+  - `invitations` - Pending invitations with tokens
+  - `context_switches` - Audit log of context changes
+  - `permission_audit_log` - Track permission checks and denials
+  - Helper functions: `get_user_contexts()`, `switch_context()`, `accept_invitation()`, `has_permission()`
+- **Auth Library** (`src/lib/auth/`):
+  - `types.ts` - ContextType, ContextWithDetails, PERMISSIONS constants, TENANT_PERMISSIONS
+  - `auth-context.tsx` - AuthProvider with user, profile, contexts state; switchContext, hasPermission methods
+  - `ai-detection.ts` - detectIdentityConflicts, checkContextAnomalies, getSuggestionsForIdentity
+  - `analytics.ts` - getContextMetrics, getPermissionUsage, getUserSwitchPatterns, getStaffProductivity
+  - `index.ts` - Central exports
+- **Auth Components** (`src/components/auth/`):
+  - `context-picker.tsx` - Full-page context selection after login (for multi-context users)
+  - `context-switcher.tsx` - Header dropdown for switching contexts
+  - `permission-gate.tsx` - PermissionGate, RoleGate, OwnerOnly, StaffOnly, TenantOnly components
+  - `invitation-components.tsx` - InvitationForm, InvitationList, AcceptInvitation
+  - `index.ts` - Central exports
+- **Updated Files**:
+  - `src/app/(auth)/login/page.tsx` - Context picker flow after login
+  - `src/app/(dashboard)/layout.tsx` - AuthProvider wrapper, ContextSwitcher in header
+- **UI Components Added**: Installed shadcn/ui `checkbox` and `dropdown-menu`
+- **Design Principles Applied**: Standardization, Unified, Modularization, Centralization, Flexibility, AI, BI, Customer Centric
 
 ### 2025-12-30 - Shared Form Components & UI Centralization
 - **Problem Solved**: Eliminated duplicate form code across new/edit pages by creating shared form components
