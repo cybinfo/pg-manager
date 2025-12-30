@@ -64,6 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [currentContext, setCurrentContext] = useState<ContextWithDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const initializingRef = useRef(false)
+  const initialLoadDoneRef = useRef(false)
 
   // Use singleton supabase client to maintain session state
   const supabase = useMemo(() => getSupabaseClient(), [])
@@ -292,6 +293,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } finally {
         if (mounted) {
           console.log('[Auth] Setting isLoading to false')
+          initialLoadDoneRef.current = true
           setIsLoading(false)
         }
       }
@@ -303,15 +305,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
-      console.log('Auth state change:', event)
+      console.log('[Auth] Auth state change:', event, 'initialLoadDone:', initialLoadDoneRef.current)
+
+      // Skip SIGNED_IN during initial load - initAuth handles it
+      if (event === 'SIGNED_IN' && !initialLoadDoneRef.current) {
+        console.log('[Auth] Skipping SIGNED_IN during initial load')
+        return
+      }
 
       if (event === 'SIGNED_IN' && session?.user) {
+        console.log('[Auth] Processing SIGNED_IN event')
         setUser(session.user)
         await loadUserData(session.user, false) // Don't auto-select context on sign in
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
         // Token refreshed - update user but keep everything else
+        console.log('[Auth] Token refreshed')
         setUser(session.user)
       } else if (event === 'SIGNED_OUT') {
+        console.log('[Auth] Signed out')
         setUser(null)
         setProfile(null)
         setContexts([])
@@ -324,6 +335,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('[Auth] Cleanup - unmounting')
       mounted = false
       initializingRef.current = false
+      initialLoadDoneRef.current = false
       subscription.unsubscribe()
     }
   }, [supabase, loadUserData])
