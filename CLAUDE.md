@@ -56,6 +56,7 @@ src/
 │   └── help/             # FAQ/Help page
 ├── components/
 │   ├── ui/               # shadcn/ui components (button, card, input, label)
+│   ├── forms/            # Shared form components (AddressInput, PhotoGallery, etc.)
 │   └── pwa-install-prompt.tsx
 └── lib/
     ├── supabase/         # Supabase client (client.ts, server.ts, middleware.ts)
@@ -205,6 +206,42 @@ vercel --prod
 ---
 
 ## Changelog
+
+### 2025-12-30 - Shared Form Components & UI Centralization
+- **Problem Solved**: Eliminated duplicate form code across new/edit pages by creating shared form components
+- **New Directory**: `/src/components/forms/` - Centralized form components
+- **Components Created**:
+  - **AddressInput** (`AddressInput.tsx`) - Full address input with type selector, line1/line2, city/state/pincode, primary toggle
+  - **PropertyAddressInput** - Simplified variant for property forms
+  - **PhotoGallery** (`PhotoGallery.tsx`) - Multi-photo upload with thumbnails, delete buttons, max limit
+  - **CoverImageUpload** - Single cover image upload with preview
+  - **PhoneEntry** (`PhoneEntry.tsx`) - Phone input with WhatsApp checkbox, primary radio
+  - **EmailEntry** (`EmailEntry.tsx`) - Email input with primary radio
+  - **GuardianEntry** (`GuardianEntry.tsx`) - Guardian/emergency contact with relation dropdown
+  - **IdDocumentEntry** (`IdDocumentEntry.tsx`) - ID document type/number with file uploads
+  - **MultiEntryList** (`MultiEntryList.tsx`) - Generic wrapper for add/remove multiple entries
+  - **index.ts** - Central exports with types and default values
+- **Exported Types**: `PhoneData`, `EmailData`, `AddressData`, `GuardianData`, `IdDocumentData`
+- **Exported Constants**: `ADDRESS_TYPES`, `RELATION_TYPES`, `ID_DOCUMENT_TYPES`, `DEFAULT_PHONE`, `DEFAULT_EMAIL`, `DEFAULT_GUARDIAN`, `DEFAULT_ID_DOCUMENT`
+- **Pages Updated**:
+  - `properties/new` & `properties/[id]/edit` - Using `PropertyAddressInput`, `CoverImageUpload`, `PhotoGallery`
+  - `rooms/new` & `rooms/[id]/edit` - Using `PhotoGallery`
+  - `tenants/new` & `tenants/[id]/edit` - Using shared types + `IdDocumentEntry`
+- **Code Reduction**: ~360 lines of duplicate code removed across 6 files
+- **Benefits**:
+  - Single source of truth for form field styling (`p-3 border rounded-lg bg-muted/30`)
+  - Consistent dropdown options across pages
+  - Type safety with exported interfaces
+  - Easy to update all forms from one location
+- **Files Created**:
+  - `/src/components/forms/AddressInput.tsx`
+  - `/src/components/forms/PhotoGallery.tsx`
+  - `/src/components/forms/PhoneEntry.tsx`
+  - `/src/components/forms/EmailEntry.tsx`
+  - `/src/components/forms/GuardianEntry.tsx`
+  - `/src/components/forms/IdDocumentEntry.tsx`
+  - `/src/components/forms/MultiEntryList.tsx`
+  - `/src/components/forms/index.ts`
 
 ### 2025-12-29 - Centralized UI Component Library & Detail Page Redesign
 - **Problem Solved**: Created comprehensive reusable component library for consistent UI across application
