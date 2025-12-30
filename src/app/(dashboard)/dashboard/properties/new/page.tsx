@@ -19,7 +19,8 @@ export default function NewPropertyPage() {
 
   const [formData, setFormData] = useState({
     name: "",
-    address: "",
+    address_line1: "",
+    address_line2: "",
     city: "",
     state: "",
     pincode: "",
@@ -56,10 +57,15 @@ export default function NewPropertyPage() {
         return
       }
 
+      // Combine address lines into single address field
+      const fullAddress = [formData.address_line1, formData.address_line2]
+        .filter(Boolean)
+        .join(", ")
+
       const { error } = await supabase.from("properties").insert({
         owner_id: user.id,
         name: formData.name,
-        address: formData.address || null,
+        address: fullAddress || null,
         city: formData.city,
         state: formData.state || null,
         pincode: formData.pincode || null,
@@ -132,55 +138,50 @@ export default function NewPropertyPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                name="address"
-                placeholder="e.g., 123, MG Road, Near Metro Station"
-                value={formData.address}
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City *</Label>
+            {/* Address Section - Unified style matching tenant address */}
+            <div className="space-y-3">
+              <Label>Property Address</Label>
+              <div className="p-3 border rounded-lg bg-muted/30 space-y-3">
                 <Input
-                  id="city"
-                  name="city"
-                  placeholder="e.g., Bangalore"
-                  value={formData.city}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Input
-                  id="state"
-                  name="state"
-                  placeholder="e.g., Karnataka"
-                  value={formData.state}
+                  name="address_line1"
+                  placeholder="Address Line 1"
+                  value={formData.address_line1}
                   onChange={handleChange}
                   disabled={loading}
                 />
+                <Input
+                  name="address_line2"
+                  placeholder="Address Line 2 (optional)"
+                  value={formData.address_line2}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+                <div className="grid grid-cols-3 gap-2">
+                  <Input
+                    name="city"
+                    placeholder="City *"
+                    value={formData.city}
+                    onChange={handleChange}
+                    required
+                    disabled={loading}
+                  />
+                  <Input
+                    name="state"
+                    placeholder="State"
+                    value={formData.state}
+                    onChange={handleChange}
+                    disabled={loading}
+                  />
+                  <Input
+                    name="pincode"
+                    placeholder="PIN Code"
+                    value={formData.pincode}
+                    onChange={handleChange}
+                    disabled={loading}
+                    maxLength={6}
+                  />
+                </div>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="pincode">Pincode</Label>
-              <Input
-                id="pincode"
-                name="pincode"
-                placeholder="e.g., 560001"
-                value={formData.pincode}
-                onChange={handleChange}
-                disabled={loading}
-                maxLength={6}
-              />
             </div>
 
             {/* Property Photos Section */}
