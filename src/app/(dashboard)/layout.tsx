@@ -33,21 +33,23 @@ import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { AuthProvider, useAuth, useCurrentContext } from "@/lib/auth"
 import { ContextSwitcher } from "@/components/auth"
 
+// Navigation items with required permissions
+// null permission means always visible, string means need that permission
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Properties", href: "/dashboard/properties", icon: Building2 },
-  { name: "Rooms", href: "/dashboard/rooms", icon: Home },
-  { name: "Tenants", href: "/dashboard/tenants", icon: Users },
-  { name: "Bills", href: "/dashboard/bills", icon: Receipt },
-  { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
-  { name: "Expenses", href: "/dashboard/expenses", icon: TrendingDown },
-  { name: "Meter Readings", href: "/dashboard/meter-readings", icon: Gauge },
-  { name: "Exit Clearance", href: "/dashboard/exit-clearance", icon: UserMinus },
-  { name: "Visitors", href: "/dashboard/visitors", icon: UserPlus },
-  { name: "Complaints", href: "/dashboard/complaints", icon: MessageSquare },
-  { name: "Notices", href: "/dashboard/notices", icon: Bell },
-  { name: "Reports", href: "/dashboard/reports", icon: FileText },
-  { name: "Staff", href: "/dashboard/staff", icon: UserCog },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null },
+  { name: "Properties", href: "/dashboard/properties", icon: Building2, permission: "properties.view" },
+  { name: "Rooms", href: "/dashboard/rooms", icon: Home, permission: "rooms.view" },
+  { name: "Tenants", href: "/dashboard/tenants", icon: Users, permission: "tenants.view" },
+  { name: "Bills", href: "/dashboard/bills", icon: Receipt, permission: "bills.view" },
+  { name: "Payments", href: "/dashboard/payments", icon: CreditCard, permission: "payments.view" },
+  { name: "Expenses", href: "/dashboard/expenses", icon: TrendingDown, permission: "expenses.view" },
+  { name: "Meter Readings", href: "/dashboard/meter-readings", icon: Gauge, permission: "meter_readings.view" },
+  { name: "Exit Clearance", href: "/dashboard/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate" },
+  { name: "Visitors", href: "/dashboard/visitors", icon: UserPlus, permission: "visitors.view" },
+  { name: "Complaints", href: "/dashboard/complaints", icon: MessageSquare, permission: "complaints.view" },
+  { name: "Notices", href: "/dashboard/notices", icon: Bell, permission: "notices.view" },
+  { name: "Reports", href: "/dashboard/reports", icon: FileText, permission: "reports.view" },
+  { name: "Staff", href: "/dashboard/staff", icon: UserCog, permission: "staff.view" },
 ]
 
 // Mobile bottom nav items (5 most used)
@@ -66,8 +68,18 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Use auth context
-  const { user, profile, contexts, isLoading, logout } = useAuth()
+  const { user, profile, contexts, isLoading, logout, hasPermission } = useAuth()
   const currentContext = useCurrentContext()
+
+  // Filter navigation based on permissions
+  const filteredNavigation = navigation.filter(item => {
+    // Always show items with no permission requirement
+    if (item.permission === null) return true
+    // Owners see everything
+    if (currentContext.isOwner) return true
+    // Check staff permissions
+    return hasPermission(item.permission)
+  })
 
   const handleLogout = async () => {
     await logout()
@@ -159,7 +171,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <ul className="space-y-1">
-              {navigation.map((item) => {
+              {filteredNavigation.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
                 return (
                   <li key={item.name}>
@@ -183,18 +195,21 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
           {/* Settings & Logout */}
           <div className="border-t p-4 space-y-1 bg-muted/30">
-            <Link
-              href="/dashboard/settings"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                pathname === "/dashboard/settings"
-                  ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <Settings className="h-5 w-5" />
-              Settings
-            </Link>
+            {/* Settings only for owners */}
+            {currentContext.isOwner && (
+              <Link
+                href="/dashboard/settings"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  pathname === "/dashboard/settings"
+                    ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Settings className="h-5 w-5" />
+                Settings
+              </Link>
+            )}
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-rose-50 hover:text-rose-600 transition-all duration-200"
