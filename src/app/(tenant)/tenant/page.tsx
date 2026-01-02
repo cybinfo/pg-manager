@@ -104,6 +104,17 @@ export default function TenantHomePage() {
         return
       }
 
+      // Transform Supabase join arrays to objects (Supabase returns joins as arrays)
+      const normalizedTenant = {
+        ...tenantData,
+        property: Array.isArray(tenantData.property)
+          ? tenantData.property[0]
+          : tenantData.property,
+        room: Array.isArray(tenantData.room)
+          ? tenantData.room[0]
+          : tenantData.room,
+      }
+
       // Fetch recent payments
       const { data: payments } = await supabase
         .from("payments")
@@ -137,7 +148,7 @@ export default function TenantHomePage() {
       const totalPaid = yearPayments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0
 
       setData({
-        tenant: tenantData,
+        tenant: normalizedTenant as TenantData,
         recentPayments: payments || [],
         openComplaints: complaintsCount || 0,
         unreadNotices: noticesCount || 0,
@@ -204,7 +215,7 @@ export default function TenantHomePage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Room</p>
-                <p className="font-semibold">{data.tenant.room.room_number}</p>
+                <p className="font-semibold">{data.tenant.room?.room_number || "-"}</p>
               </div>
             </div>
           </CardContent>
@@ -264,21 +275,21 @@ export default function TenantHomePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="font-semibold text-lg">{data.tenant.property.name}</p>
+              <p className="font-semibold text-lg">{data.tenant.property?.name || "Unknown Property"}</p>
               <p className="text-sm text-muted-foreground">
-                {data.tenant.property.address && `${data.tenant.property.address}, `}
-                {data.tenant.property.city}
+                {data.tenant.property?.address && `${data.tenant.property.address}, `}
+                {data.tenant.property?.city || ""}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Room Number</p>
-                <p className="font-medium">{data.tenant.room.room_number}</p>
+                <p className="font-medium">{data.tenant.room?.room_number || "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Room Type</p>
-                <p className="font-medium capitalize">{data.tenant.room.room_type || "Standard"}</p>
+                <p className="font-medium capitalize">{data.tenant.room?.room_type || "Standard"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Check-in Date</p>
@@ -293,11 +304,11 @@ export default function TenantHomePage() {
               </div>
             </div>
 
-            {data.tenant.room.amenities && data.tenant.room.amenities.length > 0 && (
+            {data.tenant.room?.amenities && data.tenant.room.amenities.length > 0 && (
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Amenities</p>
                 <div className="flex flex-wrap gap-2">
-                  {data.tenant.room.amenities.map((amenity) => (
+                  {data.tenant.room.amenities.map((amenity: string) => (
                     <span
                       key={amenity}
                       className="px-2 py-1 bg-muted rounded text-xs"

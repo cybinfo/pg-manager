@@ -172,7 +172,10 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <ul className="space-y-1">
               {filteredNavigation.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                // Fix: Dashboard should only be active on exact match, not on all routes
+                const isActive = item.href === "/dashboard"
+                  ? pathname === "/dashboard"
+                  : pathname === item.href || pathname.startsWith(item.href + "/")
                 return (
                   <li key={item.name}>
                     <Link
@@ -270,8 +273,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="mobile-nav lg:hidden">
+      {/* Mobile Bottom Navigation - hide when sidebar is open so logout is accessible */}
+      <nav className={`mobile-nav lg:hidden transition-opacity duration-200 ${sidebarOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
         <div className="flex items-center justify-around h-16">
           {mobileNavItems.map((item) => {
             const isActive = item.href !== "#more" && (pathname === item.href || pathname.startsWith(item.href + "/"))
