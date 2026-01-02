@@ -16,8 +16,8 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer,
 } from "recharts"
+import { ChartContainer } from "@/components/ui/chart-container"
 import {
   Building2,
   Users,
@@ -164,8 +164,8 @@ export default function DashboardPage() {
         supabase.from("complaints").select("id", { count: "exact", head: true }).eq("status", "open"),
         supabase.from("tenants").select("id", { count: "exact", head: true })
           .eq("status", "active")
-          .not("exit_date", "is", null)
-          .lte("exit_date", thirtyDaysFromNow.toISOString()),
+          .not("expected_exit_date", "is", null)
+          .lte("expected_exit_date", thirtyDaysFromNow.toISOString()),
         // Get payments for last 6 months for chart
         supabase.from("payments")
           .select("amount, payment_date")
@@ -479,36 +479,34 @@ export default function DashboardPage() {
               <CardTitle className="text-base font-medium">Revenue Trend (6 Months)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyRevenue}>
-                    <XAxis
-                      dataKey="month"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
-                    />
-                    <Tooltip content={<CustomBarTooltip />} />
-                    <Bar
-                      dataKey="amount"
-                      fill="url(#colorGradient)"
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <defs>
-                      <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" />
-                        <stop offset="100%" stopColor="#14b8a6" />
-                      </linearGradient>
-                    </defs>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <ChartContainer height={192}>
+                <BarChart data={monthlyRevenue}>
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
+                  />
+                  <Tooltip content={<CustomBarTooltip />} />
+                  <Bar
+                    dataKey="amount"
+                    fill="url(#colorGradient)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <defs>
+                    <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#14b8a6" />
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ChartContainer>
             </CardContent>
           </Card>
 
@@ -519,8 +517,8 @@ export default function DashboardPage() {
                 <CardTitle className="text-base font-medium">Payment Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-48 flex items-center">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="flex items-center">
+                  <ChartContainer height={192} className="flex-1">
                     <PieChart>
                       <Pie
                         data={paymentStatus}
@@ -539,7 +537,7 @@ export default function DashboardPage() {
                         formatter={(value) => [`${value} charges`, ""]}
                       />
                     </PieChart>
-                  </ResponsiveContainer>
+                  </ChartContainer>
                   <div className="space-y-2 min-w-[100px]">
                     {paymentStatus.map((status, index) => (
                       <div key={index} className="flex items-center gap-2 text-sm">

@@ -307,6 +307,7 @@ Configurable via property edit → Website Settings tab:
 | `Currency` | Indian Rupee formatting |
 | `EmptyState` | No data/no results states |
 | `Loading` | Spinners and skeletons |
+| `ChartContainer` | Recharts wrapper preventing dimension warnings |
 
 ### Form Components (src/components/forms/)
 | Component | Purpose |
@@ -369,6 +370,45 @@ RESEND_API_KEY=<resend_key>
 
 ## Recent Bug Fixes (Important)
 
+### Blank Page After Sign-In (2026-01-02) ✅
+**Problem**: Users seeing blank page after logging in, especially on second sign-in
+**Root Cause**: Spurious `SIGNED_OUT` events from Supabase during navigation/initialization were clearing auth state
+**Solution**: Complete rewrite of auth context with `explicitLogout` flag pattern:
+- Added `explicitLogout` flag to global auth state
+- Only process `SIGNED_OUT` events when flag is true (user explicitly called logout)
+- Ignore spurious `SIGNED_OUT` events from Supabase
+- Removed focus/visibility refresh handlers that caused issues
+**File**: `src/lib/auth/auth-context.tsx`
+
+### Session Timeout During Auth Init (2026-01-02) ✅
+**Problem**: Session timeout dialog appearing during initial auth loading
+**Solution**: Added `authReady` check to SessionTimeout component
+- Only start timeout timers when `!isLoading && isAuthenticated`
+**File**: `src/components/auth/session-timeout.tsx`
+
+### Password Reset Flow (2026-01-02) ✅
+**Problem**: Missing forgot-password and reset-password pages (404 errors)
+**Solution**: Created forgot-password and reset-password pages
+**Files**: `src/app/(auth)/forgot-password/page.tsx`, `src/app/(auth)/reset-password/page.tsx`
+
+### Chart Dimension Warnings (2026-01-02) ✅
+**Problem**: Recharts ResponsiveContainer showing dimension warnings
+**Solution**: Created ChartContainer wrapper that delays render until parent has dimensions
+**File**: `src/components/ui/chart-container.tsx`
+
+### Room Capacity Bug (2026-01-02) ✅
+**Problem**: Room with available beds not showing in dropdown / occupancy not updating
+**Root Cause**:
+1. Trigger setting status to 'partial' but UI expecting 'partially_occupied'
+2. Trigger not handling room_id changes (tenant moves) correctly
+**Solution**:
+- Migration 024: Standardized status values to 'partially_occupied'
+- Improved trigger to handle both old and new room when tenant moves
+- Added `sync_room_occupancy()` helper function for manual sync
+- Added refresh button to tenant creation page
+- UI now accepts both 'partial' and 'partially_occupied' status
+**Files**: `supabase/migrations/024_standardize_room_status.sql`, `src/app/(dashboard)/dashboard/rooms/page.tsx`, `src/app/(dashboard)/dashboard/tenants/new/page.tsx`
+
 ### Login Blocked After Migrations (2026-01-02) ✅
 **Problem**: Users couldn't login after running migration 017 - stuck at login page
 **Root Cause**: RLS policies in migration 017 had issues:
@@ -416,7 +456,9 @@ RESEND_API_KEY=<resend_key>
 ### Critical Bugs to Fix
 | Issue | Description | Status |
 |-------|-------------|--------|
-| Room capacity bug | Room 101 (3 beds) cannot add 3rd tenant | **Investigating** |
+| Blank page after sign-in | Spurious SIGNED_OUT events clearing auth | ✅ Fixed |
+| Room capacity bug | Room 101 (3 beds) cannot add 3rd tenant | ✅ Fixed |
+| Chart dimension warnings | Recharts ResponsiveContainer warnings | ✅ Fixed |
 | Dashboard color | "Always green" - active state logic | ✅ Fixed |
 | Tenant Dashboard | Property & Room not showing | ✅ Fixed |
 | Mobile logout | Hidden behind bottom menu | ✅ Fixed |
@@ -487,6 +529,8 @@ Run in order in Supabase SQL editor:
 016_audit_logging.sql       - Global immutable audit trail
 017_platform_admins.sql     - Superuser/Global Admin system
 018_fix_rls_policies.sql    - Fix RLS policies blocking login
+019-023                      - Various RLS and trigger fixes
+024_standardize_room_status.sql - Room occupancy trigger fix
 ```
 
 ### Storage Buckets (Migration 015)
@@ -602,4 +646,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2025-01-02*
+*Last updated: 2026-01-02*

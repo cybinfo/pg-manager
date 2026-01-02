@@ -96,6 +96,19 @@ export default function NewTenantPage() {
   const [guardians, setGuardians] = useState<GuardianData[]>([{ ...DEFAULT_GUARDIAN }])
   const [idDocuments, setIdDocuments] = useState<IdDocumentData[]>([{ ...DEFAULT_ID_DOCUMENT }])
 
+  // Refresh rooms data from database
+  const refreshRooms = async () => {
+    const supabase = createClient()
+    const { data, error } = await supabase.from("rooms").select("*").order("room_number")
+    if (error) {
+      console.error("Error refreshing rooms:", error)
+      toast.error("Failed to refresh rooms")
+    } else {
+      setRooms(data || [])
+      toast.success("Rooms refreshed")
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
@@ -1213,7 +1226,20 @@ export default function NewTenantPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="room_id">Room *</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="room_id">Room *</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={refreshRooms}
+                    disabled={loading}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Refresh
+                  </Button>
+                </div>
                 <select
                   id="room_id"
                   name="room_id"

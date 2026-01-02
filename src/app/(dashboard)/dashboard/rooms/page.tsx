@@ -90,6 +90,7 @@ export default function RoomsPage() {
       case "occupied":
         return { status: "error", label: "Occupied" }
       case "partially_occupied":
+      case "partial": // Handle both old and new status values
         return { status: "warning", label: "Partial" }
       case "maintenance":
         return { status: "muted", label: "Maintenance" }
@@ -148,8 +149,12 @@ export default function RoomsPage() {
     if (filters.property && filters.property !== "all" && room.property.id !== filters.property) {
       return false
     }
-    if (filters.status && filters.status !== "all" && room.status !== filters.status) {
-      return false
+    if (filters.status && filters.status !== "all") {
+      // Handle both 'partial' and 'partially_occupied' as equivalent
+      const normalizedRoomStatus = room.status === "partial" ? "partially_occupied" : room.status
+      if (normalizedRoomStatus !== filters.status) {
+        return false
+      }
     }
     if (filters.room_type && filters.room_type !== "all" && room.room_type !== filters.room_type) {
       return false

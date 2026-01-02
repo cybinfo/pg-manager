@@ -54,9 +54,12 @@ export function SessionTimeout({
   children,
 }: SessionTimeoutProps) {
   const router = useRouter()
-  const { user, logout, isAuthenticated } = useAuth()
+  const { user, logout, isAuthenticated, isLoading } = useAuth()
   const [showWarning, setShowWarning] = useState(false)
   const [remainingTime, setRemainingTime] = useState(0)
+
+  // Don't run session timeout until auth is fully ready
+  const authReady = !isLoading && isAuthenticated
 
   // Refs for timers
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -110,7 +113,7 @@ export function SessionTimeout({
 
   // Reset the inactivity timer
   const resetTimer = useCallback(() => {
-    if (!enabled || !isAuthenticated) return
+    if (!enabled || !authReady) return
 
     clearTimers()
     setShowWarning(false)
@@ -126,11 +129,11 @@ export function SessionTimeout({
     timeoutRef.current = setTimeout(() => {
       handleTimeout()
     }, inactivityTimeout)
-  }, [enabled, isAuthenticated, inactivityTimeout, warningTime, clearTimers, startCountdown, handleTimeout])
+  }, [enabled, authReady, inactivityTimeout, warningTime, clearTimers, startCountdown, handleTimeout])
 
   // Handle user activity (debounced)
   const handleActivity = useCallback(() => {
-    if (!enabled || !isAuthenticated) return
+    if (!enabled || !authReady) return
     if (showWarning) return // Don't reset during warning
 
     // Debounce activity detection
@@ -141,7 +144,7 @@ export function SessionTimeout({
     }, ACTIVITY_DEBOUNCE)
 
     resetTimer()
-  }, [enabled, isAuthenticated, showWarning, resetTimer])
+  }, [enabled, authReady, showWarning, resetTimer])
 
   // Extend session (user clicked "Stay Logged In")
   const handleExtendSession = useCallback(() => {
@@ -155,7 +158,7 @@ export function SessionTimeout({
 
   // Set up activity listeners
   useEffect(() => {
-    if (!enabled || !isAuthenticated) {
+    if (!enabled || !authReady) {
       clearTimers()
       return
     }
@@ -188,11 +191,11 @@ export function SessionTimeout({
         clearTimeout(activityDebounceRef.current)
       }
     }
-  }, [enabled, isAuthenticated, handleActivity, resetTimer, clearTimers])
+  }, [enabled, authReady, handleActivity, resetTimer, clearTimers])
 
   // Handle visibility change - reset timer when user returns to tab
   useEffect(() => {
-    if (!enabled || !isAuthenticated) return
+    if (!enabled || !authReady) return
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -226,7 +229,7 @@ export function SessionTimeout({
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [enabled, isAuthenticated, inactivityTimeout, warningTime, handleTimeout])
+  }, [enabled, authReady, inactivityTimeout, warningTime, handleTimeout])
 
   // Format remaining time for display
   const formatTime = (seconds: number): string => {
@@ -243,7 +246,7 @@ export function SessionTimeout({
       {children}
 
       {/* Session Warning Dialog */}
-      <AlertDialog open={showWarning && isAuthenticated}>
+      <AlertDialog open={showWarning && authReady}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
