@@ -36,6 +36,10 @@ export {
   ToggleSwitch,
 } from "./form-components"
 
+// Combobox Components (searchable dropdowns)
+export { Combobox, MultiCombobox, AsyncCombobox } from "./combobox"
+export type { ComboboxOption } from "./combobox"
+
 // Detail Page Components
 export {
   DetailHero,
