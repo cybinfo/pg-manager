@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import {
   ClipboardCheck, Loader2, CheckCircle, XCircle, Clock,
   User, AlertTriangle, FileText, ChevronRight
@@ -303,8 +303,9 @@ export default function ApprovalsPage() {
   }
 
   return (
-    <PermissionGuard permission="tenants.view">
-      <div className="space-y-6">
+    <FeatureGuard feature="approvals">
+      <PermissionGuard permission="tenants.view">
+        <div className="space-y-6">
         <PageHeader
           title="Approvals Hub"
           description="Review and manage tenant requests"
@@ -472,7 +473,8 @@ export default function ApprovalsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }

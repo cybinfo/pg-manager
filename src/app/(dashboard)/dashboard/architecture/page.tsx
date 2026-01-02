@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import {
   Building2, Home, Bed, Users, Loader2, ChevronRight,
   CheckCircle, XCircle, AlertCircle, ArrowLeft, User
@@ -182,8 +182,9 @@ export default function ArchitecturePage() {
   }
 
   return (
-    <PermissionGuard permission="properties.view">
-      <div className="space-y-6">
+    <FeatureGuard feature="architectureView">
+      <PermissionGuard permission="properties.view">
+        <div className="space-y-6">
         {/* Header */}
         <PageHeader
           title="Property Architecture"
@@ -481,7 +482,8 @@ export default function ArchitecturePage() {
             </Card>
           </div>
         )}
-      </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }

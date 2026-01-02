@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import {
   Loader2,
   Plus,
@@ -313,8 +313,9 @@ export default function ExpensesPage() {
   }
 
   return (
-    <PermissionGuard permission="expenses.view">
-    <div className="space-y-6">
+    <FeatureGuard feature="expenses">
+      <PermissionGuard permission="expenses.view">
+        <div className="space-y-6">
       <PageHeader
         title="Expenses"
         description="Track and manage property expenses"
@@ -374,7 +375,8 @@ export default function ExpensesPage() {
           </div>
         }
       />
-    </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }

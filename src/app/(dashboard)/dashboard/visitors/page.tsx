@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import {
   UserPlus,
   Plus,
@@ -304,8 +304,9 @@ export default function VisitorsPage() {
   }
 
   return (
-    <PermissionGuard permission="visitors.view">
-    <div className="space-y-6">
+    <FeatureGuard feature="visitors">
+      <PermissionGuard permission="visitors.view">
+        <div className="space-y-6">
       <PageHeader
         title="Visitors"
         description="Manage visitor check-ins and check-outs"
@@ -359,7 +360,8 @@ export default function VisitorsPage() {
           </div>
         }
       />
-    </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }

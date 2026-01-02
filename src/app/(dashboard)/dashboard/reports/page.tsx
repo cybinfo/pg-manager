@@ -37,7 +37,7 @@ import {
   BarChart3,
 } from "lucide-react"
 import { PageHeader } from "@/components/ui/page-header"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { useDemoMode } from "@/lib/demo-mode"
 import { toast } from "sonner"
 
@@ -624,8 +624,9 @@ export default function ReportsPage() {
   }
 
   return (
-    <PermissionGuard permission="reports.view">
-    <div className="space-y-6">
+    <FeatureGuard feature="reports">
+      <PermissionGuard permission="reports.view">
+        <div className="space-y-6">
       <PageHeader
         title="Reports & Analytics"
         description="Insights and metrics for your PG business"
@@ -1239,7 +1240,8 @@ export default function ReportsPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }

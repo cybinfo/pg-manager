@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import {
   Bell,
   Plus,
@@ -379,8 +379,9 @@ export default function NoticesPage() {
   }
 
   return (
-    <PermissionGuard permission="notices.view">
-    <div className="space-y-6">
+    <FeatureGuard feature="notices">
+      <PermissionGuard permission="notices.view">
+        <div className="space-y-6">
       <PageHeader
         title="Notices"
         description="Announcements and notifications for tenants"
@@ -434,7 +435,8 @@ export default function NoticesPage() {
           </div>
         }
       />
-    </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }

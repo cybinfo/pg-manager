@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import {
   LogOut,
   Plus,
@@ -349,8 +349,9 @@ export default function ExitClearancePage() {
   }
 
   return (
-    <PermissionGuard permission="exit_clearance.initiate">
-    <div className="space-y-6">
+    <FeatureGuard feature="exitClearance">
+      <PermissionGuard permission="exit_clearance.initiate">
+        <div className="space-y-6">
       {/* Header */}
       <PageHeader
         title="Exit Clearance"
@@ -450,7 +451,8 @@ export default function ExitClearancePage() {
           </div>
         }
       />
-    </div>
-    </PermissionGuard>
+        </div>
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }
