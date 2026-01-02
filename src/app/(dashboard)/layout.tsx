@@ -29,7 +29,8 @@ import {
   UserCircle2,
   Grid3X3,
   ClipboardCheck,
-  Shield
+  Shield,
+  Activity
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -50,29 +51,30 @@ const navigation: {
   feature: FeatureFlagKey | null
 }[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
-  { name: "Properties", href: "/dashboard/properties", icon: Building2, permission: "properties.view", feature: null },
-  { name: "Rooms", href: "/dashboard/rooms", icon: Home, permission: "rooms.view", feature: null },
-  { name: "Tenants", href: "/dashboard/tenants", icon: Users, permission: "tenants.view", feature: null },
-  { name: "Bills", href: "/dashboard/bills", icon: Receipt, permission: "bills.view", feature: null },
-  { name: "Payments", href: "/dashboard/payments", icon: CreditCard, permission: "payments.view", feature: null },
-  { name: "Expenses", href: "/dashboard/expenses", icon: TrendingDown, permission: "expenses.view", feature: "expenses" },
-  { name: "Meter Readings", href: "/dashboard/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
-  { name: "Exit Clearance", href: "/dashboard/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
-  { name: "Visitors", href: "/dashboard/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
-  { name: "Complaints", href: "/dashboard/complaints", icon: MessageSquare, permission: "complaints.view", feature: "complaints" },
-  { name: "Notices", href: "/dashboard/notices", icon: Bell, permission: "notices.view", feature: "notices" },
-  { name: "Reports", href: "/dashboard/reports", icon: FileText, permission: "reports.view", feature: "reports" },
-  { name: "Architecture", href: "/dashboard/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
-  { name: "Approvals", href: "/dashboard/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
-  { name: "Staff", href: "/dashboard/staff", icon: UserCog, permission: "staff.view", feature: null },
+  { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", feature: null },
+  { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", feature: null },
+  { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
+  { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
+  { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
+  { name: "Expenses", href: "/expenses", icon: TrendingDown, permission: "expenses.view", feature: "expenses" },
+  { name: "Meter Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
+  { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
+  { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
+  { name: "Complaints", href: "/complaints", icon: MessageSquare, permission: "complaints.view", feature: "complaints" },
+  { name: "Notices", href: "/notices", icon: Bell, permission: "notices.view", feature: "notices" },
+  { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", feature: "reports" },
+  { name: "Activity Log", href: "/activity", icon: Activity, permission: null, feature: "activityLog" },
+  { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
+  { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
+  { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", feature: null },
 ]
 
 // Mobile bottom nav items (5 most used)
 const mobileNavItems = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Tenants", href: "/dashboard/tenants", icon: Users },
-  { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
-  { name: "Bills", href: "/dashboard/bills", icon: Receipt },
+  { name: "Tenants", href: "/tenants", icon: Users },
+  { name: "Payments", href: "/payments", icon: CreditCard },
+  { name: "Bills", href: "/bills", icon: Receipt },
   { name: "More", href: "#more", icon: MoreHorizontal },
 ]
 
@@ -134,7 +136,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   // Add admin link for platform admins
   const finalNavigation = isPlatformAdmin
-    ? [...filteredNavigation, { name: "Admin", href: "/dashboard/admin", icon: Shield, permission: null, feature: null }]
+    ? [...filteredNavigation, { name: "Admin", href: "/admin", icon: Shield, permission: null, feature: null }]
     : filteredNavigation
 
   const handleLogout = async () => {
@@ -272,9 +274,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             {/* Settings only for owners */}
             {currentContext.isOwner && (
               <Link
-                href="/dashboard/settings"
+                href="/settings"
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  pathname === "/dashboard/settings"
+                  pathname === "/settings"
                     ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}

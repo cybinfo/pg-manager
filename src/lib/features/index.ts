@@ -92,6 +92,13 @@ export const FEATURE_FLAGS = {
     defaultEnabled: true,
     category: "core",
   },
+  activityLog: {
+    key: "activityLog",
+    name: "Activity Log",
+    description: "Track all changes and actions in your workspace",
+    defaultEnabled: true,
+    category: "core",
+  },
   autoBilling: {
     key: "autoBilling",
     name: "Auto Billing",

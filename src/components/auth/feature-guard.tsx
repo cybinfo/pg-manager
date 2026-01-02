@@ -71,7 +71,7 @@ export function FeatureGuard({
                     Back to Dashboard
                   </Button>
                 </Link>
-                <Link href="/dashboard/settings">
+                <Link href="/settings">
                   <Button>
                     <Settings className="mr-2 h-4 w-4" />
                     Go to Settings

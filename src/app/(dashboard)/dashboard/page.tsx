@@ -76,12 +76,12 @@ interface PaymentStatus {
 }
 
 const quickActionsConfig = [
-  { name: "Add Property", href: "/dashboard/properties/new", icon: Building2, permission: "properties.create" },
-  { name: "Add Room", href: "/dashboard/rooms/new", icon: Home, permission: "rooms.create" },
-  { name: "Add Tenant", href: "/dashboard/tenants/new", icon: Users, permission: "tenants.create" },
-  { name: "Record Payment", href: "/dashboard/payments/new", icon: CreditCard, permission: "payments.create" },
-  { name: "Create Bill", href: "/dashboard/bills/new", icon: FileText, permission: "bills.create" },
-  { name: "Add Expense", href: "/dashboard/expenses/new", icon: Wallet, permission: "expenses.create" },
+  { name: "Add Property", href: "/properties/new", icon: Building2, permission: "properties.create" },
+  { name: "Add Room", href: "/rooms/new", icon: Home, permission: "rooms.create" },
+  { name: "Add Tenant", href: "/tenants/new", icon: Users, permission: "tenants.create" },
+  { name: "Record Payment", href: "/payments/new", icon: CreditCard, permission: "payments.create" },
+  { name: "Create Bill", href: "/bills/new", icon: FileText, permission: "bills.create" },
+  { name: "Add Expense", href: "/expenses/new", icon: Wallet, permission: "expenses.create" },
 ]
 
 function getGreeting(): { text: string; icon: typeof Sun } {
@@ -114,10 +114,10 @@ export default function DashboardPage() {
   const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([])
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus[]>([])
   const [gettingStarted, setGettingStarted] = useState<GettingStartedItem[]>([
-    { task: "Add your first property", href: "/dashboard/properties/new", done: false },
-    { task: "Create rooms in your property", href: "/dashboard/rooms/new", done: false },
-    { task: "Add your first tenant", href: "/dashboard/tenants/new", done: false },
-    { task: "Configure charge types", href: "/dashboard/settings", done: false },
+    { task: "Add your first property", href: "/properties/new", done: false },
+    { task: "Create rooms in your property", href: "/rooms/new", done: false },
+    { task: "Add your first tenant", href: "/tenants/new", done: false },
+    { task: "Configure charge types", href: "/settings", done: false },
   ])
 
   const greeting = getGreeting()
@@ -261,10 +261,10 @@ export default function DashboardPage() {
 
       // Update getting started checklist
       setGettingStarted([
-        { task: "Add your first property", href: "/dashboard/properties/new", done: (propertiesRes.count || 0) > 0 },
-        { task: "Create rooms in your property", href: "/dashboard/rooms/new", done: (roomsRes.data?.length || 0) > 0 },
-        { task: "Add your first tenant", href: "/dashboard/tenants/new", done: (tenantsRes.count || 0) > 0 },
-        { task: "Configure charge types", href: "/dashboard/settings", done: (chargeTypesRes.count || 0) > 0 },
+        { task: "Add your first property", href: "/properties/new", done: (propertiesRes.count || 0) > 0 },
+        { task: "Create rooms in your property", href: "/rooms/new", done: (roomsRes.data?.length || 0) > 0 },
+        { task: "Add your first tenant", href: "/tenants/new", done: (tenantsRes.count || 0) > 0 },
+        { task: "Configure charge types", href: "/settings", done: (chargeTypesRes.count || 0) > 0 },
       ])
 
       setLoading(false)
@@ -284,21 +284,21 @@ export default function DashboardPage() {
       label: "Properties",
       value: stats.properties,
       icon: Building2,
-      href: "/dashboard/properties",
+      href: "/properties",
       permission: "properties.view",
     },
     {
       label: "Tenants",
       value: stats.tenants,
       icon: Users,
-      href: "/dashboard/tenants",
+      href: "/tenants",
       permission: "tenants.view",
     },
     {
       label: "Revenue",
       value: formatCurrency(stats.totalRevenue),
       icon: Receipt,
-      href: "/dashboard/reports",
+      href: "/reports",
       permission: "reports.view",
     },
     {
@@ -306,21 +306,21 @@ export default function DashboardPage() {
       value: formatCurrency(stats.pendingDues),
       icon: CreditCard,
       highlight: stats.pendingDues > 0,
-      href: "/dashboard/payments",
+      href: "/payments",
       permission: "payments.view",
     },
     {
       label: "Expenses",
       value: formatCurrency(stats.totalExpenses),
       icon: TrendingDown,
-      href: "/dashboard/expenses",
+      href: "/expenses",
       permission: "expenses.view",
     },
     {
       label: "Net Income",
       value: formatCurrency(stats.totalRevenue - stats.totalExpenses),
       icon: BarChart3,
-      href: "/dashboard/reports",
+      href: "/reports",
       permission: "reports.view",
     },
   ]
@@ -401,7 +401,7 @@ export default function DashboardPage() {
 
           {/* Overdue Payments - visible to those with payments.view permission */}
           {canView("payments.view") && (
-            <Link href="/dashboard/payments">
+            <Link href="/payments">
               <Card className={`h-full ${stats.overdueCount > 0 ? "bg-gradient-to-br from-rose-50 to-red-50 border-rose-100" : "bg-white"}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
@@ -424,7 +424,7 @@ export default function DashboardPage() {
 
           {/* Open Complaints - visible to those with complaints.view permission */}
           {canView("complaints.view") && (
-            <Link href="/dashboard/complaints">
+            <Link href="/complaints">
               <Card className={`h-full ${stats.openComplaints > 0 ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100" : "bg-white"}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
@@ -447,7 +447,7 @@ export default function DashboardPage() {
 
           {/* Exiting Soon - visible to those with tenants.view permission */}
           {canView("tenants.view") && (
-            <Link href="/dashboard/tenants">
+            <Link href="/tenants">
               <Card className={`h-full ${stats.expiringLeases > 0 ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100" : "bg-white"}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
@@ -635,7 +635,7 @@ export default function DashboardPage() {
           <p className="text-muted-foreground text-sm mb-4">
             Get started by adding your first property
           </p>
-          <Link href="/dashboard/properties/new">
+          <Link href="/properties/new">
             <Button variant="gradient">
               <Plus className="mr-2 h-4 w-4" />
               Add Your First Property

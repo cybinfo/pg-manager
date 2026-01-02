@@ -1,0 +1,814 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  DetailHero,
+  InfoCard,
+  DetailSection,
+  InfoRow,
+  QuickActions,
+} from "@/components/ui/detail-components"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { Currency, PaymentAmount } from "@/components/ui/currency"
+import { PageLoading, Skeleton } from "@/components/ui/loading"
+import { EmptyState } from "@/components/ui/empty-state"
+import { Select, FormField } from "@/components/ui/form-components"
+import {
+  Loader2,
+  User,
+  Phone,
+  Mail,
+  Building2,
+  Home,
+  Calendar,
+  IndianRupee,
+  Pencil,
+  Shield,
+  MapPin,
+  Users,
+  FileText,
+  CreditCard,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  LogOut,
+  Bell,
+  ArrowRightLeft,
+  History,
+  Plus,
+} from "lucide-react"
+import { toast } from "sonner"
+
+// Types
+interface Tenant {
+  id: string
+  name: string
+  email: string | null
+  phone: string
+  photo_url: string | null
+  check_in_date: string
+  check_out_date: string | null
+  expected_exit_date: string | null
+  monthly_rent: number
+  security_deposit: number
+  status: string
+  police_verification_status: string
+  agreement_signed: boolean
+  notes: string | null
+  custom_fields: Record<string, string>
+  created_at: string
+  property: { id: string; name: string; address: string } | null
+  room: { id: string; room_number: string; room_type: string } | null
+}
+
+interface Payment {
+  id: string
+  amount: number
+  payment_date: string
+  payment_method: string
+  for_period: string | null
+  charge_type: { name: string } | null
+}
+
+interface Charge {
+  id: string
+  amount: number
+  due_date: string
+  status: string
+  for_period: string
+  charge_type: { name: string } | null
+}
+
+interface TenantStay {
+  id: string
+  join_date: string
+  exit_date: string | null
+  monthly_rent: number
+  status: string
+  stay_number: number
+  property: { name: string } | null
+  room: { room_number: string } | null
+}
+
+interface RoomTransfer {
+  id: string
+  transfer_date: string
+  reason: string | null
+  old_rent: number
+  new_rent: number
+  from_property: { name: string } | null
+  from_room: { room_number: string } | null
+  to_property: { name: string } | null
+  to_room: { room_number: string } | null
+}
+
+interface Room {
+  id: string
+  room_number: string
+  rent_amount: number
+  property_id: string
+  total_beds: number
+  occupied_beds: number
+}
+
+export default function TenantDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [tenant, setTenant] = useState<Tenant | null>(null)
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [charges, setCharges] = useState<Charge[]>([])
+  const [stays, setStays] = useState<TenantStay[]>([])
+  const [transfers, setTransfers] = useState<RoomTransfer[]>([])
+  const [actionLoading, setActionLoading] = useState(false)
+  const [showTransferModal, setShowTransferModal] = useState(false)
+  const [availableRooms, setAvailableRooms] = useState<Room[]>([])
+  const [transferData, setTransferData] = useState({
+    to_room_id: "",
+    new_rent: "",
+    reason: "",
+    notes: "",
+  })
+
+  useEffect(() => {
+    const fetchTenant = async () => {
+      const supabase = createClient()
+
+      // Fetch tenant details
+      const { data: tenantData, error: tenantError } = await supabase
+        .from("tenants")
+        .select(`*, property:properties(id, name, address), room:rooms(id, room_number, room_type)`)
+        .eq("id", params.id)
+        .single()
+
+      if (tenantError || !tenantData) {
+        toast.error("Tenant not found")
+        router.push("/tenants")
+        return
+      }
+
+      // Transform tenant data
+      const transformedTenant: Tenant = {
+        ...tenantData,
+        property: Array.isArray(tenantData.property) ? tenantData.property[0] : tenantData.property,
+        room: Array.isArray(tenantData.room) ? tenantData.room[0] : tenantData.room,
+      }
+      setTenant(transformedTenant)
+
+      // Fetch recent payments
+      const { data: paymentsData } = await supabase
+        .from("payments")
+        .select(`id, amount, payment_date, payment_method, for_period, charge_type:charge_types(name)`)
+        .eq("tenant_id", params.id)
+        .order("payment_date", { ascending: false })
+        .limit(5)
+
+      const transformedPayments: Payment[] = (paymentsData || []).map((p: any) => ({
+        ...p,
+        charge_type: Array.isArray(p.charge_type) ? p.charge_type[0] : p.charge_type,
+      }))
+      setPayments(transformedPayments)
+
+      // Fetch pending charges
+      const { data: chargesData } = await supabase
+        .from("charges")
+        .select(`id, amount, due_date, status, for_period, charge_type:charge_types(name)`)
+        .eq("tenant_id", params.id)
+        .in("status", ["pending", "partial", "overdue"])
+        .order("due_date", { ascending: true })
+
+      const transformedCharges: Charge[] = (chargesData || []).map((c: any) => ({
+        ...c,
+        charge_type: Array.isArray(c.charge_type) ? c.charge_type[0] : c.charge_type,
+      }))
+      setCharges(transformedCharges)
+
+      // Fetch tenant stays history
+      const { data: staysData } = await supabase
+        .from("tenant_stays")
+        .select(`id, join_date, exit_date, monthly_rent, status, stay_number, property:properties(name), room:rooms(room_number)`)
+        .eq("tenant_id", params.id)
+        .order("stay_number", { ascending: false })
+
+      if (staysData) {
+        const transformedStays: TenantStay[] = staysData.map((s: any) => ({
+          ...s,
+          property: Array.isArray(s.property) ? s.property[0] : s.property,
+          room: Array.isArray(s.room) ? s.room[0] : s.room,
+        }))
+        setStays(transformedStays)
+      }
+
+      // Fetch room transfers
+      const { data: transfersData } = await supabase
+        .from("room_transfers")
+        .select(`
+          id, transfer_date, reason, old_rent, new_rent,
+          from_property:properties!room_transfers_from_property_id_fkey(name),
+          from_room:rooms!room_transfers_from_room_id_fkey(room_number),
+          to_property:properties!room_transfers_to_property_id_fkey(name),
+          to_room:rooms!room_transfers_to_room_id_fkey(room_number)
+        `)
+        .eq("tenant_id", params.id)
+        .order("transfer_date", { ascending: false })
+
+      if (transfersData) {
+        const transformedTransfers: RoomTransfer[] = transfersData.map((t: any) => ({
+          ...t,
+          from_property: Array.isArray(t.from_property) ? t.from_property[0] : t.from_property,
+          from_room: Array.isArray(t.from_room) ? t.from_room[0] : t.from_room,
+          to_property: Array.isArray(t.to_property) ? t.to_property[0] : t.to_property,
+          to_room: Array.isArray(t.to_room) ? t.to_room[0] : t.to_room,
+        }))
+        setTransfers(transformedTransfers)
+      }
+
+      setLoading(false)
+    }
+
+    fetchTenant()
+  }, [params.id, router])
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+  }
+
+  const handlePutOnNotice = async () => {
+    if (!tenant) return
+
+    const expectedExitDate = prompt("Enter expected exit date (YYYY-MM-DD):")
+    if (!expectedExitDate) return
+
+    setActionLoading(true)
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from("tenants")
+      .update({ status: "notice_period", expected_exit_date: expectedExitDate })
+      .eq("id", tenant.id)
+
+    if (error) {
+      toast.error("Failed to update tenant status")
+    } else {
+      toast.success("Tenant put on notice period")
+      setTenant({ ...tenant, status: "notice_period", expected_exit_date: expectedExitDate })
+    }
+    setActionLoading(false)
+  }
+
+  const handleInitiateCheckout = () => {
+    router.push(`/exit-clearance/new?tenant=${tenant?.id}`)
+  }
+
+  const openTransferModal = async () => {
+    if (!tenant) return
+
+    const supabase = createClient()
+    const { data: roomsData } = await supabase
+      .from("rooms")
+      .select("id, room_number, rent_amount, property_id, total_beds, occupied_beds")
+      .neq("id", tenant.room?.id)
+      .order("room_number")
+
+    if (roomsData) {
+      const available = roomsData.filter((r: Room) => r.occupied_beds < r.total_beds)
+      setAvailableRooms(available)
+    }
+
+    setTransferData({ to_room_id: "", new_rent: "", reason: "", notes: "" })
+    setShowTransferModal(true)
+  }
+
+  const handleRoomTransfer = async () => {
+    if (!tenant || !transferData.to_room_id) {
+      toast.error("Please select a room")
+      return
+    }
+
+    setActionLoading(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    try {
+      const selectedRoom = availableRooms.find((r) => r.id === transferData.to_room_id)
+      if (!selectedRoom) return
+
+      const newRent = parseFloat(transferData.new_rent) || selectedRoom.rent_amount
+
+      // Create transfer record
+      await supabase.from("room_transfers").insert({
+        owner_id: user.id,
+        tenant_id: tenant.id,
+        from_property_id: tenant.property?.id,
+        from_room_id: tenant.room?.id,
+        to_property_id: selectedRoom.property_id,
+        to_room_id: selectedRoom.id,
+        transfer_date: new Date().toISOString().split("T")[0],
+        reason: transferData.reason || null,
+        notes: transferData.notes || null,
+        old_rent: tenant.monthly_rent,
+        new_rent: newRent,
+      })
+
+      // Update current stay
+      await supabase
+        .from("tenant_stays")
+        .update({ status: "transferred", exit_date: new Date().toISOString().split("T")[0], exit_reason: "transferred" })
+        .eq("tenant_id", tenant.id)
+        .eq("status", "active")
+
+      // Create new stay
+      const stayNumber = stays.length > 0 ? Math.max(...stays.map((s) => s.stay_number)) + 1 : 1
+      await supabase.from("tenant_stays").insert({
+        owner_id: user.id,
+        tenant_id: tenant.id,
+        property_id: selectedRoom.property_id,
+        room_id: selectedRoom.id,
+        join_date: new Date().toISOString().split("T")[0],
+        monthly_rent: newRent,
+        security_deposit: tenant.security_deposit,
+        status: "active",
+        stay_number: stayNumber,
+      })
+
+      // Update tenant record
+      await supabase
+        .from("tenants")
+        .update({ property_id: selectedRoom.property_id, room_id: selectedRoom.id, monthly_rent: newRent })
+        .eq("id", tenant.id)
+
+      toast.success("Room transfer completed!")
+      setShowTransferModal(false)
+      window.location.reload()
+    } catch (error) {
+      console.error("Error transferring room:", error)
+      toast.error("Failed to transfer room")
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const totalDues = charges.reduce((sum, c) => sum + c.amount, 0)
+
+  if (loading) {
+    return <PageLoading message="Loading tenant details..." />
+  }
+
+  if (!tenant) {
+    return null
+  }
+
+  // Map status to StatusBadge status
+  const getStatusKey = (status: string) => {
+    const map: Record<string, string> = {
+      active: "active",
+      notice_period: "notice_period",
+      checked_out: "moved_out",
+      moved_out: "moved_out",
+    }
+    return map[status] || "active"
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Hero Header */}
+      <DetailHero
+        title={tenant.name}
+        subtitle={
+          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+            <span className="flex items-center gap-1">
+              <Phone className="h-4 w-4" />
+              {tenant.phone}
+            </span>
+            {tenant.email && (
+              <span className="flex items-center gap-1">
+                <Mail className="h-4 w-4" />
+                {tenant.email}
+              </span>
+            )}
+          </div>
+        }
+        backHref="/tenants"
+        backLabel="All Tenants"
+        status={getStatusKey(tenant.status)}
+        avatar={tenant.name.charAt(0).toUpperCase()}
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link href={`/tenants/${tenant.id}/edit`}>
+              <Button variant="outline" size="sm">
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </Link>
+            {tenant.status === "active" && (
+              <>
+                <Button variant="outline" size="sm" onClick={openTransferModal} disabled={actionLoading}>
+                  <ArrowRightLeft className="mr-2 h-4 w-4" />
+                  Transfer
+                </Button>
+                <Button variant="outline" size="sm" onClick={handlePutOnNotice} disabled={actionLoading}>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Notice
+                </Button>
+              </>
+            )}
+            {(tenant.status === "active" || tenant.status === "notice_period") && (
+              <Button variant="gradient" size="sm" onClick={handleInitiateCheckout} disabled={actionLoading}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Checkout
+              </Button>
+            )}
+          </div>
+        }
+      />
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <InfoCard
+          label="Monthly Rent"
+          value={<Currency amount={tenant.monthly_rent} />}
+          icon={IndianRupee}
+          variant="default"
+        />
+        <InfoCard
+          label="Security Deposit"
+          value={<Currency amount={tenant.security_deposit || 0} />}
+          icon={Shield}
+          variant="default"
+        />
+        <InfoCard
+          label="Pending Dues"
+          value={<Currency amount={totalDues} />}
+          icon={CreditCard}
+          variant={totalDues > 0 ? "error" : "success"}
+          href={`/payments/new?tenant=${tenant.id}`}
+        />
+        <InfoCard
+          label="Check-in Date"
+          value={formatDate(tenant.check_in_date)}
+          icon={Calendar}
+          variant="default"
+        />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Room Details */}
+        <DetailSection title="Room Details" description="Current accommodation" icon={Home}>
+          <InfoRow label="Property" value={tenant.property?.name} icon={Building2} />
+          <InfoRow
+            label="Room"
+            value={
+              tenant.room
+                ? `Room ${tenant.room.room_number} (${tenant.room.room_type})`
+                : "N/A"
+            }
+            icon={Home}
+          />
+          <InfoRow label="Check-in Date" value={formatDate(tenant.check_in_date)} icon={Calendar} />
+          {tenant.expected_exit_date && (
+            <InfoRow
+              label="Expected Exit"
+              value={<span className="text-amber-600">{formatDate(tenant.expected_exit_date)}</span>}
+              icon={Clock}
+            />
+          )}
+          {tenant.check_out_date && (
+            <InfoRow label="Check-out Date" value={formatDate(tenant.check_out_date)} icon={LogOut} />
+          )}
+        </DetailSection>
+
+        {/* Contact & Documents */}
+        <DetailSection title="Contact & Documents" description="Personal information" icon={FileText}>
+          <InfoRow
+            label="Phone"
+            value={
+              <a href={`tel:${tenant.phone}`} className="text-teal-600 hover:underline">
+                {tenant.phone}
+              </a>
+            }
+            icon={Phone}
+          />
+          {tenant.email && (
+            <InfoRow
+              label="Email"
+              value={
+                <a href={`mailto:${tenant.email}`} className="text-teal-600 hover:underline">
+                  {tenant.email}
+                </a>
+              }
+              icon={Mail}
+            />
+          )}
+          <InfoRow
+            label="Police Verification"
+            value={<StatusBadge status={tenant.police_verification_status === "verified" ? "verified" : tenant.police_verification_status === "submitted" ? "pending" : "unverified"} size="sm" />}
+            icon={Shield}
+          />
+          <InfoRow
+            label="Agreement"
+            value={
+              tenant.agreement_signed ? (
+                <span className="flex items-center gap-1 text-emerald-600">
+                  <CheckCircle className="h-4 w-4" /> Signed
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-amber-600">
+                  <AlertCircle className="h-4 w-4" /> Pending
+                </span>
+              )
+            }
+            icon={FileText}
+          />
+        </DetailSection>
+
+        {/* Additional Details (Custom Fields) */}
+        {Object.keys(tenant.custom_fields || {}).length > 0 && (
+          <DetailSection title="Additional Details" description="Family & ID information" icon={Users}>
+            {tenant.custom_fields.parent_name && (
+              <InfoRow label="Parent/Guardian" value={tenant.custom_fields.parent_name} icon={User} />
+            )}
+            {tenant.custom_fields.parent_phone && (
+              <InfoRow
+                label="Parent Phone"
+                value={
+                  <a href={`tel:${tenant.custom_fields.parent_phone}`} className="text-teal-600 hover:underline">
+                    {tenant.custom_fields.parent_phone}
+                  </a>
+                }
+                icon={Phone}
+              />
+            )}
+            {tenant.custom_fields.id_proof_type && (
+              <InfoRow label="ID Proof Type" value={tenant.custom_fields.id_proof_type} />
+            )}
+            {tenant.custom_fields.id_proof_number && (
+              <InfoRow label="ID Proof Number" value={tenant.custom_fields.id_proof_number} />
+            )}
+            {tenant.custom_fields.permanent_address && (
+              <InfoRow label="Permanent Address" value={tenant.custom_fields.permanent_address} icon={MapPin} />
+            )}
+          </DetailSection>
+        )}
+
+        {/* Pending Dues */}
+        <DetailSection
+          title="Pending Dues"
+          description="Outstanding payments"
+          icon={AlertCircle}
+          actions={
+            <div className="flex gap-2">
+              <Link href={`/tenants/${tenant.id}/bills`}>
+                <Button variant="outline" size="sm">
+                  <FileText className="mr-1 h-3 w-3" />
+                  All Bills
+                </Button>
+              </Link>
+              <Link href={`/payments/new?tenant=${tenant.id}`}>
+                <Button size="sm" variant="gradient">
+                  <Plus className="mr-1 h-3 w-3" />
+                  Record Payment
+                </Button>
+              </Link>
+            </div>
+          }
+        >
+          {charges.length === 0 ? (
+            <div className="text-center py-4">
+              <CheckCircle className="h-10 w-10 mx-auto mb-2 text-emerald-500" />
+              <p className="text-muted-foreground">No pending dues</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {charges.map((charge) => (
+                <div key={charge.id} className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
+                  <div>
+                    <p className="font-medium">{charge.charge_type?.name || "Charge"}</p>
+                    <p className="text-xs text-muted-foreground">{charge.for_period}</p>
+                  </div>
+                  <div className="text-right">
+                    <Currency amount={charge.amount} className="text-rose-600 font-semibold" />
+                    <p className="text-xs text-muted-foreground">Due: {formatDate(charge.due_date)}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center justify-between pt-2 font-semibold">
+                <span>Total Dues</span>
+                <Currency amount={totalDues} className="text-rose-600" />
+              </div>
+            </div>
+          )}
+        </DetailSection>
+
+        {/* Recent Payments */}
+        <DetailSection
+          title="Recent Payments"
+          description="Last 5 transactions"
+          icon={CreditCard}
+          actions={
+            <Link href={`/tenants/${tenant.id}/payments`}>
+              <Button variant="outline" size="sm">View All</Button>
+            </Link>
+          }
+        >
+          {payments.length === 0 ? (
+            <div className="text-center py-4">
+              <CreditCard className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
+              <p className="text-muted-foreground">No payments recorded</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {payments.map((payment) => (
+                <div key={payment.id} className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
+                  <div>
+                    <p className="font-medium">{payment.charge_type?.name || "Payment"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {payment.for_period || formatDate(payment.payment_date)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <Currency amount={payment.amount} className="text-emerald-600 font-semibold" />
+                    <p className="text-xs text-muted-foreground capitalize">{payment.payment_method}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DetailSection>
+      </div>
+
+      {/* Notes */}
+      {tenant.notes && (
+        <DetailSection title="Notes" icon={FileText}>
+          <p className="text-muted-foreground whitespace-pre-wrap">{tenant.notes}</p>
+        </DetailSection>
+      )}
+
+      {/* Stay History */}
+      {stays.length > 0 && (
+        <DetailSection title="Stay History" description="All tenures at your properties" icon={History}>
+          <div className="space-y-3">
+            {stays.map((stay) => (
+              <div key={stay.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Stay #{stay.stay_number}</span>
+                    <StatusBadge
+                      status={stay.status === "active" ? "active" : stay.status === "transferred" ? "info" : "muted"}
+                      label={stay.status === "active" ? "Current" : stay.status === "transferred" ? "Transferred" : "Completed"}
+                      size="sm"
+                      dot
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {stay.property?.name} - Room {stay.room?.room_number}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(stay.join_date)} {stay.exit_date && `→ ${formatDate(stay.exit_date)}`}
+                  </p>
+                </div>
+                <Currency amount={stay.monthly_rent} className="font-semibold" />
+              </div>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Room Transfer History */}
+      {transfers.length > 0 && (
+        <DetailSection title="Room Transfers" description="History of room changes" icon={ArrowRightLeft}>
+          <div className="space-y-3">
+            {transfers.map((transfer) => (
+              <div key={transfer.id} className="p-3 bg-slate-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-medium">
+                    {transfer.from_property?.name} Room {transfer.from_room?.room_number}
+                  </span>
+                  <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">
+                    {transfer.to_property?.name} Room {transfer.to_room?.room_number}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatDate(transfer.transfer_date)}
+                  {transfer.reason && ` • ${transfer.reason}`}
+                </p>
+                {transfer.old_rent !== transfer.new_rent && (
+                  <p className="text-xs mt-1">
+                    <span className="text-muted-foreground">Rent:</span>{" "}
+                    <span className="line-through text-muted-foreground">
+                      <Currency amount={transfer.old_rent} />
+                    </span>{" "}
+                    <Currency amount={transfer.new_rent} className="text-emerald-600" />
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Room Transfer Modal */}
+      {showTransferModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <Card className="w-full max-w-md animate-scale-in">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ArrowRightLeft className="h-5 w-5" />
+                Transfer Room
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">Move {tenant.name} to a different room</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 bg-slate-50 rounded-lg text-sm">
+                <p className="text-muted-foreground">Current Room</p>
+                <p className="font-medium">{tenant.property?.name} - Room {tenant.room?.room_number}</p>
+                <p className="text-muted-foreground">Rent: <Currency amount={tenant.monthly_rent} /></p>
+              </div>
+
+              <FormField label="New Room" required>
+                <Select
+                  value={transferData.to_room_id}
+                  onChange={(e) => {
+                    const room = availableRooms.find((r) => r.id === e.target.value)
+                    setTransferData({
+                      ...transferData,
+                      to_room_id: e.target.value,
+                      new_rent: room ? room.rent_amount.toString() : "",
+                    })
+                  }}
+                  options={availableRooms.map((room) => ({
+                    value: room.id,
+                    label: `Room ${room.room_number} (${room.occupied_beds}/${room.total_beds} beds) - ₹${room.rent_amount}`,
+                  }))}
+                  placeholder="Select a room"
+                />
+              </FormField>
+
+              <FormField label="New Rent (₹)" hint="Leave blank to use room's default rent">
+                <Input
+                  type="number"
+                  value={transferData.new_rent}
+                  onChange={(e) => setTransferData({ ...transferData, new_rent: e.target.value })}
+                  placeholder="Leave blank for default"
+                />
+              </FormField>
+
+              <FormField label="Reason">
+                <Select
+                  value={transferData.reason}
+                  onChange={(e) => setTransferData({ ...transferData, reason: e.target.value })}
+                  options={[
+                    { value: "upgrade", label: "Upgrade" },
+                    { value: "downgrade", label: "Downgrade" },
+                    { value: "request", label: "Tenant Request" },
+                    { value: "maintenance", label: "Maintenance" },
+                    { value: "other", label: "Other" },
+                  ]}
+                  placeholder="Select reason"
+                />
+              </FormField>
+
+              <FormField label="Notes">
+                <Input
+                  value={transferData.notes}
+                  onChange={(e) => setTransferData({ ...transferData, notes: e.target.value })}
+                  placeholder="Additional notes"
+                />
+              </FormField>
+            </CardContent>
+            <div className="flex justify-end gap-2 p-4 pt-0">
+              <Button variant="outline" onClick={() => setShowTransferModal(false)} disabled={actionLoading}>
+                Cancel
+              </Button>
+              <Button variant="gradient" onClick={handleRoomTransfer} disabled={actionLoading || !transferData.to_room_id}>
+                {actionLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Transferring...
+                  </>
+                ) : (
+                  <>
+                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                    Transfer
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}

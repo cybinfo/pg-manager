@@ -313,7 +313,7 @@ export default function TenantPaymentsPage() {
                               #{payment.receipt_number}
                             </p>
                           )}
-                          <Link href={`/dashboard/payments/${payment.id}`} target="_blank">
+                          <Link href={`/payments/${payment.id}`} target="_blank">
                             <Button variant="outline" size="sm">
                               <Download className="h-3 w-3 mr-1" />
                               Receipt

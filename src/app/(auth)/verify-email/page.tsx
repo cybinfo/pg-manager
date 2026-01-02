@@ -139,7 +139,7 @@ function VerifyEmailContent() {
                   The verification link may have expired or already been used.
                 </p>
                 <Button
-                  onClick={() => router.push("/dashboard/settings")}
+                  onClick={() => router.push("/settings")}
                   className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600"
                 >
                   Request New Verification

@@ -1,0 +1,546 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  Clock,
+  CheckCircle,
+  Wrench,
+  Eye,
+  Building2,
+  User,
+  Home,
+  Phone,
+  Calendar,
+  MessageSquare,
+  Edit2,
+  Save,
+  X
+} from "lucide-react"
+import { toast } from "sonner"
+
+interface Complaint {
+  id: string
+  category: string
+  title: string
+  description: string | null
+  status: string
+  priority: string
+  assigned_to: string | null
+  resolution_notes: string | null
+  created_at: string
+  updated_at: string
+  resolved_at: string | null
+  tenant: {
+    id: string
+    name: string
+    phone: string
+  } | null
+  property: {
+    id: string
+    name: string
+    address: string | null
+    city: string
+  } | null
+  room: {
+    id: string
+    room_number: string
+  } | null
+}
+
+interface RawComplaint {
+  id: string
+  category: string
+  title: string
+  description: string | null
+  status: string
+  priority: string
+  assigned_to: string | null
+  resolution_notes: string | null
+  created_at: string
+  updated_at: string
+  resolved_at: string | null
+  tenant: {
+    id: string
+    name: string
+    phone: string
+  }[] | null
+  property: {
+    id: string
+    name: string
+    address: string | null
+    city: string
+  }[] | null
+  room: {
+    id: string
+    room_number: string
+  }[] | null
+}
+
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
+  open: { label: "Open", color: "text-red-700", bgColor: "bg-red-100", icon: AlertCircle },
+  acknowledged: { label: "Acknowledged", color: "text-blue-700", bgColor: "bg-blue-100", icon: Eye },
+  in_progress: { label: "In Progress", color: "text-yellow-700", bgColor: "bg-yellow-100", icon: Wrench },
+  resolved: { label: "Resolved", color: "text-green-700", bgColor: "bg-green-100", icon: CheckCircle },
+  closed: { label: "Closed", color: "text-gray-700", bgColor: "bg-gray-100", icon: CheckCircle },
+}
+
+const priorityConfig: Record<string, { label: string; color: string; bgColor: string }> = {
+  low: { label: "Low", color: "text-gray-600", bgColor: "bg-gray-100" },
+  medium: { label: "Medium", color: "text-blue-600", bgColor: "bg-blue-100" },
+  high: { label: "High", color: "text-orange-600", bgColor: "bg-orange-100" },
+  urgent: { label: "Urgent", color: "text-red-600", bgColor: "bg-red-100" },
+}
+
+const categoryLabels: Record<string, string> = {
+  electrical: "Electrical",
+  plumbing: "Plumbing",
+  furniture: "Furniture",
+  cleanliness: "Cleanliness",
+  appliances: "Appliances",
+  security: "Security",
+  noise: "Noise/Disturbance",
+  other: "Other",
+}
+
+const statusFlow = ["open", "acknowledged", "in_progress", "resolved", "closed"]
+
+export default function ComplaintDetailPage() {
+  const params = useParams()
+  const router = useRouter()
+  const [complaint, setComplaint] = useState<Complaint | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [updating, setUpdating] = useState(false)
+  const [editing, setEditing] = useState(false)
+
+  const [editData, setEditData] = useState({
+    status: "",
+    priority: "",
+    assigned_to: "",
+    resolution_notes: "",
+  })
+
+  useEffect(() => {
+    const fetchComplaint = async () => {
+      const supabase = createClient()
+
+      const { data, error } = await supabase
+        .from("complaints")
+        .select(`
+          *,
+          tenant:tenants(id, name, phone),
+          property:properties(id, name, address, city),
+          room:rooms(id, room_number)
+        `)
+        .eq("id", params.id)
+        .single()
+
+      if (error || !data) {
+        console.error("Error fetching complaint:", error)
+        toast.error("Complaint not found")
+        router.push("/complaints")
+        return
+      }
+
+      // Transform the data from arrays to single objects
+      const rawData = data as RawComplaint
+      const transformedData: Complaint = {
+        ...rawData,
+        tenant: rawData.tenant && rawData.tenant.length > 0 ? rawData.tenant[0] : null,
+        property: rawData.property && rawData.property.length > 0 ? rawData.property[0] : null,
+        room: rawData.room && rawData.room.length > 0 ? rawData.room[0] : null,
+      }
+      setComplaint(transformedData)
+      setEditData({
+        status: data.status,
+        priority: data.priority,
+        assigned_to: data.assigned_to || "",
+        resolution_notes: data.resolution_notes || "",
+      })
+      setLoading(false)
+    }
+
+    fetchComplaint()
+  }, [params.id, router])
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!complaint) return
+
+    setUpdating(true)
+
+    try {
+      const supabase = createClient()
+
+      const updateData: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      }
+
+      // Set resolved_at when status changes to resolved
+      if (newStatus === "resolved" && complaint.status !== "resolved") {
+        updateData.resolved_at = new Date().toISOString()
+      }
+
+      const { error } = await supabase
+        .from("complaints")
+        .update(updateData)
+        .eq("id", complaint.id)
+
+      if (error) {
+        toast.error("Failed to update status")
+        return
+      }
+
+      setComplaint({ ...complaint, ...updateData })
+      toast.success(`Status updated to ${statusConfig[newStatus]?.label || newStatus}`)
+    } catch (error) {
+      toast.error("Failed to update status")
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!complaint) return
+
+    setUpdating(true)
+
+    try {
+      const supabase = createClient()
+
+      const updateData: any = {
+        status: editData.status,
+        priority: editData.priority,
+        assigned_to: editData.assigned_to || null,
+        resolution_notes: editData.resolution_notes || null,
+        updated_at: new Date().toISOString(),
+      }
+
+      // Set resolved_at when status changes to resolved
+      if (editData.status === "resolved" && complaint.status !== "resolved") {
+        updateData.resolved_at = new Date().toISOString()
+      }
+
+      const { error } = await supabase
+        .from("complaints")
+        .update(updateData)
+        .eq("id", complaint.id)
+
+      if (error) {
+        toast.error("Failed to update complaint")
+        return
+      }
+
+      setComplaint({ ...complaint, ...updateData })
+      setEditing(false)
+      toast.success("Complaint updated successfully")
+    } catch (error) {
+      toast.error("Failed to update complaint")
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+  }
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!complaint) {
+    return null
+  }
+
+  const StatusIcon = statusConfig[complaint.status]?.icon || AlertCircle
+  const currentStatusIndex = statusFlow.indexOf(complaint.status)
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/complaints">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${priorityConfig[complaint.priority]?.bgColor} ${priorityConfig[complaint.priority]?.color}`}>
+                {priorityConfig[complaint.priority]?.label || complaint.priority}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {categoryLabels[complaint.category] || complaint.category}
+              </span>
+            </div>
+            <h1 className="text-2xl font-bold">{complaint.title}</h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {!editing ? (
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              <Edit2 className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setEditing(false)} disabled={updating}>
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={updating}>
+                {updating ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="md:col-span-2 space-y-6">
+          {/* Status Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 mb-4">
+                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${statusConfig[complaint.status]?.bgColor} ${statusConfig[complaint.status]?.color}`}>
+                  <StatusIcon className="h-4 w-4" />
+                  {statusConfig[complaint.status]?.label || complaint.status}
+                </span>
+              </div>
+
+              {/* Status Flow Buttons */}
+              {!editing && complaint.status !== "closed" && (
+                <div className="flex flex-wrap gap-2">
+                  {statusFlow.slice(currentStatusIndex + 1).map((status) => (
+                    <Button
+                      key={status}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleStatusChange(status)}
+                      disabled={updating}
+                    >
+                      {updating ? (
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                      ) : null}
+                      Mark as {statusConfig[status]?.label || status}
+                    </Button>
+                  ))}
+                </div>
+              )}
+
+              {editing && (
+                <div className="space-y-2">
+                  <Label>Change Status</Label>
+                  <select
+                    value={editData.status}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, status: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                  >
+                    {statusFlow.map((status) => (
+                      <option key={status} value={status}>
+                        {statusConfig[status]?.label || status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Description */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Description</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {complaint.description ? (
+                <p className="text-muted-foreground whitespace-pre-wrap">{complaint.description}</p>
+              ) : (
+                <p className="text-muted-foreground italic">No description provided</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Resolution Notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Resolution Notes</CardTitle>
+              <CardDescription>Notes about how this complaint was resolved</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {editing ? (
+                <textarea
+                  value={editData.resolution_notes}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, resolution_notes: e.target.value }))}
+                  placeholder="Add resolution notes..."
+                  rows={4}
+                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+                />
+              ) : complaint.resolution_notes ? (
+                <p className="text-muted-foreground whitespace-pre-wrap">{complaint.resolution_notes}</p>
+              ) : (
+                <p className="text-muted-foreground italic">No resolution notes yet</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Priority */}
+              <div>
+                <Label className="text-xs text-muted-foreground">Priority</Label>
+                {editing ? (
+                  <select
+                    value={editData.priority}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, priority: e.target.value }))}
+                    className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm mt-1"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                ) : (
+                  <p className={`font-medium ${priorityConfig[complaint.priority]?.color}`}>
+                    {priorityConfig[complaint.priority]?.label || complaint.priority}
+                  </p>
+                )}
+              </div>
+
+              {/* Assigned To */}
+              <div>
+                <Label className="text-xs text-muted-foreground">Assigned To</Label>
+                {editing ? (
+                  <Input
+                    value={editData.assigned_to}
+                    onChange={(e) => setEditData((prev) => ({ ...prev, assigned_to: e.target.value }))}
+                    placeholder="Staff name"
+                    className="mt-1"
+                  />
+                ) : (
+                  <p className="font-medium">{complaint.assigned_to || "Unassigned"}</p>
+                )}
+              </div>
+
+              {/* Dates */}
+              <div>
+                <Label className="text-xs text-muted-foreground">Created</Label>
+                <p className="font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  {formatDateTime(complaint.created_at)}
+                </p>
+              </div>
+
+              {complaint.resolved_at && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Resolved</Label>
+                  <p className="font-medium flex items-center gap-2 text-green-600">
+                    <CheckCircle className="h-4 w-4" />
+                    {formatDateTime(complaint.resolved_at)}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Location */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Location</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">{complaint.property?.name}</p>
+                  {complaint.property?.address && (
+                    <p className="text-xs text-muted-foreground">
+                      {complaint.property.address}, {complaint.property.city}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {complaint.room && (
+                <div className="flex items-center gap-2">
+                  <Home className="h-4 w-4 text-muted-foreground" />
+                  <p className="font-medium">Room {complaint.room.room_number}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Reported By */}
+          {complaint.tenant && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Reported By</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <p className="font-medium">{complaint.tenant.name}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <a href={`tel:${complaint.tenant.phone}`} className="text-primary hover:underline">
+                    {complaint.tenant.phone}
+                  </a>
+                </div>
+                <Link href={`/tenants/${complaint.tenant.id}`}>
+                  <Button variant="outline" size="sm" className="w-full mt-2">
+                    View Tenant Profile
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
