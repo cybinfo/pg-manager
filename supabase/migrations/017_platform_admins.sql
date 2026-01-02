@@ -93,7 +93,7 @@ USING (
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.user_id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -111,7 +111,7 @@ USING (
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.user_id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -129,7 +129,7 @@ USING (
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.user_id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -161,7 +161,7 @@ USING (
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.user_id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -179,7 +179,7 @@ USING (
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.user_id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -192,7 +192,7 @@ ON workspaces FOR SELECT
 TO authenticated
 USING (
     is_platform_admin(auth.uid())
-    OR owner_id = auth.uid()
+    OR owner_user_id = auth.uid()
     OR id IN (
         SELECT workspace_id FROM user_contexts
         WHERE user_id = auth.uid()
@@ -209,7 +209,7 @@ USING (
     OR user_id = auth.uid()
     OR id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.user_id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid()
     )

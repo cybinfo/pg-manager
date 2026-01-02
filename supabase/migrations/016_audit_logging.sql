@@ -274,9 +274,9 @@ CREATE TRIGGER audit_payments
     FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
 
 -- Staff (access control)
-DROP TRIGGER IF EXISTS audit_staff ON staff;
-CREATE TRIGGER audit_staff
-    AFTER INSERT OR UPDATE OR DELETE ON staff
+DROP TRIGGER IF EXISTS audit_staff_members ON staff_members;
+CREATE TRIGGER audit_staff_members
+    AFTER INSERT OR UPDATE OR DELETE ON staff_members
     FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
 
 -- User roles (access control)
