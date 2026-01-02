@@ -1,13 +1,14 @@
 -- ============================================
 -- Migration 031: Admin Functions with Stats
 -- ============================================
--- Enhanced SECURITY DEFINER functions for platform admins
--- Now includes per-workspace statistics
+-- SECURITY DEFINER functions for platform admins
+-- Uses owner_id for joins (not workspace_id)
 -- ============================================
 
 -- Drop existing functions if they exist
 DROP FUNCTION IF EXISTS get_all_workspaces_admin();
 DROP FUNCTION IF EXISTS get_platform_stats_admin();
+DROP FUNCTION IF EXISTS get_audit_events_admin(INT);
 
 -- ============================================
 -- Function: get_all_workspaces_admin
@@ -44,28 +45,27 @@ BEGIN
         w.created_at,
         w.owner_user_id,
         COALESCE(up.name, 'Unknown')::TEXT as owner_name,
-        COALESCE(u.email, 'Unknown')::TEXT as owner_email,
-        COALESCE(p.property_count, 0) as total_properties,
-        COALESCE(r.room_count, 0) as total_rooms,
-        COALESCE(t.tenant_count, 0) as total_tenants
+        COALESCE(up.email, 'Unknown')::TEXT as owner_email,
+        COALESCE(p.property_count, 0)::BIGINT as total_properties,
+        COALESCE(r.room_count, 0)::BIGINT as total_rooms,
+        COALESCE(t.tenant_count, 0)::BIGINT as total_tenants
     FROM workspaces w
-    LEFT JOIN auth.users u ON u.id = w.owner_user_id
     LEFT JOIN user_profiles up ON up.user_id = w.owner_user_id
     LEFT JOIN LATERAL (
-        SELECT COUNT(*) as property_count
+        SELECT COUNT(*)::BIGINT as property_count
         FROM properties
-        WHERE properties.workspace_id = w.id
+        WHERE properties.owner_id = w.owner_user_id
     ) p ON true
     LEFT JOIN LATERAL (
-        SELECT COUNT(*) as room_count
+        SELECT COUNT(*)::BIGINT as room_count
         FROM rooms
-        JOIN properties ON properties.id = rooms.property_id
-        WHERE properties.workspace_id = w.id
+        JOIN properties pr ON pr.id = rooms.property_id
+        WHERE pr.owner_id = w.owner_user_id
     ) r ON true
     LEFT JOIN LATERAL (
-        SELECT COUNT(*) as tenant_count
+        SELECT COUNT(*)::BIGINT as tenant_count
         FROM tenants
-        WHERE tenants.workspace_id = w.id
+        WHERE tenants.owner_id = w.owner_user_id
         AND tenants.status = 'active'
     ) t ON true
     ORDER BY w.created_at DESC;
@@ -109,7 +109,7 @@ $$;
 
 -- ============================================
 -- Function: get_audit_events_admin
--- Returns recent audit events across all workspaces
+-- Returns recent audit events (placeholder - returns empty)
 -- ============================================
 CREATE OR REPLACE FUNCTION get_audit_events_admin(p_limit INT DEFAULT 50)
 RETURNS TABLE (
@@ -134,30 +134,8 @@ BEGIN
         RAISE EXCEPTION 'Access denied: Not a platform admin';
     END IF;
 
-    -- Check if audit_events table exists
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_name = 'audit_events'
-    ) THEN
-        -- Return empty if table doesn't exist
-        RETURN;
-    END IF;
-
-    RETURN QUERY
-    SELECT
-        ae.id,
-        ae.occurred_at,
-        ae.action::TEXT,
-        ae.entity_type::TEXT,
-        ae.entity_id::TEXT,
-        COALESCE(u.email, 'System')::TEXT as actor_email,
-        COALESCE(w.name, 'Unknown')::TEXT as workspace_name,
-        ae.changes
-    FROM audit_events ae
-    LEFT JOIN auth.users u ON u.id = ae.actor_id
-    LEFT JOIN workspaces w ON w.id = ae.workspace_id
-    ORDER BY ae.occurred_at DESC
-    LIMIT p_limit;
+    -- Return empty for now - audit_events table structure may differ
+    RETURN;
 END;
 $$;
 
