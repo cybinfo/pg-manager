@@ -177,7 +177,7 @@ function MyComponent() {
 ### 3. Page Protection Pattern
 All dashboard pages must be wrapped with appropriate guard:
 ```typescript
-import { PermissionGuard, OwnerGuard } from "@/components/auth"
+import { PermissionGuard, OwnerGuard, FeatureGuard } from "@/components/auth"
 
 // For permission-based pages
 export default function TenantsPage() {
@@ -185,6 +185,17 @@ export default function TenantsPage() {
     <PermissionGuard permission="tenants.view">
       {/* page content */}
     </PermissionGuard>
+  )
+}
+
+// For feature-flagged pages (wrap FeatureGuard OUTSIDE PermissionGuard)
+export default function ExpensesPage() {
+  return (
+    <FeatureGuard feature="expenses">
+      <PermissionGuard permission="expenses.view">
+        {/* page content */}
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }
 
@@ -335,6 +346,7 @@ Configurable via property edit → Website Settings tab:
 | `ContextSwitcher` | Header dropdown for context switch |
 | `OwnerOnly/StaffOnly/TenantOnly` | Role-based visibility |
 | `FeatureGate` | Conditional render by feature flag |
+| `FeatureGuard` | Page wrapper for feature-flagged routes |
 | `useFeatureCheck` | Hook to check if feature is enabled |
 
 ---
@@ -522,6 +534,7 @@ RESEND_API_KEY=<resend_key>
 | Room Defaults by Property Type | Different pricing defaults for PG, Hostel, Co-Living in Settings | ✅ Complete |
 | ID Proof Front/Back Support | Separate front/back image uploads for ID documents | ✅ Complete |
 | Feature Flags System | Enable/disable features per workspace via Settings → Features | ✅ Complete |
+| Feature Flags Route Protection | FeatureGuard prevents direct URL access to disabled features | ✅ Complete |
 
 ### New Features (Migrations Ready)
 | Feature | Description | Migration |
@@ -575,18 +588,33 @@ features.autoBilling        // Auto bill generation
 features.emailReminders     // Payment reminders
 features.demoMode           // Demo mode
 
-// Usage in components
+// Usage in components (inline conditional render)
 import { FeatureGate, useFeatureCheck } from "@/components/auth"
 
 <FeatureGate feature="food">
   <FoodSettings />
 </FeatureGate>
 
+// Route protection (page-level guard)
+import { FeatureGuard } from "@/components/auth"
+
+<FeatureGuard feature="expenses">
+  <PermissionGuard permission="expenses.view">
+    {/* page content */}
+  </PermissionGuard>
+</FeatureGuard>
+
 // Or programmatically
 const { isEnabled } = useFeatures()
 if (isEnabled("food")) { ... }
 ```
 Managed via Settings → Features tab. Stored in `owner_config.feature_flags` JSONB.
+
+**Route Protection**: 9 feature-flagged pages are protected with FeatureGuard:
+- expenses, meter-readings, visitors, complaints, reports
+- architecture, approvals, exit-clearance, notices
+
+When a feature is disabled, users see a "Feature Disabled" page instead of the content.
 
 ---
 
@@ -665,6 +693,7 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Feature Flags Route Protection** - FeatureGuard component prevents direct URL access to disabled features (9 pages protected)
 - **Deep Links Navigation** - Nested routes: /tenants/[id]/bills, /tenants/[id]/payments, /rooms/[id]/tenants, /properties/[id]/rooms, /properties/[id]/tenants
 - **Room Defaults by Property Type** - Settings → Room Pricing now supports PG, Hostel, Co-Living with different pricing defaults
 - **ID Proof Front/Back** - IdDocumentEntry now supports front_url and back_url for documents with two sides
@@ -719,9 +748,10 @@ Check `src/lib/auth/auth-context.tsx` - session refresh handlers should handle t
 ### If Adding New Dashboard Page
 1. Create page in `src/app/(dashboard)/dashboard/[module]/`
 2. Wrap with `<PermissionGuard permission="module.view">`
-3. Add to navigation in `src/app/(dashboard)/layout.tsx`
-4. Use `PageHeader` with `breadcrumbs` prop, `MetricsBar`, `DataTable` for consistency
-5. Example breadcrumbs: `breadcrumbs={[{ label: "Module Name" }]}`
+3. If feature-flagged, also wrap with `<FeatureGuard feature="featureName">` (outside PermissionGuard)
+4. Add to navigation in `src/app/(dashboard)/layout.tsx` with `feature` property if applicable
+5. Use `PageHeader` with `breadcrumbs` prop, `MetricsBar`, `DataTable` for consistency
+6. Example breadcrumbs: `breadcrumbs={[{ label: "Module Name" }]}`
 
 ### If Modifying Permissions
 1. Update `src/lib/auth/types.ts` - PERMISSIONS constant
@@ -745,4 +775,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-02 (deep links, property-type pricing, ID front/back, feature flags)*
+*Last updated: 2026-01-02 (feature flags route protection, deep links, property-type pricing, ID front/back, feature flags)*
