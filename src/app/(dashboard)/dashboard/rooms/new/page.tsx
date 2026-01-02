@@ -18,6 +18,7 @@ import { PhotoGallery } from "@/components/forms"
 interface Property {
   id: string
   name: string
+  website_config?: { property_type?: string } | null
 }
 
 interface RoomTypePricing {
@@ -27,11 +28,38 @@ interface RoomTypePricing {
   dormitory: { rent: number; deposit: number }
 }
 
+interface PropertyTypePricing {
+  pg: RoomTypePricing
+  hostel: RoomTypePricing
+  coliving: RoomTypePricing
+}
+
 const defaultRoomTypePricing: RoomTypePricing = {
   single: { rent: 8000, deposit: 16000 },
   double: { rent: 6000, deposit: 12000 },
   triple: { rent: 5000, deposit: 10000 },
   dormitory: { rent: 4000, deposit: 8000 },
+}
+
+const defaultPropertyTypePricing: PropertyTypePricing = {
+  pg: {
+    single: { rent: 8000, deposit: 16000 },
+    double: { rent: 6000, deposit: 12000 },
+    triple: { rent: 5000, deposit: 10000 },
+    dormitory: { rent: 4000, deposit: 8000 },
+  },
+  hostel: {
+    single: { rent: 6000, deposit: 12000 },
+    double: { rent: 4500, deposit: 9000 },
+    triple: { rent: 3500, deposit: 7000 },
+    dormitory: { rent: 2500, deposit: 5000 },
+  },
+  coliving: {
+    single: { rent: 12000, deposit: 24000 },
+    double: { rent: 9000, deposit: 18000 },
+    triple: { rent: 7000, deposit: 14000 },
+    dormitory: { rent: 5000, deposit: 10000 },
+  },
 }
 
 const roomTypeBedCounts: Record<string, number> = {
@@ -60,6 +88,8 @@ export default function NewRoomPage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProperties, setLoadingProperties] = useState(true)
   const [roomTypePricing, setRoomTypePricing] = useState<RoomTypePricing>(defaultRoomTypePricing)
+  const [propertyTypePricing, setPropertyTypePricing] = useState<PropertyTypePricing>(defaultPropertyTypePricing)
+  const [currentPropertyType, setCurrentPropertyType] = useState<keyof PropertyTypePricing>("pg")
 
   const [formData, setFormData] = useState({
     property_id: "",
@@ -88,10 +118,10 @@ export default function NewRoomPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Fetch properties and owner config in parallel
+      // Fetch properties (with website_config for property_type) and owner config in parallel
       const [propertiesRes, configRes] = await Promise.all([
-        supabase.from("properties").select("id, name").order("name"),
-        user ? supabase.from("owner_config").select("room_type_pricing").eq("owner_id", user.id).single() : null,
+        supabase.from("properties").select("id, name, website_config").order("name"),
+        user ? supabase.from("owner_config").select("room_type_pricing, property_type_pricing").eq("owner_id", user.id).single() : null,
       ])
 
       if (propertiesRes.error) {
@@ -99,31 +129,41 @@ export default function NewRoomPage() {
         toast.error("Failed to load properties")
       } else {
         setProperties(propertiesRes.data || [])
-        if (propertiesRes.data && propertiesRes.data.length > 0) {
-          setFormData((prev) => ({ ...prev, property_id: propertiesRes.data[0].id }))
-        }
-      }
 
-      // Load room type pricing from owner config
-      if (configRes?.data?.room_type_pricing) {
-        const pricing = {
-          ...defaultRoomTypePricing,
-          ...configRes.data.room_type_pricing,
+        // Load property type pricing from owner config
+        let pricingConfig = defaultPropertyTypePricing
+        if (configRes?.data?.property_type_pricing) {
+          pricingConfig = {
+            ...defaultPropertyTypePricing,
+            ...configRes.data.property_type_pricing,
+          }
+          setPropertyTypePricing(pricingConfig)
         }
-        setRoomTypePricing(pricing)
-        // Set initial rent/deposit based on default room type (single)
-        setFormData((prev) => ({
-          ...prev,
-          rent_amount: pricing.single.rent.toString(),
-          deposit_amount: pricing.single.deposit.toString(),
-        }))
-      } else {
-        // Use defaults
-        setFormData((prev) => ({
-          ...prev,
-          rent_amount: defaultRoomTypePricing.single.rent.toString(),
-          deposit_amount: defaultRoomTypePricing.single.deposit.toString(),
-        }))
+
+        // Also load legacy flat pricing for backwards compatibility
+        if (configRes?.data?.room_type_pricing) {
+          setRoomTypePricing({
+            ...defaultRoomTypePricing,
+            ...configRes.data.room_type_pricing,
+          })
+        }
+
+        // Set initial property and pricing
+        if (propertiesRes.data && propertiesRes.data.length > 0) {
+          const firstProperty = propertiesRes.data[0]
+          const propertyType = (firstProperty.website_config?.property_type || "pg") as keyof PropertyTypePricing
+          const validPropertyType = ["pg", "hostel", "coliving"].includes(propertyType) ? propertyType : "pg"
+          const pricing = pricingConfig[validPropertyType]
+
+          setCurrentPropertyType(validPropertyType)
+          setRoomTypePricing(pricing)
+          setFormData((prev) => ({
+            ...prev,
+            property_id: firstProperty.id,
+            rent_amount: pricing.single.rent.toString(),
+            deposit_amount: pricing.single.deposit.toString(),
+          }))
+        }
       }
 
       setLoadingProperties(false)
@@ -140,6 +180,30 @@ export default function NewRoomPage() {
       ...prev,
       [name]: newValue,
     }))
+  }
+
+  // Handle property selection change - update pricing based on property type
+  const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const propertyId = e.target.value
+    const selectedProperty = properties.find((p) => p.id === propertyId)
+
+    if (selectedProperty) {
+      const propertyType = (selectedProperty.website_config?.property_type || "pg") as keyof PropertyTypePricing
+      const validPropertyType = ["pg", "hostel", "coliving"].includes(propertyType) ? propertyType : "pg"
+      const pricing = propertyTypePricing[validPropertyType]
+
+      setCurrentPropertyType(validPropertyType)
+      setRoomTypePricing(pricing)
+
+      // Update rent/deposit based on current room type
+      const currentRoomType = formData.room_type as keyof RoomTypePricing
+      setFormData((prev) => ({
+        ...prev,
+        property_id: propertyId,
+        rent_amount: pricing[currentRoomType].rent.toString(),
+        deposit_amount: pricing[currentRoomType].deposit.toString(),
+      }))
+    }
   }
 
   const handleRoomTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -292,7 +356,7 @@ export default function NewRoomPage() {
                 id="property_id"
                 name="property_id"
                 value={formData.property_id}
-                onChange={handleChange}
+                onChange={handlePropertyChange}
                 className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 required
                 disabled={loading}
@@ -303,6 +367,12 @@ export default function NewRoomPage() {
                   </option>
                 ))}
               </select>
+              {currentPropertyType && (
+                <p className="text-xs text-muted-foreground">
+                  Property type: <span className="font-medium capitalize">{currentPropertyType === "pg" ? "PG" : currentPropertyType}</span>
+                  {" "}• Pricing defaults loaded
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

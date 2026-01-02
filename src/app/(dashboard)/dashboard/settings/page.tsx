@@ -26,8 +26,17 @@ import {
   Cog,
   Home,
   Bed,
-  UtensilsCrossed
+  UtensilsCrossed,
+  ToggleLeft
 } from "lucide-react"
+import {
+  FEATURE_FLAGS,
+  FeatureFlagKey,
+  FeatureFlags,
+  getDefaultFeatureFlags,
+  getFeaturesByCategory,
+  CATEGORY_LABELS,
+} from "@/lib/features"
 import { formatCurrency } from "@/lib/format"
 import { PageHeader } from "@/components/ui/page-header"
 import { OwnerGuard, EmailVerificationCard } from "@/components/auth"
@@ -87,11 +96,44 @@ interface RoomTypePricing {
   dormitory: { rent: number; deposit: number }
 }
 
+interface PropertyTypePricing {
+  pg: RoomTypePricing
+  hostel: RoomTypePricing
+  coliving: RoomTypePricing
+}
+
 const defaultRoomTypePricing: RoomTypePricing = {
   single: { rent: 8000, deposit: 16000 },
   double: { rent: 6000, deposit: 12000 },
   triple: { rent: 5000, deposit: 10000 },
   dormitory: { rent: 4000, deposit: 8000 },
+}
+
+const defaultPropertyTypePricing: PropertyTypePricing = {
+  pg: {
+    single: { rent: 8000, deposit: 16000 },
+    double: { rent: 6000, deposit: 12000 },
+    triple: { rent: 5000, deposit: 10000 },
+    dormitory: { rent: 4000, deposit: 8000 },
+  },
+  hostel: {
+    single: { rent: 6000, deposit: 12000 },
+    double: { rent: 4500, deposit: 9000 },
+    triple: { rent: 3500, deposit: 7000 },
+    dormitory: { rent: 2500, deposit: 5000 },
+  },
+  coliving: {
+    single: { rent: 12000, deposit: 24000 },
+    double: { rent: 9000, deposit: 18000 },
+    triple: { rent: 7000, deposit: 14000 },
+    dormitory: { rent: 5000, deposit: 10000 },
+  },
+}
+
+const propertyTypeLabels = {
+  pg: "PG (Paying Guest)",
+  hostel: "Hostel",
+  coliving: "Co-Living Space",
 }
 
 interface AutoBillingSettings {
@@ -181,11 +223,18 @@ export default function SettingsPage() {
   // Auto Billing Settings
   const [autoBillingSettings, setAutoBillingSettings] = useState<AutoBillingSettings>(defaultAutoBillingSettings)
 
-  // Room Type Pricing
+  // Room Type Pricing (legacy flat pricing)
   const [roomTypePricing, setRoomTypePricing] = useState<RoomTypePricing>(defaultRoomTypePricing)
+
+  // Property Type Pricing (new - pricing by property type)
+  const [propertyTypePricing, setPropertyTypePricing] = useState<PropertyTypePricing>(defaultPropertyTypePricing)
+  const [selectedPropertyType, setSelectedPropertyType] = useState<keyof PropertyTypePricing>("pg")
 
   // Food Settings
   const [foodSettings, setFoodSettings] = useState<FoodSettings>(defaultFoodSettings)
+
+  // Feature Flags
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlags>(getDefaultFeatureFlags())
 
   useEffect(() => {
     fetchData()
@@ -243,11 +292,25 @@ export default function SettingsPage() {
             ...configRes.data.auto_billing_settings,
           })
         }
-        // Load room type pricing if available
+        // Load room type pricing if available (legacy flat pricing)
         if (configRes.data.room_type_pricing) {
           setRoomTypePricing({
             ...defaultRoomTypePricing,
             ...configRes.data.room_type_pricing,
+          })
+        }
+        // Load property type pricing if available
+        if (configRes.data.property_type_pricing) {
+          setPropertyTypePricing({
+            ...defaultPropertyTypePricing,
+            ...configRes.data.property_type_pricing,
+          })
+        }
+        // Load feature flags if available
+        if (configRes.data.feature_flags) {
+          setFeatureFlags({
+            ...getDefaultFeatureFlags(),
+            ...configRes.data.feature_flags,
           })
         }
       }
@@ -440,13 +503,17 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
+      // Save both property type pricing and flat room type pricing (for backwards compatibility)
+      const updateData = {
+        room_type_pricing: propertyTypePricing.pg, // Default to PG pricing for legacy support
+        property_type_pricing: propertyTypePricing,
+      }
+
       if (config) {
         // Update existing config
         const { error } = await supabase
           .from("owner_config")
-          .update({
-            room_type_pricing: roomTypePricing,
-          })
+          .update(updateData)
           .eq("id", config.id)
 
         if (error) throw error
@@ -456,7 +523,7 @@ export default function SettingsPage() {
           .from("owner_config")
           .insert({
             owner_id: user.id,
-            room_type_pricing: roomTypePricing,
+            ...updateData,
           })
           .select()
           .single()
@@ -592,6 +659,37 @@ export default function SettingsPage() {
     toast.success("Expense category deleted")
   }
 
+  const toggleFeatureFlag = (feature: FeatureFlagKey) => {
+    setFeatureFlags((prev) => ({
+      ...prev,
+      [feature]: !prev[feature],
+    }))
+  }
+
+  const saveFeatureFlags = async () => {
+    if (!config) return
+
+    setSaving(true)
+    try {
+      const supabase = createClient()
+
+      const { error } = await supabase
+        .from("owner_config")
+        .update({
+          feature_flags: featureFlags,
+        })
+        .eq("id", config.id)
+
+      if (error) throw error
+
+      toast.success("Feature settings saved")
+    } catch (error) {
+      toast.error("Failed to save feature settings")
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
     { id: "room-pricing", label: "Room Pricing", icon: Bed },
@@ -599,6 +697,7 @@ export default function SettingsPage() {
     { id: "food", label: "Food & Meals", icon: UtensilsCrossed },
     { id: "expenses", label: "Expense Categories", icon: IndianRupee },
     { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "features", label: "Features", icon: ToggleLeft },
     { id: "defaults", label: "Default Settings", icon: Settings },
   ]
 
@@ -729,14 +828,40 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bed className="h-5 w-5" />
-                Default Room Pricing
+                Default Room Pricing by Property Type
               </CardTitle>
               <CardDescription>
                 Set default rent and security deposit amounts for each room type.
-                These will auto-populate when adding new rooms.
+                Different property types can have different default pricing.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Property Type Selector */}
+              <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                {(Object.keys(propertyTypeLabels) as Array<keyof typeof propertyTypeLabels>).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedPropertyType(type)}
+                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      selectedPropertyType === type
+                        ? "bg-background shadow text-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {type === "pg" ? "PG" : type === "hostel" ? "Hostel" : "Co-Living"}
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                <p className="text-sm text-primary font-medium">
+                  Editing: {propertyTypeLabels[selectedPropertyType]}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  These defaults apply when adding rooms to {selectedPropertyType === "pg" ? "PG" : selectedPropertyType} properties
+                </p>
+              </div>
+
               {(["single", "double", "triple", "dormitory"] as const).map((roomType) => (
                 <div key={roomType} className="p-4 border rounded-lg space-y-4">
                   <div className="flex items-center gap-3">
@@ -755,42 +880,48 @@ export default function SettingsPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor={`${roomType}-rent`}>Monthly Rent</Label>
+                      <Label htmlFor={`${selectedPropertyType}-${roomType}-rent`}>Monthly Rent</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                         <Input
-                          id={`${roomType}-rent`}
+                          id={`${selectedPropertyType}-${roomType}-rent`}
                           type="number"
                           min="0"
                           step="500"
                           className="pl-8"
-                          value={roomTypePricing[roomType].rent}
-                          onChange={(e) => setRoomTypePricing({
-                            ...roomTypePricing,
-                            [roomType]: {
-                              ...roomTypePricing[roomType],
-                              rent: parseInt(e.target.value) || 0,
+                          value={propertyTypePricing[selectedPropertyType][roomType].rent}
+                          onChange={(e) => setPropertyTypePricing({
+                            ...propertyTypePricing,
+                            [selectedPropertyType]: {
+                              ...propertyTypePricing[selectedPropertyType],
+                              [roomType]: {
+                                ...propertyTypePricing[selectedPropertyType][roomType],
+                                rent: parseInt(e.target.value) || 0,
+                              },
                             },
                           })}
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`${roomType}-deposit`}>Security Deposit</Label>
+                      <Label htmlFor={`${selectedPropertyType}-${roomType}-deposit`}>Security Deposit</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                         <Input
-                          id={`${roomType}-deposit`}
+                          id={`${selectedPropertyType}-${roomType}-deposit`}
                           type="number"
                           min="0"
                           step="1000"
                           className="pl-8"
-                          value={roomTypePricing[roomType].deposit}
-                          onChange={(e) => setRoomTypePricing({
-                            ...roomTypePricing,
-                            [roomType]: {
-                              ...roomTypePricing[roomType],
-                              deposit: parseInt(e.target.value) || 0,
+                          value={propertyTypePricing[selectedPropertyType][roomType].deposit}
+                          onChange={(e) => setPropertyTypePricing({
+                            ...propertyTypePricing,
+                            [selectedPropertyType]: {
+                              ...propertyTypePricing[selectedPropertyType],
+                              [roomType]: {
+                                ...propertyTypePricing[selectedPropertyType][roomType],
+                                deposit: parseInt(e.target.value) || 0,
+                              },
                             },
                           })}
                         />
@@ -810,23 +941,32 @@ export default function SettingsPage() {
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                Note: These defaults are used when adding new rooms.
+                Note: These defaults are used when adding new rooms based on the property type.
                 Existing room prices won&apos;t be affected.
               </p>
             </CardContent>
           </Card>
 
-          {/* Quick Reference */}
+          {/* Quick Reference - All Property Types */}
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-6">
-              <h4 className="font-medium text-blue-900 mb-3">Current Pricing Summary</h4>
-              <div className="grid grid-cols-2 gap-3">
-                {(["single", "double", "triple", "dormitory"] as const).map((roomType) => (
-                  <div key={roomType} className="flex justify-between text-sm">
-                    <span className="capitalize text-blue-700">{roomType}:</span>
-                    <span className="font-medium text-blue-900">
-                      {formatCurrency(roomTypePricing[roomType].rent)}/mo
-                    </span>
+              <h4 className="font-medium text-blue-900 mb-4">Pricing Summary (All Property Types)</h4>
+              <div className="space-y-4">
+                {(Object.keys(propertyTypeLabels) as Array<keyof typeof propertyTypeLabels>).map((pType) => (
+                  <div key={pType} className="space-y-2">
+                    <h5 className="text-sm font-medium text-blue-800 capitalize">
+                      {pType === "pg" ? "PG" : pType === "hostel" ? "Hostel" : "Co-Living"}
+                    </h5>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(["single", "double", "triple", "dormitory"] as const).map((roomType) => (
+                        <div key={roomType} className="flex justify-between text-xs">
+                          <span className="capitalize text-blue-700">{roomType}:</span>
+                          <span className="font-medium text-blue-900">
+                            {formatCurrency(propertyTypePricing[pType][roomType].rent)}/mo
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1642,6 +1782,99 @@ export default function SettingsPage() {
                     WhatsApp reminders are available via manual send buttons on the Payments page.
                     Go to Payments → Send Reminders to send WhatsApp messages to tenants with pending dues.
                   </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Features Tab */}
+      {activeTab === "features" && (
+        <div className="grid gap-6 max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ToggleLeft className="h-5 w-5" />
+                Feature Management
+              </CardTitle>
+              <CardDescription>
+                Enable or disable features for your workspace.
+                Changes take effect immediately after saving.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {Object.entries(getFeaturesByCategory()).map(([category, features]) => (
+                <div key={category} className="space-y-3">
+                  <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                    {CATEGORY_LABELS[category] || category}
+                  </h4>
+                  <div className="space-y-2">
+                    {features.map((feature) => (
+                      <div
+                        key={feature.key}
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                          featureFlags[feature.key as FeatureFlagKey] ? "bg-background" : "bg-muted/30"
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <p className={`font-medium ${!featureFlags[feature.key as FeatureFlagKey] && "text-muted-foreground"}`}>
+                            {feature.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {feature.description}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => toggleFeatureFlag(feature.key as FeatureFlagKey)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            featureFlags[feature.key as FeatureFlagKey] ? "bg-primary" : "bg-muted"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              featureFlags[feature.key as FeatureFlagKey] ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <Button onClick={saveFeatureFlags} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Feature Settings
+              </Button>
+
+              <p className="text-xs text-muted-foreground">
+                Note: Some features may require additional configuration in their respective settings tabs.
+                Disabling a feature hides it from navigation but does not delete any data.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Quick Stats */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-6">
+              <h4 className="font-medium text-blue-900 mb-3">Feature Summary</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {Object.values(featureFlags).filter(Boolean).length}
+                  </p>
+                  <p className="text-sm text-blue-700">Features enabled</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {Object.values(featureFlags).filter(v => !v).length}
+                  </p>
+                  <p className="text-sm text-blue-700">Features disabled</p>
                 </div>
               </div>
             </CardContent>

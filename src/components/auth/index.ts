@@ -31,3 +31,6 @@ export { SessionTimeout, useSessionTimeout } from './session-timeout'
 
 // Email Verification
 export { EmailVerificationCard } from './email-verification-card'
+
+// Feature Gates
+export { FeatureGate, useFeatureCheck } from './feature-gate'

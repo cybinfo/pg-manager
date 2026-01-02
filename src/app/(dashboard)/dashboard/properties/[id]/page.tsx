@@ -394,12 +394,19 @@ export default function PropertyDetailPage() {
                   <CardDescription>{rooms.length} rooms in this property</CardDescription>
                 </div>
               </div>
-              <Link href={`/dashboard/rooms/new?property=${property.id}`}>
-                <Button size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Room
-                </Button>
-              </Link>
+              <div className="flex gap-2">
+                <Link href={`/dashboard/properties/${property.id}/rooms`}>
+                  <Button variant="outline" size="sm">
+                    View All
+                  </Button>
+                </Link>
+                <Link href={`/dashboard/rooms/new?property=${property.id}`}>
+                  <Button size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Room
+                  </Button>
+                </Link>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -458,12 +465,19 @@ export default function PropertyDetailPage() {
                   <CardDescription>{activeTenants} tenants currently staying</CardDescription>
                 </div>
               </div>
-              <Link href={`/dashboard/tenants/new?property=${property.id}`}>
-                <Button size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Tenant
-                </Button>
-              </Link>
+              <div className="flex gap-2">
+                <Link href={`/dashboard/properties/${property.id}/tenants`}>
+                  <Button variant="outline" size="sm">
+                    View All
+                  </Button>
+                </Link>
+                <Link href={`/dashboard/tenants/new?property=${property.id}`}>
+                  <Button size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Tenant
+                  </Button>
+                </Link>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

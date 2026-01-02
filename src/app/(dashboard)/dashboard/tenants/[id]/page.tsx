@@ -568,12 +568,20 @@ export default function TenantDetailPage() {
           description="Outstanding payments"
           icon={AlertCircle}
           actions={
-            <Link href={`/dashboard/payments/new?tenant=${tenant.id}`}>
-              <Button size="sm" variant="gradient">
-                <Plus className="mr-1 h-3 w-3" />
-                Record Payment
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              <Link href={`/dashboard/tenants/${tenant.id}/bills`}>
+                <Button variant="outline" size="sm">
+                  <FileText className="mr-1 h-3 w-3" />
+                  All Bills
+                </Button>
+              </Link>
+              <Link href={`/dashboard/payments/new?tenant=${tenant.id}`}>
+                <Button size="sm" variant="gradient">
+                  <Plus className="mr-1 h-3 w-3" />
+                  Record Payment
+                </Button>
+              </Link>
+            </div>
           }
         >
           {charges.length === 0 ? (
@@ -609,7 +617,7 @@ export default function TenantDetailPage() {
           description="Last 5 transactions"
           icon={CreditCard}
           actions={
-            <Link href={`/dashboard/payments?tenant=${tenant.id}`}>
+            <Link href={`/dashboard/tenants/${tenant.id}/payments`}>
               <Button variant="outline" size="sm">View All</Button>
             </Link>
           }

@@ -383,14 +383,21 @@ export default function RoomDetailPage() {
                   <CardDescription>{tenants.length} tenant(s) in this room</CardDescription>
                 </div>
               </div>
-              {availableBeds > 0 && (
-                <Link href={`/dashboard/tenants/new?room=${room.id}`}>
-                  <Button size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Tenant
+              <div className="flex gap-2">
+                <Link href={`/dashboard/rooms/${room.id}/tenants`}>
+                  <Button variant="outline" size="sm">
+                    View All
                   </Button>
                 </Link>
-              )}
+                {availableBeds > 0 && (
+                  <Link href={`/dashboard/tenants/new?room=${room.id}`}>
+                    <Button size="sm">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Tenant
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
