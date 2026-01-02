@@ -217,6 +217,13 @@ The auth context automatically refreshes sessions on:
 - Window focus
 Uses `getUser()` (server validation) instead of `getSession()` (local only)
 
+### 5. Clean URL Routing (Important!)
+- All dashboard pages use **clean URLs** directly (e.g., `/tenants`, `/properties`)
+- Files are at `src/app/(dashboard)/[module]/` NOT `src/app/(dashboard)/dashboard/[module]/`
+- **No rewrites in next.config.ts** - routes are direct
+- The `(dashboard)` route group provides shared layout without affecting URL
+- Middleware protects all routes in `src/lib/supabase/middleware.ts`
+
 ---
 
 ## Key Features & Implementation
@@ -529,7 +536,7 @@ RESEND_API_KEY=<resend_key>
 | Daily Summaries Cron | Daily payment/expense summaries via email + WhatsApp-ready | ✅ Complete |
 | URL Aliases | Cleaner routes like /tenants instead of /dashboard/tenants | ✅ Complete |
 | Breadcrumb Navigation | Breadcrumbs on all 16 dashboard pages via PageHeader | ✅ Complete |
-| Platform Admin Explorer | /dashboard/admin with workspace browser & audit logs | ✅ Complete |
+| Platform Admin Explorer | /admin with workspace browser (Explore dialog) | ✅ Complete |
 | Multiple Phones/Emails | Tenants can have multiple phones & emails with primary selection | ✅ Complete |
 | Admin Workspace Stats | Per-workspace property/room/tenant counts in admin panel | ✅ Complete |
 | Deep Links Navigation | Nested routes for tenant bills/payments, room tenants, property rooms/tenants | ✅ Complete |
@@ -541,37 +548,22 @@ RESEND_API_KEY=<resend_key>
 | Admin Page Simplified | Platform admin shows workspaces only with Explore dialog | ✅ Complete |
 | Clean URL Structure | Removed /dashboard/ prefix from all routes (e.g., /tenants not /dashboard/tenants) | ✅ Complete |
 
-### New Features (Migrations Ready)
-| Feature | Description | Migration |
-|---------|-------------|-----------|
-| **Storage Buckets** | Photo uploads for properties/rooms/tenants | 015 ✅ |
-| **Audit Logging** | Global immutable log (who/when/what/before/after) | 016 ✅ |
-| **Platform Admin** | Cross-workspace superuser access | 017 ✅ |
-| **Approvals Hub** | Tenant requests (name/address change) with workflow | 017 |
-| **Billing Continuity** | No gaps; ₹0 bills for zero usage; bill_id required for payments | 018 |
-| **Verification Tokens** | Indian mobile (+91) & email verification with OTP | 019 |
-| **Property Architecture 2D** | Visual map: properties → rooms → beds → availability | - |
-| **WhatsApp Summaries** | Payment & expense summaries to owner (cron) | - |
-| **Session Timeout** | Auto-logout on inactivity (configurable) | - |
-| **Demo Mode** | Masked sample data; safe for demos | - |
-| **Food Options** | Breakfast/Lunch/Dinner/Snacks per tenant | - |
-
-### UX Improvements Needed
-- Dropdowns: Always include search (Combobox) ✅ Done
-- URL clarity: `/tenants` aliases ✅, breadcrumbs ✅, deep links ✅ Done
-- INR (₹) symbol everywhere via `Currency` component ✅ Done
-- Room defaults from PG type; editable in Settings → Room Pricing ✅ Done
-- Multiple phones/emails/addresses per tenant ✅ Done
-- ID proofs: multiple docs, front/back support ✅ Done
-
-### Upcoming Migrations (015-019)
-```sql
-015_audit_events.sql        - Global audit logging
-016_platform_admins.sql     - Superuser table + RLS
-017_approvals.sql           - Tenant request workflow
-018_billing_continuity.sql  - Bill chain + payment enforcement
-019_verification_tokens.sql - Mobile/email verification
-```
+### Pending Features (Backlog)
+| Priority | Feature | Description |
+|----------|---------|-------------|
+| **High** | WhatsApp Bill Sharing | Send bills directly via WhatsApp Business API |
+| **High** | Mobile OTP Verification | Verify tenant phone numbers with SMS OTP (+91) |
+| **High** | WhatsApp Payment Reminders | Auto-send payment reminders to tenants |
+| **High** | Bill Continuity Chain | No gaps; `previous_bill_id` linking; ₹0 bills |
+| **High** | Partial Payments | Support paying bills in installments |
+| **Medium** | Tenant Portal Enhancement | Self-service profile updates, complaint raising |
+| **Medium** | Public PG Website Galleries | Photo galleries from uploaded photos |
+| **Medium** | Parental/Emergency Contacts | Multiple emergency contacts per tenant |
+| **Medium** | Superuser Payment Deletion | Allow platform admin to delete payments |
+| **Low** | Document Templates | Rent agreement, NOC templates |
+| **Low** | Bulk Operations | Bulk bill generation, bulk SMS |
+| **Low** | Multi-language Support | Hindi, regional languages |
+| **Low** | Payment Gateway | Razorpay/Paytm integration |
 
 ### Feature Flags System ✅ Implemented
 Feature flags are now available in `src/lib/features/`:
@@ -787,4 +779,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-02 (clean URLs, activity log, admin simplification, 15 feature flags)*
+*Last updated: 2026-01-02 (clean URLs without rewrites, activity log, admin simplification, backlog cleanup)*
