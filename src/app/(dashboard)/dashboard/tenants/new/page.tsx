@@ -12,7 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import {
   ArrowLeft, Users, Loader2, Building2, Home, UserCheck, RefreshCw,
-  Phone, Mail, MapPin, Plus, Trash2, Contact, FileText, Shield
+  Phone, Mail, MapPin, Plus, Trash2, Contact, FileText, Shield,
+  ChevronRight
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
@@ -817,6 +818,20 @@ export default function NewTenantPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {/* Breadcrumbs */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Link href="/dashboard" className="flex items-center gap-1 hover:text-foreground transition-colors">
+          <Home className="h-3.5 w-3.5" />
+          <span className="sr-only sm:not-sr-only">Dashboard</span>
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+        <Link href="/dashboard/tenants" className="hover:text-foreground transition-colors">
+          Tenants
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+        <span className="text-foreground font-medium">Add New</span>
+      </nav>
+
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/dashboard/tenants">

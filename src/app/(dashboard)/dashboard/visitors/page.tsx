@@ -310,6 +310,7 @@ export default function VisitorsPage() {
         title="Visitors"
         description="Manage visitor check-ins and check-outs"
         icon={UserPlus}
+        breadcrumbs={[{ label: "Visitors" }]}
         actions={
           <Link href="/dashboard/visitors/new">
             <Button variant="gradient">

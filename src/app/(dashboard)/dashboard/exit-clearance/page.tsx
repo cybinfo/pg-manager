@@ -356,6 +356,7 @@ export default function ExitClearancePage() {
         title="Exit Clearance"
         description="Manage tenant checkouts and settlements"
         icon={LogOut}
+        breadcrumbs={[{ label: "Exit Clearance" }]}
         actions={
           <Link href="/dashboard/exit-clearance/new">
             <Button variant="gradient">

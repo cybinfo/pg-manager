@@ -311,6 +311,7 @@ export default function StaffPage() {
         title="Staff Management"
         description="Manage staff members and their access"
         icon={UserCog}
+        breadcrumbs={[{ label: "Staff" }]}
         actions={
           <>
             <Link href="/dashboard/staff/roles">

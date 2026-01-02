@@ -1,8 +1,13 @@
 import * as React from "react"
 import Link from "next/link"
-import { ArrowLeft, LucideIcon } from "lucide-react"
+import { ArrowLeft, ChevronRight, Home, LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+
+export interface BreadcrumbItem {
+  label: string
+  href?: string
+}
 
 interface PageHeaderProps {
   title: string
@@ -13,6 +18,7 @@ interface PageHeaderProps {
   actions?: React.ReactNode
   children?: React.ReactNode
   className?: string
+  breadcrumbs?: BreadcrumbItem[]
 }
 
 export function PageHeader({
@@ -24,9 +30,38 @@ export function PageHeader({
   actions,
   children,
   className,
+  breadcrumbs,
 }: PageHeaderProps) {
   return (
     <div className={cn("space-y-4", className)}>
+      {/* Breadcrumbs */}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+          >
+            <Home className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only">Dashboard</span>
+          </Link>
+          {breadcrumbs.map((item, index) => (
+            <React.Fragment key={index}>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+              {item.href ? (
+                <Link
+                  href={item.href}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-foreground font-medium">{item.label}</span>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
+      )}
+
       {backHref && (
         <Link href={backHref}>
           <Button variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">
@@ -70,15 +105,45 @@ export function PageHeaderSimple({
   backHref,
   actions,
   className,
+  breadcrumbs,
 }: {
   title: string
   subtitle?: string
   backHref?: string
   actions?: React.ReactNode
   className?: string
+  breadcrumbs?: BreadcrumbItem[]
 }) {
   return (
     <div className={cn("space-y-2", className)}>
+      {/* Breadcrumbs */}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+          >
+            <Home className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only">Dashboard</span>
+          </Link>
+          {breadcrumbs.map((item, index) => (
+            <React.Fragment key={index}>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+              {item.href ? (
+                <Link
+                  href={item.href}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-foreground font-medium">{item.label}</span>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
+      )}
+
       {backHref && (
         <Link href={backHref}>
           <Button variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">

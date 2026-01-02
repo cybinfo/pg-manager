@@ -255,6 +255,7 @@ export default function PaymentsPage() {
         title="Payments"
         description="Track and manage all tenant payments"
         icon={CreditCard}
+        breadcrumbs={[{ label: "Payments" }]}
         actions={
           <div className="flex gap-2">
             <Link href="/dashboard/payments/reminders">

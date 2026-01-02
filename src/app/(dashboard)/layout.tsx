@@ -28,7 +28,8 @@ import {
   MoreHorizontal,
   UserCircle2,
   Grid3X3,
-  ClipboardCheck
+  ClipboardCheck,
+  Shield
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -71,10 +72,26 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
 
   // Use auth context
   const { user, profile, contexts, isLoading, logout, hasPermission } = useAuth()
   const currentContext = useCurrentContext()
+
+  // Check if user is a platform admin
+  useEffect(() => {
+    const checkPlatformAdmin = async () => {
+      if (!user) return
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("platform_admins")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .single()
+      setIsPlatformAdmin(!!data)
+    }
+    checkPlatformAdmin()
+  }, [user])
 
   // Filter navigation based on permissions
   const filteredNavigation = navigation.filter(item => {
@@ -85,6 +102,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     // Check staff permissions
     return hasPermission(item.permission)
   })
+
+  // Add admin link for platform admins
+  const finalNavigation = isPlatformAdmin
+    ? [...filteredNavigation, { name: "Admin", href: "/dashboard/admin", icon: Shield, permission: null }]
+    : filteredNavigation
 
   const handleLogout = async () => {
     await logout()
@@ -181,7 +203,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <ul className="space-y-1">
-              {filteredNavigation.map((item) => {
+              {finalNavigation.map((item) => {
                 // Fix: Dashboard should only be active on exact match, not on all routes
                 const isActive = item.href === "/dashboard"
                   ? pathname === "/dashboard"

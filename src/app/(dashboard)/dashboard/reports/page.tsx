@@ -630,6 +630,7 @@ export default function ReportsPage() {
         title="Reports & Analytics"
         description="Insights and metrics for your PG business"
         icon={BarChart3}
+        breadcrumbs={[{ label: "Reports" }]}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">

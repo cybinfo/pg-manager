@@ -290,6 +290,7 @@ export default function MeterReadingsPage() {
         title="Meter Readings"
         description="Track electricity, water, and gas consumption"
         icon={Gauge}
+        breadcrumbs={[{ label: "Meter Readings" }]}
         actions={
           <Link href="/dashboard/meter-readings/new">
             <Button variant="gradient">

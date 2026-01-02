@@ -189,6 +189,7 @@ export default function ArchitecturePage() {
           title="Property Architecture"
           description="Visual overview of all properties, rooms, and bed availability"
           icon={Building2}
+          breadcrumbs={[{ label: "Architecture" }]}
         />
 
         {/* Metrics */}

@@ -617,6 +617,7 @@ export default function SettingsPage() {
         title="Settings"
         description="Manage your account and preferences"
         icon={Cog}
+        breadcrumbs={[{ label: "Settings" }]}
       />
 
       {/* Tabs */}

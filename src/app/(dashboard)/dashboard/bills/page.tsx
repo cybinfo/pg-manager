@@ -254,6 +254,7 @@ export default function BillsPage() {
         title="Bills"
         description="Generate and manage monthly bills for tenants"
         icon={FileText}
+        breadcrumbs={[{ label: "Bills" }]}
         actions={
           <Link href="/dashboard/bills/new">
             <Button variant="gradient">

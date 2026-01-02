@@ -197,6 +197,7 @@ export default function PropertiesPage() {
         title="Properties"
         description="Manage your PG properties and buildings"
         icon={Building2}
+        breadcrumbs={[{ label: "Properties" }]}
         actions={
           <Link href="/dashboard/properties/new">
             <Button variant="gradient">

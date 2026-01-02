@@ -385,6 +385,7 @@ export default function NoticesPage() {
         title="Notices"
         description="Announcements and notifications for tenants"
         icon={Bell}
+        breadcrumbs={[{ label: "Notices" }]}
         actions={
           <Link href="/dashboard/notices/new">
             <Button variant="gradient">

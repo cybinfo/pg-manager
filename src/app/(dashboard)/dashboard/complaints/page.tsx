@@ -311,6 +311,7 @@ export default function ComplaintsPage() {
         title="Complaints"
         description="Manage tenant complaints and issues"
         icon={MessageSquare}
+        breadcrumbs={[{ label: "Complaints" }]}
         actions={
           <Link href="/dashboard/complaints/new">
             <Button variant="gradient">

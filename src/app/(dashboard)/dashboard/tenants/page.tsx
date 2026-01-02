@@ -257,6 +257,7 @@ export default function TenantsPage() {
         title="Tenants"
         description="Manage all your tenants across properties"
         icon={Users}
+        breadcrumbs={[{ label: "Tenants" }]}
         actions={
           <Link href="/dashboard/tenants/new">
             <Button variant="gradient">

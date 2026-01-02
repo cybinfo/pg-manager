@@ -309,6 +309,7 @@ export default function ApprovalsPage() {
           title="Approvals Hub"
           description="Review and manage tenant requests"
           icon={ClipboardCheck}
+          breadcrumbs={[{ label: "Approvals" }]}
         />
 
         <MetricsBar items={metrics} />

@@ -251,6 +251,7 @@ export default function RoomsPage() {
         title="Rooms"
         description="Manage rooms across all your properties"
         icon={Home}
+        breadcrumbs={[{ label: "Rooms" }]}
         actions={
           <Link href="/dashboard/rooms/new">
             <Button variant="gradient">
