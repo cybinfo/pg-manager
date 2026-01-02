@@ -37,8 +37,30 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes
-  const protectedPaths = ["/dashboard", "/admin", "/tenant", "/setup"]
+  // Protected routes - all dashboard pages now use clean URLs
+  const protectedPaths = [
+    "/dashboard",
+    "/admin",
+    "/tenant",
+    "/setup",
+    "/properties",
+    "/rooms",
+    "/tenants",
+    "/bills",
+    "/payments",
+    "/expenses",
+    "/meter-readings",
+    "/staff",
+    "/notices",
+    "/complaints",
+    "/visitors",
+    "/exit-clearance",
+    "/reports",
+    "/architecture",
+    "/activity",
+    "/approvals",
+    "/settings",
+  ]
   const isProtectedPath = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   )
