@@ -100,126 +100,60 @@ export default function AdminExplorerPage() {
     setRefreshing(true)
     const supabase = createClient()
 
-    // Fetch all workspaces with stats
-    const { data: workspacesData } = await supabase
-      .from("workspaces")
-      .select(`
-        id,
-        name,
-        created_at,
-        owner_user_id
-      `)
-      .order("created_at", { ascending: false })
+    // Fetch all workspaces using SECURITY DEFINER function (bypasses RLS)
+    const { data: workspacesData, error: wsError } = await supabase
+      .rpc("get_all_workspaces_admin")
+
+    if (wsError) {
+      console.error("Error fetching workspaces:", wsError)
+    }
 
     if (workspacesData) {
-      // Fetch additional data for each workspace
-      const enrichedWorkspaces = await Promise.all(
-        workspacesData.map(async (ws) => {
-          const [
-            { data: owner },
-            { count: propCount },
-            { count: roomCount },
-            { count: tenantCount }
-          ] = await Promise.all([
-            supabase
-              .from("user_profiles")
-              .select("name, email")
-              .eq("user_id", ws.owner_user_id)
-              .single(),
-            supabase
-              .from("properties")
-              .select("id", { count: "exact", head: true })
-              .eq("owner_id", ws.owner_user_id),
-            supabase
-              .from("rooms")
-              .select("id", { count: "exact", head: true })
-              .eq("owner_id", ws.owner_user_id),
-            supabase
-              .from("tenants")
-              .select("id", { count: "exact", head: true })
-              .eq("owner_id", ws.owner_user_id)
-          ])
-
-          return {
-            ...ws,
-            owner_name: owner?.name || "Unknown",
-            owner_email: owner?.email || "",
-            total_properties: propCount || 0,
-            total_rooms: roomCount || 0,
-            total_tenants: tenantCount || 0
-          }
-        })
-      )
+      // Map to expected format - function now returns stats
+      const enrichedWorkspaces = workspacesData.map((ws: {
+        id: string
+        name: string
+        created_at: string
+        owner_user_id: string
+        owner_name: string
+        owner_email: string
+        total_properties?: number
+        total_rooms?: number
+        total_tenants?: number
+      }) => ({
+        ...ws,
+        total_properties: ws.total_properties || 0,
+        total_rooms: ws.total_rooms || 0,
+        total_tenants: ws.total_tenants || 0
+      }))
       setWorkspaces(enrichedWorkspaces)
     }
 
-    // Fetch recent audit events
-    const { data: eventsData } = await supabase
-      .from("audit_events")
-      .select(`
-        id,
-        occurred_at,
-        action,
-        entity_type,
-        entity_id,
-        workspace_id
-      `)
-      .order("occurred_at", { ascending: false })
-      .limit(50)
+    // Fetch platform stats using SECURITY DEFINER function
+    const { data: statsData, error: statsError } = await supabase
+      .rpc("get_platform_stats_admin")
 
-    if (eventsData) {
-      // Enrich with workspace names
-      const enrichedEvents = await Promise.all(
-        eventsData.map(async (event) => {
-          let workspaceName = "Platform"
-          if (event.workspace_id) {
-            const { data: ws } = await supabase
-              .from("workspaces")
-              .select("name")
-              .eq("id", event.workspace_id)
-              .single()
-            workspaceName = ws?.name || "Unknown"
-          }
-          return {
-            ...event,
-            workspace_name: workspaceName
-          }
-        })
-      )
-      setAuditEvents(enrichedEvents)
+    if (statsError) {
+      console.error("Error fetching stats:", statsError)
     }
 
-    // Calculate platform stats
-    const [
-      { count: wsCount },
-      { count: ownerCount },
-      { count: tenantCount },
-      { count: propCount },
-      { count: roomCount },
-      { count: billCount },
-      { count: paymentCount },
-      { count: activeCount }
-    ] = await Promise.all([
-      supabase.from("workspaces").select("id", { count: "exact", head: true }),
-      supabase.from("owners").select("id", { count: "exact", head: true }),
-      supabase.from("tenants").select("id", { count: "exact", head: true }),
-      supabase.from("properties").select("id", { count: "exact", head: true }),
-      supabase.from("rooms").select("id", { count: "exact", head: true }),
-      supabase.from("bills").select("id", { count: "exact", head: true }),
-      supabase.from("payments").select("id", { count: "exact", head: true }),
-      supabase.from("tenants").select("id", { count: "exact", head: true }).eq("status", "active")
-    ])
+    if (statsData) {
+      setStats(statsData as PlatformStats)
+    }
 
-    setStats({
-      total_workspaces: wsCount || 0,
-      total_owners: ownerCount || 0,
-      total_tenants: tenantCount || 0,
-      total_properties: propCount || 0,
-      total_rooms: roomCount || 0,
-      total_bills: billCount || 0,
-      total_payments: paymentCount || 0,
-      active_tenants: activeCount || 0
-    })
+    // Fetch audit events using SECURITY DEFINER function
+    const { data: auditData, error: auditError } = await supabase
+      .rpc("get_audit_events_admin", { p_limit: 50 })
+
+    if (auditError) {
+      console.error("Error fetching audit events:", auditError)
+    }
+
+    if (auditData && Array.isArray(auditData)) {
+      setAuditEvents(auditData as AuditEvent[])
+    } else {
+      setAuditEvents([])
+    }
 
     setLoading(false)
     setRefreshing(false)

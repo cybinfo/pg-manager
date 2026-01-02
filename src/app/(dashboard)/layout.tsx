@@ -82,13 +82,24 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkPlatformAdmin = async () => {
       if (!user) return
-      const supabase = createClient()
-      const { data } = await supabase
-        .from("platform_admins")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .single()
-      setIsPlatformAdmin(!!data)
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from("platform_admins")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .maybeSingle()
+
+        // Ignore errors (user might not have access to see this table)
+        if (error) {
+          console.log("Platform admin check:", error.message)
+          setIsPlatformAdmin(false)
+          return
+        }
+        setIsPlatformAdmin(!!data)
+      } catch {
+        setIsPlatformAdmin(false)
+      }
     }
     checkPlatformAdmin()
   }, [user])
@@ -141,7 +152,17 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   // Redirect if not authenticated
   if (!user) {
     router.push("/login")
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-emerald-50">
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
+          <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
+            <Building2 className="h-6 w-6 text-white" />
+          </div>
+          <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+          <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    )
   }
 
   // Redirect to setup if user has no contexts (new owner without workspace)

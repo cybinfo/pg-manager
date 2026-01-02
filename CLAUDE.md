@@ -376,6 +376,30 @@ RESEND_API_KEY=<resend_key>
 
 ## Recent Bug Fixes (Important)
 
+### Auth Context Supabase Client Hanging (2026-01-02) ✅
+**Problem**: Application stuck on loading for ALL users after refresh. Supabase client methods (`supabase.from()`, `supabase.rpc()`) were being called but not making actual HTTP requests.
+**Root Cause**: Unknown issue with Supabase JS client where methods hang indefinitely
+**Solution**: Converted auth context to use direct `fetch()` calls to Supabase REST API:
+- `fetchProfile()` uses direct fetch to `/rest/v1/user_profiles`
+- `fetchContexts()` uses direct fetch to `/rest/v1/rpc/get_user_contexts`
+- Pass access token explicitly from session to fetch functions
+**File**: `src/lib/auth/auth-context.tsx`
+
+### Logout Blank Page (2026-01-02) ✅
+**Problem**: Blank page appearing during logout while redirect was pending
+**Root Cause**: Layout returned `null` while `router.push("/login")` was processing asynchronously
+**Solution**: Show loading spinner with "Redirecting to login..." message during redirect
+**File**: `src/app/(dashboard)/layout.tsx`
+
+### Logout Stuck on Second Attempt (2026-01-02) ✅
+**Problem**: First logout worked, second logout got stuck
+**Root Cause**: Race condition - logout set `initialized=false` which triggered useEffect re-run before `signOut()` completed, finding still-valid session
+**Solution**:
+- Added `loggingOut` flag to prevent re-initialization during logout
+- Reordered: call `signOut()` first, THEN clear state
+- Check `loggingOut` flag before initialization
+**File**: `src/lib/auth/auth-context.tsx`
+
 ### Blank Page After Sign-In (2026-01-02) ✅
 **Problem**: Users seeing blank page after logging in, especially on second sign-in
 **Root Cause**: Spurious `SIGNED_OUT` events from Supabase during navigation/initialization were clearing auth state
@@ -488,6 +512,7 @@ RESEND_API_KEY=<resend_key>
 | Breadcrumb Navigation | Breadcrumbs on all 16 dashboard pages via PageHeader | ✅ Complete |
 | Platform Admin Explorer | /dashboard/admin with workspace browser & audit logs | ✅ Complete |
 | Multiple Phones/Emails | Tenants can have multiple phones & emails with primary selection | ✅ Complete |
+| Admin Workspace Stats | Per-workspace property/room/tenant counts in admin panel | ✅ Complete |
 
 ### New Features (Migrations Ready)
 | Feature | Description | Migration |
@@ -560,6 +585,9 @@ Run in order in Supabase SQL editor:
 026_approvals_hub.sql         - Tenant request workflow
 027_verification_tokens.sql   - Email/phone verification tokens
 028_food_options.sql          - Food/meal tracking for tenants
+029_fix_platform_admins.sql   - Platform admin seeding fix
+030_fix_user_creation.sql     - User creation trigger fixes
+031_admin_functions.sql       - Enhanced admin functions with stats
 ```
 
 ### Storage Buckets (Migration 015)
