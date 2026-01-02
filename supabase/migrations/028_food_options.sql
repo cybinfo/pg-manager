@@ -92,9 +92,7 @@ ON food_logs FOR SELECT
 TO authenticated
 USING (
     tenant_id IN (
-        SELECT t.id FROM tenants t
-        JOIN user_contexts uc ON t.id::text = uc.tenant_id::text
-        WHERE uc.user_id = auth.uid()
+        SELECT id FROM tenants WHERE user_id = auth.uid()
     )
 );
 

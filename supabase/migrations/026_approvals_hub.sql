@@ -66,17 +66,17 @@ CREATE POLICY "Owners can view all approvals in their workspace"
 ON approvals FOR SELECT
 TO authenticated
 USING (
-    owner_id IN (SELECT id FROM owners WHERE user_id = auth.uid())
+    owner_id IN (SELECT id FROM owners WHERE id = auth.uid())
 );
 
 CREATE POLICY "Owners can manage approvals"
 ON approvals FOR ALL
 TO authenticated
 USING (
-    owner_id IN (SELECT id FROM owners WHERE user_id = auth.uid())
+    owner_id IN (SELECT id FROM owners WHERE id = auth.uid())
 )
 WITH CHECK (
-    owner_id IN (SELECT id FROM owners WHERE user_id = auth.uid())
+    owner_id IN (SELECT id FROM owners WHERE id = auth.uid())
 );
 
 -- Staff can view approvals (based on permissions - handled in app)
@@ -91,15 +91,13 @@ USING (
     )
 );
 
--- Tenants can view their own approvals
+-- Tenants can view their own approvals (tenant must have user_id matching auth.uid())
 CREATE POLICY "Tenants can view own approvals"
 ON approvals FOR SELECT
 TO authenticated
 USING (
     requester_tenant_id IN (
-        SELECT t.id FROM tenants t
-        JOIN user_contexts uc ON t.id::text = uc.tenant_id::text
-        WHERE uc.user_id = auth.uid()
+        SELECT id FROM tenants WHERE user_id = auth.uid()
     )
 );
 
@@ -109,9 +107,7 @@ ON approvals FOR INSERT
 TO authenticated
 WITH CHECK (
     requester_tenant_id IN (
-        SELECT t.id FROM tenants t
-        JOIN user_contexts uc ON t.id::text = uc.tenant_id::text
-        WHERE uc.user_id = auth.uid()
+        SELECT id FROM tenants WHERE user_id = auth.uid()
     )
 );
 
