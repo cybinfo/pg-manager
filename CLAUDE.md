@@ -6,6 +6,22 @@
 > 3. **Update README.md** when user-facing features change
 > 4. **Write detailed git commits** explaining what and why
 > 5. **Run `/compact`** after completing major tasks to save context
+> 6. **Follow Master Prompt** - See `ManageKar_Claude_Master_Prompt.md` for full roadmap
+
+---
+
+## Design Principles (Always Follow)
+
+All design, code, UI, and workflow must be:
+- **Standardised** - Consistent patterns across codebase
+- **Unified** - Single source of truth
+- **Modular** - Reusable components
+- **Centralised** - No scattered logic
+- **Flexible** - Configurable behaviors
+- **Secure** - RLS, validation, audit
+- **Simplified** - Easy to understand
+- **Automated** - Reduce manual work
+- **Customer-Centric** - Indian business needs first
 
 ---
 
@@ -373,13 +389,57 @@ RESEND_API_KEY=<resend_key>
 
 ---
 
-## Pending / Known Issues
+## Development Backlog (Priority Order)
 
-1. **Tenant Portal**: Basic implementation, needs polish
-2. **Payment Gateway**: UPI/Razorpay integration pending
-3. **WhatsApp API**: Using wa.me links (manual), not official API
-4. **Email Limits**: Resend free tier = 100 emails/day
-5. **Offline PWA**: Service worker installed but limited offline support
+### Critical Bugs to Fix
+| Issue | Description | Status |
+|-------|-------------|--------|
+| Room capacity bug | Room 101 (3 beds) cannot add 3rd tenant | Pending |
+| Tenant Dashboard | Property & Room not showing; missing check-in date | Pending |
+| Dashboard color | "Always green" - active state logic broken | Pending |
+| Mobile logout | Hidden behind bottom menu (z-index) | Pending |
+| Photo uploads | Not working anywhere (Storage integration) | Pending |
+
+### New Features to Implement
+| Feature | Description | Migration |
+|---------|-------------|-----------|
+| **Audit Logging** | Global immutable log (who/when/what/before/after) | 015 |
+| **Superuser (Global Admin)** | Cross-workspace access; payment deletion for troubleshooting | 016 |
+| **Approvals Hub** | Tenant requests (name/address change) with workflow | 017 |
+| **Billing Continuity** | No gaps; ₹0 bills for zero usage; bill_id required for payments | 018 |
+| **Verification Tokens** | Indian mobile (+91) & email verification with OTP | 019 |
+| **Property Architecture 2D** | Visual map: properties → rooms → beds → availability | - |
+| **WhatsApp Summaries** | Payment & expense summaries to owner (cron) | - |
+| **Session Timeout** | Auto-logout on inactivity (configurable) | - |
+| **Demo Mode** | Masked sample data; safe for demos | - |
+| **Food Options** | Breakfast/Lunch/Dinner/Snacks per tenant | - |
+
+### UX Improvements Needed
+- Dropdowns: Always include search (Combobox)
+- URL clarity: `/tenants` aliases, breadcrumbs, deep links
+- INR (₹) symbol everywhere via `Currency` component
+- Room defaults from PG type; editable in Settings → Money
+- Multiple phones/emails/addresses per tenant
+- ID proofs: multiple docs, front/back support
+
+### Upcoming Migrations (015-019)
+```sql
+015_audit_events.sql        - Global audit logging
+016_platform_admins.sql     - Superuser table + RLS
+017_approvals.sql           - Tenant request workflow
+018_billing_continuity.sql  - Bill chain + payment enforcement
+019_verification_tokens.sql - Mobile/email verification
+```
+
+### Feature Flags to Add
+```typescript
+features.approvals          // Approvals hub
+features.architectureView   // 2D property map
+features.food               // Meal tracking
+features.whatsappSummaries  // Owner summaries
+settings.security.email_blocklist_enabled
+settings.notifications.whatsapp_recipients
+```
 
 ---
 
@@ -444,6 +504,12 @@ Configured in `vercel.json`
 
 ## For Next Claude Session
 
+### Starting a New Session
+1. Read this CLAUDE.md completely
+2. Check `ManageKar_Claude_Master_Prompt.md` for full roadmap
+3. Review the Development Backlog section above
+4. Ask user which items to prioritize
+
 ### If User Reports Loading Issue
 Check `src/lib/auth/auth-context.tsx` - session refresh handlers should handle this now.
 
@@ -460,6 +526,18 @@ Check `src/lib/auth/auth-context.tsx` - session refresh handlers should handle t
 
 ### If Adding Staff/Tenant Features
 Remember to check email existence and auto-link or create invitation.
+
+### If Implementing Backlog Items
+Follow the Output Contract from Master Prompt:
+1. **Planning Mode** - Structured plan with options
+2. **Implementation Diff** - File-by-file changes
+3. **Security & RLS Matrix** - Permission predicates
+4. **QA Checklist** - Test scenarios
+5. **Release Artifacts** - Changelog, migrations
+
+### Key Contacts
+- **Developer/Owner**: Rajat Seth (sethrajat0711@gmail.com)
+- **Client Owner**: newgreenhigh@gmail.com
 
 ---
 
