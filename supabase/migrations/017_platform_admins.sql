@@ -89,11 +89,11 @@ TO authenticated
 USING (
     is_platform_admin(auth.uid())
     OR owner_id IN (
-        SELECT id FROM owners WHERE user_id = auth.uid()
+        SELECT id FROM owners WHERE id = auth.uid()
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_user_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -107,11 +107,11 @@ TO authenticated
 USING (
     is_platform_admin(auth.uid())
     OR owner_id IN (
-        SELECT id FROM owners WHERE user_id = auth.uid()
+        SELECT id FROM owners WHERE id = auth.uid()
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_user_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -125,11 +125,11 @@ TO authenticated
 USING (
     is_platform_admin(auth.uid())
     OR owner_id IN (
-        SELECT id FROM owners WHERE user_id = auth.uid()
+        SELECT id FROM owners WHERE id = auth.uid()
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_user_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -145,7 +145,7 @@ USING (
     is_platform_admin(auth.uid())
     -- Or owners can delete their own payments
     OR owner_id IN (
-        SELECT id FROM owners WHERE user_id = auth.uid()
+        SELECT id FROM owners WHERE id = auth.uid()
     )
 );
 
@@ -157,11 +157,11 @@ TO authenticated
 USING (
     is_platform_admin(auth.uid())
     OR owner_id IN (
-        SELECT id FROM owners WHERE user_id = auth.uid()
+        SELECT id FROM owners WHERE id = auth.uid()
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_user_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -175,11 +175,11 @@ TO authenticated
 USING (
     is_platform_admin(auth.uid())
     OR owner_id IN (
-        SELECT id FROM owners WHERE user_id = auth.uid()
+        SELECT id FROM owners WHERE id = auth.uid()
     )
     OR owner_id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_user_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid() AND uc.context_type = 'staff'
     )
@@ -206,10 +206,10 @@ ON owners FOR SELECT
 TO authenticated
 USING (
     is_platform_admin(auth.uid())
-    OR user_id = auth.uid()
+    OR id = auth.uid()
     OR id IN (
         SELECT o.id FROM owners o
-        JOIN workspaces w ON w.owner_user_id = o.user_id
+        JOIN workspaces w ON w.owner_user_id = o.id
         JOIN user_contexts uc ON uc.workspace_id = w.id
         WHERE uc.user_id = auth.uid()
     )
