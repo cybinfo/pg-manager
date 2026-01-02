@@ -91,6 +91,7 @@ src/
 │   │       ├── exit-clearance/     # Checkout process
 │   │       ├── reports/            # Analytics + charts
 │   │       ├── architecture/       # Property 2D visual map
+│   │       ├── admin/              # Platform Admin explorer (superusers)
 │   │       └── settings/           # Config (owner only)
 │   ├── (tenant)/                   # Tenant portal
 │   ├── (setup)/                    # Initial setup wizard
@@ -303,7 +304,7 @@ Configurable via property edit → Website Settings tab:
 |-----------|---------|
 | `MetricsBar` | Compact horizontal stats bar |
 | `DataTable` | Table with search, filters, row actions |
-| `PageHeader` | Page title with icon and actions |
+| `PageHeader` | Page title with icon, actions, and breadcrumbs |
 | `StatusBadge` | Pre-configured status badges |
 | `Currency` | Indian Rupee formatting |
 | `EmptyState` | No data/no results states |
@@ -312,6 +313,7 @@ Configurable via property edit → Website Settings tab:
 | `Combobox` | Searchable dropdown with single/multi select |
 | `PhoneInput` | Indian mobile number input with validation |
 | `Badge` | Status badges with variants |
+| `Tabs` | Tab navigation component (shadcn/ui) |
 
 ### Form Components (src/components/forms/)
 | Component | Purpose |
@@ -483,6 +485,9 @@ RESEND_API_KEY=<resend_key>
 | Demo Mode | Masked data, restricted actions, watermark for demos | ✅ Complete |
 | Daily Summaries Cron | Daily payment/expense summaries via email + WhatsApp-ready | ✅ Complete |
 | URL Aliases | Cleaner routes like /tenants instead of /dashboard/tenants | ✅ Complete |
+| Breadcrumb Navigation | Breadcrumbs on all 16 dashboard pages via PageHeader | ✅ Complete |
+| Platform Admin Explorer | /dashboard/admin with workspace browser & audit logs | ✅ Complete |
+| Multiple Phones/Emails | Tenants can have multiple phones & emails with primary selection | ✅ Complete |
 
 ### New Features (Migrations Ready)
 | Feature | Description | Migration |
@@ -500,11 +505,11 @@ RESEND_API_KEY=<resend_key>
 | **Food Options** | Breakfast/Lunch/Dinner/Snacks per tenant | - |
 
 ### UX Improvements Needed
-- Dropdowns: Always include search (Combobox)
-- URL clarity: `/tenants` aliases, breadcrumbs, deep links
+- Dropdowns: Always include search (Combobox) ✅ Done
+- URL clarity: `/tenants` aliases ✅, breadcrumbs ✅, deep links (pending)
 - INR (₹) symbol everywhere via `Currency` component
 - Room defaults from PG type; editable in Settings → Money
-- Multiple phones/emails/addresses per tenant
+- Multiple phones/emails/addresses per tenant ✅ Done
 - ID proofs: multiple docs, front/back support
 
 ### Upcoming Migrations (015-019)
@@ -600,6 +605,10 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Breadcrumb navigation** - All 16 dashboard pages now have breadcrumbs via PageHeader
+- **Platform Admin Explorer** - New /dashboard/admin page for superusers with workspace browser & audit logs
+- **Admin navigation** - Admin link shows in sidebar for platform admins only
+- **Tabs component** - Added shadcn/ui Tabs component
 - **Dashboard nav fix** - Dashboard item no longer always green/active
 - **Tenant dashboard fix** - Property/Room now displays correctly (Array.isArray fix)
 - **Mobile logout fix** - Bottom nav hides when sidebar opens for logout access
@@ -647,7 +656,8 @@ Check `src/lib/auth/auth-context.tsx` - session refresh handlers should handle t
 1. Create page in `src/app/(dashboard)/dashboard/[module]/`
 2. Wrap with `<PermissionGuard permission="module.view">`
 3. Add to navigation in `src/app/(dashboard)/layout.tsx`
-4. Use `PageHeader`, `MetricsBar`, `DataTable` for consistency
+4. Use `PageHeader` with `breadcrumbs` prop, `MetricsBar`, `DataTable` for consistency
+5. Example breadcrumbs: `breadcrumbs={[{ label: "Module Name" }]}`
 
 ### If Modifying Permissions
 1. Update `src/lib/auth/types.ts` - PERMISSIONS constant
@@ -671,4 +681,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-02*
+*Last updated: 2026-01-02 (breadcrumbs, admin explorer)*
