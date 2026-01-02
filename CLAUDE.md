@@ -107,6 +107,9 @@ src/
 └── lib/
     ├── supabase/                   # Supabase clients
     ├── auth/                       # Auth context + hooks
+    ├── features/                   # Feature flags system
+    │   ├── index.ts                # Flag definitions & utilities
+    │   └── use-features.ts         # React hooks
     ├── email.ts                    # Resend email service
     └── notifications.ts            # WhatsApp templates
 ```
@@ -321,7 +324,7 @@ Configurable via property edit → Website Settings tab:
 | `AddressInput` | Full address with type selector |
 | `PhotoGallery` | Multi-photo upload |
 | `PhoneEntry` | Phone with WhatsApp checkbox |
-| `IdDocumentEntry` | ID document with file upload |
+| `IdDocumentEntry` | ID document with front/back upload support |
 
 ### Auth Components (src/components/auth/)
 | Component | Purpose |
@@ -331,6 +334,8 @@ Configurable via property edit → Website Settings tab:
 | `OwnerGuard` | Owner-only page wrapper |
 | `ContextSwitcher` | Header dropdown for context switch |
 | `OwnerOnly/StaffOnly/TenantOnly` | Role-based visibility |
+| `FeatureGate` | Conditional render by feature flag |
+| `useFeatureCheck` | Hook to check if feature is enabled |
 
 ---
 
@@ -513,6 +518,10 @@ RESEND_API_KEY=<resend_key>
 | Platform Admin Explorer | /dashboard/admin with workspace browser & audit logs | ✅ Complete |
 | Multiple Phones/Emails | Tenants can have multiple phones & emails with primary selection | ✅ Complete |
 | Admin Workspace Stats | Per-workspace property/room/tenant counts in admin panel | ✅ Complete |
+| Deep Links Navigation | Nested routes for tenant bills/payments, room tenants, property rooms/tenants | ✅ Complete |
+| Room Defaults by Property Type | Different pricing defaults for PG, Hostel, Co-Living in Settings | ✅ Complete |
+| ID Proof Front/Back Support | Separate front/back image uploads for ID documents | ✅ Complete |
+| Feature Flags System | Enable/disable features per workspace via Settings → Features | ✅ Complete |
 
 ### New Features (Migrations Ready)
 | Feature | Description | Migration |
@@ -531,11 +540,11 @@ RESEND_API_KEY=<resend_key>
 
 ### UX Improvements Needed
 - Dropdowns: Always include search (Combobox) ✅ Done
-- URL clarity: `/tenants` aliases ✅, breadcrumbs ✅, deep links (pending)
-- INR (₹) symbol everywhere via `Currency` component
-- Room defaults from PG type; editable in Settings → Money
+- URL clarity: `/tenants` aliases ✅, breadcrumbs ✅, deep links ✅ Done
+- INR (₹) symbol everywhere via `Currency` component ✅ Done
+- Room defaults from PG type; editable in Settings → Room Pricing ✅ Done
 - Multiple phones/emails/addresses per tenant ✅ Done
-- ID proofs: multiple docs, front/back support
+- ID proofs: multiple docs, front/back support ✅ Done
 
 ### Upcoming Migrations (015-019)
 ```sql
@@ -546,15 +555,38 @@ RESEND_API_KEY=<resend_key>
 019_verification_tokens.sql - Mobile/email verification
 ```
 
-### Feature Flags to Add
+### Feature Flags System ✅ Implemented
+Feature flags are now available in `src/lib/features/`:
 ```typescript
+// Available flags (14 total)
 features.approvals          // Approvals hub
 features.architectureView   // 2D property map
 features.food               // Meal tracking
 features.whatsappSummaries  // Owner summaries
-settings.security.email_blocklist_enabled
-settings.notifications.whatsapp_recipients
+features.meterReadings      // Utility meter tracking
+features.publicWebsite      // Public PG website
+features.exitClearance      // Checkout process
+features.visitors           // Visitor log
+features.notices            // Announcements
+features.complaints         // Issue tracking
+features.expenses           // Expense tracking
+features.reports            // Analytics
+features.autoBilling        // Auto bill generation
+features.emailReminders     // Payment reminders
+features.demoMode           // Demo mode
+
+// Usage in components
+import { FeatureGate, useFeatureCheck } from "@/components/auth"
+
+<FeatureGate feature="food">
+  <FoodSettings />
+</FeatureGate>
+
+// Or programmatically
+const { isEnabled } = useFeatures()
+if (isEnabled("food")) { ... }
 ```
+Managed via Settings → Features tab. Stored in `owner_config.feature_flags` JSONB.
 
 ---
 
@@ -633,6 +665,10 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Deep Links Navigation** - Nested routes: /tenants/[id]/bills, /tenants/[id]/payments, /rooms/[id]/tenants, /properties/[id]/rooms, /properties/[id]/tenants
+- **Room Defaults by Property Type** - Settings → Room Pricing now supports PG, Hostel, Co-Living with different pricing defaults
+- **ID Proof Front/Back** - IdDocumentEntry now supports front_url and back_url for documents with two sides
+- **Feature Flags System** - 14 configurable features via Settings → Features tab with FeatureGate component
 - **Breadcrumb navigation** - All 16 dashboard pages now have breadcrumbs via PageHeader
 - **Platform Admin Explorer** - New /dashboard/admin page for superusers with workspace browser & audit logs
 - **Admin navigation** - Admin link shows in sidebar for platform admins only
@@ -709,4 +745,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-02 (breadcrumbs, admin explorer)*
+*Last updated: 2026-01-02 (deep links, property-type pricing, ID front/back, feature flags)*
