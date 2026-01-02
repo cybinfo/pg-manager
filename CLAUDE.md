@@ -476,6 +476,13 @@ RESEND_API_KEY=<resend_key>
 | Searchable Dropdowns | Combobox with search for tenant/room/property | ✅ Complete |
 | Indian Mobile Validation | +91 normalization, format validation | ✅ Complete |
 | Payment Workflow | Payments must reference a bill | ✅ Complete |
+| Approvals Hub | Tenant requests (name/address change) with workflow | ✅ Complete |
+| Email Verification | Token-based email verification with UI | ✅ Complete |
+| Generate Bill Multi-select | Select multiple charge types when creating bills | ✅ Complete |
+| Food & Meal Options | Settings for breakfast/lunch/dinner/snacks tracking | ✅ Complete |
+| Demo Mode | Masked data, restricted actions, watermark for demos | ✅ Complete |
+| Daily Summaries Cron | Daily payment/expense summaries via email + WhatsApp-ready | ✅ Complete |
+| URL Aliases | Cleaner routes like /tenants instead of /dashboard/tenants | ✅ Complete |
 
 ### New Features (Migrations Ready)
 | Feature | Description | Migration |
@@ -544,6 +551,10 @@ Run in order in Supabase SQL editor:
 018_fix_rls_policies.sql    - Fix RLS policies blocking login
 019-023                      - Various RLS and trigger fixes
 024_standardize_room_status.sql - Room occupancy trigger fix
+025_enforce_payment_bill_linkage.sql - Payment must reference bill
+026_approvals_hub.sql         - Tenant request workflow
+027_verification_tokens.sql   - Email/phone verification tokens
+028_food_options.sql          - Food/meal tracking for tenants
 ```
 
 ### Storage Buckets (Migration 015)
@@ -579,6 +590,7 @@ Creates 4 storage buckets with RLS policies:
 | Endpoint | Schedule | Purpose |
 |----------|----------|---------|
 | `/api/cron/generate-bills` | Daily 6 AM UTC | Auto-generate monthly bills |
+| `/api/cron/daily-summaries` | Daily 8 AM UTC | Daily payment/expense summaries to owners |
 | `/api/cron/payment-reminders` | Daily 9 AM UTC | Email payment reminders |
 
 Configured in `vercel.json`

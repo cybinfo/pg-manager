@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import {
   ArrowLeft,
   FileText,
@@ -18,10 +20,12 @@ import {
   User,
   Building2,
   Calendar,
-  IndianRupee
+  IndianRupee,
+  Check
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 interface Tenant {
   id: string
@@ -29,11 +33,24 @@ interface Tenant {
   phone: string
   monthly_rent: number
   property_id: string
+  check_in_date: string | null
   property: {
     name: string
   } | null
   room: {
     room_number: string
+  } | null
+}
+
+interface ChargeType {
+  id: string
+  name: string
+  code: string
+  category: string
+  is_enabled: boolean
+  calculation_config: {
+    default_amount?: number
+    source?: string
   } | null
 }
 
@@ -53,7 +70,7 @@ interface PendingCharge {
   } | null
 }
 
-export default function NewBillPage() {
+function NewBillContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedTenant = searchParams.get("tenant")
@@ -63,6 +80,8 @@ export default function NewBillPage() {
   const [loadingCharges, setLoadingCharges] = useState(false)
 
   const [tenants, setTenants] = useState<Tenant[]>([])
+  const [chargeTypes, setChargeTypes] = useState<ChargeType[]>([])
+  const [selectedChargeTypes, setSelectedChargeTypes] = useState<string[]>([])
   const [selectedTenant, setSelectedTenant] = useState<string>("")
   const [pendingCharges, setPendingCharges] = useState<PendingCharge[]>([])
 
@@ -88,9 +107,9 @@ export default function NewBillPage() {
     }))
   }, [formData.bill_date])
 
-  // Fetch tenants
+  // Fetch tenants and charge types
   useEffect(() => {
-    const fetchTenants = async () => {
+    const fetchData = async () => {
       const supabase = createClient()
 
       const { data: { user } } = await supabase.auth.getUser()
@@ -99,34 +118,53 @@ export default function NewBillPage() {
         return
       }
 
-      const { data, error } = await supabase
-        .from("tenants")
-        .select(`
-          id,
-          name,
-          phone,
-          monthly_rent,
-          property_id,
-          property:properties(name),
-          room:rooms(room_number)
-        `)
-        .eq("owner_id", user.id)
-        .eq("status", "active")
-        .order("name")
+      // Fetch tenants and charge types in parallel
+      const [tenantsRes, chargeTypesRes] = await Promise.all([
+        supabase
+          .from("tenants")
+          .select(`
+            id,
+            name,
+            phone,
+            monthly_rent,
+            property_id,
+            check_in_date,
+            property:properties(name),
+            room:rooms(room_number)
+          `)
+          .eq("owner_id", user.id)
+          .eq("status", "active")
+          .order("name"),
+        supabase
+          .from("charge_types")
+          .select("*")
+          .eq("is_enabled", true)
+          .order("display_order")
+      ])
 
-      if (error) {
-        console.error("Error fetching tenants:", error)
+      if (tenantsRes.error) {
+        console.error("Error fetching tenants:", tenantsRes.error)
         toast.error("Failed to load tenants")
         return
       }
 
-      const transformedTenants: Tenant[] = (data || []).map((t) => ({
+      const transformedTenants: Tenant[] = (tenantsRes.data || []).map((t) => ({
         ...t,
         property: Array.isArray(t.property) ? t.property[0] : t.property,
         room: Array.isArray(t.room) ? t.room[0] : t.room,
       }))
 
       setTenants(transformedTenants)
+
+      if (chargeTypesRes.data) {
+        setChargeTypes(chargeTypesRes.data)
+        // Pre-select "Rent" charge type by default
+        const rentType = chargeTypesRes.data.find((ct: ChargeType) => ct.code === "rent")
+        if (rentType) {
+          setSelectedChargeTypes([rentType.id])
+        }
+      }
+
       setLoadingTenants(false)
 
       // Pre-select tenant if provided
@@ -135,12 +173,12 @@ export default function NewBillPage() {
       }
     }
 
-    fetchTenants()
+    fetchData()
   }, [router, preselectedTenant])
 
-  // Fetch pending charges when tenant is selected
+  // Build line items when tenant or selected charge types change
   useEffect(() => {
-    const fetchPendingCharges = async () => {
+    const buildLineItems = async () => {
       if (!selectedTenant) {
         setPendingCharges([])
         setLineItems([])
@@ -175,36 +213,83 @@ export default function NewBillPage() {
 
       setPendingCharges(transformedCharges)
 
-      // Auto-populate line items from pending charges
+      // Auto-populate line items from selected charge types
       const tenant = tenants.find((t) => t.id === selectedTenant)
       const items: LineItem[] = []
 
-      // Add monthly rent
-      if (tenant?.monthly_rent) {
+      // Add line items for each selected charge type
+      selectedChargeTypes.forEach((chargeTypeId) => {
+        const chargeType = chargeTypes.find((ct) => ct.id === chargeTypeId)
+        if (!chargeType) return
+
+        let amount = 0
+        let description = `${chargeType.name} - ${formData.for_month}`
+
+        // Determine amount based on charge type
+        if (chargeType.code === "rent" && tenant?.monthly_rent) {
+          amount = tenant.monthly_rent
+        } else if (chargeType.calculation_config?.default_amount) {
+          amount = chargeType.calculation_config.default_amount
+        }
+
         items.push({
           id: crypto.randomUUID(),
-          type: "Rent",
-          description: `Monthly Rent - ${formData.for_month}`,
-          amount: tenant.monthly_rent,
+          type: chargeType.name,
+          description,
+          amount,
         })
-      }
+      })
 
-      // Add pending charges
+      // Add pending charges (not already included via charge types)
       transformedCharges.forEach((charge) => {
-        items.push({
-          id: charge.id,
-          type: charge.charge_type?.name || "Charge",
-          description: charge.for_period || "Pending charge",
-          amount: Number(charge.amount),
-        })
+        // Check if this charge type is already in items
+        const alreadyAdded = items.some((item) => item.type === charge.charge_type?.name)
+        if (!alreadyAdded) {
+          items.push({
+            id: charge.id,
+            type: charge.charge_type?.name || "Charge",
+            description: charge.for_period || "Pending charge",
+            amount: Number(charge.amount),
+          })
+        }
       })
 
       setLineItems(items)
       setLoadingCharges(false)
     }
 
-    fetchPendingCharges()
-  }, [selectedTenant, tenants, formData.for_month])
+    buildLineItems()
+  }, [selectedTenant, selectedChargeTypes, tenants, chargeTypes, formData.for_month])
+
+  // Update bill date based on tenant's check-in date
+  useEffect(() => {
+    if (selectedTenant) {
+      const tenant = tenants.find((t) => t.id === selectedTenant)
+      if (tenant?.check_in_date) {
+        // Use the day of check-in but current month/year
+        const checkInDay = new Date(tenant.check_in_date).getDate()
+        const now = new Date()
+        const billDate = new Date(now.getFullYear(), now.getMonth(), checkInDay)
+        // If the calculated date is in the future, use 1st
+        if (billDate > now) {
+          billDate.setDate(1)
+        }
+        setFormData((prev) => ({
+          ...prev,
+          bill_date: billDate.toISOString().split("T")[0],
+        }))
+      }
+    }
+  }, [selectedTenant, tenants])
+
+  // Toggle charge type selection
+  const toggleChargeType = (chargeTypeId: string) => {
+    setSelectedChargeTypes((prev) =>
+      prev.includes(chargeTypeId)
+        ? prev.filter((id) => id !== chargeTypeId)
+        : [...prev, chargeTypeId]
+    )
+  }
 
   const addLineItem = () => {
     setLineItems([
@@ -373,19 +458,16 @@ export default function NewBillPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <select
+            <Combobox
+              options={tenants.map((tenant): ComboboxOption => ({
+                value: tenant.id,
+                label: `${tenant.name} - ${tenant.property?.name} (Room ${tenant.room?.room_number})`,
+              }))}
               value={selectedTenant}
-              onChange={(e) => setSelectedTenant(e.target.value)}
-              className="w-full h-10 px-3 rounded-md border bg-background"
-              required
-            >
-              <option value="">Select a tenant...</option>
-              {tenants.map((tenant) => (
-                <option key={tenant.id} value={tenant.id}>
-                  {tenant.name} - {tenant.property?.name} (Room {tenant.room?.room_number})
-                </option>
-              ))}
-            </select>
+              onValueChange={setSelectedTenant}
+              placeholder="Search and select a tenant..."
+              searchPlaceholder="Type to search tenants..."
+            />
 
             {selectedTenant && (
               <div className="mt-4 p-4 bg-muted/50 rounded-lg">
@@ -409,10 +491,69 @@ export default function NewBillPage() {
                         <span className="text-muted-foreground">Phone:</span>
                         <span className="ml-2 font-medium">{tenant.phone}</span>
                       </div>
+                      {tenant.check_in_date && (
+                        <div>
+                          <span className="text-muted-foreground">Check-in:</span>
+                          <span className="ml-2 font-medium">{new Date(tenant.check_in_date).toLocaleDateString()}</span>
+                        </div>
+                      )}
                     </div>
                   ) : null
                 })()}
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Charge Types Selection */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <IndianRupee className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Select Charges</CardTitle>
+                <CardDescription>Choose which charges to include in this bill</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {chargeTypes.map((chargeType) => {
+                const isSelected = selectedChargeTypes.includes(chargeType.id)
+                return (
+                  <button
+                    key={chargeType.id}
+                    type="button"
+                    onClick={() => toggleChargeType(chargeType.id)}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border-2 transition-all text-left",
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-muted hover:border-primary/50"
+                    )}
+                  >
+                    <div className={cn(
+                      "h-5 w-5 rounded flex items-center justify-center border-2 transition-colors",
+                      isSelected
+                        ? "bg-primary border-primary text-white"
+                        : "border-muted-foreground/30"
+                    )}>
+                      {isSelected && <Check className="h-3 w-3" />}
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">{chargeType.name}</div>
+                      <div className="text-xs text-muted-foreground capitalize">{chargeType.category.replace("_", " ")}</div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            {selectedChargeTypes.length === 0 && (
+              <p className="text-sm text-amber-600 mt-3">
+                Please select at least one charge type to include in the bill.
+              </p>
             )}
           </CardContent>
         </Card>
@@ -613,5 +754,22 @@ export default function NewBillPage() {
         </div>
       </form>
     </div>
+  )
+}
+
+// Loading fallback
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  )
+}
+
+export default function NewBillPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <NewBillContent />
+    </Suspense>
   )
 }

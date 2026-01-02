@@ -27,12 +27,14 @@ import {
   TrendingDown,
   MoreHorizontal,
   UserCircle2,
-  Grid3X3
+  Grid3X3,
+  ClipboardCheck
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { AuthProvider, useAuth, useCurrentContext } from "@/lib/auth"
 import { ContextSwitcher, SessionTimeout } from "@/components/auth"
+import { DemoModeProvider, DemoBanner, DemoWatermark } from "@/lib/demo-mode"
 
 // Navigation items with required permissions
 // null permission means always visible, string means need that permission
@@ -51,6 +53,7 @@ const navigation = [
   { name: "Notices", href: "/dashboard/notices", icon: Bell, permission: "notices.view" },
   { name: "Reports", href: "/dashboard/reports", icon: FileText, permission: "reports.view" },
   { name: "Architecture", href: "/dashboard/architecture", icon: Grid3X3, permission: "properties.view" },
+  { name: "Approvals", href: "/dashboard/approvals", icon: ClipboardCheck, permission: "tenants.view" },
   { name: "Staff", href: "/dashboard/staff", icon: UserCog, permission: "staff.view" },
 ]
 
@@ -140,6 +143,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       inactivityTimeout={30 * 60 * 1000} // 30 minutes
       warningTime={60 * 1000} // 1 minute warning
     >
+    <DemoBanner />
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       {/* Mobile sidebar backdrop with glass effect */}
       {sidebarOpen && (
@@ -308,12 +312,15 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+
+      {/* Demo Mode Watermark */}
+      <DemoWatermark />
     </div>
     </SessionTimeout>
   )
 }
 
-// Main export with AuthProvider wrapper
+// Main export with AuthProvider and DemoModeProvider wrappers
 export default function DashboardLayout({
   children,
 }: {
@@ -321,7 +328,9 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+      <DemoModeProvider>
+        <DashboardLayoutInner>{children}</DashboardLayoutInner>
+      </DemoModeProvider>
     </AuthProvider>
   )
 }

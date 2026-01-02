@@ -28,3 +28,6 @@ export { InvitationForm, InvitationList, AcceptInvitation } from './invitation-c
 
 // Session Timeout
 export { SessionTimeout, useSessionTimeout } from './session-timeout'
+
+// Email Verification
+export { EmailVerificationCard } from './email-verification-card'

@@ -3,6 +3,8 @@ import type {
   OverdueAlertData,
   PaymentReceiptData,
   InvitationEmailData,
+  EmailVerificationData,
+  DailySummaryData,
 } from "./email"
 
 // Format currency for display
@@ -335,6 +337,160 @@ export function invitationEmailTemplate(data: InvitationEmailData): string {
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
       <p style="color: #6B7280; margin: 0; font-size: 14px;">
         If you didn't expect this invitation, you can safely ignore this email.
+      </p>
+    </div>
+  `
+
+  return emailWrapper(content)
+}
+
+// Email Verification Template
+export function emailVerificationTemplate(data: EmailVerificationData): string {
+  const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #DBEAFE; color: #2563EB; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Verify Your Email
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.userName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Please verify your email address to complete your ManageKar account setup and access all features.
+    </p>
+
+    <!-- Verification Card -->
+    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="color: #6B7280; font-size: 14px; margin: 0 0 8px 0;">Email to verify:</p>
+      <p style="color: #111827; font-size: 18px; font-weight: bold; margin: 0;">${data.email}</p>
+    </div>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 32px 0;">
+      <a href="${data.verificationUrl}" style="display: inline-block; background: linear-gradient(135deg, #14B8A6, #10B981); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        Verify Email Address
+      </a>
+    </div>
+
+    <p style="color: #9CA3AF; font-size: 13px; text-align: center; margin: 0 0 24px 0;">
+      If the button doesn't work, copy and paste this link in your browser:<br>
+      <a href="${data.verificationUrl}" style="color: #10B981; word-break: break-all;">${data.verificationUrl}</a>
+    </p>
+
+    <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <p style="color: #92400E; font-size: 14px; margin: 0;">
+        <strong>This link expires in ${data.expiresInMinutes} minutes.</strong><br>
+        If you didn't request this verification, you can safely ignore this email.
+      </p>
+    </div>
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Thank you for using ManageKar!
+      </p>
+    </div>
+  `
+
+  return emailWrapper(content)
+}
+
+// Daily Summary Email Template (for Owners)
+export function dailySummaryTemplate(data: DailySummaryData): string {
+  const dateStr = formatDate(data.date)
+  const net = data.paymentsReceived - data.expensesTotal
+  const netColor = net >= 0 ? "#059669" : "#DC2626"
+  const netPrefix = net >= 0 ? "+" : ""
+
+  const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #DBEAFE; color: #2563EB; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Daily Summary
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 8px 0; font-size: 22px;">
+      Hi ${data.ownerName},
+    </h2>
+    <p style="color: #6B7280; margin: 0 0 24px 0; font-size: 14px;">
+      Here's your daily summary for <strong>${dateStr}</strong>
+    </p>
+
+    <!-- Summary Cards -->
+    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #6B7280; font-size: 14px;">💰 Payments Received</span>
+        <span style="color: #059669; font-weight: bold; font-size: 18px;">${formatCurrency(data.paymentsReceived)}</span>
+      </div>
+      <p style="color: #9CA3AF; font-size: 12px; margin: 4px 0 0 0;">${data.paymentsCount} payment${data.paymentsCount !== 1 ? "s" : ""}</p>
+    </div>
+
+    <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #6B7280; font-size: 14px;">📉 Expenses</span>
+        <span style="color: #DC2626; font-weight: bold; font-size: 18px;">${formatCurrency(data.expensesTotal)}</span>
+      </div>
+      <p style="color: #9CA3AF; font-size: 12px; margin: 4px 0 0 0;">${data.expensesCount} expense${data.expensesCount !== 1 ? "s" : ""}</p>
+    </div>
+
+    <div style="background: #F3F4F6; border: 1px solid #D1D5DB; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: #6B7280; font-size: 14px;">📈 Net</span>
+        <span style="color: ${netColor}; font-weight: bold; font-size: 20px;">${netPrefix}${formatCurrency(net)}</span>
+      </div>
+    </div>
+
+    <!-- Status Section -->
+    <h3 style="color: #111827; margin: 0 0 12px 0; font-size: 16px; border-top: 1px solid #E5E7EB; padding-top: 16px;">Current Status</h3>
+
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">🏠 Occupancy Rate</td>
+        <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.occupancyRate}%</td>
+      </tr>
+      <tr>
+        <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">⏰ Pending Dues</td>
+        <td style="padding: 8px 0; color: ${data.pendingDues > 0 ? "#DC2626" : "#059669"}; font-weight: 500; text-align: right;">${formatCurrency(data.pendingDues)} (${data.pendingCount} bills)</td>
+      </tr>
+      ${data.openComplaints > 0 ? `
+      <tr>
+        <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">⚠️ Open Complaints</td>
+        <td style="padding: 8px 0; color: #F59E0B; font-weight: 500; text-align: right;">${data.openComplaints}</td>
+      </tr>
+      ` : ""}
+    </table>
+
+    ${data.newTenants > 0 || data.exits > 0 ? `
+    <!-- Activity Section -->
+    <h3 style="color: #111827; margin: 16px 0 12px 0; font-size: 16px; border-top: 1px solid #E5E7EB; padding-top: 16px;">Activity</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+      ${data.newTenants > 0 ? `
+      <tr>
+        <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">👥 New Tenants</td>
+        <td style="padding: 8px 0; color: #059669; font-weight: 500; text-align: right;">+${data.newTenants}</td>
+      </tr>
+      ` : ""}
+      ${data.exits > 0 ? `
+      <tr>
+        <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">👋 Exits</td>
+        <td style="padding: 8px 0; color: #DC2626; font-weight: 500; text-align: right;">-${data.exits}</td>
+      </tr>
+      ` : ""}
+    </table>
+    ` : ""}
+
+    <!-- WhatsApp Message Box -->
+    <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 16px; margin-top: 24px;">
+      <p style="color: #065F46; font-size: 14px; font-weight: 600; margin: 0 0 8px 0;">📱 Share via WhatsApp</p>
+      <p style="color: #6B7280; font-size: 12px; margin: 0 0 12px 0;">Copy the message below to share with your contacts:</p>
+      <div style="background: white; border: 1px solid #D1FAE5; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 12px; white-space: pre-wrap; color: #374151;">${data.whatsappMessage}</div>
+    </div>
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Stay on top of your PG business!<br>
+        <strong style="color: #111827;">ManageKar</strong>
       </p>
     </div>
   `

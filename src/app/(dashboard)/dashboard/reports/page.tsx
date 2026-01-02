@@ -38,6 +38,8 @@ import {
 } from "lucide-react"
 import { PageHeader } from "@/components/ui/page-header"
 import { PermissionGuard } from "@/components/auth"
+import { useDemoMode } from "@/lib/demo-mode"
+import { toast } from "sonner"
 
 interface Property {
   id: string
@@ -156,6 +158,7 @@ export default function ReportsPage() {
   const [selectedProperty, setSelectedProperty] = useState<string>("all")
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const [dateRange, setDateRange] = useState<string>("this_month")
+  const { canPerformAction, getDemoMessage } = useDemoMode()
 
   useEffect(() => {
     fetchReportData()
@@ -516,6 +519,12 @@ export default function ReportsPage() {
 
   const exportToCSV = (type: string) => {
     if (!reportData) return
+
+    // Check demo mode before exporting
+    if (!canPerformAction("export_data")) {
+      toast.error(getDemoMessage("export_data"))
+      return
+    }
 
     let csvContent = ""
     let filename = ""

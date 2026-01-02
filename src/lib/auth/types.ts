@@ -34,6 +34,11 @@ export interface UserProfile {
   preferences: UserPreferences
   last_login_at: string | null
   created_at: string
+  // Verification status
+  email_verified?: boolean
+  email_verified_at?: string | null
+  phone_verified?: boolean
+  phone_verified_at?: string | null
 }
 
 export interface UserPreferences {

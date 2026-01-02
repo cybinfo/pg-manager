@@ -4,6 +4,8 @@ import {
   overdueAlertTemplate,
   paymentReceiptTemplate,
   invitationEmailTemplate,
+  emailVerificationTemplate,
+  dailySummaryTemplate,
 } from "./email-templates"
 
 // Lazy initialization of Resend client
@@ -69,6 +71,32 @@ export interface InvitationEmailData {
   roleName?: string
   message?: string
   signupUrl: string
+}
+
+export interface EmailVerificationData {
+  to: string
+  userName: string
+  email: string
+  verificationUrl: string
+  expiresInMinutes: number
+}
+
+export interface DailySummaryData {
+  to: string
+  ownerName: string
+  businessName?: string
+  date: Date
+  paymentsReceived: number
+  paymentsCount: number
+  expensesTotal: number
+  expensesCount: number
+  pendingDues: number
+  pendingCount: number
+  occupancyRate: number
+  newTenants: number
+  exits: number
+  openComplaints: number
+  whatsappMessage: string
 }
 
 export async function sendPaymentReminder(
@@ -209,6 +237,61 @@ export async function sendTestEmail(
 
     return { success: true }
   } catch (err) {
+    return { success: false, error: String(err) }
+  }
+}
+
+// Email verification function
+export async function sendVerificationEmail(
+  data: EmailVerificationData
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    const client = getResendClient()
+    const { data: result, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: data.to,
+      subject: "Verify your email - ManageKar",
+      html: emailVerificationTemplate(data),
+    })
+
+    if (error) {
+      console.error("Failed to send verification email:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, id: result?.id }
+  } catch (err) {
+    console.error("Error sending verification email:", err)
+    return { success: false, error: String(err) }
+  }
+}
+
+// Daily summary email for owners
+export async function sendDailySummary(
+  data: DailySummaryData
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    const client = getResendClient()
+    const dateStr = data.date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+    const { data: result, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: data.to,
+      subject: `Daily Summary for ${dateStr} - ${data.businessName || "ManageKar"}`,
+      html: dailySummaryTemplate(data),
+    })
+
+    if (error) {
+      console.error("Failed to send daily summary:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, id: result?.id }
+  } catch (err) {
+    console.error("Error sending daily summary:", err)
     return { success: false, error: String(err) }
   }
 }
