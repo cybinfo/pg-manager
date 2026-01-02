@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/generate-bills",
       "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron/daily-summaries",
-      "schedule": "0 8 * * *"
     }
   ]
 }
