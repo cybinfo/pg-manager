@@ -36,26 +36,35 @@ import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { AuthProvider, useAuth, useCurrentContext } from "@/lib/auth"
 import { ContextSwitcher, SessionTimeout } from "@/components/auth"
 import { DemoModeProvider, DemoBanner, DemoWatermark } from "@/lib/demo-mode"
+import { useFeatures } from "@/lib/features/use-features"
+import { FeatureFlagKey } from "@/lib/features"
 
-// Navigation items with required permissions
+// Navigation items with required permissions and feature flags
 // null permission means always visible, string means need that permission
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null },
-  { name: "Properties", href: "/dashboard/properties", icon: Building2, permission: "properties.view" },
-  { name: "Rooms", href: "/dashboard/rooms", icon: Home, permission: "rooms.view" },
-  { name: "Tenants", href: "/dashboard/tenants", icon: Users, permission: "tenants.view" },
-  { name: "Bills", href: "/dashboard/bills", icon: Receipt, permission: "bills.view" },
-  { name: "Payments", href: "/dashboard/payments", icon: CreditCard, permission: "payments.view" },
-  { name: "Expenses", href: "/dashboard/expenses", icon: TrendingDown, permission: "expenses.view" },
-  { name: "Meter Readings", href: "/dashboard/meter-readings", icon: Gauge, permission: "meter_readings.view" },
-  { name: "Exit Clearance", href: "/dashboard/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate" },
-  { name: "Visitors", href: "/dashboard/visitors", icon: UserPlus, permission: "visitors.view" },
-  { name: "Complaints", href: "/dashboard/complaints", icon: MessageSquare, permission: "complaints.view" },
-  { name: "Notices", href: "/dashboard/notices", icon: Bell, permission: "notices.view" },
-  { name: "Reports", href: "/dashboard/reports", icon: FileText, permission: "reports.view" },
-  { name: "Architecture", href: "/dashboard/architecture", icon: Grid3X3, permission: "properties.view" },
-  { name: "Approvals", href: "/dashboard/approvals", icon: ClipboardCheck, permission: "tenants.view" },
-  { name: "Staff", href: "/dashboard/staff", icon: UserCog, permission: "staff.view" },
+// feature: null means always visible, string means feature must be enabled
+const navigation: {
+  name: string
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  permission: string | null
+  feature: FeatureFlagKey | null
+}[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
+  { name: "Properties", href: "/dashboard/properties", icon: Building2, permission: "properties.view", feature: null },
+  { name: "Rooms", href: "/dashboard/rooms", icon: Home, permission: "rooms.view", feature: null },
+  { name: "Tenants", href: "/dashboard/tenants", icon: Users, permission: "tenants.view", feature: null },
+  { name: "Bills", href: "/dashboard/bills", icon: Receipt, permission: "bills.view", feature: null },
+  { name: "Payments", href: "/dashboard/payments", icon: CreditCard, permission: "payments.view", feature: null },
+  { name: "Expenses", href: "/dashboard/expenses", icon: TrendingDown, permission: "expenses.view", feature: "expenses" },
+  { name: "Meter Readings", href: "/dashboard/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
+  { name: "Exit Clearance", href: "/dashboard/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
+  { name: "Visitors", href: "/dashboard/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
+  { name: "Complaints", href: "/dashboard/complaints", icon: MessageSquare, permission: "complaints.view", feature: "complaints" },
+  { name: "Notices", href: "/dashboard/notices", icon: Bell, permission: "notices.view", feature: "notices" },
+  { name: "Reports", href: "/dashboard/reports", icon: FileText, permission: "reports.view", feature: "reports" },
+  { name: "Architecture", href: "/dashboard/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
+  { name: "Approvals", href: "/dashboard/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
+  { name: "Staff", href: "/dashboard/staff", icon: UserCog, permission: "staff.view", feature: null },
 ]
 
 // Mobile bottom nav items (5 most used)
@@ -77,6 +86,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   // Use auth context
   const { user, profile, contexts, isLoading, logout, hasPermission } = useAuth()
   const currentContext = useCurrentContext()
+
+  // Use feature flags
+  const { isEnabled: isFeatureEnabled } = useFeatures()
 
   // Check if user is a platform admin
   useEffect(() => {
@@ -104,11 +116,17 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     checkPlatformAdmin()
   }, [user])
 
-  // Filter navigation based on permissions
+  // Filter navigation based on permissions AND feature flags
   const filteredNavigation = navigation.filter(item => {
+    // Check feature flag first - if feature is disabled, hide the item
+    if (item.feature !== null && !isFeatureEnabled(item.feature)) {
+      return false
+    }
+
+    // Then check permissions
     // Always show items with no permission requirement
     if (item.permission === null) return true
-    // Owners see everything
+    // Owners see everything (permission-wise)
     if (currentContext.isOwner) return true
     // Check staff permissions
     return hasPermission(item.permission)
@@ -116,7 +134,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   // Add admin link for platform admins
   const finalNavigation = isPlatformAdmin
-    ? [...filteredNavigation, { name: "Admin", href: "/dashboard/admin", icon: Shield, permission: null }]
+    ? [...filteredNavigation, { name: "Admin", href: "/dashboard/admin", icon: Shield, permission: null, feature: null }]
     : filteredNavigation
 
   const handleLogout = async () => {
