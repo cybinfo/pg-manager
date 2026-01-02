@@ -75,24 +75,26 @@ src/
 │   ├── pricing/                    # Pricing page
 │   ├── products/pg-manager/        # Product page
 │   ├── (auth)/                     # Login, Register
-│   ├── (dashboard)/                # Owner/Staff dashboard (14 modules)
-│   │   └── dashboard/
-│   │       ├── properties/         # Property CRUD
-│   │       ├── rooms/              # Room management
-│   │       ├── tenants/            # Tenant lifecycle
-│   │       ├── bills/              # Billing system
-│   │       ├── payments/           # Payment tracking
-│   │       ├── expenses/           # Expense tracking
-│   │       ├── meter-readings/     # Utility meters
-│   │       ├── staff/              # Staff + roles RBAC
-│   │       ├── notices/            # Announcements
-│   │       ├── complaints/         # Issue tracking
-│   │       ├── visitors/           # Visitor log
-│   │       ├── exit-clearance/     # Checkout process
-│   │       ├── reports/            # Analytics + charts
-│   │       ├── architecture/       # Property 2D visual map
-│   │       ├── admin/              # Platform Admin explorer (superusers)
-│   │       └── settings/           # Config (owner only)
+│   ├── (dashboard)/                # Owner/Staff dashboard (16 modules)
+│   │   ├── dashboard/page.tsx      # Main dashboard (at /dashboard)
+│   │   ├── properties/             # Property CRUD (at /properties)
+│   │   ├── rooms/                  # Room management (at /rooms)
+│   │   ├── tenants/                # Tenant lifecycle (at /tenants)
+│   │   ├── bills/                  # Billing system (at /bills)
+│   │   ├── payments/               # Payment tracking (at /payments)
+│   │   ├── expenses/               # Expense tracking (at /expenses)
+│   │   ├── meter-readings/         # Utility meters (at /meter-readings)
+│   │   ├── staff/                  # Staff + roles RBAC (at /staff)
+│   │   ├── notices/                # Announcements (at /notices)
+│   │   ├── complaints/             # Issue tracking (at /complaints)
+│   │   ├── visitors/               # Visitor log (at /visitors)
+│   │   ├── exit-clearance/         # Checkout process (at /exit-clearance)
+│   │   ├── reports/                # Analytics + charts (at /reports)
+│   │   ├── architecture/           # Property 2D visual map (at /architecture)
+│   │   ├── activity/               # Activity Log for all owners (at /activity)
+│   │   ├── approvals/              # Tenant requests workflow (at /approvals)
+│   │   ├── admin/                  # Platform Admin - workspaces only (at /admin)
+│   │   └── settings/               # Config (owner only) (at /settings)
 │   ├── (tenant)/                   # Tenant portal
 │   ├── (setup)/                    # Initial setup wizard
 │   ├── pg/[slug]/                  # Public PG websites
@@ -535,6 +537,9 @@ RESEND_API_KEY=<resend_key>
 | ID Proof Front/Back Support | Separate front/back image uploads for ID documents | ✅ Complete |
 | Feature Flags System | Enable/disable features per workspace via Settings → Features | ✅ Complete |
 | Feature Flags Route Protection | FeatureGuard prevents direct URL access to disabled features | ✅ Complete |
+| Activity Log Page | Workspace activity log for all owners at /activity | ✅ Complete |
+| Admin Page Simplified | Platform admin shows workspaces only with Explore dialog | ✅ Complete |
+| Clean URL Structure | Removed /dashboard/ prefix from all routes (e.g., /tenants not /dashboard/tenants) | ✅ Complete |
 
 ### New Features (Migrations Ready)
 | Feature | Description | Migration |
@@ -571,7 +576,7 @@ RESEND_API_KEY=<resend_key>
 ### Feature Flags System ✅ Implemented
 Feature flags are now available in `src/lib/features/`:
 ```typescript
-// Available flags (14 total)
+// Available flags (15 total)
 features.approvals          // Approvals hub
 features.architectureView   // 2D property map
 features.food               // Meal tracking
@@ -587,6 +592,7 @@ features.reports            // Analytics
 features.autoBilling        // Auto bill generation
 features.emailReminders     // Payment reminders
 features.demoMode           // Demo mode
+features.activityLog        // Activity Log for workspace
 
 // Usage in components (inline conditional render)
 import { FeatureGate, useFeatureCheck } from "@/components/auth"
@@ -610,9 +616,9 @@ if (isEnabled("food")) { ... }
 ```
 Managed via Settings → Features tab. Stored in `owner_config.feature_flags` JSONB.
 
-**Route Protection**: 9 feature-flagged pages are protected with FeatureGuard:
+**Route Protection**: 10 feature-flagged pages are protected with FeatureGuard:
 - expenses, meter-readings, visitors, complaints, reports
-- architecture, approvals, exit-clearance, notices
+- architecture, approvals, exit-clearance, notices, activity
 
 When a feature is disabled, users see a "Feature Disabled" page instead of the content.
 
@@ -648,6 +654,7 @@ Run in order in Supabase SQL editor:
 029_fix_platform_admins.sql   - Platform admin seeding fix
 030_fix_user_creation.sql     - User creation trigger fixes
 031_admin_functions.sql       - Enhanced admin functions with stats
+032_workspace_details_admin.sql - get_workspace_details_admin() for admin Explore
 ```
 
 ### Storage Buckets (Migration 015)
@@ -693,13 +700,17 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
-- **Feature Flags Route Protection** - FeatureGuard component prevents direct URL access to disabled features (9 pages protected)
+- **Clean URL Structure** - Removed /dashboard/ prefix from all routes (e.g., /tenants instead of /dashboard/tenants)
+- **Activity Log Page** - New /activity page for all workspace owners to view audit events
+- **Admin Page Simplified** - Platform admin now shows only workspaces list with Explore dialog for details
+- **Migration 032** - Added get_workspace_details_admin() RPC function for admin Explore
+- **Feature Flags Route Protection** - FeatureGuard component prevents direct URL access to disabled features (10 pages protected)
 - **Deep Links Navigation** - Nested routes: /tenants/[id]/bills, /tenants/[id]/payments, /rooms/[id]/tenants, /properties/[id]/rooms, /properties/[id]/tenants
 - **Room Defaults by Property Type** - Settings → Room Pricing now supports PG, Hostel, Co-Living with different pricing defaults
 - **ID Proof Front/Back** - IdDocumentEntry now supports front_url and back_url for documents with two sides
-- **Feature Flags System** - 14 configurable features via Settings → Features tab with FeatureGate component
+- **Feature Flags System** - 15 configurable features via Settings → Features tab with FeatureGate component
 - **Breadcrumb navigation** - All 16 dashboard pages now have breadcrumbs via PageHeader
-- **Platform Admin Explorer** - New /dashboard/admin page for superusers with workspace browser & audit logs
+- **Platform Admin Explorer** - New /admin page for superusers with workspace browser
 - **Admin navigation** - Admin link shows in sidebar for platform admins only
 - **Tabs component** - Added shadcn/ui Tabs component
 - **Dashboard nav fix** - Dashboard item no longer always green/active
@@ -746,12 +757,13 @@ Configured in `vercel.json`
 Check `src/lib/auth/auth-context.tsx` - session refresh handlers should handle this now.
 
 ### If Adding New Dashboard Page
-1. Create page in `src/app/(dashboard)/dashboard/[module]/`
-2. Wrap with `<PermissionGuard permission="module.view">`
-3. If feature-flagged, also wrap with `<FeatureGuard feature="featureName">` (outside PermissionGuard)
-4. Add to navigation in `src/app/(dashboard)/layout.tsx` with `feature` property if applicable
-5. Use `PageHeader` with `breadcrumbs` prop, `MetricsBar`, `DataTable` for consistency
-6. Example breadcrumbs: `breadcrumbs={[{ label: "Module Name" }]}`
+1. Create page in `src/app/(dashboard)/[module]/` (NOT in dashboard/ subfolder - URLs are now clean)
+2. URL will be `/[module]` (e.g., `/tenants`, `/payments`, NOT `/dashboard/tenants`)
+3. Wrap with `<PermissionGuard permission="module.view">`
+4. If feature-flagged, also wrap with `<FeatureGuard feature="featureName">` (outside PermissionGuard)
+5. Add to navigation in `src/app/(dashboard)/layout.tsx` with `feature` property if applicable
+6. Use `PageHeader` with `breadcrumbs` prop, `MetricsBar`, `DataTable` for consistency
+7. Example breadcrumbs: `breadcrumbs={[{ label: "Module Name" }]}`
 
 ### If Modifying Permissions
 1. Update `src/lib/auth/types.ts` - PERMISSIONS constant
@@ -775,4 +787,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-02 (feature flags route protection, deep links, property-type pricing, ID front/back, feature flags)*
+*Last updated: 2026-01-02 (clean URLs, activity log, admin simplification, 15 feature flags)*
