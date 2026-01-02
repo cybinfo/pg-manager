@@ -369,23 +369,33 @@ RESEND_API_KEY=<resend_key>
 
 ## Recent Bug Fixes (Important)
 
+### Dashboard Nav Active State (2026-01-02) ✅
+**Problem**: Dashboard menu item always green/active on all pages
+**Solution**: Dashboard route now uses exact match instead of startsWith
+**File**: `src/app/(dashboard)/layout.tsx:176-178`
+
+### Tenant Dashboard Display (2026-01-02) ✅
+**Problem**: Property & Room not showing in tenant dashboard
+**Solution**: Added Array.isArray() transform for Supabase joins
+**File**: `src/app/(tenant)/tenant/page.tsx:107-116`
+
+### Mobile Logout Accessibility (2026-01-02) ✅
+**Problem**: Logout button hidden behind mobile bottom nav
+**Solution**: Bottom nav fades out when sidebar is open
+**File**: `src/app/(dashboard)/layout.tsx:277`
+
 ### Session Loading Issue (2025-01-02)
 **Problem**: App stuck on loading after inactivity
 **Solution**: Added visibility/focus handlers to refresh session
 **File**: `src/lib/auth/auth-context.tsx`
-- Changed `getSession()` to `getUser()` for server-side validation
-- Added `visibilitychange` and `focus` event listeners
-- Added `refreshSession()` function
 
 ### Multi-Role Permissions (2025-12-30)
 **Problem**: Staff with multiple roles only got permissions from primary role
 **Solution**: Migration 014 - aggregate permissions from ALL roles in `user_roles`
-**File**: `supabase/migrations/014_fix_staff_permissions_aggregation.sql`
 
 ### Supabase Join Arrays (2025-12-30)
 **Problem**: Role names not displaying, property selection broken
 **Solution**: Always use `Array.isArray()` check for Supabase joins
-**Pattern**: See "Critical Patterns" section above
 
 ---
 
@@ -394,17 +404,18 @@ RESEND_API_KEY=<resend_key>
 ### Critical Bugs to Fix
 | Issue | Description | Status |
 |-------|-------------|--------|
-| Room capacity bug | Room 101 (3 beds) cannot add 3rd tenant | Pending |
-| Tenant Dashboard | Property & Room not showing; missing check-in date | Pending |
-| Dashboard color | "Always green" - active state logic broken | Pending |
-| Mobile logout | Hidden behind bottom menu (z-index) | Pending |
-| Photo uploads | Not working anywhere (Storage integration) | Pending |
+| Room capacity bug | Room 101 (3 beds) cannot add 3rd tenant | **Investigating** |
+| Dashboard color | "Always green" - active state logic | ✅ Fixed |
+| Tenant Dashboard | Property & Room not showing | ✅ Fixed |
+| Mobile logout | Hidden behind bottom menu | ✅ Fixed |
+| Photo uploads | Not working (Storage integration) | Migration 015 ready |
 
-### New Features to Implement
+### New Features (Migrations Ready)
 | Feature | Description | Migration |
 |---------|-------------|-----------|
-| **Audit Logging** | Global immutable log (who/when/what/before/after) | 015 |
-| **Superuser (Global Admin)** | Cross-workspace access; payment deletion for troubleshooting | 016 |
+| **Storage Buckets** | Photo uploads for properties/rooms/tenants | 015 ✅ |
+| **Audit Logging** | Global immutable log (who/when/what/before/after) | 016 ✅ |
+| **Platform Admin** | Cross-workspace superuser access | 017 ✅ |
 | **Approvals Hub** | Tenant requests (name/address change) with workflow | 017 |
 | **Billing Continuity** | No gaps; ₹0 bills for zero usage; bill_id required for payments | 018 |
 | **Verification Tokens** | Indian mobile (+91) & email verification with OTP | 019 |
@@ -460,7 +471,29 @@ Run in order in Supabase SQL editor:
 012_unified_identity.sql    - Multi-context auth
 013_default_roles.sql       - System roles + tenant features
 014_fix_permissions.sql     - Multi-role aggregation
+015_storage_buckets.sql     - Supabase Storage for photos/docs
+016_audit_logging.sql       - Global immutable audit trail
+017_platform_admins.sql     - Superuser/Global Admin system
 ```
+
+### Storage Buckets (Migration 015)
+Creates 4 storage buckets with RLS policies:
+- `property-photos` - Property images (public)
+- `room-photos` - Room images (public)
+- `tenant-photos` - Tenant profile photos
+- `tenant-documents` - ID documents (10MB limit)
+
+### Audit Logging (Migration 016)
+- `audit_events` table - immutable log of all actions
+- Automatic triggers on: tenants, bills, payments, staff, roles, properties, rooms, exit_clearance
+- Helper function `log_audit_event()` for programmatic logging
+- `audit_events_view` for easy querying with actor info
+
+### Platform Admin (Migration 017)
+- `platform_admins` table - users with global access
+- `is_platform_admin()` function for RLS checks
+- Superuser bypass on all key tables
+- Initial admins: newgreenhigh@gmail.com, sethrajat0711@gmail.com
 
 ---
 
@@ -477,10 +510,18 @@ Configured in `vercel.json`
 
 ## Changelog Summary
 
+### January 2026 (Latest)
+- **Dashboard nav fix** - Dashboard item no longer always green/active
+- **Tenant dashboard fix** - Property/Room now displays correctly (Array.isArray fix)
+- **Mobile logout fix** - Bottom nav hides when sidebar opens for logout access
+- **Storage migration** - 015_storage_buckets.sql for photo uploads
+- **Audit logging** - 016_audit_logging.sql with immutable event trail
+- **Platform admin** - 017_platform_admins.sql for superuser access
+
 ### January 2025
 - **Session refresh fix** - Auto-refresh on tab focus/visibility
 
-### December 2025 (Latest)
+### December 2025
 - **RBAC System** - 50+ permissions, 5 default roles, multi-role support
 - **Permission Guards** - Page-level access control
 - **Invitation Emails** - Automated staff/tenant onboarding
