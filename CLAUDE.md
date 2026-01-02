@@ -90,6 +90,7 @@ src/
 │   │       ├── visitors/           # Visitor log
 │   │       ├── exit-clearance/     # Checkout process
 │   │       ├── reports/            # Analytics + charts
+│   │       ├── architecture/       # Property 2D visual map
 │   │       └── settings/           # Config (owner only)
 │   ├── (tenant)/                   # Tenant portal
 │   ├── (setup)/                    # Initial setup wizard
@@ -308,6 +309,9 @@ Configurable via property edit → Website Settings tab:
 | `EmptyState` | No data/no results states |
 | `Loading` | Spinners and skeletons |
 | `ChartContainer` | Recharts wrapper preventing dimension warnings |
+| `Combobox` | Searchable dropdown with single/multi select |
+| `PhoneInput` | Indian mobile number input with validation |
+| `Badge` | Status badges with variants |
 
 ### Form Components (src/components/forms/)
 | Component | Purpose |
@@ -462,7 +466,16 @@ RESEND_API_KEY=<resend_key>
 | Dashboard color | "Always green" - active state logic | ✅ Fixed |
 | Tenant Dashboard | Property & Room not showing | ✅ Fixed |
 | Mobile logout | Hidden behind bottom menu | ✅ Fixed |
-| Photo uploads | Not working (Storage integration) | Migration 015 ready |
+| Photo uploads | Not working (Storage integration) | ✅ Verified working |
+| Payment-bill linkage | Payments without bills allowed | ✅ Fixed (enforced) |
+
+### Features Implemented (2026-01-02)
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Property Architecture View | Visual 2D map of properties→rooms→beds | ✅ Complete |
+| Searchable Dropdowns | Combobox with search for tenant/room/property | ✅ Complete |
+| Indian Mobile Validation | +91 normalization, format validation | ✅ Complete |
+| Payment Workflow | Payments must reference a bill | ✅ Complete |
 
 ### New Features (Migrations Ready)
 | Feature | Description | Migration |
