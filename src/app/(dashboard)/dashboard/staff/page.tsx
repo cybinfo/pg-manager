@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
+import { PermissionGuard } from "@/components/auth"
 import {
   Users,
   Plus,
@@ -304,6 +305,7 @@ export default function StaffPage() {
   }
 
   return (
+    <PermissionGuard permission="staff.view">
     <div className="space-y-6">
       <PageHeader
         title="Staff Management"
@@ -366,5 +368,6 @@ export default function StaffPage() {
         }
       />
     </div>
+    </PermissionGuard>
   )
 }

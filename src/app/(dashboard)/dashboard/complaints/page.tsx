@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
+import { PermissionGuard } from "@/components/auth"
 import {
   MessageSquare,
   Plus,
@@ -304,6 +305,7 @@ export default function ComplaintsPage() {
   }
 
   return (
+    <PermissionGuard permission="complaints.view">
     <div className="space-y-6">
       <PageHeader
         title="Complaints"
@@ -358,5 +360,6 @@ export default function ComplaintsPage() {
         }
       />
     </div>
+    </PermissionGuard>
   )
 }

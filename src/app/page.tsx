@@ -26,14 +26,14 @@ const products = [
   {
     name: "PG Manager",
     tagline: "For PGs & Hostels",
-    description: "Complete management for Paying Guest accommodations and hostels. Tenants, rooms, billing, meter readings & more.",
+    description: "Complete management for Paying Guest accommodations and hostels. Tenants, rooms, billing, staff roles with 50+ permissions & more.",
     icon: Building2,
     color: "from-teal-500 to-emerald-500",
     bgColor: "bg-teal-50",
     textColor: "text-teal-600",
     status: "live",
     href: "/products/pg-manager",
-    features: ["Tenant Management", "Billing & Payments", "Meter Readings", "Your Own Website"]
+    features: ["Tenant Management", "Smart Billing", "Staff & Roles (RBAC)", "Your Own Website"]
   },
   {
     name: "Shop Manager",

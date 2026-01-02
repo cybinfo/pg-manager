@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
+import { useAuth, useCurrentContext } from "@/lib/auth"
 import Link from "next/link"
 import {
   BarChart,
@@ -74,13 +75,13 @@ interface PaymentStatus {
   [key: string]: string | number // Index signature for recharts compatibility
 }
 
-const quickActions = [
-  { name: "Add Property", href: "/dashboard/properties/new", icon: Building2 },
-  { name: "Add Room", href: "/dashboard/rooms/new", icon: Home },
-  { name: "Add Tenant", href: "/dashboard/tenants/new", icon: Users },
-  { name: "Record Payment", href: "/dashboard/payments/new", icon: CreditCard },
-  { name: "Create Bill", href: "/dashboard/bills/new", icon: FileText },
-  { name: "Add Expense", href: "/dashboard/expenses/new", icon: Wallet },
+const quickActionsConfig = [
+  { name: "Add Property", href: "/dashboard/properties/new", icon: Building2, permission: "properties.create" },
+  { name: "Add Room", href: "/dashboard/rooms/new", icon: Home, permission: "rooms.create" },
+  { name: "Add Tenant", href: "/dashboard/tenants/new", icon: Users, permission: "tenants.create" },
+  { name: "Record Payment", href: "/dashboard/payments/new", icon: CreditCard, permission: "payments.create" },
+  { name: "Create Bill", href: "/dashboard/bills/new", icon: FileText, permission: "bills.create" },
+  { name: "Add Expense", href: "/dashboard/expenses/new", icon: Wallet, permission: "expenses.create" },
 ]
 
 function getGreeting(): { text: string; icon: typeof Sun } {
@@ -93,6 +94,8 @@ function getGreeting(): { text: string; icon: typeof Sun } {
 const CHART_COLORS = ["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
 
 export default function DashboardPage() {
+  const { hasPermission } = useAuth()
+  const { isOwner } = useCurrentContext()
   const [userName, setUserName] = useState("")
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<DashboardStats>({
@@ -272,24 +275,31 @@ export default function DashboardPage() {
 
   const occupancyRate = stats.totalBeds > 0 ? Math.round((stats.occupiedBeds / stats.totalBeds) * 100) : 0
 
-  const metricsItems: MetricItem[] = [
+  // Check if user has permission (owners always have access)
+  const canView = (permission: string) => isOwner || hasPermission(permission)
+
+  // Filter metrics based on permissions
+  const allMetricsItems: (MetricItem & { permission?: string })[] = [
     {
       label: "Properties",
       value: stats.properties,
       icon: Building2,
       href: "/dashboard/properties",
+      permission: "properties.view",
     },
     {
       label: "Tenants",
       value: stats.tenants,
       icon: Users,
       href: "/dashboard/tenants",
+      permission: "tenants.view",
     },
     {
       label: "Revenue",
       value: formatCurrency(stats.totalRevenue),
       icon: Receipt,
       href: "/dashboard/reports",
+      permission: "reports.view",
     },
     {
       label: "Pending Dues",
@@ -297,20 +307,31 @@ export default function DashboardPage() {
       icon: CreditCard,
       highlight: stats.pendingDues > 0,
       href: "/dashboard/payments",
+      permission: "payments.view",
     },
     {
       label: "Expenses",
       value: formatCurrency(stats.totalExpenses),
       icon: TrendingDown,
       href: "/dashboard/expenses",
+      permission: "expenses.view",
     },
     {
       label: "Net Income",
       value: formatCurrency(stats.totalRevenue - stats.totalExpenses),
       icon: BarChart3,
       href: "/dashboard/reports",
+      permission: "reports.view",
     },
   ]
+
+  // Filter metrics based on user permissions
+  const metricsItems: MetricItem[] = allMetricsItems
+    .filter(item => !item.permission || canView(item.permission))
+    .map(({ permission, ...rest }) => rest)
+
+  // Filter quick actions based on permissions
+  const quickActions = quickActionsConfig.filter(action => canView(action.permission))
 
   const completedTasks = gettingStarted.filter((item) => item.done).length
   const allTasksDone = completedTasks === gettingStarted.length
@@ -355,90 +376,102 @@ export default function DashboardPage() {
         <MetricsBar items={metricsItems} />
       )}
 
-      {/* Additional Quick Stats */}
+      {/* Additional Quick Stats - filtered by permissions */}
       {!loading && stats.properties > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-teal-50 to-emerald-50 border-teal-100">
-            <CardContent className="pt-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <Percent className="h-4 w-4 text-teal-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-teal-700">{occupancyRate}%</p>
-                  <p className="text-xs text-teal-600">Occupancy Rate</p>
-                </div>
-              </div>
-              <p className="text-xs text-teal-600/70 mt-2">
-                {stats.occupiedBeds}/{stats.totalBeds} beds filled
-              </p>
-            </CardContent>
-          </Card>
-
-          <Link href="/dashboard/payments">
-            <Card className={`h-full ${stats.overdueCount > 0 ? "bg-gradient-to-br from-rose-50 to-red-50 border-rose-100" : "bg-white"}`}>
+          {/* Occupancy Rate - visible to those with rooms.view permission */}
+          {canView("rooms.view") && (
+            <Card className="bg-gradient-to-br from-teal-50 to-emerald-50 border-teal-100">
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg shadow-sm ${stats.overdueCount > 0 ? "bg-white" : "bg-slate-100"}`}>
-                    <Clock className={`h-4 w-4 ${stats.overdueCount > 0 ? "text-rose-600" : "text-slate-600"}`} />
+                  <div className="p-2 bg-white rounded-lg shadow-sm">
+                    <Percent className="h-4 w-4 text-teal-600" />
                   </div>
                   <div>
-                    <p className={`text-2xl font-bold ${stats.overdueCount > 0 ? "text-rose-700" : "text-slate-700"}`}>
-                      {stats.overdueCount}
-                    </p>
-                    <p className={`text-xs ${stats.overdueCount > 0 ? "text-rose-600" : "text-slate-600"}`}>
-                      Overdue Payments
-                    </p>
+                    <p className="text-2xl font-bold text-teal-700">{occupancyRate}%</p>
+                    <p className="text-xs text-teal-600">Occupancy Rate</p>
                   </div>
                 </div>
+                <p className="text-xs text-teal-600/70 mt-2">
+                  {stats.occupiedBeds}/{stats.totalBeds} beds filled
+                </p>
               </CardContent>
             </Card>
-          </Link>
+          )}
 
-          <Link href="/dashboard/complaints">
-            <Card className={`h-full ${stats.openComplaints > 0 ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100" : "bg-white"}`}>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg shadow-sm ${stats.openComplaints > 0 ? "bg-white" : "bg-slate-100"}`}>
-                    <MessageSquare className={`h-4 w-4 ${stats.openComplaints > 0 ? "text-amber-600" : "text-slate-600"}`} />
+          {/* Overdue Payments - visible to those with payments.view permission */}
+          {canView("payments.view") && (
+            <Link href="/dashboard/payments">
+              <Card className={`h-full ${stats.overdueCount > 0 ? "bg-gradient-to-br from-rose-50 to-red-50 border-rose-100" : "bg-white"}`}>
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg shadow-sm ${stats.overdueCount > 0 ? "bg-white" : "bg-slate-100"}`}>
+                      <Clock className={`h-4 w-4 ${stats.overdueCount > 0 ? "text-rose-600" : "text-slate-600"}`} />
+                    </div>
+                    <div>
+                      <p className={`text-2xl font-bold ${stats.overdueCount > 0 ? "text-rose-700" : "text-slate-700"}`}>
+                        {stats.overdueCount}
+                      </p>
+                      <p className={`text-xs ${stats.overdueCount > 0 ? "text-rose-600" : "text-slate-600"}`}>
+                        Overdue Payments
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className={`text-2xl font-bold ${stats.openComplaints > 0 ? "text-amber-700" : "text-slate-700"}`}>
-                      {stats.openComplaints}
-                    </p>
-                    <p className={`text-xs ${stats.openComplaints > 0 ? "text-amber-600" : "text-slate-600"}`}>
-                      Open Complaints
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
 
-          <Link href="/dashboard/tenants">
-            <Card className={`h-full ${stats.expiringLeases > 0 ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100" : "bg-white"}`}>
-              <CardContent className="pt-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg shadow-sm ${stats.expiringLeases > 0 ? "bg-white" : "bg-slate-100"}`}>
-                    <CalendarDays className={`h-4 w-4 ${stats.expiringLeases > 0 ? "text-blue-600" : "text-slate-600"}`} />
+          {/* Open Complaints - visible to those with complaints.view permission */}
+          {canView("complaints.view") && (
+            <Link href="/dashboard/complaints">
+              <Card className={`h-full ${stats.openComplaints > 0 ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100" : "bg-white"}`}>
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg shadow-sm ${stats.openComplaints > 0 ? "bg-white" : "bg-slate-100"}`}>
+                      <MessageSquare className={`h-4 w-4 ${stats.openComplaints > 0 ? "text-amber-600" : "text-slate-600"}`} />
+                    </div>
+                    <div>
+                      <p className={`text-2xl font-bold ${stats.openComplaints > 0 ? "text-amber-700" : "text-slate-700"}`}>
+                        {stats.openComplaints}
+                      </p>
+                      <p className={`text-xs ${stats.openComplaints > 0 ? "text-amber-600" : "text-slate-600"}`}>
+                        Open Complaints
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className={`text-2xl font-bold ${stats.expiringLeases > 0 ? "text-blue-700" : "text-slate-700"}`}>
-                      {stats.expiringLeases}
-                    </p>
-                    <p className={`text-xs ${stats.expiringLeases > 0 ? "text-blue-600" : "text-slate-600"}`}>
-                      Exiting Soon (30d)
-                    </p>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+
+          {/* Exiting Soon - visible to those with tenants.view permission */}
+          {canView("tenants.view") && (
+            <Link href="/dashboard/tenants">
+              <Card className={`h-full ${stats.expiringLeases > 0 ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100" : "bg-white"}`}>
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg shadow-sm ${stats.expiringLeases > 0 ? "bg-white" : "bg-slate-100"}`}>
+                      <CalendarDays className={`h-4 w-4 ${stats.expiringLeases > 0 ? "text-blue-600" : "text-slate-600"}`} />
+                    </div>
+                    <div>
+                      <p className={`text-2xl font-bold ${stats.expiringLeases > 0 ? "text-blue-700" : "text-slate-700"}`}>
+                        {stats.expiringLeases}
+                      </p>
+                      <p className={`text-xs ${stats.expiringLeases > 0 ? "text-blue-600" : "text-slate-600"}`}>
+                        Exiting Soon (30d)
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
         </div>
       )}
 
-      {/* Charts Section */}
-      {!loading && stats.properties > 0 && monthlyRevenue.length > 0 && (
+      {/* Charts Section - only visible to those with reports.view permission */}
+      {!loading && stats.properties > 0 && monthlyRevenue.length > 0 && canView("reports.view") && (
         <div className="grid md:grid-cols-2 gap-6">
           {/* Revenue Trend */}
           <Card>
@@ -577,20 +610,22 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Quick Actions - cleaner inline buttons */}
-      <div>
-        <h2 className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</h2>
-        <div className="flex flex-wrap gap-2">
-          {quickActions.map((action) => (
-            <Link key={action.name} href={action.href}>
-              <Button variant="outline" size="sm" className="gap-2 hover:bg-slate-50">
-                <action.icon className="h-4 w-4 text-slate-600" />
-                {action.name}
-              </Button>
-            </Link>
-          ))}
+      {/* Quick Actions - filtered by permissions */}
+      {quickActions.length > 0 && (
+        <div>
+          <h2 className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</h2>
+          <div className="flex flex-wrap gap-2">
+            {quickActions.map((action) => (
+              <Link key={action.name} href={action.href}>
+                <Button variant="outline" size="sm" className="gap-2 hover:bg-slate-50">
+                  <action.icon className="h-4 w-4 text-slate-600" />
+                  {action.name}
+                </Button>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Empty state for new users */}
       {stats.properties === 0 && !loading && (

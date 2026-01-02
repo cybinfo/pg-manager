@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
+import { PermissionGuard } from "@/components/auth"
 import {
   FileText,
   Plus,
@@ -247,6 +248,7 @@ export default function BillsPage() {
   }
 
   return (
+    <PermissionGuard permission="bills.view">
     <div className="space-y-6">
       <PageHeader
         title="Bills"
@@ -301,5 +303,6 @@ export default function BillsPage() {
         }
       />
     </div>
+    </PermissionGuard>
   )
 }

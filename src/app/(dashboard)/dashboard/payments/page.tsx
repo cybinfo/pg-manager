@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
+import { PermissionGuard } from "@/components/auth"
 import {
   CreditCard,
   Plus,
@@ -248,6 +249,7 @@ export default function PaymentsPage() {
   }
 
   return (
+    <PermissionGuard permission="payments.view">
     <div className="space-y-6">
       <PageHeader
         title="Payments"
@@ -310,5 +312,6 @@ export default function PaymentsPage() {
         }
       />
     </div>
+    </PermissionGuard>
   )
 }

@@ -35,8 +35,14 @@ const features = [
   {
     icon: Users,
     title: "Tenant Management",
-    description: "Complete tenant lifecycle - registration, documents, room assignment, and exit clearance.",
+    description: "Complete tenant lifecycle - registration, documents, room assignment, and exit clearance. Detect returning tenants automatically.",
     color: "text-violet-600 bg-violet-50"
+  },
+  {
+    icon: Shield,
+    title: "Staff & Roles (RBAC)",
+    description: "5 default roles + custom roles with 50+ granular permissions. Multi-role support, email invitations, property-level access control.",
+    color: "text-cyan-600 bg-cyan-50"
   },
   {
     icon: Globe,
@@ -53,7 +59,7 @@ const features = [
   {
     icon: Receipt,
     title: "Smart Billing System",
-    description: "Generate bills, track dues, accept partial payments. Everything linked and reconciled automatically.",
+    description: "Generate bills, track dues, accept partial payments. Auto-generate monthly bills on your schedule.",
     color: "text-emerald-600 bg-emerald-50"
   },
   {
@@ -85,12 +91,6 @@ const features = [
     title: "Reports & Analytics",
     description: "Revenue trends, occupancy rates, dues aging - make data-driven decisions.",
     color: "text-purple-600 bg-purple-50"
-  },
-  {
-    icon: Shield,
-    title: "Staff & Roles",
-    description: "Add staff with custom roles. Control who can access what with granular permissions.",
-    color: "text-cyan-600 bg-cyan-50"
   },
   {
     icon: UserCheck,
@@ -130,7 +130,11 @@ const benefits = [
   "WhatsApp Reminders",
   "UPI Payment Support",
   "PDF Receipts",
-  "Your Own PG Website"
+  "Your Own PG Website",
+  "Staff with 50+ Permissions",
+  "Email Invitations",
+  "Multi-Role Support",
+  "Property-Level Access"
 ]
 
 export default function PGManagerPage() {
@@ -380,15 +384,15 @@ export default function PGManagerPage() {
                   "Unlimited Properties",
                   "Unlimited Rooms",
                   "Unlimited Tenants",
+                  "Staff with 50+ Permissions",
+                  "5 Default Roles + Custom",
+                  "Email Invitation System",
                   "Meter Reading Tracking",
-                  "Payment Management",
+                  "Auto Monthly Billing",
                   "Complaint Handling",
                   "Visitor Logs",
-                  "Staff Management",
                   "Reports & Analytics",
-                  "Your Own PG Website",
-                  "Email & WhatsApp Reminders",
-                  "PDF Receipts"
+                  "Your Own PG Website"
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-2 text-slate-300">
                     <CheckCircle className="h-5 w-5 text-teal-500" />

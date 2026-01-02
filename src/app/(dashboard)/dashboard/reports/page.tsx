@@ -37,6 +37,7 @@ import {
   BarChart3,
 } from "lucide-react"
 import { PageHeader } from "@/components/ui/page-header"
+import { PermissionGuard } from "@/components/auth"
 
 interface Property {
   id: string
@@ -614,6 +615,7 @@ export default function ReportsPage() {
   }
 
   return (
+    <PermissionGuard permission="reports.view">
     <div className="space-y-6">
       <PageHeader
         title="Reports & Analytics"
@@ -1228,5 +1230,6 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
     </div>
+    </PermissionGuard>
   )
 }

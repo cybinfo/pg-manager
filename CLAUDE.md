@@ -115,16 +115,87 @@ ManageKar is a platform for multiple management products targeting Indian busine
 - **Single Login, Multiple Roles**: One email can be owner at one PG, staff at another, tenant at a third
 - **Context Switching**: Header dropdown to switch between workspaces without re-login
 - **Workspaces**: Each PG owner account becomes a "workspace" - staff and tenants are invited to workspaces
-- **Invitation System**: Invite staff/tenants via email/phone - they auto-link on signup
-- **Role-Based Permissions**: Staff have role-specific permissions (manage_tenants, manage_payments, etc.)
-- **Permission Gates**: `<PermissionGate>`, `<OwnerOnly>`, `<StaffOnly>`, `<TenantOnly>` components
+- **Invitation System**: Invite staff/tenants via email - they auto-link on signup or receive invitation email
+- **Role-Based Permissions**: Staff have role-specific permissions (50+ granular permissions)
+- **Permission Gates**: `<PermissionGate>`, `<PermissionGuard>`, `<OwnerGuard>`, `<OwnerOnly>`, `<StaffOnly>`, `<TenantOnly>` components
 - **AI Identity Detection**: Detect duplicate accounts, suggest account linking
 - **Context Analytics**: Track context switches, permission usage, staff productivity
 - **Database Tables**: `workspaces`, `user_profiles`, `user_contexts`, `invitations`, `context_switches`, `permission_audit_log`
 - **Files**:
   - `src/lib/auth/` - AuthProvider, types, AI detection, analytics
-  - `src/components/auth/` - ContextPicker, ContextSwitcher, PermissionGate, InvitationForm
+  - `src/components/auth/` - ContextPicker, ContextSwitcher, PermissionGate, PermissionGuard, InvitationForm
   - `supabase/migrations/012_unified_identity_system.sql`
+
+### Staff Management & Role-Based Access Control (RBAC)
+- **Default System Roles** (auto-created for new owners):
+  - **Admin**: Full access to all features
+  - **Property Manager**: Manage properties, rooms, tenants
+  - **Accountant**: Handle billing, payments, expenses
+  - **Maintenance**: Manage meter readings, complaints
+  - **Receptionist**: Handle visitors, complaints, notices
+- **Custom Roles**: Owners can create custom roles with specific permissions
+- **50+ Granular Permissions**: Organized by module (properties, rooms, tenants, bills, payments, expenses, etc.)
+- **Multi-Role Support**: Staff can have multiple roles assigned (permissions aggregated from all roles)
+- **Property-Level Roles**: Roles can be scoped to specific properties or all properties
+- **Permission Categories**:
+  - `properties.view/create/edit/delete`
+  - `rooms.view/create/edit/delete`
+  - `tenants.view/create/edit/delete`
+  - `bills.view/create/edit/delete`
+  - `payments.view/create/edit/delete`
+  - `expenses.view/create/edit/delete`
+  - `meter_readings.view/create/edit`
+  - `complaints.view/create/edit/resolve`
+  - `notices.view/create/edit/delete`
+  - `visitors.view/create`
+  - `reports.view/export`
+  - `exit_clearance.initiate/process/approve`
+  - `staff.view/create/edit/delete`
+  - `settings.view/edit`
+- **Files**:
+  - `src/app/(dashboard)/dashboard/staff/` - Staff management pages
+  - `src/app/(dashboard)/dashboard/staff/roles/` - Role management pages
+  - `supabase/migrations/013_default_roles_tenant_features.sql`
+  - `supabase/migrations/014_fix_staff_permissions_aggregation.sql`
+
+### Page-Level Permission Enforcement
+- **PermissionGuard Component**: Wraps pages to enforce permission checks
+  - Shows "Access Denied" if user lacks required permission
+  - Owners always have access
+  - Staff checked against their role permissions
+  - Tenants redirected to tenant portal
+- **OwnerGuard Component**: Owner-only pages (like Settings)
+- **Navigation Filtering**: Sidebar only shows menu items user has permission for
+- **Dashboard Filtering**: Stats, charts, and quick actions filtered by permissions
+- **Protected Pages**: All dashboard pages wrapped with appropriate guards
+- **Files**:
+  - `src/components/auth/permission-guard.tsx` - PermissionGuard, OwnerGuard components
+  - `src/app/(dashboard)/layout.tsx` - Navigation filtering
+  - `src/app/(dashboard)/dashboard/page.tsx` - Dashboard filtering
+
+### Invitation Email System
+- **Automated Emails**: When staff/tenant is created, invitation email sent automatically
+- **Email Content**: Branded HTML email with workspace name, role, and signup link
+- **Token-Based**: Secure invitation tokens that expire after 7 days
+- **Auto-Linking**: If user already exists, context created immediately without email
+- **Email Service**: Uses Resend API (100 emails/day free tier)
+- **Files**:
+  - `src/lib/email.ts` - Email service with templates
+  - `src/app/(dashboard)/dashboard/staff/new/page.tsx` - Staff creation with email
+
+### Property-Level Tenant Feature Toggles
+- **Configurable Features**: Each property can enable/disable tenant features
+  - Tenant Portal Access
+  - Online Payments
+  - Raise Complaints
+  - View Notices
+  - View Bill History
+  - Request Maintenance
+- **Settings UI**: Per-property toggles in Settings → Tenant Features tab
+- **Database**: `tenant_features` JSONB column on properties table
+- **Files**:
+  - `src/app/(dashboard)/dashboard/settings/page.tsx` - Tenant Features tab
+  - `supabase/migrations/013_default_roles_tenant_features.sql`
 
 ### Tenant Re-joining & Room Switching
 - Automatic detection of returning tenants by phone number
@@ -223,6 +294,54 @@ vercel --prod
 ---
 
 ## Changelog
+
+### 2025-12-30 - Staff RBAC, Permission Enforcement & Invitation System
+- **Problem Solved**: Complete role-based access control for staff with page-level security enforcement
+- **Default System Roles Created** (`supabase/migrations/013_default_roles_tenant_features.sql`):
+  - Admin (full access), Property Manager, Accountant, Maintenance, Receptionist
+  - Auto-created for each owner via `create_default_roles_for_owner()` function
+  - Each role has pre-configured permissions matching their job responsibilities
+- **Invitation Email System**:
+  - When creating staff, system checks if email exists in `user_profiles`
+  - Existing users: Context created immediately, no email sent
+  - New users: Invitation created with token, branded email sent via Resend API
+  - Email includes: workspace name, role name, signup URL with token
+  - `sendInvitationEmail()` function in `src/lib/email.ts`
+- **Page-Level Permission Enforcement**:
+  - Created `PermissionGuard` component - wraps pages, shows "Access Denied" if no permission
+  - Created `OwnerGuard` component - for owner-only pages like Settings
+  - All 14 dashboard pages now protected with appropriate guards
+  - Direct URL access blocked for unauthorized users
+- **Navigation Filtering**:
+  - Sidebar navigation filtered by user permissions
+  - Only shows menu items user has access to
+  - Settings only visible to owners
+- **Dashboard Permission Filtering**:
+  - Metrics bar filtered by permission (properties.view, tenants.view, etc.)
+  - Quick stats cards filtered (Occupancy, Overdue Payments, Complaints, Exiting Soon)
+  - Charts section only visible with reports.view permission
+  - Quick actions filtered by create permissions
+- **Multi-Role Permissions Aggregation** (`supabase/migrations/014_fix_staff_permissions_aggregation.sql`):
+  - Fixed issue where staff with multiple roles only got permissions from primary role
+  - `get_user_contexts()` function now aggregates permissions from ALL assigned roles
+  - Uses `user_roles` table to fetch all role assignments for staff member
+- **Property-Level Tenant Feature Toggles**:
+  - Each property can configure which features tenants can access
+  - Settings UI in Settings → Tenant Features tab
+  - Features: Portal Access, Online Payments, Raise Complaints, View Notices, Bill History, Maintenance Requests
+- **Bug Fixes**:
+  - Fixed role dropdown not showing system roles (removed `is_system_role = false` filter)
+  - Fixed property selection saving as "All Properties" (Supabase join object vs array handling)
+  - Fixed role names not displaying (Array.isArray check for Supabase joins)
+- **Files Created/Modified**:
+  - `src/components/auth/permission-guard.tsx` - PermissionGuard, OwnerGuard
+  - `src/components/auth/index.ts` - Added exports
+  - `src/app/(dashboard)/layout.tsx` - Navigation filtering
+  - `src/app/(dashboard)/dashboard/page.tsx` - Dashboard filtering
+  - `src/app/(dashboard)/dashboard/settings/page.tsx` - OwnerGuard, Tenant Features tab
+  - All dashboard pages - Added PermissionGuard wrappers
+  - `supabase/migrations/013_default_roles_tenant_features.sql`
+  - `supabase/migrations/014_fix_staff_permissions_aggregation.sql`
 
 ### 2025-12-30 - Unified Identity & Multi-Context System
 - **Problem Solved**: Comprehensive system for handling multi-role users (same person as owner, staff, tenant across different PGs)

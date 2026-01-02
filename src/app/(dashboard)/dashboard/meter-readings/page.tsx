@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
+import { PermissionGuard } from "@/components/auth"
 import {
   Gauge,
   Plus,
@@ -283,6 +284,7 @@ export default function MeterReadingsPage() {
   }
 
   return (
+    <PermissionGuard permission="meter_readings.view">
     <div className="space-y-6">
       <PageHeader
         title="Meter Readings"
@@ -337,5 +339,6 @@ export default function MeterReadingsPage() {
         }
       />
     </div>
+    </PermissionGuard>
   )
 }

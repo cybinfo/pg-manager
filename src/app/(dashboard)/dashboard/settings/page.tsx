@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { formatCurrency } from "@/lib/format"
 import { PageHeader } from "@/components/ui/page-header"
+import { OwnerGuard } from "@/components/auth"
 import { toast } from "sonner"
 import { sendTestEmail } from "@/lib/email"
 
@@ -581,6 +582,7 @@ export default function SettingsPage() {
   }
 
   return (
+    <OwnerGuard>
     <div className="space-y-6">
       <PageHeader
         title="Settings"
@@ -1605,5 +1607,6 @@ export default function SettingsPage() {
         </div>
       )}
     </div>
+    </OwnerGuard>
   )
 }

@@ -248,6 +248,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [fetchProfile, fetchContexts])
 
+  // Refresh session - validates token with server
+  const refreshSession = useCallback(async () => {
+    console.log('[Auth] Refreshing session...')
+    try {
+      // First try to get the user (validates token server-side)
+      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser()
+
+      if (userError || !currentUser) {
+        console.log('[Auth] Session invalid or expired, user needs to re-login')
+        // Session is invalid - clear state
+        setUser(null)
+        setProfile(null)
+        setContexts([])
+        setCurrentContext(null)
+        localStorage.removeItem('currentContextId')
+        setIsLoading(false)
+        return false
+      }
+
+      // Session is valid - update user if needed
+      if (!user || user.id !== currentUser.id) {
+        console.log('[Auth] Updating user from refreshed session')
+        setUser(currentUser)
+        await loadUserData(currentUser, !currentContext)
+      }
+
+      setIsLoading(false)
+      return true
+    } catch (err) {
+      console.error('[Auth] Error refreshing session:', err)
+      setIsLoading(false)
+      return false
+    }
+  }, [supabase, user, currentContext, loadUserData])
+
   // Initialize auth state
   useEffect(() => {
     let mounted = true
@@ -263,10 +298,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('[Auth] Starting initialization')
 
       try {
-        // Get current session
-        console.log('[Auth] Getting session...')
-        const { data: { session }, error } = await supabase.auth.getSession()
-        console.log('[Auth] Session result:', { hasSession: !!session, hasUser: !!session?.user, error })
+        // Use getUser() instead of getSession() to validate token server-side
+        console.log('[Auth] Getting user (validates token)...')
+        const { data: { user: sessionUser }, error } = await supabase.auth.getUser()
+        console.log('[Auth] User result:', { hasUser: !!sessionUser, error: error?.message })
 
         if (!mounted) {
           console.log('[Auth] Component unmounted, aborting')
@@ -274,16 +309,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         if (error) {
-          console.error('[Auth] Error getting session:', error)
+          console.error('[Auth] Error getting user:', error)
+          // Clear any stale state
+          setUser(null)
+          setProfile(null)
+          setContexts([])
+          setCurrentContext(null)
           setIsLoading(false)
           return
         }
 
-        if (session?.user) {
-          console.log('[Auth] User found:', session.user.email)
-          setUser(session.user)
+        if (sessionUser) {
+          console.log('[Auth] User found:', sessionUser.email)
+          setUser(sessionUser)
           console.log('[Auth] Loading user data...')
-          await loadUserData(session.user, true)
+          await loadUserData(sessionUser, true)
           console.log('[Auth] User data loaded')
         } else {
           console.log('[Auth] No user in session')
@@ -331,14 +371,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     })
 
+    // Handle visibility change - refresh session when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && initialLoadDoneRef.current) {
+        console.log('[Auth] Tab became visible, refreshing session...')
+        refreshSession()
+      }
+    }
+
+    // Handle focus - refresh session when window gains focus
+    const handleFocus = () => {
+      if (initialLoadDoneRef.current) {
+        console.log('[Auth] Window focused, refreshing session...')
+        refreshSession()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
     return () => {
       console.log('[Auth] Cleanup - unmounting')
       mounted = false
       initializingRef.current = false
       initialLoadDoneRef.current = false
       subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
     }
-  }, [supabase, loadUserData])
+  }, [supabase, loadUserData, refreshSession])
 
   const value: AuthState = {
     user,

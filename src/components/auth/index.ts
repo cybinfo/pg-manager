@@ -20,5 +20,8 @@ export {
   UpgradePrompt,
 } from './permission-gate'
 
+// Permission Guard (for page-level access control)
+export { PermissionGuard, OwnerGuard, withPermission } from './permission-guard'
+
 // Invitation Components
 export { InvitationForm, InvitationList, AcceptInvitation } from './invitation-components'

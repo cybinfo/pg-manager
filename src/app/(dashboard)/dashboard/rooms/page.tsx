@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
+import { PermissionGuard } from "@/components/auth"
 import {
   Home,
   Plus,
@@ -239,6 +240,7 @@ export default function RoomsPage() {
   }
 
   return (
+    <PermissionGuard permission="rooms.view">
     <div className="space-y-6">
       <PageHeader
         title="Rooms"
@@ -293,5 +295,6 @@ export default function RoomsPage() {
         }
       />
     </div>
+    </PermissionGuard>
   )
 }
