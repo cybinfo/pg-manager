@@ -129,15 +129,15 @@ export default function AdminExplorerPage() {
             supabase
               .from("properties")
               .select("id", { count: "exact", head: true })
-              .eq("workspace_id", ws.id),
+              .eq("owner_id", ws.owner_user_id),
             supabase
               .from("rooms")
               .select("id", { count: "exact", head: true })
-              .eq("workspace_id", ws.id),
+              .eq("owner_id", ws.owner_user_id),
             supabase
               .from("tenants")
               .select("id", { count: "exact", head: true })
-              .eq("workspace_id", ws.id)
+              .eq("owner_id", ws.owner_user_id)
           ])
 
           return {
