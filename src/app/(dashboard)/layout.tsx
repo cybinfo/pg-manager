@@ -134,6 +134,10 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
+    <SessionTimeout
+      inactivityTimeout={30 * 60 * 1000} // 30 minutes
+      warningTime={60 * 1000} // 1 minute warning
+    >
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       {/* Mobile sidebar backdrop with glass effect */}
       {sidebarOpen && (
@@ -303,6 +307,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
     </div>
+    </SessionTimeout>
   )
 }
 
@@ -314,12 +319,7 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      <SessionTimeout
-        inactivityTimeout={30 * 60 * 1000} // 30 minutes
-        warningTime={60 * 1000} // 1 minute warning
-      >
-        <DashboardLayoutInner>{children}</DashboardLayoutInner>
-      </SessionTimeout>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
     </AuthProvider>
   )
 }

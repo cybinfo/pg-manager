@@ -22,6 +22,30 @@ function getSupabaseClient(): SupabaseClient {
 }
 
 // ============================================
+// Global Auth State (persists across remounts)
+// ============================================
+// This prevents the infinite remount loop issue
+interface GlobalAuthState {
+  initializing: boolean  // Lock to prevent concurrent initializations
+  initialized: boolean
+  initPromise: Promise<void> | null  // Shared initialization promise
+  user: User | null
+  profile: UserProfile | null
+  contexts: ContextWithDetails[]
+  currentContext: ContextWithDetails | null
+}
+
+const globalAuthState: GlobalAuthState = {
+  initializing: false,
+  initialized: false,
+  initPromise: null,
+  user: null,
+  profile: null,
+  contexts: [],
+  currentContext: null,
+}
+
+// ============================================
 // Auth Context Types
 // ============================================
 
@@ -58,13 +82,14 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [contexts, setContexts] = useState<ContextWithDetails[]>([])
-  const [currentContext, setCurrentContext] = useState<ContextWithDetails | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  // Initialize from global state to survive remounts
+  const [user, setUser] = useState<User | null>(globalAuthState.user)
+  const [profile, setProfile] = useState<UserProfile | null>(globalAuthState.profile)
+  const [contexts, setContexts] = useState<ContextWithDetails[]>(globalAuthState.contexts)
+  const [currentContext, setCurrentContext] = useState<ContextWithDetails | null>(globalAuthState.currentContext)
+  const [isLoading, setIsLoading] = useState(!globalAuthState.initialized)
   const initializingRef = useRef(false)
-  const initialLoadDoneRef = useRef(false)
+  const initialLoadDoneRef = useRef(globalAuthState.initialized)
 
   // Use singleton supabase client to maintain session state
   const supabase = useMemo(() => getSupabaseClient(), [])
@@ -115,11 +140,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const newContexts = await fetchContexts(user.id)
     setContexts(newContexts)
+    globalAuthState.contexts = newContexts
 
     // If current context is no longer valid, switch to default or first
     if (currentContext && !newContexts.find(c => c.context_id === currentContext.context_id)) {
       const defaultCtx = newContexts.find(c => c.is_default) || newContexts[0]
       setCurrentContext(defaultCtx || null)
+      globalAuthState.currentContext = defaultCtx || null
     }
   }, [user, currentContext, fetchContexts])
 
@@ -142,8 +169,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return false
     }
 
-    // Update local state
+    // Update local and global state
     setCurrentContext(targetContext)
+    globalAuthState.currentContext = targetContext
 
     // Store in localStorage for persistence
     localStorage.setItem('currentContextId', contextId)
@@ -204,10 +232,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async () => {
     localStorage.removeItem('currentContextId')
     await supabase.auth.signOut()
+    // Clear both local and global state
     setUser(null)
     setProfile(null)
     setContexts([])
     setCurrentContext(null)
+    globalAuthState.initializing = false
+    globalAuthState.initialized = false
+    globalAuthState.initPromise = null
+    globalAuthState.user = null
+    globalAuthState.profile = null
+    globalAuthState.contexts = []
+    globalAuthState.currentContext = null
   }, [supabase])
 
   // Helper to load user data
@@ -222,8 +258,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       ])
       console.log('[Auth] Fetched - profile:', !!userProfile, 'contexts:', userContexts?.length)
 
+      // Update both local and global state
       setProfile(userProfile)
       setContexts(userContexts)
+      globalAuthState.profile = userProfile
+      globalAuthState.contexts = userContexts
 
       if (selectContext) {
         // Determine initial context
@@ -242,6 +281,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         console.log('[Auth] Setting current context:', initialContext?.context_type, initialContext?.workspace_name)
         setCurrentContext(initialContext)
+        globalAuthState.currentContext = initialContext
       }
     } catch (err) {
       console.error('[Auth] Error loading user data:', err)
@@ -286,16 +326,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Initialize auth state
   useEffect(() => {
     let mounted = true
-    console.log('[Auth] useEffect triggered, isLoading:', isLoading)
+    console.log('[Auth] useEffect triggered, isLoading:', isLoading, 'globalInitialized:', globalAuthState.initialized, 'globalInitializing:', globalAuthState.initializing)
 
     const initAuth = async () => {
-      // Prevent duplicate initialization within same mount cycle
-      if (initializingRef.current) {
-        console.log('[Auth] Already initializing, skipping')
+      // If already initialized globally, just sync state and return
+      if (globalAuthState.initialized) {
+        console.log('[Auth] Using cached global auth state')
+        setUser(globalAuthState.user)
+        setProfile(globalAuthState.profile)
+        setContexts(globalAuthState.contexts)
+        setCurrentContext(globalAuthState.currentContext)
+        setIsLoading(false)
+        initialLoadDoneRef.current = true
         return
       }
+
+      // If initialization is already in progress globally, wait for it
+      if (globalAuthState.initializing && globalAuthState.initPromise) {
+        console.log('[Auth] Waiting for existing initialization to complete')
+        await globalAuthState.initPromise
+        // After waiting, sync state
+        if (mounted) {
+          setUser(globalAuthState.user)
+          setProfile(globalAuthState.profile)
+          setContexts(globalAuthState.contexts)
+          setCurrentContext(globalAuthState.currentContext)
+          setIsLoading(false)
+          initialLoadDoneRef.current = true
+        }
+        return
+      }
+
+      // Prevent duplicate initialization within same mount cycle
+      if (initializingRef.current) {
+        console.log('[Auth] Already initializing (local), skipping')
+        return
+      }
+
+      // Set global lock
+      globalAuthState.initializing = true
       initializingRef.current = true
       console.log('[Auth] Starting initialization')
+
+      // Create a promise that will be resolved when init completes
+      let resolveInit: () => void
+      globalAuthState.initPromise = new Promise<void>((resolve) => {
+        resolveInit = resolve
+      })
 
       try {
         // Use getUser() instead of getSession() to validate token server-side
@@ -303,36 +380,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const { data: { user: sessionUser }, error } = await supabase.auth.getUser()
         console.log('[Auth] User result:', { hasUser: !!sessionUser, error: error?.message })
 
-        if (!mounted) {
-          console.log('[Auth] Component unmounted, aborting')
-          return
-        }
-
         if (error) {
           console.error('[Auth] Error getting user:', error)
           // Clear any stale state
-          setUser(null)
-          setProfile(null)
-          setContexts([])
-          setCurrentContext(null)
-          setIsLoading(false)
-          return
-        }
-
-        if (sessionUser) {
+          globalAuthState.user = null
+          globalAuthState.profile = null
+          globalAuthState.contexts = []
+          globalAuthState.currentContext = null
+          if (mounted) {
+            setUser(null)
+            setProfile(null)
+            setContexts([])
+            setCurrentContext(null)
+          }
+        } else if (sessionUser) {
           console.log('[Auth] User found:', sessionUser.email)
-          setUser(sessionUser)
+          globalAuthState.user = sessionUser
+          if (mounted) setUser(sessionUser)
           console.log('[Auth] Loading user data...')
           await loadUserData(sessionUser, true)
           console.log('[Auth] User data loaded')
         } else {
           console.log('[Auth] No user in session')
+          globalAuthState.user = null
         }
       } catch (err) {
         console.error('[Auth] Exception during auth init:', err)
       } finally {
+        console.log('[Auth] Initialization complete, setting global state')
+        globalAuthState.initialized = true
+        globalAuthState.initializing = false
+        resolveInit!()
         if (mounted) {
-          console.log('[Auth] Setting isLoading to false')
           initialLoadDoneRef.current = true
           setIsLoading(false)
         }
@@ -356,11 +435,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (event === 'SIGNED_IN' && session?.user) {
         console.log('[Auth] Processing SIGNED_IN event')
         setUser(session.user)
+        globalAuthState.user = session.user
         await loadUserData(session.user, false) // Don't auto-select context on sign in
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
         // Token refreshed - update user but keep everything else
         console.log('[Auth] Token refreshed')
         setUser(session.user)
+        globalAuthState.user = session.user
       } else if (event === 'SIGNED_OUT') {
         console.log('[Auth] Signed out')
         setUser(null)
@@ -368,6 +449,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setContexts([])
         setCurrentContext(null)
         localStorage.removeItem('currentContextId')
+        // Clear global state on sign out
+        globalAuthState.initializing = false
+        globalAuthState.initialized = false
+        globalAuthState.initPromise = null
+        globalAuthState.user = null
+        globalAuthState.profile = null
+        globalAuthState.contexts = []
+        globalAuthState.currentContext = null
       }
     })
 
@@ -394,7 +483,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('[Auth] Cleanup - unmounting')
       mounted = false
       initializingRef.current = false
-      initialLoadDoneRef.current = false
+      // Don't reset initialLoadDoneRef or globalAuthState - they persist across remounts
       subscription.unsubscribe()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleFocus)

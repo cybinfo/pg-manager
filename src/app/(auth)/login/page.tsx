@@ -99,7 +99,7 @@ function LoginForm() {
         // No contexts - likely a new owner, redirect to setup or dashboard
         toast.success("Welcome back!")
         router.push(redirectTo || '/dashboard')
-        router.refresh()
+        // Don't use router.refresh() - it causes full page reload and remount issues
       } else if (contextsArray.length === 1) {
         // Single context - log switch and redirect
         await handleContextSelect(contextsArray[0].context_id, false)
@@ -150,8 +150,7 @@ function LoginForm() {
       } else {
         router.push('/dashboard')
       }
-
-      router.refresh()
+      // Don't use router.refresh() - it causes full page reload and remount issues
     } catch (error) {
       console.error('Error selecting context:', error)
       toast.error('Failed to select account')

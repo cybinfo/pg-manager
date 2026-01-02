@@ -101,15 +101,18 @@ async function main() {
     await createStorageBucket(bucket.name, bucket.public, bucket.fileSizeLimit, bucket.mimeTypes);
   }
 
-  // Migration 016 & 017: Need SQL Editor
-  console.log('\n--- Migrations 016 & 017 ---\n');
-  console.log('⚠ Audit logging and Platform admin migrations require direct SQL access.');
+  // Migration 016, 017, 018: Need SQL Editor
+  console.log('\n--- Migrations 016, 017 & 018 ---\n');
+  console.log('⚠ These migrations require direct SQL access.');
   console.log('  Please run these in the Supabase Dashboard SQL Editor:');
   console.log('  1. Go to https://supabase.com/dashboard/project/pmedxtgysllyhpjldhho/sql');
   console.log('  2. Copy and paste contents of:');
   console.log('     - supabase/migrations/016_audit_logging.sql');
   console.log('     - supabase/migrations/017_platform_admins.sql');
+  console.log('     - supabase/migrations/018_fix_rls_policies.sql (REQUIRED - fixes login)');
   console.log('  3. Click "Run" for each migration\n');
+  console.log('  ⚠️  If you already ran 016 & 017 and login is broken:');
+  console.log('     Just run 018_fix_rls_policies.sql to fix it.\n');
 
   console.log('='.repeat(50));
   console.log('Storage buckets created successfully!');

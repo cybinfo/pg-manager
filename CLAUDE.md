@@ -369,6 +369,18 @@ RESEND_API_KEY=<resend_key>
 
 ## Recent Bug Fixes (Important)
 
+### Login Blocked After Migrations (2026-01-02) ✅
+**Problem**: Users couldn't login after running migration 017 - stuck at login page
+**Root Cause**: RLS policies in migration 017 had issues:
+1. `platform_admins` policy was self-referential (circular dependency)
+2. Old policies weren't fully dropped (different names)
+3. Complex joins in policies caused cascading RLS checks
+**Solution**: Migration 018 - comprehensive RLS policy fix:
+- Simplified `platform_admins` policy to only check own record
+- Dropped ALL existing policies before recreating
+- Added `debug_user_access()` function for diagnostics
+**File**: `supabase/migrations/018_fix_rls_policies.sql`
+
 ### Dashboard Nav Active State (2026-01-02) ✅
 **Problem**: Dashboard menu item always green/active on all pages
 **Solution**: Dashboard route now uses exact match instead of startsWith
@@ -474,6 +486,7 @@ Run in order in Supabase SQL editor:
 015_storage_buckets.sql     - Supabase Storage for photos/docs
 016_audit_logging.sql       - Global immutable audit trail
 017_platform_admins.sql     - Superuser/Global Admin system
+018_fix_rls_policies.sql    - Fix RLS policies blocking login
 ```
 
 ### Storage Buckets (Migration 015)
@@ -494,6 +507,13 @@ Creates 4 storage buckets with RLS policies:
 - `is_platform_admin()` function for RLS checks
 - Superuser bypass on all key tables
 - Initial admins: newgreenhigh@gmail.com, sethrajat0711@gmail.com
+
+### RLS Policy Fix (Migration 018)
+- Fixes login issues caused by migration 017
+- Drops ALL existing policies before recreating
+- Simplified platform_admins policy (no self-reference)
+- Added `debug_user_access()` diagnostic function
+- Re-seeds platform admins
 
 ---
 
