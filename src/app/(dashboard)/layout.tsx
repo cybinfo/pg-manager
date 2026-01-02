@@ -31,7 +31,7 @@ import {
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { AuthProvider, useAuth, useCurrentContext } from "@/lib/auth"
-import { ContextSwitcher } from "@/components/auth"
+import { ContextSwitcher, SessionTimeout } from "@/components/auth"
 
 // Navigation items with required permissions
 // null permission means always visible, string means need that permission
@@ -314,7 +314,12 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+      <SessionTimeout
+        inactivityTimeout={30 * 60 * 1000} // 30 minutes
+        warningTime={60 * 1000} // 1 minute warning
+      >
+        <DashboardLayoutInner>{children}</DashboardLayoutInner>
+      </SessionTimeout>
     </AuthProvider>
   )
 }
