@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import {
@@ -1208,26 +1209,22 @@ export default function NewTenantPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="property_id">Property *</Label>
-                <select
-                  id="property_id"
-                  name="property_id"
+                <Label>Property *</Label>
+                <Combobox
+                  options={properties.map((p): ComboboxOption => ({
+                    value: p.id,
+                    label: p.name,
+                  }))}
                   value={formData.property_id}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  required
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, property_id: value }))}
+                  placeholder="Select property..."
+                  searchPlaceholder="Search properties..."
                   disabled={loading}
-                >
-                  {properties.map((property) => (
-                    <option key={property.id} value={property.id}>
-                      {property.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="room_id">Room *</Label>
+                  <Label>Room *</Label>
                   <Button
                     type="button"
                     variant="ghost"
@@ -1240,25 +1237,26 @@ export default function NewTenantPage() {
                     Refresh
                   </Button>
                 </div>
-                <select
-                  id="room_id"
-                  name="room_id"
+                <Combobox
+                  options={availableRooms.map((r): ComboboxOption => ({
+                    value: r.id,
+                    label: `Room ${r.room_number}`,
+                    description: `${r.occupied_beds}/${r.total_beds} beds - ${formatCurrency(r.rent_amount)}/mo`,
+                  }))}
                   value={formData.room_id}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  required
+                  onValueChange={(value) => {
+                    const room = availableRooms.find(r => r.id === value)
+                    setFormData(prev => ({
+                      ...prev,
+                      room_id: value,
+                      monthly_rent: room?.rent_amount?.toString() || prev.monthly_rent,
+                      security_deposit: room?.deposit_amount?.toString() || prev.security_deposit,
+                    }))
+                  }}
+                  placeholder={availableRooms.length === 0 ? "No available rooms" : "Select room..."}
+                  searchPlaceholder="Search rooms..."
                   disabled={loading || availableRooms.length === 0}
-                >
-                  {availableRooms.length === 0 ? (
-                    <option value="">No available rooms</option>
-                  ) : (
-                    availableRooms.map((room) => (
-                      <option key={room.id} value={room.id}>
-                        Room {room.room_number} ({room.occupied_beds}/{room.total_beds} beds)
-                      </option>
-                    ))
-                  )}
-                </select>
+                />
               </div>
             </div>
 

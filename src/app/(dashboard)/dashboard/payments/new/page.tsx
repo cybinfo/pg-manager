@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
 import { toast } from "sonner"
@@ -221,6 +222,11 @@ function NewPaymentForm() {
       return
     }
 
+    if (!formData.bill_id) {
+      toast.error("Payment must be linked to a bill. Please select a bill or create one first.")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -341,23 +347,19 @@ function NewPaymentForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="tenant_id">Tenant *</Label>
-              <select
-                id="tenant_id"
-                name="tenant_id"
+              <Label>Tenant *</Label>
+              <Combobox
+                options={tenants.map((t): ComboboxOption => ({
+                  value: t.id,
+                  label: t.name,
+                  description: `${t.property?.name || 'Unknown Property'}, Room ${t.room?.room_number || 'N/A'}`,
+                }))}
                 value={formData.tenant_id}
-                onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                required
+                onValueChange={(value) => setFormData(prev => ({ ...prev, tenant_id: value }))}
+                placeholder="Search tenant..."
+                searchPlaceholder="Type tenant name..."
                 disabled={loading}
-              >
-                <option value="">Select a tenant</option>
-                {tenants.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name} - {tenant.property?.name}, Room {tenant.room?.room_number}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             {selectedTenant && (
@@ -375,8 +377,8 @@ function NewPaymentForm() {
           </CardContent>
         </Card>
 
-        {/* Bill Selection (if tenant has pending bills) */}
-        {selectedTenant && bills.length > 0 && (
+        {/* Bill Selection - REQUIRED */}
+        {selectedTenant && (
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
@@ -384,36 +386,55 @@ function NewPaymentForm() {
                   <FileText className="h-5 w-5 text-amber-600" />
                 </div>
                 <div>
-                  <CardTitle>Link to Bill (Optional)</CardTitle>
-                  <CardDescription>Select a pending bill to apply this payment</CardDescription>
+                  <CardTitle>Select Bill *</CardTitle>
+                  <CardDescription>Every payment must be linked to a bill</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="bill_id">Select Bill</Label>
-                <select
-                  id="bill_id"
-                  name="bill_id"
-                  value={formData.bill_id}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  disabled={loading}
-                >
-                  <option value="">No bill (standalone payment)</option>
-                  {bills.map((bill) => (
-                    <option key={bill.id} value={bill.id}>
-                      {bill.bill_number} - {bill.for_month} (Due: {formatCurrency(bill.balance_due)})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {bills.length > 0 ? (
+                <>
+                  <div className="space-y-2">
+                    <Label>Pending Bill *</Label>
+                    <Combobox
+                      options={bills.map((b): ComboboxOption => ({
+                        value: b.id,
+                        label: `${b.bill_number} - ${b.for_month}`,
+                        description: `Balance Due: ${formatCurrency(b.balance_due)}`,
+                      }))}
+                      value={formData.bill_id}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, bill_id: value }))}
+                      placeholder="Select a bill..."
+                      searchPlaceholder="Search bills..."
+                      disabled={loading}
+                    />
+                  </div>
 
-              {formData.bill_id && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-                  <p className="text-amber-800">
-                    Payment will be linked to the selected bill and automatically update the bill status.
-                  </p>
+                  {formData.bill_id && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                      <p className="text-amber-800">
+                        Payment will be linked to this bill and automatically update the bill status.
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-5 w-5 text-rose-600 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-rose-800">No Pending Bills</h4>
+                      <p className="text-sm text-rose-700 mt-1">
+                        This tenant has no pending bills. You must create a bill before recording a payment.
+                      </p>
+                      <Link href={`/dashboard/bills/new?tenant=${selectedTenant.id}`}>
+                        <Button variant="outline" size="sm" className="mt-3 border-rose-300 text-rose-700 hover:bg-rose-100">
+                          <FileText className="mr-2 h-4 w-4" />
+                          Create Bill First
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -549,7 +570,7 @@ function NewPaymentForm() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading || !formData.tenant_id}>
+          <Button type="submit" disabled={loading || !formData.tenant_id || !formData.bill_id}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -26,7 +26,8 @@ import {
   Receipt,
   TrendingDown,
   MoreHorizontal,
-  UserCircle2
+  UserCircle2,
+  Grid3X3
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -49,6 +50,7 @@ const navigation = [
   { name: "Complaints", href: "/dashboard/complaints", icon: MessageSquare, permission: "complaints.view" },
   { name: "Notices", href: "/dashboard/notices", icon: Bell, permission: "notices.view" },
   { name: "Reports", href: "/dashboard/reports", icon: FileText, permission: "reports.view" },
+  { name: "Architecture", href: "/dashboard/architecture", icon: Grid3X3, permission: "properties.view" },
   { name: "Staff", href: "/dashboard/staff", icon: UserCog, permission: "staff.view" },
 ]
 
