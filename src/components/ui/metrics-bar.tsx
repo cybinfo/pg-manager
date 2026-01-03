@@ -1,4 +1,7 @@
+"use client"
+
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -20,6 +23,14 @@ interface MetricsBarProps {
 }
 
 export function MetricsBar({ items, className }: MetricsBarProps) {
+  const router = useRouter()
+
+  const handleClick = (href: string | undefined) => {
+    if (href) {
+      router.push(href)
+    }
+  }
+
   return (
     <div
       className={cn(
@@ -36,7 +47,7 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
             item.highlight && "bg-amber-50/50",
             item.href && "cursor-pointer hover:bg-slate-50 transition-colors"
           )}
-          onClick={() => item.href && (window.location.href = item.href)}
+          onClick={() => handleClick(item.href)}
         >
           {item.icon && (
             <div className={cn(
