@@ -74,7 +74,7 @@ interface PendingCharge {
 function NewBillContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const preselectedTenant = searchParams.get("tenant")
+  const preselectedTenant = searchParams.get("tenant_id") || searchParams.get("tenant")
 
   const [loading, setLoading] = useState(false)
   const [loadingTenants, setLoadingTenants] = useState(true)
