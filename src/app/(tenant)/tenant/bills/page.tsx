@@ -18,6 +18,7 @@ import {
   Flag
 } from "lucide-react"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
+import { formatDate, formatCurrency, formatMonthYear } from "@/lib/format"
 
 interface TenantInfo {
   id: string
@@ -157,24 +158,10 @@ export default function TenantBillsPage() {
     setDialogOpen(true)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
-
-  const formatMonth = (monthString: string) => {
+  // Helper to convert YYYY-MM to Date for formatMonthYear
+  const formatBillMonth = (monthString: string) => {
     const [year, month] = monthString.split("-")
-    return new Date(Number(year), Number(month) - 1).toLocaleDateString("en-IN", {
-      month: "long",
-      year: "numeric",
-    })
-  }
-
-  const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString("en-IN")}`
+    return formatMonthYear(new Date(Number(year), Number(month) - 1))
   }
 
   // Get unique years from bills
@@ -319,7 +306,7 @@ export default function TenantBillsPage() {
                             <div>
                               <p className="font-semibold text-lg">{formatCurrency(bill.total_amount)}</p>
                               <p className="text-sm text-muted-foreground">
-                                Bill for {formatMonth(bill.for_month)}
+                                Bill for {formatBillMonth(bill.for_month)}
                               </p>
                               <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                                 <span className="flex items-center gap-1">
@@ -420,7 +407,7 @@ export default function TenantBillsPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           fieldLabel={`Bill #${selectedBill.bill_number || 'N/A'}`}
-          currentValue={`₹${selectedBill.total_amount.toLocaleString("en-IN")} for ${formatMonth(selectedBill.for_month)}`}
+          currentValue={`${formatCurrency(selectedBill.total_amount)} for ${formatBillMonth(selectedBill.for_month)}`}
           approvalType="bill_dispute"
           tenantId={tenantInfo.id}
           workspaceId={tenantInfo.workspace_id}

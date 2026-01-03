@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { ReportIssueDialog, ApprovalType } from "@/components/tenant/report-issue-dialog"
 import { formatDistanceToNow } from "date-fns"
+import { formatDate } from "@/lib/format"
 
 interface TenantProfile {
   id: string
@@ -157,13 +158,6 @@ export default function TenantProfilePage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
-  }
 
   const getVerificationBadge = (status: string) => {
     switch (status) {

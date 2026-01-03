@@ -22,9 +22,10 @@ import {
 import { toast } from "sonner"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface Payment {
   id: string
@@ -105,6 +106,7 @@ export default function PaymentReceiptPage() {
   const [payment, setPayment] = useState<Payment | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   useEffect(() => {
     const fetchPayment = async () => {
@@ -168,11 +170,6 @@ export default function PaymentReceiptPage() {
   const handleDelete = async () => {
     if (!payment) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete this payment of ₹${formatCurrency(payment.amount)}?\n\nReceipt: ${payment.receipt_number || payment.id.slice(0, 8).toUpperCase()}\n\nThis will permanently remove the payment record and may affect associated bill status.\n\nThis action cannot be undone.`
-    )
-    if (!confirmed) return
-
     setDeleting(true)
     const supabase = createClient()
 
@@ -184,11 +181,11 @@ export default function PaymentReceiptPage() {
     if (error) {
       console.error("Delete error:", error)
       toast.error("Failed to delete payment: " + error.message)
+      setDeleting(false)
     } else {
       toast.success("Payment deleted successfully")
       router.push("/payments")
     }
-    setDeleting(false)
   }
 
   const handleDownloadPDF = async () => {
@@ -216,24 +213,6 @@ export default function PaymentReceiptPage() {
       toast.dismiss()
       toast.error("Failed to download PDF")
     }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
-  }
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
   }
 
   const numberToWords = (num: number): string => {
@@ -321,7 +300,7 @@ export default function PaymentReceiptPage() {
           <PermissionGate permission="payments.delete" hide>
             <Button
               variant="destructive"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteDialog(true)}
               disabled={deleting}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -499,6 +478,18 @@ export default function PaymentReceiptPage() {
           }
         }
       `}</style>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Payment"
+        description={`Are you sure you want to delete this payment of ${formatCurrency(payment?.amount || 0)}? Receipt: ${payment?.receipt_number || payment?.id.slice(0, 8).toUpperCase()}. This will permanently remove the payment record and may affect associated bill status. This action cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+        loading={deleting}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

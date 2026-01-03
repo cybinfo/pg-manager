@@ -20,7 +20,7 @@ import {
   Hash,
 } from "lucide-react"
 import { toast } from "sonner"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 
@@ -167,12 +167,7 @@ export default function ExpenseDetailPage() {
           <div>
             <h1 className="text-2xl font-bold">{expense.expense_type?.name || "Expense"}</h1>
             <p className="text-muted-foreground">
-              {new Date(expense.expense_date).toLocaleDateString("en-IN", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
+              {formatDate(expense.expense_date)}
             </p>
           </div>
         </div>
@@ -235,7 +230,7 @@ export default function ExpenseDetailPage() {
               <span className="text-muted-foreground">Date</span>
               <span className="font-medium flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                {new Date(expense.expense_date).toLocaleDateString("en-IN")}
+                {formatDate(expense.expense_date)}
               </span>
             </div>
             <div className="flex items-center justify-between py-2 border-b">
@@ -310,8 +305,8 @@ export default function ExpenseDetailPage() {
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-            <span>Created: {new Date(expense.created_at).toLocaleString("en-IN")}</span>
-            <span>Updated: {new Date(expense.updated_at).toLocaleString("en-IN")}</span>
+            <span>Created: {formatDateTime(expense.created_at)}</span>
+            <span>Updated: {formatDateTime(expense.updated_at)}</span>
             <span>ID: {expense.id}</span>
           </div>
         </CardContent>

@@ -30,9 +30,10 @@ import {
   AlertCircle
 } from "lucide-react"
 import { toast } from "sonner"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface MeterReadingRaw {
   id: string
@@ -119,6 +120,7 @@ export default function MeterReadingDetailPage() {
   const [generating, setGenerating] = useState(false)
   const [reading, setReading] = useState<MeterReading | null>(null)
   const [charges, setCharges] = useState<Charge[]>([])
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   useEffect(() => {
     const fetchReading = async () => {
@@ -184,10 +186,6 @@ export default function MeterReadingDetailPage() {
 
   const handleDelete = async () => {
     if (!reading) return
-
-    if (!window.confirm("Are you sure you want to delete this meter reading? This action cannot be undone.")) {
-      return
-    }
 
     setDeleting(true)
     const supabase = createClient()
@@ -320,25 +318,6 @@ export default function MeterReadingDetailPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  
   const totalChargesAmount = charges.reduce((sum, c) => sum + c.amount, 0)
   const totalPaidAmount = charges.reduce((sum, c) => sum + (c.paid_amount || 0), 0)
 
@@ -389,7 +368,7 @@ export default function MeterReadingDetailPage() {
             </Button>
           </Link>
           <PermissionGate permission="meter_readings.delete" hide>
-            <Button variant="destructive" disabled={deleting} onClick={handleDelete}>
+            <Button variant="destructive" disabled={deleting} onClick={() => setShowDeleteDialog(true)}>
               {deleting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -735,6 +714,18 @@ export default function MeterReadingDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Meter Reading"
+        description="Are you sure you want to delete this meter reading? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+        loading={deleting}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

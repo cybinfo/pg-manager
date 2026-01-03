@@ -27,6 +27,8 @@ import {
   X
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatDate, formatDateTime } from "@/lib/format"
+import { PermissionGate } from "@/components/auth"
 
 interface Complaint {
   id: string
@@ -250,24 +252,6 @@ export default function ComplaintDetailPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
-  }
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -307,10 +291,12 @@ export default function ComplaintDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           {!editing ? (
-            <Button variant="outline" onClick={() => setEditing(true)}>
-              <Edit2 className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
+            <PermissionGate permission="complaints.edit" hide>
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                <Edit2 className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </PermissionGate>
           ) : (
             <>
               <Button variant="outline" onClick={() => setEditing(false)} disabled={updating}>

@@ -22,6 +22,7 @@ import {
   Calendar
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatDateTime, formatTimeAgo } from "@/lib/format"
 
 interface Visitor {
   id: string
@@ -102,31 +103,6 @@ export default function VisitorsPage() {
       toast.success("Visitor checked out")
       fetchVisitors()
     }
-  }
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-IN", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffMins = Math.floor(diffMs / (1000 * 60))
-
-    if (diffHours > 24) {
-      return `${Math.floor(diffHours / 24)}d ago`
-    }
-    if (diffHours > 0) {
-      return `${diffHours}h ago`
-    }
-    return `${diffMins}m ago`
   }
 
   // Filter configuration
@@ -254,7 +230,7 @@ export default function VisitorsPage() {
           </div>
           {!row.check_out_time && (
             <div className="text-green-600 font-medium text-xs">
-              {getTimeAgo(row.check_in_time)}
+              {formatTimeAgo(row.check_in_time)}
             </div>
           )}
         </div>

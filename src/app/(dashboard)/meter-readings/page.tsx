@@ -22,6 +22,7 @@ import {
   ArrowDownRight
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatDate } from "@/lib/format"
 
 interface MeterReading {
   id: string
@@ -125,14 +126,6 @@ export default function MeterReadingsPage() {
     }
 
     setLoading(false)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
   }
 
   // Filter configuration

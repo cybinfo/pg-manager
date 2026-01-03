@@ -28,6 +28,7 @@ import {
   Clock
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatDate, formatTimeAgo } from "@/lib/format"
 
 interface Notice {
   id: string
@@ -207,26 +208,6 @@ export default function NoticesPage() {
     return expiresAt > now && expiresAt.getTime() - now.getTime() < threeDays
   }).length
 
-  const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-
-    if (diffDays > 0) return `${diffDays}d ago`
-    if (diffHours > 0) return `${diffHours}h ago`
-    return "Just now"
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
-
   const metricsItems: MetricItem[] = [
     { label: "Total Notices", value: notices.length, icon: Bell },
     { label: "Active", value: activeCount, icon: Eye },
@@ -300,7 +281,7 @@ export default function NoticesPage() {
       render: (row) => (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <Calendar className="h-3 w-3" />
-          {getTimeAgo(row.created_at)}
+          {formatTimeAgo(row.created_at)}
         </div>
       ),
     },

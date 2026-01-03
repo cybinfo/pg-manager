@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { messageTemplates, generateWhatsAppLink, formatCurrency } from "@/lib/notifications"
+import { formatDate } from "@/lib/format"
 
 interface TenantWithDues {
   id: string
@@ -172,15 +173,6 @@ export default function PaymentRemindersPage() {
   const handleMarkSent = (tenantId: string) => {
     setSentReminders(prev => new Set([...prev, tenantId]))
     toast.success("Marked as sent")
-  }
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Never"
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
   }
 
   // Calculate due date (1st of next month)

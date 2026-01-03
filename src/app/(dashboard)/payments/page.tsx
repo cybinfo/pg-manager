@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
 
 interface Payment {
@@ -110,13 +110,6 @@ export default function PaymentsPage() {
 
     setPayments(transformed)
     setLoading(false)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-    })
   }
 
   // Calculate stats

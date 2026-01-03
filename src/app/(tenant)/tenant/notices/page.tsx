@@ -13,6 +13,7 @@ import {
   Calendar,
   Clock
 } from "lucide-react"
+import { formatDate, formatTimeAgo } from "@/lib/format"
 
 interface Notice {
   id: string
@@ -118,25 +119,6 @@ export default function TenantNoticesPage() {
     fetchNotices()
   }, [])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
-
-  const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-
-    if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`
-    if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`
-    return "Just now"
-  }
 
   const isNew = (dateString: string) => {
     const date = new Date(dateString)
@@ -218,7 +200,7 @@ export default function TenantNoticesPage() {
                       <div className="flex items-center gap-3 mt-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {getTimeAgo(notice.created_at)}
+                          {formatTimeAgo(notice.created_at)}
                         </span>
                         {notice.property && (
                           <span>{notice.property.name}</span>

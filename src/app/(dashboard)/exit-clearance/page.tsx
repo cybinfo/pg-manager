@@ -21,7 +21,7 @@ import {
   Building2,
   ArrowRight
 } from "lucide-react"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 interface ExitClearanceRaw {
   id: string
@@ -174,14 +174,6 @@ export default function ExitClearancePage() {
 
     fetchData()
   }, [])
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
 
   // Filter configuration
   const filterConfigs: FilterConfig[] = [

@@ -20,7 +20,7 @@ import {
   Wallet,
 } from "lucide-react"
 import { toast } from "sonner"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 interface ExpenseType {
   id: string
@@ -114,13 +114,6 @@ export default function ExpensesPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-    })
   }
 
   // Calculate stats

@@ -20,6 +20,7 @@ import {
   ArrowRight,
   User
 } from "lucide-react"
+import { formatDate, formatCurrency } from "@/lib/format"
 
 interface TenantFeatures {
   view_bills: boolean
@@ -160,17 +161,6 @@ export default function TenantHomePage() {
     fetchData()
   }, [])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
-
-  const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString("en-IN")}`
-  }
 
   const getDaysStayed = () => {
     if (!data.tenant?.check_in_date) return 0

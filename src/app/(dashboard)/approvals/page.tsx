@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { formatDate, formatDateTime } from "@/lib/format"
 import {
   Dialog,
   DialogContent,
@@ -332,7 +333,7 @@ export default function ApprovalsPage() {
       hideOnMobile: true,
       render: (approval) => (
         <span className="text-sm text-muted-foreground">
-          {new Date(approval.created_at).toLocaleDateString()}
+          {formatDate(approval.created_at)}
         </span>
       ),
     },
@@ -457,7 +458,7 @@ export default function ApprovalsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Submitted:</span>
-                      <span>{new Date(selectedApproval.created_at).toLocaleString()}</span>
+                      <span>{formatDateTime(selectedApproval.created_at)}</span>
                     </div>
                     {selectedApproval.description && (
                       <div className="pt-2 border-t">
@@ -550,7 +551,7 @@ export default function ApprovalsPage() {
                     <CardContent className="text-sm">
                       <p>{selectedApproval.decision_notes}</p>
                       <p className="text-muted-foreground mt-2">
-                        Decided on {new Date(selectedApproval.decided_at!).toLocaleString()}
+                        Decided on {formatDateTime(selectedApproval.decided_at!)}
                       </p>
                     </CardContent>
                   </Card>

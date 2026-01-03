@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { DocumentUploadDialog } from "@/components/tenant/document-upload-dialog"
 import { toast } from "sonner"
+import { formatDate } from "@/lib/format"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -166,13 +167,6 @@ export default function TenantDocumentsPage() {
     setDeleteDialogOpen(true)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
 
   const isImage = (mimeType: string | null) => {
     return mimeType?.startsWith("image/")

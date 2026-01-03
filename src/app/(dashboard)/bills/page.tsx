@@ -19,7 +19,7 @@ import {
   CheckCircle,
   Clock
 } from "lucide-react"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
 
 interface Bill {
@@ -100,13 +100,6 @@ export default function BillsPage() {
 
     fetchBills()
   }, [router])
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-    })
-  }
 
   const getStatusInfo = (status: string): { status: "success" | "warning" | "error" | "muted"; label: string } => {
     switch (status) {

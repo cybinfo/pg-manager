@@ -25,6 +25,7 @@ import {
   ExternalLink
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 interface Property {
   id: string
@@ -144,18 +145,6 @@ export default function PropertyDetailPage() {
 
     fetchData()
   }, [params.id, router])
-
-  const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString("en-IN")}`
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
 
   if (loading) {
     return (

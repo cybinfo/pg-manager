@@ -28,7 +28,7 @@ import {
   Trash2
 } from "lucide-react"
 import { toast } from "sonner"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 interface Deduction {
   reason: string
@@ -321,13 +321,6 @@ export default function ExitClearanceDetailPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
-  }
 
   const getDaysStayed = () => {
     if (!clearance || !clearance.tenant) return 0

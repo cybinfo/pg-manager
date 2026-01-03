@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
+import { formatDate } from "@/lib/format"
 
 interface StaffMember {
   id: string
@@ -308,13 +309,6 @@ export default function StaffDetailPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
 
   if (loading) {
     return (
@@ -403,9 +397,11 @@ export default function StaffDetailPage() {
                 </div>
               </div>
               {!isEditing ? (
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                  Edit
-                </Button>
+                <PermissionGate permission="staff.edit" hide>
+                  <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                    Edit
+                  </Button>
+                </PermissionGate>
               ) : (
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setIsEditing(false)} disabled={saving}>

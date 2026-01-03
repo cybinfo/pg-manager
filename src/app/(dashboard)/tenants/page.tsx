@@ -17,7 +17,7 @@ import {
   UserMinus,
   Clock
 } from "lucide-react"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
 
 interface Tenant {
@@ -107,14 +107,6 @@ export default function TenantsPage() {
     }))
     setTenants(transformedData)
     setLoading(false)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
   }
 
   const getStatusInfo = (status: string): { status: "success" | "warning" | "muted"; label: string } => {

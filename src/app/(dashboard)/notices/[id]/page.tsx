@@ -26,6 +26,7 @@ import {
   Clock
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatDateTime } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 
@@ -265,16 +266,6 @@ export default function NoticeDetailPage() {
     } finally {
       setSaving(false)
     }
-  }
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
   }
 
   const isExpired = () => {

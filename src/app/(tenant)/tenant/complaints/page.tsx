@@ -19,6 +19,7 @@ import {
   Send
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatDate, formatTimeAgo } from "@/lib/format"
 
 interface Complaint {
   id: string
@@ -165,25 +166,6 @@ export default function TenantComplaintsPage() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
-
-  const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-
-    if (diffDays > 0) return `${diffDays}d ago`
-    if (diffHours > 0) return `${diffHours}h ago`
-    return "Just now"
-  }
 
   const openComplaints = complaints.filter((c) =>
     c.status === "open" || c.status === "acknowledged" || c.status === "in_progress"
@@ -366,7 +348,7 @@ export default function TenantComplaintsPage() {
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground mt-2">
-                              Submitted {getTimeAgo(complaint.created_at)}
+                              Submitted {formatTimeAgo(complaint.created_at)}
                             </p>
                           </div>
                         </div>

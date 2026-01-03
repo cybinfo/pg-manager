@@ -30,9 +30,10 @@ import {
   Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 interface LineItem {
   type: string
@@ -102,6 +103,7 @@ export default function BillDetailPage() {
   const [loading, setLoading] = useState(true)
   const [showPaymentForm, setShowPaymentForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // Payment form state
   const [paymentData, setPaymentData] = useState({
@@ -180,14 +182,6 @@ export default function BillDetailPage() {
 
     fetchBill()
   }, [router, billId])
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -283,11 +277,6 @@ ManageKar`
   const handleDelete = async () => {
     if (!bill) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete bill "${bill.bill_number}"?\n\nThis will permanently remove the bill and unlink any associated payments.\n\nThis action cannot be undone.`
-    )
-    if (!confirmed) return
-
     setSubmitting(true)
     const supabase = createClient()
 
@@ -299,11 +288,11 @@ ManageKar`
     if (error) {
       console.error("Delete error:", error)
       toast.error("Failed to delete bill: " + error.message)
+      setSubmitting(false)
     } else {
       toast.success("Bill deleted successfully")
       router.push("/bills")
     }
-    setSubmitting(false)
   }
 
   if (loading) {
@@ -363,7 +352,7 @@ ManageKar`
           <PermissionGate permission="bills.delete" hide>
             <Button
               variant="destructive"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteDialog(true)}
               disabled={submitting}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -692,6 +681,18 @@ ManageKar`
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Bill"
+        description={`Are you sure you want to delete bill "${bill.bill_number}"? This will permanently remove the bill and unlink any associated payments. This action cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+        loading={submitting}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

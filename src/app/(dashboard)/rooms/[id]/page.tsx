@@ -22,6 +22,7 @@ import {
   Layers
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 interface Room {
   id: string
@@ -106,18 +107,6 @@ export default function RoomDetailPage() {
 
     fetchData()
   }, [params.id, router])
-
-  const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString("en-IN")}`
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
 
   const handleStatusChange = async (newStatus: string) => {
     if (!room) return

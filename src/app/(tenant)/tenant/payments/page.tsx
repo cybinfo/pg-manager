@@ -18,6 +18,7 @@ import {
   Flag
 } from "lucide-react"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
+import { formatDate, formatCurrency } from "@/lib/format"
 
 interface Payment {
   id: string
@@ -173,17 +174,6 @@ export default function TenantPaymentsPage() {
     setDialogOpen(true)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
-
-  const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString("en-IN")}`
-  }
 
   // Get unique years from payments
   const years = [...new Set(payments.map((p) => new Date(p.payment_date).getFullYear()))].sort((a, b) => b - a)

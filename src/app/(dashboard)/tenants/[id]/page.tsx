@@ -19,6 +19,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency, PaymentAmount } from "@/components/ui/currency"
 import { PageLoading, Skeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Select, FormField } from "@/components/ui/form-components"
 import {
   Loader2,
@@ -46,6 +47,7 @@ import {
   Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatDate } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 
@@ -140,6 +142,7 @@ export default function TenantDetailPage() {
     reason: "",
     notes: "",
   })
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   useEffect(() => {
     const fetchTenant = async () => {
@@ -240,14 +243,6 @@ export default function TenantDetailPage() {
     fetchTenant()
   }, [params.id, router])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  }
-
   const handlePutOnNotice = async () => {
     if (!tenant) return
 
@@ -278,11 +273,6 @@ export default function TenantDetailPage() {
   const handleDelete = async () => {
     if (!tenant) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete tenant "${tenant.name}"?\n\nThis will permanently remove the tenant and all associated data including:\n- Payment history\n- Charges\n- Stay history\n- Room transfers\n\nThis action cannot be undone.`
-    )
-    if (!confirmed) return
-
     setActionLoading(true)
     const supabase = createClient()
 
@@ -294,11 +284,11 @@ export default function TenantDetailPage() {
     if (error) {
       console.error("Delete error:", error)
       toast.error("Failed to delete tenant: " + error.message)
+      setActionLoading(false)
     } else {
       toast.success("Tenant deleted successfully")
       router.push("/tenants")
     }
-    setActionLoading(false)
   }
 
   const openTransferModal = async () => {
@@ -464,7 +454,7 @@ export default function TenantDetailPage() {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={handleDelete}
+                onClick={() => setShowDeleteDialog(true)}
                 disabled={actionLoading}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -850,6 +840,18 @@ export default function TenantDetailPage() {
           </Card>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Tenant"
+        description={`Are you sure you want to delete "${tenant?.name}"? This will permanently remove the tenant and all associated data including payment history, charges, stay history, and room transfers. This action cannot be undone.`}
+        confirmText="Delete"
+        variant="destructive"
+        loading={actionLoading}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

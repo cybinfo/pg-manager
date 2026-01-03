@@ -23,6 +23,7 @@ import {
   Trash2
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatDateTime, formatCurrency } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 
@@ -126,20 +127,6 @@ export default function VisitorDetailPage() {
 
     fetchVisitor()
   }, [params.id, router])
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString("en-IN")}`
-  }
 
   const getDuration = (checkIn: string, checkOut: string | null) => {
     const start = new Date(checkIn)

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users } from "lucide-react"
 import { toast } from "sonner"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 interface Property {
   id: string
@@ -289,14 +289,6 @@ export default function NewMeterReadingPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
   }
 
   const selectedChargeType = chargeTypes.find((ct) => ct.id === formData.charge_type_id)
