@@ -28,6 +28,8 @@ import { toast } from "sonner"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { formatDate } from "@/lib/format"
+import { PageLoader } from "@/components/ui/page-loader"
+import { Avatar } from "@/components/ui/avatar"
 
 interface StaffMember {
   id: string
@@ -311,11 +313,7 @@ export default function StaffDetailPage() {
 
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!staff) {
@@ -333,11 +331,11 @@ export default function StaffDetailPage() {
             </Button>
           </Link>
           <div className="flex items-center gap-4">
-            <div className={`h-14 w-14 rounded-full flex items-center justify-center ${staff.is_active ? "bg-primary/10" : "bg-gray-100"}`}>
-              <span className={`text-2xl font-semibold ${staff.is_active ? "text-primary" : "text-gray-500"}`}>
-                {staff.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
+            <Avatar
+              name={staff.name}
+              size="lg"
+              className={`h-14 w-14 text-2xl ${staff.is_active ? "" : "bg-gray-100 text-gray-500"}`}
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl md:text-3xl font-bold">{staff.name}</h1>

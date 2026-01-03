@@ -9,10 +9,10 @@ import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard } from "@/components/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 import {
   Building2,
   Plus,
-  Loader2,
   Home,
   Users,
   MapPin
@@ -185,11 +185,7 @@ export default function PropertiesPage() {
   ]
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

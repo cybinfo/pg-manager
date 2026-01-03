@@ -9,8 +9,8 @@ import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 import {
-  Loader2,
   Plus,
   Receipt,
   TrendingDown,
@@ -298,11 +298,7 @@ export default function ExpensesPage() {
   ]
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

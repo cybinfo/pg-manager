@@ -35,6 +35,7 @@ import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface MeterReadingRaw {
   id: string
@@ -316,11 +317,7 @@ export default function MeterReadingDetailPage() {
   const totalPaidAmount = charges.reduce((sum, c) => sum + (c.paid_amount || 0), 0)
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!reading) {

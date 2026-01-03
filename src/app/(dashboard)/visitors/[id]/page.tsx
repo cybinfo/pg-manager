@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
-  Loader2,
   Users,
   Phone,
   Building2,
@@ -26,6 +25,8 @@ import { toast } from "sonner"
 import { formatDateTime, formatCurrency } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
+import { Avatar } from "@/components/ui/avatar"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface Visitor {
   id: string
@@ -191,11 +192,7 @@ export default function VisitorDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!visitor) {
@@ -399,9 +396,7 @@ export default function VisitorDetailPage() {
               {/* Tenant Info */}
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                    {visitor.tenant?.name.charAt(0).toUpperCase()}
-                  </div>
+                  <Avatar name={visitor.tenant?.name || "?"} size="md" />
                   <div>
                     <p className="font-semibold">{visitor.tenant?.name}</p>
                     <p className="text-sm text-muted-foreground">Tenant</p>

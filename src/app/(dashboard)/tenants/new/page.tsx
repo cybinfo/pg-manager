@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-utils"
+import { PageLoader } from "@/components/ui/page-loader"
 import { sendInvitationEmail } from "@/lib/email"
 
 // Shared form components
@@ -778,11 +779,7 @@ export default function NewTenantPage() {
   }
 
   if (loadingData) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (properties.length === 0) {

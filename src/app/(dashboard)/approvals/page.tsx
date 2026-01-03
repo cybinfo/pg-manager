@@ -9,8 +9,9 @@ import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 import {
-  ClipboardCheck, Loader2, CheckCircle, XCircle, Clock,
+  ClipboardCheck, CheckCircle, XCircle, Clock, Loader2,
   User, AlertTriangle, FileText, ChevronRight, Paperclip, ExternalLink
 } from "lucide-react"
 import { toast } from "sonner"
@@ -370,11 +371,7 @@ export default function ApprovalsPage() {
   ]
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

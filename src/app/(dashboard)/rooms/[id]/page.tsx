@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
-  Loader2,
   Home,
   Building2,
   Bed,
@@ -24,6 +23,8 @@ import {
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { Avatar } from "@/components/ui/avatar"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface Room {
   id: string
@@ -130,11 +131,7 @@ export default function RoomDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!room) {
@@ -409,9 +406,7 @@ export default function RoomDetailPage() {
                   <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
                     <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                          {tenant.name.charAt(0).toUpperCase()}
-                        </div>
+                        <Avatar name={tenant.name} size="md" />
                         <div>
                           <p className="font-medium">{tenant.name}</p>
                           <p className="text-sm text-muted-foreground flex items-center gap-1">

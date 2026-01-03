@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface Deduction {
   reason: string
@@ -332,11 +333,7 @@ export default function ExitClearanceDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!clearance) return null

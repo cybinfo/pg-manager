@@ -21,6 +21,7 @@ import {
   Calendar
 } from "lucide-react"
 import { toast } from "sonner"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface Property {
   id: string
@@ -171,11 +172,7 @@ export default function NewNoticePage() {
   }
 
   if (loadingData) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

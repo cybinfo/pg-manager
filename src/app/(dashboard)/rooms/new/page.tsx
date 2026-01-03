@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Home, Loader2, Building2, Info } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
+import { PageLoader } from "@/components/ui/page-loader"
 
 // Shared form components
 import { PhotoGallery } from "@/components/forms"
@@ -281,11 +282,7 @@ export default function NewRoomPage() {
   }
 
   if (loadingProperties) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (properties.length === 0) {

@@ -9,10 +9,10 @@ import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 import {
   UserPlus,
   Plus,
-  Loader2,
   Clock,
   Users,
   Moon,
@@ -272,11 +272,7 @@ export default function VisitorsPage() {
   ]
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

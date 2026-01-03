@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface Tenant {
   id: string
@@ -277,11 +278,7 @@ function NewPaymentForm() {
   }
 
   if (loadingData) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (tenants.length === 0) {

@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
-  Loader2,
   User,
   Phone,
   Mail,
@@ -23,9 +22,11 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react"
+import { PageLoader } from "@/components/ui/page-loader"
 import { ReportIssueDialog, ApprovalType } from "@/components/tenant/report-issue-dialog"
 import { formatDistanceToNow } from "date-fns"
 import { formatDate } from "@/lib/format"
+import { Avatar } from "@/components/ui/avatar"
 
 interface TenantProfile {
   id: string
@@ -192,11 +193,7 @@ export default function TenantProfilePage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!profile) {
@@ -221,9 +218,7 @@ export default function TenantProfilePage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
-            <div className="h-16 w-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-2xl font-bold">
-              {profile.name.charAt(0).toUpperCase()}
-            </div>
+            <Avatar name={profile.name} size="xl" className="bg-primary text-primary-foreground" />
             <div className="flex-1">
               <h2 className="text-xl font-bold">{profile.name}</h2>
               <p className="text-muted-foreground">

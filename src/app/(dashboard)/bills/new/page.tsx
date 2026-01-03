@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
+import { PageLoader } from "@/components/ui/page-loader"
 import { cn } from "@/lib/utils"
 
 interface Tenant {
@@ -421,11 +422,7 @@ function NewBillContent() {
   const { subtotal, total } = calculateTotals()
 
   if (loadingTenants) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

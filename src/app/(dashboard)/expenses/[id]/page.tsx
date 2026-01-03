@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface ExpenseType {
   id: string
@@ -136,11 +137,7 @@ export default function ExpenseDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!expense) {

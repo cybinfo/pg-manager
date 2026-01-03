@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Loader2,
   Bell,
   Megaphone,
   AlertTriangle,
@@ -13,6 +12,7 @@ import {
   Calendar,
   Clock
 } from "lucide-react"
+import { PageLoader } from "@/components/ui/page-loader"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 
 interface Notice {
@@ -128,11 +128,7 @@ export default function TenantNoticesPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

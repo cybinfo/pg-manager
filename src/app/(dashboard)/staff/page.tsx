@@ -9,10 +9,10 @@ import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard } from "@/components/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 import {
   Users,
   Plus,
-  Loader2,
   Shield,
   Mail,
   Phone,
@@ -22,6 +22,7 @@ import {
   UserCog
 } from "lucide-react"
 import { toast } from "sonner"
+import { Avatar } from "@/components/ui/avatar"
 
 interface StaffMember {
   id: string
@@ -196,11 +197,11 @@ export default function StaffPage() {
       width: "primary",
       render: (row) => (
         <div className="flex items-center gap-3">
-          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${row.is_active ? "bg-primary/10" : "bg-gray-100"}`}>
-            <span className={`text-lg font-semibold ${row.is_active ? "text-primary" : "text-gray-500"}`}>
-              {row.name.charAt(0).toUpperCase()}
-            </span>
-          </div>
+          <Avatar
+            name={row.name}
+            size="md"
+            className={row.is_active ? "" : "bg-gray-100 text-gray-500"}
+          />
           <div className={!row.is_active ? "opacity-60" : ""}>
             <div className="font-medium flex items-center gap-2">
               {row.name}
@@ -297,11 +298,7 @@ export default function StaffPage() {
   ]
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

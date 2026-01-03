@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface Property {
   id: string
@@ -294,11 +295,7 @@ export default function NewMeterReadingPage() {
   const selectedChargeType = chargeTypes.find((ct) => ct.id === formData.charge_type_id)
 
   if (loadingData) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (properties.length === 0) {

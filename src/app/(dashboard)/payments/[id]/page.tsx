@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   ArrowLeft,
-  Loader2,
   Printer,
   Building2,
   User,
@@ -24,6 +23,7 @@ import { WhatsAppButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
@@ -243,11 +243,7 @@ export default function PaymentReceiptPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!payment) {

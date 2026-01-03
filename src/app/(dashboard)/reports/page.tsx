@@ -18,8 +18,8 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts"
+import { PageLoader } from "@/components/ui/page-loader"
 import {
-  Loader2,
   Building2,
   Users,
   Home,
@@ -608,11 +608,7 @@ export default function ReportsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!reportData) {

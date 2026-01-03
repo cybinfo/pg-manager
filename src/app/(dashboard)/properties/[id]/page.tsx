@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
-  Loader2,
   Building2,
   MapPin,
   Phone,
@@ -26,6 +25,8 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { Avatar } from "@/components/ui/avatar"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface Property {
   id: string
@@ -147,11 +148,7 @@ export default function PropertyDetailPage() {
   }, [params.id, router])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!property) {
@@ -481,9 +478,7 @@ export default function PropertyDetailPage() {
                   <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
                     <div className="p-3 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                          {tenant.name.charAt(0).toUpperCase()}
-                        </div>
+                        <Avatar name={tenant.name} size="md" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{tenant.name}</p>
                           <p className="text-sm text-muted-foreground">

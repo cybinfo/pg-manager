@@ -39,6 +39,7 @@ import {
 } from "@/lib/features"
 import { formatCurrency } from "@/lib/format"
 import { PageHeader } from "@/components/ui/page-header"
+import { PageLoader } from "@/components/ui/page-loader"
 import { OwnerGuard, EmailVerificationCard } from "@/components/auth"
 import { toast } from "sonner"
 import { sendTestEmail } from "@/lib/email"
@@ -702,11 +703,7 @@ export default function SettingsPage() {
   ]
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

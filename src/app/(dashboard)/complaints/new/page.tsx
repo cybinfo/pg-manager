@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
+import { PageLoader } from "@/components/ui/page-loader"
 
 interface Property {
   id: string
@@ -220,11 +221,7 @@ function NewComplaintForm() {
   }
 
   if (loadingData) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (properties.length === 0) {

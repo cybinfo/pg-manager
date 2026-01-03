@@ -10,10 +10,10 @@ import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-t
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 import {
   LogOut,
   Plus,
-  Loader2,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -22,6 +22,7 @@ import {
   ArrowRight
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { Avatar } from "@/components/ui/avatar"
 
 interface ExitClearanceRaw {
   id: string
@@ -250,9 +251,11 @@ export default function ExitClearancePage() {
       width: "primary",
       render: (clearance) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
-            {clearance.tenant.name.charAt(0).toUpperCase()}
-          </div>
+          <Avatar
+            name={clearance.tenant.name}
+            size="sm"
+            className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
+          />
           <div className="min-w-0">
             <div className="font-medium truncate">{clearance.tenant.name}</div>
             <div className="text-xs text-muted-foreground">{clearance.tenant.phone}</div>
@@ -333,11 +336,7 @@ export default function ExitClearancePage() {
   ]
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

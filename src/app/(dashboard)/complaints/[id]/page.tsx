@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 
 interface Complaint {
@@ -248,11 +249,7 @@ export default function ComplaintDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!complaint) {

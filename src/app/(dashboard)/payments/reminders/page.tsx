@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Bell,
   Search,
-  Loader2,
   User,
   Building2,
   Home,
@@ -22,6 +21,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { WhatsAppButton } from "@/components/whatsapp-button"
+import { PageLoader } from "@/components/ui/page-loader"
 import { messageTemplates, generateWhatsAppLink, formatCurrency } from "@/lib/notifications"
 import { formatDate } from "@/lib/format"
 
@@ -182,11 +182,7 @@ export default function PaymentRemindersPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

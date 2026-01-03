@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
-  Loader2,
   CreditCard,
   IndianRupee,
   Calendar,
@@ -17,6 +16,7 @@ import {
   Filter,
   Flag
 } from "lucide-react"
+import { PageLoader } from "@/components/ui/page-loader"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 import { formatDate, formatCurrency } from "@/lib/format"
 
@@ -195,11 +195,7 @@ export default function TenantPaymentsPage() {
   }, {} as Record<string, Payment[]>)
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (

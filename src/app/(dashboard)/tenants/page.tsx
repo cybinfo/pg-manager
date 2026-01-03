@@ -9,16 +9,17 @@ import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard } from "@/components/auth"
+import { PageLoader } from "@/components/ui/page-loader"
 import {
   Users,
   Plus,
-  Loader2,
   UserCheck,
   UserMinus,
   Clock
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
+import { Avatar } from "@/components/ui/avatar"
 
 interface Tenant {
   id: string
@@ -189,9 +190,11 @@ export default function TenantsPage() {
       width: "primary",
       render: (tenant) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium shrink-0">
-            {tenant.name.charAt(0).toUpperCase()}
-          </div>
+          <Avatar
+            name={tenant.name}
+            size="sm"
+            className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
+          />
           <div className="min-w-0">
             <div className="font-medium truncate">{tenant.name}</div>
             <div className="text-xs text-muted-foreground">{tenant.phone}</div>
@@ -237,11 +240,7 @@ export default function TenantsPage() {
   ]
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PageLoader />
   }
 
   return (
