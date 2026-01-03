@@ -69,11 +69,12 @@ export default function NewMeterReadingPage() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
       const [propertiesRes, roomsRes, chargeTypesRes, tenantsRes] = await Promise.all([
         supabase.from("properties").select("id, name").order("name"),
         supabase.from("rooms").select("id, room_number, property_id").order("room_number"),
-        supabase.from("charge_types").select("id, name, calculation_config").in("name", ["Electricity", "Water", "Gas", "electricity", "water", "gas"]).order("name"),
+        supabase.from("charge_types").select("id, name, calculation_config").eq("owner_id", user?.id).in("name", ["Electricity", "Water", "Gas", "electricity", "water", "gas"]).order("name"),
         supabase.from("tenants").select("id, name, room_id").eq("status", "active"),
       ])
 

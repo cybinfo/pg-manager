@@ -83,10 +83,12 @@ export default function EditMeterReadingPage() {
 
       setOriginalReading(readingData as MeterReadingRaw)
 
+      const { data: { user } } = await supabase.auth.getUser()
+
       const [propertiesRes, roomsRes, chargeTypesRes] = await Promise.all([
         supabase.from("properties").select("id, name").order("name"),
         supabase.from("rooms").select("id, room_number, property_id").order("room_number"),
-        supabase.from("charge_types").select("id, name, calculation_config").in("name", ["Electricity", "Water", "Gas", "electricity", "water", "gas"]).order("name"),
+        supabase.from("charge_types").select("id, name, calculation_config").eq("owner_id", user?.id).in("name", ["Electricity", "Water", "Gas", "electricity", "water", "gas"]).order("name"),
       ])
 
       if (!propertiesRes.error) {

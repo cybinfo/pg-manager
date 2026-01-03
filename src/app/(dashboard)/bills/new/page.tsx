@@ -139,6 +139,7 @@ function NewBillContent() {
         supabase
           .from("charge_types")
           .select("*")
+          .eq("owner_id", user.id)
           .eq("is_enabled", true)
           .order("display_order")
       ])
