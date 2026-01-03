@@ -504,10 +504,9 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
-      // Save both property type pricing and flat room type pricing (for backwards compatibility)
+      // Save room type pricing (using PG pricing as the default)
       const updateData = {
-        room_type_pricing: propertyTypePricing.pg, // Default to PG pricing for legacy support
-        property_type_pricing: propertyTypePricing,
+        room_type_pricing: propertyTypePricing.pg,
       }
 
       if (config) {
