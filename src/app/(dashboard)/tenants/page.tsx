@@ -54,14 +54,9 @@ interface RawTenant {
   check_in_date: string
   monthly_rent: number
   status: string
-  property: {
-    id: string
-    name: string
-  }[] | null
-  room: {
-    id: string
-    room_number: string
-  }[] | null
+  // Supabase can return joins as arrays or objects depending on query type
+  property: { id: string; name: string }[] | { id: string; name: string } | null
+  room: { id: string; room_number: string }[] | { id: string; room_number: string } | null
 }
 
 interface Property {
@@ -115,10 +110,15 @@ export default function TenantsPage() {
       return
     }
 
+    // Handle both array (from some queries) and object (from REST) formats
     const transformedData = ((data as RawTenant[]) || []).map((tenant) => ({
       ...tenant,
-      property: tenant.property && tenant.property.length > 0 ? tenant.property[0] : null,
-      room: tenant.room && tenant.room.length > 0 ? tenant.room[0] : null,
+      property: Array.isArray(tenant.property)
+        ? (tenant.property.length > 0 ? tenant.property[0] : null)
+        : tenant.property,
+      room: Array.isArray(tenant.room)
+        ? (tenant.room.length > 0 ? tenant.room[0] : null)
+        : tenant.room,
     }))
     setTenants(transformedData)
     setLoading(false)
