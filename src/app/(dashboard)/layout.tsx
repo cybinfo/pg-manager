@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
   Building2,
@@ -83,40 +82,13 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
 
-  // Use auth context
-  const { user, profile, contexts, isLoading, logout, hasPermission } = useAuth()
+  // Use auth context - isPlatformAdmin is centralized here
+  const { user, profile, contexts, isLoading, logout, hasPermission, isPlatformAdmin } = useAuth()
   const currentContext = useCurrentContext()
 
   // Use feature flags
   const { isEnabled: isFeatureEnabled } = useFeatures()
-
-  // Check if user is a platform admin
-  useEffect(() => {
-    const checkPlatformAdmin = async () => {
-      if (!user) return
-      try {
-        const supabase = createClient()
-        const { data, error } = await supabase
-          .from("platform_admins")
-          .select("user_id")
-          .eq("user_id", user.id)
-          .maybeSingle()
-
-        // Ignore errors (user might not have access to see this table)
-        if (error) {
-          console.log("Platform admin check:", error.message)
-          setIsPlatformAdmin(false)
-          return
-        }
-        setIsPlatformAdmin(!!data)
-      } catch {
-        setIsPlatformAdmin(false)
-      }
-    }
-    checkPlatformAdmin()
-  }, [user])
 
   // Filter navigation based on permissions AND feature flags
   const filteredNavigation = navigation.filter(item => {

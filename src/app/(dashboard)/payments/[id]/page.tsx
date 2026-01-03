@@ -16,12 +16,15 @@ import {
   Home,
   CheckCircle,
   MessageCircle,
-  Download
+  Download,
+  Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency } from "@/lib/format"
+import { useAuth } from "@/lib/auth"
+import { PermissionGate } from "@/components/auth"
 
 interface Payment {
   id: string
@@ -97,9 +100,11 @@ const paymentMethodLabels: Record<string, string> = {
 export default function PaymentReceiptPage() {
   const params = useParams()
   const router = useRouter()
+  const { hasPermission } = useAuth()
   const receiptRef = useRef<HTMLDivElement>(null)
   const [payment, setPayment] = useState<Payment | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const fetchPayment = async () => {
@@ -158,6 +163,32 @@ export default function PaymentReceiptPage() {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleDelete = async () => {
+    if (!payment) return
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete this payment of ₹${formatCurrency(payment.amount)}?\n\nReceipt: ${payment.receipt_number || payment.id.slice(0, 8).toUpperCase()}\n\nThis will permanently remove the payment record and may affect associated bill status.\n\nThis action cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setDeleting(true)
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from("payments")
+      .delete()
+      .eq("id", payment.id)
+
+    if (error) {
+      console.error("Delete error:", error)
+      toast.error("Failed to delete payment: " + error.message)
+    } else {
+      toast.success("Payment deleted successfully")
+      router.push("/payments")
+    }
+    setDeleting(false)
   }
 
   const handleDownloadPDF = async () => {
@@ -287,6 +318,16 @@ export default function PaymentReceiptPage() {
             <Printer className="mr-2 h-4 w-4" />
             Print
           </Button>
+          <PermissionGate permission="payments.delete" hide>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </PermissionGate>
         </div>
       </div>
 

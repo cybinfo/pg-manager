@@ -26,10 +26,13 @@ import {
   Send,
   Printer,
   Home,
-  CreditCard
+  CreditCard,
+  Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
+import { useAuth } from "@/lib/auth"
+import { PermissionGate } from "@/components/auth"
 
 interface LineItem {
   type: string
@@ -92,6 +95,7 @@ export default function BillDetailPage() {
   const router = useRouter()
   const params = useParams()
   const billId = params.id as string
+  const { hasPermission } = useAuth()
 
   const [bill, setBill] = useState<Bill | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
@@ -276,6 +280,32 @@ ManageKar`
     window.open(whatsappUrl, "_blank")
   }
 
+  const handleDelete = async () => {
+    if (!bill) return
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete bill "${bill.bill_number}"?\n\nThis will permanently remove the bill and unlink any associated payments.\n\nThis action cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setSubmitting(true)
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from("bills")
+      .delete()
+      .eq("id", bill.id)
+
+    if (error) {
+      console.error("Delete error:", error)
+      toast.error("Failed to delete bill: " + error.message)
+    } else {
+      toast.success("Bill deleted successfully")
+      router.push("/bills")
+    }
+    setSubmitting(false)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -330,6 +360,16 @@ ManageKar`
               Record Payment
             </Button>
           )}
+          <PermissionGate permission="bills.delete" hide>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={submitting}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </PermissionGate>
         </div>
       </div>
 

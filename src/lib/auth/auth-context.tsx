@@ -34,6 +34,8 @@ interface GlobalAuthState {
   explicitLogout: boolean
   // Flag to prevent re-initialization during logout
   loggingOut: boolean
+  // Platform admin status (super user with access to all workspaces)
+  isPlatformAdmin: boolean
 }
 
 const globalAuthState: GlobalAuthState = {
@@ -44,6 +46,7 @@ const globalAuthState: GlobalAuthState = {
   currentContext: null,
   explicitLogout: false,
   loggingOut: false,
+  isPlatformAdmin: false,
 }
 
 // ============================================
@@ -58,6 +61,7 @@ interface AuthState {
   contexts: ContextWithDetails[]
   currentContext: ContextWithDetails | null
   hasMultipleContexts: boolean
+  isPlatformAdmin: boolean
   refreshContexts: () => Promise<void>
   switchContext: (contextId: string) => Promise<boolean>
   setDefaultContext: (contextId: string) => Promise<boolean>
@@ -83,6 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [contexts, setContexts] = useState<ContextWithDetails[]>(() => globalAuthState.contexts)
   const [currentContext, setCurrentContext] = useState<ContextWithDetails | null>(() => globalAuthState.currentContext)
   const [isLoading, setIsLoading] = useState(() => !globalAuthState.initialized)
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(() => globalAuthState.isPlatformAdmin)
   const mountedRef = useRef(true)
   const initializingRef = useRef(false)
 
@@ -95,6 +100,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setProfile(globalAuthState.profile)
       setContexts(globalAuthState.contexts)
       setCurrentContext(globalAuthState.currentContext)
+      setIsPlatformAdmin(globalAuthState.isPlatformAdmin)
       setIsLoading(false)
     }
   }, [])
@@ -208,18 +214,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return true
   }, [user, supabase, refreshContexts])
 
-  // Permission checks
+  // Permission checks - Centralized access control
+  // Access hierarchy: Platform Admin > Owner > Staff > Tenant
   const hasPermission = useCallback((permission: Permission | string): boolean => {
+    // Platform Admin (Super User) - Full access to everything
+    if (isPlatformAdmin) return true
+    // No context means no permissions
     if (!currentContext) return false
+    // Owner - Full access to their workspace
     if (currentContext.context_type === 'owner') return true
+    // Tenant - Limited hardcoded permissions
     if (currentContext.context_type === 'tenant') {
       return TENANT_PERMISSIONS.includes(permission as Permission)
     }
+    // Staff - Role-based permissions
     if (currentContext.context_type === 'staff') {
       return currentContext.permissions.includes(permission)
     }
     return false
-  }, [currentContext])
+  }, [currentContext, isPlatformAdmin])
 
   const hasAnyPermission = useCallback((permissions: (Permission | string)[]): boolean => {
     return permissions.some(p => hasPermission(p))
@@ -243,12 +256,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setProfile(null)
     setContexts([])
     setCurrentContext(null)
+    setIsPlatformAdmin(false)
     globalAuthState.initialized = false
     globalAuthState.user = null
     globalAuthState.profile = null
     globalAuthState.contexts = []
     globalAuthState.currentContext = null
+    globalAuthState.isPlatformAdmin = false
     globalAuthState.loggingOut = false
+  }, [supabase])
+
+  // Check if user is a platform admin (super user)
+  const checkPlatformAdmin = useCallback(async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from("platform_admins")
+        .select("user_id")
+        .eq("user_id", userId)
+        .maybeSingle()
+
+      // Ignore errors (user might not have access to see this table)
+      if (error) {
+        return false
+      }
+      return !!data
+    } catch {
+      return false
+    }
   }, [supabase])
 
   // Load user data
@@ -256,13 +290,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const userProfile = await fetchProfile(sessionUser.id, accessToken)
       const userContexts = await fetchContexts(sessionUser.id, accessToken)
+      const isAdmin = await checkPlatformAdmin(sessionUser.id)
 
       if (!mountedRef.current) return
 
       setProfile(userProfile)
       setContexts(userContexts)
+      setIsPlatformAdmin(isAdmin)
       globalAuthState.profile = userProfile
       globalAuthState.contexts = userContexts
+      globalAuthState.isPlatformAdmin = isAdmin
 
       // Determine initial context
       const savedContextId = localStorage.getItem('currentContextId')
@@ -280,7 +317,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch {
       // Silent fail - user data loading errors are handled gracefully
     }
-  }, [fetchProfile, fetchContexts])
+  }, [fetchProfile, fetchContexts, checkPlatformAdmin])
 
   // Initialize auth
   useEffect(() => {
@@ -364,11 +401,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setProfile(null)
           setContexts([])
           setCurrentContext(null)
+          setIsPlatformAdmin(false)
           globalAuthState.initialized = false
           globalAuthState.user = null
           globalAuthState.profile = null
           globalAuthState.contexts = []
           globalAuthState.currentContext = null
+          globalAuthState.isPlatformAdmin = false
         }
         // Ignore spurious SIGNED_OUT events from Supabase
       }
@@ -388,6 +427,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     contexts,
     currentContext,
     hasMultipleContexts: contexts.length > 1,
+    isPlatformAdmin,
     refreshContexts,
     switchContext,
     setDefaultContext,
@@ -435,12 +475,13 @@ export function usePermissions(permissions: (Permission | string)[]): {
 }
 
 export function useCurrentContext() {
-  const { currentContext, contexts, switchContext, hasMultipleContexts } = useAuth()
+  const { currentContext, contexts, switchContext, hasMultipleContexts, isPlatformAdmin } = useAuth()
   return {
     context: currentContext,
     contexts,
     switchContext,
     hasMultipleContexts,
+    isPlatformAdmin,
     isOwner: currentContext?.context_type === 'owner',
     isStaff: currentContext?.context_type === 'staff',
     isTenant: currentContext?.context_type === 'tenant',

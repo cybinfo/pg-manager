@@ -43,8 +43,11 @@ import {
   ArrowRightLeft,
   History,
   Plus,
+  Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
+import { useAuth } from "@/lib/auth"
+import { PermissionGate } from "@/components/auth"
 
 // Types
 interface Tenant {
@@ -121,6 +124,7 @@ interface Room {
 export default function TenantDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { hasPermission } = useAuth()
   const [loading, setLoading] = useState(true)
   const [tenant, setTenant] = useState<Tenant | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
@@ -269,6 +273,32 @@ export default function TenantDetailPage() {
 
   const handleInitiateCheckout = () => {
     router.push(`/exit-clearance/new?tenant=${tenant?.id}`)
+  }
+
+  const handleDelete = async () => {
+    if (!tenant) return
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete tenant "${tenant.name}"?\n\nThis will permanently remove the tenant and all associated data including:\n- Payment history\n- Charges\n- Stay history\n- Room transfers\n\nThis action cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setActionLoading(true)
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from("tenants")
+      .delete()
+      .eq("id", tenant.id)
+
+    if (error) {
+      console.error("Delete error:", error)
+      toast.error("Failed to delete tenant: " + error.message)
+    } else {
+      toast.success("Tenant deleted successfully")
+      router.push("/tenants")
+    }
+    setActionLoading(false)
   }
 
   const openTransferModal = async () => {
@@ -430,6 +460,17 @@ export default function TenantDetailPage() {
                 Checkout
               </Button>
             )}
+            <PermissionGate permission="tenants.delete" hide>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={actionLoading}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </PermissionGate>
           </div>
         }
       />
