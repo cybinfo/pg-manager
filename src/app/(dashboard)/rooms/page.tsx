@@ -167,7 +167,7 @@ export default function RoomsPage() {
 
   // Apply filters
   const filteredRooms = rooms.filter((room) => {
-    if (filters.property && filters.property !== "all" && room.property.id !== filters.property) {
+    if (filters.property && filters.property !== "all" && room.property?.id !== filters.property) {
       return false
     }
     if (filters.status && filters.status !== "all") {
@@ -213,7 +213,7 @@ export default function RoomsPage() {
             <div className="font-medium">Room {room.room_number}</div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Building2 className="h-3 w-3" />
-              {room.property.name}
+              {room.property?.name || "—"}
             </div>
           </div>
         </div>

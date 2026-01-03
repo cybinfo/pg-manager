@@ -219,7 +219,7 @@ export default function ExitClearancePage() {
   // Apply filters
   const filteredClearances = clearances.filter((clearance) => {
     // Property filter
-    if (filters.property && filters.property !== "all" && clearance.property.id !== filters.property) {
+    if (filters.property && filters.property !== "all" && clearance.property?.id !== filters.property) {
       return false
     }
 
@@ -285,9 +285,9 @@ export default function ExitClearancePage() {
         <div className="text-sm min-w-0">
           <div className="flex items-center gap-1 truncate">
             <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
-            <span className="truncate">{clearance.property.name}</span>
+            <span className="truncate">{clearance.property?.name || "—"}</span>
           </div>
-          <div className="text-xs text-muted-foreground">Room {clearance.room.room_number}</div>
+          <div className="text-xs text-muted-foreground">Room {clearance.room?.room_number || "—"}</div>
         </div>
       ),
     },
@@ -397,7 +397,7 @@ export default function ExitClearancePage() {
                     <div>
                       <p className="font-medium">{tenant.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {tenant.property.name} • Room {tenant.room.room_number}
+                        {tenant.property?.name || "—"} • Room {tenant.room?.room_number || "—"}
                       </p>
                     </div>
                   </div>

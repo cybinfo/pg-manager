@@ -160,10 +160,12 @@ export default function RoomDetailPage() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">Room {room.room_number}</h1>
-              <Link href={`/properties/${room.property.id}`} className="text-muted-foreground hover:text-primary flex items-center gap-1">
-                <Building2 className="h-4 w-4" />
-                {room.property.name}
-              </Link>
+              {room.property && (
+                <Link href={`/properties/${room.property.id}`} className="text-muted-foreground hover:text-primary flex items-center gap-1">
+                  <Building2 className="h-4 w-4" />
+                  {room.property.name}
+                </Link>
+              )}
             </div>
           </div>
         </div>

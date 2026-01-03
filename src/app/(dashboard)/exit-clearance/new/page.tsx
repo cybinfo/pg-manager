@@ -303,7 +303,7 @@ function InitiateCheckoutForm() {
                 <option value="">Select a tenant</option>
                 {tenants.map((tenant) => (
                   <option key={tenant.id} value={tenant.id}>
-                    {tenant.name} - {tenant.property.name}, Room {tenant.room.room_number}
+                    {tenant.name} - {tenant.property?.name || "—"}, Room {tenant.room?.room_number || "—"}
                     {tenant.status === "notice_period" ? " (On Notice)" : ""}
                   </option>
                 ))}
@@ -315,11 +315,11 @@ function InitiateCheckoutForm() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span>{selectedTenant.property.name}</span>
+                    <span>{selectedTenant.property?.name || "—"}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Home className="h-4 w-4 text-muted-foreground" />
-                    <span>Room {selectedTenant.room.room_number}</span>
+                    <span>Room {selectedTenant.room?.room_number || "—"}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <IndianRupee className="h-4 w-4 text-muted-foreground" />

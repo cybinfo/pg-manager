@@ -175,7 +175,7 @@ export default function PaymentsPage() {
 
   // Apply filters
   const filteredPayments = payments.filter((payment) => {
-    if (filters.property && filters.property !== "all" && payment.property.id !== filters.property) {
+    if (filters.property && filters.property !== "all" && payment.property?.id !== filters.property) {
       return false
     }
     if (filters.payment_method && filters.payment_method !== "all" && payment.payment_method !== filters.payment_method) {
@@ -206,7 +206,7 @@ export default function PaymentsPage() {
           </div>
           <div className="min-w-0">
             <div className="font-medium truncate">{payment.tenant.name}</div>
-            <div className="text-xs text-muted-foreground truncate">{payment.property.name}</div>
+            <div className="text-xs text-muted-foreground truncate">{payment.property?.name || "—"}</div>
           </div>
         </div>
       ),
