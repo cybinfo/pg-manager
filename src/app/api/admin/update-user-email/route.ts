@@ -33,6 +33,46 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // SECURITY CHECK: Does this user have owner or staff contexts?
+    // If so, we should NOT update auth.users.email or user_profiles.email
+    // because that would affect their owner/staff login!
+    const { data: contexts } = await supabaseAdmin
+      .from("user_contexts")
+      .select("context_type")
+      .eq("user_id", userId)
+
+    const hasOwnerOrStaffContext = contexts?.some(
+      (ctx) => ctx.context_type === "owner" || ctx.context_type === "staff"
+    )
+
+    // Always update tenants email (the record) if tenantId provided
+    if (tenantId) {
+      const { error: tenantError } = await supabaseAdmin
+        .from("tenants")
+        .update({ email: newEmail })
+        .eq("id", tenantId)
+
+      if (tenantError) {
+        console.error("Error updating tenants email:", tenantError)
+        return NextResponse.json(
+          { error: "Failed to update tenant email" },
+          { status: 500 }
+        )
+      }
+    }
+
+    // If user has owner/staff context, ONLY update tenants.email (done above)
+    // Do NOT change their login credentials!
+    if (hasOwnerOrStaffContext) {
+      return NextResponse.json({
+        success: true,
+        message: "Tenant record email updated. Login email unchanged (user has owner/staff access).",
+        loginEmailUpdated: false,
+      })
+    }
+
+    // User is ONLY a tenant, safe to update login credentials
+
     // Check if new email is already in use by another user
     const { data: existingUser } = await supabaseAdmin
       .from("user_profiles")
@@ -73,22 +113,10 @@ export async function POST(request: NextRequest) {
       // Don't fail completely, auth email is already updated
     }
 
-    // Update tenants email if tenantId provided
-    if (tenantId) {
-      const { error: tenantError } = await supabaseAdmin
-        .from("tenants")
-        .update({ email: newEmail })
-        .eq("id", tenantId)
-
-      if (tenantError) {
-        console.error("Error updating tenants email:", tenantError)
-        // Don't fail completely
-      }
-    }
-
     return NextResponse.json({
       success: true,
       message: "Email updated successfully across all tables",
+      loginEmailUpdated: true,
     })
   } catch (error) {
     console.error("Error in update-user-email:", error)
