@@ -540,6 +540,22 @@ RESEND_API_KEY=<resend_key>
 **Solution**: Changed MetricsBar to use `useRouter().push()` for client-side navigation
 **File**: `src/components/ui/metrics-bar.tsx`
 
+### Deep Link Pages "Not Found" Error (2026-01-03) ✅
+**Problem**: Clicking "View All" links from Property/Room/Tenant detail pages showed "Property/Tenant/Room not found" error
+**Root Cause**: Two issues:
+1. Pages used `if (!user) return` in useEffect, but `user` is initially null while auth loads, causing early return before data fetch
+2. Property deep link pages queried non-existent `type` column from properties table (400 Bad Request)
+**Solution**:
+- Removed unnecessary `user` dependency from useEffect (data protected by RLS + dashboard layout ensures auth)
+- Removed invalid `type` column from properties query
+- Replaced `PageLoading` with centralized `PageLoader` component
+**Files Fixed**:
+- `src/app/(dashboard)/properties/[id]/rooms/page.tsx`
+- `src/app/(dashboard)/properties/[id]/tenants/page.tsx`
+- `src/app/(dashboard)/tenants/[id]/bills/page.tsx`
+- `src/app/(dashboard)/tenants/[id]/payments/page.tsx`
+- `src/app/(dashboard)/rooms/[id]/tenants/page.tsx`
+
 ### Dashboard Nav Active State (2026-01-02) ✅
 **Problem**: Dashboard menu item always green/active on all pages
 **Solution**: Dashboard route now uses exact match instead of startsWith
@@ -856,4 +872,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-03 (Fixed Dashboard MetricsBar navigation using router.push)*
+*Last updated: 2026-01-03 (Fixed deep link pages and MetricsBar navigation)*
