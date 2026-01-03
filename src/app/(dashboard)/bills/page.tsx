@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
-import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { DataTable, Column, StatusDot, TableBadge, GroupConfig } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard } from "@/components/auth"
@@ -17,7 +17,8 @@ import {
   IndianRupee,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
+  Layers
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
@@ -47,12 +48,21 @@ interface Property {
   name: string
 }
 
+// Group by options for bills
+const billGroupByOptions = [
+  { value: "", label: "No Grouping" },
+  { value: "status", label: "Status" },
+  { value: "for_month", label: "Period" },
+  { value: "property.name", label: "Property" },
+]
+
 export default function BillsPage() {
   const router = useRouter()
   const [bills, setBills] = useState<Bill[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<Record<string, string>>({})
+  const [groupBy, setGroupBy] = useState<string>("")
 
   useEffect(() => {
     const fetchBills = async () => {
@@ -266,12 +276,30 @@ export default function BillsPage() {
       {bills.length > 0 && <MetricsBar items={metricsItems} />}
 
       {/* Filters */}
-      <ListPageFilters
-        filters={filterConfigs}
-        values={filters}
-        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
-        onClear={() => setFilters({})}
-      />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <ListPageFilters
+            filters={filterConfigs}
+            values={filters}
+            onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+            onClear={() => setFilters({})}
+          />
+        </div>
+
+        {/* Group By Selector */}
+        <div className="flex items-center gap-2">
+          <Layers className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value)}
+            className="h-9 px-3 rounded-md border border-input bg-background text-sm"
+          >
+            {billGroupByOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <DataTable
         columns={columns}
@@ -281,6 +309,7 @@ export default function BillsPage() {
         searchable
         searchPlaceholder="Search by bill number, tenant, or month..."
         searchFields={["bill_number", "for_month"]}
+        groupBy={groupBy ? { key: groupBy, label: billGroupByOptions.find(o => o.value === groupBy)?.label } : undefined}
         emptyState={
           <div className="flex flex-col items-center py-8">
             <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />

@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown, Search, Loader2 } from "lucide-react"
+import { ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown, Search, Loader2, FolderOpen, FolderClosed } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 // ============================================
@@ -47,6 +47,12 @@ export interface Column<T> {
 
 export type SortDirection = "asc" | "desc" | null
 
+export interface GroupConfig {
+  key: string              // Field to group by (supports dot notation like "property.name")
+  label?: string           // Display label for the group (e.g., "Property")
+  renderLabel?: (value: unknown, count: number) => React.ReactNode  // Custom group header render
+}
+
 interface DataTableProps<T> {
   columns: Column<T>[]
   data: T[]
@@ -62,6 +68,10 @@ interface DataTableProps<T> {
   // Sorting options
   defaultSort?: { key: string; direction: "asc" | "desc" }
   onSortChange?: (key: string | null, direction: SortDirection) => void
+  // Grouping options
+  groupBy?: GroupConfig | string  // Group by field (string for simple, GroupConfig for advanced)
+  collapsibleGroups?: boolean     // Allow groups to be collapsed
+  defaultCollapsed?: boolean      // Start groups collapsed
 }
 
 // Helper to get nested value from object (e.g., "property.name")
@@ -72,6 +82,76 @@ function getNestedValue<T>(obj: T, path: string): unknown {
     }
     return undefined
   }, obj)
+}
+
+// Row component extracted for reuse in grouped/non-grouped views
+function DataTableRow<T extends object>({
+  row,
+  columns,
+  visibleColumns,
+  gridTemplate,
+  isClickable,
+  onRowClick,
+}: {
+  row: T
+  columns: Column<T>[]
+  visibleColumns: Column<T>[]
+  gridTemplate: string
+  isClickable: boolean
+  onRowClick: (row: T) => void
+}) {
+  return (
+    <div
+      className={cn(
+        "px-4 py-3 transition-colors",
+        isClickable && "cursor-pointer hover:bg-slate-50"
+      )}
+      onClick={() => onRowClick(row)}
+    >
+      {/* Desktop Row */}
+      <div
+        className="hidden md:grid items-center gap-4"
+        style={{ gridTemplateColumns: gridTemplate }}
+      >
+        {visibleColumns.map((column) => (
+          <div key={column.key} className={cn("text-sm min-w-0", column.className)}>
+            {column.render
+              ? column.render(row)
+              : String((row as Record<string, unknown>)[column.key] ?? "")}
+          </div>
+        ))}
+        {isClickable && (
+          <div className="flex justify-end">
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Row */}
+      <div className="md:hidden space-y-1">
+        {columns.slice(0, 3).map((column, index) => (
+          <div key={column.key} className="flex items-center justify-between">
+            {index === 0 ? (
+              <div className="font-medium text-sm flex-1 min-w-0">
+                {column.render
+                  ? column.render(row)
+                  : String((row as Record<string, unknown>)[column.key] ?? "")}
+              </div>
+            ) : (
+              <>
+                <span className="text-xs text-muted-foreground">{column.header}</span>
+                <span className="text-sm">
+                  {column.render
+                    ? column.render(row)
+                    : String((row as Record<string, unknown>)[column.key] ?? "")}
+                </span>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export function DataTable<T extends object>({
@@ -88,11 +168,24 @@ export function DataTable<T extends object>({
   className,
   defaultSort,
   onSortChange,
+  groupBy,
+  collapsibleGroups = true,
+  defaultCollapsed = false,
 }: DataTableProps<T>) {
   const router = useRouter()
   const [search, setSearch] = React.useState("")
   const [sortColumn, setSortColumn] = React.useState<string | null>(defaultSort?.key ?? null)
   const [sortDirection, setSortDirection] = React.useState<SortDirection>(defaultSort?.direction ?? null)
+  const [collapsedGroups, setCollapsedGroups] = React.useState<Set<string>>(new Set())
+
+  // Parse groupBy config
+  const groupConfig: GroupConfig | null = React.useMemo(() => {
+    if (!groupBy) return null
+    if (typeof groupBy === "string") {
+      return { key: groupBy }
+    }
+    return groupBy
+  }, [groupBy])
 
   // Handle column header click for sorting
   const handleSort = (column: Column<T>) => {
@@ -160,6 +253,52 @@ export function DataTable<T extends object>({
 
     return result
   }, [data, search, searchFields, sortColumn, sortDirection, columns])
+
+  // Group data if groupBy is specified
+  const groupedData = React.useMemo(() => {
+    if (!groupConfig) return null
+
+    const groups = new Map<string, { label: string; rows: T[] }>()
+
+    processedData.forEach((row) => {
+      const value = getNestedValue(row, groupConfig.key)
+      const groupKey = value == null ? "__null__" : String(value)
+      const groupLabel = value == null ? "Ungrouped" : String(value)
+
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, { label: groupLabel, rows: [] })
+      }
+      groups.get(groupKey)!.rows.push(row)
+    })
+
+    // Convert to array and sort by group label
+    return Array.from(groups.entries())
+      .sort(([, a], [, b]) => a.label.localeCompare(b.label))
+      .map(([key, { label, rows }]) => ({ key, label, rows }))
+  }, [processedData, groupConfig])
+
+  // Initialize collapsed state when groupBy changes
+  React.useEffect(() => {
+    if (groupedData && defaultCollapsed) {
+      setCollapsedGroups(new Set(groupedData.map((g) => g.key)))
+    } else {
+      setCollapsedGroups(new Set())
+    }
+  }, [groupConfig?.key, defaultCollapsed])
+
+  // Toggle group collapse
+  const toggleGroup = (groupKey: string) => {
+    if (!collapsibleGroups) return
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupKey)) {
+        next.delete(groupKey)
+      } else {
+        next.add(groupKey)
+      }
+      return next
+    })
+  }
 
   const handleRowClick = (row: T) => {
     if (href) {
@@ -254,59 +393,75 @@ export function DataTable<T extends object>({
         {/* Data Rows */}
         {!loading && processedData.length > 0 && (
           <div className="divide-y">
-            {processedData.map((row) => (
-              <div
-                key={String(row[keyField])}
-                className={cn(
-                  "px-4 py-3 transition-colors",
-                  isClickable && "cursor-pointer hover:bg-slate-50"
-                )}
-                onClick={() => handleRowClick(row)}
-              >
-                {/* Desktop Row */}
-                <div
-                  className="hidden md:grid items-center gap-4"
-                  style={{ gridTemplateColumns: gridTemplate }}
-                >
-                  {visibleColumns.map((column) => (
-                    <div key={column.key} className={cn("text-sm min-w-0", column.className)}>
-                      {column.render
-                        ? column.render(row)
-                        : String((row as Record<string, unknown>)[column.key] ?? "")}
-                    </div>
-                  ))}
-                  {isClickable && (
-                    <div className="flex justify-end">
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
+            {groupedData ? (
+              // Grouped rendering
+              groupedData.map((group) => {
+                const isCollapsed = collapsedGroups.has(group.key)
+                const GroupIcon = isCollapsed ? FolderClosed : FolderOpen
 
-                {/* Mobile Row */}
-                <div className="md:hidden space-y-1">
-                  {columns.slice(0, 3).map((column, index) => (
-                    <div key={column.key} className="flex items-center justify-between">
-                      {index === 0 ? (
-                        <div className="font-medium text-sm flex-1 min-w-0">
-                          {column.render
-                            ? column.render(row)
-                            : String((row as Record<string, unknown>)[column.key] ?? "")}
-                        </div>
-                      ) : (
-                        <>
-                          <span className="text-xs text-muted-foreground">{column.header}</span>
-                          <span className="text-sm">
-                            {column.render
-                              ? column.render(row)
-                              : String((row as Record<string, unknown>)[column.key] ?? "")}
-                          </span>
-                        </>
+                return (
+                  <div key={group.key}>
+                    {/* Group Header */}
+                    <div
+                      className={cn(
+                        "px-4 py-2.5 bg-slate-100/80 border-b flex items-center gap-3",
+                        collapsibleGroups && "cursor-pointer hover:bg-slate-100"
                       )}
+                      onClick={() => toggleGroup(group.key)}
+                    >
+                      {collapsibleGroups && (
+                        <GroupIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                      )}
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {groupConfig?.label && (
+                          <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                            {groupConfig.label}:
+                          </span>
+                        )}
+                        <span className="font-medium text-sm truncate">
+                          {groupConfig?.renderLabel
+                            ? groupConfig.renderLabel(group.label, group.rows.length)
+                            : group.label}
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground bg-slate-200 px-2 py-0.5 rounded-full">
+                        {group.rows.length}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+
+                    {/* Group Rows */}
+                    {!isCollapsed && (
+                      <div className="divide-y">
+                        {group.rows.map((row) => (
+                          <DataTableRow
+                            key={String(row[keyField])}
+                            row={row}
+                            columns={columns}
+                            visibleColumns={visibleColumns}
+                            gridTemplate={gridTemplate}
+                            isClickable={isClickable}
+                            onRowClick={handleRowClick}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            ) : (
+              // Non-grouped rendering
+              processedData.map((row) => (
+                <DataTableRow
+                  key={String(row[keyField])}
+                  row={row}
+                  columns={columns}
+                  visibleColumns={visibleColumns}
+                  gridTemplate={gridTemplate}
+                  isClickable={isClickable}
+                  onRowClick={handleRowClick}
+                />
+              ))
+            )}
           </div>
         )}
       </div>

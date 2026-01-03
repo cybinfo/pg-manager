@@ -5,7 +5,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
-import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
+import { DataTable, Column, StatusDot, GroupConfig } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard } from "@/components/auth"
@@ -15,7 +15,8 @@ import {
   Plus,
   UserCheck,
   UserMinus,
-  Clock
+  Clock,
+  Layers
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
@@ -66,11 +67,20 @@ interface Property {
   name: string
 }
 
+// Group by options
+const groupByOptions = [
+  { value: "", label: "No Grouping" },
+  { value: "property.name", label: "Property" },
+  { value: "status", label: "Status" },
+  { value: "room.room_number", label: "Room" },
+]
+
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<Record<string, string>>({})
+  const [groupBy, setGroupBy] = useState<string>("")
 
   useEffect(() => {
     fetchData()
@@ -275,12 +285,30 @@ export default function TenantsPage() {
       {tenants.length > 0 && <MetricsBar items={metricsItems} />}
 
       {/* Filters */}
-      <ListPageFilters
-        filters={filterConfigs}
-        values={filters}
-        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
-        onClear={() => setFilters({})}
-      />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <ListPageFilters
+            filters={filterConfigs}
+            values={filters}
+            onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+            onClear={() => setFilters({})}
+          />
+        </div>
+
+        {/* Group By Selector */}
+        <div className="flex items-center gap-2">
+          <Layers className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={groupBy}
+            onChange={(e) => setGroupBy(e.target.value)}
+            className="h-9 px-3 rounded-md border border-input bg-background text-sm"
+          >
+            {groupByOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <DataTable
         columns={columns}
@@ -290,6 +318,7 @@ export default function TenantsPage() {
         searchable
         searchPlaceholder="Search by name, phone, property..."
         searchFields={["name", "phone"]}
+        groupBy={groupBy ? { key: groupBy, label: groupByOptions.find(o => o.value === groupBy)?.label } : undefined}
         emptyState={
           <div className="flex flex-col items-center py-8">
             <Users className="h-12 w-12 text-muted-foreground/50 mb-4" />
