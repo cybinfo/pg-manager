@@ -326,7 +326,7 @@ Configurable via property edit → Website Settings tab:
 | Component | Purpose |
 |-----------|---------|
 | `MetricsBar` | Compact horizontal stats bar |
-| `DataTable` | Table with search, filters, row actions |
+| `DataTable` | Table with search, sorting, nested grouping, row actions |
 | `PageHeader` | Page title with icon, actions, and breadcrumbs |
 | `StatusBadge` | Pre-configured status badges (success, warning, error, info, muted, primary, purple) |
 | `PageLoader` | Centralized page loading spinner with height variants (sm, md, lg, full) |
@@ -359,6 +359,53 @@ Configurable via property edit → Website Settings tab:
 | `FeatureGate` | Conditional render by feature flag |
 | `FeatureGuard` | Page wrapper for feature-flagged routes |
 | `useFeatureCheck` | Hook to check if feature is enabled |
+
+### DataTable Features (src/components/ui/data-table.tsx)
+The DataTable component supports advanced features for consistent UX across all list pages:
+
+**Column Sorting:**
+- Click column headers to sort ascending/descending
+- Supports nested properties (e.g., `property.name`)
+- Visual indicators show sort direction
+
+**Nested Grouping:**
+- Multi-level hierarchical grouping with collapsible sections
+- Depth-based styling (lighter backgrounds at deeper levels)
+- Selection order numbers in group dropdown
+- Compound keys for tracking collapsed state
+
+```typescript
+// Usage in page components
+const groupByOptions = [
+  { value: "property.name", label: "Property" },
+  { value: "status", label: "Status" },
+]
+
+const [selectedGroups, setSelectedGroups] = useState<string[]>([])
+
+<DataTable
+  columns={columns}
+  data={filteredData}
+  groupBy={selectedGroups.length > 0 ? selectedGroups.map(key => ({
+    key,
+    label: groupByOptions.find(o => o.value === key)?.label
+  })) : undefined}
+/>
+```
+
+**Pages with Grouping Support:**
+- tenants: Property, Status, Room
+- bills: Property, Status, Period
+- payments: Property, Method, Period
+- expenses: Category, Property, Method
+- visitors: Property, Overnight
+- complaints: Property, Status, Priority, Category
+- meter-readings: Property, Meter Type
+- exit-clearance: Property, Status
+- notices: Property, Type, Active
+- rooms: Property, Status, Room Type, Floor
+- staff: Status
+- approvals: Type, Status, Priority
 
 ---
 
@@ -552,6 +599,8 @@ RESEND_API_KEY=<resend_key>
 | Tenant Profile Issue Reporting | Tenants can report data issues from profile, flows to approvals | ✅ Complete |
 | Expanded Issue Reporting | Report issues on bills, payments, tenancy details, room details | ✅ Complete |
 | Tenant Document Management | Upload, verify, and manage tenant documents with approval workflow | ✅ Complete |
+| DataTable Column Sorting | Click headers to sort by any column, supports nested properties | ✅ Complete |
+| DataTable Nested Grouping | Multi-level hierarchical grouping on all 12 list pages | ✅ Complete |
 
 ### Pending Features (Backlog)
 | Priority | Feature | Description |
@@ -698,6 +747,8 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **DataTable Nested Grouping** - Multi-level hierarchical grouping on all 12 list pages (tenants, bills, payments, expenses, visitors, complaints, meter-readings, exit-clearance, notices, rooms, staff, approvals)
+- **DataTable Column Sorting** - Click-to-sort on all columns with visual indicators, supports nested properties
 - **UI Component Centralization** - Created PageLoader, Avatar, StatCard components; refactored 52 files replacing 155+ patterns
 - **Tenant Document Management** - Tenants can upload documents for verification, link them to issue reports; once approved, cannot be deleted
 - **Expanded Issue Reporting** - Report issues on bills, payments, tenancy details, room details (bill_dispute, payment_dispute, tenancy_issue, room_issue)
@@ -790,4 +841,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-03 (UI component centralization: PageLoader, Avatar, StatCard)*
+*Last updated: 2026-01-03 (DataTable nested grouping on all 12 list pages)*
