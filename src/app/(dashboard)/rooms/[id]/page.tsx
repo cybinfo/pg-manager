@@ -25,6 +25,7 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Avatar } from "@/components/ui/avatar"
 import { PageLoader } from "@/components/ui/page-loader"
+import { StatCard } from "@/components/ui/stat-card"
 
 interface Room {
   id: string
@@ -198,47 +199,11 @@ export default function RoomDetailPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Bed className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Occupancy</p>
-                <p className="font-semibold">{room.occupied_beds}/{room.total_beds} Beds</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard icon={Bed} label="Occupancy" value={`${room.occupied_beds}/${room.total_beds} Beds`} color="blue" />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Rent</p>
-                <p className="font-semibold">{formatCurrency(room.rent_amount)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard icon={IndianRupee} label="Rent" value={formatCurrency(room.rent_amount)} color="green" />
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Deposit</p>
-                <p className="font-semibold">{formatCurrency(room.deposit_amount || 0)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard icon={IndianRupee} label="Deposit" value={formatCurrency(room.deposit_amount || 0)} color="purple" />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">

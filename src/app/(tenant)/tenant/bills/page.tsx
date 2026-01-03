@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
+import { StatCard } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
 import {
   FileText,
@@ -198,61 +199,30 @@ export default function TenantBillsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Billed</p>
-                <p className="font-semibold">{formatCurrency(stats.totalBilled)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Paid</p>
-                <p className="font-semibold">{formatCurrency(stats.totalPaid)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Balance Due</p>
-                <p className="font-semibold">{formatCurrency(stats.totalDue)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Receipt className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Bills</p>
-                <p className="font-semibold">{stats.billsCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={IndianRupee}
+          label="Total Billed"
+          value={formatCurrency(stats.totalBilled)}
+          color="blue"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Total Paid"
+          value={formatCurrency(stats.totalPaid)}
+          color="green"
+        />
+        <StatCard
+          icon={AlertCircle}
+          label="Balance Due"
+          value={formatCurrency(stats.totalDue)}
+          color="red"
+        />
+        <StatCard
+          icon={Receipt}
+          label="Total Bills"
+          value={stats.billsCount}
+          color="purple"
+        />
       </div>
 
       {/* Filter */}

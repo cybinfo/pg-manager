@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatCard } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
 import {
   CreditCard,
@@ -208,61 +209,30 @@ export default function TenantPaymentsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Paid</p>
-                <p className="font-semibold">{formatCurrency(stats.totalPaid)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">This Year</p>
-                <p className="font-semibold">{formatCurrency(stats.totalPaidThisYear)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Receipt className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Payments</p>
-                <p className="font-semibold">{stats.paymentsCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <CreditCard className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Monthly Rent</p>
-                <p className="font-semibold">{formatCurrency(stats.monthlyRent)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={IndianRupee}
+          label="Total Paid"
+          value={formatCurrency(stats.totalPaid)}
+          color="green"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="This Year"
+          value={formatCurrency(stats.totalPaidThisYear)}
+          color="blue"
+        />
+        <StatCard
+          icon={Receipt}
+          label="Payments"
+          value={stats.paymentsCount}
+          color="purple"
+        />
+        <StatCard
+          icon={CreditCard}
+          label="Monthly Rent"
+          value={formatCurrency(stats.monthlyRent)}
+          color="orange"
+        />
       </div>
 
       {/* Filter */}

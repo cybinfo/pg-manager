@@ -27,6 +27,7 @@ import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { PageLoader } from "@/components/ui/page-loader"
+import { StatCard } from "@/components/ui/stat-card"
 
 interface Property {
   id: string
@@ -213,61 +214,30 @@ export default function PropertyDetailPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Home className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{rooms.length}</p>
-                <p className="text-xs text-muted-foreground">Total Rooms</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{activeTenants}</p>
-                <p className="text-xs text-muted-foreground">Active Tenants</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Bed className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{occupancyRate}%</p>
-                <p className="text-xs text-muted-foreground">Occupancy ({occupiedBeds}/{totalBeds})</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{formatCurrency(monthlyRevenue)}</p>
-                <p className="text-xs text-muted-foreground">Monthly Revenue</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={Home}
+          label="Total Rooms"
+          value={rooms.length}
+          color="blue"
+        />
+        <StatCard
+          icon={Users}
+          label="Active Tenants"
+          value={activeTenants}
+          color="green"
+        />
+        <StatCard
+          icon={Bed}
+          label={`Occupancy (${occupiedBeds}/${totalBeds})`}
+          value={`${occupancyRate}%`}
+          color="purple"
+        />
+        <StatCard
+          icon={IndianRupee}
+          label="Monthly Revenue"
+          value={formatCurrency(monthlyRevenue)}
+          color="orange"
+        />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
