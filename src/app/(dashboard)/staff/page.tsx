@@ -10,6 +10,7 @@ import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-t
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard } from "@/components/auth"
 import { PageLoader } from "@/components/ui/page-loader"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Users,
   Plus,
@@ -19,7 +20,9 @@ import {
   CheckCircle,
   XCircle,
   Settings,
-  UserCog
+  UserCog,
+  Layers,
+  ChevronDown
 } from "lucide-react"
 import { toast } from "sonner"
 import { Avatar } from "@/components/ui/avatar"
@@ -75,11 +78,18 @@ interface Role {
   is_system_role: boolean
 }
 
+// Group by options for staff
+const staffGroupByOptions = [
+  { value: "is_active", label: "Status" },
+]
+
 export default function StaffPage() {
   const [loading, setLoading] = useState(true)
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [filters, setFilters] = useState<Record<string, string>>({})
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -330,12 +340,91 @@ export default function StaffPage() {
       <MetricsBar items={metricsItems} />
 
       {/* Filters */}
-      <ListPageFilters
-        filters={filterConfigs}
-        values={filters}
-        onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
-        onClear={() => setFilters({})}
-      />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <ListPageFilters
+            filters={filterConfigs}
+            values={filters}
+            onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
+            onClear={() => setFilters({})}
+          />
+        </div>
+
+        {/* Group By Multi-Select */}
+        <div className="relative">
+          <button
+            onClick={() => setGroupDropdownOpen(!groupDropdownOpen)}
+            className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-slate-50"
+          >
+            <Layers className="h-4 w-4 text-muted-foreground" />
+            <span>
+              {selectedGroups.length === 0
+                ? "Group by..."
+                : selectedGroups.length === 1
+                  ? staffGroupByOptions.find(o => o.value === selectedGroups[0])?.label
+                  : `${selectedGroups.length} levels`}
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${groupDropdownOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {groupDropdownOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setGroupDropdownOpen(false)}
+              />
+              <div className="absolute right-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-20 py-1">
+                <div className="px-3 py-2 border-b">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Group by (select order)
+                  </p>
+                </div>
+                {staffGroupByOptions.map((opt) => {
+                  const isSelected = selectedGroups.includes(opt.value)
+                  const orderIndex = selectedGroups.indexOf(opt.value)
+
+                  return (
+                    <label
+                      key={opt.value}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedGroups([...selectedGroups, opt.value])
+                          } else {
+                            setSelectedGroups(selectedGroups.filter(v => v !== opt.value))
+                          }
+                        }}
+                      />
+                      <span className="text-sm flex-1">{opt.label}</span>
+                      {isSelected && (
+                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                          {orderIndex + 1}
+                        </span>
+                      )}
+                    </label>
+                  )
+                })}
+                {selectedGroups.length > 0 && (
+                  <div className="border-t mt-1 pt-1 px-3 py-2">
+                    <button
+                      onClick={() => {
+                        setSelectedGroups([])
+                        setGroupDropdownOpen(false)
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Clear grouping
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
       <DataTable
         columns={columns}
@@ -345,6 +434,10 @@ export default function StaffPage() {
         searchable
         searchPlaceholder="Search by name, email, or phone..."
         searchFields={["name", "email", "phone"] as (keyof StaffMember)[]}
+        groupBy={selectedGroups.length > 0 ? selectedGroups.map(key => ({
+          key,
+          label: staffGroupByOptions.find(o => o.value === key)?.label
+        })) : undefined}
         emptyState={
           <div className="flex flex-col items-center py-8">
             <UserCog className="h-12 w-12 text-muted-foreground/50 mb-4" />

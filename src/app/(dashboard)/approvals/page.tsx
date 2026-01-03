@@ -10,9 +10,11 @@ import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { PageLoader } from "@/components/ui/page-loader"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   ClipboardCheck, CheckCircle, XCircle, Clock, Loader2,
-  User, AlertTriangle, FileText, ChevronRight, Paperclip, ExternalLink
+  User, AlertTriangle, FileText, ChevronRight, Paperclip, ExternalLink,
+  Layers, ChevronDown
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -78,6 +80,13 @@ const PRIORITY_COLORS: Record<string, string> = {
   urgent: "bg-rose-100 text-rose-700",
 }
 
+// Group by options for approvals
+const approvalGroupByOptions = [
+  { value: "type", label: "Type" },
+  { value: "status", label: "Status" },
+  { value: "priority", label: "Priority" },
+]
+
 export default function ApprovalsPage() {
   const [loading, setLoading] = useState(true)
   const [approvals, setApprovals] = useState<Approval[]>([])
@@ -88,6 +97,8 @@ export default function ApprovalsPage() {
   const [processing, setProcessing] = useState(false)
   const [decisionNotes, setDecisionNotes] = useState("")
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending")
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false)
 
   useEffect(() => {
     fetchApprovals()
@@ -388,20 +399,97 @@ export default function ApprovalsPage() {
         <MetricsBar items={metrics} />
 
         {/* Filter Tabs */}
-        <div className="flex gap-2">
-          {(["pending", "approved", "rejected", "all"] as const).map((f) => (
-            <Button
-              key={f}
-              variant={filter === f ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setFilter(f)}
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex gap-2">
+            {(["pending", "approved", "rejected", "all"] as const).map((f) => (
+              <Button
+                key={f}
+                variant={filter === f ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setFilter(f)}
+              >
+                {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+                {f === "pending" && pendingCount > 0 && (
+                  <Badge className="ml-2 bg-amber-500">{pendingCount}</Badge>
+                )}
+              </Button>
+            ))}
+          </div>
+
+          {/* Group By Multi-Select */}
+          <div className="relative">
+            <button
+              onClick={() => setGroupDropdownOpen(!groupDropdownOpen)}
+              className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-slate-50"
             >
-              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-              {f === "pending" && pendingCount > 0 && (
-                <Badge className="ml-2 bg-amber-500">{pendingCount}</Badge>
-              )}
-            </Button>
-          ))}
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              <span>
+                {selectedGroups.length === 0
+                  ? "Group by..."
+                  : selectedGroups.length === 1
+                    ? approvalGroupByOptions.find(o => o.value === selectedGroups[0])?.label
+                    : `${selectedGroups.length} levels`}
+              </span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${groupDropdownOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {groupDropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setGroupDropdownOpen(false)}
+                />
+                <div className="absolute right-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-20 py-1">
+                  <div className="px-3 py-2 border-b">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                      Group by (select order)
+                    </p>
+                  </div>
+                  {approvalGroupByOptions.map((opt) => {
+                    const isSelected = selectedGroups.includes(opt.value)
+                    const orderIndex = selectedGroups.indexOf(opt.value)
+
+                    return (
+                      <label
+                        key={opt.value}
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedGroups([...selectedGroups, opt.value])
+                            } else {
+                              setSelectedGroups(selectedGroups.filter(v => v !== opt.value))
+                            }
+                          }}
+                        />
+                        <span className="text-sm flex-1">{opt.label}</span>
+                        {isSelected && (
+                          <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                            {orderIndex + 1}
+                          </span>
+                        )}
+                      </label>
+                    )
+                  })}
+                  {selectedGroups.length > 0 && (
+                    <div className="border-t mt-1 pt-1 px-3 py-2">
+                      <button
+                        onClick={() => {
+                          setSelectedGroups([])
+                          setGroupDropdownOpen(false)
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Clear grouping
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <DataTable
@@ -411,6 +499,10 @@ export default function ApprovalsPage() {
           searchable
           searchPlaceholder="Search requests..."
           searchFields={["title", "type"]}
+          groupBy={selectedGroups.length > 0 ? selectedGroups.map(key => ({
+            key,
+            label: approvalGroupByOptions.find(o => o.value === key)?.label
+          })) : undefined}
           onRowClick={(approval) => {
             openApprovalDialog(approval)
           }}
