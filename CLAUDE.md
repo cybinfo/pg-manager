@@ -631,6 +631,8 @@ RESEND_API_KEY=<resend_key>
 | Tenant Document Management | Upload, verify, and manage tenant documents with approval workflow | ✅ Complete |
 | DataTable Column Sorting | Click headers to sort by any column, supports nested properties | ✅ Complete |
 | DataTable Nested Grouping | Multi-level hierarchical grouping on all 12 list pages | ✅ Complete |
+| Configurable Room Types | Add/edit/delete custom room types in Settings → Room Types | ✅ Complete |
+| Billing Cycle Mode | Calendar Month (1st) or Check-in Anniversary billing dates | ✅ Complete |
 
 ### Pending Features (Backlog)
 | Priority | Feature | Description |
@@ -732,6 +734,8 @@ Run in order in Supabase SQL editor:
 031_admin_functions.sql       - Enhanced admin functions with stats
 032_workspace_details_admin.sql - get_workspace_details_admin() for admin Explore
 033_tenant_documents.sql       - Tenant document uploads + expanded approval types
+034_platform_admin_join_fix.sql - Platform admin JOIN fixes
+035_configurable_room_types.sql - room_types JSONB + billing_cycle_mode columns
 ```
 
 ### Storage Buckets (Migration 015)
@@ -777,6 +781,9 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Configurable Room Types** - Add/edit/delete custom room types in Settings → Room Types; room creation/edit uses dynamic types from owner_config
+- **Billing Cycle Mode** - Choose between Calendar Month (1st of month) or Check-in Anniversary (based on tenant check-in date) in Settings → Billing
+- **Migration 035** - Added room_types JSONB and billing_cycle_mode columns to owner_config
 - **Supabase JOIN Transform Utility** - Centralized `transformJoin()` function in `src/lib/supabase/transforms.ts` that handles both array and object formats from Supabase JOINs; refactored 14 files for consistency
 - **DataTable Nested Grouping** - Multi-level hierarchical grouping on all 12 list pages (tenants, bills, payments, expenses, visitors, complaints, meter-readings, exit-clearance, notices, rooms, staff, approvals)
 - **DataTable Column Sorting** - Click-to-sort on all columns with visual indicators, supports nested properties
@@ -872,4 +879,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-03 (Fixed deep link pages and MetricsBar navigation)*
+*Last updated: 2026-01-03 (Configurable room types and billing cycle mode)*
