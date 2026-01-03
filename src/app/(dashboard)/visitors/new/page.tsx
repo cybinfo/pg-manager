@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -77,7 +78,7 @@ export default function NewVisitorPage() {
       if (!tenantsRes.error) {
         const transformedTenants = ((tenantsRes.data as RawTenant[]) || []).map((tenant) => ({
           ...tenant,
-          room: tenant.room && tenant.room.length > 0 ? tenant.room[0] : null,
+          room: transformJoin(tenant.room),
         }))
         setTenants(transformedTenants)
       }

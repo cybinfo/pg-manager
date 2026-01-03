@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -113,18 +114,18 @@ export default function VisitorDetailPage() {
 
       // Transform the data from arrays to single objects
       const rawData = data as RawVisitor
-      const tenant = rawData.tenant && rawData.tenant.length > 0 ? rawData.tenant[0] : null
-      const property = rawData.property && rawData.property.length > 0 ? rawData.property[0] : null
+      const tenant = transformJoin(rawData.tenant)
+      const property = transformJoin(rawData.property)
 
       // Flatten the room data from tenant
       const visitorData: Visitor = {
         ...rawData,
         tenant: tenant ? {
           ...tenant,
-          room: tenant.room && tenant.room.length > 0 ? tenant.room[0] : null,
+          room: transformJoin(tenant.room),
         } : null,
         property,
-        room: tenant?.room && tenant.room.length > 0 ? tenant.room[0] : null,
+        room: tenant ? transformJoin(tenant.room) : null,
       }
       setVisitor(visitorData)
       setLoading(false)

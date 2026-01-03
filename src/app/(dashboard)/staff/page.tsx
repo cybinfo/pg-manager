@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
@@ -124,8 +125,8 @@ export default function StaffPage() {
         ...member,
         roles: (member.roles || []).map((userRole) => ({
           ...userRole,
-          role: userRole.role && userRole.role.length > 0 ? userRole.role[0] : null,
-          property: userRole.property && userRole.property.length > 0 ? userRole.property[0] : null,
+          role: transformJoin(userRole.role),
+          property: transformJoin(userRole.property),
         })),
       }))
       setStaff(transformedData)

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -109,8 +110,8 @@ function NewComplaintForm() {
           name: t.name,
           property_id: t.property_id,
           room_id: t.room_id,
-          room: t.room && t.room.length > 0 ? t.room[0] : null,
-          property: t.property && t.property.length > 0 ? t.property[0] : null,
+          room: transformJoin(t.room),
+          property: transformJoin(t.property),
         }))
         setTenants(transformedTenants)
 

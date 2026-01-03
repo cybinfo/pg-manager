@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -114,8 +115,8 @@ function NewPaymentForm() {
         // Transform the data from arrays to single objects
         const transformedTenants = ((tenantsRes.data as RawTenant[]) || []).map((tenant) => ({
           ...tenant,
-          property: tenant.property && tenant.property.length > 0 ? tenant.property[0] : null,
-          room: tenant.room && tenant.room.length > 0 ? tenant.room[0] : null,
+          property: transformJoin(tenant.property),
+          room: transformJoin(tenant.room),
         }))
         setTenants(transformedTenants)
 

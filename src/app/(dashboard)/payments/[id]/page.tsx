@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -145,15 +146,15 @@ export default function PaymentReceiptPage() {
 
       // Transform the data from arrays to single objects
       const rawData = data as RawPayment
-      const tenant = rawData.tenant && rawData.tenant.length > 0 ? rawData.tenant[0] : null
+      const tenant = transformJoin(rawData.tenant)
       const transformedPayment: Payment = {
         ...rawData,
         tenant: tenant ? {
           ...tenant,
-          room: tenant.room && tenant.room.length > 0 ? tenant.room[0] : null,
+          room: transformJoin(tenant.room),
         } : null,
-        property: rawData.property && rawData.property.length > 0 ? rawData.property[0] : null,
-        charge_type: rawData.charge_type && rawData.charge_type.length > 0 ? rawData.charge_type[0] : null,
+        property: transformJoin(rawData.property),
+        charge_type: transformJoin(rawData.charge_type),
         owner: ownerData || { business_name: null, name: "PG Manager", phone: null },
       }
       setPayment(transformedPayment)

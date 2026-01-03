@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
@@ -145,9 +146,9 @@ export default function ComplaintsPage() {
       } else {
         const transformedData = ((data as RawComplaint[]) || []).map((complaint) => ({
           ...complaint,
-          tenant: complaint.tenant && complaint.tenant.length > 0 ? complaint.tenant[0] : null,
-          property: complaint.property && complaint.property.length > 0 ? complaint.property[0] : null,
-          room: complaint.room && complaint.room.length > 0 ? complaint.room[0] : null,
+          tenant: transformJoin(complaint.tenant),
+          property: transformJoin(complaint.property),
+          room: transformJoin(complaint.room),
         }))
         setComplaints(transformedData)
       }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -156,9 +157,9 @@ export default function ExitClearanceDetailPage() {
       const rawData = data as RawExitClearance
       const transformedData: ExitClearance = {
         ...rawData,
-        tenant: rawData.tenant && rawData.tenant.length > 0 ? rawData.tenant[0] : null,
-        property: rawData.property && rawData.property.length > 0 ? rawData.property[0] : null,
-        room: rawData.room && rawData.room.length > 0 ? rawData.room[0] : null,
+        tenant: transformJoin(rawData.tenant),
+        property: transformJoin(rawData.property),
+        room: transformJoin(rawData.room),
       }
       setClearance(transformedData)
       setFormData({

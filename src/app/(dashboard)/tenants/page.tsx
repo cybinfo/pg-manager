@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, StatusDot, GroupConfig } from "@/components/ui/data-table"
@@ -44,20 +45,6 @@ interface Tenant {
   } | null
 }
 
-interface RawTenant {
-  id: string
-  name: string
-  email: string | null
-  phone: string
-  photo_url: string | null
-  profile_photo: string | null
-  check_in_date: string
-  monthly_rent: number
-  status: string
-  // Supabase can return joins as arrays or objects depending on query type
-  property: { id: string; name: string }[] | { id: string; name: string } | null
-  room: { id: string; room_number: string }[] | { id: string; room_number: string } | null
-}
 
 interface Property {
   id: string
@@ -110,16 +97,12 @@ export default function TenantsPage() {
       return
     }
 
-    // Handle both array (from some queries) and object (from REST) formats
-    const transformedData = ((data as RawTenant[]) || []).map((tenant) => ({
+    // Transform Supabase JOIN data (handles both array and object formats)
+    const transformedData = (data || []).map((tenant) => ({
       ...tenant,
-      property: Array.isArray(tenant.property)
-        ? (tenant.property.length > 0 ? tenant.property[0] : null)
-        : tenant.property,
-      room: Array.isArray(tenant.room)
-        ? (tenant.room.length > 0 ? tenant.room[0] : null)
-        : tenant.room,
-    }))
+      property: transformJoin(tenant.property),
+      room: transformJoin(tenant.room),
+    })) as Tenant[]
     setTenants(transformedData)
     setLoading(false)
   }

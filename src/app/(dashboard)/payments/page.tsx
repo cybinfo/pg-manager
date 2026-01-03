@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
@@ -115,9 +116,9 @@ export default function PaymentsPage() {
     // Transform Supabase joins from arrays to objects
     const transformed = (data || []).map((payment) => ({
       ...payment,
-      tenant: Array.isArray(payment.tenant) ? payment.tenant[0] : payment.tenant,
-      property: Array.isArray(payment.property) ? payment.property[0] : payment.property,
-      charge_type: Array.isArray(payment.charge_type) ? payment.charge_type[0] : payment.charge_type,
+      tenant: transformJoin(payment.tenant),
+      property: transformJoin(payment.property),
+      charge_type: transformJoin(payment.charge_type),
     }))
 
     setPayments(transformed)

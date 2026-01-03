@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -145,7 +146,7 @@ export default function PropertyDetailPage() {
       // Transform tenant data
       const transformedTenants: Tenant[] = ((tenantsData as TenantRaw[]) || []).map((t) => ({
         ...t,
-        room: t.room && t.room.length > 0 ? t.room[0] : null,
+        room: transformJoin(t.room),
       }))
       setTenants(transformedTenants)
       setLoading(false)

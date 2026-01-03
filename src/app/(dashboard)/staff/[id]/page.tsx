@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -146,8 +147,8 @@ export default function StaffDetailPage() {
       // Transform user roles - handle both array and object responses from Supabase joins
       const transformedRoles: UserRole[] = rolesRes.data.map((r: any) => ({
         ...r,
-        role: Array.isArray(r.role) ? (r.role.length > 0 ? r.role[0] : null) : r.role || null,
-        property: Array.isArray(r.property) ? (r.property.length > 0 ? r.property[0] : null) : r.property || null,
+        role: transformJoin(r.role),
+        property: transformJoin(r.property),
       }))
       setUserRoles(transformedRoles)
     }
