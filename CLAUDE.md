@@ -328,10 +328,12 @@ Configurable via property edit → Website Settings tab:
 | `MetricsBar` | Compact horizontal stats bar |
 | `DataTable` | Table with search, filters, row actions |
 | `PageHeader` | Page title with icon, actions, and breadcrumbs |
-| `StatusBadge` | Pre-configured status badges |
+| `StatusBadge` | Pre-configured status badges (success, warning, error, info, muted, primary, purple) |
+| `PageLoader` | Centralized page loading spinner with height variants (sm, md, lg, full) |
+| `Avatar` | User avatar with auto-generated initials, size variants (xs-xl), AvatarGroup |
+| `StatCard` | Stat card with icon + colored background, 9 color variants, StatItem inline variant |
 | `Currency` | Indian Rupee formatting |
 | `EmptyState` | No data/no results states |
-| `Loading` | Spinners and skeletons |
 | `ChartContainer` | Recharts wrapper preventing dimension warnings |
 | `Combobox` | Searchable dropdown with single/multi select |
 | `PhoneInput` | Indian mobile number input with validation |
@@ -696,6 +698,7 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **UI Component Centralization** - Created PageLoader, Avatar, StatCard components; refactored 52 files replacing 155+ patterns
 - **Tenant Document Management** - Tenants can upload documents for verification, link them to issue reports; once approved, cannot be deleted
 - **Expanded Issue Reporting** - Report issues on bills, payments, tenancy details, room details (bill_dispute, payment_dispute, tenancy_issue, room_issue)
 - **Migration 033** - Added tenant_documents table, expanded approval types, document_ids on approvals
@@ -787,4 +790,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-03 (expanded issue reporting + tenant document management)*
+*Last updated: 2026-01-03 (UI component centralization: PageLoader, Avatar, StatCard)*
