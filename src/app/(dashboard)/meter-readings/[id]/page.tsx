@@ -34,6 +34,7 @@ import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 interface MeterReadingRaw {
   id: string
@@ -104,13 +105,6 @@ const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: 
   gas: { label: "Gas", icon: Flame, color: "text-orange-700", bgColor: "bg-orange-100", unit: "m³" },
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  pending: { label: "Pending", color: "text-yellow-700", bgColor: "bg-yellow-100" },
-  partial: { label: "Partial", color: "text-blue-700", bgColor: "bg-blue-100" },
-  paid: { label: "Paid", color: "text-green-700", bgColor: "bg-green-100" },
-  overdue: { label: "Overdue", color: "text-red-700", bgColor: "bg-red-100" },
-  waived: { label: "Waived", color: "text-gray-700", bgColor: "bg-gray-100" },
-}
 
 export default function MeterReadingDetailPage() {
   const params = useParams()
@@ -653,9 +647,7 @@ export default function MeterReadingDetailPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {charges.map((charge) => {
-                const status = statusConfig[charge.status] || statusConfig.pending
-                return (
+              {charges.map((charge) => (
                   <Link key={charge.id} href={`/payments?charge=${charge.id}`}>
                     <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                       <div className="flex items-center gap-4">
@@ -678,14 +670,11 @@ export default function MeterReadingDetailPage() {
                             </p>
                           )}
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.bgColor} ${status.color}`}>
-                          {status.label}
-                        </span>
+                        <StatusBadge status={charge.status as "pending" | "partial" | "paid" | "overdue"} />
                       </div>
                     </div>
                   </Link>
-                )
-              })}
+                ))}
 
               {/* Summary */}
               {charges.length > 1 && (

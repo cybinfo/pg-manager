@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 interface Room {
   id: string
@@ -423,9 +424,7 @@ export default function RoomDetailPage() {
                         <p className="font-medium">{formatCurrency(tenant.monthly_rent)}/mo</p>
                         <p className="text-xs text-muted-foreground">Since {formatDate(tenant.check_in_date)}</p>
                         {tenant.status === "notice_period" && (
-                          <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
-                            On Notice
-                          </span>
+                          <StatusBadge variant="warning" label="On Notice" />
                         )}
                       </div>
                     </div>

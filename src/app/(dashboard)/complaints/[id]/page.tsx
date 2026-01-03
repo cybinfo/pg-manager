@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
+import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 
 interface Complaint {
   id: string
@@ -88,19 +89,13 @@ interface RawComplaint {
   }[] | null
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
-  open: { label: "Open", color: "text-red-700", bgColor: "bg-red-100", icon: AlertCircle },
-  acknowledged: { label: "Acknowledged", color: "text-blue-700", bgColor: "bg-blue-100", icon: Eye },
-  in_progress: { label: "In Progress", color: "text-yellow-700", bgColor: "bg-yellow-100", icon: Wrench },
-  resolved: { label: "Resolved", color: "text-green-700", bgColor: "bg-green-100", icon: CheckCircle },
-  closed: { label: "Closed", color: "text-gray-700", bgColor: "bg-gray-100", icon: CheckCircle },
-}
-
-const priorityConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  low: { label: "Low", color: "text-gray-600", bgColor: "bg-gray-100" },
-  medium: { label: "Medium", color: "text-blue-600", bgColor: "bg-blue-100" },
-  high: { label: "High", color: "text-orange-600", bgColor: "bg-orange-100" },
-  urgent: { label: "Urgent", color: "text-red-600", bgColor: "bg-red-100" },
+// Status labels for toast messages and dropdown options
+const statusLabels: Record<string, string> = {
+  open: "Open",
+  acknowledged: "Acknowledged",
+  in_progress: "In Progress",
+  resolved: "Resolved",
+  closed: "Closed",
 }
 
 const categoryLabels: Record<string, string> = {
@@ -203,7 +198,7 @@ export default function ComplaintDetailPage() {
       }
 
       setComplaint({ ...complaint, ...updateData })
-      toast.success(`Status updated to ${statusConfig[newStatus]?.label || newStatus}`)
+      toast.success(`Status updated to ${statusLabels[newStatus] || newStatus}`)
     } catch (error) {
       toast.error("Failed to update status")
     } finally {
@@ -264,8 +259,7 @@ export default function ComplaintDetailPage() {
     return null
   }
 
-  const StatusIcon = statusConfig[complaint.status]?.icon || AlertCircle
-  const currentStatusIndex = statusFlow.indexOf(complaint.status)
+    const currentStatusIndex = statusFlow.indexOf(complaint.status)
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -279,9 +273,7 @@ export default function ComplaintDetailPage() {
           </Link>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${priorityConfig[complaint.priority]?.bgColor} ${priorityConfig[complaint.priority]?.color}`}>
-                {priorityConfig[complaint.priority]?.label || complaint.priority}
-              </span>
+              <PriorityBadge priority={complaint.priority as "low" | "medium" | "high" | "urgent"} />
               <span className="text-sm text-muted-foreground">
                 {categoryLabels[complaint.category] || complaint.category}
               </span>
@@ -326,10 +318,7 @@ export default function ComplaintDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 mb-4">
-                <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${statusConfig[complaint.status]?.bgColor} ${statusConfig[complaint.status]?.color}`}>
-                  <StatusIcon className="h-4 w-4" />
-                  {statusConfig[complaint.status]?.label || complaint.status}
-                </span>
+                <StatusBadge status={complaint.status as "open" | "acknowledged" | "in_progress" | "resolved" | "closed"} size="lg" />
               </div>
 
               {/* Status Flow Buttons */}
@@ -346,7 +335,7 @@ export default function ComplaintDetailPage() {
                       {updating ? (
                         <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                       ) : null}
-                      Mark as {statusConfig[status]?.label || status}
+                      Mark as {statusLabels[status] || status}
                     </Button>
                   ))}
                 </div>
@@ -362,7 +351,7 @@ export default function ComplaintDetailPage() {
                   >
                     {statusFlow.map((status) => (
                       <option key={status} value={status}>
-                        {statusConfig[status]?.label || status}
+                        {statusLabels[status] || status}
                       </option>
                     ))}
                   </select>
@@ -432,9 +421,7 @@ export default function ComplaintDetailPage() {
                     <option value="urgent">Urgent</option>
                   </select>
                 ) : (
-                  <p className={`font-medium ${priorityConfig[complaint.priority]?.color}`}>
-                    {priorityConfig[complaint.priority]?.label || complaint.priority}
-                  </p>
+                  <PriorityBadge priority={complaint.priority as "low" | "medium" | "high" | "urgent"} />
                 )}
               </div>
 

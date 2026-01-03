@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 interface Deduction {
   reason: string
@@ -105,10 +106,11 @@ interface RawExitClearance {
   }[] | null
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  initiated: { label: "Initiated", color: "text-blue-700", bgColor: "bg-blue-100" },
-  pending_payment: { label: "Pending Payment", color: "text-yellow-700", bgColor: "bg-yellow-100" },
-  cleared: { label: "Cleared", color: "text-green-700", bgColor: "bg-green-100" },
+// Exit clearance status mapping for StatusBadge
+const exitStatusMap: Record<string, { variant: "info" | "warning" | "success"; label: string }> = {
+  initiated: { variant: "info", label: "Initiated" },
+  pending_payment: { variant: "warning", label: "Pending Payment" },
+  cleared: { variant: "success", label: "Cleared" },
 }
 
 export default function ExitClearanceDetailPage() {
@@ -355,9 +357,10 @@ export default function ExitClearanceDetailPage() {
           </Link>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusConfig[clearance.settlement_status]?.bgColor} ${statusConfig[clearance.settlement_status]?.color}`}>
-                {statusConfig[clearance.settlement_status]?.label}
-              </span>
+              <StatusBadge
+                variant={exitStatusMap[clearance.settlement_status]?.variant || "muted"}
+                label={exitStatusMap[clearance.settlement_status]?.label || clearance.settlement_status}
+              />
             </div>
             <h1 className="text-2xl font-bold">Exit Clearance</h1>
           </div>

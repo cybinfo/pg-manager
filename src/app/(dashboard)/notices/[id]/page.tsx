@@ -29,6 +29,7 @@ import { toast } from "sonner"
 import { formatDateTime } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 interface Notice {
   id: string
@@ -304,14 +305,10 @@ export default function NoticeDetailPage() {
                 {typeConfig?.label || formData.type}
               </span>
               {!formData.is_active && (
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                  Inactive
-                </span>
+                <StatusBadge variant="muted" label="Inactive" />
               )}
               {isExpired() && (
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-600">
-                  Expired
-                </span>
+                <StatusBadge variant="error" label="Expired" />
               )}
             </div>
             <h1 className="text-2xl font-bold">Edit Notice</h1>

@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 import { formatDate, formatCurrency, formatMonthYear } from "@/lib/format"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 interface TenantInfo {
   id: string
@@ -53,11 +54,11 @@ interface BillStats {
   billsCount: number
 }
 
-const statusConfig: Record<string, { label: string; icon: typeof CheckCircle; className: string }> = {
-  paid: { label: "Paid", icon: CheckCircle, className: "text-green-600 bg-green-100" },
-  partial: { label: "Partial", icon: Clock, className: "text-amber-600 bg-amber-100" },
-  overdue: { label: "Overdue", icon: AlertCircle, className: "text-red-600 bg-red-100" },
-  pending: { label: "Pending", icon: Clock, className: "text-blue-600 bg-blue-100" },
+const statusIconConfig: Record<string, { icon: typeof CheckCircle; className: string }> = {
+  paid: { icon: CheckCircle, className: "text-green-600 bg-green-100" },
+  partial: { icon: Clock, className: "text-amber-600 bg-amber-100" },
+  overdue: { icon: AlertCircle, className: "text-red-600 bg-red-100" },
+  pending: { icon: Clock, className: "text-blue-600 bg-blue-100" },
 }
 
 export default function TenantBillsPage() {
@@ -293,14 +294,14 @@ export default function TenantBillsPage() {
               <h3 className="text-sm font-medium text-muted-foreground mb-3">{monthYear}</h3>
               <div className="space-y-3">
                 {monthBills.map((bill) => {
-                  const config = statusConfig[bill.status] || statusConfig.pending
-                  const StatusIcon = config.icon
+                  const iconConfig = statusIconConfig[bill.status] || statusIconConfig.pending
+                  const StatusIcon = iconConfig.icon
                   return (
                     <Card key={bill.id}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-3">
-                            <div className={`p-2 rounded-full ${config.className}`}>
+                            <div className={`p-2 rounded-full ${iconConfig.className}`}>
                               <StatusIcon className="h-4 w-4" />
                             </div>
                             <div>
@@ -320,9 +321,7 @@ export default function TenantBillsPage() {
 
                           <div className="text-right flex items-start gap-2">
                             <div>
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
-                                {config.label}
-                              </span>
+                              <StatusBadge status={bill.status as "pending" | "partial" | "paid" | "overdue"} />
                               {bill.bill_number && (
                                 <p className="text-xs text-muted-foreground mt-2">
                                   #{bill.bill_number}

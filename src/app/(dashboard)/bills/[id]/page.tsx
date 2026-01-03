@@ -34,6 +34,7 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 interface LineItem {
   type: string
@@ -84,12 +85,13 @@ interface Payment {
   notes: string | null
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: React.ComponentType<{ className?: string }> }> = {
-  pending: { label: "Pending", color: "text-amber-700", bgColor: "bg-amber-100", icon: Clock },
-  partial: { label: "Partial Payment", color: "text-blue-700", bgColor: "bg-blue-100", icon: AlertCircle },
-  paid: { label: "Paid", color: "text-green-700", bgColor: "bg-green-100", icon: CheckCircle },
-  overdue: { label: "Overdue", color: "text-red-700", bgColor: "bg-red-100", icon: AlertCircle },
-  cancelled: { label: "Cancelled", color: "text-gray-700", bgColor: "bg-gray-100", icon: AlertCircle },
+// Status labels for WhatsApp messages
+const statusLabels: Record<string, string> = {
+  pending: "Pending",
+  partial: "Partial Payment",
+  paid: "Paid",
+  overdue: "Overdue",
+  cancelled: "Cancelled",
 }
 
 export default function BillDetailPage() {
@@ -265,7 +267,7 @@ ${bill.previous_balance > 0 ? `Previous Balance: ${formatCurrency(bill.previous_
 *Paid: ${formatCurrency(bill.paid_amount)}*
 *Balance Due: ${formatCurrency(bill.balance_due)}*
 
-Status: ${statusConfig[bill.status]?.label || bill.status}
+Status: ${statusLabels[bill.status] || bill.status}
 
 Thank you,
 ManageKar`
@@ -314,8 +316,7 @@ ManageKar`
     )
   }
 
-  const StatusIcon = statusConfig[bill.status]?.icon || Clock
-
+  
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -329,10 +330,7 @@ ManageKar`
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">{bill.bill_number}</h1>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusConfig[bill.status]?.bgColor} ${statusConfig[bill.status]?.color}`}>
-                <StatusIcon className="inline h-4 w-4 mr-1" />
-                {statusConfig[bill.status]?.label || bill.status}
-              </span>
+              <StatusBadge status={bill.status as "pending" | "partial" | "paid" | "overdue"} size="lg" />
             </div>
             <p className="text-muted-foreground">Bill for {bill.for_month}</p>
           </div>

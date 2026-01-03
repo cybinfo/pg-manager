@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatTimeAgo } from "@/lib/format"
+import { StatusBadge } from "@/components/ui/status-badge"
 
 interface Complaint {
   id: string
@@ -37,14 +38,6 @@ interface TenantInfo {
   id: string
   property_id: string
   room_id: string
-}
-
-const statusConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
-  open: { label: "Open", color: "text-red-700", bgColor: "bg-red-100", icon: AlertCircle },
-  acknowledged: { label: "Acknowledged", color: "text-blue-700", bgColor: "bg-blue-100", icon: Eye },
-  in_progress: { label: "In Progress", color: "text-yellow-700", bgColor: "bg-yellow-100", icon: Wrench },
-  resolved: { label: "Resolved", color: "text-green-700", bgColor: "bg-green-100", icon: CheckCircle },
-  closed: { label: "Closed", color: "text-gray-700", bgColor: "bg-gray-100", icon: CheckCircle },
 }
 
 const categories = [
@@ -325,37 +318,31 @@ export default function TenantComplaintsPage() {
                 Open ({openComplaints.length})
               </h3>
               <div className="space-y-3">
-                {openComplaints.map((complaint) => {
-                  const StatusIcon = statusConfig[complaint.status]?.icon || AlertCircle
-                  return (
-                    <Card key={complaint.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${statusConfig[complaint.status]?.bgColor} ${statusConfig[complaint.status]?.color}`}>
-                                <StatusIcon className="h-3 w-3" />
-                                {statusConfig[complaint.status]?.label}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {categoryLabels[complaint.category] || complaint.category}
-                              </span>
-                            </div>
-                            <h4 className="font-medium">{complaint.title}</h4>
-                            {complaint.description && (
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {complaint.description}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Submitted {formatTimeAgo(complaint.created_at)}
-                            </p>
+                {openComplaints.map((complaint) => (
+                  <Card key={complaint.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <StatusBadge status={complaint.status as "open" | "acknowledged" | "in_progress" | "resolved" | "closed"} />
+                            <span className="text-xs text-muted-foreground">
+                              {categoryLabels[complaint.category] || complaint.category}
+                            </span>
                           </div>
+                          <h4 className="font-medium">{complaint.title}</h4>
+                          {complaint.description && (
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              {complaint.description}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Submitted {formatTimeAgo(complaint.created_at)}
+                          </p>
                         </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
           )}
@@ -373,10 +360,7 @@ export default function TenantComplaintsPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
-                              <CheckCircle className="h-3 w-3" />
-                              Resolved
-                            </span>
+                            <StatusBadge status={complaint.status as "resolved" | "closed"} />
                             <span className="text-xs text-muted-foreground">
                               {categoryLabels[complaint.category] || complaint.category}
                             </span>

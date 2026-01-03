@@ -20,6 +20,7 @@ import {
 import { DocumentUploadDialog } from "@/components/tenant/document-upload-dialog"
 import { toast } from "sonner"
 import { formatDate } from "@/lib/format"
+import { StatusBadge } from "@/components/ui/status-badge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,10 +52,10 @@ interface TenantInfo {
   owner_id: string
 }
 
-const statusConfig: Record<string, { label: string; icon: typeof CheckCircle; className: string }> = {
-  pending: { label: "Pending Review", icon: Clock, className: "text-amber-600 bg-amber-100" },
-  approved: { label: "Approved", icon: CheckCircle, className: "text-green-600 bg-green-100" },
-  rejected: { label: "Rejected", icon: XCircle, className: "text-red-600 bg-red-100" },
+const docStatusMap: Record<string, { variant: "warning" | "success" | "error"; label: string }> = {
+  pending: { variant: "warning", label: "Pending Review" },
+  approved: { variant: "success", label: "Approved" },
+  rejected: { variant: "error", label: "Rejected" },
 }
 
 const documentTypeLabels: Record<string, string> = {
@@ -253,8 +254,7 @@ export default function TenantDocumentsPage() {
       ) : (
         <div className="space-y-3">
           {documents.map((doc) => {
-            const config = statusConfig[doc.status]
-            const StatusIcon = config.icon
+            const statusMapping = docStatusMap[doc.status]
             return (
               <Card key={doc.id}>
                 <CardContent className="p-4">
@@ -272,10 +272,7 @@ export default function TenantDocumentsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold truncate">{doc.name}</h3>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {config.label}
-                        </span>
+                        <StatusBadge variant={statusMapping?.variant} label={statusMapping?.label} />
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {documentTypeLabels[doc.document_type] || doc.document_type}
