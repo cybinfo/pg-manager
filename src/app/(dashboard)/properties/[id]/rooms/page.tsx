@@ -4,13 +4,12 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/lib/auth"
 import { PermissionGuard } from "@/components/auth"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column } from "@/components/ui/data-table"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
-import { PageLoading } from "@/components/ui/loading"
+import { PageLoader } from "@/components/ui/page-loader"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Home, Plus, ArrowLeft, Building2 } from "lucide-react"
@@ -36,7 +35,6 @@ interface Property {
 export default function PropertyRoomsPage() {
   const params = useParams()
   const propertyId = params.id as string
-  const { user } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [property, setProperty] = useState<Property | null>(null)
@@ -44,7 +42,6 @@ export default function PropertyRoomsPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return
       const supabase = createClient()
 
       // Fetch property details
@@ -73,7 +70,7 @@ export default function PropertyRoomsPage() {
     }
 
     fetchData()
-  }, [user, propertyId])
+  }, [propertyId])
 
   const totalBeds = rooms.reduce((sum, r) => sum + r.total_beds, 0)
   const occupiedBeds = rooms.reduce((sum, r) => sum + r.occupied_beds, 0)
@@ -129,7 +126,7 @@ export default function PropertyRoomsPage() {
     }
   ]
 
-  if (loading) return <PageLoading />
+  if (loading) return <PageLoader />
 
   if (!property) {
     return (
