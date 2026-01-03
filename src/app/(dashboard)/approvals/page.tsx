@@ -11,7 +11,7 @@ import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import {
   ClipboardCheck, Loader2, CheckCircle, XCircle, Clock,
-  User, AlertTriangle, FileText, ChevronRight
+  User, AlertTriangle, FileText, ChevronRight, Paperclip, ExternalLink
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -26,6 +26,13 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 
+interface AttachedDocument {
+  id: string
+  name: string
+  document_type: string
+  file_url: string
+}
+
 interface Approval {
   id: string
   type: string
@@ -38,6 +45,7 @@ interface Approval {
   decided_at: string | null
   decision_notes: string | null
   change_applied: boolean
+  document_ids: string[] | null
   requester_tenant: {
     id: string
     name: string
@@ -53,6 +61,10 @@ const TYPE_LABELS: Record<string, string> = {
   room_change: "Room Transfer",
   complaint: "Complaint",
   other: "Other Request",
+  bill_dispute: "Bill Dispute",
+  payment_dispute: "Payment Dispute",
+  tenancy_issue: "Tenancy Issue",
+  room_issue: "Room Issue",
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -66,6 +78,8 @@ export default function ApprovalsPage() {
   const [loading, setLoading] = useState(true)
   const [approvals, setApprovals] = useState<Approval[]>([])
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null)
+  const [attachedDocs, setAttachedDocs] = useState<AttachedDocument[]>([])
+  const [loadingDocs, setLoadingDocs] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [decisionNotes, setDecisionNotes] = useState("")
@@ -101,6 +115,34 @@ export default function ApprovalsPage() {
     }
 
     setLoading(false)
+  }
+
+  const fetchAttachedDocuments = async (docIds: string[]) => {
+    if (!docIds || docIds.length === 0) {
+      setAttachedDocs([])
+      return
+    }
+
+    setLoadingDocs(true)
+    const supabase = createClient()
+
+    const { data } = await supabase
+      .from("tenant_documents")
+      .select("id, name, document_type, file_url")
+      .in("id", docIds)
+
+    setAttachedDocs(data || [])
+    setLoadingDocs(false)
+  }
+
+  const openApprovalDialog = (approval: Approval) => {
+    setSelectedApproval(approval)
+    setDialogOpen(true)
+    if (approval.document_ids && approval.document_ids.length > 0) {
+      fetchAttachedDocuments(approval.document_ids)
+    } else {
+      setAttachedDocs([])
+    }
   }
 
   const handleApprove = async () => {
@@ -282,8 +324,7 @@ export default function ApprovalsPage() {
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              setSelectedApproval(approval)
-              setDialogOpen(true)
+              openApprovalDialog(approval)
             }}
           >
             Review
@@ -340,8 +381,7 @@ export default function ApprovalsPage() {
           searchPlaceholder="Search requests..."
           searchFields={["title", "type"]}
           onRowClick={(approval) => {
-            setSelectedApproval(approval)
-            setDialogOpen(true)
+            openApprovalDialog(approval)
           }}
           emptyState={
             <div className="flex flex-col items-center py-12">
@@ -410,6 +450,47 @@ export default function ApprovalsPage() {
                           <span className="font-medium">{value}</span>
                         </div>
                       ))}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Attached Documents */}
+                {selectedApproval.document_ids && selectedApproval.document_ids.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Paperclip className="h-4 w-4" />
+                        Attached Documents ({selectedApproval.document_ids.length})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm">
+                      {loadingDocs ? (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading documents...
+                        </div>
+                      ) : attachedDocs.length > 0 ? (
+                        <div className="space-y-2">
+                          {attachedDocs.map((doc) => (
+                            <div key={doc.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <span>{doc.name}</span>
+                              </div>
+                              <a
+                                href={doc.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline flex items-center gap-1"
+                              >
+                                View <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">Unable to load documents</p>
+                      )}
                     </CardContent>
                   </Card>
                 )}

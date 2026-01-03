@@ -20,6 +20,7 @@ import {
   Building2,
   User
 } from "lucide-react"
+import { toast } from "sonner"
 
 interface Complaint {
   id: string
@@ -127,6 +128,7 @@ export default function ComplaintsPage() {
 
       if (error) {
         console.error("Error fetching complaints:", error)
+        toast.error("Failed to load complaints")
       } else {
         const transformedData = ((data as RawComplaint[]) || []).map((complaint) => ({
           ...complaint,

@@ -9,13 +9,15 @@ import {
   Home,
   User,
   CreditCard,
+  FileText,
   MessageSquare,
   Bell,
   LogOut,
   Loader2,
   Menu,
   X,
-  Building2
+  Building2,
+  FolderOpen
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -47,7 +49,9 @@ interface RawTenantInfo {
 const navigation = [
   { name: "Home", href: "/tenant", icon: Home },
   { name: "My Profile", href: "/tenant/profile", icon: User },
+  { name: "My Bills", href: "/tenant/bills", icon: FileText },
   { name: "Payments", href: "/tenant/payments", icon: CreditCard },
+  { name: "Documents", href: "/tenant/documents", icon: FolderOpen },
   { name: "Complaints", href: "/tenant/complaints", icon: MessageSquare },
   { name: "Notices", href: "/tenant/notices", icon: Bell },
 ]

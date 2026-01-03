@@ -101,10 +101,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Fetch user's contexts from database - using direct fetch
   const fetchContexts = useCallback(async (userId: string, accessToken?: string) => {
-    console.log('[Auth] fetchContexts START for:', userId)
     try {
       const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_user_contexts`
-      console.log('[Auth] Fetching contexts via direct fetch...')
 
       const response = await fetch(url, {
         method: 'POST',
@@ -117,25 +115,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       const data = await response.json()
-      console.log('[Auth] fetchContexts DONE, count:', data?.length)
 
       if (Array.isArray(data)) {
         return data as ContextWithDetails[]
       }
       return []
-    } catch (err) {
-      console.error('[Auth] Exception fetching contexts:', err)
+    } catch {
       return []
     }
   }, [])
 
   // Fetch user profile - using direct fetch with passed token
   const fetchProfile = useCallback(async (userId: string, accessToken?: string) => {
-    console.log('[Auth] fetchProfile START for:', userId)
     try {
-      // Use direct fetch to bypass Supabase client issues
       const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/user_profiles?user_id=eq.${userId}&select=*`
-      console.log('[Auth] Fetching profile via direct fetch...')
 
       const response = await fetch(url, {
         headers: {
@@ -146,14 +139,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       const data = await response.json()
-      console.log('[Auth] fetchProfile DONE, data:', data?.length)
 
       if (Array.isArray(data) && data.length > 0) {
         return data[0] as UserProfile
       }
       return null
-    } catch (err) {
-      console.error('[Auth] Exception fetching profile:', err)
+    } catch {
       return null
     }
   }, [])
@@ -165,7 +156,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Get current session for token
     const { data: { session } } = await supabase.auth.getSession()
     if (!session?.access_token) {
-      console.log('[Auth] No session token for refreshContexts')
       return
     }
 
@@ -241,7 +231,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Explicit logout - sets flag to distinguish from spurious SIGNED_OUT
   const logout = useCallback(async () => {
-    console.log('[Auth] Explicit logout called')
     globalAuthState.explicitLogout = true
     globalAuthState.loggingOut = true
     localStorage.removeItem('currentContextId')
@@ -264,14 +253,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Load user data
   const loadUserData = useCallback(async (sessionUser: User, accessToken: string) => {
-    console.log('[Auth] Loading user data for:', sessionUser.email)
     try {
-      // Run sequentially to debug
-      console.log('[Auth] Fetching profile first...')
       const userProfile = await fetchProfile(sessionUser.id, accessToken)
-      console.log('[Auth] Profile fetched, now contexts...')
       const userContexts = await fetchContexts(sessionUser.id, accessToken)
-      console.log('[Auth] Loaded - profile:', !!userProfile, 'contexts:', userContexts?.length)
 
       if (!mountedRef.current) return
 
@@ -291,22 +275,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         initialContext = userContexts.find(c => c.is_default) || userContexts[0] || null
       }
 
-      console.log('[Auth] Setting context:', initialContext?.context_type, initialContext?.workspace_name)
       setCurrentContext(initialContext)
       globalAuthState.currentContext = initialContext
-    } catch (err) {
-      console.error('[Auth] Error loading user data:', err)
+    } catch {
+      // Silent fail - user data loading errors are handled gracefully
     }
   }, [fetchProfile, fetchContexts])
 
   // Initialize auth
   useEffect(() => {
     mountedRef.current = true
-    console.log('[Auth] useEffect - initialized:', globalAuthState.initialized)
 
     // If already initialized with valid data, just sync state
     if (globalAuthState.initialized && globalAuthState.user) {
-      console.log('[Auth] Using cached auth state')
       setUser(globalAuthState.user)
       setProfile(globalAuthState.profile)
       setContexts(globalAuthState.contexts)
@@ -317,53 +298,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Prevent concurrent initialization
     if (initializingRef.current) {
-      console.log('[Auth] Already initializing, skipping')
       return
     }
 
     // Prevent re-initialization during logout
     if (globalAuthState.loggingOut) {
-      console.log('[Auth] Logout in progress, skipping init')
       return
     }
 
     const initAuth = async () => {
       // Double-check logging out flag
       if (globalAuthState.loggingOut) {
-        console.log('[Auth] Logout in progress, aborting init')
         return
       }
 
       initializingRef.current = true
-      console.log('[Auth] Starting initialization')
 
       try {
         // Get session first to get the access token
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-
-        if (sessionError) {
-          console.log('[Auth] getSession error:', sessionError.message)
-        }
+        const { data: { session } } = await supabase.auth.getSession()
 
         if (session?.user && session?.access_token) {
-          console.log('[Auth] Session found:', session.user.email)
           setUser(session.user)
           globalAuthState.user = session.user
           globalAuthState.explicitLogout = false
           await loadUserData(session.user, session.access_token)
         } else {
-          console.log('[Auth] No session found')
           globalAuthState.user = null
         }
-      } catch (err) {
-        console.error('[Auth] Init error:', err)
+      } catch {
+        // Silent fail
       } finally {
         globalAuthState.initialized = true
         initializingRef.current = false
         if (mountedRef.current) {
           setIsLoading(false)
         }
-        console.log('[Auth] Initialization complete')
       }
     }
 
@@ -374,12 +344,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mountedRef.current) return
 
-      console.log('[Auth] Auth event:', event, 'hasSession:', !!session, 'explicitLogout:', globalAuthState.explicitLogout)
-
       if (event === 'SIGNED_IN' && session?.user && session?.access_token) {
         // Only process if we don't already have this user
         if (globalAuthState.user?.id !== session.user.id) {
-          console.log('[Auth] Processing SIGNED_IN for:', session.user.email)
           setUser(session.user)
           globalAuthState.user = session.user
           globalAuthState.explicitLogout = false
@@ -388,13 +355,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setIsLoading(false)
         }
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        console.log('[Auth] Token refreshed')
         setUser(session.user)
         globalAuthState.user = session.user
       } else if (event === 'SIGNED_OUT') {
         // ONLY process if user explicitly logged out via our logout() function
         if (globalAuthState.explicitLogout) {
-          console.log('[Auth] Processing explicit SIGNED_OUT')
           setUser(null)
           setProfile(null)
           setContexts([])
@@ -404,14 +369,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           globalAuthState.profile = null
           globalAuthState.contexts = []
           globalAuthState.currentContext = null
-        } else {
-          console.log('[Auth] Ignoring spurious SIGNED_OUT event')
         }
+        // Ignore spurious SIGNED_OUT events from Supabase
       }
     })
 
     return () => {
-      console.log('[Auth] Cleanup')
       mountedRef.current = false
       subscription.unsubscribe()
     }

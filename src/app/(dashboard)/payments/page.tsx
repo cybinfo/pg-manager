@@ -22,6 +22,7 @@ import {
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency } from "@/lib/format"
+import { toast } from "sonner"
 
 interface Payment {
   id: string
@@ -94,11 +95,20 @@ export default function PaymentsPage() {
 
     if (error) {
       console.error("Error fetching payments:", error)
+      toast.error("Failed to load payments")
       setLoading(false)
       return
     }
 
-    setPayments(data || [])
+    // Transform Supabase joins from arrays to objects
+    const transformed = (data || []).map((payment) => ({
+      ...payment,
+      tenant: Array.isArray(payment.tenant) ? payment.tenant[0] : payment.tenant,
+      property: Array.isArray(payment.property) ? payment.property[0] : payment.property,
+      charge_type: Array.isArray(payment.charge_type) ? payment.charge_type[0] : payment.charge_type,
+    }))
+
+    setPayments(transformed)
     setLoading(false)
   }
 

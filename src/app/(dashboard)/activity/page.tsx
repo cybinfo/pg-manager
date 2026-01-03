@@ -26,6 +26,7 @@ import {
   Clock
 } from "lucide-react"
 import { formatDistanceToNow, format } from "date-fns"
+import { toast } from "sonner"
 
 interface AuditEvent {
   id: string
@@ -95,6 +96,7 @@ export default function ActivityLogPage() {
 
     if (error) {
       console.error("Error fetching audit events:", error)
+      toast.error("Failed to load activity log")
     } else {
       setEvents(data || [])
     }

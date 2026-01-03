@@ -14,8 +14,10 @@ import {
   CheckCircle,
   Receipt,
   TrendingUp,
-  Filter
+  Filter,
+  Flag
 } from "lucide-react"
+import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 
 interface Payment {
   id: string
@@ -54,6 +56,12 @@ interface PaymentStats {
   monthlyRent: number
 }
 
+interface TenantInfo {
+  id: string
+  workspace_id: string
+  owner_id: string
+}
+
 const paymentMethodLabels: Record<string, string> = {
   cash: "Cash",
   upi: "UPI",
@@ -65,6 +73,7 @@ const paymentMethodLabels: Record<string, string> = {
 export default function TenantPaymentsPage() {
   const [loading, setLoading] = useState(true)
   const [payments, setPayments] = useState<Payment[]>([])
+  const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
   const [stats, setStats] = useState<PaymentStats>({
     totalPaid: 0,
     totalPaidThisYear: 0,
@@ -73,6 +82,10 @@ export default function TenantPaymentsPage() {
   })
   const [yearFilter, setYearFilter] = useState<string>("all")
 
+  // Report Issue Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
+
   useEffect(() => {
     const fetchPayments = async () => {
       const supabase = createClient()
@@ -80,10 +93,10 @@ export default function TenantPaymentsPage() {
 
       if (!user) return
 
-      // Get tenant ID
+      // Get tenant info including owner_id
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("id, monthly_rent")
+        .select("id, monthly_rent, owner_id, property:properties(owner_id)")
         .eq("user_id", user.id)
         .eq("status", "active")
         .single()
@@ -92,6 +105,23 @@ export default function TenantPaymentsPage() {
         setLoading(false)
         return
       }
+
+      // Handle Supabase array join
+      const property = Array.isArray(tenant.property) ? tenant.property[0] : tenant.property
+      const ownerId = property?.owner_id || tenant.owner_id
+
+      // Get workspace_id from workspaces table via owner
+      const { data: workspace } = await supabase
+        .from("workspaces")
+        .select("id")
+        .eq("owner_user_id", ownerId)
+        .single()
+
+      setTenantInfo({
+        id: tenant.id,
+        workspace_id: workspace?.id || "",
+        owner_id: ownerId,
+      })
 
       // Fetch all payments
       const { data: paymentsData } = await supabase
@@ -137,6 +167,11 @@ export default function TenantPaymentsPage() {
 
     fetchPayments()
   }, [])
+
+  const openReportDialog = (payment: Payment) => {
+    setSelectedPayment(payment)
+    setDialogOpen(true)
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {
@@ -307,18 +342,29 @@ export default function TenantPaymentsPage() {
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          {payment.receipt_number && (
-                            <p className="text-xs text-muted-foreground mb-2">
-                              #{payment.receipt_number}
-                            </p>
-                          )}
-                          <Link href={`/payments/${payment.id}`} target="_blank">
-                            <Button variant="outline" size="sm">
-                              <Download className="h-3 w-3 mr-1" />
-                              Receipt
-                            </Button>
-                          </Link>
+                        <div className="text-right flex items-start gap-2">
+                          <div>
+                            {payment.receipt_number && (
+                              <p className="text-xs text-muted-foreground mb-2">
+                                #{payment.receipt_number}
+                              </p>
+                            )}
+                            <Link href={`/api/receipts/${payment.id}/pdf`} target="_blank">
+                              <Button variant="outline" size="sm">
+                                <Download className="h-3 w-3 mr-1" />
+                                Receipt
+                              </Button>
+                            </Link>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                            onClick={() => openReportDialog(payment)}
+                            title="Report issue with this payment"
+                          >
+                            <Flag className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
 
@@ -352,6 +398,20 @@ export default function TenantPaymentsPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Report Issue Dialog */}
+      {selectedPayment && tenantInfo && (
+        <ReportIssueDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          fieldLabel={`Payment #${selectedPayment.receipt_number || 'N/A'}`}
+          currentValue={`₹${selectedPayment.amount.toLocaleString("en-IN")} on ${formatDate(selectedPayment.payment_date)} via ${paymentMethodLabels[selectedPayment.payment_method] || selectedPayment.payment_method}`}
+          approvalType="payment_dispute"
+          tenantId={tenantInfo.id}
+          workspaceId={tenantInfo.workspace_id}
+          ownerId={tenantInfo.owner_id}
+        />
       )}
     </div>
   )

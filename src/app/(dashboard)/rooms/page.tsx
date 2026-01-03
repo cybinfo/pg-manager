@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { formatCurrency } from "@/lib/format"
+import { toast } from "sonner"
 
 interface Room {
   id: string
@@ -75,11 +76,18 @@ export default function RoomsPage() {
 
     if (error) {
       console.error("Error fetching rooms:", error)
+      toast.error("Failed to load rooms")
       setLoading(false)
       return
     }
 
-    setRooms(data || [])
+    // Transform Supabase joins from arrays to objects
+    const transformed = (data || []).map((room) => ({
+      ...room,
+      property: Array.isArray(room.property) ? room.property[0] : room.property,
+    }))
+
+    setRooms(transformed)
     setLoading(false)
   }
 

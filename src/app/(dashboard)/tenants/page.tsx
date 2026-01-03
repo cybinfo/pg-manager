@@ -18,6 +18,7 @@ import {
   Clock
 } from "lucide-react"
 import { formatCurrency } from "@/lib/format"
+import { toast } from "sonner"
 
 interface Tenant {
   id: string
@@ -94,6 +95,7 @@ export default function TenantsPage() {
 
     if (error) {
       console.error("Error fetching tenants:", error)
+      toast.error("Failed to load tenants")
       setLoading(false)
       return
     }

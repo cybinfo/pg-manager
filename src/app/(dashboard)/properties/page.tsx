@@ -17,6 +17,7 @@ import {
   Users,
   MapPin
 } from "lucide-react"
+import { toast } from "sonner"
 
 interface Property {
   id: string
@@ -53,6 +54,7 @@ export default function PropertiesPage() {
 
     if (error) {
       console.error("Error fetching properties:", error)
+      toast.error("Failed to load properties")
       setLoading(false)
       return
     }

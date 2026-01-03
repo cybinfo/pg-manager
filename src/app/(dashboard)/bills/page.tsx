@@ -20,6 +20,7 @@ import {
   Clock
 } from "lucide-react"
 import { formatCurrency } from "@/lib/format"
+import { toast } from "sonner"
 
 interface Bill {
   id: string
@@ -82,6 +83,7 @@ export default function BillsPage() {
 
       if (error) {
         console.error("Error fetching bills:", error)
+        toast.error("Failed to load bills")
         setLoading(false)
         return
       }

@@ -20,7 +20,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Fetch payment with related data
+    // Fetch payment with related data (no owner filter - we'll check access below)
     const { data: payment, error: paymentError } = await supabase
       .from("payments")
       .select(`
@@ -30,6 +30,7 @@ export async function GET(
           name,
           phone,
           email,
+          user_id,
           room:rooms(
             room_number,
             property:properties(
@@ -40,7 +41,6 @@ export async function GET(
         )
       `)
       .eq("id", id)
-      .eq("owner_id", user.id)
       .single()
 
     if (paymentError || !payment) {
@@ -50,17 +50,53 @@ export async function GET(
       )
     }
 
-    // Fetch owner details
+    // Check access: Owner, Staff with permission, or Tenant who owns this payment
+    const isOwner = payment.owner_id === user.id
+
+    // Check if user is the tenant for this payment
+    const tenant = Array.isArray(payment.tenant) ? payment.tenant[0] : payment.tenant
+    const isTenantOwner = tenant?.user_id === user.id
+
+    // Check if user is staff with payments.view permission in this workspace
+    let isAuthorizedStaff = false
+    if (!isOwner && !isTenantOwner) {
+      // Get user's context for this workspace
+      const { data: userContext } = await supabase
+        .from("user_contexts")
+        .select("id, context_type")
+        .eq("user_id", user.id)
+        .eq("workspace_id", payment.workspace_id)
+        .eq("is_active", true)
+        .single()
+
+      if (userContext?.context_type === "staff") {
+        // Check staff permissions
+        const { data: permissions } = await supabase.rpc("get_user_permissions", {
+          p_user_id: user.id,
+          p_workspace_id: payment.workspace_id,
+        })
+
+        if (permissions && Array.isArray(permissions) && permissions.includes("payments.view")) {
+          isAuthorizedStaff = true
+        }
+      }
+    }
+
+    if (!isOwner && !isTenantOwner && !isAuthorizedStaff) {
+      return NextResponse.json(
+        { error: "Access denied" },
+        { status: 403 }
+      )
+    }
+
+    // Fetch owner details (use payment's owner_id, not current user)
     const { data: owner } = await supabase
       .from("owners")
       .select("name, phone, email, business_name")
-      .eq("id", user.id)
+      .eq("id", payment.owner_id)
       .single()
 
-    // Transform nested data
-    const tenant = Array.isArray(payment.tenant)
-      ? payment.tenant[0]
-      : payment.tenant
+    // Transform nested data (tenant already extracted above)
     const room = tenant?.room
       ? Array.isArray(tenant.room)
         ? tenant.room[0]

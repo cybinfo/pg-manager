@@ -18,8 +18,13 @@ import {
   FileText,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Flag,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react"
+import { ReportIssueDialog, ApprovalType } from "@/components/tenant/report-issue-dialog"
+import { formatDistanceToNow } from "date-fns"
 
 interface TenantProfile {
   id: string
@@ -33,12 +38,15 @@ interface TenantProfile {
   police_verification_status: string
   agreement_signed: boolean
   notes: string | null
-  custom_fields: Record<string, any> | null
+  custom_fields: Record<string, unknown> | null
+  workspace_id: string
+  owner_id: string
   property: {
     name: string
     address: string | null
     city: string
     state: string | null
+    owner_id: string
   }
   room: {
     room_number: string
@@ -50,10 +58,44 @@ interface TenantProfile {
   }
 }
 
+interface ApprovalRequest {
+  id: string
+  type: string
+  status: string
+  reason: string
+  payload: Record<string, unknown>
+  created_at: string
+  reviewed_at: string | null
+}
+
 export default function TenantProfilePage() {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<TenantProfile | null>(null)
   const [userEmail, setUserEmail] = useState<string>("")
+  const [requests, setRequests] = useState<ApprovalRequest[]>([])
+  const [showRequests, setShowRequests] = useState(false)
+
+  // Report Issue Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedField, setSelectedField] = useState<{
+    label: string
+    value: string
+    type: ApprovalType
+  } | null>(null)
+
+  const fetchRequests = async (tenantId: string) => {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from("approvals")
+      .select("id, type, status, reason, payload, created_at, reviewed_at")
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    if (data) {
+      setRequests(data)
+    }
+  }
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -68,7 +110,7 @@ export default function TenantProfilePage() {
         .from("tenants")
         .select(`
           *,
-          property:properties(name, address, city, state),
+          property:properties(name, address, city, state, owner_id),
           room:rooms(room_number, room_type, floor, amenities, has_ac, has_attached_bathroom)
         `)
         .eq("user_id", user.id)
@@ -76,13 +118,34 @@ export default function TenantProfilePage() {
         .single()
 
       if (data) {
-        setProfile(data)
+        // Handle Supabase array joins
+        const property = Array.isArray(data.property) ? data.property[0] : data.property
+        const transformedData = {
+          ...data,
+          property,
+          room: Array.isArray(data.room) ? data.room[0] : data.room,
+          owner_id: property?.owner_id || data.owner_id,
+        }
+        setProfile(transformedData)
+        // Fetch approval requests
+        fetchRequests(data.id)
       }
       setLoading(false)
     }
 
     fetchProfile()
   }, [])
+
+  const openReportDialog = (label: string, value: string, type: ApprovalType) => {
+    setSelectedField({ label, value, type })
+    setDialogOpen(true)
+  }
+
+  const handleRequestSuccess = () => {
+    if (profile) {
+      fetchRequests(profile.id)
+    }
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN", {
@@ -189,19 +252,56 @@ export default function TenantProfilePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
+            {/* Name Field */}
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <User className="h-5 w-5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Name</p>
+                <p className="font-medium">{profile.name}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                onClick={() => openReportDialog("Name", profile.name, "name_change")}
+                title="Report issue with name"
+              >
+                <Flag className="h-4 w-4" />
+              </Button>
+            </div>
+            {/* Phone Field */}
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <Phone className="h-5 w-5 text-muted-foreground" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm text-muted-foreground">Phone</p>
                 <p className="font-medium">{profile.phone}</p>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                onClick={() => openReportDialog("Phone Number", profile.phone, "phone_change")}
+                title="Report issue with phone"
+              >
+                <Flag className="h-4 w-4" />
+              </Button>
             </div>
+            {/* Email Field */}
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <Mail className="h-5 w-5 text-muted-foreground" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm text-muted-foreground">Email</p>
                 <p className="font-medium">{userEmail || profile.email || "Not provided"}</p>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                onClick={() => openReportDialog("Email", userEmail || profile.email || "", "email_change")}
+                title="Report issue with email"
+              >
+                <Flag className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
@@ -213,10 +313,19 @@ export default function TenantProfilePage() {
                 return (
                   <div key={key} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                     <div className="h-5 w-5" />
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm text-muted-foreground">{label}</p>
                       <p className="font-medium">{String(value)}</p>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                      onClick={() => openReportDialog(label, String(value), "other")}
+                      title={`Report issue with ${label.toLowerCase()}`}
+                    >
+                      <Flag className="h-4 w-4" />
+                    </Button>
                   </div>
                 )
               })}
@@ -235,13 +344,35 @@ export default function TenantProfilePage() {
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground">Check-in Date</p>
-              <p className="font-medium">{formatDate(profile.check_in_date)}</p>
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Check-in Date</p>
+                <p className="font-medium">{formatDate(profile.check_in_date)}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                onClick={() => openReportDialog("Check-in Date", formatDate(profile.check_in_date), "tenancy_issue")}
+                title="Report issue with check-in date"
+              >
+                <Flag className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="p-3 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground">Monthly Rent</p>
-              <p className="font-medium text-lg">₹{profile.monthly_rent.toLocaleString("en-IN")}</p>
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Monthly Rent</p>
+                <p className="font-medium text-lg">₹{profile.monthly_rent.toLocaleString("en-IN")}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                onClick={() => openReportDialog("Monthly Rent", `₹${profile.monthly_rent.toLocaleString("en-IN")}`, "tenancy_issue")}
+                title="Report issue with monthly rent"
+              >
+                <Flag className="h-4 w-4" />
+              </Button>
             </div>
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-sm text-muted-foreground">Police Verification</p>
@@ -298,31 +429,84 @@ export default function TenantProfilePage() {
                 <Home className="h-4 w-4" />
                 Room {profile.room.room_number}
               </h4>
-              <span className="text-sm text-muted-foreground capitalize">
-                {profile.room.room_type || "Standard"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground capitalize">
+                  {profile.room.room_type || "Standard"}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                  onClick={() => openReportDialog(
+                    "Room Assignment",
+                    `Room ${profile.room.room_number} (${profile.room.room_type || "Standard"})`,
+                    "room_issue"
+                  )}
+                  title="Report issue with room assignment"
+                >
+                  <Flag className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               {profile.room.floor !== null && (
-                <div className="p-2 bg-muted rounded text-center">
+                <div className="p-2 bg-muted rounded text-center relative group">
                   <p className="text-muted-foreground text-xs">Floor</p>
                   <p className="font-medium">{profile.room.floor}</p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => openReportDialog("Floor", String(profile.room.floor), "room_issue")}
+                    title="Report issue with floor"
+                  >
+                    <Flag className="h-3 w-3" />
+                  </Button>
                 </div>
               )}
-              <div className="p-2 bg-muted rounded text-center">
+              <div className="p-2 bg-muted rounded text-center relative group">
                 <p className="text-muted-foreground text-xs">AC</p>
                 <p className="font-medium">{profile.room.has_ac ? "Yes" : "No"}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => openReportDialog("AC Status", profile.room.has_ac ? "Yes" : "No", "room_issue")}
+                  title="Report issue with AC status"
+                >
+                  <Flag className="h-3 w-3" />
+                </Button>
               </div>
-              <div className="p-2 bg-muted rounded text-center">
+              <div className="p-2 bg-muted rounded text-center relative group">
                 <p className="text-muted-foreground text-xs">Attached Bath</p>
                 <p className="font-medium">{profile.room.has_attached_bathroom ? "Yes" : "No"}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => openReportDialog("Attached Bathroom", profile.room.has_attached_bathroom ? "Yes" : "No", "room_issue")}
+                  title="Report issue with attached bathroom"
+                >
+                  <Flag className="h-3 w-3" />
+                </Button>
               </div>
             </div>
 
             {profile.room.amenities && profile.room.amenities.length > 0 && (
-              <div className="mt-4">
-                <p className="text-sm text-muted-foreground mb-2">Amenities</p>
+              <div className="mt-4 relative group">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground mb-2">Amenities</p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => openReportDialog("Amenities", profile.room.amenities?.join(", ") || "", "room_issue")}
+                    title="Report issue with amenities"
+                  >
+                    <Flag className="h-3 w-3" />
+                  </Button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {profile.room.amenities.map((amenity) => (
                     <span
@@ -339,15 +523,96 @@ export default function TenantProfilePage() {
         </CardContent>
       </Card>
 
+      {/* My Requests Section */}
+      <Card>
+        <CardHeader
+          className="cursor-pointer"
+          onClick={() => setShowRequests(!showRequests)}
+        >
+          <CardTitle className="text-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              My Requests
+              {requests.length > 0 && (
+                <span className="ml-2 px-2 py-0.5 text-xs bg-muted rounded-full">
+                  {requests.length}
+                </span>
+              )}
+            </div>
+            {showRequests ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </CardTitle>
+        </CardHeader>
+        {showRequests && (
+          <CardContent className="pt-0">
+            {requests.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No requests submitted yet. Use the flag icons above to report any issues.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {requests.map((request) => {
+                  const typeLabel = request.type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+                  return (
+                    <div
+                      key={request.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium">{typeLabel}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Submitted {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                          request.status === "approved"
+                            ? "bg-green-100 text-green-700"
+                            : request.status === "rejected"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {request.status === "approved" && <CheckCircle className="h-3 w-3" />}
+                        {request.status === "rejected" && <AlertCircle className="h-3 w-3" />}
+                        {request.status === "pending" && <Clock className="h-3 w-3" />}
+                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
       {/* Help Text */}
       <Card className="bg-muted/50">
         <CardContent className="p-4">
           <p className="text-sm text-muted-foreground">
-            <strong>Need to update your information?</strong> Please contact your PG administrator
-            to request any changes to your profile details.
+            <strong>Need to update your information?</strong> Click the <Flag className="h-3 w-3 inline text-amber-500" /> icon next to any field to submit a change request. Your administrator will review and process it.
           </p>
         </CardContent>
       </Card>
+
+      {/* Report Issue Dialog */}
+      {selectedField && profile.owner_id && (
+        <ReportIssueDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          fieldLabel={selectedField.label}
+          currentValue={selectedField.value}
+          approvalType={selectedField.type}
+          tenantId={profile.id}
+          workspaceId={profile.workspace_id}
+          ownerId={profile.owner_id}
+          onSuccess={handleRequestSuccess}
+        />
+      )}
     </div>
   )
 }

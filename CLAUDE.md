@@ -547,6 +547,9 @@ RESEND_API_KEY=<resend_key>
 | Activity Log Page | Workspace activity log for all owners at /activity | ✅ Complete |
 | Admin Page Simplified | Platform admin shows workspaces only with Explore dialog | ✅ Complete |
 | Clean URL Structure | Removed /dashboard/ prefix from all routes (e.g., /tenants not /dashboard/tenants) | ✅ Complete |
+| Tenant Profile Issue Reporting | Tenants can report data issues from profile, flows to approvals | ✅ Complete |
+| Expanded Issue Reporting | Report issues on bills, payments, tenancy details, room details | ✅ Complete |
+| Tenant Document Management | Upload, verify, and manage tenant documents with approval workflow | ✅ Complete |
 
 ### Pending Features (Backlog)
 | Priority | Feature | Description |
@@ -556,7 +559,7 @@ RESEND_API_KEY=<resend_key>
 | **High** | WhatsApp Payment Reminders | Auto-send payment reminders to tenants |
 | **High** | Bill Continuity Chain | No gaps; `previous_bill_id` linking; ₹0 bills |
 | **High** | Partial Payments | Support paying bills in installments |
-| **Medium** | Tenant Portal Enhancement | Self-service profile updates, complaint raising |
+| **Medium** | Tenant Portal Enhancement | Complaint raising from tenant portal (profile issues done) |
 | **Medium** | Public PG Website Galleries | Photo galleries from uploaded photos |
 | **Medium** | Parental/Emergency Contacts | Multiple emergency contacts per tenant |
 | **Medium** | Superuser Payment Deletion | Allow platform admin to delete payments |
@@ -647,6 +650,7 @@ Run in order in Supabase SQL editor:
 030_fix_user_creation.sql     - User creation trigger fixes
 031_admin_functions.sql       - Enhanced admin functions with stats
 032_workspace_details_admin.sql - get_workspace_details_admin() for admin Explore
+033_tenant_documents.sql       - Tenant document uploads + expanded approval types
 ```
 
 ### Storage Buckets (Migration 015)
@@ -692,6 +696,10 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Tenant Document Management** - Tenants can upload documents for verification, link them to issue reports; once approved, cannot be deleted
+- **Expanded Issue Reporting** - Report issues on bills, payments, tenancy details, room details (bill_dispute, payment_dispute, tenancy_issue, room_issue)
+- **Migration 033** - Added tenant_documents table, expanded approval types, document_ids on approvals
+- **Tenant Profile Issue Reporting** - Tenants can report data issues directly from profile with flag icons, flows to Approvals Hub
 - **Clean URL Structure** - Removed /dashboard/ prefix from all routes (e.g., /tenants instead of /dashboard/tenants)
 - **Activity Log Page** - New /activity page for all workspace owners to view audit events
 - **Admin Page Simplified** - Platform admin now shows only workspaces list with Explore dialog for details
@@ -779,4 +787,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-02 (clean URLs without rewrites, activity log, admin simplification, backlog cleanup)*
+*Last updated: 2026-01-03 (expanded issue reporting + tenant document management)*
