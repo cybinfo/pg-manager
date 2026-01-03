@@ -53,6 +53,16 @@ export interface GroupConfig {
   renderLabel?: (value: unknown, count: number) => React.ReactNode  // Custom group header render
 }
 
+// Nested group structure for rendering
+interface NestedGroup<T> {
+  key: string
+  label: string
+  depth: number
+  config: GroupConfig
+  rows: T[]
+  children: NestedGroup<T>[]
+}
+
 interface DataTableProps<T> {
   columns: Column<T>[]
   data: T[]
@@ -68,8 +78,8 @@ interface DataTableProps<T> {
   // Sorting options
   defaultSort?: { key: string; direction: "asc" | "desc" }
   onSortChange?: (key: string | null, direction: SortDirection) => void
-  // Grouping options
-  groupBy?: GroupConfig | string  // Group by field (string for simple, GroupConfig for advanced)
+  // Grouping options - supports single or nested grouping
+  groupBy?: GroupConfig | GroupConfig[] | string | string[]
   collapsibleGroups?: boolean     // Allow groups to be collapsed
   defaultCollapsed?: boolean      // Start groups collapsed
 }
@@ -154,6 +164,144 @@ function DataTableRow<T extends object>({
   )
 }
 
+// Recursive component for rendering nested groups
+function NestedGroupRenderer<T extends object>({
+  groups,
+  collapsedGroups,
+  collapsibleGroups,
+  toggleGroup,
+  keyField,
+  columns,
+  visibleColumns,
+  gridTemplate,
+  isClickable,
+  onRowClick,
+}: {
+  groups: NestedGroup<T>[]
+  collapsedGroups: Set<string>
+  collapsibleGroups: boolean
+  toggleGroup: (key: string) => void
+  keyField: keyof T
+  columns: Column<T>[]
+  visibleColumns: Column<T>[]
+  gridTemplate: string
+  isClickable: boolean
+  onRowClick: (row: T) => void
+}) {
+  // Depth-based styling
+  const getDepthStyles = (depth: number) => {
+    const bgColors = [
+      "bg-slate-100/80 hover:bg-slate-100",      // depth 0
+      "bg-slate-50/80 hover:bg-slate-50",        // depth 1
+      "bg-white hover:bg-slate-50/50",           // depth 2+
+    ]
+    const countBgColors = [
+      "bg-slate-200",   // depth 0
+      "bg-slate-150",   // depth 1
+      "bg-slate-100",   // depth 2+
+    ]
+    return {
+      bg: bgColors[Math.min(depth, bgColors.length - 1)],
+      countBg: countBgColors[Math.min(depth, countBgColors.length - 1)],
+      paddingLeft: `${1 + depth * 1.5}rem`, // Indent based on depth
+    }
+  }
+
+  // Get total row count including nested children
+  const getTotalRowCount = (group: NestedGroup<T>): number => {
+    if (group.children.length === 0) {
+      return group.rows.length
+    }
+    return group.children.reduce((sum, child) => sum + getTotalRowCount(child), 0)
+  }
+
+  return (
+    <>
+      {groups.map((group) => {
+        const isCollapsed = collapsedGroups.has(group.key)
+        const GroupIcon = isCollapsed ? FolderClosed : FolderOpen
+        const styles = getDepthStyles(group.depth)
+        const hasChildren = group.children.length > 0
+        const rowCount = getTotalRowCount(group)
+
+        return (
+          <div key={group.key}>
+            {/* Group Header */}
+            <div
+              className={cn(
+                "py-2.5 border-b flex items-center gap-3",
+                styles.bg,
+                collapsibleGroups && "cursor-pointer"
+              )}
+              style={{ paddingLeft: styles.paddingLeft, paddingRight: "1rem" }}
+              onClick={() => toggleGroup(group.key)}
+            >
+              {collapsibleGroups && (
+                <GroupIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+              )}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {group.config.label && (
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                    {group.config.label}:
+                  </span>
+                )}
+                <span className={cn(
+                  "text-sm truncate",
+                  group.depth === 0 ? "font-medium" : "font-normal"
+                )}>
+                  {group.config.renderLabel
+                    ? group.config.renderLabel(group.label, rowCount)
+                    : group.label}
+                </span>
+              </div>
+              <span className={cn(
+                "text-xs text-muted-foreground px-2 py-0.5 rounded-full",
+                styles.countBg
+              )}>
+                {rowCount}
+              </span>
+            </div>
+
+            {/* Group Content (children or rows) */}
+            {!isCollapsed && (
+              hasChildren ? (
+                // Render nested groups
+                <NestedGroupRenderer
+                  groups={group.children}
+                  collapsedGroups={collapsedGroups}
+                  collapsibleGroups={collapsibleGroups}
+                  toggleGroup={toggleGroup}
+                  keyField={keyField}
+                  columns={columns}
+                  visibleColumns={visibleColumns}
+                  gridTemplate={gridTemplate}
+                  isClickable={isClickable}
+                  onRowClick={onRowClick}
+                />
+              ) : (
+                // Render data rows at leaf level
+                <div className="divide-y">
+                  {group.rows.map((row) => (
+                    <DataTableRow
+                      key={String(row[keyField])}
+                      row={row}
+                      columns={columns}
+                      visibleColumns={visibleColumns}
+                      gridTemplate={gridTemplate}
+                      isClickable={isClickable}
+                      onRowClick={onRowClick}
+                    />
+                  ))}
+                </div>
+              )
+            )}
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
 export function DataTable<T extends object>({
   columns,
   data,
@@ -178,13 +326,20 @@ export function DataTable<T extends object>({
   const [sortDirection, setSortDirection] = React.useState<SortDirection>(defaultSort?.direction ?? null)
   const [collapsedGroups, setCollapsedGroups] = React.useState<Set<string>>(new Set())
 
-  // Parse groupBy config
-  const groupConfig: GroupConfig | null = React.useMemo(() => {
-    if (!groupBy) return null
-    if (typeof groupBy === "string") {
-      return { key: groupBy }
-    }
-    return groupBy
+  // Parse groupBy config - now supports arrays for nested grouping
+  const groupConfigs: GroupConfig[] = React.useMemo(() => {
+    if (!groupBy) return []
+
+    // Normalize to array
+    const configs = Array.isArray(groupBy) ? groupBy : [groupBy]
+
+    // Convert strings to GroupConfig objects
+    return configs.map((config) => {
+      if (typeof config === "string") {
+        return { key: config }
+      }
+      return config
+    })
   }, [groupBy])
 
   // Handle column header click for sorting
@@ -254,37 +409,75 @@ export function DataTable<T extends object>({
     return result
   }, [data, search, searchFields, sortColumn, sortDirection, columns])
 
+  // Build nested group structure recursively
+  const buildNestedGroups = React.useCallback(
+    (rows: T[], configs: GroupConfig[], depth: number, parentKey: string): NestedGroup<T>[] => {
+      if (configs.length === 0) return []
+
+      const [currentConfig, ...remainingConfigs] = configs
+      const groups = new Map<string, { label: string; rows: T[] }>()
+
+      // Group rows by current config
+      rows.forEach((row) => {
+        const value = getNestedValue(row, currentConfig.key)
+        const groupKey = value == null ? "__null__" : String(value)
+        const groupLabel = value == null ? "Ungrouped" : String(value)
+
+        if (!groups.has(groupKey)) {
+          groups.set(groupKey, { label: groupLabel, rows: [] })
+        }
+        groups.get(groupKey)!.rows.push(row)
+      })
+
+      // Convert to NestedGroup array
+      return Array.from(groups.entries())
+        .sort(([, a], [, b]) => a.label.localeCompare(b.label))
+        .map(([key, { label, rows: groupRows }]) => {
+          const fullKey = parentKey ? `${parentKey}::${key}` : key
+          return {
+            key: fullKey,
+            label,
+            depth,
+            config: currentConfig,
+            rows: groupRows,
+            children: remainingConfigs.length > 0
+              ? buildNestedGroups(groupRows, remainingConfigs, depth + 1, fullKey)
+              : [],
+          }
+        })
+    },
+    []
+  )
+
   // Group data if groupBy is specified
   const groupedData = React.useMemo(() => {
-    if (!groupConfig) return null
+    if (groupConfigs.length === 0) return null
+    return buildNestedGroups(processedData, groupConfigs, 0, "")
+  }, [processedData, groupConfigs, buildNestedGroups])
 
-    const groups = new Map<string, { label: string; rows: T[] }>()
-
-    processedData.forEach((row) => {
-      const value = getNestedValue(row, groupConfig.key)
-      const groupKey = value == null ? "__null__" : String(value)
-      const groupLabel = value == null ? "Ungrouped" : String(value)
-
-      if (!groups.has(groupKey)) {
-        groups.set(groupKey, { label: groupLabel, rows: [] })
-      }
-      groups.get(groupKey)!.rows.push(row)
-    })
-
-    // Convert to array and sort by group label
-    return Array.from(groups.entries())
-      .sort(([, a], [, b]) => a.label.localeCompare(b.label))
-      .map(([key, { label, rows }]) => ({ key, label, rows }))
-  }, [processedData, groupConfig])
+  // Collect all group keys for collapsed state initialization
+  const getAllGroupKeys = React.useCallback((groups: NestedGroup<T>[]): string[] => {
+    const keys: string[] = []
+    const collect = (gs: NestedGroup<T>[]) => {
+      gs.forEach((g) => {
+        keys.push(g.key)
+        if (g.children.length > 0) {
+          collect(g.children)
+        }
+      })
+    }
+    collect(groups)
+    return keys
+  }, [])
 
   // Initialize collapsed state when groupBy changes
   React.useEffect(() => {
     if (groupedData && defaultCollapsed) {
-      setCollapsedGroups(new Set(groupedData.map((g) => g.key)))
+      setCollapsedGroups(new Set(getAllGroupKeys(groupedData)))
     } else {
       setCollapsedGroups(new Set())
     }
-  }, [groupConfig?.key, defaultCollapsed])
+  }, [groupConfigs.length, defaultCollapsed, getAllGroupKeys])
 
   // Toggle group collapse
   const toggleGroup = (groupKey: string) => {
@@ -394,60 +587,19 @@ export function DataTable<T extends object>({
         {!loading && processedData.length > 0 && (
           <div className="divide-y">
             {groupedData ? (
-              // Grouped rendering
-              groupedData.map((group) => {
-                const isCollapsed = collapsedGroups.has(group.key)
-                const GroupIcon = isCollapsed ? FolderClosed : FolderOpen
-
-                return (
-                  <div key={group.key}>
-                    {/* Group Header */}
-                    <div
-                      className={cn(
-                        "px-4 py-2.5 bg-slate-100/80 border-b flex items-center gap-3",
-                        collapsibleGroups && "cursor-pointer hover:bg-slate-100"
-                      )}
-                      onClick={() => toggleGroup(group.key)}
-                    >
-                      {collapsibleGroups && (
-                        <GroupIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                      )}
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {groupConfig?.label && (
-                          <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                            {groupConfig.label}:
-                          </span>
-                        )}
-                        <span className="font-medium text-sm truncate">
-                          {groupConfig?.renderLabel
-                            ? groupConfig.renderLabel(group.label, group.rows.length)
-                            : group.label}
-                        </span>
-                      </div>
-                      <span className="text-xs text-muted-foreground bg-slate-200 px-2 py-0.5 rounded-full">
-                        {group.rows.length}
-                      </span>
-                    </div>
-
-                    {/* Group Rows */}
-                    {!isCollapsed && (
-                      <div className="divide-y">
-                        {group.rows.map((row) => (
-                          <DataTableRow
-                            key={String(row[keyField])}
-                            row={row}
-                            columns={columns}
-                            visibleColumns={visibleColumns}
-                            gridTemplate={gridTemplate}
-                            isClickable={isClickable}
-                            onRowClick={handleRowClick}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })
+              // Grouped rendering - recursive for nested groups
+              <NestedGroupRenderer
+                groups={groupedData}
+                collapsedGroups={collapsedGroups}
+                collapsibleGroups={collapsibleGroups}
+                toggleGroup={toggleGroup}
+                keyField={keyField}
+                columns={columns}
+                visibleColumns={visibleColumns}
+                gridTemplate={gridTemplate}
+                isClickable={isClickable}
+                onRowClick={handleRowClick}
+              />
             ) : (
               // Non-grouped rendering
               processedData.map((row) => (

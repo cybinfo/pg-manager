@@ -11,6 +11,7 @@ import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard } from "@/components/auth"
 import { PageLoader } from "@/components/ui/page-loader"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   FileText,
   Plus,
@@ -18,7 +19,8 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Layers
+  Layers,
+  ChevronDown
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
@@ -48,12 +50,11 @@ interface Property {
   name: string
 }
 
-// Group by options for bills
+// Group by options for bills - supports multi-select for nested grouping
 const billGroupByOptions = [
-  { value: "", label: "No Grouping" },
+  { value: "property.name", label: "Property" },
   { value: "status", label: "Status" },
   { value: "for_month", label: "Period" },
-  { value: "property.name", label: "Property" },
 ]
 
 export default function BillsPage() {
@@ -62,7 +63,8 @@ export default function BillsPage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<Record<string, string>>({})
-  const [groupBy, setGroupBy] = useState<string>("")
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false)
 
   useEffect(() => {
     const fetchBills = async () => {
@@ -286,18 +288,79 @@ export default function BillsPage() {
           />
         </div>
 
-        {/* Group By Selector */}
-        <div className="flex items-center gap-2">
-          <Layers className="h-4 w-4 text-muted-foreground" />
-          <select
-            value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value)}
-            className="h-9 px-3 rounded-md border border-input bg-background text-sm"
+        {/* Group By Multi-Select */}
+        <div className="relative">
+          <button
+            onClick={() => setGroupDropdownOpen(!groupDropdownOpen)}
+            className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-slate-50"
           >
-            {billGroupByOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+            <Layers className="h-4 w-4 text-muted-foreground" />
+            <span>
+              {selectedGroups.length === 0
+                ? "Group by..."
+                : selectedGroups.length === 1
+                  ? billGroupByOptions.find(o => o.value === selectedGroups[0])?.label
+                  : `${selectedGroups.length} levels`}
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${groupDropdownOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {groupDropdownOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setGroupDropdownOpen(false)}
+              />
+              <div className="absolute right-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-20 py-1">
+                <div className="px-3 py-2 border-b">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Group by (select order)
+                  </p>
+                </div>
+                {billGroupByOptions.map((opt) => {
+                  const isSelected = selectedGroups.includes(opt.value)
+                  const orderIndex = selectedGroups.indexOf(opt.value)
+
+                  return (
+                    <label
+                      key={opt.value}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedGroups([...selectedGroups, opt.value])
+                          } else {
+                            setSelectedGroups(selectedGroups.filter(v => v !== opt.value))
+                          }
+                        }}
+                      />
+                      <span className="text-sm flex-1">{opt.label}</span>
+                      {isSelected && (
+                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                          {orderIndex + 1}
+                        </span>
+                      )}
+                    </label>
+                  )
+                })}
+                {selectedGroups.length > 0 && (
+                  <div className="border-t mt-1 pt-1 px-3 py-2">
+                    <button
+                      onClick={() => {
+                        setSelectedGroups([])
+                        setGroupDropdownOpen(false)
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      Clear grouping
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -309,7 +372,10 @@ export default function BillsPage() {
         searchable
         searchPlaceholder="Search by bill number, tenant, or month..."
         searchFields={["bill_number", "for_month"]}
-        groupBy={groupBy ? { key: groupBy, label: billGroupByOptions.find(o => o.value === groupBy)?.label } : undefined}
+        groupBy={selectedGroups.length > 0 ? selectedGroups.map(key => ({
+          key,
+          label: billGroupByOptions.find(o => o.value === key)?.label
+        })) : undefined}
         emptyState={
           <div className="flex flex-col items-center py-8">
             <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
