@@ -62,10 +62,10 @@ interface ApprovalRequest {
   id: string
   type: string
   status: string
-  reason: string
+  description: string | null
   payload: Record<string, unknown>
   created_at: string
-  reviewed_at: string | null
+  decided_at: string | null
 }
 
 export default function TenantProfilePage() {
@@ -87,8 +87,8 @@ export default function TenantProfilePage() {
     const supabase = createClient()
     const { data } = await supabase
       .from("approvals")
-      .select("id, type, status, reason, payload, created_at, reviewed_at")
-      .eq("tenant_id", tenantId)
+      .select("id, type, status, description, payload, created_at, decided_at")
+      .eq("requester_tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .limit(10)
 
@@ -120,11 +120,21 @@ export default function TenantProfilePage() {
       if (data) {
         // Handle Supabase array joins
         const property = Array.isArray(data.property) ? data.property[0] : data.property
+        const ownerId = property?.owner_id || data.owner_id
+
+        // Fetch workspace_id from workspaces table via owner
+        const { data: workspace } = await supabase
+          .from("workspaces")
+          .select("id")
+          .eq("owner_user_id", ownerId)
+          .single()
+
         const transformedData = {
           ...data,
           property,
           room: Array.isArray(data.room) ? data.room[0] : data.room,
-          owner_id: property?.owner_id || data.owner_id,
+          owner_id: ownerId,
+          workspace_id: workspace?.id || "",
         }
         setProfile(transformedData)
         // Fetch approval requests
