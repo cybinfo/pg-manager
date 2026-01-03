@@ -4,13 +4,12 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/lib/auth"
 import { PermissionGuard } from "@/components/auth"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column } from "@/components/ui/data-table"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
-import { PageLoading } from "@/components/ui/loading"
+import { PageLoader } from "@/components/ui/page-loader"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Users, Plus, ArrowLeft, Home } from "lucide-react"
@@ -38,7 +37,6 @@ interface Room {
 export default function RoomTenantsPage() {
   const params = useParams()
   const roomId = params.id as string
-  const { user } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [room, setRoom] = useState<Room | null>(null)
@@ -46,7 +44,6 @@ export default function RoomTenantsPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return
       const supabase = createClient()
 
       // Fetch room details
@@ -87,7 +84,7 @@ export default function RoomTenantsPage() {
     }
 
     fetchData()
-  }, [user, roomId])
+  }, [roomId])
 
   const columns: Column<Tenant>[] = [
     {
@@ -135,7 +132,7 @@ export default function RoomTenantsPage() {
     }
   ]
 
-  if (loading) return <PageLoading />
+  if (loading) return <PageLoader />
 
   if (!room) {
     return (

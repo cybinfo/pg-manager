@@ -4,13 +4,12 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/lib/auth"
 import { PermissionGuard } from "@/components/auth"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column } from "@/components/ui/data-table"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
-import { PageLoading } from "@/components/ui/loading"
+import { PageLoader } from "@/components/ui/page-loader"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Receipt, Plus, ArrowLeft, User } from "lucide-react"
@@ -38,7 +37,6 @@ interface Tenant {
 export default function TenantBillsPage() {
   const params = useParams()
   const tenantId = params.id as string
-  const { user } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [tenant, setTenant] = useState<Tenant | null>(null)
@@ -46,7 +44,6 @@ export default function TenantBillsPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return
       const supabase = createClient()
 
       // Fetch tenant details
@@ -89,7 +86,7 @@ export default function TenantBillsPage() {
     }
 
     fetchData()
-  }, [user, tenantId])
+  }, [tenantId])
 
   const columns: Column<Bill>[] = [
     {
@@ -128,7 +125,7 @@ export default function TenantBillsPage() {
     }
   ]
 
-  if (loading) return <PageLoading />
+  if (loading) return <PageLoader />
 
   if (!tenant) {
     return (
