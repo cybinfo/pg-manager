@@ -36,7 +36,7 @@ interface ExitClearanceRaw {
   room_inspection_done: boolean
   key_returned: boolean
   created_at: string
-  tenant: { id: string; name: string; phone: string }[] | null
+  tenant: { id: string; name: string; phone: string; photo_url: string | null; profile_photo: string | null }[] | null
   property: { id: string; name: string }[] | null
   room: { room_number: string }[] | null
 }
@@ -57,6 +57,8 @@ interface ExitClearance {
     id: string
     name: string
     phone: string
+    photo_url: string | null
+    profile_photo: string | null
   }
   property: {
     id: string
@@ -125,7 +127,7 @@ export default function ExitClearancePage() {
         .from("exit_clearance")
         .select(`
           *,
-          tenant:tenants(id, name, phone),
+          tenant:tenants(id, name, phone, photo_url, profile_photo),
           property:properties(id, name),
           room:rooms(room_number)
         `)
@@ -253,6 +255,7 @@ export default function ExitClearancePage() {
         <div className="flex items-center gap-3">
           <Avatar
             name={clearance.tenant.name}
+            src={clearance.tenant.profile_photo || clearance.tenant.photo_url}
             size="sm"
             className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
           />

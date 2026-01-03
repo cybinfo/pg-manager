@@ -27,6 +27,7 @@ interface Tenant {
   email: string | null
   phone: string
   photo_url: string | null
+  profile_photo: string | null
   check_in_date: string
   monthly_rent: number
   status: string
@@ -46,6 +47,7 @@ interface RawTenant {
   email: string | null
   phone: string
   photo_url: string | null
+  profile_photo: string | null
   check_in_date: string
   monthly_rent: number
   status: string
@@ -192,6 +194,7 @@ export default function TenantsPage() {
         <div className="flex items-center gap-3">
           <Avatar
             name={tenant.name}
+            src={tenant.profile_photo || tenant.photo_url}
             size="sm"
             className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
           />

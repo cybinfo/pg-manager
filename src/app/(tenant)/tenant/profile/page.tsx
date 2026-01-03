@@ -33,6 +33,8 @@ interface TenantProfile {
   name: string
   phone: string
   email: string | null
+  photo_url: string | null
+  profile_photo: string | null
   monthly_rent: number
   check_in_date: string
   check_out_date: string | null
@@ -218,7 +220,7 @@ export default function TenantProfilePage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
-            <Avatar name={profile.name} size="xl" className="bg-primary text-primary-foreground" />
+            <Avatar name={profile.name} src={profile.profile_photo || profile.photo_url} size="xl" className="bg-primary text-primary-foreground" />
             <div className="flex-1">
               <h2 className="text-xl font-bold">{profile.name}</h2>
               <p className="text-muted-foreground">

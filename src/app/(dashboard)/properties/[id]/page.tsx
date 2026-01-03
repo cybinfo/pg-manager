@@ -61,6 +61,8 @@ interface TenantRaw {
   id: string
   name: string
   phone: string
+  photo_url: string | null
+  profile_photo: string | null
   monthly_rent: number
   status: string
   room: { room_number: string }[] | null
@@ -70,6 +72,8 @@ interface Tenant {
   id: string
   name: string
   phone: string
+  photo_url: string | null
+  profile_photo: string | null
   monthly_rent: number
   status: string
   room: {
@@ -128,6 +132,8 @@ export default function PropertyDetailPage() {
           id,
           name,
           phone,
+          photo_url,
+          profile_photo,
           monthly_rent,
           status,
           room:rooms(room_number)
@@ -448,7 +454,7 @@ export default function PropertyDetailPage() {
                   <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
                     <div className="p-3 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-3">
-                        <Avatar name={tenant.name} size="md" />
+                        <Avatar name={tenant.name} src={tenant.profile_photo || tenant.photo_url} size="md" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{tenant.name}</p>
                           <p className="text-sm text-muted-foreground">

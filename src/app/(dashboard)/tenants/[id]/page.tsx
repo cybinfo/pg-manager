@@ -50,6 +50,7 @@ import { toast } from "sonner"
 import { formatDate } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
+import { Avatar } from "@/components/ui/avatar"
 
 // Types
 interface Tenant {
@@ -58,6 +59,7 @@ interface Tenant {
   email: string | null
   phone: string
   photo_url: string | null
+  profile_photo: string | null
   check_in_date: string
   check_out_date: string | null
   expected_exit_date: string | null
@@ -423,7 +425,14 @@ export default function TenantDetailPage() {
         backHref="/tenants"
         backLabel="All Tenants"
         status={getStatusKey(tenant.status)}
-        avatar={tenant.name.charAt(0).toUpperCase()}
+        avatar={
+          <Avatar
+            name={tenant.name}
+            src={tenant.profile_photo || tenant.photo_url}
+            size="xl"
+            className="h-16 w-16 text-2xl shadow-lg shadow-teal-500/20"
+          />
+        }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             <Link href={`/tenants/${tenant.id}/edit`}>

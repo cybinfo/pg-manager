@@ -43,6 +43,8 @@ interface Visitor {
     id: string
     name: string
     phone: string
+    photo_url: string | null
+    profile_photo: string | null
     room?: { room_number: string } | null
   } | null
   property: {
@@ -70,6 +72,8 @@ interface RawVisitor {
     id: string
     name: string
     phone: string
+    photo_url: string | null
+    profile_photo: string | null
     room?: { room_number: string }[] | null
   }[] | null
   property: {
@@ -94,7 +98,7 @@ export default function VisitorDetailPage() {
         .from("visitors")
         .select(`
           *,
-          tenant:tenants(id, name, phone, room:rooms(room_number)),
+          tenant:tenants(id, name, phone, photo_url, profile_photo, room:rooms(room_number)),
           property:properties(id, name, address)
         `)
         .eq("id", params.id)
@@ -396,7 +400,7 @@ export default function VisitorDetailPage() {
               {/* Tenant Info */}
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center gap-3 mb-3">
-                  <Avatar name={visitor.tenant?.name || "?"} size="md" />
+                  <Avatar name={visitor.tenant?.name || "?"} src={visitor.tenant?.profile_photo || visitor.tenant?.photo_url} size="md" />
                   <div>
                     <p className="font-semibold">{visitor.tenant?.name}</p>
                     <p className="text-sm text-muted-foreground">Tenant</p>

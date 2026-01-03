@@ -53,6 +53,8 @@ interface Tenant {
   name: string
   phone: string
   email: string | null
+  photo_url: string | null
+  profile_photo: string | null
   monthly_rent: number
   status: string
   check_in_date: string
@@ -99,7 +101,7 @@ export default function RoomDetailPage() {
       // Fetch tenants in this room
       const { data: tenantsData } = await supabase
         .from("tenants")
-        .select("id, name, phone, email, monthly_rent, status, check_in_date")
+        .select("id, name, phone, email, photo_url, profile_photo, monthly_rent, status, check_in_date")
         .eq("room_id", params.id)
         .neq("status", "checked_out")
         .order("name")
@@ -371,7 +373,7 @@ export default function RoomDetailPage() {
                   <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
                     <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-3">
-                        <Avatar name={tenant.name} size="md" />
+                        <Avatar name={tenant.name} src={tenant.profile_photo || tenant.photo_url} size="md" />
                         <div>
                           <p className="font-medium">{tenant.name}</p>
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
