@@ -333,7 +333,7 @@ Configurable via property edit → Website Settings tab:
 ### Custom Components (src/components/ui/)
 | Component | Purpose |
 |-----------|---------|
-| `MetricsBar` | Compact horizontal stats bar |
+| `MetricsBar` | Compact horizontal stats bar with clickable items (uses router.push) |
 | `DataTable` | Table with search, sorting, nested grouping, row actions |
 | `PageHeader` | Page title with icon, actions, and breadcrumbs |
 | `StatusBadge` | Pre-configured status badges (success, warning, error, info, muted, primary, purple) |
@@ -533,6 +533,12 @@ RESEND_API_KEY=<resend_key>
 - Dropped ALL existing policies before recreating
 - Added `debug_user_access()` function for diagnostics
 **File**: `supabase/migrations/018_fix_rls_policies.sql`
+
+### Dashboard MetricsBar Navigation Stuck (2026-01-03) ✅
+**Problem**: Clicking Properties from Dashboard stuck on loading, but sidebar navigation works fine
+**Root Cause**: MetricsBar was using `window.location.href` for navigation, triggering full page reload and auth re-initialization. Sidebar uses Next.js Link component with client-side routing.
+**Solution**: Changed MetricsBar to use `useRouter().push()` for client-side navigation
+**File**: `src/components/ui/metrics-bar.tsx`
 
 ### Dashboard Nav Active State (2026-01-02) ✅
 **Problem**: Dashboard menu item always green/active on all pages
@@ -850,4 +856,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-03 (DataTable nested grouping on all 12 list pages)*
+*Last updated: 2026-01-03 (Fixed Dashboard MetricsBar navigation using router.push)*
