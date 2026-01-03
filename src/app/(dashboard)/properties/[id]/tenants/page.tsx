@@ -30,7 +30,6 @@ interface Property {
   id: string
   name: string
   address: string
-  type: string
 }
 
 export default function PropertyTenantsPage() {
@@ -48,7 +47,7 @@ export default function PropertyTenantsPage() {
       // Fetch property details
       const { data: propertyData } = await supabase
         .from("properties")
-        .select("id, name, address, type")
+        .select("id, name, address")
         .eq("id", propertyId)
         .single()
 
