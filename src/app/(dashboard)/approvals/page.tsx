@@ -46,10 +46,12 @@ interface Approval {
   decision_notes: string | null
   change_applied: boolean
   document_ids: string[] | null
+  requester_tenant_id: string
   requester_tenant: {
     id: string
     name: string
     phone: string
+    user_id: string | null
   } | null
 }
 
@@ -96,7 +98,7 @@ export default function ApprovalsPage() {
       .from("approvals")
       .select(`
         *,
-        requester_tenant:tenants(id, name, phone)
+        requester_tenant:tenants(id, name, phone, user_id)
       `)
       .order("created_at", { ascending: false })
 
@@ -165,10 +167,41 @@ export default function ApprovalsPage() {
     if (error) {
       toast.error("Failed to approve request")
     } else {
-      // Try to apply the change
+      // Try to apply the change (updates tenants + user_profiles)
       const { error: applyError } = await supabase.rpc("apply_approval_change", {
         p_approval_id: selectedApproval.id
       })
+
+      // For email changes, also update auth.users via API route
+      if (selectedApproval.type === "email_change" && selectedApproval.requester_tenant?.user_id) {
+        try {
+          const response = await fetch("/api/admin/update-user-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: selectedApproval.requester_tenant.user_id,
+              newEmail: selectedApproval.payload?.new_email,
+              tenantId: selectedApproval.requester_tenant_id,
+            }),
+          })
+
+          if (!response.ok) {
+            const data = await response.json()
+            console.error("Failed to update auth email:", data.error)
+            toast.warning("Request approved but login email needs manual update in Supabase")
+          } else {
+            toast.success("Request approved and email updated everywhere!")
+            fetchApprovals()
+            setProcessing(false)
+            setDialogOpen(false)
+            setDecisionNotes("")
+            return
+          }
+        } catch (err) {
+          console.error("Error calling email update API:", err)
+          toast.warning("Request approved but login email needs manual update")
+        }
+      }
 
       if (applyError) {
         toast.success("Request approved (change needs manual application)")
