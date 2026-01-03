@@ -147,17 +147,25 @@ exit_clearance      - Checkout process
 
 ## Critical Patterns (MUST FOLLOW)
 
-### 1. Supabase Join Array Pattern
-Supabase returns joined tables as arrays, NOT objects. Always transform:
-```typescript
-// WRONG - Will fail
-const propertyName = data.property.name
+### 1. Supabase Join Transform Pattern
+Supabase returns JOIN data in varying formats (arrays or objects). **ALWAYS use the centralized utility**:
 
-// CORRECT - Handle array
-const propertyName = Array.isArray(data.property)
-  ? data.property[0]?.name
-  : data.property?.name
+```typescript
+import { transformJoin } from "@/lib/supabase/transforms"
+
+// Transform JOIN data (handles both array and object formats)
+const transformedData = data.map((item) => ({
+  ...item,
+  property: transformJoin(item.property),
+  room: transformJoin(item.room),
+  tenant: transformJoin(item.tenant),
+}))
 ```
+
+**Key File:** `src/lib/supabase/transforms.ts`
+- `transformJoin<T>(value)` - Transform single JOIN to object or null
+- `transformJoins<T>(data, fields)` - Transform multiple fields on one object
+- `transformArrayJoins<T>(data, fields)` - Transform array of records
 
 ### 2. Permission Check Pattern
 Always use the auth context for permission checks:
@@ -747,6 +755,7 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Supabase JOIN Transform Utility** - Centralized `transformJoin()` function in `src/lib/supabase/transforms.ts` that handles both array and object formats from Supabase JOINs; refactored 14 files for consistency
 - **DataTable Nested Grouping** - Multi-level hierarchical grouping on all 12 list pages (tenants, bills, payments, expenses, visitors, complaints, meter-readings, exit-clearance, notices, rooms, staff, approvals)
 - **DataTable Column Sorting** - Click-to-sort on all columns with visual indicators, supports nested properties
 - **UI Component Centralization** - Created PageLoader, Avatar, StatCard components; refactored 52 files replacing 155+ patterns
