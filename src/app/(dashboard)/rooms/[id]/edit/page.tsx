@@ -17,6 +17,23 @@ interface Property {
   name: string
 }
 
+// Configurable room type from Settings
+interface ConfigurableRoomType {
+  code: string
+  name: string
+  default_rent: number
+  default_deposit: number
+  is_enabled: boolean
+  display_order: number
+}
+
+const defaultConfigurableRoomTypes: ConfigurableRoomType[] = [
+  { code: "single", name: "Single", default_rent: 8000, default_deposit: 8000, is_enabled: true, display_order: 1 },
+  { code: "double", name: "Double Sharing", default_rent: 6000, default_deposit: 6000, is_enabled: true, display_order: 2 },
+  { code: "triple", name: "Triple Sharing", default_rent: 5000, default_deposit: 5000, is_enabled: true, display_order: 3 },
+  { code: "dormitory", name: "Dormitory", default_rent: 4000, default_deposit: 4000, is_enabled: false, display_order: 4 },
+]
+
 // Extended amenities list - same as new room page
 const availableAmenities = [
   { key: "has_ac", label: "Air Conditioned (AC)" },
@@ -36,6 +53,7 @@ export default function EditRoomPage() {
   const [loading, setLoading] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
 
   const [formData, setFormData] = useState({
     property_id: "",
@@ -62,11 +80,13 @@ export default function EditRoomPage() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
-      // Fetch room and properties in parallel
-      const [roomRes, propertiesRes] = await Promise.all([
+      // Fetch room, properties, and owner config in parallel
+      const [roomRes, propertiesRes, configRes] = await Promise.all([
         supabase.from("rooms").select("*").eq("id", params.id).single(),
         supabase.from("properties").select("id, name").order("name"),
+        user ? supabase.from("owner_config").select("room_types").eq("owner_id", user.id).single() : null,
       ])
 
       if (roomRes.error || !roomRes.data) {
@@ -74,6 +94,11 @@ export default function EditRoomPage() {
         toast.error("Room not found")
         router.push("/rooms")
         return
+      }
+
+      // Load configurable room types from owner config
+      if (configRes?.data?.room_types && Array.isArray(configRes.data.room_types)) {
+        setRoomTypes(configRes.data.room_types)
       }
 
       const room = roomRes.data
@@ -260,10 +285,17 @@ export default function EditRoomPage() {
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   disabled={loading}
                 >
-                  <option value="single">Single</option>
-                  <option value="double">Double</option>
-                  <option value="triple">Triple</option>
-                  <option value="dormitory">Dormitory</option>
+                  {roomTypes.filter(rt => rt.is_enabled).sort((a, b) => a.display_order - b.display_order).map((rt) => (
+                    <option key={rt.code} value={rt.code}>
+                      {rt.name}
+                    </option>
+                  ))}
+                  {/* Also include current room type even if disabled (for existing rooms) */}
+                  {!roomTypes.find(rt => rt.code === formData.room_type && rt.is_enabled) && formData.room_type && (
+                    <option value={formData.room_type}>
+                      {roomTypes.find(rt => rt.code === formData.room_type)?.name || formData.room_type}
+                    </option>
+                  )}
                 </select>
               </div>
             </div>

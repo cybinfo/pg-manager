@@ -103,6 +103,18 @@ interface PropertyTypePricing {
   coliving: RoomTypePricing
 }
 
+// Configurable room type (new)
+interface ConfigurableRoomType {
+  code: string
+  name: string
+  default_rent: number
+  default_deposit: number
+  is_enabled: boolean
+  display_order: number
+}
+
+type BillingCycleMode = 'calendar_month' | 'checkin_anniversary'
+
 const defaultRoomTypePricing: RoomTypePricing = {
   single: { rent: 8000, deposit: 16000 },
   double: { rent: 6000, deposit: 12000 },
@@ -185,6 +197,13 @@ const defaultNotificationSettings: NotificationSettings = {
   overdue_alert_frequency: "weekly",
 }
 
+const defaultConfigurableRoomTypes: ConfigurableRoomType[] = [
+  { code: "single", name: "Single", default_rent: 8000, default_deposit: 8000, is_enabled: true, display_order: 1 },
+  { code: "double", name: "Double Sharing", default_rent: 6000, default_deposit: 6000, is_enabled: true, display_order: 2 },
+  { code: "triple", name: "Triple Sharing", default_rent: 5000, default_deposit: 5000, is_enabled: true, display_order: 3 },
+  { code: "dormitory", name: "Dormitory", default_rent: 4000, default_deposit: 4000, is_enabled: false, display_order: 4 },
+]
+
 export default function SettingsPage() {
   const { user, profile } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -236,6 +255,15 @@ export default function SettingsPage() {
 
   // Feature Flags
   const [featureFlags, setFeatureFlags] = useState<FeatureFlags>(getDefaultFeatureFlags())
+
+  // Configurable Room Types (new)
+  const [configurableRoomTypes, setConfigurableRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
+  const [showAddRoomType, setShowAddRoomType] = useState(false)
+  const [newRoomType, setNewRoomType] = useState({ name: "", code: "", default_rent: 5000, default_deposit: 5000 })
+  const [editingRoomType, setEditingRoomType] = useState<string | null>(null)
+
+  // Billing Cycle Mode (new)
+  const [billingCycleMode, setBillingCycleMode] = useState<BillingCycleMode>('calendar_month')
 
   useEffect(() => {
     fetchData()
@@ -313,6 +341,14 @@ export default function SettingsPage() {
             ...getDefaultFeatureFlags(),
             ...configRes.data.feature_flags,
           })
+        }
+        // Load configurable room types if available
+        if (configRes.data.room_types) {
+          setConfigurableRoomTypes(configRes.data.room_types)
+        }
+        // Load billing cycle mode if available
+        if (configRes.data.billing_cycle_mode) {
+          setBillingCycleMode(configRes.data.billing_cycle_mode)
         }
       }
     } catch (error) {
@@ -541,6 +577,120 @@ export default function SettingsPage() {
     }
   }
 
+  // Save configurable room types
+  const saveConfigurableRoomTypes = async () => {
+    setSaving(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const updateData = { room_types: configurableRoomTypes }
+
+      if (config) {
+        const { error } = await supabase
+          .from("owner_config")
+          .update(updateData)
+          .eq("id", config.id)
+        if (error) throw error
+      } else {
+        const { data, error } = await supabase
+          .from("owner_config")
+          .insert({ owner_id: user.id, ...updateData })
+          .select()
+          .single()
+        if (error) throw error
+        setConfig(data)
+      }
+
+      toast.success("Room types saved")
+    } catch (error) {
+      console.error("Save error:", error)
+      toast.error("Failed to save room types")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Save billing cycle mode
+  const saveBillingCycleMode = async () => {
+    setSaving(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const updateData = { billing_cycle_mode: billingCycleMode }
+
+      if (config) {
+        const { error } = await supabase
+          .from("owner_config")
+          .update(updateData)
+          .eq("id", config.id)
+        if (error) throw error
+      } else {
+        const { data, error } = await supabase
+          .from("owner_config")
+          .insert({ owner_id: user.id, ...updateData })
+          .select()
+          .single()
+        if (error) throw error
+        setConfig(data)
+      }
+
+      toast.success("Billing cycle mode saved")
+    } catch (error) {
+      console.error("Save error:", error)
+      toast.error("Failed to save billing cycle mode")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Add new room type
+  const addRoomType = () => {
+    if (!newRoomType.name || !newRoomType.code) {
+      toast.error("Please enter name and code")
+      return
+    }
+    // Check for duplicate code
+    if (configurableRoomTypes.some(rt => rt.code === newRoomType.code.toLowerCase())) {
+      toast.error("A room type with this code already exists")
+      return
+    }
+    const newType: ConfigurableRoomType = {
+      code: newRoomType.code.toLowerCase().replace(/\s+/g, '_'),
+      name: newRoomType.name,
+      default_rent: newRoomType.default_rent,
+      default_deposit: newRoomType.default_deposit,
+      is_enabled: true,
+      display_order: configurableRoomTypes.length + 1,
+    }
+    setConfigurableRoomTypes([...configurableRoomTypes, newType])
+    setNewRoomType({ name: "", code: "", default_rent: 5000, default_deposit: 5000 })
+    setShowAddRoomType(false)
+  }
+
+  // Delete room type
+  const deleteRoomType = (code: string) => {
+    if (!confirm("Delete this room type? Make sure no rooms are using it.")) return
+    setConfigurableRoomTypes(configurableRoomTypes.filter(rt => rt.code !== code))
+  }
+
+  // Toggle room type enabled/disabled
+  const toggleRoomType = (code: string) => {
+    setConfigurableRoomTypes(configurableRoomTypes.map(rt =>
+      rt.code === code ? { ...rt, is_enabled: !rt.is_enabled } : rt
+    ))
+  }
+
+  // Update room type pricing
+  const updateRoomTypePricing = (code: string, field: 'default_rent' | 'default_deposit', value: number) => {
+    setConfigurableRoomTypes(configurableRoomTypes.map(rt =>
+      rt.code === code ? { ...rt, [field]: value } : rt
+    ))
+  }
+
   const handleSendTestEmail = async () => {
     if (!owner?.email) {
       toast.error("No email address found")
@@ -692,7 +842,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
-    { id: "room-pricing", label: "Room Pricing", icon: Bed },
+    { id: "room-types", label: "Room Types", icon: Bed },
     { id: "billing", label: "Billing & Charges", icon: CreditCard },
     { id: "food", label: "Food & Meals", icon: UtensilsCrossed },
     { id: "expenses", label: "Expense Categories", icon: IndianRupee },
@@ -817,155 +967,186 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Room Pricing Tab */}
-      {activeTab === "room-pricing" && (
+      {/* Room Types Tab */}
+      {activeTab === "room-types" && (
         <div className="grid gap-6 max-w-2xl">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bed className="h-5 w-5" />
-                Default Room Pricing by Property Type
-              </CardTitle>
-              <CardDescription>
-                Set default rent and security deposit amounts for each room type.
-                Different property types can have different default pricing.
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bed className="h-5 w-5" />
+                    Room Types
+                  </CardTitle>
+                  <CardDescription>
+                    Configure room types available in your properties with default pricing
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddRoomType(!showAddRoomType)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Room Type
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Property Type Selector */}
-              <div className="flex gap-2 p-1 bg-muted rounded-lg">
-                {(Object.keys(propertyTypeLabels) as Array<keyof typeof propertyTypeLabels>).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setSelectedPropertyType(type)}
-                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                      selectedPropertyType === type
-                        ? "bg-background shadow text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {type === "pg" ? "PG" : type === "hostel" ? "Hostel" : "Co-Living"}
-                  </button>
-                ))}
-              </div>
-
-              <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                <p className="text-sm text-primary font-medium">
-                  Editing: {propertyTypeLabels[selectedPropertyType]}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  These defaults apply when adding rooms to {selectedPropertyType === "pg" ? "PG" : selectedPropertyType} properties
-                </p>
-              </div>
-
-              {(["single", "double", "triple", "dormitory"] as const).map((roomType) => (
-                <div key={roomType} className="p-4 border rounded-lg space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Home className="h-5 w-5 text-primary" />
+            <CardContent className="space-y-4">
+              {/* Add New Room Type Form */}
+              {showAddRoomType && (
+                <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
+                  <h4 className="font-medium">Add Custom Room Type</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="roomtype_name">Name</Label>
+                      <Input
+                        id="roomtype_name"
+                        placeholder="e.g., AC Single"
+                        value={newRoomType.name}
+                        onChange={(e) => setNewRoomType({ ...newRoomType, name: e.target.value })}
+                      />
                     </div>
-                    <div>
-                      <h4 className="font-medium capitalize">{roomType} Room</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {roomType === "single" && "1 bed"}
-                        {roomType === "double" && "2 beds"}
-                        {roomType === "triple" && "3 beds"}
-                        {roomType === "dormitory" && "4+ beds"}
-                      </p>
+                    <div className="space-y-1">
+                      <Label htmlFor="roomtype_code">Code</Label>
+                      <Input
+                        id="roomtype_code"
+                        placeholder="e.g., ac_single"
+                        value={newRoomType.code}
+                        onChange={(e) => setNewRoomType({ ...newRoomType, code: e.target.value })}
+                      />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`${selectedPropertyType}-${roomType}-rent`}>Monthly Rent</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="roomtype_rent">Default Rent</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                         <Input
-                          id={`${selectedPropertyType}-${roomType}-rent`}
+                          id="roomtype_rent"
                           type="number"
                           min="0"
                           step="500"
                           className="pl-8"
-                          value={propertyTypePricing[selectedPropertyType][roomType].rent}
-                          onChange={(e) => setPropertyTypePricing({
-                            ...propertyTypePricing,
-                            [selectedPropertyType]: {
-                              ...propertyTypePricing[selectedPropertyType],
-                              [roomType]: {
-                                ...propertyTypePricing[selectedPropertyType][roomType],
-                                rent: parseInt(e.target.value) || 0,
-                              },
-                            },
-                          })}
+                          value={newRoomType.default_rent}
+                          onChange={(e) => setNewRoomType({ ...newRoomType, default_rent: parseInt(e.target.value) || 0 })}
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`${selectedPropertyType}-${roomType}-deposit`}>Security Deposit</Label>
+                    <div className="space-y-1">
+                      <Label htmlFor="roomtype_deposit">Default Deposit</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                         <Input
-                          id={`${selectedPropertyType}-${roomType}-deposit`}
+                          id="roomtype_deposit"
                           type="number"
                           min="0"
-                          step="1000"
+                          step="500"
                           className="pl-8"
-                          value={propertyTypePricing[selectedPropertyType][roomType].deposit}
-                          onChange={(e) => setPropertyTypePricing({
-                            ...propertyTypePricing,
-                            [selectedPropertyType]: {
-                              ...propertyTypePricing[selectedPropertyType],
-                              [roomType]: {
-                                ...propertyTypePricing[selectedPropertyType][roomType],
-                                deposit: parseInt(e.target.value) || 0,
-                              },
-                            },
-                          })}
+                          value={newRoomType.default_deposit}
+                          onChange={(e) => setNewRoomType({ ...newRoomType, default_deposit: parseInt(e.target.value) || 0 })}
                         />
                       </div>
                     </div>
                   </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={addRoomType}>Add</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setShowAddRoomType(false)}>Cancel</Button>
+                  </div>
                 </div>
-              ))}
+              )}
 
-              <Button onClick={saveRoomTypePricing} disabled={saving}>
+              {/* Room Types List */}
+              <div className="space-y-3">
+                {configurableRoomTypes.map((roomType) => (
+                  <div
+                    key={roomType.code}
+                    className={`p-4 border rounded-lg transition-colors ${
+                      roomType.is_enabled ? "bg-background" : "bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${roomType.is_enabled ? "bg-primary/10" : "bg-muted"}`}>
+                          <Home className={`h-4 w-4 ${roomType.is_enabled ? "text-primary" : "text-muted-foreground"}`} />
+                        </div>
+                        <div>
+                          <p className={`font-medium ${!roomType.is_enabled && "text-muted-foreground"}`}>
+                            {roomType.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{roomType.code}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => toggleRoomType(roomType.code)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            roomType.is_enabled ? "bg-primary" : "bg-muted"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              roomType.is_enabled ? "translate-x-6" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                          onClick={() => deleteRoomType(roomType.code)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Default Rent</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="500"
+                            className="pl-8 h-9"
+                            value={roomType.default_rent}
+                            onChange={(e) => updateRoomTypePricing(roomType.code, 'default_rent', parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Default Deposit</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="500"
+                            className="pl-8 h-9"
+                            value={roomType.default_deposit}
+                            onChange={(e) => updateRoomTypePricing(roomType.code, 'default_deposit', parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button onClick={saveConfigurableRoomTypes} disabled={saving}>
                 {saving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Save className="mr-2 h-4 w-4" />
                 )}
-                Save Room Pricing
+                Save Room Types
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                Note: These defaults are used when adding new rooms based on the property type.
-                Existing room prices won&apos;t be affected.
+                These room types will appear in the dropdown when creating rooms.
+                Default pricing is used when a room type is selected.
               </p>
-            </CardContent>
-          </Card>
-
-          {/* Quick Reference - All Property Types */}
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="pt-6">
-              <h4 className="font-medium text-blue-900 mb-4">Pricing Summary (All Property Types)</h4>
-              <div className="space-y-4">
-                {(Object.keys(propertyTypeLabels) as Array<keyof typeof propertyTypeLabels>).map((pType) => (
-                  <div key={pType} className="space-y-2">
-                    <h5 className="text-sm font-medium text-blue-800 capitalize">
-                      {pType === "pg" ? "PG" : pType === "hostel" ? "Hostel" : "Co-Living"}
-                    </h5>
-                    <div className="grid grid-cols-2 gap-2">
-                      {(["single", "double", "triple", "dormitory"] as const).map((roomType) => (
-                        <div key={roomType} className="flex justify-between text-xs">
-                          <span className="capitalize text-blue-700">{roomType}:</span>
-                          <span className="font-medium text-blue-900">
-                            {formatCurrency(propertyTypePricing[pType][roomType].rent)}/mo
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -974,6 +1155,63 @@ export default function SettingsPage() {
       {/* Billing Tab */}
       {activeTab === "billing" && (
         <div className="grid gap-6 max-w-2xl">
+          {/* Billing Cycle Mode */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Billing Cycle Mode
+              </CardTitle>
+              <CardDescription>
+                Choose how billing periods are calculated for tenants
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                  <input
+                    type="radio"
+                    name="billing_cycle"
+                    value="calendar_month"
+                    checked={billingCycleMode === 'calendar_month'}
+                    onChange={() => setBillingCycleMode('calendar_month')}
+                    className="mt-1"
+                  />
+                  <div>
+                    <p className="font-medium">Calendar Month</p>
+                    <p className="text-sm text-muted-foreground">
+                      Bill period is 1st to end of month. All tenants billed on same cycle.
+                    </p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                  <input
+                    type="radio"
+                    name="billing_cycle"
+                    value="checkin_anniversary"
+                    checked={billingCycleMode === 'checkin_anniversary'}
+                    onChange={() => setBillingCycleMode('checkin_anniversary')}
+                    className="mt-1"
+                  />
+                  <div>
+                    <p className="font-medium">Check-in Anniversary</p>
+                    <p className="text-sm text-muted-foreground">
+                      Bill period aligns with tenant&apos;s check-in date. E.g., if tenant joined on 15th, bill runs 15th to 14th.
+                    </p>
+                  </div>
+                </label>
+              </div>
+              <Button onClick={saveBillingCycleMode} disabled={saving} size="sm">
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Billing Mode
+              </Button>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">

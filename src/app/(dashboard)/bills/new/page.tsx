@@ -85,6 +85,7 @@ function NewBillContent() {
   const [selectedChargeTypes, setSelectedChargeTypes] = useState<string[]>([])
   const [selectedTenant, setSelectedTenant] = useState<string>("")
   const [pendingCharges, setPendingCharges] = useState<PendingCharge[]>([])
+  const [billingCycleMode, setBillingCycleMode] = useState<'calendar_month' | 'checkin_anniversary'>('calendar_month')
 
   const [formData, setFormData] = useState({
     for_month: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
@@ -119,8 +120,8 @@ function NewBillContent() {
         return
       }
 
-      // Fetch tenants and charge types in parallel
-      const [tenantsRes, chargeTypesRes] = await Promise.all([
+      // Fetch tenants, charge types, and owner config in parallel
+      const [tenantsRes, chargeTypesRes, configRes] = await Promise.all([
         supabase
           .from("tenants")
           .select(`
@@ -141,7 +142,12 @@ function NewBillContent() {
           .select("*")
           .eq("owner_id", user.id)
           .eq("is_enabled", true)
-          .order("display_order")
+          .order("display_order"),
+        supabase
+          .from("owner_config")
+          .select("billing_cycle_mode")
+          .eq("owner_id", user.id)
+          .single()
       ])
 
       if (tenantsRes.error) {
@@ -165,6 +171,11 @@ function NewBillContent() {
         if (rentType) {
           setSelectedChargeTypes([rentType.id])
         }
+      }
+
+      // Load billing cycle mode from owner config
+      if (configRes?.data?.billing_cycle_mode) {
+        setBillingCycleMode(configRes.data.billing_cycle_mode as 'calendar_month' | 'checkin_anniversary')
       }
 
       setLoadingTenants(false)
@@ -263,26 +274,32 @@ function NewBillContent() {
     buildLineItems()
   }, [selectedTenant, selectedChargeTypes, tenants, chargeTypes, formData.for_month])
 
-  // Update bill date based on tenant's check-in date
+  // Update bill date based on billing cycle mode and tenant's check-in date
   useEffect(() => {
     if (selectedTenant) {
       const tenant = tenants.find((t) => t.id === selectedTenant)
-      if (tenant?.check_in_date) {
+      const now = new Date()
+      let billDate: Date
+
+      if (billingCycleMode === 'checkin_anniversary' && tenant?.check_in_date) {
         // Use the day of check-in but current month/year
         const checkInDay = new Date(tenant.check_in_date).getDate()
-        const now = new Date()
-        const billDate = new Date(now.getFullYear(), now.getMonth(), checkInDay)
-        // If the calculated date is in the future, use 1st
+        billDate = new Date(now.getFullYear(), now.getMonth(), checkInDay)
+        // If the calculated date is in the future, use previous month
         if (billDate > now) {
-          billDate.setDate(1)
+          billDate.setMonth(billDate.getMonth() - 1)
         }
-        setFormData((prev) => ({
-          ...prev,
-          bill_date: billDate.toISOString().split("T")[0],
-        }))
+      } else {
+        // Calendar month mode - use 1st of current month
+        billDate = new Date(now.getFullYear(), now.getMonth(), 1)
       }
+
+      setFormData((prev) => ({
+        ...prev,
+        bill_date: billDate.toISOString().split("T")[0],
+      }))
     }
-  }, [selectedTenant, tenants])
+  }, [selectedTenant, tenants, billingCycleMode])
 
   // Toggle charge type selection
   const toggleChargeType = (chargeTypeId: string) => {
@@ -588,6 +605,11 @@ function NewBillContent() {
                   onChange={(e) => setFormData({ ...formData, bill_date: e.target.value })}
                   required
                 />
+                <p className="text-xs text-muted-foreground">
+                  {billingCycleMode === 'checkin_anniversary'
+                    ? "Auto-set from tenant's check-in date"
+                    : "Using calendar month (1st of month)"}
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
