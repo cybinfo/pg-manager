@@ -31,6 +31,8 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
+import { useAuth } from "@/lib/auth"
+import { PermissionGate } from "@/components/auth"
 
 interface MeterReadingRaw {
   id: string
@@ -386,14 +388,16 @@ export default function MeterReadingDetailPage() {
               Edit
             </Button>
           </Link>
-          <Button variant="destructive" disabled={deleting} onClick={handleDelete}>
-            {deleting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="mr-2 h-4 w-4" />
-            )}
-            Delete
-          </Button>
+          <PermissionGate permission="meter_readings.delete" hide>
+            <Button variant="destructive" disabled={deleting} onClick={handleDelete}>
+              {deleting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-2 h-4 w-4" />
+              )}
+              Delete
+            </Button>
+          </PermissionGate>
         </div>
       </div>
 

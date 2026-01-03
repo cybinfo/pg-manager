@@ -21,6 +21,8 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
+import { useAuth } from "@/lib/auth"
+import { PermissionGate } from "@/components/auth"
 
 interface ExpenseType {
   id: string
@@ -181,19 +183,20 @@ export default function ExpenseDetailPage() {
               Edit
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={handleDelete}
-            disabled={deleting}
-          >
-            {deleting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4 mr-2" />
-            )}
-            Delete
-          </Button>
+          <PermissionGate permission="expenses.delete" hide>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Delete
+            </Button>
+          </PermissionGate>
         </div>
       </div>
 

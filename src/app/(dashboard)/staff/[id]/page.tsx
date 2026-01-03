@@ -25,6 +25,8 @@ import {
   Save
 } from "lucide-react"
 import { toast } from "sonner"
+import { useAuth } from "@/lib/auth"
+import { PermissionGate } from "@/components/auth"
 
 interface StaffMember {
   id: string
@@ -373,15 +375,16 @@ export default function StaffDetailPage() {
               </>
             )}
           </Button>
-          <Button
-            variant="outline"
-            className="text-destructive hover:text-destructive"
-            onClick={handleDelete}
-            disabled={saving}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </Button>
+          <PermissionGate permission="staff.delete" hide>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={saving}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </PermissionGate>
         </div>
       </div>
 
