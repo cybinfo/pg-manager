@@ -185,6 +185,8 @@ export default function PaymentsPage() {
       key: "tenant",
       header: "Tenant",
       width: "primary",
+      sortable: true,
+      sortKey: "tenant.name",
       render: (payment) => (
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold shrink-0">
@@ -201,6 +203,8 @@ export default function PaymentsPage() {
       key: "amount",
       header: "Amount",
       width: "amount",
+      sortable: true,
+      sortType: "number",
       render: (payment) => (
         <span className="font-semibold text-emerald-600 tabular-nums">
           {formatCurrency(Number(payment.amount))}
@@ -212,6 +216,7 @@ export default function PaymentsPage() {
       header: "Method",
       width: "badge",
       hideOnMobile: true,
+      sortable: true,
       render: (payment) => (
         <TableBadge variant="default">
           {paymentMethodLabels[payment.payment_method] || payment.payment_method}
@@ -222,6 +227,8 @@ export default function PaymentsPage() {
       key: "payment_date",
       header: "Date",
       width: "date",
+      sortable: true,
+      sortType: "date",
       render: (payment) => formatDate(payment.payment_date),
     },
     {

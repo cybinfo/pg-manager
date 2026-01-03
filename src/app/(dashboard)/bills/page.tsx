@@ -185,6 +185,7 @@ export default function BillsPage() {
       key: "bill_number",
       header: "Bill",
       width: "primary",
+      sortable: true,
       render: (bill) => (
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
@@ -201,12 +202,15 @@ export default function BillsPage() {
       key: "for_month",
       header: "Period",
       width: "tertiary",
+      sortable: true,
       render: (bill) => bill.for_month,
     },
     {
       key: "total_amount",
       header: "Amount",
       width: "amount",
+      sortable: true,
+      sortType: "number",
       render: (bill) => (
         <div>
           <div className="font-medium tabular-nums">{formatCurrency(bill.total_amount)}</div>
@@ -221,12 +225,15 @@ export default function BillsPage() {
       header: "Due",
       width: "date",
       hideOnMobile: true,
+      sortable: true,
+      sortType: "date",
       render: (bill) => formatDate(bill.due_date),
     },
     {
       key: "status",
       header: "Status",
       width: "status",
+      sortable: true,
       render: (bill) => {
         const info = getStatusInfo(bill.status)
         return <StatusDot status={info.status} label={info.label} />

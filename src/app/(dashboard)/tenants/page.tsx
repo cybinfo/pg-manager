@@ -190,6 +190,7 @@ export default function TenantsPage() {
       key: "name",
       header: "Tenant",
       width: "primary",
+      sortable: true,
       render: (tenant) => (
         <div className="flex items-center gap-3">
           <Avatar
@@ -209,6 +210,8 @@ export default function TenantsPage() {
       key: "property",
       header: "Property / Room",
       width: "secondary",
+      sortable: true,
+      sortKey: "property.name",
       render: (tenant) => (
         <div className="text-sm min-w-0">
           <div className="truncate">{tenant.property?.name || "—"}</div>
@@ -220,6 +223,8 @@ export default function TenantsPage() {
       key: "monthly_rent",
       header: "Rent",
       width: "amount",
+      sortable: true,
+      sortType: "number",
       render: (tenant) => (
         <span className="font-medium tabular-nums">{formatCurrency(tenant.monthly_rent)}</span>
       ),
@@ -229,12 +234,15 @@ export default function TenantsPage() {
       header: "Since",
       width: "date",
       hideOnMobile: true,
+      sortable: true,
+      sortType: "date",
       render: (tenant) => formatDate(tenant.check_in_date),
     },
     {
       key: "status",
       header: "Status",
       width: "status",
+      sortable: true,
       render: (tenant) => {
         const info = getStatusInfo(tenant.status)
         return <StatusDot status={info.status} label={info.label} />

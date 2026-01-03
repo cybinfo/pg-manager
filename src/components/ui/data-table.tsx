@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { ChevronRight, Search, Loader2 } from "lucide-react"
+import { ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown, Search, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 // ============================================
@@ -39,7 +39,13 @@ export interface Column<T> {
   render?: (row: T) => React.ReactNode
   className?: string
   hideOnMobile?: boolean
+  // Sorting options
+  sortable?: boolean
+  sortKey?: string  // Custom key for sorting (e.g., "property.name" for nested values)
+  sortType?: "string" | "number" | "date"  // Type for proper comparison
 }
+
+export type SortDirection = "asc" | "desc" | null
 
 interface DataTableProps<T> {
   columns: Column<T>[]
@@ -53,6 +59,19 @@ interface DataTableProps<T> {
   searchPlaceholder?: string
   searchFields?: (keyof T)[]
   className?: string
+  // Sorting options
+  defaultSort?: { key: string; direction: "asc" | "desc" }
+  onSortChange?: (key: string | null, direction: SortDirection) => void
+}
+
+// Helper to get nested value from object (e.g., "property.name")
+function getNestedValue<T>(obj: T, path: string): unknown {
+  return path.split(".").reduce((acc: unknown, part) => {
+    if (acc && typeof acc === "object" && part in acc) {
+      return (acc as Record<string, unknown>)[part]
+    }
+    return undefined
+  }, obj)
 }
 
 export function DataTable<T extends object>({
@@ -67,20 +86,80 @@ export function DataTable<T extends object>({
   searchPlaceholder = "Search...",
   searchFields,
   className,
+  defaultSort,
+  onSortChange,
 }: DataTableProps<T>) {
   const router = useRouter()
   const [search, setSearch] = React.useState("")
+  const [sortColumn, setSortColumn] = React.useState<string | null>(defaultSort?.key ?? null)
+  const [sortDirection, setSortDirection] = React.useState<SortDirection>(defaultSort?.direction ?? null)
 
-  const filteredData = React.useMemo(() => {
-    if (!search || !searchFields) return data
-    const lowerSearch = search.toLowerCase()
-    return data.filter((row) =>
-      searchFields.some((field) => {
-        const value = row[field]
-        return value && String(value).toLowerCase().includes(lowerSearch)
+  // Handle column header click for sorting
+  const handleSort = (column: Column<T>) => {
+    if (!column.sortable) return
+
+    const sortKey = column.sortKey || column.key
+    let newDirection: SortDirection
+
+    if (sortColumn !== sortKey) {
+      // New column: start with ascending
+      newDirection = "asc"
+    } else {
+      // Same column: cycle through asc → desc → null
+      newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc"
+    }
+
+    setSortColumn(newDirection ? sortKey : null)
+    setSortDirection(newDirection)
+    onSortChange?.(newDirection ? sortKey : null, newDirection)
+  }
+
+  // Filter and sort data
+  const processedData = React.useMemo(() => {
+    let result = [...data]
+
+    // Apply search filter
+    if (search && searchFields) {
+      const lowerSearch = search.toLowerCase()
+      result = result.filter((row) =>
+        searchFields.some((field) => {
+          const value = row[field]
+          return value && String(value).toLowerCase().includes(lowerSearch)
+        })
+      )
+    }
+
+    // Apply sorting
+    if (sortColumn && sortDirection) {
+      const column = columns.find((c) => (c.sortKey || c.key) === sortColumn)
+      const sortType = column?.sortType || "string"
+
+      result.sort((a, b) => {
+        const aVal = getNestedValue(a, sortColumn)
+        const bVal = getNestedValue(b, sortColumn)
+
+        // Handle null/undefined values
+        if (aVal == null && bVal == null) return 0
+        if (aVal == null) return sortDirection === "asc" ? 1 : -1
+        if (bVal == null) return sortDirection === "asc" ? -1 : 1
+
+        let comparison = 0
+
+        if (sortType === "number") {
+          comparison = Number(aVal) - Number(bVal)
+        } else if (sortType === "date") {
+          comparison = new Date(String(aVal)).getTime() - new Date(String(bVal)).getTime()
+        } else {
+          // String comparison (case-insensitive)
+          comparison = String(aVal).toLowerCase().localeCompare(String(bVal).toLowerCase())
+        }
+
+        return sortDirection === "asc" ? comparison : -comparison
       })
-    )
-  }, [data, search, searchFields])
+    }
+
+    return result
+  }, [data, search, searchFields, sortColumn, sortDirection, columns])
 
   const handleRowClick = (row: T) => {
     if (href) {
@@ -124,11 +203,35 @@ export function DataTable<T extends object>({
           className="hidden md:grid gap-4 border-b bg-slate-50/80 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider"
           style={{ gridTemplateColumns: gridTemplate }}
         >
-          {visibleColumns.map((column) => (
-            <div key={column.key} className={cn("truncate", column.className)}>
-              {column.header}
-            </div>
-          ))}
+          {visibleColumns.map((column) => {
+            const sortKey = column.sortKey || column.key
+            const isSorted = sortColumn === sortKey
+            const SortIcon = isSorted
+              ? sortDirection === "asc" ? ChevronUp : ChevronDown
+              : ChevronsUpDown
+
+            return (
+              <div
+                key={column.key}
+                className={cn(
+                  "truncate flex items-center gap-1",
+                  column.sortable && "cursor-pointer hover:text-foreground select-none",
+                  column.className
+                )}
+                onClick={() => handleSort(column)}
+              >
+                <span>{column.header}</span>
+                {column.sortable && (
+                  <SortIcon
+                    className={cn(
+                      "h-3.5 w-3.5 shrink-0 transition-colors",
+                      isSorted ? "text-primary" : "text-muted-foreground/50"
+                    )}
+                  />
+                )}
+              </div>
+            )
+          })}
           {isClickable && <div />}
         </div>
 
@@ -140,7 +243,7 @@ export function DataTable<T extends object>({
         )}
 
         {/* Empty State */}
-        {!loading && filteredData.length === 0 && (
+        {!loading && processedData.length === 0 && (
           <div className="py-12">
             {emptyState || (
               <p className="text-center text-muted-foreground">No data found</p>
@@ -149,9 +252,9 @@ export function DataTable<T extends object>({
         )}
 
         {/* Data Rows */}
-        {!loading && filteredData.length > 0 && (
+        {!loading && processedData.length > 0 && (
           <div className="divide-y">
-            {filteredData.map((row) => (
+            {processedData.map((row) => (
               <div
                 key={String(row[keyField])}
                 className={cn(
