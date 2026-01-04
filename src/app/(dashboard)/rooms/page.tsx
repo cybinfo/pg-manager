@@ -211,10 +211,16 @@ export default function RoomsPage() {
           </div>
           <div>
             <div className="font-medium">Room {room.room_number}</div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <Building2 className="h-3 w-3" />
-              {room.property?.name || "—"}
-            </div>
+            {room.property && (
+              <Link
+                href={`/properties/${room.property.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors"
+              >
+                <Building2 className="h-3 w-3" />
+                {room.property.name}
+              </Link>
+            )}
           </div>
         </div>
       ),
