@@ -222,10 +222,14 @@ export default function MeterReadingsPage() {
             </div>
             <div>
               <div className="font-medium">{config.label}</div>
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Link
+                href={`/properties/${row.property?.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors"
+              >
                 <Building2 className="h-3 w-3" />
                 {row.property?.name}
-              </div>
+              </Link>
             </div>
           </div>
         )
@@ -236,10 +240,14 @@ export default function MeterReadingsPage() {
       header: "Room",
       width: "tertiary",
       render: (row) => (
-        <div className="flex items-center gap-1 text-sm">
+        <Link
+          href={`/rooms/${row.room?.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 text-sm hover:text-primary transition-colors"
+        >
           <Home className="h-3 w-3 text-muted-foreground" />
           Room {row.room?.room_number}
-        </div>
+        </Link>
       ),
     },
     {

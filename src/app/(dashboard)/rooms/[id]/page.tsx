@@ -18,7 +18,11 @@ import {
   Plus,
   Thermometer,
   Bath,
-  Layers
+  Layers,
+  Gauge,
+  Zap,
+  Droplets,
+  Calendar
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -60,6 +64,23 @@ interface Tenant {
   check_in_date: string
 }
 
+interface MeterReading {
+  id: string
+  reading_date: string
+  reading_value: number
+  units_consumed: number | null
+  charge_type: {
+    id: string
+    name: string
+  } | null
+}
+
+const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string }> = {
+  electricity: { icon: Zap, color: "text-yellow-700", bgColor: "bg-yellow-100" },
+  water: { icon: Droplets, color: "text-blue-700", bgColor: "bg-blue-100" },
+  gas: { icon: Gauge, color: "text-orange-700", bgColor: "bg-orange-100" },
+}
+
 const statusColors: Record<string, { bg: string; text: string; label: string }> = {
   available: { bg: "bg-green-100", text: "text-green-700", label: "Available" },
   occupied: { bg: "bg-red-100", text: "text-red-700", label: "Occupied" },
@@ -73,6 +94,7 @@ export default function RoomDetailPage() {
   const [loading, setLoading] = useState(true)
   const [room, setRoom] = useState<Room | null>(null)
   const [tenants, setTenants] = useState<Tenant[]>([])
+  const [meterReadings, setMeterReadings] = useState<MeterReading[]>([])
   const [updatingStatus, setUpdatingStatus] = useState(false)
 
   useEffect(() => {
@@ -107,6 +129,24 @@ export default function RoomDetailPage() {
         .order("name")
 
       setTenants(tenantsData || [])
+
+      // Fetch recent meter readings for this room
+      const { data: readingsData } = await supabase
+        .from("meter_readings")
+        .select(`
+          id, reading_date, reading_value, units_consumed,
+          charge_type:charge_types(id, name)
+        `)
+        .eq("room_id", params.id)
+        .order("reading_date", { ascending: false })
+        .limit(5)
+
+      const transformedReadings = (readingsData || []).map((r: { id: string; reading_date: string; reading_value: number; units_consumed: number | null; charge_type: { id: string; name: string }[] | { id: string; name: string } | null }) => ({
+        ...r,
+        charge_type: Array.isArray(r.charge_type) ? r.charge_type[0] : r.charge_type,
+      }))
+      setMeterReadings(transformedReadings)
+
       setLoading(false)
     }
 
@@ -394,6 +434,81 @@ export default function RoomDetailPage() {
                     </div>
                   </Link>
                 ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Meter Readings */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Gauge className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <CardTitle>Meter Readings</CardTitle>
+                  <CardDescription>Recent electricity, water & gas readings</CardDescription>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Link href={`/rooms/${room.id}/meter-readings`}>
+                  <Button variant="outline" size="sm">
+                    View All
+                  </Button>
+                </Link>
+                <Link href={`/meter-readings/new?room=${room.id}`}>
+                  <Button size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Record Reading
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {meterReadings.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Gauge className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No meter readings recorded</p>
+                <Link href={`/meter-readings/new?room=${room.id}`}>
+                  <Button variant="outline" size="sm" className="mt-3">
+                    Record First Reading
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {meterReadings.map((reading) => {
+                  const meterType = reading.charge_type?.name?.toLowerCase() || "electricity"
+                  const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
+                  const Icon = config.icon
+                  return (
+                    <Link key={reading.id} href={`/meter-readings/${reading.id}`}>
+                      <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                            <Icon className={`h-4 w-4 ${config.color}`} />
+                          </div>
+                          <div>
+                            <p className="font-medium capitalize">{meterType}</p>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(reading.reading_date)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</p>
+                          {reading.units_consumed !== null && (
+                            <p className="text-xs text-orange-600">+{reading.units_consumed} units</p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             )}
           </CardContent>

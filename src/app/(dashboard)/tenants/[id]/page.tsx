@@ -45,6 +45,7 @@ import {
   History,
   Plus,
   Trash2,
+  Gauge,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate } from "@/lib/format"
@@ -505,7 +506,29 @@ export default function TenantDetailPage() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Room Details */}
-        <DetailSection title="Room Details" description="Current accommodation" icon={Home}>
+        <DetailSection
+          title="Room Details"
+          description="Current accommodation"
+          icon={Home}
+          actions={
+            tenant.room && (
+              <div className="flex gap-2">
+                <Link href={`/rooms/${tenant.room.id}`}>
+                  <Button variant="outline" size="sm">
+                    <Home className="mr-1 h-3 w-3" />
+                    View Room
+                  </Button>
+                </Link>
+                <Link href={`/rooms/${tenant.room.id}/meter-readings`}>
+                  <Button variant="outline" size="sm">
+                    <Gauge className="mr-1 h-3 w-3" />
+                    Meter Readings
+                  </Button>
+                </Link>
+              </div>
+            )
+          }
+        >
           <InfoRow label="Property" value={tenant.property?.name} icon={Building2} />
           <InfoRow
             label="Room"

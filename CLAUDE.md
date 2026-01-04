@@ -635,6 +635,7 @@ RESEND_API_KEY=<resend_key>
 | Billing Cycle Mode | Calendar Month (1st) or Check-in Anniversary billing dates | ✅ Complete |
 | Utility Rates Configuration | Edit Electricity/Water/Gas rates, billing method, split options in Settings | ✅ Complete |
 | Multi-Tenant Data Isolation Security Fix | Fixed charge_types/expense_types queries leaking cross-workspace data; RLS policies secured | ✅ Complete |
+| Entity Linking: Meter Readings | Bi-directional navigation between meter readings, rooms, and tenants; clickable columns in data tables | ✅ Complete |
 
 ### Pending Features (Backlog)
 | Priority | Feature | Description |
@@ -804,6 +805,7 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Entity Linking: Meter Readings** - Full bi-directional navigation between meter readings, rooms, and tenants. From meter readings list, click Room or Property to navigate directly. From Room detail page, see recent meter readings with "View All" deep link to `/rooms/[id]/meter-readings`. From Tenant detail page, access "Meter Readings" button in Room Details section to view room's meter data.
 - **SECURITY: Multi-Tenant Data Isolation Fix** - Critical fix for RLS policies that allowed cross-workspace data leakage; charge_types and expense_types now properly scoped by owner_id with staff workspace access
 - **Migration 036** - Fixed `USING(true)` RLS policies on charge_types/expense_types; added proper owner-scoped policies with platform admin bypass
 - **Utility Rates Configuration** - New Settings → Billing → Utility Rates section to edit Electricity/Water/Gas rates; choose per-unit vs flat rate billing; set rate per kWh/L/m³; choose split method (per occupant vs per room)
@@ -823,7 +825,7 @@ Configured in `vercel.json`
 - **Admin Page Simplified** - Platform admin now shows only workspaces list with Explore dialog for details
 - **Migration 032** - Added get_workspace_details_admin() RPC function for admin Explore
 - **Feature Flags Route Protection** - FeatureGuard component prevents direct URL access to disabled features (10 pages protected)
-- **Deep Links Navigation** - Nested routes: /tenants/[id]/bills, /tenants/[id]/payments, /rooms/[id]/tenants, /properties/[id]/rooms, /properties/[id]/tenants
+- **Deep Links Navigation** - Nested routes: /tenants/[id]/bills, /tenants/[id]/payments, /rooms/[id]/tenants, /rooms/[id]/meter-readings, /properties/[id]/rooms, /properties/[id]/tenants
 - **Room Defaults by Property Type** - Settings → Room Pricing now supports PG, Hostel, Co-Living with different pricing defaults
 - **ID Proof Front/Back** - IdDocumentEntry now supports front_url and back_url for documents with two sides
 - **Feature Flags System** - 15 configurable features via Settings → Features tab with FeatureGate component
@@ -905,4 +907,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-04 (Multi-tenant data isolation security fix)*
+*Last updated: 2026-01-04 (Entity linking: Meter readings bi-directional navigation)*
