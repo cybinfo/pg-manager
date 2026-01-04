@@ -21,10 +21,9 @@ import {
   Wallet,
   Banknote,
   Layers,
-  ChevronDown,
-  Building2,
-  User
+  ChevronDown
 } from "lucide-react"
+import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -208,23 +207,9 @@ export default function PaymentsPage() {
             ₹
           </div>
           <div className="min-w-0">
-            <Link
-              href={`/tenants/${payment.tenant.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="font-medium truncate flex items-center gap-1 hover:text-primary transition-colors"
-            >
-              <User className="h-3 w-3 text-muted-foreground" />
-              {payment.tenant.name}
-            </Link>
+            <TenantLink id={payment.tenant.id} name={payment.tenant.name} />
             {payment.property && (
-              <Link
-                href={`/properties/${payment.property.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-xs text-muted-foreground truncate flex items-center gap-1 hover:text-primary transition-colors"
-              >
-                <Building2 className="h-3 w-3" />
-                {payment.property.name}
-              </Link>
+              <PropertyLink id={payment.property.id} name={payment.property.name} size="sm" />
             )}
           </div>
         </div>

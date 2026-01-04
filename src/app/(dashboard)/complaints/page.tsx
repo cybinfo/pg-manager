@@ -19,11 +19,10 @@ import {
   Clock,
   CheckCircle,
   Wrench,
-  Building2,
-  User,
   Layers,
   ChevronDown
 } from "lucide-react"
+import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { toast } from "sonner"
 
 interface Complaint {
@@ -277,34 +276,14 @@ export default function ComplaintsPage() {
       render: (row) => (
         <div className="text-sm">
           {row.tenant && (
-            <Link
-              href={`/tenants/${row.tenant.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1 hover:text-primary transition-colors"
-            >
-              <User className="h-3 w-3 text-muted-foreground" />
-              {row.tenant.name}
-            </Link>
+            <TenantLink id={row.tenant.id} name={row.tenant.name} size="sm" />
           )}
           <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
             {row.property && (
-              <Link
-                href={`/properties/${row.property.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 hover:text-primary transition-colors"
-              >
-                <Building2 className="h-3 w-3" />
-                {row.property.name}
-              </Link>
+              <PropertyLink id={row.property.id} name={row.property.name} size="sm" />
             )}
             {row.room && (
-              <Link
-                href={`/rooms/${row.room.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="hover:text-primary transition-colors"
-              >
-                , Room {row.room.room_number}
-              </Link>
+              <RoomLink id={row.room.id} roomNumber={row.room.room_number} size="sm" showPrefix={false} />
             )}
           </div>
         </div>

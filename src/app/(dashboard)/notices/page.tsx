@@ -30,6 +30,7 @@ import {
   Layers,
   ChevronDown
 } from "lucide-react"
+import { PropertyLink } from "@/components/ui/entity-link"
 import { toast } from "sonner"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 
@@ -267,14 +268,7 @@ export default function NoticesPage() {
       width: "tertiary",
       hideOnMobile: true,
       render: (row) => row.property ? (
-        <Link
-          href={`/properties/${row.property.id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
-        >
-          <Building2 className="h-3 w-3" />
-          {row.property.name}
-        </Link>
+        <PropertyLink id={row.property.id} name={row.property.name} size="sm" />
       ) : (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <Building2 className="h-3 w-3" />

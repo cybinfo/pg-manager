@@ -19,7 +19,6 @@ import {
   Eye,
   Building2,
   User,
-  Home,
   Phone,
   Calendar,
   MessageSquare,
@@ -27,6 +26,7 @@ import {
   Save,
   X
 } from "lucide-react"
+import { PropertyLink, RoomLink, TenantLink } from "@/components/ui/entity-link"
 import { toast } from "sonner"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
@@ -479,10 +479,7 @@ export default function ComplaintDetailPage() {
                 </Link>
               )}
               {complaint.room && (
-                <Link href={`/rooms/${complaint.room.id}`} className="flex items-center gap-2 hover:text-primary transition-colors">
-                  <Home className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-medium">Room {complaint.room.room_number}</p>
-                </Link>
+                <RoomLink id={complaint.room.id} roomNumber={complaint.room.room_number} />
               )}
             </CardContent>
           </Card>

@@ -22,6 +22,7 @@ import {
   Layers,
   ChevronDown,
 } from "lucide-react"
+import { PropertyLink } from "@/components/ui/entity-link"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 
@@ -302,13 +303,7 @@ export default function ExpensesPage() {
       width: "tertiary",
       hideOnMobile: true,
       render: (expense) => expense.property ? (
-        <Link
-          href={`/properties/${expense.property.id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="text-sm hover:text-primary transition-colors"
-        >
-          {expense.property.name}
-        </Link>
+        <PropertyLink id={expense.property.id} name={expense.property.name} showIcon={false} />
       ) : "General",
     },
     {

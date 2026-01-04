@@ -19,11 +19,11 @@ import {
   CheckCircle,
   AlertCircle,
   User,
-  Building2,
   ArrowRight,
   Layers,
   ChevronDown
 } from "lucide-react"
+import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 
@@ -272,13 +272,7 @@ export default function ExitClearancePage() {
             className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
           />
           <div className="min-w-0">
-            <Link
-              href={`/tenants/${clearance.tenant.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="font-medium truncate hover:text-primary transition-colors block"
-            >
-              {clearance.tenant.name}
-            </Link>
+            <TenantLink id={clearance.tenant.id} name={clearance.tenant.name} showIcon={false} />
             <div className="text-xs text-muted-foreground">{clearance.tenant.phone}</div>
           </div>
         </div>
@@ -291,23 +285,10 @@ export default function ExitClearancePage() {
       render: (clearance) => (
         <div className="text-sm min-w-0">
           {clearance.property && (
-            <Link
-              href={`/properties/${clearance.property.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1 truncate hover:text-primary transition-colors"
-            >
-              <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className="truncate">{clearance.property.name}</span>
-            </Link>
+            <PropertyLink id={clearance.property.id} name={clearance.property.name} size="sm" />
           )}
           {clearance.room && (
-            <Link
-              href={`/rooms/${clearance.room.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="text-xs text-muted-foreground hover:text-primary transition-colors"
-            >
-              Room {clearance.room.room_number}
-            </Link>
+            <RoomLink id={clearance.room.id} roomNumber={clearance.room.room_number} size="sm" />
           )}
         </div>
       ),

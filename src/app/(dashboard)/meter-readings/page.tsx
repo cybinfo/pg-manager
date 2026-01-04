@@ -16,14 +16,13 @@ import {
   Plus,
   Zap,
   Droplets,
-  Building2,
-  Home,
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
   Layers,
   ChevronDown
 } from "lucide-react"
+import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { toast } from "sonner"
 import { formatDate } from "@/lib/format"
 
@@ -222,14 +221,9 @@ export default function MeterReadingsPage() {
             </div>
             <div>
               <div className="font-medium">{config.label}</div>
-              <Link
-                href={`/properties/${row.property?.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors"
-              >
-                <Building2 className="h-3 w-3" />
-                {row.property?.name}
-              </Link>
+              {row.property && (
+                <PropertyLink id={row.property.id} name={row.property.name} size="sm" />
+              )}
             </div>
           </div>
         )
@@ -239,16 +233,9 @@ export default function MeterReadingsPage() {
       key: "room",
       header: "Room",
       width: "tertiary",
-      render: (row) => (
-        <Link
-          href={`/rooms/${row.room?.id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="flex items-center gap-1 text-sm hover:text-primary transition-colors"
-        >
-          <Home className="h-3 w-3 text-muted-foreground" />
-          Room {row.room?.room_number}
-        </Link>
-      ),
+      render: (row) => row.room ? (
+        <RoomLink id={row.room.id} roomNumber={row.room.room_number} size="sm" />
+      ) : null,
     },
     {
       key: "reading_value",

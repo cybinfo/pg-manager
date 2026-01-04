@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
+import { PropertyLink } from "@/components/ui/entity-link"
 import { PermissionGuard } from "@/components/auth"
 import { PageLoader } from "@/components/ui/page-loader"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -15,7 +16,6 @@ import {
   Home,
   Plus,
   Bed,
-  Building2,
   CheckCircle,
   AlertCircle,
   Layers,
@@ -212,14 +212,11 @@ export default function RoomsPage() {
           <div>
             <div className="font-medium">Room {room.room_number}</div>
             {room.property && (
-              <Link
-                href={`/properties/${room.property.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors"
-              >
-                <Building2 className="h-3 w-3" />
-                {room.property.name}
-              </Link>
+              <PropertyLink
+                id={room.property.id}
+                name={room.property.name}
+                size="sm"
+              />
             )}
           </div>
         </div>

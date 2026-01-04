@@ -20,10 +20,9 @@ import {
   CheckCircle,
   Clock,
   Layers,
-  ChevronDown,
-  Building2,
-  User
+  ChevronDown
 } from "lucide-react"
+import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
 
@@ -209,24 +208,10 @@ export default function BillsPage() {
           <div className="min-w-0">
             <div className="font-medium truncate">{bill.bill_number}</div>
             {bill.tenant && (
-              <Link
-                href={`/tenants/${bill.tenant.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-xs text-muted-foreground truncate flex items-center gap-1 hover:text-primary transition-colors"
-              >
-                <User className="h-3 w-3" />
-                {bill.tenant.name}
-              </Link>
+              <TenantLink id={bill.tenant.id} name={bill.tenant.name} size="sm" />
             )}
             {bill.property && (
-              <Link
-                href={`/properties/${bill.property.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-xs text-muted-foreground truncate flex items-center gap-1 hover:text-primary transition-colors"
-              >
-                <Building2 className="h-3 w-3" />
-                {bill.property.name}
-              </Link>
+              <PropertyLink id={bill.property.id} name={bill.property.name} size="sm" />
             )}
           </div>
         </div>

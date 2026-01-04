@@ -17,13 +17,13 @@ import {
   Clock,
   Users,
   Moon,
-  Building2,
   Phone,
   LogOut,
   Calendar,
   Layers,
   ChevronDown
 } from "lucide-react"
+import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { toast } from "sonner"
 import { formatDateTime, formatTimeAgo } from "@/lib/format"
 
@@ -222,23 +222,10 @@ export default function VisitorsPage() {
       render: (row) => (
         <div>
           {row.tenant && (
-            <Link
-              href={`/tenants/${row.tenant.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              {row.tenant.name}
-            </Link>
+            <TenantLink id={row.tenant.id} name={row.tenant.name} showIcon={false} />
           )}
           {row.property && (
-            <Link
-              href={`/properties/${row.property.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors"
-            >
-              <Building2 className="h-3 w-3" />
-              {row.property.name}
-            </Link>
+            <PropertyLink id={row.property.id} name={row.property.name} size="sm" />
           )}
         </div>
       ),
