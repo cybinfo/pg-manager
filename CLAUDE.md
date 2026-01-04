@@ -633,6 +633,7 @@ RESEND_API_KEY=<resend_key>
 | DataTable Nested Grouping | Multi-level hierarchical grouping on all 12 list pages | ✅ Complete |
 | Configurable Room Types | Add/edit/delete custom room types in Settings → Room Types | ✅ Complete |
 | Billing Cycle Mode | Calendar Month (1st) or Check-in Anniversary billing dates | ✅ Complete |
+| Utility Rates Configuration | Edit Electricity/Water/Gas rates, billing method, split options in Settings | ✅ Complete |
 
 ### Pending Features (Backlog)
 | Priority | Feature | Description |
@@ -781,6 +782,7 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Utility Rates Configuration** - New Settings → Billing → Utility Rates section to edit Electricity/Water/Gas rates; choose per-unit vs flat rate billing; set rate per kWh/L/m³; choose split method (per occupant vs per room)
 - **Configurable Room Types** - Add/edit/delete custom room types in Settings → Room Types; room creation/edit uses dynamic types from owner_config
 - **Billing Cycle Mode** - Choose between Calendar Month (1st of month) or Check-in Anniversary (based on tenant check-in date) in Settings → Billing
 - **Migration 035** - Added room_types JSONB and billing_cycle_mode columns to owner_config
@@ -879,4 +881,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-03 (Configurable room types and billing cycle mode)*
+*Last updated: 2026-01-04 (Utility rates configuration)*
