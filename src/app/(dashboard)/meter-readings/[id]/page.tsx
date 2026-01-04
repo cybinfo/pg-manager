@@ -345,8 +345,20 @@ export default function MeterReadingDetailPage() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">{config.label} Reading</h1>
-              <p className="text-muted-foreground">
-                {reading.property?.name} - Room {reading.room?.room_number}
+              <p className="text-muted-foreground flex items-center gap-1 flex-wrap">
+                {reading.property ? (
+                  <Link href={`/properties/${reading.property.id}`} className="hover:text-primary transition-colors flex items-center gap-1">
+                    <Building2 className="h-4 w-4" />
+                    {reading.property.name}
+                  </Link>
+                ) : "N/A"}
+                <span>-</span>
+                {reading.room ? (
+                  <Link href={`/rooms/${reading.room.id}`} className="hover:text-primary transition-colors flex items-center gap-1">
+                    <Home className="h-4 w-4" />
+                    Room {reading.room.room_number}
+                  </Link>
+                ) : "N/A"}
               </p>
             </div>
           </div>
@@ -461,7 +473,13 @@ export default function MeterReadingDetailPage() {
                 <Building2 className="h-4 w-4" />
                 Property
               </span>
-              <span className="font-medium">{reading.property?.name || "N/A"}</span>
+              {reading.property ? (
+                <Link href={`/properties/${reading.property.id}`} className="font-medium hover:text-primary transition-colors">
+                  {reading.property.name}
+                </Link>
+              ) : (
+                <span className="font-medium">N/A</span>
+              )}
             </div>
             {reading.property?.address && (
               <div className="flex items-center justify-between py-2 border-b">
@@ -474,7 +492,13 @@ export default function MeterReadingDetailPage() {
                 <Home className="h-4 w-4" />
                 Room
               </span>
-              <span className="font-medium">Room {reading.room?.room_number || "N/A"}</span>
+              {reading.room ? (
+                <Link href={`/rooms/${reading.room.id}`} className="font-medium hover:text-primary transition-colors">
+                  Room {reading.room.room_number}
+                </Link>
+              ) : (
+                <span className="font-medium">N/A</span>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -645,32 +669,36 @@ export default function MeterReadingDetailPage() {
           ) : (
             <div className="space-y-3">
               {charges.map((charge) => (
-                  <Link key={charge.id} href={`/payments?charge=${charge.id}`}>
-                    <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <User className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{charge.tenant?.name || "Unknown Tenant"}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {charge.for_period || "No period specified"}
-                          </p>
-                        </div>
+                  <div key={charge.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <User className="h-5 w-5 text-primary" />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="font-bold">{formatCurrency(charge.amount)}</p>
-                          {charge.paid_amount > 0 && (
-                            <p className="text-sm text-green-600">
-                              Paid: {formatCurrency(charge.paid_amount)}
-                            </p>
-                          )}
-                        </div>
-                        <StatusBadge status={charge.status as "pending" | "partial" | "paid" | "overdue"} />
+                      <div>
+                        {charge.tenant ? (
+                          <Link href={`/tenants/${charge.tenant.id}`} className="font-medium hover:text-primary transition-colors">
+                            {charge.tenant.name}
+                          </Link>
+                        ) : (
+                          <p className="font-medium">Unknown Tenant</p>
+                        )}
+                        <p className="text-sm text-muted-foreground">
+                          {charge.for_period || "No period specified"}
+                        </p>
                       </div>
                     </div>
-                  </Link>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="font-bold">{formatCurrency(charge.amount)}</p>
+                        {charge.paid_amount > 0 && (
+                          <p className="text-sm text-green-600">
+                            Paid: {formatCurrency(charge.paid_amount)}
+                          </p>
+                        )}
+                      </div>
+                      <StatusBadge status={charge.status as "pending" | "partial" | "paid" | "overdue"} />
+                    </div>
+                  </div>
                 ))}
 
               {/* Summary */}

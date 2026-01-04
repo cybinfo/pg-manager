@@ -232,10 +232,17 @@ export default function ExpenseDetailPage() {
             </div>
             <div className="flex items-center justify-between py-2 border-b">
               <span className="text-muted-foreground">Property</span>
-              <span className="font-medium flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                {expense.property?.name || "All Properties"}
-              </span>
+              {expense.property ? (
+                <Link href={`/properties/${expense.property.id}`} className="font-medium flex items-center gap-2 hover:text-primary transition-colors">
+                  <Building2 className="h-4 w-4" />
+                  {expense.property.name}
+                </Link>
+              ) : (
+                <span className="font-medium flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  All Properties
+                </span>
+              )}
             </div>
             {expense.description && (
               <div className="py-2 border-b">

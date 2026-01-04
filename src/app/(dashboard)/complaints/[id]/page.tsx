@@ -465,22 +465,24 @@ export default function ComplaintDetailPage() {
               <CardTitle className="text-lg">Location</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">{complaint.property?.name}</p>
-                  {complaint.property?.address && (
-                    <p className="text-xs text-muted-foreground">
-                      {complaint.property.address}, {complaint.property.city}
-                    </p>
-                  )}
-                </div>
-              </div>
+              {complaint.property && (
+                <Link href={`/properties/${complaint.property.id}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">{complaint.property.name}</p>
+                    {complaint.property.address && (
+                      <p className="text-xs text-muted-foreground">
+                        {complaint.property.address}, {complaint.property.city}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              )}
               {complaint.room && (
-                <div className="flex items-center gap-2">
+                <Link href={`/rooms/${complaint.room.id}`} className="flex items-center gap-2 hover:text-primary transition-colors">
                   <Home className="h-4 w-4 text-muted-foreground" />
                   <p className="font-medium">Room {complaint.room.room_number}</p>
-                </div>
+                </Link>
               )}
             </CardContent>
           </Card>

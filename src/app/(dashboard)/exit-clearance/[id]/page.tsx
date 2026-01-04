@@ -387,7 +387,13 @@ export default function ExitClearanceDetailPage() {
                   <User className="h-7 w-7 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold">{clearance.tenant?.name}</h3>
+                  {clearance.tenant ? (
+                    <Link href={`/tenants/${clearance.tenant.id}`} className="text-xl font-semibold hover:text-primary transition-colors">
+                      {clearance.tenant.name}
+                    </Link>
+                  ) : (
+                    <h3 className="text-xl font-semibold">Unknown Tenant</h3>
+                  )}
                   <div className="flex items-center gap-2 text-muted-foreground mt-1">
                     <Phone className="h-4 w-4" />
                     <a href={`tel:${clearance.tenant?.phone}`} className="hover:text-primary">
@@ -397,11 +403,23 @@ export default function ExitClearanceDetailPage() {
                   <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span>{clearance.property?.name}</span>
+                      {clearance.property ? (
+                        <Link href={`/properties/${clearance.property.id}`} className="hover:text-primary transition-colors">
+                          {clearance.property.name}
+                        </Link>
+                      ) : (
+                        <span>N/A</span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Home className="h-4 w-4 text-muted-foreground" />
-                      <span>Room {clearance.room?.room_number}</span>
+                      {clearance.room ? (
+                        <Link href={`/rooms/${clearance.room.id}`} className="hover:text-primary transition-colors">
+                          Room {clearance.room.room_number}
+                        </Link>
+                      ) : (
+                        <span>N/A</span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
