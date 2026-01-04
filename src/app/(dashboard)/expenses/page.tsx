@@ -82,6 +82,7 @@ export default function ExpensesPage() {
   const fetchData = async () => {
     try {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
 
       // Fetch properties for filter
       const { data: propertiesData } = await supabase
@@ -90,11 +91,12 @@ export default function ExpensesPage() {
         .order("name")
       setProperties(propertiesData || [])
 
-      // Fetch expense types for filter
+      // Fetch expense types for filter (owner-scoped)
       const { data: typesData } = await supabase
         .from("expense_types")
         .select("id, name, code")
-        .eq("is_active", true)
+        .eq("owner_id", user?.id)
+        .eq("is_enabled", true)
         .order("name")
       setExpenseTypes(typesData || [])
 

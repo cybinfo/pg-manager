@@ -298,9 +298,9 @@ export default function SettingsPage() {
 
       const [ownerRes, chargeTypesRes, configRes, expenseTypesRes] = await Promise.all([
         supabase.from("owners").select("*").eq("id", user.id).single(),
-        supabase.from("charge_types").select("*").order("display_order"),
+        supabase.from("charge_types").select("*").eq("owner_id", user.id).order("display_order"),
         supabase.from("owner_config").select("*").eq("owner_id", user.id).single(),
-        supabase.from("expense_types").select("*").order("display_order"),
+        supabase.from("expense_types").select("*").eq("owner_id", user.id).order("display_order"),
       ])
 
       if (ownerRes.data) {

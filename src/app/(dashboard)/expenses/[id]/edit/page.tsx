@@ -83,10 +83,11 @@ export default function EditExpensePage() {
         notes: expense.notes || "",
       })
 
-      // Fetch expense types
+      // Fetch expense types (owner-scoped)
       const { data: typesData } = await supabase
         .from("expense_types")
         .select("id, name, code")
+        .eq("owner_id", user.id)
         .eq("is_enabled", true)
         .order("display_order")
 

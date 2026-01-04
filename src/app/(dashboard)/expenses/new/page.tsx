@@ -64,10 +64,11 @@ export default function NewExpensePage() {
         return
       }
 
-      // Fetch expense types - create defaults if none exist
+      // Fetch expense types - create defaults if none exist (owner-scoped)
       let { data: typesData, error: typesError } = await supabase
         .from("expense_types")
         .select("id, name, code")
+        .eq("owner_id", user.id)
         .eq("is_enabled", true)
         .order("display_order")
 
@@ -79,10 +80,11 @@ export default function NewExpensePage() {
       if (!typesData || typesData.length === 0) {
         await supabase.rpc("create_default_expense_types", { p_owner_id: user.id })
 
-        // Fetch again after creating defaults
+        // Fetch again after creating defaults (owner-scoped)
         const { data: newTypesData } = await supabase
           .from("expense_types")
           .select("id, name, code")
+          .eq("owner_id", user.id)
           .eq("is_enabled", true)
           .order("display_order")
 
