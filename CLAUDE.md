@@ -445,19 +445,28 @@ const [selectedGroups, setSelectedGroups] = useState<string[]>([])
 />
 ```
 
-**Pages with Grouping Support:**
-- tenants: Property, Status, Room
-- bills: Property, Status, Period
-- payments: Property, Method, Period
-- expenses: Category, Property, Method
-- visitors: Property, Overnight
-- complaints: Property, Status, Priority, Category
-- meter-readings: Property, Meter Type
-- exit-clearance: Property, Status
-- notices: Property, Type, Active
-- rooms: Property, Status, Room Type, Floor
-- staff: Status
-- approvals: Type, Status, Priority
+**Pages with Grouping Support (Expanded January 2026):**
+
+| Page | Group By Options |
+|------|------------------|
+| **tenants** | Property, Room, Status, Check-in Month, Check-in Year |
+| **bills** | Property, Tenant, Status, Period, Bill Month, Year |
+| **payments** | Property, Tenant, Method, Period, Month, Year, Charge Type |
+| **expenses** | Category, Property, Vendor, Method, Month, Year |
+| **visitors** | Property, Visiting Tenant, Relation, Purpose, Overnight, Month, Year |
+| **complaints** | Property, Tenant, Room, Status, Priority, Category, Assigned To, Month, Year |
+| **meter-readings** | Property, Room, Meter Type, Month, Year |
+| **exit-clearance** | Property, Tenant, Room, Status, Inspection, Key Status, Exit Month, Year |
+| **notices** | Property, Type, Audience, Status, Month, Year |
+| **rooms** | Property, Floor, Room Type, Status, Capacity, AC, Bathroom |
+| **staff** | Status, Role, Account, Joined Month, Joined Year |
+| **approvals** | Type, Status, Priority, Tenant, Has Documents, Month, Year |
+
+**Computed Fields for Grouping:**
+Each page adds computed fields during data transformation for human-readable labels:
+- `*_month`: "January 2026" format using `toLocaleDateString("en-US", { month: "long", year: "numeric" })`
+- `*_year`: Year as string (e.g., "2026")
+- `*_label`: Human-readable versions (e.g., "AC" vs "Non-AC", "Ground Floor" vs "Floor 1")
 
 ---
 
@@ -674,7 +683,7 @@ RESEND_API_KEY=<resend_key>
 | Expanded Issue Reporting | Report issues on bills, payments, tenancy details, room details | ✅ Complete |
 | Tenant Document Management | Upload, verify, and manage tenant documents with approval workflow | ✅ Complete |
 | DataTable Column Sorting | Click headers to sort by any column, supports nested properties | ✅ Complete |
-| DataTable Nested Grouping | Multi-level hierarchical grouping on all 12 list pages | ✅ Complete |
+| DataTable Nested Grouping | Multi-level hierarchical grouping on all 12 list pages with expanded options (Month/Year, Tenant, contextual fields) | ✅ Complete |
 | Configurable Room Types | Add/edit/delete custom room types in Settings → Room Types | ✅ Complete |
 | Billing Cycle Mode | Calendar Month (1st) or Check-in Anniversary billing dates | ✅ Complete |
 | Utility Rates Configuration | Edit Electricity/Water/Gas rates, billing method, split options in Settings | ✅ Complete |
@@ -851,6 +860,7 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Expanded Group By Options** - Significantly expanded grouping options across all 12 list pages for better data organization: added Month/Year grouping to all pages, Tenant grouping where relevant, plus contextual options like Vendor (expenses), Relation/Purpose (visitors), Inspection/Key Status (exit-clearance), AC/Bathroom/Capacity (rooms), Role/Account Status (staff). Uses computed fields for human-readable labels (e.g., "January 2026", "Ground Floor", "AC", "Has Login")
 - **Centralized EntityLink Components** - Created 11 reusable entity link components in `src/components/ui/entity-link.tsx` (PropertyLink, RoomLink, TenantLink, BillLink, PaymentLink, ExpenseLink, MeterReadingLink, ComplaintLink, VisitorLink, NoticeLink, ExitClearanceLink); all list pages refactored to use centralized components; single source of truth for entity navigation styling
 - **Unified Section Naming** - Consistent section naming across all detail pages for reduced user confusion:
   - **Tenant Detail Page**: Added "Meter Readings" section (shows room's meter readings with View All + Record buttons), "Recent Bills" section (inline preview of 5 recent bills with clickable items)
@@ -964,4 +974,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-04 (Centralized EntityLink components for consistent navigation)*
+*Last updated: 2026-01-04 (Expanded group by options across all 12 list pages)*
