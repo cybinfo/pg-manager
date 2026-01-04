@@ -634,6 +634,7 @@ RESEND_API_KEY=<resend_key>
 | Configurable Room Types | Add/edit/delete custom room types in Settings → Room Types | ✅ Complete |
 | Billing Cycle Mode | Calendar Month (1st) or Check-in Anniversary billing dates | ✅ Complete |
 | Utility Rates Configuration | Edit Electricity/Water/Gas rates, billing method, split options in Settings | ✅ Complete |
+| Multi-Tenant Data Isolation Security Fix | Fixed charge_types/expense_types queries leaking cross-workspace data; RLS policies secured | ✅ Complete |
 
 ### Pending Features (Backlog)
 | Priority | Feature | Description |
@@ -737,6 +738,7 @@ Run in order in Supabase SQL editor:
 033_tenant_documents.sql       - Tenant document uploads + expanded approval types
 034_platform_admin_join_fix.sql - Platform admin JOIN fixes
 035_configurable_room_types.sql - room_types JSONB + billing_cycle_mode columns
+036_fix_charge_expense_rls.sql  - SECURITY: Fix RLS policies for charge_types/expense_types
 ```
 
 ### Storage Buckets (Migration 015)
@@ -765,6 +767,26 @@ Creates 4 storage buckets with RLS policies:
 - Added `debug_user_access()` diagnostic function
 - Re-seeds platform admins
 
+### Data Isolation Security Fix (Migration 036)
+**CRITICAL SECURITY FIX** - Previous RLS policies on `charge_types` and `expense_types` used `USING(true)` allowing ANY authenticated user to read ALL data across workspaces.
+
+**Vulnerability**: Migration 020 created insecure policies:
+```sql
+CREATE POLICY "charge_types_read" ON charge_types FOR SELECT USING (true);  -- INSECURE!
+CREATE POLICY "expense_types_read" ON expense_types FOR SELECT USING (true);  -- INSECURE!
+```
+
+**Fix Applied** (Migration 036):
+- Application-level: Added `.eq("owner_id", user.id)` filters to all charge_types/expense_types queries
+- Database-level: New RLS policies properly scope by owner_id, allow staff access via workspace, platform admin bypass
+
+**Files Fixed**:
+- `src/app/(dashboard)/settings/page.tsx` - charge_types and expense_types queries
+- `src/app/(dashboard)/expenses/page.tsx` - expense_types query
+- `src/app/(dashboard)/expenses/new/page.tsx` - expense_types queries (2 locations)
+- `src/app/(dashboard)/expenses/[id]/edit/page.tsx` - expense_types query
+- `supabase/migrations/036_fix_charge_expense_rls.sql` - Proper RLS policies
+
 ---
 
 ## Cron Jobs (Vercel)
@@ -782,6 +804,8 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **SECURITY: Multi-Tenant Data Isolation Fix** - Critical fix for RLS policies that allowed cross-workspace data leakage; charge_types and expense_types now properly scoped by owner_id with staff workspace access
+- **Migration 036** - Fixed `USING(true)` RLS policies on charge_types/expense_types; added proper owner-scoped policies with platform admin bypass
 - **Utility Rates Configuration** - New Settings → Billing → Utility Rates section to edit Electricity/Water/Gas rates; choose per-unit vs flat rate billing; set rate per kWh/L/m³; choose split method (per occupant vs per room)
 - **Configurable Room Types** - Add/edit/delete custom room types in Settings → Room Types; room creation/edit uses dynamic types from owner_config
 - **Billing Cycle Mode** - Choose between Calendar Month (1st of month) or Check-in Anniversary (based on tenant check-in date) in Settings → Billing
@@ -881,4 +905,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-04 (Utility rates configuration)*
+*Last updated: 2026-01-04 (Multi-tenant data isolation security fix)*
