@@ -347,6 +347,50 @@ Configurable via property edit → Website Settings tab:
 | `PhoneInput` | Indian mobile number input with validation |
 | `Badge` | Status badges with variants |
 | `Tabs` | Tab navigation component (shadcn/ui) |
+| `EntityLink` | Centralized clickable links to entity detail pages (11 variants) |
+
+### EntityLink Components (src/components/ui/entity-link.tsx)
+Centralized, reusable link components for navigating to entity detail pages. **Always use these instead of inline Links** for consistency.
+
+**Available Components:**
+| Component | Icon | Route | Props |
+|-----------|------|-------|-------|
+| `PropertyLink` | Building2 | `/properties/[id]` | `id`, `name` |
+| `RoomLink` | Home | `/rooms/[id]` | `id`, `roomNumber`, `showPrefix?` |
+| `TenantLink` | User | `/tenants/[id]` | `id`, `name` |
+| `BillLink` | FileText | `/bills/[id]` | `id`, `billNumber` |
+| `PaymentLink` | CreditCard | `/payments/[id]` | `id`, `label` |
+| `ExpenseLink` | Receipt | `/expenses/[id]` | `id`, `label` |
+| `MeterReadingLink` | Gauge | `/meter-readings/[id]` | `id`, `label` |
+| `ComplaintLink` | MessageSquare | `/complaints/[id]` | `id`, `title` |
+| `VisitorLink` | UserCheck | `/visitors/[id]` | `id`, `name` |
+| `NoticeLink` | Bell | `/notices/[id]` | `id`, `title` |
+| `ExitClearanceLink` | LogOut | `/exit-clearance/[id]` | `id`, `label` |
+
+**Common Props (all components):**
+- `size?: "sm" | "default"` - Text size (`sm` = text-xs, `default` = text-sm)
+- `showIcon?: boolean` - Show/hide icon (default: true)
+- `stopPropagation?: boolean` - Prevent click bubbling for DataTable rows (default: true)
+- `className?: string` - Additional CSS classes
+
+**Usage Examples:**
+```typescript
+import { PropertyLink, TenantLink, RoomLink } from "@/components/ui/entity-link"
+
+// In DataTable column render
+{property && <PropertyLink id={property.id} name={property.name} size="sm" />}
+{tenant && <TenantLink id={tenant.id} name={tenant.name} showIcon={false} />}
+{room && <RoomLink id={room.id} roomNumber={room.room_number} showPrefix={false} />}
+
+// In detail page sidebar
+<PropertyLink id={property.id} name={property.name} />
+```
+
+**Key Features:**
+- Consistent `hover:text-primary transition-colors` styling
+- Built-in `stopPropagation` for use inside clickable DataTable rows
+- Automatic icon + text layout with proper spacing
+- Size variants match DataTable's text-xs/text-sm patterns
 
 ### Form Components (src/components/forms/)
 | Component | Purpose |
@@ -807,6 +851,7 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Centralized EntityLink Components** - Created 11 reusable entity link components in `src/components/ui/entity-link.tsx` (PropertyLink, RoomLink, TenantLink, BillLink, PaymentLink, ExpenseLink, MeterReadingLink, ComplaintLink, VisitorLink, NoticeLink, ExitClearanceLink); all list pages refactored to use centralized components; single source of truth for entity navigation styling
 - **Unified Section Naming** - Consistent section naming across all detail pages for reduced user confusion:
   - **Tenant Detail Page**: Added "Meter Readings" section (shows room's meter readings with View All + Record buttons), "Recent Bills" section (inline preview of 5 recent bills with clickable items)
   - **Property Detail Page**: Added "Recent Complaints" section (issues reported by tenants), "Recent Visitors" section (visitor log for property)
@@ -919,4 +964,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-04 (Unified section naming across all detail pages)*
+*Last updated: 2026-01-04 (Centralized EntityLink components for consistent navigation)*
