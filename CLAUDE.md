@@ -637,6 +637,7 @@ RESEND_API_KEY=<resend_key>
 | Multi-Tenant Data Isolation Security Fix | Fixed charge_types/expense_types queries leaking cross-workspace data; RLS policies secured | ✅ Complete |
 | Entity Linking: Meter Readings | Bi-directional navigation between meter readings, rooms, and tenants; clickable columns in data tables | ✅ Complete |
 | Entity Linking: Full Application | Bi-directional navigation across ALL entities (bills, payments, expenses, complaints, visitors, exit-clearance, notices); financial sections in Property/Room detail pages | ✅ Complete |
+| Unified Section Naming | Consistent section naming across all detail pages (Tenant, Room, Property): Meter Readings, Recent Bills, Recent Payments, Recent Complaints, Recent Visitors | ✅ Complete |
 
 ### Pending Features (Backlog)
 | Priority | Feature | Description |
@@ -806,6 +807,11 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Unified Section Naming** - Consistent section naming across all detail pages for reduced user confusion:
+  - **Tenant Detail Page**: Added "Meter Readings" section (shows room's meter readings with View All + Record buttons), "Recent Bills" section (inline preview of 5 recent bills with clickable items)
+  - **Property Detail Page**: Added "Recent Complaints" section (issues reported by tenants), "Recent Visitors" section (visitor log for property)
+  - **Room Detail Page**: Added "Recent Complaints" section (issues reported for this room)
+  - All sections use unified naming: "Meter Readings", "Recent Bills", "Recent Payments", "Recent Complaints", "Recent Visitors", "Recent Expenses"
 - **Entity Linking: Full Application** - Comprehensive bi-directional navigation across ALL entities:
   - **List Pages with Clickable Links**: Bills (Tenant→Property), Payments (Tenant→Property), Expenses (Property), Complaints (Tenant→Property→Room), Visitors (Tenant→Property), Exit Clearance (Tenant→Property→Room), Notices (Property)
   - **Property Detail Page**: Added Recent Bills, Recent Payments, Recent Expenses sections with clickable items and "View All" links
@@ -913,4 +919,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-04 (Entity linking: Full application bi-directional navigation)*
+*Last updated: 2026-01-04 (Unified section naming across all detail pages)*

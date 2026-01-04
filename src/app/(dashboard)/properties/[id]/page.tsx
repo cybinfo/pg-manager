@@ -26,7 +26,10 @@ import {
   FileText,
   CreditCard,
   Receipt,
-  Calendar
+  Calendar,
+  MessageSquare,
+  UserCheck,
+  Clock
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -112,6 +115,27 @@ interface Expense {
   expense_type: { name: string } | null
 }
 
+interface Complaint {
+  id: string
+  title: string
+  description: string | null
+  status: string
+  priority: string
+  created_at: string
+  tenant: { id: string; name: string } | null
+  room: { id: string; room_number: string } | null
+}
+
+interface Visitor {
+  id: string
+  visitor_name: string
+  purpose: string | null
+  check_in_time: string
+  check_out_time: string | null
+  is_overnight: boolean
+  tenant: { id: string; name: string } | null
+}
+
 const statusColors: Record<string, string> = {
   available: "bg-green-100 text-green-700",
   occupied: "bg-red-100 text-red-700",
@@ -129,6 +153,8 @@ export default function PropertyDetailPage() {
   const [bills, setBills] = useState<Bill[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [complaints, setComplaints] = useState<Complaint[]>([])
+  const [visitors, setVisitors] = useState<Visitor[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -233,6 +259,42 @@ export default function PropertyDetailPage() {
         expense_type: transformJoin(e.expense_type),
       }))
       setExpenses(transformedExpenses)
+
+      // Fetch recent complaints for this property
+      const { data: complaintsData } = await supabase
+        .from("complaints")
+        .select(`
+          id, title, description, status, priority, created_at,
+          tenant:tenants(id, name),
+          room:rooms(id, room_number)
+        `)
+        .eq("property_id", params.id)
+        .order("created_at", { ascending: false })
+        .limit(5)
+
+      const transformedComplaints = (complaintsData || []).map((c: any) => ({
+        ...c,
+        tenant: transformJoin(c.tenant),
+        room: transformJoin(c.room),
+      }))
+      setComplaints(transformedComplaints)
+
+      // Fetch recent visitors to this property
+      const { data: visitorsData } = await supabase
+        .from("visitors")
+        .select(`
+          id, visitor_name, purpose, check_in_time, check_out_time, is_overnight,
+          tenant:tenants(id, name)
+        `)
+        .eq("property_id", params.id)
+        .order("check_in_time", { ascending: false })
+        .limit(5)
+
+      const transformedVisitors = (visitorsData || []).map((v: any) => ({
+        ...v,
+        tenant: transformJoin(v.tenant),
+      }))
+      setVisitors(transformedVisitors)
 
       setLoading(false)
     }
@@ -705,6 +767,119 @@ export default function PropertyDetailPage() {
                       <p className="font-semibold text-sm text-rose-600">-{formatCurrency(expense.amount)}</p>
                     </div>
                   </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Complaints */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <MessageSquare className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <CardTitle>Recent Complaints</CardTitle>
+                  <CardDescription>Issues reported by tenants</CardDescription>
+                </div>
+              </div>
+              <Link href={`/complaints?property=${property.id}`}>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {complaints.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No complaints for this property</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {complaints.map((complaint) => (
+                  <Link key={complaint.id} href={`/complaints/${complaint.id}`}>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{complaint.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {complaint.tenant?.name}
+                          {complaint.room && ` • Room ${complaint.room.room_number}`}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${
+                          complaint.status === "open" ? "bg-red-100 text-red-700" :
+                          complaint.status === "in_progress" ? "bg-yellow-100 text-yellow-700" :
+                          "bg-green-100 text-green-700"
+                        }`}>
+                          {complaint.status.replace("_", " ")}
+                        </span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatDate(complaint.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Visitors */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <UserCheck className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <CardTitle>Recent Visitors</CardTitle>
+                  <CardDescription>Visitor log for this property</CardDescription>
+                </div>
+              </div>
+              <Link href={`/visitors?property=${property.id}`}>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {visitors.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <UserCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No visitors recorded for this property</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {visitors.map((visitor) => (
+                  <div key={visitor.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{visitor.visitor_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        Visiting {visitor.tenant?.name}
+                        {visitor.purpose && ` • ${visitor.purpose}`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
+                        <Clock className="h-3 w-3" />
+                        {formatDate(visitor.check_in_time)}
+                      </p>
+                      {visitor.is_overnight && (
+                        <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-medium">
+                          Overnight
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

@@ -24,7 +24,8 @@ import {
   Droplets,
   Calendar,
   FileText,
-  CreditCard
+  CreditCard,
+  MessageSquare
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -95,6 +96,16 @@ interface Payment {
   tenant: { id: string; name: string } | null
 }
 
+interface Complaint {
+  id: string
+  title: string
+  description: string | null
+  status: string
+  priority: string
+  created_at: string
+  tenant: { id: string; name: string } | null
+}
+
 const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string }> = {
   electricity: { icon: Zap, color: "text-yellow-700", bgColor: "bg-yellow-100" },
   water: { icon: Droplets, color: "text-blue-700", bgColor: "bg-blue-100" },
@@ -117,6 +128,7 @@ export default function RoomDetailPage() {
   const [meterReadings, setMeterReadings] = useState<MeterReading[]>([])
   const [bills, setBills] = useState<Bill[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
+  const [complaints, setComplaints] = useState<Complaint[]>([])
   const [updatingStatus, setUpdatingStatus] = useState(false)
 
   useEffect(() => {
@@ -202,6 +214,23 @@ export default function RoomDetailPage() {
         tenant: Array.isArray(p.tenant) ? p.tenant[0] : p.tenant,
       }))
       setPayments(transformedPayments)
+
+      // Fetch recent complaints for this room
+      const { data: complaintsData } = await supabase
+        .from("complaints")
+        .select(`
+          id, title, description, status, priority, created_at,
+          tenant:tenants(id, name)
+        `)
+        .eq("room_id", params.id)
+        .order("created_at", { ascending: false })
+        .limit(5)
+
+      const transformedComplaints = (complaintsData || []).map((c: any) => ({
+        ...c,
+        tenant: Array.isArray(c.tenant) ? c.tenant[0] : c.tenant,
+      }))
+      setComplaints(transformedComplaints)
 
       setLoading(false)
     }
@@ -663,6 +692,58 @@ export default function RoomDetailPage() {
                         <p className="font-semibold text-sm text-green-600">+{formatCurrency(payment.amount)}</p>
                         <p className="text-xs text-muted-foreground capitalize">{payment.payment_method.replace("_", " ")}</p>
                       </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Complaints */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <MessageSquare className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <CardTitle>Recent Complaints</CardTitle>
+                  <CardDescription>Issues reported for this room</CardDescription>
+                </div>
+              </div>
+              <Link href={`/complaints?room=${room.id}`}>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {complaints.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No complaints for this room</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-2">
+                {complaints.map((complaint) => (
+                  <Link key={complaint.id} href={`/complaints/${complaint.id}`}>
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{complaint.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {complaint.tenant?.name} • {formatDate(complaint.created_at)}
+                        </p>
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded font-medium ml-2 ${
+                        complaint.status === "open" ? "bg-red-100 text-red-700" :
+                        complaint.status === "in_progress" ? "bg-yellow-100 text-yellow-700" :
+                        "bg-green-100 text-green-700"
+                      }`}>
+                        {complaint.status.replace("_", " ")}
+                      </span>
                     </div>
                   </Link>
                 ))}

@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -46,9 +46,11 @@ import {
   Plus,
   Trash2,
   Gauge,
+  Zap,
+  Droplets,
 } from "lucide-react"
 import { toast } from "sonner"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatCurrency } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
@@ -117,6 +119,23 @@ interface RoomTransfer {
   to_room: { room_number: string } | null
 }
 
+interface MeterReading {
+  id: string
+  reading_date: string
+  reading_value: number
+  units_consumed: number | null
+  charge_type: { id: string; name: string } | null
+}
+
+interface Bill {
+  id: string
+  bill_number: string
+  bill_date: string
+  total_amount: number
+  balance_due: number
+  status: string
+}
+
 interface Room {
   id: string
   room_number: string
@@ -124,6 +143,12 @@ interface Room {
   property_id: string
   total_beds: number
   occupied_beds: number
+}
+
+const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string }> = {
+  electricity: { icon: Zap, color: "text-yellow-700", bgColor: "bg-yellow-100" },
+  water: { icon: Droplets, color: "text-blue-700", bgColor: "bg-blue-100" },
+  gas: { icon: Gauge, color: "text-orange-700", bgColor: "bg-orange-100" },
 }
 
 export default function TenantDetailPage() {
@@ -136,6 +161,8 @@ export default function TenantDetailPage() {
   const [charges, setCharges] = useState<Charge[]>([])
   const [stays, setStays] = useState<TenantStay[]>([])
   const [transfers, setTransfers] = useState<RoomTransfer[]>([])
+  const [meterReadings, setMeterReadings] = useState<MeterReading[]>([])
+  const [bills, setBills] = useState<Bill[]>([])
   const [actionLoading, setActionLoading] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
   const [availableRooms, setAvailableRooms] = useState<Room[]>([])
@@ -239,6 +266,35 @@ export default function TenantDetailPage() {
         }))
         setTransfers(transformedTransfers)
       }
+
+      // Fetch meter readings for tenant's room (if they have a room)
+      if (transformedTenant.room?.id) {
+        const { data: readingsData } = await supabase
+          .from("meter_readings")
+          .select(`
+            id, reading_date, reading_value, units_consumed,
+            charge_type:charge_types(id, name)
+          `)
+          .eq("room_id", transformedTenant.room.id)
+          .order("reading_date", { ascending: false })
+          .limit(5)
+
+        const transformedReadings = (readingsData || []).map((r: any) => ({
+          ...r,
+          charge_type: Array.isArray(r.charge_type) ? r.charge_type[0] : r.charge_type,
+        }))
+        setMeterReadings(transformedReadings)
+      }
+
+      // Fetch recent bills for this tenant
+      const { data: billsData } = await supabase
+        .from("bills")
+        .select(`id, bill_number, bill_date, total_amount, balance_due, status`)
+        .eq("tenant_id", params.id)
+        .order("bill_date", { ascending: false })
+        .limit(5)
+
+      setBills(billsData || [])
 
       setLoading(false)
     }
@@ -709,6 +765,105 @@ export default function TenantDetailPage() {
             </div>
           )}
         </DetailSection>
+
+        {/* Recent Bills */}
+        <DetailSection
+          title="Recent Bills"
+          description="Latest billing activity"
+          icon={FileText}
+          actions={
+            <Link href={`/tenants/${tenant.id}/bills`}>
+              <Button variant="outline" size="sm">View All</Button>
+            </Link>
+          }
+        >
+          {bills.length === 0 ? (
+            <div className="text-center py-4">
+              <FileText className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
+              <p className="text-muted-foreground">No bills generated</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {bills.map((bill) => (
+                <Link key={bill.id} href={`/bills/${bill.id}`}>
+                  <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0 hover:bg-muted/50 transition-colors rounded px-1 -mx-1">
+                    <div>
+                      <p className="font-medium">{bill.bill_number}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(bill.bill_date)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">{formatCurrency(bill.total_amount)}</p>
+                      {bill.balance_due > 0 && (
+                        <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </DetailSection>
+
+        {/* Meter Readings */}
+        {tenant.room && (
+          <DetailSection
+            title="Meter Readings"
+            description="Recent utility readings for your room"
+            icon={Gauge}
+            actions={
+              <div className="flex gap-2">
+                <Link href={`/rooms/${tenant.room.id}/meter-readings`}>
+                  <Button variant="outline" size="sm">View All</Button>
+                </Link>
+                <Link href={`/meter-readings/new?room=${tenant.room.id}`}>
+                  <Button size="sm" variant="gradient">
+                    <Plus className="mr-1 h-3 w-3" />
+                    Record
+                  </Button>
+                </Link>
+              </div>
+            }
+          >
+            {meterReadings.length === 0 ? (
+              <div className="text-center py-4">
+                <Gauge className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
+                <p className="text-muted-foreground">No meter readings recorded</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {meterReadings.map((reading) => {
+                  const meterType = reading.charge_type?.name?.toLowerCase() || "electricity"
+                  const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
+                  const Icon = config.icon
+                  return (
+                    <Link key={reading.id} href={`/meter-readings/${reading.id}`}>
+                      <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                            <Icon className={`h-4 w-4 ${config.color}`} />
+                          </div>
+                          <div>
+                            <p className="font-medium capitalize">{meterType}</p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(reading.reading_date)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</p>
+                          {reading.units_consumed !== null && (
+                            <p className="text-xs text-orange-600">+{reading.units_consumed} units</p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+          </DetailSection>
+        )}
       </div>
 
       {/* Notes */}
