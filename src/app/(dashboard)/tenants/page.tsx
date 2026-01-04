@@ -43,6 +43,9 @@ interface Tenant {
     id: string
     room_number: string
   } | null
+  // Computed fields for grouping
+  checkin_month?: string
+  checkin_year?: string
 }
 
 
@@ -54,8 +57,10 @@ interface Property {
 // Group by options - supports multi-select for nested grouping
 const groupByOptions = [
   { value: "property.name", label: "Property" },
-  { value: "status", label: "Status" },
   { value: "room.room_number", label: "Room" },
+  { value: "status", label: "Status" },
+  { value: "checkin_month", label: "Check-in Month" },
+  { value: "checkin_year", label: "Check-in Year" },
 ]
 
 export default function TenantsPage() {
@@ -98,11 +103,16 @@ export default function TenantsPage() {
     }
 
     // Transform Supabase JOIN data (handles both array and object formats)
-    const transformedData = (data || []).map((tenant) => ({
-      ...tenant,
-      property: transformJoin(tenant.property),
-      room: transformJoin(tenant.room),
-    })) as Tenant[]
+    const transformedData = (data || []).map((tenant) => {
+      const date = new Date(tenant.check_in_date)
+      return {
+        ...tenant,
+        property: transformJoin(tenant.property),
+        room: transformJoin(tenant.room),
+        checkin_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+        checkin_year: date.getFullYear().toString(),
+      }
+    }) as Tenant[]
     setTenants(transformedData)
     setLoading(false)
   }

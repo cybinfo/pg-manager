@@ -46,6 +46,10 @@ interface Visitor {
     id: string
     name: string
   }
+  // Computed fields for grouping
+  visit_month?: string
+  visit_year?: string
+  overnight_label?: string
 }
 
 interface Property {
@@ -56,7 +60,12 @@ interface Property {
 // Group by options for visitors
 const visitorGroupByOptions = [
   { value: "property.name", label: "Property" },
-  { value: "is_overnight", label: "Overnight" },
+  { value: "tenant.name", label: "Visiting Tenant" },
+  { value: "relation", label: "Relation" },
+  { value: "purpose", label: "Purpose" },
+  { value: "overnight_label", label: "Overnight" },
+  { value: "visit_month", label: "Month" },
+  { value: "visit_year", label: "Year" },
 ]
 
 export default function VisitorsPage() {
@@ -94,7 +103,18 @@ export default function VisitorsPage() {
       console.error("Error fetching visitors:", error)
       toast.error("Failed to load visitors")
     } else {
-      setVisitors(data || [])
+      const transformedData = (data || []).map((visitor) => {
+        const date = new Date(visitor.check_in_time)
+        return {
+          ...visitor,
+          tenant: Array.isArray(visitor.tenant) ? visitor.tenant[0] : visitor.tenant,
+          property: Array.isArray(visitor.property) ? visitor.property[0] : visitor.property,
+          visit_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          visit_year: date.getFullYear().toString(),
+          overnight_label: visitor.is_overnight ? "Overnight" : "Day Visit",
+        }
+      })
+      setVisitors(transformedData)
     }
     setLoading(false)
   }

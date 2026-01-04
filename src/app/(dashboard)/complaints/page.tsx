@@ -47,6 +47,9 @@ interface Complaint {
     id: string
     room_number: string
   } | null
+  // Computed fields for grouping
+  created_month?: string
+  created_year?: string
 }
 
 interface RawComplaint {
@@ -107,9 +110,14 @@ interface Property {
 // Group by options for complaints
 const complaintGroupByOptions = [
   { value: "property.name", label: "Property" },
+  { value: "tenant.name", label: "Tenant" },
+  { value: "room.room_number", label: "Room" },
   { value: "status", label: "Status" },
   { value: "priority", label: "Priority" },
   { value: "category", label: "Category" },
+  { value: "assigned_to", label: "Assigned To" },
+  { value: "created_month", label: "Month" },
+  { value: "created_year", label: "Year" },
 ]
 
 export default function ComplaintsPage() {
@@ -145,12 +153,17 @@ export default function ComplaintsPage() {
         console.error("Error fetching complaints:", error)
         toast.error("Failed to load complaints")
       } else {
-        const transformedData = ((data as RawComplaint[]) || []).map((complaint) => ({
-          ...complaint,
-          tenant: transformJoin(complaint.tenant),
-          property: transformJoin(complaint.property),
-          room: transformJoin(complaint.room),
-        }))
+        const transformedData = ((data as RawComplaint[]) || []).map((complaint) => {
+          const date = new Date(complaint.created_at)
+          return {
+            ...complaint,
+            tenant: transformJoin(complaint.tenant),
+            property: transformJoin(complaint.property),
+            room: transformJoin(complaint.room),
+            created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+            created_year: date.getFullYear().toString(),
+          }
+        })
         setComplaints(transformedData)
       }
       setLoading(false)

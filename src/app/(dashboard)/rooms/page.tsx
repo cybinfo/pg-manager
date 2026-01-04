@@ -40,6 +40,11 @@ interface Room {
     id: string
     name: string
   }
+  // Computed fields for grouping
+  ac_label?: string
+  bathroom_label?: string
+  beds_label?: string
+  floor_label?: string
 }
 
 interface Property {
@@ -50,9 +55,12 @@ interface Property {
 // Group by options for rooms
 const roomGroupByOptions = [
   { value: "property.name", label: "Property" },
-  { value: "status", label: "Status" },
+  { value: "floor_label", label: "Floor" },
   { value: "room_type", label: "Room Type" },
-  { value: "floor", label: "Floor" },
+  { value: "status", label: "Status" },
+  { value: "beds_label", label: "Capacity" },
+  { value: "ac_label", label: "AC" },
+  { value: "bathroom_label", label: "Bathroom" },
 ]
 
 export default function RoomsPage() {
@@ -98,6 +106,10 @@ export default function RoomsPage() {
     const transformed = (data || []).map((room) => ({
       ...room,
       property: Array.isArray(room.property) ? room.property[0] : room.property,
+      ac_label: room.has_ac ? "AC" : "Non-AC",
+      bathroom_label: room.has_attached_bathroom ? "Attached Bath" : "Shared Bath",
+      beds_label: `${room.total_beds} ${room.total_beds === 1 ? "Bed" : "Beds"}`,
+      floor_label: room.floor === 0 ? "Ground Floor" : `Floor ${room.floor}`,
     }))
 
     setRooms(transformed)

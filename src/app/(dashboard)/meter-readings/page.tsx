@@ -47,6 +47,9 @@ interface MeterReading {
     id: string
     name: string
   } | null
+  // Computed fields for grouping
+  reading_month?: string
+  reading_year?: string
 }
 
 interface RawMeterReading {
@@ -86,7 +89,10 @@ const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: 
 // Group by options for meter readings
 const meterReadingGroupByOptions = [
   { value: "property.name", label: "Property" },
+  { value: "room.room_number", label: "Room" },
   { value: "charge_type.name", label: "Meter Type" },
+  { value: "reading_month", label: "Month" },
+  { value: "reading_year", label: "Year" },
 ]
 
 export default function MeterReadingsPage() {
@@ -122,12 +128,17 @@ export default function MeterReadingsPage() {
       console.error("Error fetching readings:", readingsRes.error)
       toast.error("Failed to load meter readings")
     } else {
-      const transformedData = ((readingsRes.data as RawMeterReading[]) || []).map((reading) => ({
-        ...reading,
-        property: Array.isArray(reading.property) ? reading.property[0] : reading.property,
-        room: Array.isArray(reading.room) ? reading.room[0] : reading.room,
-        charge_type: Array.isArray(reading.charge_type) ? reading.charge_type[0] : reading.charge_type,
-      }))
+      const transformedData = ((readingsRes.data as RawMeterReading[]) || []).map((reading) => {
+        const date = new Date(reading.reading_date)
+        return {
+          ...reading,
+          property: Array.isArray(reading.property) ? reading.property[0] : reading.property,
+          room: Array.isArray(reading.room) ? reading.room[0] : reading.room,
+          charge_type: Array.isArray(reading.charge_type) ? reading.charge_type[0] : reading.charge_type,
+          reading_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          reading_year: date.getFullYear().toString(),
+        }
+      })
       setReadings(transformedData)
     }
 

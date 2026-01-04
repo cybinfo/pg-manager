@@ -48,6 +48,11 @@ interface Notice {
     id: string
     name: string
   } | null
+  // Computed fields for grouping
+  created_month?: string
+  created_year?: string
+  active_label?: string
+  type_label?: string
 }
 
 const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: typeof Megaphone }> = {
@@ -71,8 +76,11 @@ interface Property {
 // Group by options for notices
 const noticeGroupByOptions = [
   { value: "property.name", label: "Property" },
-  { value: "type", label: "Type" },
-  { value: "is_active", label: "Active" },
+  { value: "type_label", label: "Type" },
+  { value: "target_audience", label: "Audience" },
+  { value: "active_label", label: "Status" },
+  { value: "created_month", label: "Month" },
+  { value: "created_year", label: "Year" },
 ]
 
 export default function NoticesPage() {
@@ -106,7 +114,18 @@ export default function NoticesPage() {
       console.error("Error fetching notices:", error)
       toast.error("Failed to load notices")
     } else {
-      setNotices(data || [])
+      const transformedData = (data || []).map((notice) => {
+        const date = new Date(notice.created_at)
+        return {
+          ...notice,
+          property: Array.isArray(notice.property) ? notice.property[0] : notice.property,
+          created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          created_year: date.getFullYear().toString(),
+          active_label: notice.is_active ? "Active" : "Inactive",
+          type_label: typeConfig[notice.type]?.label || notice.type,
+        }
+      })
+      setNotices(transformedData)
     }
     setLoading(false)
   }

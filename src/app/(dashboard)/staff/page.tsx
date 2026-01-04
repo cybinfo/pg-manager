@@ -48,6 +48,12 @@ interface StaffMember {
       name: string
     } | null
   }[]
+  // Computed fields for grouping
+  status_label?: string
+  primary_role?: string
+  account_status?: string
+  joined_month?: string
+  joined_year?: string
 }
 
 interface RawStaffMember {
@@ -81,7 +87,11 @@ interface Role {
 
 // Group by options for staff
 const staffGroupByOptions = [
-  { value: "is_active", label: "Status" },
+  { value: "status_label", label: "Status" },
+  { value: "primary_role", label: "Role" },
+  { value: "account_status", label: "Account" },
+  { value: "joined_month", label: "Joined Month" },
+  { value: "joined_year", label: "Joined Year" },
 ]
 
 export default function StaffPage() {
@@ -121,14 +131,23 @@ export default function StaffPage() {
       console.error("Error fetching staff:", staffRes.error)
       toast.error("Failed to load staff members")
     } else {
-      const transformedData = ((staffRes.data as RawStaffMember[]) || []).map((member) => ({
-        ...member,
-        roles: (member.roles || []).map((userRole) => ({
+      const transformedData = ((staffRes.data as RawStaffMember[]) || []).map((member) => {
+        const date = new Date(member.created_at)
+        const transformedRoles = (member.roles || []).map((userRole) => ({
           ...userRole,
           role: transformJoin(userRole.role),
           property: transformJoin(userRole.property),
-        })),
-      }))
+        }))
+        return {
+          ...member,
+          roles: transformedRoles,
+          status_label: member.is_active ? "Active" : "Inactive",
+          primary_role: transformedRoles[0]?.role?.name || "No Role",
+          account_status: member.user_id ? "Has Login" : "Pending Invite",
+          joined_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          joined_year: date.getFullYear().toString(),
+        }
+      })
       setStaff(transformedData)
     }
 

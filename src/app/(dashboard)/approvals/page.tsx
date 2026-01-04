@@ -57,6 +57,12 @@ interface Approval {
     phone: string
     user_id: string | null
   } | null
+  // Computed fields for grouping
+  type_label?: string
+  priority_label?: string
+  created_month?: string
+  created_year?: string
+  has_docs_label?: string
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -82,9 +88,13 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 // Group by options for approvals
 const approvalGroupByOptions = [
-  { value: "type", label: "Type" },
+  { value: "type_label", label: "Type" },
   { value: "status", label: "Status" },
-  { value: "priority", label: "Priority" },
+  { value: "priority_label", label: "Priority" },
+  { value: "requester_tenant.name", label: "Tenant" },
+  { value: "has_docs_label", label: "Has Documents" },
+  { value: "created_month", label: "Month" },
+  { value: "created_year", label: "Year" },
 ]
 
 export default function ApprovalsPage() {
@@ -120,12 +130,20 @@ export default function ApprovalsPage() {
       toast.error("Failed to load approvals")
     } else {
       // Transform Supabase array joins
-      const transformed = (data || []).map(a => ({
-        ...a,
-        requester_tenant: Array.isArray(a.requester_tenant)
-          ? a.requester_tenant[0]
-          : a.requester_tenant
-      }))
+      const transformed = (data || []).map(a => {
+        const date = new Date(a.created_at)
+        return {
+          ...a,
+          requester_tenant: Array.isArray(a.requester_tenant)
+            ? a.requester_tenant[0]
+            : a.requester_tenant,
+          type_label: TYPE_LABELS[a.type] || a.type,
+          priority_label: a.priority.charAt(0).toUpperCase() + a.priority.slice(1),
+          created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          created_year: date.getFullYear().toString(),
+          has_docs_label: (a.document_ids && a.document_ids.length > 0) ? "With Documents" : "No Documents",
+        }
+      })
       setApprovals(transformed)
     }
 

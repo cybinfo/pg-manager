@@ -50,6 +50,9 @@ interface Expense {
   expense_type: ExpenseType | null
   property: Property | null
   created_at: string
+  // Computed fields for grouping
+  expense_month?: string
+  expense_year?: string
 }
 
 const paymentMethodLabels: Record<string, string> = {
@@ -64,7 +67,10 @@ const paymentMethodLabels: Record<string, string> = {
 const expenseGroupByOptions = [
   { value: "expense_type.name", label: "Category" },
   { value: "property.name", label: "Property" },
+  { value: "vendor_name", label: "Vendor" },
   { value: "payment_method", label: "Method" },
+  { value: "expense_month", label: "Month" },
+  { value: "expense_year", label: "Year" },
 ]
 
 export default function ExpensesPage() {
@@ -112,15 +118,20 @@ export default function ExpensesPage() {
 
       if (expensesError) throw expensesError
 
-      const transformedExpenses = (expensesData || []).map((expense) => ({
-        ...expense,
-        expense_type: Array.isArray(expense.expense_type)
-          ? expense.expense_type[0]
-          : expense.expense_type,
-        property: Array.isArray(expense.property)
-          ? expense.property[0]
-          : expense.property,
-      }))
+      const transformedExpenses = (expensesData || []).map((expense) => {
+        const date = new Date(expense.expense_date)
+        return {
+          ...expense,
+          expense_type: Array.isArray(expense.expense_type)
+            ? expense.expense_type[0]
+            : expense.expense_type,
+          property: Array.isArray(expense.property)
+            ? expense.property[0]
+            : expense.property,
+          expense_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          expense_year: date.getFullYear().toString(),
+        }
+      })
 
       setExpenses(transformedExpenses)
     } catch (error) {

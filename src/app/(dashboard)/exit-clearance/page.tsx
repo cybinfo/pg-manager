@@ -71,6 +71,11 @@ interface ExitClearance {
     id: string
     room_number: string
   }
+  // Computed fields for grouping
+  exit_month?: string
+  exit_year?: string
+  inspection_label?: string
+  key_label?: string
 }
 
 interface TenantOnNoticeRaw {
@@ -108,7 +113,13 @@ interface Property {
 // Group by options for exit clearances
 const exitClearanceGroupByOptions = [
   { value: "property.name", label: "Property" },
+  { value: "tenant.name", label: "Tenant" },
+  { value: "room.room_number", label: "Room" },
   { value: "settlement_status", label: "Status" },
+  { value: "inspection_label", label: "Inspection" },
+  { value: "key_label", label: "Key Status" },
+  { value: "exit_month", label: "Exit Month" },
+  { value: "exit_year", label: "Year" },
 ]
 
 export default function ExitClearancePage() {
@@ -148,12 +159,19 @@ export default function ExitClearancePage() {
       // Transform exit clearances
       const transformedClearances: ExitClearance[] = ((clearanceData as ExitClearanceRaw[]) || [])
         .filter((c) => c.tenant && c.tenant.length > 0 && c.property && c.property.length > 0 && c.room && c.room.length > 0)
-        .map((c) => ({
-          ...c,
-          tenant: c.tenant![0],
-          property: c.property![0],
-          room: c.room![0],
-        }))
+        .map((c) => {
+          const date = new Date(c.expected_exit_date)
+          return {
+            ...c,
+            tenant: c.tenant![0],
+            property: c.property![0],
+            room: c.room![0],
+            exit_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+            exit_year: date.getFullYear().toString(),
+            inspection_label: c.room_inspection_done ? "Inspected" : "Pending Inspection",
+            key_label: c.key_returned ? "Returned" : "Not Returned",
+          }
+        })
       setClearances(transformedClearances)
 
       // Fetch tenants on notice period (without exit clearance)

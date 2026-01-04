@@ -45,6 +45,9 @@ interface Bill {
     id: string
     name: string
   } | null
+  // Computed fields for grouping
+  bill_month?: string
+  bill_year?: string
 }
 
 interface Property {
@@ -55,8 +58,11 @@ interface Property {
 // Group by options for bills - supports multi-select for nested grouping
 const billGroupByOptions = [
   { value: "property.name", label: "Property" },
+  { value: "tenant.name", label: "Tenant" },
   { value: "status", label: "Status" },
   { value: "for_month", label: "Period" },
+  { value: "bill_month", label: "Bill Month" },
+  { value: "bill_year", label: "Year" },
 ]
 
 export default function BillsPage() {
@@ -102,11 +108,16 @@ export default function BillsPage() {
         return
       }
 
-      const transformedBills: Bill[] = (data || []).map((bill) => ({
-        ...bill,
-        tenant: Array.isArray(bill.tenant) ? bill.tenant[0] : bill.tenant,
-        property: Array.isArray(bill.property) ? bill.property[0] : bill.property,
-      }))
+      const transformedBills: Bill[] = (data || []).map((bill) => {
+        const date = new Date(bill.bill_date)
+        return {
+          ...bill,
+          tenant: Array.isArray(bill.tenant) ? bill.tenant[0] : bill.tenant,
+          property: Array.isArray(bill.property) ? bill.property[0] : bill.property,
+          bill_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          bill_year: date.getFullYear().toString(),
+        }
+      })
 
       setBills(transformedBills)
       setLoading(false)

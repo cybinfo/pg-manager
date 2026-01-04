@@ -52,6 +52,9 @@ interface Payment {
     id: string
     name: string
   } | null
+  // Computed fields for grouping
+  payment_month?: string
+  payment_year?: string
 }
 
 const paymentMethodLabels: Record<string, string> = {
@@ -70,8 +73,12 @@ interface Property {
 // Group by options for payments - supports multi-select for nested grouping
 const paymentGroupByOptions = [
   { value: "property.name", label: "Property" },
+  { value: "tenant.name", label: "Tenant" },
   { value: "payment_method", label: "Method" },
   { value: "for_period", label: "Period" },
+  { value: "payment_month", label: "Month" },
+  { value: "payment_year", label: "Year" },
+  { value: "charge_type.name", label: "Charge Type" },
 ]
 
 export default function PaymentsPage() {
@@ -115,12 +122,17 @@ export default function PaymentsPage() {
     }
 
     // Transform Supabase joins from arrays to objects
-    const transformed = (data || []).map((payment) => ({
-      ...payment,
-      tenant: transformJoin(payment.tenant),
-      property: transformJoin(payment.property),
-      charge_type: transformJoin(payment.charge_type),
-    }))
+    const transformed = (data || []).map((payment) => {
+      const date = new Date(payment.payment_date)
+      return {
+        ...payment,
+        tenant: transformJoin(payment.tenant),
+        property: transformJoin(payment.property),
+        charge_type: transformJoin(payment.charge_type),
+        payment_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+        payment_year: date.getFullYear().toString(),
+      }
+    })
 
     setPayments(transformed)
     setLoading(false)
