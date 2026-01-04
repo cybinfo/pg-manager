@@ -207,9 +207,9 @@ export default function PaymentsPage() {
             ₹
           </div>
           <div className="min-w-0">
-            <TenantLink id={payment.tenant.id} name={payment.tenant.name} />
+            <div><TenantLink id={payment.tenant.id} name={payment.tenant.name} /></div>
             {payment.property && (
-              <PropertyLink id={payment.property.id} name={payment.property.name} size="sm" />
+              <div><PropertyLink id={payment.property.id} name={payment.property.name} size="sm" /></div>
             )}
           </div>
         </div>

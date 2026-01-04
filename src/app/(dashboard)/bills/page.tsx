@@ -208,10 +208,10 @@ export default function BillsPage() {
           <div className="min-w-0">
             <div className="font-medium truncate">{bill.bill_number}</div>
             {bill.tenant && (
-              <TenantLink id={bill.tenant.id} name={bill.tenant.name} size="sm" />
+              <div><TenantLink id={bill.tenant.id} name={bill.tenant.name} size="sm" /></div>
             )}
             {bill.property && (
-              <PropertyLink id={bill.property.id} name={bill.property.name} size="sm" />
+              <div><PropertyLink id={bill.property.id} name={bill.property.name} size="sm" /></div>
             )}
           </div>
         </div>

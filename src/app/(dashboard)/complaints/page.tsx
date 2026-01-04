@@ -276,16 +276,14 @@ export default function ComplaintsPage() {
       render: (row) => (
         <div className="text-sm">
           {row.tenant && (
-            <TenantLink id={row.tenant.id} name={row.tenant.name} size="sm" />
+            <div><TenantLink id={row.tenant.id} name={row.tenant.name} size="sm" /></div>
           )}
-          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-            {row.property && (
-              <PropertyLink id={row.property.id} name={row.property.name} size="sm" />
-            )}
-            {row.room && (
-              <RoomLink id={row.room.id} roomNumber={row.room.room_number} size="sm" showPrefix={false} />
-            )}
-          </div>
+          {row.property && (
+            <div><PropertyLink id={row.property.id} name={row.property.name} size="sm" /></div>
+          )}
+          {row.room && (
+            <div><RoomLink id={row.room.id} roomNumber={row.room.room_number} size="sm" /></div>
+          )}
         </div>
       ),
     },
