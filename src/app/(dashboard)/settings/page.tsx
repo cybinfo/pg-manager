@@ -62,6 +62,22 @@ interface ChargeType {
   is_refundable: boolean
   apply_late_fee: boolean
   display_order: number
+  calculation_config?: {
+    rate_per_unit?: number
+    default_amount?: number
+    split_by?: 'occupants' | 'room'
+  } | null
+}
+
+interface UtilityRate {
+  id: string
+  name: string
+  code: string
+  billing_type: 'per_unit' | 'flat_rate'
+  rate_per_unit: number
+  flat_amount: number
+  split_by: 'occupants' | 'room'
+  unit_label: string
 }
 
 interface ExpenseType {
@@ -265,6 +281,10 @@ export default function SettingsPage() {
   // Billing Cycle Mode (new)
   const [billingCycleMode, setBillingCycleMode] = useState<BillingCycleMode>('calendar_month')
 
+  // Utility Rates (for meter-based charges like Electricity, Water, Gas)
+  const [utilityRates, setUtilityRates] = useState<UtilityRate[]>([])
+  const [savingUtilityRates, setSavingUtilityRates] = useState(false)
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -294,6 +314,27 @@ export default function SettingsPage() {
 
       if (chargeTypesRes.data) {
         setChargeTypes(chargeTypesRes.data)
+
+        // Extract utility rates from charge types with calculation_config
+        const utilityCodes = ['electricity', 'water', 'gas']
+        const unitLabels: Record<string, string> = {
+          electricity: 'kWh',
+          water: 'L',
+          gas: 'm³'
+        }
+        const utilities = chargeTypesRes.data
+          .filter((ct: ChargeType) => utilityCodes.includes(ct.code))
+          .map((ct: ChargeType): UtilityRate => ({
+            id: ct.id,
+            name: ct.name,
+            code: ct.code,
+            billing_type: ct.calculation_config?.rate_per_unit ? 'per_unit' : 'flat_rate',
+            rate_per_unit: ct.calculation_config?.rate_per_unit || 0,
+            flat_amount: ct.calculation_config?.default_amount || 0,
+            split_by: ct.calculation_config?.split_by || 'occupants',
+            unit_label: unitLabels[ct.code] || 'units'
+          }))
+        setUtilityRates(utilities)
       }
 
       if (expenseTypesRes.data) {
@@ -645,6 +686,44 @@ export default function SettingsPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Save utility rates
+  const saveUtilityRates = async () => {
+    setSavingUtilityRates(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      // Update each utility charge type's calculation_config
+      for (const utility of utilityRates) {
+        const calculation_config = utility.billing_type === 'per_unit'
+          ? { rate_per_unit: utility.rate_per_unit, split_by: utility.split_by }
+          : { default_amount: utility.flat_amount, split_by: utility.split_by }
+
+        const { error } = await supabase
+          .from("charge_types")
+          .update({ calculation_config })
+          .eq("id", utility.id)
+
+        if (error) throw error
+      }
+
+      toast.success("Utility rates saved")
+    } catch (error) {
+      console.error("Save error:", error)
+      toast.error("Failed to save utility rates")
+    } finally {
+      setSavingUtilityRates(false)
+    }
+  }
+
+  // Update utility rate
+  const updateUtilityRate = (id: string, field: keyof UtilityRate, value: string | number) => {
+    setUtilityRates(utilityRates.map(rate =>
+      rate.id === id ? { ...rate, [field]: value } : rate
+    ))
   }
 
   // Add new room type
@@ -1211,6 +1290,123 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Utility Rates */}
+          {utilityRates.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cog className="h-5 w-5" />
+                  Utility Rates
+                </CardTitle>
+                <CardDescription>
+                  Configure rates for meter-based utilities like Electricity, Water, Gas
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {utilityRates.map((utility) => (
+                  <div key={utility.id} className="p-4 border rounded-lg space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">{utility.name}</h4>
+                      <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded">
+                        {utility.code}
+                      </span>
+                    </div>
+
+                    {/* Billing Type Selection */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Billing Method</Label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`billing_type_${utility.id}`}
+                            checked={utility.billing_type === 'per_unit'}
+                            onChange={() => updateUtilityRate(utility.id, 'billing_type', 'per_unit')}
+                          />
+                          <span className="text-sm">Per Unit ({utility.unit_label})</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`billing_type_${utility.id}`}
+                            checked={utility.billing_type === 'flat_rate'}
+                            onChange={() => updateUtilityRate(utility.id, 'billing_type', 'flat_rate')}
+                          />
+                          <span className="text-sm">Flat Rate</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Rate Input */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {utility.billing_type === 'per_unit' ? (
+                        <div className="space-y-2">
+                          <Label className="text-sm">Rate per {utility.unit_label}</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.5"
+                              value={utility.rate_per_unit}
+                              onChange={(e) => updateUtilityRate(utility.id, 'rate_per_unit', parseFloat(e.target.value) || 0)}
+                              className="pl-7"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label className="text-sm">Flat Amount per Month</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={utility.flat_amount}
+                              onChange={(e) => updateUtilityRate(utility.id, 'flat_amount', parseFloat(e.target.value) || 0)}
+                              className="pl-7"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Split By Selection */}
+                      <div className="space-y-2">
+                        <Label className="text-sm">Split Charges</Label>
+                        <select
+                          value={utility.split_by}
+                          onChange={(e) => updateUtilityRate(utility.id, 'split_by', e.target.value)}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        >
+                          <option value="occupants">Per Occupant</option>
+                          <option value="room">Per Room</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Preview */}
+                    <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+                      {utility.billing_type === 'per_unit' ? (
+                        <>Example: 100 {utility.unit_label} × ₹{utility.rate_per_unit} = {formatCurrency(100 * utility.rate_per_unit)}</>
+                      ) : (
+                        <>Monthly charge: {formatCurrency(utility.flat_amount)} {utility.split_by === 'occupants' ? '(split among room occupants)' : '(per room)'}</>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                <Button onClick={saveUtilityRates} disabled={savingUtilityRates} size="sm">
+                  {savingUtilityRates ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  Save Utility Rates
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
