@@ -41,7 +41,7 @@ interface ExitClearanceRaw {
   created_at: string
   tenant: { id: string; name: string; phone: string; photo_url: string | null; profile_photo: string | null }[] | null
   property: { id: string; name: string }[] | null
-  room: { room_number: string }[] | null
+  room: { id: string; room_number: string }[] | null
 }
 
 interface ExitClearance {
@@ -68,6 +68,7 @@ interface ExitClearance {
     name: string
   }
   room: {
+    id: string
     room_number: string
   }
 }
@@ -140,7 +141,7 @@ export default function ExitClearancePage() {
           *,
           tenant:tenants(id, name, phone, photo_url, profile_photo),
           property:properties(id, name),
-          room:rooms(room_number)
+          room:rooms(id, room_number)
         `)
         .order("created_at", { ascending: false })
 
@@ -271,7 +272,13 @@ export default function ExitClearancePage() {
             className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
           />
           <div className="min-w-0">
-            <div className="font-medium truncate">{clearance.tenant.name}</div>
+            <Link
+              href={`/tenants/${clearance.tenant.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-medium truncate hover:text-primary transition-colors block"
+            >
+              {clearance.tenant.name}
+            </Link>
             <div className="text-xs text-muted-foreground">{clearance.tenant.phone}</div>
           </div>
         </div>
@@ -283,11 +290,25 @@ export default function ExitClearancePage() {
       width: "secondary",
       render: (clearance) => (
         <div className="text-sm min-w-0">
-          <div className="flex items-center gap-1 truncate">
-            <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
-            <span className="truncate">{clearance.property?.name || "—"}</span>
-          </div>
-          <div className="text-xs text-muted-foreground">Room {clearance.room?.room_number || "—"}</div>
+          {clearance.property && (
+            <Link
+              href={`/properties/${clearance.property.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 truncate hover:text-primary transition-colors"
+            >
+              <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className="truncate">{clearance.property.name}</span>
+            </Link>
+          )}
+          {clearance.room && (
+            <Link
+              href={`/rooms/${clearance.room.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              Room {clearance.room.room_number}
+            </Link>
+          )}
         </div>
       ),
     },

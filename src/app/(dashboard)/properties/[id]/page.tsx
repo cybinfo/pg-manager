@@ -22,7 +22,11 @@ import {
   CheckCircle,
   AlertCircle,
   Globe,
-  ExternalLink
+  ExternalLink,
+  FileText,
+  CreditCard,
+  Receipt,
+  Calendar
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -82,6 +86,32 @@ interface Tenant {
   } | null
 }
 
+interface Bill {
+  id: string
+  bill_number: string
+  bill_date: string
+  total_amount: number
+  balance_due: number
+  status: string
+  tenant: { id: string; name: string } | null
+}
+
+interface Payment {
+  id: string
+  amount: number
+  payment_date: string
+  payment_method: string
+  tenant: { id: string; name: string } | null
+}
+
+interface Expense {
+  id: string
+  amount: number
+  expense_date: string
+  description: string | null
+  expense_type: { name: string } | null
+}
+
 const statusColors: Record<string, string> = {
   available: "bg-green-100 text-green-700",
   occupied: "bg-red-100 text-red-700",
@@ -96,6 +126,9 @@ export default function PropertyDetailPage() {
   const [property, setProperty] = useState<Property | null>(null)
   const [rooms, setRooms] = useState<Room[]>([])
   const [tenants, setTenants] = useState<Tenant[]>([])
+  const [bills, setBills] = useState<Bill[]>([])
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [expenses, setExpenses] = useState<Expense[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -149,6 +182,58 @@ export default function PropertyDetailPage() {
         room: transformJoin(t.room),
       }))
       setTenants(transformedTenants)
+
+      // Fetch recent bills for this property
+      const { data: billsData } = await supabase
+        .from("bills")
+        .select(`
+          id, bill_number, bill_date, total_amount, balance_due, status,
+          tenant:tenants(id, name)
+        `)
+        .eq("property_id", params.id)
+        .order("bill_date", { ascending: false })
+        .limit(5)
+
+      const transformedBills = (billsData || []).map((b: any) => ({
+        ...b,
+        tenant: transformJoin(b.tenant),
+      }))
+      setBills(transformedBills)
+
+      // Fetch recent payments for this property
+      const { data: paymentsData } = await supabase
+        .from("payments")
+        .select(`
+          id, amount, payment_date, payment_method,
+          tenant:tenants(id, name)
+        `)
+        .eq("property_id", params.id)
+        .order("payment_date", { ascending: false })
+        .limit(5)
+
+      const transformedPayments = (paymentsData || []).map((p: any) => ({
+        ...p,
+        tenant: transformJoin(p.tenant),
+      }))
+      setPayments(transformedPayments)
+
+      // Fetch recent expenses for this property
+      const { data: expensesData } = await supabase
+        .from("expenses")
+        .select(`
+          id, amount, expense_date, description,
+          expense_type:expense_types(name)
+        `)
+        .eq("property_id", params.id)
+        .order("expense_date", { ascending: false })
+        .limit(5)
+
+      const transformedExpenses = (expensesData || []).map((e: any) => ({
+        ...e,
+        expense_type: transformJoin(e.expense_type),
+      }))
+      setExpenses(transformedExpenses)
+
       setLoading(false)
     }
 
@@ -463,6 +548,161 @@ export default function PropertyDetailPage() {
                           </p>
                         </div>
                       </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Bills */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle>Recent Bills</CardTitle>
+                  <CardDescription>Latest billing activity</CardDescription>
+                </div>
+              </div>
+              <Link href={`/bills?property=${property.id}`}>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {bills.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No bills yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {bills.map((bill) => (
+                  <Link key={bill.id} href={`/bills/${bill.id}`}>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{bill.bill_number}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {bill.tenant?.name} • {formatDate(bill.bill_date)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-sm">{formatCurrency(bill.total_amount)}</p>
+                        {bill.balance_due > 0 && (
+                          <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Payments */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <CreditCard className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle>Recent Payments</CardTitle>
+                  <CardDescription>Latest payment activity</CardDescription>
+                </div>
+              </div>
+              <Link href={`/payments?property=${property.id}`}>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {payments.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No payments yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {payments.map((payment) => (
+                  <Link key={payment.id} href={`/payments/${payment.id}`}>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{payment.tenant?.name}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(payment.payment_date)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-sm text-green-600">+{formatCurrency(payment.amount)}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{payment.payment_method.replace("_", " ")}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Expenses */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-rose-100 rounded-lg">
+                  <Receipt className="h-5 w-5 text-rose-600" />
+                </div>
+                <div>
+                  <CardTitle>Recent Expenses</CardTitle>
+                  <CardDescription>Property-specific expenses</CardDescription>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Link href={`/expenses?property=${property.id}`}>
+                  <Button variant="outline" size="sm">
+                    View All
+                  </Button>
+                </Link>
+                <Link href={`/expenses/new?property=${property.id}`}>
+                  <Button size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Expense
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {expenses.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <Receipt className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No expenses recorded for this property</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-2">
+                {expenses.map((expense) => (
+                  <Link key={expense.id} href={`/expenses/${expense.id}`}>
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{expense.expense_type?.name || "Expense"}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {expense.description || formatDate(expense.expense_date)}
+                        </p>
+                      </div>
+                      <p className="font-semibold text-sm text-rose-600">-{formatCurrency(expense.amount)}</p>
                     </div>
                   </Link>
                 ))}

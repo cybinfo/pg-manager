@@ -636,6 +636,7 @@ RESEND_API_KEY=<resend_key>
 | Utility Rates Configuration | Edit Electricity/Water/Gas rates, billing method, split options in Settings | ✅ Complete |
 | Multi-Tenant Data Isolation Security Fix | Fixed charge_types/expense_types queries leaking cross-workspace data; RLS policies secured | ✅ Complete |
 | Entity Linking: Meter Readings | Bi-directional navigation between meter readings, rooms, and tenants; clickable columns in data tables | ✅ Complete |
+| Entity Linking: Full Application | Bi-directional navigation across ALL entities (bills, payments, expenses, complaints, visitors, exit-clearance, notices); financial sections in Property/Room detail pages | ✅ Complete |
 
 ### Pending Features (Backlog)
 | Priority | Feature | Description |
@@ -805,6 +806,11 @@ Configured in `vercel.json`
 ## Changelog Summary
 
 ### January 2026 (Latest)
+- **Entity Linking: Full Application** - Comprehensive bi-directional navigation across ALL entities:
+  - **List Pages with Clickable Links**: Bills (Tenant→Property), Payments (Tenant→Property), Expenses (Property), Complaints (Tenant→Property→Room), Visitors (Tenant→Property), Exit Clearance (Tenant→Property→Room), Notices (Property)
+  - **Property Detail Page**: Added Recent Bills, Recent Payments, Recent Expenses sections with clickable items and "View All" links
+  - **Room Detail Page**: Added Recent Bills, Recent Payments sections for tenants in that room
+  - All entity links use `stopPropagation()` for nested clickable areas within data table rows
 - **Entity Linking: Meter Readings** - Full bi-directional navigation between meter readings, rooms, and tenants. From meter readings list, click Room or Property to navigate directly. From Room detail page, see recent meter readings with "View All" deep link to `/rooms/[id]/meter-readings`. From Tenant detail page, access "Meter Readings" button in Room Details section to view room's meter data.
 - **SECURITY: Multi-Tenant Data Isolation Fix** - Critical fix for RLS policies that allowed cross-workspace data leakage; charge_types and expense_types now properly scoped by owner_id with staff workspace access
 - **Migration 036** - Fixed `USING(true)` RLS policies on charge_types/expense_types; added proper owner-scoped policies with platform admin bypass
@@ -907,4 +913,4 @@ Follow the Output Contract from Master Prompt:
 
 ---
 
-*Last updated: 2026-01-04 (Entity linking: Meter readings bi-directional navigation)*
+*Last updated: 2026-01-04 (Entity linking: Full application bi-directional navigation)*

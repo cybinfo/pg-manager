@@ -21,7 +21,9 @@ import {
   Wallet,
   Banknote,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Building2,
+  User
 } from "lucide-react"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
@@ -206,8 +208,24 @@ export default function PaymentsPage() {
             ₹
           </div>
           <div className="min-w-0">
-            <div className="font-medium truncate">{payment.tenant.name}</div>
-            <div className="text-xs text-muted-foreground truncate">{payment.property?.name || "—"}</div>
+            <Link
+              href={`/tenants/${payment.tenant.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-medium truncate flex items-center gap-1 hover:text-primary transition-colors"
+            >
+              <User className="h-3 w-3 text-muted-foreground" />
+              {payment.tenant.name}
+            </Link>
+            {payment.property && (
+              <Link
+                href={`/properties/${payment.property.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-muted-foreground truncate flex items-center gap-1 hover:text-primary transition-colors"
+              >
+                <Building2 className="h-3 w-3" />
+                {payment.property.name}
+              </Link>
+            )}
           </div>
         </div>
       ),

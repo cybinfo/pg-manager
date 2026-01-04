@@ -45,6 +45,7 @@ interface Complaint {
     name: string
   } | null
   room: {
+    id: string
     room_number: string
   } | null
 }
@@ -68,6 +69,7 @@ interface RawComplaint {
     name: string
   }[] | null
   room: {
+    id: string
     room_number: string
   }[] | null
 }
@@ -136,7 +138,7 @@ export default function ComplaintsPage() {
           *,
           tenant:tenants(id, name),
           property:properties(id, name),
-          room:rooms(room_number)
+          room:rooms(id, room_number)
         `)
         .order("created_at", { ascending: false })
 
@@ -275,15 +277,35 @@ export default function ComplaintsPage() {
       render: (row) => (
         <div className="text-sm">
           {row.tenant && (
-            <div className="flex items-center gap-1">
+            <Link
+              href={`/tenants/${row.tenant.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 hover:text-primary transition-colors"
+            >
               <User className="h-3 w-3 text-muted-foreground" />
               {row.tenant.name}
-            </div>
+            </Link>
           )}
           <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-            <Building2 className="h-3 w-3" />
-            {row.property?.name}
-            {row.room && `, ${row.room.room_number}`}
+            {row.property && (
+              <Link
+                href={`/properties/${row.property.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 hover:text-primary transition-colors"
+              >
+                <Building2 className="h-3 w-3" />
+                {row.property.name}
+              </Link>
+            )}
+            {row.room && (
+              <Link
+                href={`/rooms/${row.room.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="hover:text-primary transition-colors"
+              >
+                , Room {row.room.room_number}
+              </Link>
+            )}
           </div>
         </div>
       ),

@@ -22,7 +22,9 @@ import {
   Gauge,
   Zap,
   Droplets,
-  Calendar
+  Calendar,
+  FileText,
+  CreditCard
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -75,6 +77,24 @@ interface MeterReading {
   } | null
 }
 
+interface Bill {
+  id: string
+  bill_number: string
+  bill_date: string
+  total_amount: number
+  balance_due: number
+  status: string
+  tenant: { id: string; name: string } | null
+}
+
+interface Payment {
+  id: string
+  amount: number
+  payment_date: string
+  payment_method: string
+  tenant: { id: string; name: string } | null
+}
+
 const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string }> = {
   electricity: { icon: Zap, color: "text-yellow-700", bgColor: "bg-yellow-100" },
   water: { icon: Droplets, color: "text-blue-700", bgColor: "bg-blue-100" },
@@ -95,6 +115,8 @@ export default function RoomDetailPage() {
   const [room, setRoom] = useState<Room | null>(null)
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [meterReadings, setMeterReadings] = useState<MeterReading[]>([])
+  const [bills, setBills] = useState<Bill[]>([])
+  const [payments, setPayments] = useState<Payment[]>([])
   const [updatingStatus, setUpdatingStatus] = useState(false)
 
   useEffect(() => {
@@ -146,6 +168,40 @@ export default function RoomDetailPage() {
         charge_type: Array.isArray(r.charge_type) ? r.charge_type[0] : r.charge_type,
       }))
       setMeterReadings(transformedReadings)
+
+      // Fetch recent bills for tenants in this room
+      const { data: billsData } = await supabase
+        .from("bills")
+        .select(`
+          id, bill_number, bill_date, total_amount, balance_due, status,
+          tenant:tenants!inner(id, name, room_id)
+        `)
+        .eq("tenant.room_id", params.id)
+        .order("bill_date", { ascending: false })
+        .limit(5)
+
+      const transformedBills = (billsData || []).map((b: any) => ({
+        ...b,
+        tenant: Array.isArray(b.tenant) ? b.tenant[0] : b.tenant,
+      }))
+      setBills(transformedBills)
+
+      // Fetch recent payments for tenants in this room
+      const { data: paymentsData } = await supabase
+        .from("payments")
+        .select(`
+          id, amount, payment_date, payment_method,
+          tenant:tenants!inner(id, name, room_id)
+        `)
+        .eq("tenant.room_id", params.id)
+        .order("payment_date", { ascending: false })
+        .limit(5)
+
+      const transformedPayments = (paymentsData || []).map((p: any) => ({
+        ...p,
+        tenant: Array.isArray(p.tenant) ? p.tenant[0] : p.tenant,
+      }))
+      setPayments(transformedPayments)
 
       setLoading(false)
     }
@@ -509,6 +565,107 @@ export default function RoomDetailPage() {
                     </Link>
                   )
                 })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Bills */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle>Recent Bills</CardTitle>
+                  <CardDescription>Bills for tenants in this room</CardDescription>
+                </div>
+              </div>
+              <Link href={`/bills`}>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {bills.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No bills for this room</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {bills.map((bill) => (
+                  <Link key={bill.id} href={`/bills/${bill.id}`}>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{bill.bill_number}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {bill.tenant?.name} • {formatDate(bill.bill_date)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-sm">{formatCurrency(bill.total_amount)}</p>
+                        {bill.balance_due > 0 && (
+                          <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Payments */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <CreditCard className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle>Recent Payments</CardTitle>
+                  <CardDescription>Payments from tenants in this room</CardDescription>
+                </div>
+              </div>
+              <Link href={`/payments`}>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {payments.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No payments from this room</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {payments.map((payment) => (
+                  <Link key={payment.id} href={`/payments/${payment.id}`}>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{payment.tenant?.name}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(payment.payment_date)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-sm text-green-600">+{formatCurrency(payment.amount)}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{payment.payment_method.replace("_", " ")}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </CardContent>

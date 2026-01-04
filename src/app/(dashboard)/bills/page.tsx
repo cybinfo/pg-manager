@@ -20,7 +20,9 @@ import {
   CheckCircle,
   Clock,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Building2,
+  User
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
@@ -36,6 +38,7 @@ interface Bill {
   balance_due: number
   status: string
   tenant: {
+    id: string
     name: string
     phone: string
   } | null
@@ -87,7 +90,7 @@ export default function BillsPage() {
         .from("bills")
         .select(`
           *,
-          tenant:tenants(name, phone),
+          tenant:tenants(id, name, phone),
           property:properties(id, name)
         `)
         .eq("owner_id", user.id)
@@ -205,7 +208,26 @@ export default function BillsPage() {
           </div>
           <div className="min-w-0">
             <div className="font-medium truncate">{bill.bill_number}</div>
-            <div className="text-xs text-muted-foreground truncate">{bill.tenant?.name || "Unknown"}</div>
+            {bill.tenant && (
+              <Link
+                href={`/tenants/${bill.tenant.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-muted-foreground truncate flex items-center gap-1 hover:text-primary transition-colors"
+              >
+                <User className="h-3 w-3" />
+                {bill.tenant.name}
+              </Link>
+            )}
+            {bill.property && (
+              <Link
+                href={`/properties/${bill.property.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-muted-foreground truncate flex items-center gap-1 hover:text-primary transition-colors"
+              >
+                <Building2 className="h-3 w-3" />
+                {bill.property.name}
+              </Link>
+            )}
           </div>
         </div>
       ),

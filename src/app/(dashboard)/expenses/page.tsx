@@ -301,7 +301,15 @@ export default function ExpensesPage() {
       header: "Property",
       width: "tertiary",
       hideOnMobile: true,
-      render: (expense) => expense.property?.name || "General",
+      render: (expense) => expense.property ? (
+        <Link
+          href={`/properties/${expense.property.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="text-sm hover:text-primary transition-colors"
+        >
+          {expense.property.name}
+        </Link>
+      ) : "General",
     },
     {
       key: "expense_date",

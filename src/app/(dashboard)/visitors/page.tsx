@@ -221,11 +221,25 @@ export default function VisitorsPage() {
       width: "secondary",
       render: (row) => (
         <div>
-          <div className="text-sm font-medium">{row.tenant?.name}</div>
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            <Building2 className="h-3 w-3" />
-            {row.property?.name}
-          </div>
+          {row.tenant && (
+            <Link
+              href={`/tenants/${row.tenant.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
+              {row.tenant.name}
+            </Link>
+          )}
+          {row.property && (
+            <Link
+              href={`/properties/${row.property.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary transition-colors"
+            >
+              <Building2 className="h-3 w-3" />
+              {row.property.name}
+            </Link>
+          )}
         </div>
       ),
     },

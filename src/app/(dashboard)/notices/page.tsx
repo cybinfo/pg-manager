@@ -266,10 +266,19 @@ export default function NoticesPage() {
       header: "Property",
       width: "tertiary",
       hideOnMobile: true,
-      render: (row) => (
+      render: (row) => row.property ? (
+        <Link
+          href={`/properties/${row.property.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+        >
+          <Building2 className="h-3 w-3" />
+          {row.property.name}
+        </Link>
+      ) : (
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <Building2 className="h-3 w-3" />
-          {row.property?.name || "All"}
+          All
         </div>
       ),
     },
