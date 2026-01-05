@@ -34,6 +34,7 @@ export type SessionErrorCode =
   | "NETWORK_ERROR"
   | "INVALID_TOKEN"
   | "REFRESH_FAILED"
+  | "TIMEOUT"
   | "UNKNOWN_ERROR"
 
 export interface SessionState {
