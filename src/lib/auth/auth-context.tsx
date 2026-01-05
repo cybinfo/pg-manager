@@ -315,9 +315,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Load user data
   const loadUserData = useCallback(async (sessionUser: User, accessToken: string) => {
     try {
+      console.log('[Auth] fetchProfile...')
       const userProfile = await fetchProfile(sessionUser.id, accessToken)
+      console.log('[Auth] fetchContexts...')
       const userContexts = await fetchContexts(sessionUser.id, accessToken)
+      console.log('[Auth] checkPlatformAdmin...')
       const isAdmin = await checkPlatformAdmin(sessionUser.id)
+      console.log('[Auth] All data fetched')
 
       if (!mountedRef.current) return
 
@@ -394,14 +398,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       initializingRef.current = true
+      console.log('[Auth] Init starting...')
 
       try {
         // Get session with 10s timeout
+        console.log('[Auth] Getting session...')
         const sessionResult = await withTimeout(
           getSessionUtil(),
           10000,
           { user: null, session: null, error: { code: 'TIMEOUT' as const, message: 'Session check timed out' } }
         )
+        console.log('[Auth] Session result:', sessionResult.session?.user?.email || 'no user', sessionResult.error?.message || 'no error')
 
         if (sessionResult.error) {
           // User might not be logged in - this is normal
@@ -415,12 +422,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
           globalAuthState.explicitLogout = false
 
           // Load user data with 15s timeout
+          console.log('[Auth] Loading user data...')
           await withTimeout(
             loadUserData(sessionResult.session.user, sessionResult.session.access_token),
             15000,
             undefined
           )
+          console.log('[Auth] User data loaded')
         } else {
+          console.log('[Auth] No valid session')
           globalAuthState.user = null
         }
       } catch (err) {
@@ -433,6 +443,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (mountedRef.current) {
           setIsLoading(false)
         }
+        console.log('[Auth] Init complete')
       }
     }
 
