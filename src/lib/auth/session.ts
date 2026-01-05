@@ -81,6 +81,38 @@ export function getTimeUntilExpiry(session: Session | null): number | null {
 // ============================================
 
 /**
+ * Get stored session directly from localStorage (fast, no network, no hanging)
+ * This bypasses the Supabase client which can hang on getSession()
+ */
+function getStoredSessionData(): { session: Session | null; projectRef: string | null } {
+  if (typeof window === "undefined") return { session: null, projectRef: null }
+  try {
+    // Supabase stores session with key pattern: sb-<project-ref>-auth-token
+    const keys = Object.keys(localStorage)
+    const authKey = keys.find(k => k.includes('-auth-token'))
+    if (!authKey) return { session: null, projectRef: null }
+
+    // Extract project ref from key
+    const projectRef = authKey.replace('sb-', '').replace('-auth-token', '')
+
+    const stored = localStorage.getItem(authKey)
+    if (!stored) return { session: null, projectRef }
+
+    const parsed = JSON.parse(stored)
+    // Supabase stores session in different formats depending on version
+    const session = parsed?.currentSession || parsed?.session || parsed
+    if (!session?.access_token || !session?.user) {
+      return { session: null, projectRef }
+    }
+
+    return { session: session as Session, projectRef }
+  } catch (err) {
+    console.error("[Session] Error reading stored session:", err)
+    return { session: null, projectRef: null }
+  }
+}
+
+/**
  * Get the current session with proper error handling.
  * This is the preferred method for checking authentication state.
  */
@@ -89,29 +121,11 @@ export async function getSession(): Promise<SessionResult> {
   console.log("[Session] getSession starting...")
 
   try {
-    console.log("[Session] Creating Supabase client...")
-    const supabase = createClient()
-    console.log(`[Session] Client created in ${Date.now() - startTime}ms`)
+    // First, try to get session directly from localStorage (instant, no hang)
+    const { session: storedSession, projectRef } = getStoredSessionData()
 
-    console.log("[Session] Calling supabase.auth.getSession()...")
-    const { data, error } = await supabase.auth.getSession()
-    console.log(`[Session] getSession() returned in ${Date.now() - startTime}ms`)
-
-    if (error) {
-      console.error("[Session] getSession error:", error.message)
-      return {
-        user: null,
-        session: null,
-        error: createSessionError(
-          "UNKNOWN_ERROR",
-          error.message,
-          error
-        ),
-      }
-    }
-
-    if (!data.session) {
-      console.log("[Session] No session found")
+    if (!storedSession) {
+      console.log("[Session] No stored session found")
       return {
         user: null,
         session: null,
@@ -119,16 +133,47 @@ export async function getSession(): Promise<SessionResult> {
       }
     }
 
-    // Check if session is expired
-    if (isSessionExpired(data.session)) {
-      console.warn("[Session] Session expired, attempting refresh")
+    console.log(`[Session] Found stored session in ${Date.now() - startTime}ms`)
+
+    // Check if stored session is expired
+    if (isSessionExpired(storedSession)) {
+      console.warn("[Session] Stored session expired, attempting refresh")
       return refreshSession()
     }
 
-    console.log(`[Session] Valid session found in ${Date.now() - startTime}ms`)
+    // Validate the user with a network call (this is reliable and has timeout)
+    console.log("[Session] Validating user with server...")
+    const supabase = createClient()
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    console.log(`[Session] User validation completed in ${Date.now() - startTime}ms`)
+
+    if (userError) {
+      // Token might be invalid, try to refresh
+      console.warn("[Session] User validation failed:", userError.message)
+      if (userError.message.includes("expired") || userError.message.includes("invalid")) {
+        return refreshSession()
+      }
+      return {
+        user: null,
+        session: null,
+        error: createSessionError("INVALID_TOKEN", userError.message, userError),
+      }
+    }
+
+    if (!userData.user) {
+      console.log("[Session] No valid user")
+      return {
+        user: null,
+        session: null,
+        error: createSessionError("NO_SESSION", "No valid user"),
+      }
+    }
+
+    // Return the stored session with validated user
+    console.log(`[Session] Valid session confirmed in ${Date.now() - startTime}ms`)
     return {
-      user: data.session.user,
-      session: data.session,
+      user: userData.user,
+      session: storedSession,
       error: null,
     }
   } catch (err) {
