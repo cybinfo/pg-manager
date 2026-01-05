@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback, useMemo, useRef, ReactNode } from 'react'
-import { User, SupabaseClient } from '@supabase/supabase-js'
+import { User, SupabaseClient, Session } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import {
   ContextWithDetails,
@@ -10,6 +10,14 @@ import {
   Permission,
   TENANT_PERMISSIONS,
 } from './types'
+import {
+  getSession as getSessionUtil,
+  signOut as signOutUtil,
+  clearStoredContextId,
+  getStoredContextId,
+  setStoredContextId,
+  SessionError,
+} from './session'
 
 // Singleton supabase client for the entire app
 let supabaseInstance: SupabaseClient | null = null
@@ -159,22 +167,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshContexts = useCallback(async () => {
     if (!user) return
 
-    // Get current session for token
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.access_token) {
+    // Get current session for token using centralized utility
+    const sessionResult = await getSessionUtil()
+    if (sessionResult.error || !sessionResult.session?.access_token) {
+      console.warn('[Auth] Cannot refresh contexts: no valid session')
       return
     }
 
-    const newContexts = await fetchContexts(user.id, session.access_token)
-    setContexts(newContexts)
+    const newContexts = await fetchContexts(user.id, sessionResult.session.access_token)
+    if (mountedRef.current) {
+      setContexts(newContexts)
+    }
     globalAuthState.contexts = newContexts
 
     if (currentContext && !newContexts.find(c => c.context_id === currentContext.context_id)) {
       const defaultCtx = newContexts.find(c => c.is_default) || newContexts[0]
-      setCurrentContext(defaultCtx || null)
+      if (mountedRef.current) {
+        setCurrentContext(defaultCtx || null)
+      }
       globalAuthState.currentContext = defaultCtx || null
     }
-  }, [user, currentContext, fetchContexts, supabase])
+  }, [user, currentContext, fetchContexts])
 
   // Switch to a different context
   const switchContext = useCallback(async (contextId: string): Promise<boolean> => {
@@ -182,21 +195,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const targetContext = contexts.find(c => c.context_id === contextId)
     if (!targetContext) return false
 
-    const { error } = await supabase.rpc('switch_context', {
-      p_user_id: user.id,
-      p_to_context_id: contextId,
-      p_from_context_id: currentContext?.context_id || null,
-    })
+    try {
+      const { error } = await supabase.rpc('switch_context', {
+        p_user_id: user.id,
+        p_to_context_id: contextId,
+        p_from_context_id: currentContext?.context_id || null,
+      })
 
-    if (error) {
-      console.error('[Auth] Error switching context:', error)
+      if (error) {
+        console.error('[Auth] Error switching context:', error)
+        return false
+      }
+
+      if (mountedRef.current) {
+        setCurrentContext(targetContext)
+      }
+      globalAuthState.currentContext = targetContext
+      setStoredContextId(contextId)
+      return true
+    } catch (err) {
+      console.error('[Auth] Exception switching context:', err)
       return false
     }
-
-    setCurrentContext(targetContext)
-    globalAuthState.currentContext = targetContext
-    localStorage.setItem('currentContextId', contextId)
-    return true
   }, [user, contexts, currentContext, supabase])
 
   // Set default context
@@ -246,17 +266,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async () => {
     globalAuthState.explicitLogout = true
     globalAuthState.loggingOut = true
-    localStorage.removeItem('currentContextId')
+    clearStoredContextId()
 
-    // Sign out from Supabase FIRST (before clearing state to prevent race conditions)
-    await supabase.auth.signOut()
+    // Sign out using centralized utility (has proper error handling)
+    const result = await signOutUtil()
 
-    // Now clear state after signOut completes
-    setUser(null)
-    setProfile(null)
-    setContexts([])
-    setCurrentContext(null)
-    setIsPlatformAdmin(false)
+    if (!result.success) {
+      console.error('[Auth] Logout failed:', result.error?.message)
+      // Even if sign out fails server-side, clear local state
+    }
+
+    // Clear state after signOut completes (or fails)
+    if (mountedRef.current) {
+      setUser(null)
+      setProfile(null)
+      setContexts([])
+      setCurrentContext(null)
+      setIsPlatformAdmin(false)
+    }
     globalAuthState.initialized = false
     globalAuthState.user = null
     globalAuthState.profile = null
@@ -264,7 +291,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     globalAuthState.currentContext = null
     globalAuthState.isPlatformAdmin = false
     globalAuthState.loggingOut = false
-  }, [supabase])
+  }, [])
 
   // Check if user is a platform admin (super user)
   const checkPlatformAdmin = useCallback(async (userId: string): Promise<boolean> => {
@@ -301,8 +328,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       globalAuthState.contexts = userContexts
       globalAuthState.isPlatformAdmin = isAdmin
 
-      // Determine initial context
-      const savedContextId = localStorage.getItem('currentContextId')
+      // Determine initial context using centralized storage
+      const savedContextId = getStoredContextId()
       let initialContext: ContextWithDetails | null = null
 
       if (savedContextId) {
@@ -314,8 +341,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setCurrentContext(initialContext)
       globalAuthState.currentContext = initialContext
-    } catch {
-      // Silent fail - user data loading errors are handled gracefully
+
+      // Persist the resolved context ID
+      if (initialContext) {
+        setStoredContextId(initialContext.context_id)
+      }
+    } catch (err) {
+      console.error('[Auth] Error loading user data:', err)
+      // Continue with partial data rather than failing completely
     }
   }, [fetchProfile, fetchContexts, checkPlatformAdmin])
 
@@ -352,19 +385,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
       initializingRef.current = true
 
       try {
-        // Get session first to get the access token
-        const { data: { session } } = await supabase.auth.getSession()
+        // Get session using centralized utility (has proper error handling)
+        const sessionResult = await getSessionUtil()
 
-        if (session?.user && session?.access_token) {
-          setUser(session.user)
-          globalAuthState.user = session.user
+        if (sessionResult.error) {
+          console.warn('[Auth] Session check error:', sessionResult.error.message)
+          // Continue anyway - user might not be logged in
+        }
+
+        if (sessionResult.session?.user && sessionResult.session?.access_token) {
+          if (mountedRef.current) {
+            setUser(sessionResult.session.user)
+          }
+          globalAuthState.user = sessionResult.session.user
           globalAuthState.explicitLogout = false
-          await loadUserData(session.user, session.access_token)
+          await loadUserData(sessionResult.session.user, sessionResult.session.access_token)
         } else {
           globalAuthState.user = null
         }
-      } catch {
-        // Silent fail
+      } catch (err) {
+        console.error('[Auth] Initialization error:', err)
+        // Clear state on error to prevent stale data
+        globalAuthState.user = null
       } finally {
         globalAuthState.initialized = true
         initializingRef.current = false

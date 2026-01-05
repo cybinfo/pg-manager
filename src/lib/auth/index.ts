@@ -14,6 +14,38 @@ export {
   useCurrentContext,
 } from './auth-context'
 
+// Session Management (Centralized)
+export {
+  getSession,
+  getUser,
+  refreshSession,
+  signOut,
+  isSessionValid,
+  requireSession,
+  isSessionExpired,
+  getSessionExpiryTime,
+  getTimeUntilExpiry,
+  getStoredContextId,
+  setStoredContextId,
+  clearStoredContextId,
+  createSessionError,
+} from './session'
+export type {
+  SessionResult,
+  SessionError,
+  SessionErrorCode,
+  SessionState,
+  SessionEventType,
+  SessionEvent,
+} from './session'
+
+// Session Hooks
+export {
+  useSession,
+  useIsAuthenticated,
+  useCurrentUser,
+} from './use-session'
+
 // AI Detection
 export {
   detectIdentityConflicts,

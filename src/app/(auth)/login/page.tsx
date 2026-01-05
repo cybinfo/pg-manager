@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, Suspense, useEffect } from "react"
+import { useState, Suspense, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { getSession } from "@/lib/auth/session"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,34 +30,64 @@ function LoginForm() {
   const [userName, setUserName] = useState<string>('')
 
   const supabase = createClient()
+  const mountedRef = useRef(true)
 
-  // Check for existing session on mount
+  // Check for existing session on mount using centralized session handling
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        // User already logged in, fetch contexts
-        const { data: userContexts } = await supabase.rpc('get_user_contexts', {
-          p_user_id: session.user.id
-        })
+    mountedRef.current = true
 
-        if (userContexts && userContexts.length > 0) {
-          if (userContexts.length === 1) {
-            // Single context - redirect directly
-            handleContextSelect(userContexts[0].context_id, false)
-          } else {
-            // Multiple contexts - show picker
-            setContexts(userContexts)
-            setUserName(session.user.user_metadata?.name || session.user.email?.split('@')[0] || '')
-            setStep('context-picker')
-          }
+    const checkSession = async () => {
+      // Use centralized session check
+      const sessionResult = await getSession()
+
+      if (sessionResult.error) {
+        // Session check failed - this is expected for non-logged in users
+        console.log('[Login] No existing session:', sessionResult.error.message)
+        return
+      }
+
+      if (!sessionResult.session?.user) {
+        return
+      }
+
+      if (!mountedRef.current) return
+
+      const user = sessionResult.session.user
+
+      // User already logged in, fetch contexts
+      const { data: userContexts, error: contextError } = await supabase.rpc('get_user_contexts', {
+        p_user_id: user.id
+      })
+
+      if (contextError) {
+        console.error('[Login] Error fetching contexts:', contextError)
+        // Redirect to dashboard anyway - it will handle setup
+        router.push('/dashboard')
+        return
+      }
+
+      if (!mountedRef.current) return
+
+      if (userContexts && userContexts.length > 0) {
+        if (userContexts.length === 1) {
+          // Single context - redirect directly
+          handleContextSelect(userContexts[0].context_id, false)
         } else {
-          // No contexts - redirect to dashboard (will handle setup)
-          router.push('/dashboard')
+          // Multiple contexts - show picker
+          setContexts(userContexts)
+          setUserName(user.user_metadata?.name || user.email?.split('@')[0] || '')
+          setStep('context-picker')
         }
+      } else {
+        // No contexts - redirect to dashboard (will handle setup)
+        router.push('/dashboard')
       }
     }
     checkSession()
+
+    return () => {
+      mountedRef.current = false
+    }
   }, [])
 
   const handleLogin = async (e: React.FormEvent) => {

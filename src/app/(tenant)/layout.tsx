@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { getSession, signOut } from "@/lib/auth/session"
 import { Button } from "@/components/ui/button"
 import {
   Home,
@@ -66,16 +67,23 @@ export default function TenantLayout({
   const [loading, setLoading] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [tenant, setTenant] = useState<TenantInfo | null>(null)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+    mountedRef.current = true
 
-      if (!user) {
+    const checkAuth = async () => {
+      // Use centralized session check
+      const sessionResult = await getSession()
+
+      if (sessionResult.error || !sessionResult.user) {
+        console.warn('[TenantLayout] No valid session:', sessionResult.error?.message)
         router.push("/login")
         return
       }
+
+      const user = sessionResult.user
+      const supabase = createClient()
 
       // Check if user is a tenant
       const { data: tenantData, error } = await supabase
@@ -97,6 +105,8 @@ export default function TenantLayout({
         return
       }
 
+      if (!mountedRef.current) return
+
       // Transform the data from arrays to single objects
       const rawData = tenantData as RawTenantInfo
       setTenant({
@@ -111,11 +121,18 @@ export default function TenantLayout({
     }
 
     checkAuth()
+
+    return () => {
+      mountedRef.current = false
+    }
   }, [router])
 
   const handleLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    // Use centralized signOut
+    const result = await signOut()
+    if (!result.success) {
+      console.error('[TenantLayout] Logout error:', result.error?.message)
+    }
     toast.success("Logged out successfully")
     router.push("/login")
   }

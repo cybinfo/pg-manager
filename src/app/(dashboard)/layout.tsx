@@ -115,7 +115,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     await logout()
     toast.success("Logged out successfully")
     router.push("/login")
-    router.refresh()
+    // Note: Don't call router.refresh() here - it causes hydration issues
+    // The auth context handles state clearing internally
   }
 
   const handleMobileNavClick = (href: string) => {
