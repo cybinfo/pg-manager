@@ -13,7 +13,7 @@
 
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin, transformArrayJoins } from "@/lib/supabase/transforms"
 import { toast } from "sonner"
@@ -126,12 +126,24 @@ export function useListPage<T extends object>(
   const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({})
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Fetch filter options
+  // Use refs to store stable references - prevents infinite loops
+  const configRef = useRef(config)
+  const filterConfigsRef = useRef(filterConfigs)
+  const initialFetchDone = useRef(false)
+
+  // Update refs when props change (but don't trigger re-renders)
+  useEffect(() => {
+    configRef.current = config
+    filterConfigsRef.current = filterConfigs
+  }, [config, filterConfigs])
+
+  // Fetch filter options - uses ref to avoid dependency issues
   const fetchFilterOptions = useCallback(async () => {
+    const currentFilterConfigs = filterConfigsRef.current
     const supabase = createClient()
     const optionsMap: Record<string, { value: string; label: string }[]> = {}
 
-    for (const filterConfig of filterConfigs) {
+    for (const filterConfig of currentFilterConfigs) {
       if (filterConfig.options) {
         optionsMap[filterConfig.id] = filterConfig.options
       } else if (filterConfig.optionsQuery) {
@@ -160,12 +172,13 @@ export function useListPage<T extends object>(
     }
 
     setFilterOptions(optionsMap)
-  }, [filterConfigs])
+  }, []) // No dependencies - uses ref
 
-  // Fetch main data
+  // Fetch main data - uses ref to avoid dependency issues
   const fetchData = useCallback(async () => {
     if (!enabled) return
 
+    const currentConfig = configRef.current
     setLoading(true)
     setError(null)
 
@@ -173,9 +186,9 @@ export function useListPage<T extends object>(
       const supabase = createClient()
 
       const { data: rawData, error: fetchError } = await supabase
-        .from(config.table)
-        .select(config.select)
-        .order(config.defaultOrderBy, { ascending: config.defaultOrderDirection === "asc" })
+        .from(currentConfig.table)
+        .select(currentConfig.select)
+        .order(currentConfig.defaultOrderBy, { ascending: currentConfig.defaultOrderDirection === "asc" })
 
       if (fetchError) {
         throw fetchError
@@ -183,30 +196,33 @@ export function useListPage<T extends object>(
 
       // Transform JOIN fields
       let transformedData: Record<string, unknown>[] = (rawData || []) as unknown as Record<string, unknown>[]
-      if (config.joinFields && config.joinFields.length > 0) {
-        transformedData = transformArrayJoins(transformedData, config.joinFields as string[])
+      if (currentConfig.joinFields && currentConfig.joinFields.length > 0) {
+        transformedData = transformArrayJoins(transformedData, currentConfig.joinFields as string[])
       }
 
       // Apply computed fields
-      if (config.computedFields) {
+      if (currentConfig.computedFields) {
         transformedData = transformedData.map((item) => ({
           ...item,
-          ...config.computedFields!(item),
+          ...currentConfig.computedFields!(item),
         }))
       }
 
       setData(transformedData as unknown as T[])
     } catch (err) {
-      console.error(`[useListPage] Error fetching ${config.table}:`, err)
+      console.error(`[useListPage] Error fetching ${currentConfig.table}:`, err)
       setError(err as Error)
       toast.error(`Failed to load data`)
     } finally {
       setLoading(false)
     }
-  }, [config, enabled])
+  }, [enabled]) // Only depend on enabled, use ref for config
 
-  // Initial fetch
+  // Initial fetch - only run once
   useEffect(() => {
+    if (initialFetchDone.current) return
+    initialFetchDone.current = true
+
     fetchData()
     fetchFilterOptions()
   }, [fetchData, fetchFilterOptions])
@@ -221,18 +237,20 @@ export function useListPage<T extends object>(
   }, [])
 
   const clearFilters = useCallback(() => {
-    setFiltersState(config.defaultFilters || {})
-  }, [config.defaultFilters])
+    setFiltersState(configRef.current.defaultFilters || {})
+  }, []) // Uses ref
 
-  // Filter data
+  // Filter data - uses refs for stable config references
   const filteredData = useMemo(() => {
+    const currentConfig = configRef.current
+    const currentFilterConfigs = filterConfigsRef.current
     let result = [...data]
 
     // Apply filters
     for (const [filterId, filterValue] of Object.entries(filters)) {
       if (!filterValue || filterValue === "all") continue
 
-      const filterConfig = filterConfigs.find((f) => f.id === filterId)
+      const filterConfig = currentFilterConfigs.find((f) => f.id === filterId)
       if (!filterConfig) continue
 
       switch (filterConfig.type) {
@@ -267,7 +285,7 @@ export function useListPage<T extends object>(
 
     // Handle date range filters
     if (filters.date_from) {
-      const dateField = filterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
+      const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
       result = result.filter((item) => {
         const value = getNestedValue(item as unknown as Record<string, unknown>, dateField)
         if (!value) return false
@@ -276,7 +294,7 @@ export function useListPage<T extends object>(
     }
 
     if (filters.date_to) {
-      const dateField = filterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
+      const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
       result = result.filter((item) => {
         const value = getNestedValue(item as unknown as Record<string, unknown>, dateField)
         if (!value) return false
@@ -285,10 +303,10 @@ export function useListPage<T extends object>(
     }
 
     // Apply search
-    if (searchQuery && config.searchFields.length > 0) {
+    if (searchQuery && currentConfig.searchFields.length > 0) {
       const query = searchQuery.toLowerCase()
       result = result.filter((item) =>
-        config.searchFields.some((field) => {
+        currentConfig.searchFields.some((field) => {
           const value = getNestedValue(item as unknown as Record<string, unknown>, field as string)
           return value && String(value).toLowerCase().includes(query)
         })
@@ -296,7 +314,7 @@ export function useListPage<T extends object>(
     }
 
     return result
-  }, [data, filters, filterConfigs, searchQuery, config.searchFields])
+  }, [data, filters, searchQuery]) // Removed unstable dependencies, uses refs
 
   // Group config for DataTable
   const groupConfig = useMemo(() => {
