@@ -20,6 +20,7 @@ import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-utils"
 import { PageLoader } from "@/components/ui/page-loader"
 import { sendInvitationEmail } from "@/lib/email"
+import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
 
 // Shared form components
 import {
@@ -591,83 +592,94 @@ export default function NewTenantPage() {
 
       debugLog("Room verified", roomCheck)
 
-      // Now insert the tenant
-      const { data: newTenant, error } = await supabase
-        .from("tenants")
-        .insert(tenantData)
-        .select()
-        .single()
+      // Build workflow input
+      const workflowInput: TenantCreateInput = {
+        name: formData.name,
+        email: primaryEmail || undefined,
+        phone: primaryPhone,
+        photo_url: formData.profile_photo || undefined,
+        profile_photo: formData.profile_photo || undefined,
+        property_id: formData.property_id,
+        room_id: formData.room_id,
+        check_in_date: formData.check_in_date,
+        monthly_rent: parseFloat(formData.monthly_rent),
+        security_deposit: parseFloat(formData.security_deposit) || 0,
+        phones: validPhones.length > 0 ? validPhones.map(p => ({
+          number: p.number,
+          type: p.type,
+          is_primary: p.is_primary,
+        })) : undefined,
+        emails: validEmails.length > 0 ? validEmails.map(e => ({
+          email: e.email,
+          type: e.type,
+          is_primary: e.is_primary,
+        })) : undefined,
+        addresses: validAddresses.length > 0 ? validAddresses.map(a => ({
+          type: a.type,
+          line1: a.line1,
+          line2: a.line2,
+          city: a.city,
+          state: a.state,
+          pincode: a.zip,
+          is_primary: a.is_primary,
+        })) : undefined,
+        guardians: validGuardians.length > 0 ? validGuardians.map(g => ({
+          name: g.name,
+          relation: g.relation,
+          phone: g.phone,
+          email: g.email,
+          is_primary: g.is_primary,
+        })) : undefined,
+        id_documents: idDocuments
+          .filter(d => d.number.trim() || d.file_urls.length > 0)
+          .map(d => ({
+            type: d.type,
+            number: d.number,
+            file_urls: d.file_urls,
+          })),
+        generate_initial_bill: false, // Let owner manually create first bill
+        send_welcome_notification: !!primaryEmail,
+        send_invitation: false, // We handle invitation separately below
+      }
 
-      if (error) {
-        showDetailedError(error, {
-          operation: "creating tenant",
-          table: "tenants",
-          data: tenantData
+      debugLog("Calling tenant workflow", workflowInput)
+
+      // Execute the workflow
+      const workflowResult = await createTenantWorkflow(
+        workflowInput,
+        user.id,
+        "owner",
+        user.id // workspace_id is same as owner_id
+      )
+
+      if (!workflowResult.success) {
+        const errorMsg = workflowResult.errors?.[0]?.message || "Workflow failed"
+        showDetailedError(
+          { message: errorMsg },
+          {
+            operation: "creating tenant via workflow",
+            table: "tenants",
+            data: workflowInput as unknown as Record<string, unknown>
+          }
+        )
+        return
+      }
+
+      const newTenantId = workflowResult.data?.tenant_id
+      if (!newTenantId) {
+        toast.error("Tenant creation failed", {
+          description: "No tenant ID returned from workflow",
         })
         return
       }
 
-      debugLog("Tenant created successfully", newTenant)
+      debugLog("Tenant created via workflow", { tenant_id: newTenantId })
 
-      // Save ID documents with uploaded files
-      if (newTenant) {
-        const validIdDocs = idDocuments.filter(d => d.number.trim() || d.file_urls.length > 0)
-        if (validIdDocs.length > 0) {
-          debugLog("Saving ID documents", validIdDocs)
-
-          const docInserts = validIdDocs.map(doc => ({
-            tenant_id: newTenant.id,
-            document_type: doc.type.toLowerCase().replace(/\s+/g, "_"),
-            document_number: doc.number || null,
-            document_name: doc.type,
-            file_urls: doc.file_urls.length > 0 ? doc.file_urls : null,
-            verified: false,
-          }))
-
-          const { error: docError } = await supabase.from("tenant_documents").insert(docInserts)
-          if (docError) {
-            console.warn("Warning: Failed to save ID documents:", docError)
-            // Don't fail the whole operation, just warn
-          } else {
-            debugLog("ID documents saved successfully", docInserts.length)
-          }
-        }
-      }
-
-      // Create tenant stay record
-      if (newTenant) {
-        const stayData = {
-          owner_id: user.id,
-          tenant_id: newTenant.id,
-          property_id: formData.property_id,
-          room_id: formData.room_id,
-          join_date: formData.check_in_date,
-          monthly_rent: parseFloat(formData.monthly_rent),
-          security_deposit: parseFloat(formData.security_deposit) || 0,
-          status: "active",
-          stay_number: isRejoining && returningTenant ? (returningTenant.total_stays + 1) : 1,
-        }
-
-        debugLog("Creating tenant stay record", stayData)
-
-        const { error: stayError } = await supabase.from("tenant_stays").insert(stayData)
-
-        if (stayError) {
-          // Show warning but don't fail
-          toast.warning("Tenant created but stay record failed", {
-            description: `Tenant was added successfully, but stay record failed.\n\nError: ${stayError.message}\nCode: ${stayError.code || "N/A"}\n\nThis is not critical - tenant is still created.`,
-            duration: 10000,
-          })
-          console.error("Error creating tenant stay:", stayError)
-        } else {
-          debugLog("Tenant stay created successfully", null)
-        }
-      }
+      // Create a reference object for the rest of the code
+      const newTenant = { id: newTenantId }
 
       // Step: Auto-link to existing user or create invitation for tenant portal access
-      if (newTenant) {
-        const primaryEmail = validEmails.find(e => e.is_primary)?.email || validEmails[0]?.email
-
+      if (newTenant.id) {
         // Check if email exists as a user
         let existingUserId: string | null = null
         if (primaryEmail) {

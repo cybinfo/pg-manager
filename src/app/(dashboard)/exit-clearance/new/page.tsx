@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { PageLoader } from "@/components/ui/page-loader"
+import { initiateExitClearance, ExitClearanceInput } from "@/lib/workflows/exit.workflow"
 
 interface TenantRaw {
   id: string
@@ -225,40 +226,42 @@ function InitiateCheckoutForm() {
         return
       }
 
-      const { data, error } = await supabase
-        .from("exit_clearance")
-        .insert({
-          owner_id: user.id,
-          tenant_id: formData.tenant_id,
-          property_id: selectedTenant.property_id,
-          room_id: selectedTenant.room_id,
-          notice_given_date: formData.notice_given_date || null,
-          expected_exit_date: formData.expected_exit_date,
-          total_dues: amounts.totalDues,
-          total_refundable: amounts.totalRefundable,
-          deductions: deductions.map((d) => ({ reason: d.reason, amount: d.amount })),
-          final_amount: amounts.finalAmount,
-          settlement_status: "initiated",
-          room_condition_notes: formData.room_condition_notes || null,
-        })
-        .select()
-        .single()
+      // Build workflow input
+      const workflowInput: ExitClearanceInput = {
+        tenant_id: formData.tenant_id,
+        property_id: selectedTenant.property_id,
+        room_id: selectedTenant.room_id,
+        requested_exit_date: formData.expected_exit_date,
+        exit_reason: "notice_period", // Default reason
+        notice_date: formData.notice_given_date || undefined,
+        deductions: deductions.map((d) => ({
+          description: d.reason,
+          amount: d.amount,
+        })),
+        notes: formData.room_condition_notes || undefined,
+      }
 
-      if (error) throw error
+      // Execute the workflow
+      const result = await initiateExitClearance(
+        workflowInput,
+        user.id,
+        "owner",
+        user.id // workspace_id is same as owner_id
+      )
 
-      // Update tenant status to notice_period if not already
-      if (selectedTenant.status === "active") {
-        await supabase
-          .from("tenants")
-          .update({ status: "notice_period" })
-          .eq("id", selectedTenant.id)
+      if (!result.success) {
+        console.error("Error initiating exit:", result.errors)
+        const errorMsg = result.errors?.[0]?.message || "Unknown error"
+        toast.error(`Failed to initiate checkout: ${errorMsg}`)
+        setLoading(false)
+        return
       }
 
       toast.success("Exit clearance initiated")
-      router.push(`/exit-clearance/${data.id}`)
-    } catch (error: any) {
+      router.push(`/exit-clearance/${result.data?.clearance_id}`)
+    } catch (error: unknown) {
       console.error("Error:", error)
-      toast.error(error.message || "Failed to initiate checkout")
+      toast.error(error instanceof Error ? error.message : "Failed to initiate checkout")
     } finally {
       setLoading(false)
     }

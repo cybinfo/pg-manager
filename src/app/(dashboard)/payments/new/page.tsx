@@ -14,6 +14,7 @@ import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "luc
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
 import { PageLoader } from "@/components/ui/page-loader"
+import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
 
 interface Tenant {
   id: string
@@ -243,40 +244,42 @@ function NewPaymentForm() {
         return
       }
 
-      // Generate receipt number
-      const { data: receiptData } = await supabase.rpc("generate_receipt_number", {
-        owner_uuid: user.id,
-      })
-
-      const { error } = await supabase.from("payments").insert({
-        owner_id: user.id,
+      // Build workflow input
+      const workflowInput: PaymentRecordInput = {
         tenant_id: formData.tenant_id,
-        property_id: selectedTenant?.property_id,
-        bill_id: formData.bill_id || null,
-        charge_type_id: formData.charge_type_id || null,
+        property_id: selectedTenant?.property_id || "",
+        bill_id: formData.bill_id,
         amount: parseFloat(formData.amount),
-        payment_method: formData.payment_method,
         payment_date: formData.payment_date,
-        for_period: formData.for_period || null,
-        reference_number: formData.reference_number || null,
-        receipt_number: receiptData || null,
-        notes: formData.notes || null,
-        created_by: user.id,
-      })
+        payment_method: formData.payment_method as PaymentRecordInput["payment_method"],
+        reference_number: formData.reference_number || undefined,
+        notes: formData.notes || undefined,
+        is_advance: false,
+        send_receipt: true,
+      }
 
-      if (error) {
-        console.error("Error recording payment:", error)
-        toast.error(`Failed to record payment: ${error.message}`)
+      // Execute the workflow
+      const result = await recordPayment(
+        workflowInput,
+        user.id,
+        "owner",
+        user.id // workspace_id is same as owner_id
+      )
+
+      if (!result.success) {
+        console.error("Error recording payment:", result.errors)
+        const errorMsg = result.errors?.[0]?.message || "Unknown error"
+        toast.error(`Failed to record payment: ${errorMsg}`)
         setLoading(false)
         return
       }
 
-      toast.success(`Payment recorded! Receipt: ${receiptData || "Generated"}`)
+      toast.success(`Payment recorded! Receipt: ${result.data?.receipt_number || "Generated"}`)
       setLoading(false)
       router.push("/payments")
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error:", error)
-      toast.error(error?.message || "Failed to record payment. Please try again.")
+      toast.error(error instanceof Error ? error.message : "Failed to record payment. Please try again.")
       setLoading(false)
     }
   }
