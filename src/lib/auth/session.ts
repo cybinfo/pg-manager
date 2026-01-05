@@ -85,9 +85,17 @@ export function getTimeUntilExpiry(session: Session | null): number | null {
  * This is the preferred method for checking authentication state.
  */
 export async function getSession(): Promise<SessionResult> {
+  const startTime = Date.now()
+  console.log("[Session] getSession starting...")
+
   try {
+    console.log("[Session] Creating Supabase client...")
     const supabase = createClient()
+    console.log(`[Session] Client created in ${Date.now() - startTime}ms`)
+
+    console.log("[Session] Calling supabase.auth.getSession()...")
     const { data, error } = await supabase.auth.getSession()
+    console.log(`[Session] getSession() returned in ${Date.now() - startTime}ms`)
 
     if (error) {
       console.error("[Session] getSession error:", error.message)
@@ -103,6 +111,7 @@ export async function getSession(): Promise<SessionResult> {
     }
 
     if (!data.session) {
+      console.log("[Session] No session found")
       return {
         user: null,
         session: null,
@@ -116,6 +125,7 @@ export async function getSession(): Promise<SessionResult> {
       return refreshSession()
     }
 
+    console.log(`[Session] Valid session found in ${Date.now() - startTime}ms`)
     return {
       user: data.session.user,
       session: data.session,
@@ -178,9 +188,14 @@ export async function getUser(): Promise<{ user: User | null; error: SessionErro
  * Call this when the session is about to expire.
  */
 export async function refreshSession(): Promise<SessionResult> {
+  const startTime = Date.now()
+  console.log("[Session] refreshSession starting...")
+
   try {
     const supabase = createClient()
+    console.log("[Session] Calling supabase.auth.refreshSession()...")
     const { data, error } = await supabase.auth.refreshSession()
+    console.log(`[Session] refreshSession() returned in ${Date.now() - startTime}ms`)
 
     if (error) {
       console.error("[Session] Refresh failed:", error.message)
@@ -192,6 +207,7 @@ export async function refreshSession(): Promise<SessionResult> {
     }
 
     if (!data.session) {
+      console.log("[Session] Refresh returned no session")
       return {
         user: null,
         session: null,
@@ -199,7 +215,7 @@ export async function refreshSession(): Promise<SessionResult> {
       }
     }
 
-    console.log("[Session] Session refreshed successfully")
+    console.log(`[Session] Session refreshed successfully in ${Date.now() - startTime}ms`)
     return {
       user: data.session.user,
       session: data.session,
