@@ -70,10 +70,14 @@ export interface PaymentReceiptData {
   amount: number
   receiptNumber: string
   propertyName: string
+  propertyAddress?: string
+  roomNumber?: string
   paymentDate: string | Date
   paymentMethod: string
   ownerName?: string
+  ownerPhone?: string
   forPeriod?: string
+  description?: string
 }
 
 export interface PaymentReminderData {
@@ -96,19 +100,34 @@ export interface OverdueAlertData {
 export const messageTemplates = {
   paymentReceipt: (data: PaymentReceiptData): string => {
     const period = data.forPeriod ? `\n📆 For: ${data.forPeriod}` : ""
-    return `🧾 *Payment Received*
+    const room = data.roomNumber ? `\n🚪 Room: ${data.roomNumber}` : ""
+    const address = data.propertyAddress ? `\n📍 ${data.propertyAddress}` : ""
+    const description = data.description ? `\n📝 ${data.description}` : ""
+    const ownerContact = data.ownerPhone ? `\n📞 Contact: ${data.ownerPhone}` : ""
+
+    return `🧾 *Payment Receipt*
 
 Hi ${data.tenantName},
 
-Your payment of *${formatCurrency(data.amount)}* has been received.
+Your payment of *${formatCurrency(data.amount)}* has been received successfully.
 
-📄 Receipt: ${data.receiptNumber || "N/A"}
-🏠 Property: ${data.propertyName}
+━━━━━━━━━━━━━━━━━
+📄 Receipt No: ${data.receiptNumber || "N/A"}
 📅 Date: ${formatDate(data.paymentDate)}
-💳 Method: ${getPaymentMethodLabel(data.paymentMethod)}${period}
+💳 Method: ${getPaymentMethodLabel(data.paymentMethod)}${period}${description}
+━━━━━━━━━━━━━━━━━
 
-Thank you!
-- ${data.ownerName || "ManageKar"}`
+🏠 *Property Details*
+${data.propertyName}${address}${room}
+━━━━━━━━━━━━━━━━━
+
+✅ *Status: PAID*
+
+Thank you for your payment!
+${ownerContact}
+- ${data.ownerName || "ManageKar"}
+
+_Powered by ManageKar_`
   },
 
   paymentReminder: (data: PaymentReminderData): string => {

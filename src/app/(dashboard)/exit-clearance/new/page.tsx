@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +20,8 @@ import {
   IndianRupee,
   AlertCircle,
   Plus,
-  Trash2
+  Trash2,
+  Bell
 } from "lucide-react"
 import { toast } from "sonner"
 import { PageLoader } from "@/components/ui/page-loader"
@@ -87,7 +89,7 @@ function InitiateCheckoutForm() {
     const fetchTenants = async () => {
       const supabase = createClient()
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("tenants")
         .select(`
           id,
@@ -101,12 +103,18 @@ function InitiateCheckoutForm() {
           property:properties(id, name),
           room:rooms(id, room_number, deposit_amount)
         `)
-        .in("status", ["active", "notice_period"])
+        .eq("status", "notice_period")
         .order("name")
 
-      // Transform Supabase array joins to single objects
+      if (error) {
+        console.error("Error fetching tenants:", error)
+        toast.error("Failed to load tenants")
+        setLoadingData(false)
+        return
+      }
+
+      // Transform Supabase joins using centralized utility
       const transformedTenants: Tenant[] = ((data as TenantRaw[]) || [])
-        .filter((t) => t.property && t.property.length > 0 && t.room && t.room.length > 0)
         .map((t) => ({
           id: t.id,
           name: t.name,
@@ -116,9 +124,10 @@ function InitiateCheckoutForm() {
           status: t.status,
           property_id: t.property_id,
           room_id: t.room_id,
-          property: t.property![0],
-          room: t.room![0],
+          property: transformJoin(t.property),
+          room: transformJoin(t.room),
         }))
+        .filter((t): t is Tenant => t.property !== null && t.room !== null)
       setTenants(transformedTenants)
 
       // Preselect tenant if provided
@@ -291,23 +300,40 @@ function InitiateCheckoutForm() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="tenant_id">Tenant *</Label>
-              <select
-                id="tenant_id"
-                name="tenant_id"
-                value={formData.tenant_id}
-                onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                required
-                disabled={loading}
-              >
-                <option value="">Select a tenant</option>
-                {tenants.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name} - {tenant.property?.name || "—"}, Room {tenant.room?.room_number || "—"}
-                    {tenant.status === "notice_period" ? " (On Notice)" : ""}
-                  </option>
-                ))}
-              </select>
+              {tenants.length === 0 ? (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
+                  <Bell className="h-8 w-8 text-amber-500 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-amber-800 mb-1">
+                    No tenants on notice period
+                  </p>
+                  <p className="text-xs text-amber-700 mb-3">
+                    To initiate checkout, you must first put a tenant on notice period from their profile page.
+                  </p>
+                  <Link href="/tenants" className="inline-block">
+                    <Button type="button" size="sm" variant="outline">
+                      <User className="mr-1 h-3 w-3" />
+                      View Tenants
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <select
+                  id="tenant_id"
+                  name="tenant_id"
+                  value={formData.tenant_id}
+                  onChange={handleChange}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                  required
+                  disabled={loading}
+                >
+                  <option value="">Select a tenant</option>
+                  {tenants.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>
+                      {tenant.name} - {tenant.property?.name || "—"}, Room {tenant.room?.room_number || "—"}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {selectedTenant && (

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, UserPlus, Loader2, Users, Building2, Moon, IndianRupee } from "lucide-react"
+import { ArrowLeft, UserPlus, Loader2, Users, Building2, Moon, IndianRupee, Calendar, FileText } from "lucide-react"
 import { toast } from "sonner"
 import { PageLoader } from "@/components/ui/page-loader"
 
@@ -52,8 +52,16 @@ export default function NewVisitorPage() {
     relation: "",
     purpose: "",
     is_overnight: false,
-    overnight_charge: "",
+    num_nights: "1",
+    charge_per_night: "",
+    expected_checkout_date: "",
+    create_bill: false,
   })
+
+  // Calculate total charge
+  const totalCharge = formData.is_overnight && formData.charge_per_night
+    ? parseFloat(formData.charge_per_night) * parseInt(formData.num_nights || "1")
+    : 0
 
   useEffect(() => {
     const fetchData = async () => {
@@ -130,6 +138,61 @@ export default function NewVisitorPage() {
         return
       }
 
+      const numNights = formData.is_overnight ? parseInt(formData.num_nights || "1") : null
+      const chargePerNight = formData.is_overnight && formData.charge_per_night
+        ? parseFloat(formData.charge_per_night)
+        : null
+      const overnightCharge = numNights && chargePerNight ? numNights * chargePerNight : null
+
+      // Calculate expected checkout date if overnight
+      let expectedCheckout: string | null = null
+      if (formData.is_overnight && numNights) {
+        if (formData.expected_checkout_date) {
+          expectedCheckout = formData.expected_checkout_date
+        } else {
+          const checkoutDate = new Date()
+          checkoutDate.setDate(checkoutDate.getDate() + numNights)
+          expectedCheckout = checkoutDate.toISOString().split("T")[0]
+        }
+      }
+
+      // Create bill first if requested and there's a charge
+      let billId: string | null = null
+      if (formData.create_bill && overnightCharge && overnightCharge > 0 && numNights && chargePerNight) {
+        const billNumber = `VIS-${Date.now().toString(36).toUpperCase()}`
+        const today = new Date().toISOString().split("T")[0]
+
+        const { data: billData, error: billError } = await supabase
+          .from("bills")
+          .insert({
+            owner_id: user.id,
+            tenant_id: formData.tenant_id,
+            property_id: formData.property_id,
+            bill_number: billNumber,
+            bill_date: today,
+            due_date: expectedCheckout || today,
+            total_amount: overnightCharge,
+            balance_due: overnightCharge,
+            status: "pending",
+            line_items: [{
+              description: `Visitor Stay - ${formData.visitor_name} (${numNights} night${numNights > 1 ? "s" : ""})`,
+              quantity: numNights,
+              rate: chargePerNight,
+              amount: overnightCharge,
+            }],
+            notes: `Visitor: ${formData.visitor_name}${formData.relation ? ` (${formData.relation})` : ""}`,
+          })
+          .select("id")
+          .single()
+
+        if (billError) {
+          console.error("Error creating bill:", billError)
+          toast.error("Failed to create bill, but visitor will be checked in")
+        } else {
+          billId = billData.id
+        }
+      }
+
       const { error } = await supabase.from("visitors").insert({
         owner_id: user.id,
         property_id: formData.property_id,
@@ -140,9 +203,11 @@ export default function NewVisitorPage() {
         purpose: formData.purpose || null,
         check_in_time: new Date().toISOString(),
         is_overnight: formData.is_overnight,
-        overnight_charge: formData.is_overnight && formData.overnight_charge
-          ? parseFloat(formData.overnight_charge)
-          : null,
+        num_nights: numNights,
+        charge_per_night: chargePerNight,
+        overnight_charge: overnightCharge,
+        expected_checkout_date: expectedCheckout,
+        bill_id: billId,
       })
 
       if (error) {
@@ -150,7 +215,10 @@ export default function NewVisitorPage() {
         throw error
       }
 
-      toast.success("Visitor checked in successfully!")
+      const message = billId
+        ? "Visitor checked in and bill created!"
+        : "Visitor checked in successfully!"
+      toast.success(message)
       router.push("/visitors")
     } catch (error) {
       console.error("Error:", error)
@@ -377,25 +445,100 @@ export default function NewVisitorPage() {
             </div>
 
             {formData.is_overnight && (
-              <div className="space-y-2">
-                <Label htmlFor="overnight_charge">Overnight Charge (₹)</Label>
-                <div className="relative">
-                  <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="overnight_charge"
-                    name="overnight_charge"
-                    type="number"
-                    min="0"
-                    placeholder="e.g., 200"
-                    value={formData.overnight_charge}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="pl-9"
-                  />
+              <div className="space-y-4 pt-2 border-t">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="num_nights">Number of Nights *</Label>
+                    <Input
+                      id="num_nights"
+                      name="num_nights"
+                      type="number"
+                      min="1"
+                      max="365"
+                      value={formData.num_nights}
+                      onChange={handleChange}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="charge_per_night">Charge per Night (₹)</Label>
+                    <div className="relative">
+                      <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="charge_per_night"
+                        name="charge_per_night"
+                        type="number"
+                        min="0"
+                        placeholder="e.g., 200"
+                        value={formData.charge_per_night}
+                        onChange={handleChange}
+                        disabled={loading}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Leave empty if no charge for overnight stay
-                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="expected_checkout_date">Expected Checkout Date</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="expected_checkout_date"
+                      name="expected_checkout_date"
+                      type="date"
+                      value={formData.expected_checkout_date}
+                      onChange={handleChange}
+                      disabled={loading}
+                      className="pl-9"
+                      min={new Date().toISOString().split("T")[0]}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Auto-calculated if not specified based on number of nights
+                  </p>
+                </div>
+
+                {totalCharge > 0 && (
+                  <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-muted-foreground">Total Charge</span>
+                      <span className="text-xl font-bold text-purple-600">
+                        ₹{totalCharge.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {formData.num_nights} night{parseInt(formData.num_nights) > 1 ? "s" : ""} × ₹{parseFloat(formData.charge_per_night).toLocaleString("en-IN")}/night
+                    </p>
+
+                    <div className="pt-3 border-t border-purple-200">
+                      <div className="flex items-center gap-2">
+                        <input
+                          id="create_bill"
+                          name="create_bill"
+                          type="checkbox"
+                          checked={formData.create_bill}
+                          onChange={handleChange}
+                          disabled={loading}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <Label htmlFor="create_bill" className="font-normal cursor-pointer flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-purple-600" />
+                          Create bill for tenant
+                        </Label>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 ml-6">
+                        Bill will be created for the visiting tenant with visitor stay charges
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {!formData.charge_per_night && (
+                  <p className="text-xs text-muted-foreground">
+                    Leave charge empty if no fee for overnight stays
+                  </p>
+                )}
               </div>
             )}
           </CardContent>

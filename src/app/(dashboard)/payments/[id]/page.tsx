@@ -277,10 +277,16 @@ export default function PaymentReceiptPage() {
                 amount: Number(payment.amount),
                 receiptNumber: payment.receipt_number || payment.id.slice(0, 8).toUpperCase(),
                 propertyName: payment.property?.name || "Property",
+                propertyAddress: payment.property?.address
+                  ? `${payment.property.address}, ${payment.property.city}`
+                  : payment.property?.city || undefined,
+                roomNumber: payment.tenant?.room?.room_number || undefined,
                 paymentDate: payment.payment_date,
                 paymentMethod: payment.payment_method,
                 ownerName: payment.owner.business_name || payment.owner.name,
+                ownerPhone: payment.owner.phone || undefined,
                 forPeriod: payment.for_period || undefined,
+                description: payment.charge_type?.name || undefined,
               })}
               label="Send Receipt"
               variant="default"

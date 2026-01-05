@@ -173,6 +173,11 @@ export default function TenantDetailPage() {
     notes: "",
   })
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showNoticeDialog, setShowNoticeDialog] = useState(false)
+  const [noticeData, setNoticeData] = useState({
+    expected_exit_date: "",
+    notice_notes: "",
+  })
 
   useEffect(() => {
     const fetchTenant = async () => {
@@ -302,25 +307,47 @@ export default function TenantDetailPage() {
     fetchTenant()
   }, [params.id, router])
 
-  const handlePutOnNotice = async () => {
-    if (!tenant) return
+  const openNoticeDialog = () => {
+    // Set default exit date to 30 days from now
+    const defaultDate = new Date()
+    defaultDate.setDate(defaultDate.getDate() + 30)
+    setNoticeData({
+      expected_exit_date: defaultDate.toISOString().split("T")[0],
+      notice_notes: "",
+    })
+    setShowNoticeDialog(true)
+  }
 
-    const expectedExitDate = prompt("Enter expected exit date (YYYY-MM-DD):")
-    if (!expectedExitDate) return
+  const handlePutOnNotice = async () => {
+    if (!tenant || !noticeData.expected_exit_date) {
+      toast.error("Please select an expected exit date")
+      return
+    }
 
     setActionLoading(true)
     const supabase = createClient()
 
     const { error } = await supabase
       .from("tenants")
-      .update({ status: "notice_period", expected_exit_date: expectedExitDate })
+      .update({
+        status: "notice_period",
+        expected_exit_date: noticeData.expected_exit_date,
+        notes: tenant.notes
+          ? `${tenant.notes}\n\n[Notice Period - ${new Date().toLocaleDateString("en-IN")}]: ${noticeData.notice_notes || "Put on notice"}`
+          : `[Notice Period - ${new Date().toLocaleDateString("en-IN")}]: ${noticeData.notice_notes || "Put on notice"}`
+      })
       .eq("id", tenant.id)
 
     if (error) {
       toast.error("Failed to update tenant status")
     } else {
       toast.success("Tenant put on notice period")
-      setTenant({ ...tenant, status: "notice_period", expected_exit_date: expectedExitDate })
+      setTenant({
+        ...tenant,
+        status: "notice_period",
+        expected_exit_date: noticeData.expected_exit_date
+      })
+      setShowNoticeDialog(false)
     }
     setActionLoading(false)
   }
@@ -504,16 +531,16 @@ export default function TenantDetailPage() {
                   <ArrowRightLeft className="mr-2 h-4 w-4" />
                   Transfer
                 </Button>
-                <Button variant="outline" size="sm" onClick={handlePutOnNotice} disabled={actionLoading}>
+                <Button variant="gradient" size="sm" onClick={openNoticeDialog} disabled={actionLoading}>
                   <Bell className="mr-2 h-4 w-4" />
-                  Notice
+                  Put on Notice
                 </Button>
               </>
             )}
-            {(tenant.status === "active" || tenant.status === "notice_period") && (
+            {tenant.status === "notice_period" && (
               <Button variant="gradient" size="sm" onClick={handleInitiateCheckout} disabled={actionLoading}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Checkout
+                Initiate Checkout
               </Button>
             )}
             <PermissionGate permission="tenants.delete" hide>
@@ -1039,6 +1066,78 @@ export default function TenantDetailPage() {
         loading={actionLoading}
         onConfirm={handleDelete}
       />
+
+      {/* Notice Period Dialog */}
+      {showNoticeDialog && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <Card className="w-full max-w-md animate-scale-in">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-amber-500" />
+                Put on Notice Period
+              </CardTitle>
+              <CardDescription>
+                Set an expected exit date for {tenant.name}. This will move them to &ldquo;Notice Period&rdquo; status.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                <p className="text-amber-800">
+                  <strong>Note:</strong> This action will change the tenant&apos;s status to &ldquo;Notice Period&rdquo;.
+                  You can later initiate the checkout process when they&apos;re ready to leave.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="expected_exit_date">Expected Exit Date *</Label>
+                <Input
+                  id="expected_exit_date"
+                  type="date"
+                  value={noticeData.expected_exit_date}
+                  onChange={(e) => setNoticeData({ ...noticeData, expected_exit_date: e.target.value })}
+                  min={new Date().toISOString().split("T")[0]}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Standard notice period is 30 days. Adjust as per your agreement.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notice_notes">Reason / Notes (Optional)</Label>
+                <Input
+                  id="notice_notes"
+                  value={noticeData.notice_notes}
+                  onChange={(e) => setNoticeData({ ...noticeData, notice_notes: e.target.value })}
+                  placeholder="e.g., Job relocation, personal reasons..."
+                />
+              </div>
+            </CardContent>
+            <div className="flex justify-end gap-2 p-4 pt-0">
+              <Button variant="outline" onClick={() => setShowNoticeDialog(false)} disabled={actionLoading}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handlePutOnNotice}
+                disabled={actionLoading || !noticeData.expected_exit_date}
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+              >
+                {actionLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Bell className="mr-2 h-4 w-4" />
+                    Put on Notice
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

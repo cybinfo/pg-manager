@@ -267,15 +267,16 @@ function NewPaymentForm() {
       if (error) {
         console.error("Error recording payment:", error)
         toast.error(`Failed to record payment: ${error.message}`)
+        setLoading(false)
         return
       }
 
       toast.success(`Payment recorded! Receipt: ${receiptData || "Generated"}`)
+      setLoading(false)
       router.push("/payments")
     } catch (error: any) {
       console.error("Error:", error)
       toast.error(error?.message || "Failed to record payment. Please try again.")
-    } finally {
       setLoading(false)
     }
   }
