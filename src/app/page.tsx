@@ -97,9 +97,9 @@ const whyManageKar = [
 ]
 
 const stats = [
-  { value: "500+", label: "Businesses Trust Us" },
-  { value: "10,000+", label: "Customers Managed" },
-  { value: "₹2Cr+", label: "Transactions Tracked" },
+  { value: "16+", label: "Dashboard Modules" },
+  { value: "50+", label: "Staff Permissions" },
+  { value: "37", label: "Database Migrations" },
   { value: "99.9%", label: "Uptime Guaranteed" },
 ]
 

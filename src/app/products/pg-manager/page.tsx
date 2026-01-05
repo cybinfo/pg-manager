@@ -29,13 +29,13 @@ const features = [
   {
     icon: Building2,
     title: "Multi-Property Management",
-    description: "Manage multiple PGs from a single dashboard. Track rooms, beds, and occupancy across all properties.",
+    description: "Manage multiple PGs from a single dashboard. Track rooms, beds, and occupancy across all properties with 2D architecture view.",
     color: "text-teal-600 bg-teal-50"
   },
   {
     icon: Users,
-    title: "Tenant Management",
-    description: "Complete tenant lifecycle - registration, documents, room assignment, and exit clearance. Detect returning tenants automatically.",
+    title: "Complete Tenant Lifecycle",
+    description: "Registration with document upload, notice period workflow, exit clearance with settlements. Automatic returning tenant detection.",
     color: "text-violet-600 bg-violet-50"
   },
   {
@@ -47,55 +47,55 @@ const features = [
   {
     icon: Globe,
     title: "Your Own PG Website",
-    description: "Get a beautiful public website for your PG. Share with potential tenants and fill vacancies faster.",
+    description: "Auto-generate a public website for each property at managekar.com/pg/your-slug. Share with potential tenants.",
     color: "text-pink-600 bg-pink-50"
   },
   {
     icon: Gauge,
     title: "Meter Readings",
-    description: "Track electricity, water, and gas meters. Auto-generate charges based on consumption.",
+    description: "Track electricity, water, and gas meters. Auto-generate charges based on consumption with configurable rates and split methods.",
     color: "text-amber-600 bg-amber-50"
   },
   {
     icon: Receipt,
     title: "Smart Billing System",
-    description: "Generate bills, track dues, accept partial payments. Auto-generate monthly bills on your schedule.",
+    description: "Generate itemized bills with multiple charge types. Calendar month or check-in anniversary billing. Auto-generation on schedule.",
     color: "text-emerald-600 bg-emerald-50"
   },
   {
     icon: Bell,
-    title: "Automated Reminders",
-    description: "Email & WhatsApp payment reminders. Never chase tenants manually again.",
+    title: "Automated Notifications",
+    description: "Email & WhatsApp payment reminders, receipts, and daily summaries. Professional formatting with property details.",
     color: "text-sky-600 bg-sky-50"
   },
   {
     icon: MessageSquare,
-    title: "Complaint Management",
-    description: "Tenants can raise complaints. Track resolution status and response times.",
+    title: "Approvals & Complaints",
+    description: "Tenant issue reporting with approval workflow. Document uploads, profile change requests, and complaint tracking.",
     color: "text-rose-600 bg-rose-50"
   },
   {
     icon: FileText,
-    title: "PDF Receipts",
-    description: "Professional rent receipts. Download, email, or share via WhatsApp instantly.",
+    title: "PDF & WhatsApp Receipts",
+    description: "Professional rent receipts with property details, room info, and owner contact. Download, email, or share via WhatsApp.",
     color: "text-orange-600 bg-orange-50"
   },
   {
     icon: TrendingDown,
     title: "Expense Tracking",
-    description: "Track all your expenses - maintenance, repairs, utilities. See where your money goes.",
+    description: "Track all expenses by category and vendor. Configurable expense types. See where your money goes.",
     color: "text-indigo-600 bg-indigo-50"
   },
   {
     icon: BarChart3,
     title: "Reports & Analytics",
-    description: "Revenue trends, occupancy rates, dues aging - make data-driven decisions.",
+    description: "Revenue trends, occupancy rates, dues aging, collection efficiency. Multi-level grouping across all list pages.",
     color: "text-purple-600 bg-purple-50"
   },
   {
     icon: UserCheck,
     title: "Visitor Management",
-    description: "Log visitor entries, track check-in/out times. Improve security at your property.",
+    description: "Log visitor entries with multi-day overnight stays. Per-night charges with automatic bill creation for tenants.",
     color: "text-lime-600 bg-lime-50"
   }
 ]

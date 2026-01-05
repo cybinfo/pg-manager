@@ -3,105 +3,102 @@
 <div align="center">
   <img src="public/logo.svg" alt="ManageKar Logo" width="80" />
   <h3>India's Smartest PG & Hostel Management Platform</h3>
-  <p>"Kar" means "do" in Hindi — ManageKar = "Let's Manage" 🇮🇳</p>
+  <p>"Kar" means "do" in Hindi — ManageKar = "Let's Manage"</p>
 
-  **[Live Demo](https://managekar.com)** | **[Documentation](CLAUDE.md)**
+  **[Live Demo](https://managekar.com)** | **[Product Page](https://managekar.com/products/pg-manager)** | **[Pricing](https://managekar.com/pricing)**
 </div>
 
 ---
 
-## ✨ Why ManageKar?
+## Why ManageKar?
 
 ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (Paying Guest) and hostel owners. Built with modern technology and a mobile-first approach, it helps you manage your entire PG business from anywhere.
 
 ### Key Highlights
 
-- 🏠 **Multi-Property Support** - Manage multiple PG properties from one dashboard
-- 👥 **Complete Tenant Lifecycle** - From onboarding to exit clearance
-- 💰 **Smart Billing** - Automated bills, meter readings, payment tracking
-- 👨‍💼 **Staff Management** - Role-based access control with 50+ permissions
-- 📱 **PWA Support** - Install as mobile app, works offline
-- 🌐 **Public PG Websites** - Auto-generate website for each property
-- 🔔 **Automated Notifications** - Email & WhatsApp reminders
-- 📊 **Reports & Analytics** - Track revenue, occupancy, and more
+- **Multi-Property Support** - Manage multiple PGs from one dashboard
+- **Complete Tenant Lifecycle** - From onboarding to exit clearance with notice period workflow
+- **Smart Billing** - Auto-generate bills, track meter readings, record payments
+- **Staff Management** - Role-based access with 50+ granular permissions
+- **Mobile-First** - Works beautifully on phones
+- **Public PG Websites** - Auto-generate website for each property
+- **WhatsApp Integration** - Send bills, receipts, and reminders via WhatsApp
+- **Reports & Analytics** - Track revenue, occupancy, and collection rates
 
 ---
 
-## 🚀 Features
+## Features
 
-### Property & Room Management
-- Add multiple properties with addresses, photos, and amenities
-- Manage rooms with different types (Single, Double, Triple, Dormitory)
-- Track room occupancy and availability in real-time
-- Set default pricing per room type
+### 16 Dashboard Modules
 
-### Tenant Management
-- Complete tenant profiles with photos, ID documents, emergency contacts
-- Returning tenant detection (auto-fill previous data)
-- Room transfer with history tracking
-- Exit clearance process with settlement calculation
+| Module | Description |
+|--------|-------------|
+| **Dashboard** | Overview with key metrics and quick actions |
+| **Properties** | Multi-property management with 2D architecture view |
+| **Rooms** | Room types, capacity tracking, occupancy status |
+| **Tenants** | Complete lifecycle with document upload and returning tenant detection |
+| **Bills** | Itemized monthly bills with auto-generation |
+| **Payments** | Payment recording with WhatsApp receipts |
+| **Expenses** | Track property expenses by category |
+| **Meter Readings** | Electricity, water, gas with auto-charge generation |
+| **Staff** | Staff members with email invitations |
+| **Notices** | Announcements for tenants |
+| **Complaints** | Tenant issue tracking with priority levels |
+| **Visitors** | Visitor log with multi-day overnight stays |
+| **Exit Clearance** | Systematic checkout with settlement calculation |
+| **Reports** | Revenue trends, occupancy stats, dues aging |
+| **Approvals** | Tenant request workflow (profile changes, disputes) |
+| **Settings** | Configuration for billing, room types, features |
 
-### Billing & Payments
-- Generate itemized monthly bills automatically
-- Support for rent, electricity, water, and custom charges
-- Meter readings with auto-charge generation
-- Payment tracking with partial payment support
-- WhatsApp bill sharing
-- PDF rent receipts
+### Staff & Permissions (RBAC)
 
-### Staff Management & Permissions
 - **5 Default Roles**: Admin, Property Manager, Accountant, Maintenance, Receptionist
-- Create custom roles with specific permissions
-- 50+ granular permissions across all modules
-- Multi-role support (staff can have multiple roles)
-- Property-level role assignments
+- **50+ Permissions**: Granular control across all modules
+- **Multi-Role Support**: Staff can have multiple roles
+- **Property-Level Access**: Assign roles to specific properties
 
-### Notifications
-- Automated payment reminders via email
-- WhatsApp notifications for receipts and reminders
-- Notice board for tenant announcements
-- Complaint tracking and resolution
+### Billing System
 
-### Reports & Analytics
-- Revenue trends and collection rates
-- Occupancy statistics
-- Expense tracking by category
-- Dues aging report
-- Export to CSV
+- Monthly bills with itemized line items
+- Auto-generation via configurable schedule
+- Support for rent, electricity, water, and custom charges
+- Meter readings with per-unit or flat rate billing
+- Calendar month or check-in anniversary billing modes
+- PDF receipts and WhatsApp sharing
 
 ### Additional Features
-- **Visitor Log** - Track visitor entries with checkout
-- **Complaints** - Handle tenant complaints with priority levels
-- **Exit Clearance** - Systematic checkout process
-- **PG Websites** - Public website for each property (managekar.com/pg/your-slug)
-- **Expense Tracking** - Track property expenses with categories
+
+- **Public PG Websites** - Each property gets a page at managekar.com/pg/your-slug
+- **Tenant Portal** - Tenants can view bills, raise complaints, report issues
+- **Feature Flags** - Enable/disable features per workspace
+- **Activity Log** - Audit trail for all actions
+- **Platform Admin** - Superuser access for support
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technology |
 |----------|------------|
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth with RLS |
+| Database | Supabase (PostgreSQL) with RLS |
+| Auth | Supabase Auth |
 | Styling | Tailwind CSS + shadcn/ui |
 | Charts | Recharts |
 | PDF | @react-pdf/renderer |
 | Email | Resend API |
 | Hosting | Vercel |
-| Icons | Lucide React |
 
 ---
 
-## 📦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
 - npm or yarn
-- Supabase account (free tier works)
+- Supabase account
 
 ### Installation
 
@@ -121,7 +118,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
    cp .env.example .env.local
    ```
 
-   Add your Supabase credentials:
+   Add your credentials:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
@@ -130,10 +127,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 
 4. **Run database migrations**
 
-   Go to your Supabase SQL editor and run migrations in order from `supabase/migrations/`:
-   - `001_initial_schema.sql`
-   - `002_visitors.sql`
-   - ... through `014_fix_staff_permissions_aggregation.sql`
+   Run migrations in order from `supabase/migrations/` (001 through 037)
 
 5. **Start development server**
    ```bash
@@ -144,21 +138,61 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 
 ---
 
-## 🚢 Deployment
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx                # Platform homepage
+│   ├── pricing/                # Pricing page
+│   ├── products/pg-manager/    # Product landing page
+│   ├── (auth)/                 # Login, Register, Password Reset
+│   ├── (dashboard)/            # Owner/Staff dashboard
+│   │   ├── dashboard/          # Main dashboard (/dashboard)
+│   │   ├── properties/         # Properties (/properties)
+│   │   ├── rooms/              # Rooms (/rooms)
+│   │   ├── tenants/            # Tenants (/tenants)
+│   │   ├── bills/              # Bills (/bills)
+│   │   ├── payments/           # Payments (/payments)
+│   │   ├── expenses/           # Expenses (/expenses)
+│   │   ├── meter-readings/     # Meter Readings (/meter-readings)
+│   │   ├── staff/              # Staff (/staff)
+│   │   ├── notices/            # Notices (/notices)
+│   │   ├── complaints/         # Complaints (/complaints)
+│   │   ├── visitors/           # Visitors (/visitors)
+│   │   ├── exit-clearance/     # Exit Clearance (/exit-clearance)
+│   │   ├── reports/            # Reports (/reports)
+│   │   ├── architecture/       # Architecture View (/architecture)
+│   │   ├── activity/           # Activity Log (/activity)
+│   │   ├── approvals/          # Approvals (/approvals)
+│   │   ├── admin/              # Platform Admin (/admin)
+│   │   └── settings/           # Settings (/settings)
+│   ├── (tenant)/               # Tenant portal
+│   ├── pg/[slug]/              # Public PG websites
+│   └── api/                    # API routes
+├── components/
+│   ├── ui/                     # Reusable UI components
+│   ├── forms/                  # Form components
+│   └── auth/                   # Auth components
+└── lib/
+    ├── supabase/               # Database clients
+    ├── auth/                   # Auth context & hooks
+    └── features/               # Feature flags
+```
+
+---
+
+## Deployment
 
 ### Deploy to Vercel
 
-1. **Via CLI**
-   ```bash
-   vercel --prod
-   ```
+```bash
+vercel --prod
+```
 
-2. **Via GitHub**
-   - Connect your GitHub repository to Vercel
-   - Set environment variables in Vercel dashboard
-   - Automatic deployments on push to main
+Or connect your GitHub repository for automatic deployments.
 
-### Environment Variables for Production
+### Environment Variables
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -168,70 +202,7 @@ RESEND_API_KEY=your_resend_key
 
 ---
 
-## 📁 Project Structure
-
-```
-src/
-├── app/
-│   ├── page.tsx              # Landing page (ManageKar platform)
-│   ├── pricing/              # Pricing page
-│   ├── products/pg-manager/  # PG Manager product page
-│   ├── (auth)/               # Login, Register
-│   ├── (dashboard)/          # Owner dashboard (14 modules)
-│   │   └── dashboard/
-│   │       ├── properties/   # Property management
-│   │       ├── rooms/        # Room management
-│   │       ├── tenants/      # Tenant management
-│   │       ├── bills/        # Billing system
-│   │       ├── payments/     # Payment tracking
-│   │       ├── expenses/     # Expense tracking
-│   │       ├── meter-readings/
-│   │       ├── staff/        # Staff & role management
-│   │       ├── notices/      # Announcements
-│   │       ├── complaints/   # Complaint handling
-│   │       ├── visitors/     # Visitor log
-│   │       ├── exit-clearance/
-│   │       ├── reports/      # Analytics
-│   │       └── settings/     # Configuration
-│   ├── (tenant)/             # Tenant portal
-│   ├── (setup)/              # Initial setup wizard
-│   ├── pg/[slug]/            # Public PG websites
-│   ├── contact/              # Contact page
-│   └── help/                 # FAQ page
-├── components/
-│   ├── ui/                   # Reusable UI components
-│   ├── forms/                # Form components
-│   └── auth/                 # Auth components
-└── lib/
-    ├── supabase/             # Database clients
-    ├── auth/                 # Auth context & hooks
-    ├── email.ts              # Email service
-    └── format.ts             # Formatting utilities
-```
-
----
-
-## 🔐 User Roles
-
-### Owner
-- Full access to all features
-- Can manage staff and assign roles
-- Access to settings and configuration
-
-### Staff (with assigned roles)
-- Access based on role permissions
-- Can have multiple roles
-- Property-specific or all-property access
-
-### Tenant
-- View their bills and payment history
-- Raise complaints
-- View notices
-- Update profile
-
----
-
-## 💰 Pricing
+## Pricing
 
 | Plan | Price | Features |
 |------|-------|----------|
@@ -242,25 +213,7 @@ src/
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 👨‍💻 Author
+## Author
 
 **Rajat Seth**
 - GitHub: [@cybinfo](https://github.com/cybinfo)
@@ -268,17 +221,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Acknowledgments
+## License
 
-- [Next.js](https://nextjs.org/) - React framework
-- [Supabase](https://supabase.com/) - Backend as a Service
-- [shadcn/ui](https://ui.shadcn.com/) - UI components
-- [Vercel](https://vercel.com/) - Hosting platform
-- [Lucide](https://lucide.dev/) - Icons
+This project is licensed under the MIT License.
 
 ---
 
 <div align="center">
-  <p>Made with ❤️ for Indian PG owners</p>
+  <p>Made with love for Indian PG owners</p>
   <p><strong>ManageKar</strong> - Simple Software for Indian Small Businesses</p>
 </div>
