@@ -87,21 +87,44 @@ export function getTimeUntilExpiry(session: Session | null): number | null {
 function getStoredSessionData(): { session: Session | null; projectRef: string | null } {
   if (typeof window === "undefined") return { session: null, projectRef: null }
   try {
-    // Supabase stores session with key pattern: sb-<project-ref>-auth-token
     const keys = Object.keys(localStorage)
-    const authKey = keys.find(k => k.includes('-auth-token'))
-    if (!authKey) return { session: null, projectRef: null }
+    console.log("[Session] localStorage keys:", keys.filter(k => k.includes('supabase') || k.includes('sb-') || k.includes('auth')))
+
+    // Supabase stores session with key pattern: sb-<project-ref>-auth-token
+    let authKey = keys.find(k => k.includes('-auth-token'))
+
+    // Also try other common patterns
+    if (!authKey) {
+      authKey = keys.find(k => k.startsWith('sb-') && k.includes('auth'))
+    }
+    if (!authKey) {
+      authKey = keys.find(k => k.includes('supabase') && k.includes('auth'))
+    }
+
+    if (!authKey) {
+      console.log("[Session] No auth key found in localStorage")
+      return { session: null, projectRef: null }
+    }
+
+    console.log("[Session] Found auth key:", authKey)
 
     // Extract project ref from key
     const projectRef = authKey.replace('sb-', '').replace('-auth-token', '')
 
     const stored = localStorage.getItem(authKey)
-    if (!stored) return { session: null, projectRef }
+    if (!stored) {
+      console.log("[Session] Auth key exists but value is empty")
+      return { session: null, projectRef }
+    }
 
+    console.log("[Session] Stored value length:", stored.length)
     const parsed = JSON.parse(stored)
+    console.log("[Session] Parsed keys:", Object.keys(parsed || {}))
+
     // Supabase stores session in different formats depending on version
     const session = parsed?.currentSession || parsed?.session || parsed
     if (!session?.access_token || !session?.user) {
+      console.log("[Session] Session missing access_token or user")
       return { session: null, projectRef }
     }
 
