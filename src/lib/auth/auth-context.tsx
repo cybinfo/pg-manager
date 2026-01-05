@@ -376,17 +376,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return
     }
 
-    // Timeout wrapper to prevent hanging forever
+    // Timeout wrapper to prevent hanging forever (cancellable)
     const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
-      return Promise.race([
-        promise,
-        new Promise<T>((resolve) => {
-          setTimeout(() => {
-            console.warn(`[Auth] Operation timed out after ${ms}ms`)
-            resolve(fallback)
-          }, ms)
-        })
-      ])
+      let timeoutId: NodeJS.Timeout
+      const timeoutPromise = new Promise<T>((resolve) => {
+        timeoutId = setTimeout(() => resolve(fallback), ms)
+      })
+      return Promise.race([promise, timeoutPromise]).finally(() => {
+        clearTimeout(timeoutId)
+      })
     }
 
     const initAuth = async () => {
@@ -396,8 +394,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       initializingRef.current = true
-      const startTime = Date.now()
-      console.log('[Auth] Starting initialization...')
 
       try {
         // Get session with 10s timeout
@@ -407,11 +403,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           { user: null, session: null, error: { code: 'TIMEOUT' as const, message: 'Session check timed out' } }
         )
 
-        console.log(`[Auth] Session check completed in ${Date.now() - startTime}ms`)
-
         if (sessionResult.error) {
-          console.warn('[Auth] Session check error:', sessionResult.error.message)
-          // Continue anyway - user might not be logged in
+          // User might not be logged in - this is normal
         }
 
         if (sessionResult.session?.user && sessionResult.session?.access_token) {
@@ -427,9 +420,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             15000,
             undefined
           )
-          console.log(`[Auth] User data loaded in ${Date.now() - startTime}ms`)
         } else {
-          console.log('[Auth] No valid session found')
           globalAuthState.user = null
         }
       } catch (err) {
@@ -442,7 +433,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (mountedRef.current) {
           setIsLoading(false)
         }
-        console.log(`[Auth] Initialization complete in ${Date.now() - startTime}ms`)
       }
     }
 

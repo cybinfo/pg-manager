@@ -80,17 +80,16 @@ export function getTimeUntilExpiry(session: Session | null): number | null {
 // Core Session Operations
 // ============================================
 
-// Helper to wrap a promise with a timeout
+// Helper to wrap a promise with a timeout (cancellable)
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((resolve) => {
-      setTimeout(() => {
-        console.warn(`[Session] Operation timed out after ${ms}ms`)
-        resolve(fallback)
-      }, ms)
-    })
-  ])
+  let timeoutId: NodeJS.Timeout
+  const timeoutPromise = new Promise<T>((resolve) => {
+    timeoutId = setTimeout(() => resolve(fallback), ms)
+  })
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId)
+  })
 }
 
 /**
@@ -99,24 +98,18 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
  * (getSession() can hang, but getUser() makes a proper network request)
  */
 export async function getSession(): Promise<SessionResult> {
-  const startTime = Date.now()
-  console.log("[Session] getSession starting...")
-
   try {
     const supabase = createClient()
 
     // Use getUser() - this makes a network request and works reliably with cookies
     // Unlike getSession() which can hang with @supabase/ssr
-    console.log("[Session] Calling supabase.auth.getUser()...")
     const userResult = await withTimeout(
       supabase.auth.getUser(),
       5000, // 5 second timeout
       { data: { user: null }, error: { message: 'getUser timed out' } as AuthError }
     )
-    console.log(`[Session] getUser() returned in ${Date.now() - startTime}ms`)
 
     if (userResult.error) {
-      console.log("[Session] getUser error:", userResult.error.message)
       return {
         user: null,
         session: null,
@@ -125,7 +118,6 @@ export async function getSession(): Promise<SessionResult> {
     }
 
     if (!userResult.data.user) {
-      console.log("[Session] No user found")
       return {
         user: null,
         session: null,
@@ -134,21 +126,17 @@ export async function getSession(): Promise<SessionResult> {
     }
 
     const user = userResult.data.user
-    console.log(`[Session] User found: ${user.email}`)
 
     // Now get the session for the access token with timeout
     // This should work since we confirmed the user exists
-    console.log("[Session] Getting session for access token...")
     const sessionResult = await withTimeout(
       supabase.auth.getSession(),
       3000, // 3 second timeout - if it takes longer, skip it
       { data: { session: null }, error: null }
     )
-    console.log(`[Session] getSession() returned in ${Date.now() - startTime}ms`)
 
     if (!sessionResult.data.session) {
       // User exists but session fetch timed out - return user without session
-      console.warn("[Session] Could not get session (timeout), using user data only")
       return {
         user: user,
         session: null,
@@ -158,11 +146,9 @@ export async function getSession(): Promise<SessionResult> {
 
     // Check if session is expired
     if (isSessionExpired(sessionResult.data.session)) {
-      console.warn("[Session] Session expired, attempting refresh")
       return refreshSession()
     }
 
-    console.log(`[Session] Valid session found in ${Date.now() - startTime}ms`)
     return {
       user: user,
       session: sessionResult.data.session,
@@ -225,17 +211,15 @@ export async function getUser(): Promise<{ user: User | null; error: SessionErro
  * Call this when the session is about to expire.
  */
 export async function refreshSession(): Promise<SessionResult> {
-  const startTime = Date.now()
-  console.log("[Session] refreshSession starting...")
-
   try {
     const supabase = createClient()
-    console.log("[Session] Calling supabase.auth.refreshSession()...")
-    const { data, error } = await supabase.auth.refreshSession()
-    console.log(`[Session] refreshSession() returned in ${Date.now() - startTime}ms`)
+    const { data, error } = await withTimeout(
+      supabase.auth.refreshSession(),
+      5000, // 5 second timeout
+      { data: { session: null, user: null }, error: { message: 'Refresh timed out' } as AuthError }
+    )
 
     if (error) {
-      console.error("[Session] Refresh failed:", error.message)
       return {
         user: null,
         session: null,
@@ -244,7 +228,6 @@ export async function refreshSession(): Promise<SessionResult> {
     }
 
     if (!data.session) {
-      console.log("[Session] Refresh returned no session")
       return {
         user: null,
         session: null,
@@ -252,7 +235,6 @@ export async function refreshSession(): Promise<SessionResult> {
       }
     }
 
-    console.log(`[Session] Session refreshed successfully in ${Date.now() - startTime}ms`)
     return {
       user: data.session.user,
       session: data.session,
