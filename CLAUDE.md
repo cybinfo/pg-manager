@@ -78,8 +78,27 @@ src/lib/
 ├── supabase/                   # Supabase clients + transforms
 ├── auth/                       # Auth context + hooks
 ├── features/                   # Feature flags system
+├── services/                   # Centralized service layer (NEW)
+│   ├── types.ts               # Service types, error codes
+│   ├── audit.service.ts       # Audit logging
+│   ├── notification.service.ts # Multi-channel notifications
+│   └── workflow.engine.ts     # Workflow orchestrator
+├── workflows/                  # Business workflows (NEW)
+│   ├── tenant.workflow.ts     # Tenant lifecycle
+│   ├── payment.workflow.ts    # Payment recording
+│   └── exit.workflow.ts       # Exit clearance
+├── hooks/                      # Centralized hooks (NEW)
+│   ├── useListPage.ts         # List page data + UI
+│   └── useEntityMutation.ts   # CRUD operations
 ├── email.ts                    # Resend email service
 └── notifications.ts            # WhatsApp templates
+
+src/components/
+├── ui/                         # shadcn + custom components
+├── forms/                      # Shared form components
+├── auth/                       # Auth components (PermissionGuard, etc.)
+└── shared/                     # Centralized templates (NEW)
+    └── ListPageTemplate.tsx   # Standard list page
 ```
 
 ---
@@ -228,7 +247,7 @@ roles               - Role definitions with permissions JSONB
 user_roles          - Staff-to-role assignments
 ```
 
-### Migrations (37 total)
+### Migrations (38 total)
 Run in order from `supabase/migrations/`. Key ones:
 - `012_unified_identity.sql` - Multi-context auth
 - `013_default_roles.sql` - System roles
@@ -236,6 +255,7 @@ Run in order from `supabase/migrations/`. Key ones:
 - `016_audit_logging.sql` - Audit trail
 - `017_platform_admins.sql` - Superuser system
 - `036_fix_charge_expense_rls.sql` - Security fix for data isolation
+- `038_comprehensive_audit_system.sql` - Complete audit triggers + workflow tables (NEW)
 
 ---
 
@@ -245,6 +265,93 @@ Run in order from `supabase/migrations/`. Key ones:
 NEXT_PUBLIC_SUPABASE_URL=https://pmedxtgysllyhpjldhho.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon_key>
 RESEND_API_KEY=<resend_key>  # For emails
+```
+
+---
+
+## Centralized Architecture (NEW)
+
+### Service Layer
+All business operations should go through the service layer for consistent audit logging and notifications:
+
+```typescript
+import { wrapOperation, createAuditEvent, sendNotification } from "@/lib/services"
+
+// Simple operation with automatic audit
+const result = await wrapOperation(
+  () => supabase.from("tenants").insert(data).select().single(),
+  {
+    entityType: "tenant",
+    entityId: newTenant.id,
+    action: "create",
+    actorId: user.id,
+    actorType: "owner",
+    workspaceId: workspace.id,
+  }
+)
+```
+
+### Workflow Engine
+For multi-step operations, use workflows to ensure all cascading effects happen:
+
+```typescript
+import { createTenant, recordPayment, initiateExitClearance } from "@/lib/workflows"
+
+// Tenant creation with room occupancy, initial bill, welcome notification
+const result = await createTenant(input, actorId, "owner", workspaceId)
+
+// Payment with bill status update, receipt, notification
+const result = await recordPayment(input, actorId, "owner", workspaceId)
+
+// Exit clearance with tenant status, room release, settlement
+const result = await initiateExitClearance(input, actorId, "owner", workspaceId)
+```
+
+### useListPage Hook
+Eliminates 1000+ lines of duplicate code across list pages:
+
+```typescript
+import { useListPage, TENANT_LIST_CONFIG } from "@/lib/hooks"
+
+const { data, filteredData, loading, filters, setFilter, metricsData } = useListPage({
+  config: TENANT_LIST_CONFIG,
+  filters: filterConfigs,
+  groupByOptions,
+  metrics,
+})
+```
+
+### useEntityMutation Hook
+Centralized CRUD with automatic audit logging:
+
+```typescript
+import { useEntityMutation } from "@/lib/hooks"
+
+const { create, update, remove, loading } = useEntityMutation({
+  entityType: "tenant",
+  table: "tenants",
+  onSuccess: () => refetch(),
+})
+
+await create({ name: "John", phone: "9876543210" })
+```
+
+### ListPageTemplate Component
+Standard list page with 70% code reduction:
+
+```typescript
+import { ListPageTemplate } from "@/components/shared"
+
+<ListPageTemplate
+  title="Tenants"
+  icon={Users}
+  permission="tenants.view"
+  config={TENANT_LIST_CONFIG}
+  filters={tenantFilters}
+  columns={tenantColumns}
+  createHref="/tenants/new"
+  detailHref={(t) => `/tenants/${t.id}`}
+/>
 ```
 
 ---
