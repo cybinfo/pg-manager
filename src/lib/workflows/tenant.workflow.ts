@@ -109,7 +109,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
 
         const { data: room, error } = await supabase
           .from("rooms")
-          .select("id, room_number, bed_count, occupied_beds, status, property:properties(id, name)")
+          .select("id, room_number, total_beds, occupied_beds, status, property:properties(id, name)")
           .eq("id", input.room_id)
           .single()
 
@@ -119,7 +119,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           )
         }
 
-        const bedCount = room.bed_count || 1
+        const bedCount = room.total_beds || 1
         const occupiedBeds = room.occupied_beds || 0
 
         if (occupiedBeds >= bedCount) {
@@ -234,7 +234,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const room = previousResults.validate_room as Record<string, unknown>
 
         const newOccupiedBeds = (room.occupied_beds as number || 0) + 1
-        const bedCount = room.bed_count as number || 1
+        const bedCount = room.total_beds as number || 1
         const newStatus = newOccupiedBeds >= bedCount ? "occupied" : "partially_occupied"
 
         const { error } = await supabase
@@ -523,7 +523,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
         // Get new room
         const { data: newRoom, error: roomError } = await supabase
           .from("rooms")
-          .select("id, room_number, bed_count, occupied_beds, monthly_rent")
+          .select("id, room_number, total_beds, occupied_beds, monthly_rent")
           .eq("id", input.new_room_id)
           .single()
 
@@ -534,7 +534,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
         }
 
         // Check capacity
-        if ((newRoom.occupied_beds || 0) >= (newRoom.bed_count || 1)) {
+        if ((newRoom.occupied_beds || 0) >= (newRoom.total_beds || 1)) {
           return createErrorResult(
             createServiceError(ERROR_CODES.ROOM_AT_CAPACITY, "New room is at full capacity")
           )
@@ -621,7 +621,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
           .from("rooms")
           .update({
             occupied_beds: newOccupied,
-            status: newOccupied >= (room.bed_count as number || 1) ? "occupied" : "partially_occupied",
+            status: newOccupied >= (room.total_beds as number || 1) ? "occupied" : "partially_occupied",
             updated_at: new Date().toISOString(),
           })
           .eq("id", input.new_room_id)

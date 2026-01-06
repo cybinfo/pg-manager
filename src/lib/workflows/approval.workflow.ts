@@ -256,7 +256,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       const supabase = createClient()
       const { data: room, error } = await supabase
         .from("rooms")
-        .select("id, bed_count, occupied_beds")
+        .select("id, total_beds, occupied_beds")
         .eq("id", payload.requested_room_id)
         .single()
 
@@ -264,7 +264,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
         return createErrorResult(createServiceError(ERROR_CODES.NOT_FOUND, "Requested room not found"))
       }
 
-      if ((room.occupied_beds || 0) >= (room.bed_count || 1)) {
+      if ((room.occupied_beds || 0) >= (room.total_beds || 1)) {
         return createErrorResult(createServiceError(ERROR_CODES.ROOM_AT_CAPACITY, "Requested room is full"))
       }
 
