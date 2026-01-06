@@ -194,11 +194,12 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const tenant = previousResults.create_tenant as Record<string, unknown>
 
         const stayData = {
+          owner_id: context.actor_id,
           tenant_id: tenant.id,
           property_id: input.property_id,
           room_id: input.room_id,
           bed_id: input.bed_id || null,
-          start_date: input.check_in_date,
+          join_date: input.check_in_date,
           monthly_rent: input.monthly_rent,
           status: "active",
           created_at: new Date().toISOString(),
