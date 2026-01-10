@@ -18,6 +18,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 
 - **Multi-Property Support** - Manage multiple PGs from one dashboard
 - **Complete Tenant Lifecycle** - From onboarding to exit clearance with notice period workflow
+- **Tenant Journey Intelligence** - AI-powered insights with timeline view, risk scores, and predictive analytics
 - **Smart Billing** - Auto-generate bills, track meter readings, record payments
 - **Refund Tracking** - Comprehensive refund management for deposits and overpayments
 - **Staff Management** - Role-based access with 50+ granular permissions
@@ -25,12 +26,13 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 - **Public PG Websites** - Auto-generate website for each property
 - **WhatsApp Integration** - Send bills, receipts, and reminders via WhatsApp
 - **Reports & Analytics** - Track revenue, occupancy, and collection rates
+- **PDF Export** - Generate professional reports and journey summaries
 
 ---
 
 ## Features
 
-### 17 Dashboard Modules
+### 19 Dashboard Modules
 
 | Module | Description |
 |--------|-------------|
@@ -38,6 +40,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 | **Properties** | Multi-property management with 2D architecture view |
 | **Rooms** | Room types, capacity tracking, occupancy status |
 | **Tenants** | Complete lifecycle with document upload and returning tenant detection |
+| **Tenant Journey** | AI-powered timeline, analytics, risk scores, and PDF export |
 | **Bills** | Itemized monthly bills with auto-generation |
 | **Payments** | Payment recording with WhatsApp receipts |
 | **Refunds** | Deposit refunds, overpayment refunds, adjustments |
@@ -49,8 +52,24 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 | **Visitors** | Visitor log with multi-day overnight stays |
 | **Exit Clearance** | Systematic checkout with settlement calculation |
 | **Reports** | Revenue trends, occupancy stats, dues aging |
+| **Architecture** | Interactive 2D property floor plan |
 | **Approvals** | Tenant request workflow (profile changes, disputes) |
 | **Settings** | Configuration for billing, room types, features |
+
+### Tenant Journey Intelligence (NEW)
+
+The Tenant Journey feature provides a comprehensive 360° view of each tenant:
+
+- **Visual Timeline** - Chronological events from onboarding to exit
+- **Event Categories** - Financial, accommodation, complaints, visitors, system events
+- **Journey Analytics** - Total stays, payments, complaints, room transfers
+- **AI-Powered Scores**:
+  - **Payment Reliability Index** (0-100) - Based on payment patterns
+  - **Churn Risk Score** (0-100) - Predicts likelihood of leaving
+  - **Satisfaction Indicator** - High/Medium/Low based on interactions
+- **Predictive Insights** - Automated alerts and recommendations
+- **Visitor Linkage** - Connect visitors to tenants who later joined
+- **PDF Export** - Professional journey report for documentation
 
 ### Staff & Permissions (RBAC)
 
@@ -82,7 +101,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 - **Public PG Websites** - Each property gets a page at managekar.com/pg/your-slug
 - **Tenant Portal** - Tenants can view bills, raise complaints, report issues
 - **Feature Flags** - Enable/disable features per workspace
-- **Activity Log** - Audit trail for all actions
+- **Activity Log** - Comprehensive audit trail for all actions
 - **Platform Admin** - Superuser access for support
 - **Configurable Types** - Custom room types, charge types, expense types
 
@@ -139,7 +158,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 
 4. **Run database migrations**
 
-   Run migrations in order from `supabase/migrations/` (001 through 039)
+   Run migrations in order from `supabase/migrations/` (001 through 041)
 
 5. **Start development server**
    ```bash
@@ -159,11 +178,12 @@ src/
 │   ├── pricing/                # Pricing page
 │   ├── products/pg-manager/    # Product landing page
 │   ├── (auth)/                 # Login, Register, Password Reset
-│   ├── (dashboard)/            # Owner/Staff dashboard (17 modules)
+│   ├── (dashboard)/            # Owner/Staff dashboard (19 modules)
 │   │   ├── dashboard/          # Main dashboard (/dashboard)
 │   │   ├── properties/         # Properties (/properties)
 │   │   ├── rooms/              # Rooms (/rooms)
 │   │   ├── tenants/            # Tenants (/tenants)
+│   │   │   └── [id]/journey/   # Tenant Journey (/tenants/[id]/journey)
 │   │   ├── bills/              # Bills (/bills)
 │   │   ├── payments/           # Payments (/payments)
 │   │   ├── refunds/            # Refunds (/refunds)
@@ -183,18 +203,30 @@ src/
 │   ├── (tenant)/               # Tenant portal
 │   ├── pg/[slug]/              # Public PG websites
 │   └── api/                    # API routes
+│       └── tenants/[id]/
+│           └── journey-report/ # Journey PDF export
 ├── components/
 │   ├── ui/                     # Reusable UI components
 │   ├── forms/                  # Form components
 │   ├── shared/                 # Shared templates
-│   └── auth/                   # Auth components
+│   ├── auth/                   # Auth components
+│   └── journey/                # Journey components
+│       ├── Timeline.tsx        # Vertical event timeline
+│       ├── TimelineEvent.tsx   # Individual event card
+│       ├── JourneyHeader.tsx   # Header with tenant info
+│       ├── JourneyAnalytics.tsx # Analytics metric cards
+│       ├── FinancialSummary.tsx # Financial overview
+│       ├── PredictiveInsights.tsx # AI scores display
+│       └── JourneyFilters.tsx  # Filter controls
 └── lib/
     ├── supabase/               # Database clients
     ├── auth/                   # Auth context & hooks
     ├── features/               # Feature flags
     ├── services/               # Service layer
+    │   └── journey.service.ts  # Journey data aggregation
     ├── workflows/              # Business workflows
-    └── hooks/                  # Custom hooks
+    ├── hooks/                  # Custom hooks
+    └── pdf-journey-report.tsx  # Journey PDF template
 ```
 
 ---
@@ -222,7 +254,7 @@ RESEND_API_KEY=your_resend_key
 
 ## Database Migrations
 
-The project uses 39 migrations. Key ones:
+The project uses 41 migrations. Key ones:
 
 | Migration | Purpose |
 |-----------|---------|
@@ -232,6 +264,8 @@ The project uses 39 migrations. Key ones:
 | `035_configurable_room_types.sql` | Custom types |
 | `038_comprehensive_audit_system.sql` | Audit logging |
 | `039_refunds_table.sql` | Refund tracking |
+| `040_fix_schema_gaps.sql` | Feature flags, RLS fixes |
+| `041_tenant_journey_analytics.sql` | Journey analytics, risk alerts, communications |
 
 Run migrations via Supabase Dashboard → SQL Editor.
 
