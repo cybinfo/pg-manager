@@ -29,7 +29,8 @@ import {
   Grid3X3,
   ClipboardCheck,
   Shield,
-  Activity
+  Activity,
+  Wallet,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -55,6 +56,7 @@ const navigation: {
   { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
   { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
   { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
+  { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", feature: null },
   { name: "Expenses", href: "/expenses", icon: TrendingDown, permission: "expenses.view", feature: "expenses" },
   { name: "Meter Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
   { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },

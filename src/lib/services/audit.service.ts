@@ -97,7 +97,7 @@ export async function logAuditEvents(events: AuditEvent[]): Promise<ServiceResul
       )
     }
 
-    return createSuccessResult(data.map((d) => d.id))
+    return createSuccessResult(data.map((d: { id: string }) => d.id))
   } catch (err) {
     console.error("[AuditService] Exception logging batch audit events:", err)
     return createErrorResult(

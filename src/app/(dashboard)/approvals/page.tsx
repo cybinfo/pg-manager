@@ -130,20 +130,20 @@ export default function ApprovalsPage() {
       toast.error("Failed to load approvals")
     } else {
       // Transform Supabase array joins
-      const transformed = (data || []).map(a => {
-        const date = new Date(a.created_at)
+      const transformed = (data || []).map((a: Record<string, unknown>) => {
+        const date = new Date(a.created_at as string)
         return {
           ...a,
           requester_tenant: Array.isArray(a.requester_tenant)
             ? a.requester_tenant[0]
             : a.requester_tenant,
-          type_label: TYPE_LABELS[a.type] || a.type,
-          priority_label: a.priority.charAt(0).toUpperCase() + a.priority.slice(1),
+          type_label: TYPE_LABELS[a.type as keyof typeof TYPE_LABELS] || a.type,
+          priority_label: (a.priority as string).charAt(0).toUpperCase() + (a.priority as string).slice(1),
           created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
           created_year: date.getFullYear().toString(),
-          has_docs_label: (a.document_ids && a.document_ids.length > 0) ? "With Documents" : "No Documents",
+          has_docs_label: (a.document_ids && (a.document_ids as string[]).length > 0) ? "With Documents" : "No Documents",
         }
-      })
+      }) as Approval[]
       setApprovals(transformed)
     }
 
@@ -185,21 +185,21 @@ export default function ApprovalsPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const { error } = await supabase
-      .from("approvals")
+    const { error } = await (supabase
+      .from("approvals") as ReturnType<typeof supabase.from>)
       .update({
         status: "approved",
         decided_by: user?.id,
         decided_at: new Date().toISOString(),
         decision_notes: decisionNotes || null,
-      })
+      } as Record<string, unknown>)
       .eq("id", selectedApproval.id)
 
     if (error) {
       toast.error("Failed to approve request")
     } else {
       // Try to apply the change (updates tenants + user_profiles)
-      const { error: applyError } = await supabase.rpc("apply_approval_change", {
+      const { error: applyError } = await (supabase.rpc as Function)("apply_approval_change", {
         p_approval_id: selectedApproval.id
       })
 
@@ -260,14 +260,14 @@ export default function ApprovalsPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const { error } = await supabase
-      .from("approvals")
+    const { error } = await (supabase
+      .from("approvals") as ReturnType<typeof supabase.from>)
       .update({
         status: "rejected",
         decided_by: user?.id,
         decided_at: new Date().toISOString(),
         decision_notes: decisionNotes,
-      })
+      } as Record<string, unknown>)
       .eq("id", selectedApproval.id)
 
     if (error) {

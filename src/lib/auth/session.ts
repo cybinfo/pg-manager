@@ -9,7 +9,7 @@
  * - Unified logging
  */
 
-import { createClient } from "@/lib/supabase/client"
+import { createClient, hasStoredSession } from "@/lib/supabase/client"
 import { User, Session, AuthError } from "@supabase/supabase-js"
 
 // ============================================
@@ -94,30 +94,25 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 
 /**
  * Get the current session with proper error handling.
- * Uses getUser() which is more reliable than getSession() with @supabase/ssr
- * (getSession() can hang, but getUser() makes a proper network request)
+ * Uses Supabase client's getSession() which reads from cookies.
  */
 export async function getSession(): Promise<SessionResult> {
   try {
     const supabase = createClient()
 
-    // Use getUser() - this makes a network request and works reliably with cookies
-    // Unlike getSession() which can hang with @supabase/ssr
-    const userResult = await withTimeout(
-      supabase.auth.getUser(),
-      5000, // 5 second timeout
-      { data: { user: null }, error: { message: 'getUser timed out' } as AuthError }
-    )
+    // Get session from Supabase - this reads from cookies/storage
+    const { data, error } = await supabase.auth.getSession()
 
-    if (userResult.error) {
+    if (error) {
+      console.error("[Session] getSession error:", error.message)
       return {
         user: null,
         session: null,
-        error: createSessionError("NO_SESSION", userResult.error.message, userResult.error),
+        error: createSessionError("NO_SESSION", error.message, error),
       }
     }
 
-    if (!userResult.data.user) {
+    if (!data.session) {
       return {
         user: null,
         session: null,
@@ -125,33 +120,17 @@ export async function getSession(): Promise<SessionResult> {
       }
     }
 
-    const user = userResult.data.user
-
-    // Now get the session for the access token with timeout
-    // This should work since we confirmed the user exists
-    const sessionResult = await withTimeout(
-      supabase.auth.getSession(),
-      3000, // 3 second timeout - if it takes longer, skip it
-      { data: { session: null }, error: null }
-    )
-
-    if (!sessionResult.data.session) {
-      // User exists but session fetch timed out - return user without session
-      return {
-        user: user,
-        session: null,
-        error: null,
-      }
-    }
+    const session = data.session
 
     // Check if session is expired
-    if (isSessionExpired(sessionResult.data.session)) {
+    if (isSessionExpired(session)) {
       return refreshSession()
     }
 
+    // Session exists and is valid - return it
     return {
-      user: user,
-      session: sessionResult.data.session,
+      user: session.user,
+      session: session,
       error: null,
     }
   } catch (err) {
@@ -213,11 +192,7 @@ export async function getUser(): Promise<{ user: User | null; error: SessionErro
 export async function refreshSession(): Promise<SessionResult> {
   try {
     const supabase = createClient()
-    const { data, error } = await withTimeout(
-      supabase.auth.refreshSession(),
-      5000, // 5 second timeout
-      { data: { session: null, user: null }, error: { message: 'Refresh timed out' } as AuthError }
-    )
+    const { data, error } = await supabase.auth.refreshSession()
 
     if (error) {
       return {

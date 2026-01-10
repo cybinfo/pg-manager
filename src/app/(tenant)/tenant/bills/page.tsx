@@ -138,9 +138,9 @@ export default function TenantBillsPage() {
       setBills(allBills)
 
       // Calculate stats
-      const totalBilled = allBills.reduce((sum, b) => sum + Number(b.total_amount), 0)
-      const totalPaid = allBills.reduce((sum, b) => sum + Number(b.paid_amount), 0)
-      const totalDue = allBills.reduce((sum, b) => sum + Number(b.balance_due), 0)
+      const totalBilled = allBills.reduce((sum: number, b: { total_amount: number }) => sum + Number(b.total_amount), 0)
+      const totalPaid = allBills.reduce((sum: number, b: { paid_amount: number }) => sum + Number(b.paid_amount), 0)
+      const totalDue = allBills.reduce((sum: number, b: { balance_due: number }) => sum + Number(b.balance_due), 0)
 
       setStats({
         totalBilled,

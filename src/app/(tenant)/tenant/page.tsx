@@ -146,7 +146,7 @@ export default function TenantHomePage() {
         .eq("tenant_id", tenantData.id)
         .gte("payment_date", yearStart)
 
-      const totalPaid = yearPayments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0
+      const totalPaid = yearPayments?.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0) || 0
 
       setData({
         tenant: normalizedTenant as TenantData,

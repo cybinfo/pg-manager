@@ -71,7 +71,7 @@ export async function GET(
 
       if (userContext?.context_type === "staff") {
         // Check staff permissions
-        const { data: permissions } = await supabase.rpc("get_user_permissions", {
+        const { data: permissions } = await (supabase.rpc as Function)("get_user_permissions", {
           p_user_id: user.id,
           p_workspace_id: payment.workspace_id,
         })

@@ -55,7 +55,7 @@ function LoginForm() {
       const user = sessionResult.session.user
 
       // User already logged in, fetch contexts
-      const { data: userContexts, error: contextError } = await supabase.rpc('get_user_contexts', {
+      const { data: userContexts, error: contextError } = await (supabase.rpc as Function)('get_user_contexts', {
         p_user_id: user.id
       })
 
@@ -111,7 +111,7 @@ function LoginForm() {
       }
 
       // Fetch user contexts
-      const { data: userContexts, error: ctxError } = await supabase.rpc('get_user_contexts', {
+      const { data: userContexts, error: ctxError } = await (supabase.rpc as Function)('get_user_contexts', {
         p_user_id: data.user.id
       })
 
@@ -154,7 +154,7 @@ function LoginForm() {
       if (!user) return
 
       // Log the context switch
-      await supabase.rpc('switch_context', {
+      await (supabase.rpc as Function)('switch_context', {
         p_user_id: user.id,
         p_to_context_id: contextId,
         p_from_context_id: null,
@@ -165,7 +165,7 @@ function LoginForm() {
 
       if (remember) {
         // Set as default context
-        await supabase.rpc('set_default_context', {
+        await (supabase.rpc as Function)('set_default_context', {
           p_user_id: user.id,
           p_context_id: contextId,
         })

@@ -360,21 +360,21 @@ export default function ReportsPage() {
         : 0
 
       // Property-wise stats
-      const propertyStats = propertiesData.map((property) => {
-        const propRooms = roomsData.filter((r) => r.property_id === property.id)
-        const propPayments = paymentsData.filter((p) => {
+      const propertyStats = propertiesData.map((property: { id: string; name: string }) => {
+        const propRooms = roomsData.filter((r: { property_id: string }) => r.property_id === property.id)
+        const propPayments = paymentsData.filter((p: { property_id: string; payment_date: string }) => {
           const paymentDate = new Date(p.payment_date)
           return p.property_id === property.id && paymentDate >= startDate && paymentDate <= endDate
         })
-        const propBills = billsData.filter((b) => b.property_id === property.id && b.status !== "paid" && b.status !== "cancelled")
+        const propBills = billsData.filter((b: { property_id: string; status: string }) => b.property_id === property.id && b.status !== "paid" && b.status !== "cancelled")
 
         return {
           id: property.id,
           name: property.name,
           totalRooms: propRooms.length,
-          occupiedRooms: propRooms.filter((r) => r.status === "occupied" || r.status === "partially_occupied").length,
-          revenue: propPayments.reduce((sum, p) => sum + Number(p.amount), 0),
-          pendingDues: propBills.reduce((sum, b) => sum + Number(b.balance_due || 0), 0),
+          occupiedRooms: propRooms.filter((r: { status: string }) => r.status === "occupied" || r.status === "partially_occupied").length,
+          revenue: propPayments.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0),
+          pendingDues: propBills.reduce((sum: number, b: { balance_due?: number }) => sum + Number(b.balance_due || 0), 0),
         }
       })
 

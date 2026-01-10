@@ -19,6 +19,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 - **Multi-Property Support** - Manage multiple PGs from one dashboard
 - **Complete Tenant Lifecycle** - From onboarding to exit clearance with notice period workflow
 - **Smart Billing** - Auto-generate bills, track meter readings, record payments
+- **Refund Tracking** - Comprehensive refund management for deposits and overpayments
 - **Staff Management** - Role-based access with 50+ granular permissions
 - **Mobile-First** - Works beautifully on phones
 - **Public PG Websites** - Auto-generate website for each property
@@ -29,7 +30,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 
 ## Features
 
-### 16 Dashboard Modules
+### 17 Dashboard Modules
 
 | Module | Description |
 |--------|-------------|
@@ -39,6 +40,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 | **Tenants** | Complete lifecycle with document upload and returning tenant detection |
 | **Bills** | Itemized monthly bills with auto-generation |
 | **Payments** | Payment recording with WhatsApp receipts |
+| **Refunds** | Deposit refunds, overpayment refunds, adjustments |
 | **Expenses** | Track property expenses by category |
 | **Meter Readings** | Electricity, water, gas with auto-charge generation |
 | **Staff** | Staff members with email invitations |
@@ -66,6 +68,15 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 - Calendar month or check-in anniversary billing modes
 - PDF receipts and WhatsApp sharing
 
+### Exit Clearance & Refunds
+
+- **Notice Period Tracking**: Record notice date and expected exit date
+- **Notice Period Analysis**: Compare actual notice vs configured notice days
+- **Settlement Calculation**: Auto-calculate dues, deposits, and deductions
+- **Checkout Checklist**: Room inspection, key return tracking
+- **Refund Processing**: Track deposit refunds, overpayments, and adjustments
+- **Refund Status**: Pending → Processing → Completed workflow
+
 ### Additional Features
 
 - **Public PG Websites** - Each property gets a page at managekar.com/pg/your-slug
@@ -73,6 +84,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 - **Feature Flags** - Enable/disable features per workspace
 - **Activity Log** - Audit trail for all actions
 - **Platform Admin** - Superuser access for support
+- **Configurable Types** - Custom room types, charge types, expense types
 
 ---
 
@@ -127,7 +139,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 
 4. **Run database migrations**
 
-   Run migrations in order from `supabase/migrations/` (001 through 037)
+   Run migrations in order from `supabase/migrations/` (001 through 039)
 
 5. **Start development server**
    ```bash
@@ -147,13 +159,14 @@ src/
 │   ├── pricing/                # Pricing page
 │   ├── products/pg-manager/    # Product landing page
 │   ├── (auth)/                 # Login, Register, Password Reset
-│   ├── (dashboard)/            # Owner/Staff dashboard
+│   ├── (dashboard)/            # Owner/Staff dashboard (17 modules)
 │   │   ├── dashboard/          # Main dashboard (/dashboard)
 │   │   ├── properties/         # Properties (/properties)
 │   │   ├── rooms/              # Rooms (/rooms)
 │   │   ├── tenants/            # Tenants (/tenants)
 │   │   ├── bills/              # Bills (/bills)
 │   │   ├── payments/           # Payments (/payments)
+│   │   ├── refunds/            # Refunds (/refunds)
 │   │   ├── expenses/           # Expenses (/expenses)
 │   │   ├── meter-readings/     # Meter Readings (/meter-readings)
 │   │   ├── staff/              # Staff (/staff)
@@ -173,11 +186,15 @@ src/
 ├── components/
 │   ├── ui/                     # Reusable UI components
 │   ├── forms/                  # Form components
+│   ├── shared/                 # Shared templates
 │   └── auth/                   # Auth components
 └── lib/
     ├── supabase/               # Database clients
     ├── auth/                   # Auth context & hooks
-    └── features/               # Feature flags
+    ├── features/               # Feature flags
+    ├── services/               # Service layer
+    ├── workflows/              # Business workflows
+    └── hooks/                  # Custom hooks
 ```
 
 ---
@@ -187,6 +204,7 @@ src/
 ### Deploy to Vercel
 
 ```bash
+npm run build
 vercel --prod
 ```
 
@@ -199,6 +217,23 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 RESEND_API_KEY=your_resend_key
 ```
+
+---
+
+## Database Migrations
+
+The project uses 39 migrations. Key ones:
+
+| Migration | Purpose |
+|-----------|---------|
+| `012_unified_identity.sql` | Multi-context auth system |
+| `013_default_roles.sql` | System roles setup |
+| `015_storage_buckets.sql` | Photo uploads |
+| `035_configurable_room_types.sql` | Custom types |
+| `038_comprehensive_audit_system.sql` | Audit logging |
+| `039_refunds_table.sql` | Refund tracking |
+
+Run migrations via Supabase Dashboard → SQL Editor.
 
 ---
 

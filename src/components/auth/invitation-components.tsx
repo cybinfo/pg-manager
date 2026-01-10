@@ -65,7 +65,7 @@ export function InvitationForm({
       if (!user) throw new Error('Not authenticated')
 
       // Check if user already exists
-      const { data: existingUser } = await supabase.rpc('find_user_by_identity', {
+      const { data: existingUser } = await (supabase.rpc as Function)('find_user_by_identity', {
         p_email: formData.email || null,
         p_phone: formData.phone || null,
       })
@@ -463,7 +463,7 @@ export function AcceptInvitation({ token }: AcceptInvitationProps) {
       }
 
       // Accept the invitation
-      const { data: contextId, error } = await supabase.rpc('accept_invitation', {
+      const { data: contextId, error } = await (supabase.rpc as Function)('accept_invitation', {
         p_token: token,
         p_user_id: user.id,
       })

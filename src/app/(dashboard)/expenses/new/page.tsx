@@ -78,7 +78,7 @@ export default function NewExpensePage() {
 
       // If no expense types exist, create defaults
       if (!typesData || typesData.length === 0) {
-        await supabase.rpc("create_default_expense_types", { p_owner_id: user.id })
+        await (supabase.rpc as Function)("create_default_expense_types", { p_owner_id: user.id })
 
         // Fetch again after creating defaults (owner-scoped)
         const { data: newTypesData } = await supabase

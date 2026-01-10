@@ -18,7 +18,7 @@ export async function detectIdentityConflicts(
 
   const supabase = createClient()
 
-  const { data, error } = await supabase.rpc('detect_identity_conflicts', {
+  const { data, error } = await (supabase.rpc as Function)('detect_identity_conflicts', {
     p_email: email || null,
     p_phone: phone || null,
   })
@@ -39,7 +39,7 @@ export async function findExistingUser(email?: string, phone?: string) {
 
   const supabase = createClient()
 
-  const { data, error } = await supabase.rpc('find_user_by_identity', {
+  const { data, error } = await (supabase.rpc as Function)('find_user_by_identity', {
     p_email: email || null,
     p_phone: phone || null,
   })
@@ -97,7 +97,7 @@ export async function checkContextAnomalies(userId: string): Promise<Anomaly[]> 
 
   // Check for staff + tenant at same workspace
   const workspaceContexts = new Map<string, string[]>()
-  contexts.forEach(ctx => {
+  contexts.forEach((ctx: { workspace_id: string; context_type: string; workspace: unknown }) => {
     const wsId = ctx.workspace_id
     if (!workspaceContexts.has(wsId)) {
       workspaceContexts.set(wsId, [])
@@ -107,7 +107,7 @@ export async function checkContextAnomalies(userId: string): Promise<Anomaly[]> 
 
   workspaceContexts.forEach((types, wsId) => {
     if (types.includes('staff') && types.includes('tenant')) {
-      const workspace = contexts.find(c => c.workspace_id === wsId)?.workspace
+      const workspace = contexts.find((c: { workspace_id: string }) => c.workspace_id === wsId)?.workspace
       anomalies.push({
         type: 'staff_and_tenant_same_workspace',
         severity: 'medium',

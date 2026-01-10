@@ -76,42 +76,75 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
     {
       name: "validate_tenant",
       execute: async (context, input) => {
-        const supabase = createClient()
+        // Use direct fetch to avoid Supabase client hanging issues
+        const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        // Use user's access token for RLS context, fallback to anon key
+        const authToken = (context.metadata?.accessToken as string) || apiKey
 
-        // Check tenant exists and is active
-        const { data: tenant, error: tenantError } = await supabase
-          .from("tenants")
-          .select("*, property:properties(id, name), room:rooms(id, room_number, bed_count)")
-          .eq("id", input.tenant_id)
-          .single()
+        console.log("[Workflow] validate_tenant - tenant_id:", input.tenant_id)
+        console.log("[Workflow] validate_tenant - has access token:", !!context.metadata?.accessToken)
 
-        if (tenantError || !tenant) {
+        try {
+          // Fetch tenant with property and room
+          const tenantUrl = `${baseUrl}/rest/v1/tenants?id=eq.${input.tenant_id}&select=*,property:properties(id,name),room:rooms(id,room_number,total_beds)`
+          console.log("[Workflow] Fetching tenant from:", tenantUrl)
+
+          const tenantResponse = await fetch(tenantUrl, {
+            headers: {
+              'apikey': apiKey,
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json',
+            }
+          })
+
+          console.log("[Workflow] Tenant response status:", tenantResponse.status)
+          const tenantData = await tenantResponse.json()
+          console.log("[Workflow] Tenant data:", JSON.stringify(tenantData).substring(0, 200))
+
+          if (!Array.isArray(tenantData) || tenantData.length === 0) {
+            return createErrorResult(
+              createServiceError(ERROR_CODES.NOT_FOUND, "Tenant not found")
+            )
+          }
+
+          const tenant = {
+            ...tenantData[0],
+            property: Array.isArray(tenantData[0].property) ? tenantData[0].property[0] : tenantData[0].property,
+            room: Array.isArray(tenantData[0].room) ? tenantData[0].room[0] : tenantData[0].room,
+          }
+
+          if (tenant.status === "checked_out") {
+            return createErrorResult(
+              createServiceError(ERROR_CODES.TENANT_ALREADY_EXITED, "Tenant has already exited")
+            )
+          }
+
+          // Check for existing active exit clearance (settlement_status is the column name)
+          const clearanceUrl = `${baseUrl}/rest/v1/exit_clearance?tenant_id=eq.${input.tenant_id}&settlement_status=in.(initiated,pending_payment)&select=id,settlement_status`
+          const clearanceResponse = await fetch(clearanceUrl, {
+            headers: {
+              'apikey': apiKey,
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json',
+            }
+          })
+          const clearanceData = await clearanceResponse.json()
+          console.log("[Workflow] Existing clearance check:", clearanceData)
+
+          if (Array.isArray(clearanceData) && clearanceData.length > 0) {
+            return createErrorResult(
+              createServiceError(ERROR_CODES.EXIT_ALREADY_INITIATED, "Exit clearance already initiated")
+            )
+          }
+
+          return createSuccessResult(tenant)
+        } catch (err) {
+          console.error("[Workflow] validate_tenant error:", err)
           return createErrorResult(
-            createServiceError(ERROR_CODES.NOT_FOUND, "Tenant not found")
+            createServiceError(ERROR_CODES.NOT_FOUND, "Failed to validate tenant")
           )
         }
-
-        if (tenant.status === "checked_out") {
-          return createErrorResult(
-            createServiceError(ERROR_CODES.TENANT_ALREADY_EXITED, "Tenant has already exited")
-          )
-        }
-
-        // Check for existing active exit clearance
-        const { data: existingClearance } = await supabase
-          .from("exit_clearance")
-          .select("id, status")
-          .eq("tenant_id", input.tenant_id)
-          .in("status", ["initiated", "in_progress"])
-          .single()
-
-        if (existingClearance) {
-          return createErrorResult(
-            createServiceError(ERROR_CODES.EXIT_ALREADY_INITIATED, "Exit clearance already initiated")
-          )
-        }
-
-        return createSuccessResult(tenant)
       },
     },
 
@@ -130,7 +163,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
           .in("status", ["pending", "partial", "overdue"])
 
         const totalDues = (unpaidBills || []).reduce(
-          (sum, bill) => sum + (bill.balance_due || 0),
+          (sum: number, bill: { balance_due?: number }) => sum + (bill.balance_due || 0),
           0
         )
 
@@ -139,7 +172,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
 
         // Calculate deductions
         const deductions = (input.deductions || []).reduce(
-          (sum, d) => sum + d.amount,
+          (sum: number, d: { amount: number }) => sum + d.amount,
           0
         )
 
@@ -200,49 +233,70 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
     {
       name: "create_clearance_record",
       execute: async (context, input, previousResults) => {
-        const supabase = createClient()
         const settlement = previousResults.calculate_settlement as Record<string, unknown>
+        const tenant = previousResults.validate_tenant as Record<string, unknown>
 
+        // Use direct fetch with access token for RLS
+        const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        const authToken = (context.metadata?.accessToken as string) || apiKey
+
+        // Map to actual table columns
         const clearanceData = {
+          owner_id: tenant.owner_id,
           tenant_id: input.tenant_id,
           property_id: input.property_id,
           room_id: input.room_id,
-          bed_id: input.bed_id || null,
-          initiated_by: context.actor_id,
-          notice_date: input.notice_date || new Date().toISOString(),
-          requested_exit_date: input.requested_exit_date,
-          exit_reason: input.exit_reason,
-          status: "initiated",
-          items_checklist: input.items_checklist || {},
+          notice_given_date: input.notice_date || new Date().toISOString().split('T')[0],
+          expected_exit_date: input.requested_exit_date,
+          total_dues: settlement.total_dues || 0,
+          total_refundable: settlement.deposit_amount || 0,
           deductions: input.deductions || [],
-          total_dues: settlement.total_dues,
-          deposit_amount: settlement.deposit_amount,
-          deduction_amount: settlement.deductions,
-          refund_amount: settlement.refund_amount,
-          additional_payment: settlement.additional_payment,
-          notes: input.notes || null,
-          created_at: new Date().toISOString(),
+          final_amount: (settlement.additional_payment as number) || -(settlement.refund_amount as number) || 0,
+          settlement_status: "initiated",
+          room_condition_notes: input.notes || null,
         }
 
-        const { data: clearance, error } = await supabase
-          .from("exit_clearance")
-          .insert(clearanceData)
-          .select()
-          .single()
+        console.log("[Workflow] Creating exit_clearance with:", JSON.stringify(clearanceData))
 
-        if (error) {
+        const response = await fetch(`${baseUrl}/rest/v1/exit_clearance?select=*`, {
+          method: 'POST',
+          headers: {
+            'apikey': apiKey,
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation',
+          },
+          body: JSON.stringify(clearanceData),
+        })
+
+        const responseData = await response.json()
+        console.log("[Workflow] Create clearance response:", response.status, JSON.stringify(responseData).substring(0, 200))
+
+        if (!response.ok) {
           return createErrorResult(
-            createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Failed to create exit clearance", { error })
+            createServiceError(ERROR_CODES.UNKNOWN_ERROR, `Failed to create exit clearance: ${responseData.message || response.statusText}`, { error: responseData })
           )
         }
 
+        // Response is an array when using Prefer: return=representation
+        const clearance = Array.isArray(responseData) ? responseData[0] : responseData
         return createSuccessResult(clearance)
       },
       rollback: async (context, input, stepResult) => {
-        const supabase = createClient()
+        const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        const authToken = (context.metadata?.accessToken as string) || apiKey
+
         const clearance = stepResult as Record<string, unknown>
         if (clearance?.id) {
-          await supabase.from("exit_clearance").delete().eq("id", clearance.id)
+          await fetch(`${baseUrl}/rest/v1/exit_clearance?id=eq.${clearance.id}`, {
+            method: 'DELETE',
+            headers: {
+              'apikey': apiKey,
+              'Authorization': `Bearer ${authToken}`,
+            },
+          })
         }
       },
     },
@@ -355,7 +409,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
         refund_amount: settlement?.refund_amount as number,
         additional_payment: settlement?.additional_payment as number,
       },
-      status: "initiated",
+      status: clearance?.settlement_status as string || "initiated",
     }
   },
 }
@@ -394,7 +448,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
           .select(`
             *,
             tenant:tenants(id, name, user_id, room_id, property_id),
-            room:rooms(id, room_number, bed_count, occupied_beds)
+            room:rooms(id, room_number, total_beds, occupied_beds)
           `)
           .eq("id", input.clearance_id)
           .single()
@@ -679,14 +733,16 @@ export async function initiateExitClearance(
   input: ExitClearanceInput,
   actorId: string,
   actorType: "owner" | "staff",
-  workspaceId: string
+  workspaceId: string,
+  accessToken?: string
 ) {
   return executeWorkflow(
     exitClearanceWorkflow,
     input,
     actorId,
     actorType,
-    workspaceId
+    workspaceId,
+    { metadata: { accessToken } }
   )
 }
 

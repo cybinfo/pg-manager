@@ -26,7 +26,7 @@ function getSupabaseClient(): SupabaseClient {
   if (!supabaseInstance) {
     supabaseInstance = createClient()
   }
-  return supabaseInstance
+  return supabaseInstance!
 }
 
 // ============================================
@@ -196,7 +196,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!targetContext) return false
 
     try {
-      const { error } = await supabase.rpc('switch_context', {
+      const { error } = await (supabase.rpc as Function)('switch_context', {
         p_user_id: user.id,
         p_to_context_id: contextId,
         p_from_context_id: currentContext?.context_id || null,
@@ -222,7 +222,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Set default context
   const setDefaultContext = useCallback(async (contextId: string): Promise<boolean> => {
     if (!user) return false
-    const { error } = await supabase.rpc('set_default_context', {
+    const { error } = await (supabase.rpc as Function)('set_default_context', {
       p_user_id: user.id,
       p_context_id: contextId,
     })
@@ -293,24 +293,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     globalAuthState.loggingOut = false
   }, [])
 
-  // Check if user is a platform admin (super user)
-  const checkPlatformAdmin = useCallback(async (userId: string): Promise<boolean> => {
+  // Check if user is a platform admin (super user) - using direct fetch to avoid client hanging
+  const checkPlatformAdmin = useCallback(async (userId: string, accessToken: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase
-        .from("platform_admins")
-        .select("user_id")
-        .eq("user_id", userId)
-        .maybeSingle()
+      const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/platform_admins?user_id=eq.${userId}&select=user_id`
 
-      // Ignore errors (user might not have access to see this table)
-      if (error) {
-        return false
-      }
-      return !!data
+      const response = await fetch(url, {
+        headers: {
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        }
+      })
+
+      const data = await response.json()
+
+      // Check if user exists in platform_admins
+      return Array.isArray(data) && data.length > 0
     } catch {
       return false
     }
-  }, [supabase])
+  }, [])
 
   // Load user data
   const loadUserData = useCallback(async (sessionUser: User, accessToken: string) => {
@@ -320,7 +323,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('[Auth] fetchContexts...')
       const userContexts = await fetchContexts(sessionUser.id, accessToken)
       console.log('[Auth] checkPlatformAdmin...')
-      const isAdmin = await checkPlatformAdmin(sessionUser.id)
+      const isAdmin = await checkPlatformAdmin(sessionUser.id, accessToken)
       console.log('[Auth] All data fetched')
 
       if (!mountedRef.current) return
@@ -391,82 +394,55 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
     }
 
-    const initAuth = async () => {
-      // Double-check logging out flag
-      if (globalAuthState.loggingOut) {
-        return
+    // NEW APPROACH: Don't call getSession() which hangs.
+    // Instead, rely entirely on onAuthStateChange which fires reliably.
+
+    console.log('[Auth] Setting up auth listener...')
+    initializingRef.current = true
+
+    // Set a timeout - if no auth event fires within 3 seconds, assume not logged in
+    const authTimeout = setTimeout(() => {
+      if (!globalAuthState.initialized && mountedRef.current) {
+        console.log('[Auth] Auth timeout - assuming not logged in')
+        globalAuthState.initialized = true
+        initializingRef.current = false
+        setIsLoading(false)
       }
+    }, 3000)
 
-      initializingRef.current = true
-      console.log('[Auth] Init starting...')
+    // Listen for auth state changes - this is the PRIMARY way to get session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[Auth] Auth state change:', event, session?.user?.email || 'no user')
 
-      try {
-        // Get session with 10s timeout
-        console.log('[Auth] Getting session...')
-        const sessionResult = await withTimeout(
-          getSessionUtil(),
-          10000,
-          { user: null, session: null, error: { code: 'TIMEOUT' as const, message: 'Session check timed out' } }
-        )
-        console.log('[Auth] Session result:', sessionResult.session?.user?.email || 'no user', sessionResult.error?.message || 'no error')
+      if (!mountedRef.current) return
 
-        if (sessionResult.error) {
-          // User might not be logged in - this is normal
+      // Clear the timeout since we got an auth event
+      clearTimeout(authTimeout)
+
+      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && session?.access_token) {
+        // Skip if logging out
+        if (globalAuthState.loggingOut) return
+
+        // Update user state
+        if (mountedRef.current) {
+          setUser(session.user)
         }
+        globalAuthState.user = session.user
+        globalAuthState.explicitLogout = false
 
-        if (sessionResult.session?.user && sessionResult.session?.access_token) {
-          if (mountedRef.current) {
-            setUser(sessionResult.session.user)
-          }
-          globalAuthState.user = sessionResult.session.user
-          globalAuthState.explicitLogout = false
-
-          // Load user data with 15s timeout
+        // Load user data if not already loaded for this user
+        if (!globalAuthState.initialized || globalAuthState.user?.id !== session.user.id) {
           console.log('[Auth] Loading user data...')
-          await withTimeout(
-            loadUserData(sessionResult.session.user, sessionResult.session.access_token),
-            15000,
-            undefined
-          )
+          await loadUserData(session.user, session.access_token)
           console.log('[Auth] User data loaded')
-        } else {
-          console.log('[Auth] No valid session')
-          globalAuthState.user = null
         }
-      } catch (err) {
-        console.error('[Auth] Initialization error:', err)
-        // Clear state on error to prevent stale data
-        globalAuthState.user = null
-      } finally {
+
         globalAuthState.initialized = true
         initializingRef.current = false
         if (mountedRef.current) {
           setIsLoading(false)
         }
         console.log('[Auth] Init complete')
-      }
-    }
-
-    initAuth()
-
-    // Listen for auth changes - but ONLY handle SIGNED_IN and TOKEN_REFRESHED
-    // SIGNED_OUT is ignored unless it was an explicit logout
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mountedRef.current) return
-
-      if (event === 'SIGNED_IN' && session?.user && session?.access_token) {
-        // Only process if we don't already have this user
-        if (globalAuthState.user?.id !== session.user.id) {
-          setUser(session.user)
-          globalAuthState.user = session.user
-          globalAuthState.explicitLogout = false
-          globalAuthState.initialized = true
-          await loadUserData(session.user, session.access_token)
-          setIsLoading(false)
-        }
-      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        setUser(session.user)
-        globalAuthState.user = session.user
       } else if (event === 'SIGNED_OUT') {
         // ONLY process if user explicitly logged out via our logout() function
         if (globalAuthState.explicitLogout) {
@@ -481,13 +457,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
           globalAuthState.contexts = []
           globalAuthState.currentContext = null
           globalAuthState.isPlatformAdmin = false
+          setIsLoading(false)
         }
         // Ignore spurious SIGNED_OUT events from Supabase
+      } else if (event === 'INITIAL_SESSION' && !session) {
+        // No session on initial load - user not logged in
+        console.log('[Auth] No session on initial load')
+        globalAuthState.initialized = true
+        initializingRef.current = false
+        if (mountedRef.current) {
+          setIsLoading(false)
+        }
       }
     })
 
     return () => {
       mountedRef.current = false
+      clearTimeout(authTimeout)
       subscription.unsubscribe()
     }
   }, [supabase, loadUserData])

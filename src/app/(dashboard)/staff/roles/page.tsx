@@ -68,8 +68,9 @@ export default function RolesPage() {
       toast.error("Failed to load roles")
     } else {
       // Get user count for each role
-      const rolesWithCount = await Promise.all(
-        (data || []).map(async (role) => {
+      type RoleData = Omit<Role, "_count">
+      const rolesWithCount: Role[] = await Promise.all(
+        ((data || []) as RoleData[]).map(async (role) => {
           const { count } = await supabase
             .from("user_roles")
             .select("*", { count: "exact", head: true })

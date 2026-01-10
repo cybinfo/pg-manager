@@ -87,17 +87,19 @@ const columns: Column<ExitClearance>[] = [
   },
   {
     key: "property",
-    header: "Property / Room",
+    header: "Property",
     width: "secondary",
     sortable: true,
     sortKey: "property.name",
     render: (clearance) => (
-      <div className="text-sm min-w-0">
+      <div className="min-w-0 space-y-0.5">
         {clearance.property && (
           <PropertyLink id={clearance.property.id} name={clearance.property.name} size="sm" />
         )}
         {clearance.room && (
-          <RoomLink id={clearance.room.id} roomNumber={clearance.room.room_number} size="sm" />
+          <div>
+            <RoomLink id={clearance.room.id} roomNumber={clearance.room.room_number} size="sm" />
+          </div>
         )}
       </div>
     ),

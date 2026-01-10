@@ -175,6 +175,7 @@ export default function TenantDetailPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showNoticeDialog, setShowNoticeDialog] = useState(false)
   const [noticeData, setNoticeData] = useState({
+    notice_date: "",
     expected_exit_date: "",
     notice_notes: "",
   })
@@ -308,33 +309,40 @@ export default function TenantDetailPage() {
   }, [params.id, router])
 
   const openNoticeDialog = () => {
-    // Set default exit date to 30 days from now
-    const defaultDate = new Date()
-    defaultDate.setDate(defaultDate.getDate() + 30)
+    // Set default notice date as today
+    const today = new Date().toISOString().split("T")[0]
+    // Set default exit date to 30 days from notice date
+    const defaultExitDate = new Date()
+    defaultExitDate.setDate(defaultExitDate.getDate() + 30)
     setNoticeData({
-      expected_exit_date: defaultDate.toISOString().split("T")[0],
+      notice_date: today,
+      expected_exit_date: defaultExitDate.toISOString().split("T")[0],
       notice_notes: "",
     })
     setShowNoticeDialog(true)
   }
 
   const handlePutOnNotice = async () => {
-    if (!tenant || !noticeData.expected_exit_date) {
-      toast.error("Please select an expected exit date")
+    if (!tenant || !noticeData.expected_exit_date || !noticeData.notice_date) {
+      toast.error("Please fill in all required fields")
       return
     }
 
     setActionLoading(true)
     const supabase = createClient()
 
+    const noticeDate = new Date(noticeData.notice_date)
+    const noteDateStr = noticeDate.toLocaleDateString("en-IN")
+
     const { error } = await supabase
       .from("tenants")
       .update({
         status: "notice_period",
+        notice_date: noticeData.notice_date,
         expected_exit_date: noticeData.expected_exit_date,
         notes: tenant.notes
-          ? `${tenant.notes}\n\n[Notice Period - ${new Date().toLocaleDateString("en-IN")}]: ${noticeData.notice_notes || "Put on notice"}`
-          : `[Notice Period - ${new Date().toLocaleDateString("en-IN")}]: ${noticeData.notice_notes || "Put on notice"}`
+          ? `${tenant.notes}\n\n[Notice Period - ${noteDateStr}]: ${noticeData.notice_notes || "Put on notice"}`
+          : `[Notice Period - ${noteDateStr}]: ${noticeData.notice_notes || "Put on notice"}`
       })
       .eq("id", tenant.id)
 
@@ -1088,20 +1096,55 @@ export default function TenantDetailPage() {
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="expected_exit_date">Expected Exit Date *</Label>
-                <Input
-                  id="expected_exit_date"
-                  type="date"
-                  value={noticeData.expected_exit_date}
-                  onChange={(e) => setNoticeData({ ...noticeData, expected_exit_date: e.target.value })}
-                  min={new Date().toISOString().split("T")[0]}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Standard notice period is 30 days. Adjust as per your agreement.
-                </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="notice_date">Notice Given Date *</Label>
+                  <Input
+                    id="notice_date"
+                    type="date"
+                    value={noticeData.notice_date}
+                    onChange={(e) => {
+                      const newNoticeDate = e.target.value
+                      // Auto-update exit date to 30 days after notice date
+                      const exitDate = new Date(newNoticeDate)
+                      exitDate.setDate(exitDate.getDate() + 30)
+                      setNoticeData({
+                        ...noticeData,
+                        notice_date: newNoticeDate,
+                        expected_exit_date: exitDate.toISOString().split("T")[0]
+                      })
+                    }}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    When did/will the tenant give notice?
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="expected_exit_date">Expected Exit Date *</Label>
+                  <Input
+                    id="expected_exit_date"
+                    type="date"
+                    value={noticeData.expected_exit_date}
+                    onChange={(e) => setNoticeData({ ...noticeData, expected_exit_date: e.target.value })}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Last day of stay
+                  </p>
+                </div>
               </div>
+
+              {noticeData.notice_date && noticeData.expected_exit_date && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                  <p className="text-blue-800">
+                    <strong>Notice Period:</strong>{" "}
+                    {Math.ceil((new Date(noticeData.expected_exit_date).getTime() - new Date(noticeData.notice_date).getTime()) / (1000 * 60 * 60 * 24))} days
+                    {" "}(from {new Date(noticeData.notice_date).toLocaleDateString("en-IN")} to {new Date(noticeData.expected_exit_date).toLocaleDateString("en-IN")})
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="notice_notes">Reason / Notes (Optional)</Label>

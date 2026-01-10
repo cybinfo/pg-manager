@@ -147,10 +147,11 @@ export default function BillDetailPage() {
       }
 
       // Transform data
+      const bill = billData as unknown as Bill & { tenant: Bill["tenant"] | Bill["tenant"][]; property: Bill["property"] | Bill["property"][] }
       const transformedBill: Bill = {
-        ...billData,
-        tenant: Array.isArray(billData.tenant) ? billData.tenant[0] : billData.tenant,
-        property: Array.isArray(billData.property) ? billData.property[0] : billData.property,
+        ...bill,
+        tenant: Array.isArray(bill.tenant) ? bill.tenant[0] : bill.tenant,
+        property: Array.isArray(bill.property) ? bill.property[0] : bill.property,
         room: null, // Will fetch separately if needed
       }
 
@@ -162,8 +163,9 @@ export default function BillDetailPage() {
           .eq("id", transformedBill.tenant.id)
           .single()
 
-        if (tenantData?.room) {
-          transformedBill.room = Array.isArray(tenantData.room) ? tenantData.room[0] : tenantData.room
+        const tenant = tenantData as unknown as { room: Bill["room"] | Bill["room"][] } | null
+        if (tenant?.room) {
+          transformedBill.room = Array.isArray(tenant.room) ? tenant.room[0] : tenant.room
         }
       }
 
@@ -177,7 +179,7 @@ export default function BillDetailPage() {
         .order("payment_date", { ascending: false })
 
       if (!paymentsError && paymentsData) {
-        setPayments(paymentsData)
+        setPayments(paymentsData as unknown as Payment[])
       }
 
       setLoading(false)
@@ -206,8 +208,8 @@ export default function BillDetailPage() {
       }
 
       // Create payment linked to this bill
-      const { error } = await supabase
-        .from("payments")
+      const { error } = await (supabase
+        .from("payments") as ReturnType<typeof supabase.from>)
         .insert({
           owner_id: user.id,
           tenant_id: bill.tenant?.id,
@@ -218,7 +220,7 @@ export default function BillDetailPage() {
           payment_method: paymentData.payment_method,
           reference_number: paymentData.reference_number || null,
           notes: paymentData.notes || null,
-        })
+        } as Record<string, unknown>)
 
       if (error) {
         console.error("Error recording payment:", error)

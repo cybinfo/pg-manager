@@ -100,15 +100,14 @@ export default function AdminExplorerPage() {
     const supabase = createClient()
 
     // Fetch all workspaces using SECURITY DEFINER function (bypasses RLS)
-    const { data: workspacesData, error: wsError } = await supabase
-      .rpc("get_all_workspaces_admin")
+    const { data: workspacesData, error: wsError } = await (supabase.rpc as Function)("get_all_workspaces_admin")
 
     if (wsError) {
       console.error("Error fetching workspaces:", wsError)
     }
 
     if (workspacesData) {
-      const enrichedWorkspaces = workspacesData.map((ws: {
+      type WorkspaceData = {
         id: string
         name: string
         created_at: string
@@ -118,7 +117,8 @@ export default function AdminExplorerPage() {
         total_properties?: number
         total_rooms?: number
         total_tenants?: number
-      }) => ({
+      }
+      const enrichedWorkspaces = (workspacesData as WorkspaceData[]).map((ws) => ({
         ...ws,
         total_properties: ws.total_properties || 0,
         total_rooms: ws.total_rooms || 0,
@@ -140,8 +140,7 @@ export default function AdminExplorerPage() {
 
     try {
       // Fetch workspace details using admin function
-      const { data: details, error } = await supabase
-        .rpc("get_workspace_details_admin", { p_workspace_id: workspace.id })
+      const { data: details, error } = await (supabase.rpc as Function)("get_workspace_details_admin", { p_workspace_id: workspace.id })
 
       if (error) {
         console.error("Error fetching workspace details:", error)

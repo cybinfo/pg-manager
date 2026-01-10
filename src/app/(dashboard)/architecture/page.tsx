@@ -75,7 +75,7 @@ export default function ArchitecturePage() {
     if (propertiesError) {
       console.error("Error fetching properties:", propertiesError)
     } else {
-      const transformedProperties = (propertiesData || []).map(p => {
+      const transformedProperties = (propertiesData || []).map((p: { id: string; name: string; address?: string | null; rooms: unknown }) => {
         const rooms = Array.isArray(p.rooms) ? p.rooms : []
         return {
           id: p.id,

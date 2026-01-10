@@ -156,26 +156,28 @@ function NewBillContent() {
         return
       }
 
-      const transformedTenants: Tenant[] = (tenantsRes.data || []).map((t) => ({
+      const transformedTenants: Tenant[] = (tenantsRes.data || []).map((t: Record<string, unknown>) => ({
         ...t,
         property: Array.isArray(t.property) ? t.property[0] : t.property,
         room: Array.isArray(t.room) ? t.room[0] : t.room,
-      }))
+      })) as Tenant[]
 
       setTenants(transformedTenants)
 
       if (chargeTypesRes.data) {
-        setChargeTypes(chargeTypesRes.data)
+        const chargeTypesData = chargeTypesRes.data as unknown as ChargeType[]
+        setChargeTypes(chargeTypesData)
         // Pre-select "Rent" charge type by default
-        const rentType = chargeTypesRes.data.find((ct: ChargeType) => ct.code === "rent")
+        const rentType = chargeTypesData.find((ct: ChargeType) => ct.code === "rent")
         if (rentType) {
           setSelectedChargeTypes([rentType.id])
         }
       }
 
       // Load billing cycle mode from owner config
-      if (configRes?.data?.billing_cycle_mode) {
-        setBillingCycleMode(configRes.data.billing_cycle_mode as 'calendar_month' | 'checkin_anniversary')
+      const configData = configRes?.data as { billing_cycle_mode?: string } | null
+      if (configData?.billing_cycle_mode) {
+        setBillingCycleMode(configData.billing_cycle_mode as 'calendar_month' | 'checkin_anniversary')
       }
 
       setLoadingTenants(false)
@@ -219,10 +221,10 @@ function NewBillContent() {
         console.error("Error fetching charges:", error)
       }
 
-      const transformedCharges: PendingCharge[] = (charges || []).map((c) => ({
+      const transformedCharges: PendingCharge[] = (charges || []).map((c: Record<string, unknown>) => ({
         ...c,
         charge_type: Array.isArray(c.charge_type) ? c.charge_type[0] : c.charge_type,
-      }))
+      })) as PendingCharge[]
 
       setPendingCharges(transformedCharges)
 
@@ -384,8 +386,8 @@ function NewBillContent() {
       const periodEnd = new Date(parseInt(yearStr), monthIndex + 1, 0)
 
       // Create bill
-      const { data: bill, error: billError } = await supabase
-        .from("bills")
+      const { data: bill, error: billError } = await (supabase
+        .from("bills") as ReturnType<typeof supabase.from>)
         .insert({
           owner_id: user.id,
           tenant_id: selectedTenant,
@@ -409,7 +411,7 @@ function NewBillContent() {
           })),
           notes: formData.notes || null,
           generated_at: new Date().toISOString(),
-        })
+        } as Record<string, unknown>)
         .select()
         .single()
 
@@ -420,15 +422,16 @@ function NewBillContent() {
 
       // Link pending charges to this bill
       const chargeIds = pendingCharges.map((c) => c.id)
+      const billData = bill as { id: string }
       if (chargeIds.length > 0) {
-        await supabase
-          .from("charges")
-          .update({ bill_id: bill.id })
+        await (supabase
+          .from("charges") as ReturnType<typeof supabase.from>)
+          .update({ bill_id: billData.id } as Record<string, unknown>)
           .in("id", chargeIds)
       }
 
       toast.success("Bill generated successfully!")
-      router.push(`/bills/${bill.id}`)
+      router.push(`/bills/${billData.id}`)
     } catch (error) {
       console.error("Error:", error)
       toast.error("Failed to generate bill")

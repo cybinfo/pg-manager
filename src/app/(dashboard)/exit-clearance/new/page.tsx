@@ -33,6 +33,8 @@ interface TenantRaw {
   phone: string
   monthly_rent: number
   check_in_date: string
+  notice_date: string | null
+  expected_exit_date: string | null
   status: string
   property_id: string
   room_id: string
@@ -46,6 +48,8 @@ interface Tenant {
   phone: string
   monthly_rent: number
   check_in_date: string
+  notice_date: string | null
+  expected_exit_date: string | null
   status: string
   property_id: string
   room_id: string
@@ -75,6 +79,7 @@ function InitiateCheckoutForm() {
   const [loadingData, setLoadingData] = useState(true)
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null)
+  const [configuredNoticePeriod, setConfiguredNoticePeriod] = useState(30)
 
   const [formData, setFormData] = useState({
     tenant_id: preselectedTenantId || "",
@@ -87,9 +92,20 @@ function InitiateCheckoutForm() {
   const [newDeduction, setNewDeduction] = useState({ reason: "", amount: "" })
 
   useEffect(() => {
-    const fetchTenants = async () => {
+    const fetchData = async () => {
       const supabase = createClient()
 
+      // Fetch owner config for notice period
+      const { data: configData } = await supabase
+        .from("owner_config")
+        .select("default_notice_period")
+        .single()
+
+      if (configData?.default_notice_period) {
+        setConfiguredNoticePeriod(configData.default_notice_period)
+      }
+
+      // Fetch tenants on notice period
       const { data, error } = await supabase
         .from("tenants")
         .select(`
@@ -98,6 +114,8 @@ function InitiateCheckoutForm() {
           phone,
           monthly_rent,
           check_in_date,
+          notice_date,
+          expected_exit_date,
           status,
           property_id,
           room_id,
@@ -122,6 +140,8 @@ function InitiateCheckoutForm() {
           phone: t.phone,
           monthly_rent: t.monthly_rent,
           check_in_date: t.check_in_date,
+          notice_date: t.notice_date,
+          expected_exit_date: t.expected_exit_date,
           status: t.status,
           property_id: t.property_id,
           room_id: t.room_id,
@@ -136,12 +156,18 @@ function InitiateCheckoutForm() {
         const tenant = transformedTenants.find((t) => t.id === preselectedTenantId)
         if (tenant) {
           setSelectedTenant(tenant)
-          // Set default exit date to 30 days from now
-          const exitDate = new Date()
-          exitDate.setDate(exitDate.getDate() + 30)
+          // Use tenant's notice_date if available, otherwise today
+          const noticeDate = tenant.notice_date || new Date().toISOString().split("T")[0]
+          // Use tenant's expected_exit_date if available, otherwise 30 days from now
+          const exitDate = tenant.expected_exit_date || (() => {
+            const date = new Date()
+            date.setDate(date.getDate() + 30)
+            return date.toISOString().split("T")[0]
+          })()
           setFormData((prev) => ({
             ...prev,
-            expected_exit_date: exitDate.toISOString().split("T")[0],
+            notice_given_date: noticeDate,
+            expected_exit_date: exitDate,
           }))
         }
       }
@@ -149,7 +175,7 @@ function InitiateCheckoutForm() {
       setLoadingData(false)
     }
 
-    fetchTenants()
+    fetchData()
   }, [preselectedTenantId])
 
   // Update selected tenant when selection changes
@@ -157,6 +183,21 @@ function InitiateCheckoutForm() {
     if (formData.tenant_id) {
       const tenant = tenants.find((t) => t.id === formData.tenant_id)
       setSelectedTenant(tenant || null)
+
+      // Update dates from tenant's stored values when selecting a different tenant
+      if (tenant) {
+        const noticeDate = tenant.notice_date || new Date().toISOString().split("T")[0]
+        const exitDate = tenant.expected_exit_date || (() => {
+          const date = new Date()
+          date.setDate(date.getDate() + 30)
+          return date.toISOString().split("T")[0]
+        })()
+        setFormData((prev) => ({
+          ...prev,
+          notice_given_date: noticeDate,
+          expected_exit_date: exitDate,
+        }))
+      }
     } else {
       setSelectedTenant(null)
     }
@@ -207,6 +248,40 @@ function InitiateCheckoutForm() {
 
   const amounts = calculateAmounts()
 
+  // Calculate notice period comparison
+  const calculateNoticePeriodComparison = () => {
+    if (!formData.notice_given_date || !formData.expected_exit_date) {
+      return null
+    }
+
+    const noticeDate = new Date(formData.notice_given_date)
+    const exitDate = new Date(formData.expected_exit_date)
+    const actualDays = Math.ceil((exitDate.getTime() - noticeDate.getTime()) / (1000 * 60 * 60 * 24))
+    const difference = actualDays - configuredNoticePeriod
+
+    let status: "short" | "exact" | "long"
+    let message: string
+    let colorClass: string
+
+    if (difference < 0) {
+      status = "short"
+      message = `${Math.abs(difference)} days SHORT of required ${configuredNoticePeriod} days notice`
+      colorClass = "text-red-600 bg-red-50 border-red-200"
+    } else if (difference === 0) {
+      status = "exact"
+      message = `Exactly ${configuredNoticePeriod} days notice (as required)`
+      colorClass = "text-green-600 bg-green-50 border-green-200"
+    } else {
+      status = "long"
+      message = `${difference} days MORE than required ${configuredNoticePeriod} days notice`
+      colorClass = "text-blue-600 bg-blue-50 border-blue-200"
+    }
+
+    return { actualDays, configuredDays: configuredNoticePeriod, difference, status, message, colorClass }
+  }
+
+  const noticePeriodComparison = calculateNoticePeriodComparison()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -219,10 +294,16 @@ function InitiateCheckoutForm() {
 
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      // Get session with access token for RLS context
+      const { data: { session } } = await supabase.auth.getSession()
 
-      if (!user || !selectedTenant) {
+      console.log("[ExitClearance] Session user:", session?.user?.id)
+      console.log("[ExitClearance] Has access token:", !!session?.access_token)
+      console.log("[ExitClearance] Selected tenant ID:", selectedTenant?.id)
+
+      if (!session?.user || !session?.access_token || !selectedTenant) {
         toast.error("Session expired. Please login again.")
+        setLoading(false)
         return
       }
 
@@ -241,12 +322,13 @@ function InitiateCheckoutForm() {
         notes: formData.room_condition_notes || undefined,
       }
 
-      // Execute the workflow
+      // Execute the workflow with access token for RLS
       const result = await initiateExitClearance(
         workflowInput,
-        user.id,
+        session.user.id,
         "owner",
-        user.id // workspace_id is same as owner_id
+        session.user.id, // workspace_id is same as owner_id
+        session.access_token
       )
 
       if (!result.success) {
@@ -386,7 +468,7 @@ function InitiateCheckoutForm() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="notice_given_date">Notice Given Date</Label>
+                <Label htmlFor="notice_given_date">Notice Given Date *</Label>
                 <Input
                   id="notice_given_date"
                   name="notice_given_date"
@@ -394,7 +476,11 @@ function InitiateCheckoutForm() {
                   value={formData.notice_given_date}
                   onChange={handleChange}
                   disabled={loading}
+                  required
                 />
+                <p className="text-xs text-muted-foreground">
+                  When did the tenant give notice?
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="expected_exit_date">Expected Exit Date *</Label>
@@ -406,10 +492,42 @@ function InitiateCheckoutForm() {
                   onChange={handleChange}
                   required
                   disabled={loading}
-                  min={new Date().toISOString().split("T")[0]}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Last day of stay
+                </p>
               </div>
             </div>
+
+            {/* Notice Period Comparison */}
+            {noticePeriodComparison && (
+              <div className={`p-4 rounded-lg border ${noticePeriodComparison.colorClass}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">Notice Period Analysis</p>
+                    <p className="text-sm mt-1">{noticePeriodComparison.message}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold">{noticePeriodComparison.actualDays}</p>
+                    <p className="text-xs">days given</p>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-current/20 text-sm">
+                  <div className="flex justify-between">
+                    <span>Notice Date:</span>
+                    <span className="font-medium">{new Date(formData.notice_given_date).toLocaleDateString("en-IN")}</span>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span>Exit Date:</span>
+                    <span className="font-medium">{new Date(formData.expected_exit_date).toLocaleDateString("en-IN")}</span>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span>Required Notice:</span>
+                    <span className="font-medium">{configuredNoticePeriod} days</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="room_condition_notes">Room Condition Notes</Label>

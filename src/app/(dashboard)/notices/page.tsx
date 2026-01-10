@@ -114,15 +114,16 @@ export default function NoticesPage() {
       console.error("Error fetching notices:", error)
       toast.error("Failed to load notices")
     } else {
-      const transformedData = (data || []).map((notice) => {
-        const date = new Date(notice.created_at)
+      const transformedData: Notice[] = (data || []).map((notice: unknown) => {
+        const n = notice as Notice & { property: Notice["property"] | Notice["property"][] }
+        const date = new Date(n.created_at)
         return {
-          ...notice,
-          property: Array.isArray(notice.property) ? notice.property[0] : notice.property,
+          ...n,
+          property: Array.isArray(n.property) ? n.property[0] : n.property,
           created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
           created_year: date.getFullYear().toString(),
-          active_label: notice.is_active ? "Active" : "Inactive",
-          type_label: typeConfig[notice.type]?.label || notice.type,
+          active_label: n.is_active ? "Active" : "Inactive",
+          type_label: typeConfig[n.type as keyof typeof typeConfig]?.label || n.type,
         }
       })
       setNotices(transformedData)

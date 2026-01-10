@@ -90,7 +90,7 @@ export default function TenantPaymentsPage() {
           bill: Array.isArray(p.bill) ? p.bill[0] : p.bill
         }))
         setPayments(processed)
-        setTotalPaid(processed.reduce((sum, p) => sum + p.amount, 0))
+        setTotalPaid(processed.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0))
       }
 
       setLoading(false)

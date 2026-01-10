@@ -130,6 +130,12 @@ export default function ComplaintDetailPage() {
 
   useEffect(() => {
     const fetchComplaint = async () => {
+      const complaintId = params.id as string
+      if (!complaintId) {
+        router.push("/complaints")
+        return
+      }
+
       const supabase = createClient()
 
       const { data, error } = await supabase
@@ -140,7 +146,7 @@ export default function ComplaintDetailPage() {
           property:properties(id, name, address, city),
           room:rooms(id, room_number)
         `)
-        .eq("id", params.id)
+        .eq("id", complaintId)
         .single()
 
       if (error || !data) {
@@ -151,7 +157,7 @@ export default function ComplaintDetailPage() {
       }
 
       // Transform the data from arrays to single objects
-      const rawData = data as RawComplaint
+      const rawData = data as unknown as RawComplaint
       const transformedData: Complaint = {
         ...rawData,
         tenant: transformJoin(rawData.tenant),
@@ -160,10 +166,10 @@ export default function ComplaintDetailPage() {
       }
       setComplaint(transformedData)
       setEditData({
-        status: data.status,
-        priority: data.priority,
-        assigned_to: data.assigned_to || "",
-        resolution_notes: data.resolution_notes || "",
+        status: rawData.status,
+        priority: rawData.priority,
+        assigned_to: rawData.assigned_to || "",
+        resolution_notes: rawData.resolution_notes || "",
       })
       setLoading(false)
     }
@@ -189,9 +195,9 @@ export default function ComplaintDetailPage() {
         updateData.resolved_at = new Date().toISOString()
       }
 
-      const { error } = await supabase
-        .from("complaints")
-        .update(updateData)
+      const { error } = await (supabase
+        .from("complaints") as ReturnType<typeof supabase.from>)
+        .update(updateData as Record<string, unknown>)
         .eq("id", complaint.id)
 
       if (error) {
@@ -229,9 +235,9 @@ export default function ComplaintDetailPage() {
         updateData.resolved_at = new Date().toISOString()
       }
 
-      const { error } = await supabase
-        .from("complaints")
-        .update(updateData)
+      const { error } = await (supabase
+        .from("complaints") as ReturnType<typeof supabase.from>)
+        .update(updateData as Record<string, unknown>)
         .eq("id", complaint.id)
 
       if (error) {

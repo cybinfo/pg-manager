@@ -209,7 +209,7 @@ export async function getStaffProductivity(workspaceId: string): Promise<StaffPr
 
     // Count permission usage
     const permCounts = new Map<string, number>()
-    permUsage?.forEach(p => {
+    permUsage?.forEach((p: { permission: string }) => {
       permCounts.set(p.permission, (permCounts.get(p.permission) || 0) + 1)
     })
 
@@ -269,16 +269,17 @@ export async function getAnalyticsSummary(workspaceId: string): Promise<Analytic
 
   if (!contexts) return null
 
-  const uniqueUsers = new Set(contexts.map(c => c.user_id))
+  type ContextType = { user_id: string; last_accessed_at?: string; context_type: string }
+  const uniqueUsers = new Set(contexts.map((c: ContextType) => c.user_id))
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-  const activeToday = contexts.filter(c =>
+  const activeToday = contexts.filter((c: ContextType) =>
     c.last_accessed_at && new Date(c.last_accessed_at) >= today
   ).length
 
-  const activeWeek = contexts.filter(c =>
+  const activeWeek = contexts.filter((c: ContextType) =>
     c.last_accessed_at && new Date(c.last_accessed_at) >= weekAgo
   ).length
 
@@ -286,7 +287,7 @@ export async function getAnalyticsSummary(workspaceId: string): Promise<Analytic
   const { count: switchCount } = await supabase
     .from('context_switches')
     .select('*', { count: 'exact', head: true })
-    .in('to_context_id', contexts.map(c => c.user_id))
+    .in('to_context_id', contexts.map((c: ContextType) => c.user_id))
     .gte('switched_at', weekAgo.toISOString())
 
   // Get permission denials
@@ -298,7 +299,7 @@ export async function getAnalyticsSummary(workspaceId: string): Promise<Analytic
 
   // Calculate context distribution
   const distribution = { owner: 0, staff: 0, tenant: 0 }
-  contexts.forEach(c => {
+  contexts.forEach((c: ContextType) => {
     if (c.context_type in distribution) {
       distribution[c.context_type as keyof typeof distribution]++
     }

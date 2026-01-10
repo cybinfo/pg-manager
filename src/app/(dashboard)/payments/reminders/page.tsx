@@ -98,15 +98,25 @@ export default function PaymentRemindersPage() {
     }
 
     // Get all payments for these tenants
-    const tenantIds = tenantsData?.map(t => t.id) || []
+    const tenantIds = tenantsData?.map((t: { id: string }) => t.id) || []
     const { data: paymentsData } = await supabase
       .from("payments")
       .select("tenant_id, amount, payment_date")
       .in("tenant_id", tenantIds)
 
     // Calculate dues for each tenant
+    type RawTenant = {
+      id: string
+      name: string
+      phone: string
+      email: string | null
+      monthly_rent: number
+      check_in_date: string
+      property: TenantWithDues["property"] | TenantWithDues["property"][]
+      room: TenantWithDues["room"] | TenantWithDues["room"][]
+    }
     const now = new Date()
-    const tenantsWithDues: TenantWithDues[] = (tenantsData || []).map(tenant => {
+    const tenantsWithDues: TenantWithDues[] = ((tenantsData || []) as RawTenant[]).map((tenant) => {
       // Transform arrays to single objects (Supabase join pattern)
       const property = Array.isArray(tenant.property) ? tenant.property[0] : tenant.property
       const room = Array.isArray(tenant.room) ? tenant.room[0] : tenant.room
@@ -121,15 +131,15 @@ export default function PaymentRemindersPage() {
       const expectedRent = monthsActive * Number(tenant.monthly_rent)
 
       // Calculate total paid
-      const tenantPayments = paymentsData?.filter(p => p.tenant_id === tenant.id) || []
-      const totalPaid = tenantPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+      const tenantPayments = paymentsData?.filter((p: { tenant_id: string }) => p.tenant_id === tenant.id) || []
+      const totalPaid = tenantPayments.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0)
 
       // Calculate pending dues
       const pendingDues = Math.max(0, expectedRent - totalPaid)
 
       // Get last payment date
       const sortedPayments = tenantPayments.sort(
-        (a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+        (a: { payment_date: string }, b: { payment_date: string }) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
       )
       const lastPaymentDate = sortedPayments[0]?.payment_date || null
 

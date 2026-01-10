@@ -251,7 +251,7 @@ export default function MeterReadingDetailPage() {
       const forPeriod = readingDate.toLocaleDateString("en-IN", { month: "long", year: "numeric" })
 
       // Create charges for each tenant
-      const chargeInserts = tenants.map((tenant) => ({
+      const chargeInserts = tenants.map((tenant: { id: string; name: string }) => ({
         owner_id: user.id,
         tenant_id: tenant.id,
         property_id: reading.property?.id,

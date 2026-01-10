@@ -141,7 +141,7 @@ function NewPaymentForm() {
       } else {
         setChargeTypes(chargeTypesRes.data || [])
         // Default to "Rent" if available
-        const rentType = chargeTypesRes.data?.find((ct) => ct.code === "rent")
+        const rentType = chargeTypesRes.data?.find((ct: { code: string }) => ct.code === "rent")
         if (rentType) {
           setFormData((prev) => ({ ...prev, charge_type_id: rentType.id }))
         }

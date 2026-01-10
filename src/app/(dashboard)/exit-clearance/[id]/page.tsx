@@ -26,7 +26,8 @@ import {
   Printer,
   Save,
   Plus,
-  Trash2
+  Trash2,
+  Wallet,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -670,6 +671,16 @@ export default function ExitClearanceDetailPage() {
                 <p className="text-sm text-green-600">Room is now available</p>
               </CardContent>
             </Card>
+          )}
+
+          {/* Record Refund Button - show when clearance is complete and refund is due */}
+          {isCleared && isRefund && clearance.tenant && (
+            <Link href={`/refunds/new?tenant=${clearance.tenant.id}&clearance=${clearance.id}`}>
+              <Button className="w-full" variant="outline">
+                <Wallet className="mr-2 h-4 w-4" />
+                Record Refund
+              </Button>
+            </Link>
           )}
         </div>
       </div>

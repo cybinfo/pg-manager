@@ -177,7 +177,7 @@ export default function DashboardPage() {
       let totalBeds = 0
       let occupiedBeds = 0
       if (roomsRes.data) {
-        roomsRes.data.forEach((room) => {
+        roomsRes.data.forEach((room: { total_beds?: number; occupied_beds?: number }) => {
           totalBeds += room.total_beds || 0
           occupiedBeds += room.occupied_beds || 0
         })
@@ -189,7 +189,7 @@ export default function DashboardPage() {
       let paidCount = 0
       let partialCount = 0
       if (chargesRes.data) {
-        chargesRes.data.forEach((charge) => {
+        chargesRes.data.forEach((charge: { amount: number; paid_amount?: number; status: string }) => {
           const due = Number(charge.amount) - Number(charge.paid_amount || 0)
           pendingDues += due
           if (charge.status === "overdue") overdueCount++
@@ -201,13 +201,13 @@ export default function DashboardPage() {
       // Calculate total revenue
       let totalRevenue = 0
       if (paymentsRes.data) {
-        totalRevenue = paymentsRes.data.reduce((sum, payment) => sum + Number(payment.amount), 0)
+        totalRevenue = paymentsRes.data.reduce((sum: number, payment: { amount: number }) => sum + Number(payment.amount), 0)
       }
 
       // Calculate total expenses
       let totalExpenses = 0
       if (expensesRes.data) {
-        totalExpenses = expensesRes.data.reduce((sum, expense) => sum + Number(expense.amount), 0)
+        totalExpenses = expensesRes.data.reduce((sum: number, expense: { amount: number }) => sum + Number(expense.amount), 0)
       }
 
       // Process monthly revenue for chart
@@ -222,7 +222,7 @@ export default function DashboardPage() {
       }
 
       if (monthlyPaymentsRes.data) {
-        monthlyPaymentsRes.data.forEach((payment) => {
+        monthlyPaymentsRes.data.forEach((payment: { payment_date: string; amount: number }) => {
           const d = new Date(payment.payment_date)
           const key = monthNames[d.getMonth()]
           if (revenueByMonth[key] !== undefined) {
