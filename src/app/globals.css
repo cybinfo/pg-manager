@@ -481,6 +481,54 @@ body {
 .stagger-children > *:nth-child(9) { animation-delay: 400ms; }
 
 /* ========================================
+   Journey Timeline Animations
+   ======================================== */
+@keyframes timelineConnector {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: 100%;
+    opacity: 1;
+  }
+}
+
+@keyframes eventSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes progressFill {
+  from {
+    width: 0;
+  }
+}
+
+.animate-timeline-connector {
+  animation: timelineConnector 0.6s ease-out forwards;
+}
+
+.animate-event-slide-in {
+  animation: eventSlideIn 0.4s ease-out forwards;
+}
+
+.animate-progress-fill {
+  animation: progressFill 1s ease-out forwards;
+}
+
+/* Animation delay utilities for timeline */
+.animation-delay-0 { animation-delay: 0ms; }
+.animation-delay-75 { animation-delay: 75ms; }
+.animation-delay-150 { animation-delay: 150ms; }
+
+/* ========================================
    Scrollbar Styling
    ======================================== */
 .custom-scrollbar::-webkit-scrollbar {

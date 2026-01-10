@@ -533,6 +533,12 @@ export default function TenantDetailPage() {
                 Edit
               </Button>
             </Link>
+            <Link href={`/tenants/${tenant.id}/journey`}>
+              <Button variant="outline" size="sm">
+                <History className="mr-2 h-4 w-4" />
+                Journey
+              </Button>
+            </Link>
             {tenant.status === "active" && (
               <>
                 <Button variant="outline" size="sm" onClick={openTransferModal} disabled={actionLoading}>
