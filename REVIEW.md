@@ -1184,10 +1184,11 @@ if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 }
 - **Description:** No caching, causes multiple Supabase calls per page load.
 - **Fixed:** Phase 13 - Verified 5-minute cache with TTL, user-based cache invalidation, and fetch deduplication already implemented.
 
-#### AUTH-017: Staff Permissions Aggregation Undocumented
+#### AUTH-017: Staff Permissions Aggregation Undocumented ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/lib/auth/auth-context.tsx` (Line 245)
 - **Description:** Multi-role permission aggregation behavior not documented.
+- **Fixed:** Phase 14 - Verified comprehensive JSDoc at lines 270-293 documents access hierarchy and multi-role permission aggregation (UNION) behavior.
 
 #### AUTH-018: FeatureGuard/PermissionGuard Order Inconsistent ✅ FIXED
 - **Severity:** MEDIUM
@@ -1533,10 +1534,11 @@ const chargeType = Array.isArray(charge.charge_type)
   - `src/lib/error-utils.ts:129` - `10000` hardcoded toast duration
   - `src/lib/services/journey.service.ts:61` - `24 * 60 * 60 * 1000`
 
-#### CQ-011: Linear Retry Backoff
+#### CQ-011: Linear Retry Backoff ✅ FIXED
 - **Severity:** LOW
 - **File:** `src/lib/auth/use-session.ts`
 - **Description:** Should use exponential backoff with jitter.
+- **Fixed:** Phase 10 - Implemented `getExponentialBackoffDelay()` with exponential backoff and random jitter.
 
 ---
 
