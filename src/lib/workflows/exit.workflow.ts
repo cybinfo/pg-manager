@@ -30,6 +30,7 @@ import {
   buildExitClearanceNotification,
 } from "@/lib/services/notification.service"
 import { createAuditEvent } from "@/lib/services/audit.service"
+import { workflowLogger } from "@/lib/logger"
 
 // ============================================
 // Types
@@ -82,13 +83,11 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
         // Use user's access token for RLS context, fallback to anon key
         const authToken = (context.metadata?.accessToken as string) || apiKey
 
-        console.log("[Workflow] validate_tenant - tenant_id:", input.tenant_id)
-        console.log("[Workflow] validate_tenant - has access token:", !!context.metadata?.accessToken)
+        workflowLogger.debug("[Exit] validate_tenant starting", { tenantId: input.tenant_id, hasAccessToken: !!context.metadata?.accessToken })
 
         try {
           // Fetch tenant with property and room
           const tenantUrl = `${baseUrl}/rest/v1/tenants?id=eq.${input.tenant_id}&select=*,property:properties(id,name),room:rooms(id,room_number,total_beds)`
-          console.log("[Workflow] Fetching tenant from:", tenantUrl)
 
           const tenantResponse = await fetch(tenantUrl, {
             headers: {
@@ -98,9 +97,8 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
             }
           })
 
-          console.log("[Workflow] Tenant response status:", tenantResponse.status)
           const tenantData = await tenantResponse.json()
-          console.log("[Workflow] Tenant data:", JSON.stringify(tenantData).substring(0, 200))
+          workflowLogger.debug("[Exit] Tenant fetch complete", { status: tenantResponse.status, count: Array.isArray(tenantData) ? tenantData.length : 0 })
 
           if (!Array.isArray(tenantData) || tenantData.length === 0) {
             return createErrorResult(
@@ -130,7 +128,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
             }
           })
           const clearanceData = await clearanceResponse.json()
-          console.log("[Workflow] Existing clearance check:", clearanceData)
+          workflowLogger.debug("[Exit] Existing clearance check complete", { hasExisting: Array.isArray(clearanceData) && clearanceData.length > 0 })
 
           if (Array.isArray(clearanceData) && clearanceData.length > 0) {
             return createErrorResult(
@@ -140,7 +138,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
 
           return createSuccessResult(tenant)
         } catch (err) {
-          console.error("[Workflow] validate_tenant error:", err)
+          workflowLogger.error("[Exit] validate_tenant error", { error: err instanceof Error ? err.message : String(err) })
           return createErrorResult(
             createServiceError(ERROR_CODES.NOT_FOUND, "Failed to validate tenant")
           )
@@ -266,7 +264,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
           room_condition_notes: input.notes || null,
         }
 
-        console.log("[Workflow] Creating exit_clearance with:", JSON.stringify(clearanceData))
+        workflowLogger.debug("[Exit] Creating exit_clearance", { tenantId: input.tenant_id, settlementStatus: clearanceData.settlement_status })
 
         const response = await fetch(`${baseUrl}/rest/v1/exit_clearance?select=*`, {
           method: 'POST',
@@ -280,7 +278,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
         })
 
         const responseData = await response.json()
-        console.log("[Workflow] Create clearance response:", response.status, JSON.stringify(responseData).substring(0, 200))
+        workflowLogger.debug("[Exit] Create clearance response", { status: response.status, hasData: !!responseData })
 
         if (!response.ok) {
           return createErrorResult(
@@ -534,7 +532,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
             .eq("id", stay.id)
 
           if (updateError) {
-            console.warn("[CompleteExit] Failed to update tenant_stay:", updateError)
+            workflowLogger.warn("[Exit] Failed to update tenant_stay", { error: updateError.message })
           }
         }
 
@@ -627,7 +625,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
           .eq("id", clearance.bed_id)
 
         if (error) {
-          console.warn("[CompleteExit] Failed to release bed:", error)
+          workflowLogger.warn("[Exit] Failed to release bed", { error: error.message })
         }
 
         return createSuccessResult({ bed_released: true })
@@ -635,7 +633,81 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
       optional: true,
     },
 
-    // Step 6: Update exit_clearance to completed
+    // Step 6: Create refund record (if applicable)
+    {
+      name: "create_refund_record",
+      execute: async (context, input, previousResults) => {
+        const supabase = createClient()
+        const clearance = previousResults.validate_clearance as Record<string, unknown>
+        const tenant = clearance.tenant as Record<string, unknown>
+
+        // Calculate refund amount from clearance
+        const totalRefundable = (clearance.total_refundable as number) || 0
+        const totalDues = (clearance.total_dues as number) || 0
+        const deductions = Array.isArray(clearance.deductions)
+          ? (clearance.deductions as Array<{ amount: number }>).reduce((sum, d) => sum + (d.amount || 0), 0)
+          : 0
+
+        const netAmount = totalRefundable - totalDues - deductions
+        const refundAmount = netAmount > 0 ? netAmount : 0
+
+        // Only create refund record if there's a positive refund amount
+        if (refundAmount <= 0) {
+          return createSuccessResult({ refund_created: false, reason: "no_refund_due" })
+        }
+
+        // Create refund record
+        const refundData = {
+          owner_id: clearance.owner_id,
+          workspace_id: context.workspace_id,
+          tenant_id: tenant.id,
+          exit_clearance_id: clearance.id,
+          property_id: clearance.property_id,
+          refund_type: "deposit_refund",
+          amount: refundAmount,
+          payment_mode: input.final_settlement_mode || "cash",
+          reference_number: input.settlement_reference || null,
+          status: input.final_settlement_mode ? "completed" : "pending",
+          refund_date: input.final_settlement_mode ? input.actual_exit_date : null,
+          due_date: input.actual_exit_date,
+          processed_by: input.final_settlement_mode ? context.actor_id : null,
+          processed_at: input.final_settlement_mode ? new Date().toISOString() : null,
+          reason: `Security deposit refund for exit clearance`,
+          notes: input.final_notes || null,
+        }
+
+        const { data: refund, error } = await supabase
+          .from("refunds")
+          .insert(refundData)
+          .select()
+          .single()
+
+        if (error) {
+          // Log but don't fail the workflow - refund can be created manually
+          workflowLogger.warn("[Exit] Failed to create refund record", { error: error.message })
+          return createSuccessResult({ refund_created: false, error: error.message })
+        }
+
+        // Update exit_clearance with refund info
+        await supabase
+          .from("exit_clearance")
+          .update({
+            refund_amount: refundAmount,
+            refund_status: refund?.status || "pending",
+          })
+          .eq("id", input.clearance_id)
+
+        return createSuccessResult({
+          refund_created: true,
+          refund_id: refund?.id,
+          refund_amount: refundAmount,
+          refund_status: refund?.status,
+        })
+      },
+      optional: true, // Don't fail workflow if refund creation fails
+    },
+
+    // Step 7: Update exit_clearance to completed
     {
       name: "complete_clearance",
       execute: async (context, input, previousResults) => {

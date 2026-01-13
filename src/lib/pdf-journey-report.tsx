@@ -11,6 +11,7 @@ import {
   JourneyEvent,
   EventCategory,
 } from "@/types/journey.types"
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 
 // ============================================
 // Styles
@@ -329,34 +330,6 @@ const styles = StyleSheet.create({
 // ============================================
 // Helper Functions
 // ============================================
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-function formatDate(dateString: string | null | undefined): string {
-  if (!dateString) return "N/A"
-  return new Date(dateString).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })
-}
-
-function formatDateTime(dateString: string | null | undefined): string {
-  if (!dateString) return "N/A"
-  return new Date(dateString).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
 
 function getStatusColor(status: string): string {
   switch (status?.toLowerCase()) {

@@ -1,7 +1,9 @@
-import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendPaymentReminder, sendOverdueAlert } from "@/lib/email"
 import { cronLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { transformJoin } from "@/lib/supabase/transforms"
+import { cronLogger, extractErrorMeta } from "@/lib/logger"
+import { apiSuccess, apiError, unauthorized, internalError, ErrorCodes } from "@/lib/api-response"
 
 interface NotificationSettings {
   email_reminders_enabled: boolean
@@ -45,14 +47,12 @@ export async function GET(request: Request) {
   const rateLimitResult = await cronLimiter.check(clientId)
 
   if (!rateLimitResult.success) {
-    return NextResponse.json(
-      {
-        error: "TOO_MANY_REQUESTS",
-        message: "Rate limit exceeded for cron endpoint",
-        retryAfter: rateLimitResult.retryAfter,
-      },
+    return apiError(
+      ErrorCodes.TOO_MANY_REQUESTS,
+      "Rate limit exceeded for cron endpoint",
       {
         status: 429,
+        details: { retryAfter: rateLimitResult.retryAfter },
         headers: rateLimitHeaders(rateLimitResult),
       }
     )
@@ -61,14 +61,14 @@ export async function GET(request: Request) {
   // SECURITY: Always verify cron secret - no dev bypass
   const authHeader = request.headers.get("authorization")
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return unauthorized("Invalid cron secret")
   }
 
   // SECURITY: Require service role key - fail loudly if missing
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceRoleKey) {
-    console.error("[Cron] SUPABASE_SERVICE_ROLE_KEY is required for cron jobs")
-    return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
+    cronLogger.error("SUPABASE_SERVICE_ROLE_KEY is required for cron jobs")
+    return internalError("Server configuration error")
   }
 
   // Create admin Supabase client for cron job
@@ -104,7 +104,8 @@ export async function GET(request: Request) {
 
     for (const config of ownerConfigs || []) {
       const ownerConfig = config as unknown as OwnerConfig
-      const owner = Array.isArray(ownerConfig.owner) ? ownerConfig.owner[0] : ownerConfig.owner
+      // Use transformJoin for consistent handling of Supabase joins
+      const owner = transformJoin(ownerConfig.owner) as OwnerConfig["owner"] | null
 
       if (!owner) continue
 
@@ -150,8 +151,9 @@ export async function GET(request: Request) {
 
       for (const tenantData of tenants || []) {
         const tenant = tenantData as unknown as Tenant
-        const property = Array.isArray(tenant.property) ? tenant.property[0] : tenant.property
-        const room = Array.isArray(tenant.room) ? tenant.room[0] : tenant.room
+        // Use transformJoin for consistent handling of Supabase joins
+        const property = transformJoin(tenant.property) as Tenant["property"] | null
+        const room = transformJoin(tenant.room) as Tenant["room"] | null
 
         if (!tenant.email) continue // Skip tenants without email
 
@@ -233,20 +235,14 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Payment reminders processed",
-      ...results,
-    })
+    cronLogger.info("Payment reminders processed", results)
+    return apiSuccess(results, { message: "Payment reminders processed" })
   } catch (error) {
-    console.error("Cron job error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: String(error),
-        ...results,
-      },
-      { status: 500 }
+    cronLogger.error("Cron job error", extractErrorMeta(error))
+    return apiError(
+      ErrorCodes.INTERNAL_ERROR,
+      String(error),
+      { status: 500, details: results }
     )
   }
 }

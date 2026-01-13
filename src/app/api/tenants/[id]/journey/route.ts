@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getTenantJourney } from "@/lib/services/journey.service"
-import { EventCategoryType } from "@/types/journey.types"
+import { EventCategoryType, EventCategory } from "@/types/journey.types"
 import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 import {
   apiSuccess,
@@ -9,9 +9,26 @@ import {
   unauthorized,
   forbidden,
   notFound,
+  badRequest,
   internalError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { apiLogger } from "@/lib/logger"
+
+// Valid category values for input validation
+const VALID_CATEGORIES: Set<string> = new Set(Object.values(EventCategory))
+
+// Helper to validate UUID format
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return uuidRegex.test(str)
+}
+
+// Helper to validate date format (ISO 8601)
+function isValidISODate(str: string): boolean {
+  const date = new Date(str)
+  return !isNaN(date.getTime()) && str.match(/^\d{4}-\d{2}-\d{2}/) !== null
+}
 
 /**
  * GET /api/tenants/[id]/journey
@@ -94,28 +111,69 @@ export async function GET(
       }
     }
 
-    // Parse query parameters
+    // Parse and validate query parameters
     const searchParams = request.nextUrl.searchParams
-    const limit = parseInt(searchParams.get("limit") || "50")
-    const offset = parseInt(searchParams.get("offset") || "0")
+
+    // Validate tenant ID format
+    if (!isValidUUID(tenantId)) {
+      return badRequest("Invalid tenant ID format")
+    }
+
+    // Validate and parse limit (1-100)
+    const limitParam = searchParams.get("limit")
+    const limit = limitParam ? parseInt(limitParam, 10) : 50
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      return badRequest("Limit must be a number between 1 and 100")
+    }
+
+    // Validate and parse offset (>= 0)
+    const offsetParam = searchParams.get("offset")
+    const offset = offsetParam ? parseInt(offsetParam, 10) : 0
+    if (isNaN(offset) || offset < 0) {
+      return badRequest("Offset must be a non-negative number")
+    }
+
+    // Validate and parse categories
     const categoriesParam = searchParams.get("categories")
+    let categories: EventCategoryType[] | undefined
+
+    if (categoriesParam) {
+      const categoryList = categoriesParam.split(",").map(c => c.trim().toLowerCase())
+      const invalidCategories = categoryList.filter(c => !VALID_CATEGORIES.has(c))
+
+      if (invalidCategories.length > 0) {
+        return badRequest(`Invalid categories: ${invalidCategories.join(", ")}. Valid values are: ${Array.from(VALID_CATEGORIES).join(", ")}`)
+      }
+
+      categories = categoryList as EventCategoryType[]
+    }
+
+    // Validate date parameters
     const dateFrom = searchParams.get("from") || undefined
     const dateTo = searchParams.get("to") || undefined
+
+    if (dateFrom && !isValidISODate(dateFrom)) {
+      return badRequest("Invalid 'from' date format. Use ISO 8601 format (YYYY-MM-DD)")
+    }
+
+    if (dateTo && !isValidISODate(dateTo)) {
+      return badRequest("Invalid 'to' date format. Use ISO 8601 format (YYYY-MM-DD)")
+    }
+
+    if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
+      return badRequest("'from' date must be before or equal to 'to' date")
+    }
+
     const includeAnalytics = searchParams.get("analytics") !== "false"
     const includeFinancial = searchParams.get("financial") !== "false"
     const includeInsights = searchParams.get("insights") !== "false"
     const includeVisitors = searchParams.get("visitors") !== "false"
 
-    // Parse categories
-    const categories = categoriesParam
-      ? (categoriesParam.split(",") as EventCategoryType[])
-      : undefined
-
     // Fetch journey data (use tenant's owner_id as workspace_id for proper data access)
     const result = await getTenantJourney({
       tenant_id: tenantId,
       workspace_id: tenant.owner_id,
-      events_limit: Math.min(limit, 100), // Cap at 100 events per request
+      events_limit: limit, // Already validated to be 1-100
       events_offset: offset,
       event_categories: categories,
       date_from: dateFrom,
@@ -136,7 +194,7 @@ export async function GET(
 
     return apiSuccess(result.data)
   } catch (error) {
-    console.error("[Journey API] Unexpected error:", error)
+    apiLogger.error("[Journey API] Unexpected error", { error: error instanceof Error ? error.message : String(error) })
     return internalError("An unexpected error occurred")
   }
 }

@@ -7,17 +7,10 @@ import type {
   DailySummaryData,
 } from "./email"
 
-// Format currency for display
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
+// Use shared formatters
+import { formatCurrency, formatDate as formatDateShort } from "@/lib/format"
 
-// Format date for display
+// Format date with full month name (for emails)
 function formatDate(date: Date): string {
   return new Date(date).toLocaleDateString("en-IN", {
     day: "numeric",

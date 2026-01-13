@@ -196,10 +196,18 @@ function ScoreCard({
       </div>
 
       {/* Progress bar */}
-      <div className={cn("h-2 rounded-full", colorScheme.progressBg)}>
+      <div
+        className={cn("h-2 rounded-full", colorScheme.progressBg)}
+        role="progressbar"
+        aria-valuenow={score}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${title} score: ${score} out of 100`}
+      >
         <div
           className={cn("h-full rounded-full transition-all duration-500", colorScheme.progressFill)}
           style={{ width: `${score}%` }}
+          aria-hidden="true"
         />
       </div>
 
@@ -534,7 +542,14 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
         <div className="flex items-center justify-between">
           <span className="text-sm text-slate-600">Payment</span>
           <div className="flex items-center gap-2">
-            <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div
+              className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden"
+              role="progressbar"
+              aria-valuenow={insights.payment_reliability_score}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Payment reliability score: ${insights.payment_reliability_score} out of 100`}
+            >
               <div
                 className={cn(
                   "h-full rounded-full",
@@ -542,6 +557,7 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
                   insights.payment_reliability_score >= 50 ? "bg-amber-500" : "bg-rose-500"
                 )}
                 style={{ width: `${insights.payment_reliability_score}%` }}
+                aria-hidden="true"
               />
             </div>
             <span className="text-sm font-medium text-slate-900 w-8">

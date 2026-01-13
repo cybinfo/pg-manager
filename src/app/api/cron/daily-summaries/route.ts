@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendDailySummary } from "@/lib/email"
 import { formatCurrency, formatDate } from "@/lib/notifications"
 import { cronLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { transformJoin } from "@/lib/supabase/transforms"
+import { cronLogger, extractErrorMeta } from "@/lib/logger"
+import { apiSuccess, apiError, unauthorized, internalError, ErrorCodes } from "@/lib/api-response"
 
 interface Owner {
   id: string
@@ -51,14 +53,12 @@ export async function GET(request: Request) {
   const rateLimitResult = await cronLimiter.check(clientId)
 
   if (!rateLimitResult.success) {
-    return NextResponse.json(
-      {
-        error: "TOO_MANY_REQUESTS",
-        message: "Rate limit exceeded for cron endpoint",
-        retryAfter: rateLimitResult.retryAfter,
-      },
+    return apiError(
+      ErrorCodes.TOO_MANY_REQUESTS,
+      "Rate limit exceeded for cron endpoint",
       {
         status: 429,
+        details: { retryAfter: rateLimitResult.retryAfter },
         headers: rateLimitHeaders(rateLimitResult),
       }
     )
@@ -67,14 +67,14 @@ export async function GET(request: Request) {
   // SECURITY: Always verify cron secret - no dev bypass
   const authHeader = request.headers.get("authorization")
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return unauthorized("Invalid cron secret")
   }
 
   // SECURITY: Require service role key - fail loudly if missing
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!serviceRoleKey) {
-    console.error("[Cron] SUPABASE_SERVICE_ROLE_KEY is required for cron jobs")
-    return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
+    cronLogger.error("SUPABASE_SERVICE_ROLE_KEY is required for cron jobs")
+    return internalError("Server configuration error")
   }
 
   // Create admin Supabase client
@@ -111,7 +111,8 @@ export async function GET(request: Request) {
 
     for (const config of ownerConfigs || []) {
       const ownerConfig = config as unknown as OwnerConfig
-      const owner = Array.isArray(ownerConfig.owner) ? ownerConfig.owner[0] : ownerConfig.owner
+      // Use transformJoin for consistent handling of Supabase joins
+      const owner = transformJoin(ownerConfig.owner) as Owner | null
 
       if (!owner) continue
 
@@ -145,10 +146,10 @@ export async function GET(request: Request) {
           .gte("expense_date", yesterdayStart.toISOString().split("T")[0])
           .lte("expense_date", yesterdayEnd.toISOString().split("T")[0])
 
-        // Transform expenses to handle Supabase join arrays
+        // Transform expenses using transformJoin for consistent handling
         const expenses = (expensesRaw || []).map((e: { amount: number; expense_type: { name: string } | { name: string }[] | null }) => ({
           amount: e.amount,
-          expense_type: Array.isArray(e.expense_type) ? e.expense_type[0] : e.expense_type,
+          expense_type: transformJoin(e.expense_type) as { name: string } | null,
         }))
 
         const expensesTotal = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
@@ -264,20 +265,14 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Daily summaries processed",
-      ...results,
-    })
+    cronLogger.info("Daily summaries processed", results)
+    return apiSuccess(results, { message: "Daily summaries processed" })
   } catch (error) {
-    console.error("Cron job error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: String(error),
-        ...results,
-      },
-      { status: 500 }
+    cronLogger.error("Cron job error", extractErrorMeta(error))
+    return apiError(
+      ErrorCodes.INTERNAL_ERROR,
+      String(error),
+      { status: 500, details: results }
     )
   }
 }

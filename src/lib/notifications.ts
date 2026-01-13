@@ -4,6 +4,12 @@
  * Future: Twilio API integration for automated messaging
  */
 
+// Import shared formatters
+import { formatCurrency, formatDate } from "@/lib/format"
+
+// Re-export for backward compatibility
+export { formatCurrency, formatDate }
+
 // Format phone number for WhatsApp (India)
 export function formatPhoneNumber(phone: string): string {
   // Remove all non-digit characters
@@ -30,25 +36,6 @@ export function generateWhatsAppLink(phone: string, message: string): string {
   const formattedPhone = formatPhoneNumber(phone)
   const encodedMessage = encodeURIComponent(message)
   return `https://wa.me/${formattedPhone}?text=${encodedMessage}`
-}
-
-// Format currency for display
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-// Format date for display
-export function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
 }
 
 // Payment method display names

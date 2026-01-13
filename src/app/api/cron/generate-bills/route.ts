@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { cronLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { transformJoin } from "@/lib/supabase/transforms"
+import { cronLogger, extractErrorMeta } from "@/lib/logger"
+import { apiSuccess, apiError, unauthorized, internalError, ErrorCodes } from "@/lib/api-response"
 
 interface AutoBillingSettings {
   enabled: boolean
@@ -24,14 +26,12 @@ export async function GET(request: Request) {
     const rateLimitResult = await cronLimiter.check(clientId)
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: "TOO_MANY_REQUESTS",
-          message: "Rate limit exceeded for cron endpoint",
-          retryAfter: rateLimitResult.retryAfter,
-        },
+      return apiError(
+        ErrorCodes.TOO_MANY_REQUESTS,
+        "Rate limit exceeded for cron endpoint",
         {
           status: 429,
+          details: { retryAfter: rateLimitResult.retryAfter },
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     // Verify cron secret
     const authHeader = request.headers.get("authorization")
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return unauthorized("Invalid cron secret")
     }
 
     // Create admin client for cron jobs
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     const currentDay = today.getDate()
     const currentMonth = today.toLocaleString("en-US", { month: "long", year: "numeric" })
 
-    console.log(`[Auto-Billing] Running for ${currentMonth}, day ${currentDay}`)
+    cronLogger.info("Auto-billing started", { month: currentMonth, day: currentDay })
 
     // Get all owners with auto-billing settings
     const { data: configs, error: configError } = await supabaseAdmin
@@ -61,8 +61,8 @@ export async function GET(request: Request) {
       .select("owner_id, auto_billing_settings")
 
     if (configError) {
-      console.error("[Auto-Billing] Error fetching configs:", configError)
-      return NextResponse.json({ error: "Failed to fetch configs" }, { status: 500 })
+      cronLogger.error("Error fetching configs", extractErrorMeta(configError))
+      return internalError("Failed to fetch configs")
     }
 
     let totalBillsGenerated = 0
@@ -79,14 +79,14 @@ export async function GET(request: Request) {
 
       // Check if already generated for this month
       if (settings.last_generated_month === currentMonth) {
-        console.log(`[Auto-Billing] Already generated for ${config.owner_id} this month`)
+        cronLogger.debug("Already generated this month", { ownerId: config.owner_id })
         continue
       }
 
       totalOwners++
       const ownerId = config.owner_id
 
-      console.log(`[Auto-Billing] Processing owner: ${ownerId}`)
+      cronLogger.info("Processing owner", { ownerId })
 
       // Create log entry
       const { data: logEntry } = await supabaseAdmin
@@ -116,7 +116,7 @@ export async function GET(request: Request) {
         .eq("status", "active")
 
       if (tenantsError) {
-        console.error(`[Auto-Billing] Error fetching tenants for ${ownerId}:`, tenantsError)
+        cronLogger.error("Error fetching tenants", { ownerId, ...extractErrorMeta(tenantsError) })
         continue
       }
 
@@ -142,9 +142,8 @@ export async function GET(request: Request) {
               .is("bill_id", null)
 
             for (const charge of charges || []) {
-              const chargeType = Array.isArray(charge.charge_type)
-                ? charge.charge_type[0]
-                : charge.charge_type
+              // Use transformJoin for consistent handling of Supabase joins
+              const chargeType = transformJoin(charge.charge_type) as { name?: string } | null
               lineItems.push({
                 type: chargeType?.name || "Charge",
                 description: charge.for_period || currentMonth,
@@ -206,7 +205,7 @@ export async function GET(request: Request) {
           })
 
           if (billError) {
-            console.error(`[Auto-Billing] Error creating bill for tenant ${tenant.id}:`, billError)
+            cronLogger.error("Error creating bill", { tenantId: tenant.id, ...extractErrorMeta(billError) })
             errors.push({ tenant_id: tenant.id, error: billError.message })
             billsFailed++
             continue
@@ -234,9 +233,9 @@ export async function GET(request: Request) {
           billsGenerated++
           totalAmount += totalAmountDue
 
-          console.log(`[Auto-Billing] Generated bill for ${tenant.name}: ₹${totalAmountDue}`)
+          cronLogger.debug("Generated bill", { tenantName: tenant.name, amount: totalAmountDue })
         } catch (err) {
-          console.error(`[Auto-Billing] Error processing tenant ${tenant.id}:`, err)
+          cronLogger.error("Error processing tenant", { tenantId: tenant.id, ...extractErrorMeta(err) })
           errors.push({
             tenant_id: tenant.id,
             error: err instanceof Error ? err.message : "Unknown error",
@@ -272,25 +271,17 @@ export async function GET(request: Request) {
 
       totalBillsGenerated += billsGenerated
 
-      console.log(
-        `[Auto-Billing] Owner ${ownerId}: Generated ${billsGenerated} bills, Failed: ${billsFailed}`
-      )
+      cronLogger.info("Owner billing complete", { ownerId, billsGenerated, billsFailed })
     }
 
-    console.log(
-      `[Auto-Billing] Complete. Processed ${totalOwners} owners, generated ${totalBillsGenerated} bills`
-    )
+    cronLogger.info("Auto-billing complete", { totalOwners, totalBillsGenerated })
 
-    return NextResponse.json({
-      success: true,
-      message: `Generated ${totalBillsGenerated} bills for ${totalOwners} owners`,
-      date: currentMonth,
-    })
-  } catch (error) {
-    console.error("[Auto-Billing] Cron error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+    return apiSuccess(
+      { billsGenerated: totalBillsGenerated, ownersProcessed: totalOwners },
+      { message: `Generated ${totalBillsGenerated} bills for ${totalOwners} owners` }
     )
+  } catch (error) {
+    cronLogger.error("Cron error", extractErrorMeta(error))
+    return internalError("Internal server error")
   }
 }

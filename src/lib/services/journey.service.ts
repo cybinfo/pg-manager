@@ -36,26 +36,11 @@ import {
   createServiceError,
   ERROR_CODES,
 } from "./types"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 // ============================================
 // Helper Functions
 // ============================================
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
-}
 
 function daysBetween(date1: Date, date2: Date): number {
   const oneDay = 24 * 60 * 60 * 1000

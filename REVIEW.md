@@ -27,7 +27,7 @@
 ## Remediation Status Log
 
 > **Last Updated:** 2026-01-13
-> **Status:** Phase 5 Complete
+> **Status:** Phase 6 Complete
 
 ### Phase 1: Security Fixes (2026-01-13) - COMPLETE ✅
 
@@ -204,14 +204,80 @@ function MyComponent() {
    - Automatically resets to page 1 when filters change
    - New component: `src/components/ui/pagination.tsx` with full and compact variants
 
+### Phase 6: Code Quality & Accessibility (2026-01-13) - COMPLETE ✅
+
+| Issue ID | Description | Status | Files |
+|----------|-------------|--------|-------|
+| CQ-001 | Replace console.log with structured logger | ✅ FIXED | logger.ts, cron routes |
+| API-002 | Use transformJoin consistently in cron routes | ✅ FIXED | All cron routes |
+| UI-003 | MetricsBar missing keyboard navigation | ✅ FIXED | metrics-bar.tsx |
+| UI-004 | Progress bars missing ARIA attributes | ✅ FIXED | PredictiveInsights.tsx |
+| UI-005 | Form labels/descriptions accessibility | ✅ FIXED | form-components.tsx |
+| BL-020 | Add missing business logic error codes | ✅ FIXED | services/types.ts |
+| BL-015 | Exit workflow missing refund record creation | ✅ FIXED | exit.workflow.ts |
+| CQ-005 | Consolidate duplicate formatters | ✅ FIXED | notifications.ts, journey.service.ts, etc. |
+| API-010 | Add input validation to journey API | ✅ FIXED | journey/route.ts |
+
+**Summary of Phase 6 Changes:**
+
+1. **CQ-001: Structured Logging Utility**
+   - New utility: `src/lib/logger.ts`
+   - Log levels: debug, info, warn, error
+   - Environment-aware output (silent in tests, debug only in development)
+   - Named loggers: `authLogger`, `apiLogger`, `workflowLogger`, `cronLogger`, `dbLogger`
+   - Helper function: `extractErrorMeta()` for consistent error logging
+   - Updated all cron routes and exit workflow to use structured logger
+
+2. **API-002: transformJoin Consistency**
+   - Updated `payment-reminders/route.ts` - owner, property, room joins
+   - Updated `daily-summaries/route.ts` - owner, expense_type joins
+   - Updated `generate-bills/route.ts` - charge_type joins
+   - All cron routes now use standardized API responses
+
+3. **UI-003, UI-004, UI-005: Accessibility Improvements**
+   - `metrics-bar.tsx`: Added keyboard navigation (Enter/Space), proper ARIA labels
+   - `PredictiveInsights.tsx`: Added `role="progressbar"`, aria-valuenow/min/max attributes
+   - `form-components.tsx`: Auto-generated IDs, aria-describedby for hints/errors, aria-invalid
+   - `ToggleSwitch`: Added aria-labelledby and aria-label support
+
+4. **BL-020: Business Logic Error Codes**
+   - Added to `src/lib/services/types.ts`:
+     - TENANT_STATUS_INVALID, ROOM_TRANSFER_INVALID
+     - BILL_AMOUNT_MISMATCH, ADVANCE_BALANCE_INSUFFICIENT
+     - REFUND_EXCEEDS_BALANCE, REFUND_ALREADY_PROCESSED, SECURITY_DEPOSIT_INVALID
+     - EXIT_INCOMPLETE, CLEARANCE_CHECKLIST_INCOMPLETE
+     - WORKFLOW_TIMEOUT, APPROVAL_INVALID_STATE
+
+5. **BL-015: Exit Workflow Refund Record Creation**
+   - Added `create_refund_record` step to `completeExitWorkflow`
+   - Creates refund record when settlement has positive refund amount
+   - Links refund to exit_clearance and updates refund_status
+   - Optional step - workflow continues even if refund creation fails
+
+6. **CQ-005: Consolidated Formatters**
+   - Central utility: `src/lib/format.ts` (already existed)
+   - Updated `notifications.ts` to import from format.ts
+   - Updated `email-templates.ts` to use shared formatCurrency
+   - Updated `journey.service.ts` to use shared formatters
+   - Updated `pdf-journey-report.tsx` to use shared formatters
+
+7. **API-010: Journey API Input Validation**
+   - Added UUID validation for tenant ID
+   - Added limit validation (1-100)
+   - Added offset validation (non-negative)
+   - Added category validation against EventCategory enum
+   - Added ISO date format validation for from/to parameters
+   - Added date range validation (from <= to)
+   - Uses apiLogger for error handling
+
 ### Remaining Issues
 
 All HIGH priority issues have been addressed. Remaining issues are MEDIUM or LOW priority:
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| MEDIUM | 58 | Code quality, consistency, maintainability |
-| LOW | 23 | Minor improvements, documentation |
+| MEDIUM | 49 | Code quality, consistency, maintainability |
+| LOW | 14 | Minor improvements, documentation |
 
 ---
 

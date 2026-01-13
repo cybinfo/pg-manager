@@ -28,18 +28,37 @@ export function FormField({
   children,
   className
 }: FormFieldProps) {
+  const generatedId = React.useId()
+  const fieldId = htmlFor || generatedId
+  const hintId = hint ? `${fieldId}-hint` : undefined
+  const errorId = error ? `${fieldId}-error` : undefined
+  const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined
+
+  // Clone child element to add accessibility props
+  const enhancedChildren = React.Children.map(children, (child) => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child as React.ReactElement<{ id?: string; "aria-describedby"?: string; "aria-invalid"?: boolean }>, {
+        id: fieldId,
+        "aria-describedby": describedBy,
+        "aria-invalid": !!error,
+      })
+    }
+    return child
+  })
+
   return (
     <div className={cn("space-y-2", className)}>
-      <Label htmlFor={htmlFor} className="text-sm font-medium">
+      <Label htmlFor={fieldId} className="text-sm font-medium">
         {label}
-        {required && <span className="text-rose-500 ml-1">*</span>}
+        {required && <span className="text-rose-500 ml-1" aria-hidden="true">*</span>}
+        {required && <span className="sr-only">(required)</span>}
       </Label>
-      {children}
+      {enhancedChildren}
       {hint && !error && (
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p id={hintId} className="text-xs text-muted-foreground">{hint}</p>
       )}
       {error && (
-        <p className="text-xs text-rose-500">{error}</p>
+        <p id={errorId} className="text-xs text-rose-500" role="alert">{error}</p>
       )}
     </div>
   )
@@ -326,18 +345,26 @@ export function ToggleSwitch({
   disabled,
   className
 }: ToggleSwitchProps) {
+  const switchId = React.useId()
+  const labelId = label ? `${switchId}-label` : undefined
+  const descriptionId = description ? `${switchId}-desc` : undefined
+  const describedBy = [labelId, descriptionId].filter(Boolean).join(" ") || undefined
+
   return (
     <div className={cn("flex items-center justify-between", className)}>
       {(label || description) && (
         <div className="flex-1">
-          {label && <p className="font-medium text-sm">{label}</p>}
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          {label && <p id={labelId} className="font-medium text-sm">{label}</p>}
+          {description && <p id={descriptionId} className="text-xs text-muted-foreground">{description}</p>}
         </div>
       )}
       <button
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-labelledby={labelId}
+        aria-describedby={descriptionId}
+        aria-label={!label ? "Toggle switch" : undefined}
         disabled={disabled}
         onClick={() => onCheckedChange(!checked)}
         className={cn(
@@ -351,6 +378,7 @@ export function ToggleSwitch({
             "inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform",
             checked ? "translate-x-6" : "translate-x-1"
           )}
+          aria-hidden="true"
         />
       </button>
     </div>
