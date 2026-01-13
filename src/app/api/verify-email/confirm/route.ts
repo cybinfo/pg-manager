@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf"
 
 // Service role client for database operations
 const supabaseAdmin = createClient(
@@ -26,6 +27,12 @@ export async function POST(request: NextRequest) {
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
+    }
+
+    // SECURITY: CSRF validation for state-changing requests
+    const csrfResult = validateCsrf(request)
+    if (!csrfResult.valid) {
+      return csrfErrorResponse(csrfResult.error || "CSRF validation failed")
     }
 
     const { token } = await request.json()

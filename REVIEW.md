@@ -143,11 +143,33 @@
 - Pre-configured limiters: authLimiter, adminLimiter, apiLimiter, sensitiveLimiter, cronLimiter
 - Helper functions: getClientIdentifier, rateLimitHeaders, withRateLimit
 
-### Remaining Critical Issues
+### Phase 4: CSRF Protection Implementation (2026-01-13) - COMPLETE ✅
 
-| Issue ID | Description | Priority |
-|----------|-------------|----------|
-| SEC-004 | Missing CSRF protection | CRITICAL |
+**New utilities:**
+- `src/lib/csrf.ts` - CSRF token generation and validation
+- `src/lib/hooks/use-csrf.ts` - Client-side hook for CSRF tokens
+
+**Implementation:**
+- Double-submit cookie pattern with timing-safe comparison
+- CSRF cookie set automatically for authenticated users via middleware
+- 24-hour token expiry with automatic refresh
+
+**Protected endpoints:**
+| Endpoint | Method |
+|----------|--------|
+| `/api/admin/update-user-email` | POST |
+| `/api/verify-email/send` | POST |
+| `/api/verify-email/confirm` | POST |
+
+**Client usage:**
+```tsx
+import { useCsrf } from "@/lib/hooks/use-csrf"
+
+function MyComponent() {
+  const { securePost } = useCsrf()
+  await securePost("/api/endpoint", data)
+}
+```
 
 ### Remaining High Priority Issues
 

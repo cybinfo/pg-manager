@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { sensitiveLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf"
 
 // Create admin client with service role key
 function getAdminClient() {
@@ -39,6 +40,12 @@ export async function POST(request: NextRequest) {
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
+    }
+
+    // SECURITY: CSRF validation for state-changing requests
+    const csrfResult = validateCsrf(request)
+    if (!csrfResult.valid) {
+      return csrfErrorResponse(csrfResult.error || "CSRF validation failed")
     }
 
     // SECURITY: Verify authentication first

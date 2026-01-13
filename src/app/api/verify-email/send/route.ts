@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import { sendVerificationEmail } from "@/lib/email"
 import crypto from "crypto"
 import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf"
 
 // Service role client for database operations
 const supabaseAdmin = createClient(
@@ -28,6 +29,12 @@ export async function POST(request: NextRequest) {
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
+    }
+
+    // SECURITY: CSRF validation for state-changing requests
+    const csrfResult = validateCsrf(request)
+    if (!csrfResult.valid) {
+      return csrfErrorResponse(csrfResult.error || "CSRF validation failed")
     }
 
     const { userId, email, userName } = await request.json()
