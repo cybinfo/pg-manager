@@ -145,6 +145,8 @@ export interface WorkflowResult<T> {
   errors?: ServiceError[]
   audit_events?: string[] // IDs of created audit events
   notifications_sent?: string[] // IDs of notifications sent
+  // BL-004: Track failed optional steps for visibility and debugging
+  failed_optional_steps?: string[] // Names of optional steps that failed
 }
 
 // ============================================

@@ -118,6 +118,20 @@ export interface WorkflowDefinition<TInput, TOutput> {
   buildOutput: (results: Record<string, unknown>) => TOutput
 }
 
+// BL-009: In-memory idempotency cache to prevent duplicate workflow execution
+const idempotencyCache = new Map<string, { result: WorkflowResult<unknown>; timestamp: number }>()
+const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000 // 5 minutes
+
+// Clean up expired idempotency entries periodically
+function cleanIdempotencyCache() {
+  const now = Date.now()
+  for (const [key, value] of idempotencyCache.entries()) {
+    if (now - value.timestamp > IDEMPOTENCY_TTL_MS) {
+      idempotencyCache.delete(key)
+    }
+  }
+}
+
 export async function executeWorkflow<TInput, TOutput>(
   definition: WorkflowDefinition<TInput, TOutput>,
   input: TInput,
@@ -128,8 +142,18 @@ export async function executeWorkflow<TInput, TOutput>(
     skip_audit?: boolean
     skip_notifications?: boolean
     metadata?: Record<string, unknown>
+    idempotency_key?: string // BL-009: Optional idempotency key to prevent duplicate execution
   }
 ): Promise<WorkflowResult<TOutput>> {
+  // BL-009: Check idempotency cache
+  if (options?.idempotency_key) {
+    cleanIdempotencyCache()
+    const cached = idempotencyCache.get(options.idempotency_key)
+    if (cached) {
+      console.log(`[Workflow] Returning cached result for idempotency key: ${options.idempotency_key}`)
+      return cached.result as WorkflowResult<TOutput>
+    }
+  }
   const context = createWorkflowContext(
     definition.name,
     actorId,
@@ -141,6 +165,8 @@ export async function executeWorkflow<TInput, TOutput>(
   const results: Record<string, unknown> = {}
   const errors: ServiceError[] = []
   const completedSteps: Array<{ step: typeof definition.steps[0]; result: unknown }> = []
+  // BL-004: Track failed optional steps for visibility
+  const failedOptionalSteps: Array<{ step_name: string; error: ServiceError }> = []
   let auditEventIds: string[] = []
   let notificationIds: string[] = []
 
@@ -180,7 +206,12 @@ export async function executeWorkflow<TInput, TOutput>(
           errors,
         }
       } else {
-        console.log(`[Workflow] Optional step "${stepDef.name}" failed, continuing...`)
+        // BL-004: Track failed optional steps instead of silently continuing
+        console.warn(`[Workflow] Optional step "${stepDef.name}" failed:`, stepResult.error)
+        failedOptionalSteps.push({
+          step_name: stepDef.name,
+          error: stepResult.error!,
+        })
       }
     }
   }
@@ -204,6 +235,33 @@ export async function executeWorkflow<TInput, TOutput>(
     }
   }
 
+  // BL-004: Log audit event for failed optional steps (important for debugging)
+  if (!options?.skip_audit && failedOptionalSteps.length > 0) {
+    const failedStepsAudit = createAuditEvent(
+      "workflow" as any,
+      context.workflow_id,
+      "update",
+      {
+        actor_id: actorId,
+        actor_type: actorType,
+        workspace_id: workspaceId,
+      },
+      {
+        metadata: {
+          event_subtype: "optional_steps_failed",
+          workflow_name: definition.name,
+          failed_steps: failedOptionalSteps.map(f => ({
+            step: f.step_name,
+            error_code: f.error.code,
+            error_message: f.error.message,
+          })),
+        },
+      }
+    )
+    await logAuditEvent(failedStepsAudit)
+    console.warn(`[Workflow] ${failedOptionalSteps.length} optional step(s) failed in ${definition.name}`)
+  }
+
   // Send notifications
   if (!options?.skip_notifications && definition.notifications) {
     const notifications = definition.notifications(context, input, results)
@@ -217,7 +275,7 @@ export async function executeWorkflow<TInput, TOutput>(
 
   console.log(`[Workflow] Completed: ${definition.name} (${context.workflow_id})`)
 
-  return {
+  const result: WorkflowResult<TOutput> = {
     success: true,
     data: definition.buildOutput(results),
     workflow_id: context.workflow_id,
@@ -225,7 +283,18 @@ export async function executeWorkflow<TInput, TOutput>(
     steps_total: definition.steps.length,
     audit_events: auditEventIds,
     notifications_sent: notificationIds,
+    // BL-004: Include failed optional steps in result for visibility
+    failed_optional_steps: failedOptionalSteps.length > 0
+      ? failedOptionalSteps.map(f => f.step_name)
+      : undefined,
   }
+
+  // BL-009: Cache result for idempotency
+  if (options?.idempotency_key) {
+    idempotencyCache.set(options.idempotency_key, { result, timestamp: Date.now() })
+  }
+
+  return result
 }
 
 // ============================================
