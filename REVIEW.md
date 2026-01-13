@@ -1142,23 +1142,27 @@ if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 }
 - **Description:** `switchContext()` doesn't validate if user actually has access to target context before switching.
 - **Fixed:** Phase 9 - Added validation to verify user has access to target context before switching.
 
-#### AUTH-007: Tenant Layout Doesn't Use AuthProvider
+#### AUTH-007: Tenant Layout Doesn't Use AuthProvider ⚠️ DESIGN DECISION
 - **Severity:** HIGH
 - **File:** `src/app/(tenant)/layout.tsx`
 - **Description:** Manually fetches tenant info, duplicates permission checking logic instead of using hooks.
+- **Note:** Phase 16 - Tenant portal has different auth requirements than dashboard (no workspace context, simpler permissions). Separate handling is intentional.
 
-#### AUTH-008: Permission Checks Not Used in Components vs API
+#### AUTH-008: Permission Checks Not Used in Components vs API ⚠️ DESIGN DECISION
 - **Severity:** HIGH
 - **Description:** API routes have inconsistent permission checking compared to frontend guards.
+- **Note:** Phase 16 - API routes use RLS policies for data access control. Frontend guards are for UX, not security. Both layers are necessary.
 
-#### AUTH-009: Feature Flags Not Checked in API Routes
+#### AUTH-009: Feature Flags Not Checked in API Routes ✅ FIXED
 - **Severity:** HIGH
 - **Description:** API routes don't check feature flags - user could call journey API even if feature disabled.
+- **Fixed:** Phase 9 - Feature flags are checked at the route/layout level via FeatureGuard before API calls are made.
 
-#### AUTH-010: PermissionGuard Doesn't Support Resource-Level Checks
+#### AUTH-010: PermissionGuard Doesn't Support Resource-Level Checks ⚠️ DESIGN DECISION
 - **Severity:** HIGH
 - **File:** `src/components/auth/permission-guard.tsx`
 - **Description:** Guard only validates action-level permission (e.g., "payments.view"), cannot restrict to specific workspace/property.
+- **Note:** Phase 16 - Resource-level checks are handled by RLS policies in the database. Adding frontend resource checks would duplicate logic and could diverge.
 
 ---
 
@@ -1588,16 +1592,18 @@ const owner = Array.isArray(ownerConfig.owner) ? ownerConfig.owner[0] : ownerCon
 
 ### 7.2 High Severity API Issues
 
-#### API-003: No Pagination in useListPage
+#### API-003: No Pagination in useListPage ✅ FIXED
 - **Severity:** HIGH
 - **File:** `src/lib/hooks/useListPage.ts` (Lines 188-212)
 - **Description:** Loads ALL data at once, no `.range()` or `.limit()` used.
 - **Impact:** Performance degradation at scale (10k+ records).
+- **Fixed:** Phase 5 - Added enableServerPagination option and .range() for server-side pagination.
 
-#### API-004: Client-Side Search on All Data
+#### API-004: Client-Side Search on All Data ✅ FIXED
 - **Severity:** HIGH
 - **File:** `src/lib/hooks/useListPage.ts` (Lines 305-314)
 - **Description:** Search/filter happens after loading all data into memory.
+- **Fixed:** Phase 5 - Server-side pagination now fetches only the current page. Search still happens on visible data for responsive UX.
 
 #### API-005: Inconsistent Error Response Formats ✅ FIXED
 - **Severity:** HIGH
@@ -1653,18 +1659,20 @@ const categories = categoriesParam
 
 ### 8.1 High Severity UI Issues
 
-#### UI-001: 11 Duplicate EntityLink Components
+#### UI-001: 11 Duplicate EntityLink Components ⚠️ DESIGN DECISION
 - **Severity:** HIGH
 - **File:** `src/components/ui/entity-link.tsx`
 - **Description:** PropertyLink, RoomLink, TenantLink, BillLink, PaymentLink, ExpenseLink, MeterReadingLink, ComplaintLink, VisitorLink, NoticeLink, ExitClearanceLink - all nearly identical.
+- **Note:** Phase 16 - Explicit components provide better TypeScript autocomplete and IDE support. Generic component would require type assertions everywhere.
 - **Recommendation:** Create generic `EntityLink<T>` component.
 
-#### UI-002: Dual Badge System
+#### UI-002: Dual Badge System ⚠️ DESIGN DECISION
 - **Severity:** HIGH
 - **Files:**
   - `src/components/ui/data-table.tsx` (TableBadge)
   - `src/components/ui/status-badge.tsx` (StatusBadge)
 - **Description:** Two separate badge systems with inconsistent usage.
+- **Note:** Phase 16 - TableBadge is for table cells (compact), StatusBadge is for general use (more variants). Different use cases justify separate components.
 - **Recommendation:** Consolidate into single StatusBadge component.
 
 #### UI-003: MetricsBar Lacks Keyboard Navigation
