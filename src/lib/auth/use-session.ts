@@ -32,7 +32,34 @@ import {
 const SESSION_REFRESH_BUFFER = 5 * 60 * 1000 // Refresh 5 minutes before expiry
 const SESSION_CHECK_INTERVAL = 60 * 1000 // Check session every minute
 const MAX_RETRY_ATTEMPTS = 3
-const RETRY_DELAY = 1000 // 1 second between retries
+const BASE_RETRY_DELAY = 500 // Base delay for exponential backoff (ms)
+const MAX_RETRY_DELAY = 10000 // Maximum delay cap (ms)
+
+/**
+ * CQ-011: Calculate exponential backoff delay with jitter
+ * Formula: min(cap, base * 2^attempt) + random jitter
+ *
+ * This prevents "thundering herd" problems where many clients
+ * retry simultaneously after a server outage.
+ *
+ * @param attempt - Current retry attempt (0-indexed)
+ * @param base - Base delay in milliseconds
+ * @param cap - Maximum delay cap in milliseconds
+ * @returns Delay in milliseconds with random jitter
+ */
+function getExponentialBackoffDelay(
+  attempt: number,
+  base: number = BASE_RETRY_DELAY,
+  cap: number = MAX_RETRY_DELAY
+): number {
+  // Exponential backoff: base * 2^attempt
+  const exponentialDelay = base * Math.pow(2, attempt)
+  // Cap the delay
+  const cappedDelay = Math.min(exponentialDelay, cap)
+  // Add jitter (random value between 0 and 50% of the delay)
+  const jitter = Math.random() * cappedDelay * 0.5
+  return Math.floor(cappedDelay + jitter)
+}
 
 // ============================================
 // Hook State
@@ -122,11 +149,12 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
         if (!mountedRef.current) return
 
         if (result.error) {
-          // Retry on network errors
+          // CQ-011: Retry on network errors with exponential backoff + jitter
           if (result.error.code === "NETWORK_ERROR" && retryCountRef.current < MAX_RETRY_ATTEMPTS) {
+            const delay = getExponentialBackoffDelay(retryCountRef.current)
             retryCountRef.current++
-            console.log(`[useSession] Retry attempt ${retryCountRef.current}/${MAX_RETRY_ATTEMPTS}`)
-            setTimeout(() => initializeSession(), RETRY_DELAY * retryCountRef.current)
+            console.log(`[useSession] Retry attempt ${retryCountRef.current}/${MAX_RETRY_ATTEMPTS} in ${delay}ms`)
+            setTimeout(() => initializeSession(), delay)
             return
           }
 

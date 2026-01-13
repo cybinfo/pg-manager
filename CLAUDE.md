@@ -217,6 +217,53 @@ OR is_platform_admin(auth.uid())
 const isPlatformAdmin = await checkPlatformAdmin(userId)
 ```
 
+### 9. Select vs Combobox (UI-006)
+
+**Use native Select for:**
+- Static options (≤ 10 items)
+- Simple enum values (status, type, etc.)
+- No user input needed
+- Mobile-friendly required
+
+```typescript
+import { Select } from "@/components/ui/form-components"
+
+<Select
+  value={status}
+  onChange={(e) => setStatus(e.target.value)}
+  options={[
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+  ]}
+/>
+```
+
+**Use Combobox for:**
+- Dynamic options (> 10 items)
+- Searchable lists (tenants, properties, rooms)
+- User can type to filter
+- Server-side search needed
+
+```typescript
+import { Combobox } from "@/components/ui/combobox"
+
+<Combobox
+  value={selectedTenant}
+  onValueChange={setSelectedTenant}
+  options={tenants.map(t => ({ value: t.id, label: t.name }))}
+  placeholder="Search tenants..."
+  searchable
+/>
+```
+
+| Criteria | Select | Combobox |
+|----------|--------|----------|
+| Items | ≤ 10 | > 10 |
+| Searchable | No | Yes |
+| Dynamic data | No | Yes |
+| Mobile UX | Native | Custom |
+| Keyboard nav | Limited | Full |
+
 ---
 
 ## Database Schema

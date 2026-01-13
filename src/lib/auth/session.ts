@@ -11,6 +11,7 @@
 
 import { createClient, hasStoredSession } from "@/lib/supabase/client"
 import { User, Session, AuthError } from "@supabase/supabase-js"
+import { TOKEN_REFRESH_BUFFER_SECONDS } from "@/lib/constants"
 
 // ============================================
 // Types
@@ -61,8 +62,8 @@ export function isSessionExpired(session: Session | null): boolean {
   if (!session) return true
   const expiresAt = session.expires_at
   if (!expiresAt) return false
-  // Add 30 second buffer
-  return Date.now() / 1000 > expiresAt - 30
+  // AUTH-012: Use configurable buffer (reduced from 30s to 15s)
+  return Date.now() / 1000 > expiresAt - TOKEN_REFRESH_BUFFER_SECONDS
 }
 
 export function getSessionExpiryTime(session: Session | null): number | null {

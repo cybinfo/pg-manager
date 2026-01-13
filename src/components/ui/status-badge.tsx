@@ -80,9 +80,10 @@ const statusConfig: Record<string, { variant: "success" | "warning" | "error" | 
   verified: { variant: "success", icon: CheckCircle2, label: "Verified" },
   unverified: { variant: "warning", icon: Clock, label: "Unverified" },
 
-  // Room statuses
+  // Room statuses (UI-007: Added partially_occupied)
   available: { variant: "success", icon: CheckCircle2, label: "Available" },
   occupied: { variant: "primary", icon: Play, label: "Occupied" },
+  partially_occupied: { variant: "info", icon: AlertCircle, label: "Partially Occupied" },
   maintenance: { variant: "warning", icon: AlertTriangle, label: "Maintenance" },
 }
 

@@ -26,8 +26,13 @@ export const ONE_DAY_MS = 24 * 60 * 60 * 1000
 /** Timeout for auth initialization (ms) - if no auth event fires, assume not logged in */
 export const AUTH_INIT_TIMEOUT_MS = 3000
 
-/** Buffer before token expiry to trigger refresh (ms) */
-export const TOKEN_REFRESH_BUFFER_MS = 30 * 1000
+/**
+ * AUTH-012: Buffer before token expiry to trigger refresh (seconds)
+ * Reduced from 30s to 15s to avoid unnecessary refreshes during network latency.
+ * 15 seconds provides enough buffer for the refresh call while minimizing
+ * premature token refreshes.
+ */
+export const TOKEN_REFRESH_BUFFER_SECONDS = 15
 
 /** Session check interval (ms) */
 export const SESSION_CHECK_INTERVAL_MS = 60 * 1000

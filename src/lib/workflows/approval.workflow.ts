@@ -670,6 +670,7 @@ export const processApprovalWorkflow: WorkflowDefinition<ApprovalDecisionInput, 
     },
 
     // Step 2: Validate type-specific requirements (for approvals only)
+    // BL-012: Also checks for concurrent conflicting approvals
     {
       name: "validate_type",
       execute: async (context, input, previousResults) => {
@@ -679,6 +680,35 @@ export const processApprovalWorkflow: WorkflowDefinition<ApprovalDecisionInput, 
 
         const approval = previousResults.fetch_approval as Record<string, unknown>
         const handler = approvalHandlers[approval.type as ApprovalType]
+
+        // BL-012: Check for concurrent conflicting approvals for same tenant
+        // This prevents scenarios where two room change requests are approved simultaneously
+        const tenantId = approval.requester_tenant_id as string
+        const approvalType = approval.type as string
+        const conflictingTypes = ["room_change", "stay_extension"] // Types that can conflict
+
+        if (tenantId && conflictingTypes.includes(approvalType)) {
+          const supabase = createClient()
+
+          // Check if there are other in-progress approvals being processed for this tenant
+          const { data: concurrentApprovals } = await supabase
+            .from("approvals")
+            .select("id, type, status")
+            .eq("requester_tenant_id", tenantId)
+            .eq("status", "approved")  // Check for recently approved but not yet applied
+            .eq("applied", false)
+            .neq("id", input.approval_id)
+            .in("type", conflictingTypes)
+
+          if (concurrentApprovals && concurrentApprovals.length > 0) {
+            return createErrorResult(
+              createServiceError(
+                ERROR_CODES.CONCURRENT_MODIFICATION,
+                `Another ${concurrentApprovals[0].type} approval is currently being processed for this tenant. Please wait and try again.`
+              )
+            )
+          }
+        }
 
         if (handler?.validate) {
           const validationResult = await handler.validate(approval, input)

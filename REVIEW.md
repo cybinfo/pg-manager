@@ -27,7 +27,7 @@
 ## Remediation Status Log
 
 > **Last Updated:** 2026-01-13
-> **Status:** Phase 9 Complete
+> **Status:** Phase 10 Complete
 
 ### Phase 1: Security Fixes (2026-01-13) - COMPLETE ✅
 
@@ -440,16 +440,55 @@ function MyComponent() {
      - "occupied" when occupied_beds >= total_beds
    - Consistent with tenant.workflow.ts logic
 
+### Phase 10: Medium Priority Fixes (2026-01-13) - COMPLETE ✅
+
+| Issue ID | Description | Status | Files |
+|----------|-------------|--------|-------|
+| AUTH-012 | Reduce aggressive token refresh buffer | ✅ FIXED | constants.ts, session.ts |
+| CQ-011 | Implement exponential backoff with jitter | ✅ FIXED | use-session.ts |
+| UI-007 | Unify color schemes across components | ✅ FIXED | stat-card.tsx, status-badge.tsx |
+| UI-006 | Document Select vs Combobox usage pattern | ✅ FIXED | CLAUDE.md |
+| BL-012 | Add concurrent approval conflict handling | ✅ FIXED | approval.workflow.ts, types.ts |
+| ARCH-004 | Verify design tokens in central location | ✅ VERIFIED | design-tokens.ts (already exists) |
+
+**Summary of Phase 10 Changes:**
+
+1. **AUTH-012: Token Refresh Buffer**
+   - Reduced buffer from 30 seconds to 15 seconds
+   - Created configurable `TOKEN_REFRESH_BUFFER_SECONDS` constant
+   - Updated session.ts to use centralized constant
+
+2. **CQ-011: Exponential Backoff with Jitter**
+   - Added `getExponentialBackoffDelay()` function
+   - Formula: min(cap, base * 2^attempt) + random jitter
+   - Prevents "thundering herd" on server recovery
+   - Retry delays: ~500ms, ~1s, ~2s (with jitter)
+
+3. **UI-007: Unified Color Schemes**
+   - StatCard: Updated blue→sky, green→emerald, purple→violet
+   - StatusBadge: Added `partially_occupied` room status
+   - Both components now use consistent color families
+
+4. **UI-006: Select vs Combobox Documentation**
+   - Added decision matrix to CLAUDE.md
+   - Select: ≤10 items, static, mobile-friendly
+   - Combobox: >10 items, searchable, dynamic data
+
+5. **BL-012: Concurrent Approval Conflicts**
+   - Added check in validate_type step for conflicting approvals
+   - Prevents two room changes being approved simultaneously
+   - New error code: `CONCURRENT_MODIFICATION`
+
 ### Remaining Issues
 
 All HIGH priority issues have been addressed. Remaining issues are MEDIUM or LOW priority:
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| MEDIUM | 26 | Code quality, consistency, maintainability |
+| MEDIUM | 20 | Code quality, consistency, maintainability |
 | LOW | 12 | Minor improvements, documentation |
 
-*Updated after Phase 9: Fixed 7 additional MEDIUM priority issues (14 total in Phases 8-9).*
+*Updated after Phase 10: Fixed 6 additional MEDIUM priority issues (20 total in Phases 8-10).*
 
 ---
 

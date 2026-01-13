@@ -7,12 +7,20 @@ import { Card, CardContent } from "@/components/ui/card"
 
 type ColorVariant = "blue" | "green" | "red" | "amber" | "purple" | "teal" | "orange" | "rose" | "slate"
 
+/**
+ * UI-007: Unified color classes for stat cards.
+ * Uses consistent color naming aligned with status-badge.tsx:
+ * - blue -> sky (matches info)
+ * - green -> emerald (matches success)
+ * - purple -> violet (matches purple semantic)
+ * - red -> rose (matches error)
+ */
 const colorClasses: Record<ColorVariant, { bg: string; text: string }> = {
-  blue: { bg: "bg-blue-100", text: "text-blue-600" },
-  green: { bg: "bg-green-100", text: "text-green-600" },
-  red: { bg: "bg-red-100", text: "text-red-600" },
+  blue: { bg: "bg-sky-100", text: "text-sky-600" },
+  green: { bg: "bg-emerald-100", text: "text-emerald-600" },
+  red: { bg: "bg-rose-100", text: "text-rose-600" },
   amber: { bg: "bg-amber-100", text: "text-amber-600" },
-  purple: { bg: "bg-purple-100", text: "text-purple-600" },
+  purple: { bg: "bg-violet-100", text: "text-violet-600" },
   teal: { bg: "bg-teal-100", text: "text-teal-600" },
   orange: { bg: "bg-orange-100", text: "text-orange-600" },
   rose: { bg: "bg-rose-100", text: "text-rose-600" },
