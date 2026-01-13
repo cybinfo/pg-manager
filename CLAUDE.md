@@ -299,6 +299,34 @@ import { Combobox } from "@/components/ui/combobox"
 | `exit_clearance` | `settlement_status` | ~~status~~ |
 | `platform_admins` | NO `is_active` | ~~is_active~~ |
 
+### UUID Generation (DB-012)
+
+All tables use UUID primary keys. Use these approaches:
+
+**Database (Postgres):**
+```sql
+-- PREFERRED: Native function, no extension required
+id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+
+-- LEGACY: Requires uuid-ossp extension (some older tables use this)
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4()
+```
+
+**Client-side (TypeScript):**
+```typescript
+// For generating IDs before insert (e.g., line_items array)
+const id = crypto.randomUUID()
+```
+
+**Validation:**
+```typescript
+// Validate UUID format
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const isValid = uuidRegex.test(str)
+```
+
+> **Note:** New tables should use `gen_random_uuid()`. Both functions produce valid v4 UUIDs.
+
 ### Migrations (41 total)
 
 | # | File | Purpose |

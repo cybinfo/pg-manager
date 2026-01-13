@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { createClient as createServerClient } from "@/lib/supabase/server"
 import { sendVerificationEmail } from "@/lib/email"
 import crypto from "crypto"
 import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
@@ -8,6 +9,8 @@ import {
   apiSuccess,
   apiError,
   badRequest,
+  unauthorized,
+  forbidden,
   internalError,
   csrfError,
   ErrorCodes,
@@ -43,10 +46,29 @@ export async function POST(request: NextRequest) {
       return csrfError(csrfResult.error || "CSRF validation failed")
     }
 
+    // SEC-015: Verify authentication and token ownership
+    const supabase = await createServerClient()
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+
+    if (!currentUser) {
+      return unauthorized("Authentication required to request verification email")
+    }
+
     const { userId, email, userName } = await request.json()
 
     if (!userId || !email) {
       return badRequest("Missing required fields: userId and email are required")
+    }
+
+    // SEC-015: Validate that the authenticated user is requesting their own verification
+    // Users can only request verification emails for their own account
+    if (currentUser.id !== userId) {
+      return forbidden("You can only request verification for your own account")
+    }
+
+    // Additional security: verify the email matches the authenticated user's email
+    if (currentUser.email !== email) {
+      return forbidden("Email does not match your account")
     }
 
     // Generate a secure random token

@@ -39,6 +39,12 @@ export interface Column<T> {
   render?: (row: T) => React.ReactNode
   className?: string
   hideOnMobile?: boolean
+  /**
+   * UI-009: Mobile priority (1 = highest, 3 = lowest)
+   * Columns with lower priority numbers appear first on mobile.
+   * Columns without priority default to their array position.
+   */
+  mobilePriority?: 1 | 2 | 3
   // Sorting options
   sortable?: boolean
   sortKey?: string  // Custom key for sorting (e.g., "property.name" for nested values)
@@ -137,9 +143,20 @@ function DataTableRow<T extends object>({
         )}
       </div>
 
-      {/* Mobile Row */}
+      {/* Mobile Row - UI-009: Priority-based column visibility */}
       <div className="md:hidden space-y-1">
-        {columns.slice(0, 3).map((column, index) => (
+        {columns
+          // Filter out columns hidden on mobile
+          .filter(col => !col.hideOnMobile)
+          // Sort by mobilePriority (lower = higher priority), then by original order
+          .sort((a, b) => {
+            const priorityA = a.mobilePriority ?? 99
+            const priorityB = b.mobilePriority ?? 99
+            return priorityA - priorityB
+          })
+          // Take top 3 most important columns
+          .slice(0, 3)
+          .map((column, index) => (
           <div key={column.key} className="flex items-center justify-between">
             {index === 0 ? (
               <div className="font-medium text-sm flex-1 min-w-0">

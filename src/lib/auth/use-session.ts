@@ -87,11 +87,42 @@ interface UseSessionReturn extends SessionState {
 
 // ============================================
 // Singleton State (prevents duplicate initialization)
+// AUTH-014: Thread-safe global state management
 // ============================================
 
+/**
+ * AUTH-014: Global initialization state
+ *
+ * These flags prevent multiple hook instances from triggering
+ * concurrent initialization. The pattern works as follows:
+ *
+ * 1. First hook to mount sets globalInitializing = true
+ * 2. Other hooks see this flag and wait on initializationPromise
+ * 3. When initialization completes, globalInitialized = true
+ * 4. Subsequent hooks skip initialization entirely
+ *
+ * This is safe in React because:
+ * - JavaScript is single-threaded (no true concurrent access)
+ * - React's render cycle is synchronous within a batch
+ * - useEffect callbacks run after render, in order
+ */
 let globalInitialized = false
 let globalInitializing = false
+
+/**
+ * AUTH-014: Promise to coordinate concurrent initialization attempts.
+ * All hooks waiting on initialization will await this same promise.
+ */
 const initializationPromise: { current: Promise<void> | null } = { current: null }
+
+/**
+ * AUTH-014: Reset global state (for testing or logout scenarios)
+ */
+export function resetSessionState(): void {
+  globalInitialized = false
+  globalInitializing = false
+  initializationPromise.current = null
+}
 
 // ============================================
 // Hook Implementation

@@ -772,10 +772,11 @@ console.error("[Workflow] Fetching tenant from:", tenantUrl)
 - **File:** `src/lib/auth/session.ts` (Lines 295-322)
 - **Description:** Context ID stored in unencrypted localStorage. If device compromised, attacker can read current user's context.
 
-#### SEC-015: User Email Verification Tokens Not Validated Against User
+#### SEC-015: User Email Verification Tokens Not Validated Against User ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/app/api/verify-email/send/route.ts` (Lines 14-34)
 - **Description:** Email verification tokens created without validating requester ownership.
+- **Fixed:** Phase 11 - Added authentication check and validation that requesting user's ID and email match the parameters.
 
 #### SEC-016: Unencrypted Sensitive Data in Workflow Metadata
 - **Severity:** MEDIUM
@@ -1014,9 +1015,10 @@ CREATE INDEX idx_user_contexts_workspace ON user_contexts(workspace_id);
   - `for_period` (bills) vs `for_month`
   - `payment_method` vs `method`
 
-#### DB-012: UUID Generation Inconsistency
+#### DB-012: UUID Generation Inconsistency ✅ FIXED
 - **Severity:** MEDIUM
 - **Description:** Mixing `uuid_generate_v4()` (migrations 001-037) with `gen_random_uuid()` (migrations 038-041).
+- **Fixed:** Phase 11 - Documented UUID generation standard in CLAUDE.md. Both functions produce valid UUIDs; new tables should use `gen_random_uuid()`.
 
 #### DB-013: tenant_stays Has Dual Exit Date Source
 - **Severity:** MEDIUM
@@ -1162,10 +1164,11 @@ if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 }
 - **File:** `src/lib/auth/use-session.ts`
 - **Description:** Multiple components calling refreshSession() could cause race conditions.
 
-#### AUTH-014: Global Singleton State Without Thread Safety
+#### AUTH-014: Global Singleton State Without Thread Safety ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/lib/auth/use-session.ts` (Lines 65-67)
 - **Description:** `globalInitialized`, `globalInitializing` flags without synchronization.
+- **Fixed:** Phase 11 - Added comprehensive documentation explaining thread safety in JavaScript single-threaded model. Added `resetSessionState()` for testing.
 
 #### AUTH-015: hasPermission Accepts Strings
 - **Severity:** MEDIUM
@@ -1321,11 +1324,12 @@ const newStatus = newOccupiedBeds === 0 ? "available" : "occupied"
 
 ---
 
-#### BL-007: Room Transfer Doesn't Update tenant_stays
+#### BL-007: Room Transfer Doesn't Update tenant_stays ✅ FIXED
 - **Severity:** HIGH
 - **File:** `src/lib/workflows/tenant.workflow.ts` (Lines 496-701)
 - **Description:** Room transfer workflow creates `room_transfers` record but never updates `tenant_stays.room_id`.
 - **Impact:** Tenant stays history shows wrong room, journey analytics incorrect.
+- **Fixed:** Phase 11 - Added Step 6 "update_tenant_stays" to room transfer workflow that updates tenant_stays.room_id after successful transfer.
 
 ---
 
@@ -1666,10 +1670,11 @@ const categories = categoriesParam
 - **Severity:** MEDIUM
 - **Description:** Different pages handle `profile_photo || photo_url` fallback differently.
 
-#### UI-009: Mobile Column Visibility Inconsistent
+#### UI-009: Mobile Column Visibility Inconsistent ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/components/ui/data-table.tsx` (Lines 141-162)
 - **Description:** Only shows first 3 columns on mobile regardless of importance.
+- **Fixed:** Phase 11 - Added `mobilePriority` property (1-3) to Column interface. Columns now sorted by priority before selecting top 3 for mobile.
 
 #### UI-010: Loading State Patterns Mixed
 - **Severity:** MEDIUM

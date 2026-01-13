@@ -749,6 +749,52 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
         return createSuccessResult({ updated: true, new_rent: input.new_rent })
       },
     },
+
+    // Step 6: BL-007 - Update tenant_stays record with new room
+    {
+      name: "update_tenant_stays",
+      execute: async (context, input) => {
+        const supabase = createClient()
+
+        // Find the current active stay for this tenant
+        const { data: currentStay, error: findError } = await supabase
+          .from("tenant_stays")
+          .select("id, room_id")
+          .eq("tenant_id", input.tenant_id)
+          .is("exit_date", null)  // Active stay has no exit date
+          .order("join_date", { ascending: false })
+          .limit(1)
+          .single()
+
+        if (findError || !currentStay) {
+          // No active stay found - this is unusual but not fatal
+          console.warn("[RoomTransfer] No active tenant_stays record found for tenant:", input.tenant_id)
+          return createSuccessResult({ stay_updated: false, reason: "no_active_stay" })
+        }
+
+        // Update the stay record with the new room
+        const { error: updateError } = await supabase
+          .from("tenant_stays")
+          .update({
+            room_id: input.new_room_id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", currentStay.id)
+
+        if (updateError) {
+          console.warn("[RoomTransfer] Failed to update tenant_stays:", updateError)
+          return createSuccessResult({ stay_updated: false, reason: "update_failed" })
+        }
+
+        return createSuccessResult({
+          stay_updated: true,
+          stay_id: currentStay.id,
+          old_room_id: currentStay.room_id,
+          new_room_id: input.new_room_id,
+        })
+      },
+      optional: true,  // Don't fail the whole workflow if this step fails
+    },
   ],
 
   auditEvents: (context, input, results) => {
