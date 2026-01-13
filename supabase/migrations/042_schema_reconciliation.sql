@@ -537,7 +537,7 @@ CREATE INDEX IF NOT EXISTS idx_user_contexts_user_id ON user_contexts(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_contexts_workspace_id ON user_contexts(workspace_id);
 
 -- user_roles table indexes
-CREATE INDEX IF NOT EXISTS idx_user_roles_user_context_id ON user_roles(user_context_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_staff_member_id ON user_roles(staff_member_id);
 CREATE INDEX IF NOT EXISTS idx_user_roles_role_id ON user_roles(role_id);
 
 -- tenant_stays table indexes
