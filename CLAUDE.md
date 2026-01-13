@@ -17,6 +17,9 @@
 ```bash
 npm run dev          # Development server at localhost:3000
 npm run build        # Production build
+npm test             # Run test suite (154 tests)
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Run tests with coverage
 npx tsc --noEmit     # Type check
 vercel --prod        # Deploy to production
 ```
@@ -474,9 +477,72 @@ import { sanitizeFilename } from "@/lib/format"
 const safe = sanitizeFilename(tenantName)
 ```
 
+### 8.4 Edge Runtime Compatibility
+
+The middleware runs in Vercel's Edge Runtime which has limited Node.js API support.
+
+**Do NOT use in middleware or CSRF module:**
+- `import crypto from "crypto"` - Use `crypto.getRandomValues()` (Web Crypto API)
+- `Buffer.from()` / `Buffer.toString()` - Use `btoa()` / `atob()`
+- `crypto.timingSafeEqual()` - Use manual constant-time comparison
+
 ---
 
-## 9. Common Issues & Solutions
+## 9. Testing
+
+### 9.1 Test Suite Overview
+
+The project uses Jest with React Testing Library. **154 tests** across 5 test suites:
+
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| `format.test.ts` | 45 | Currency, number, text formatting |
+| `validators.test.ts` | 42 | Indian mobile, PAN, Aadhaar, GST validators |
+| `api-response.test.ts` | 32 | API response helpers, error codes |
+| `services/types.test.ts` | 26 | Service layer error codes |
+| `currency.test.tsx` | 21 | Currency display components |
+
+### 9.2 Running Tests
+
+```bash
+npm test             # Run all tests
+npm run test:watch   # Watch mode for development
+npm run test:coverage # Generate coverage report
+```
+
+### 9.3 Test Configuration
+
+- **Config**: `jest.config.js` (uses `next/jest`)
+- **Setup**: `jest.setup.js` (mocks for NextResponse, router, Supabase)
+- **Location**: `src/__tests__/`
+
+### 9.4 Writing New Tests
+
+```typescript
+// Component test example
+import { render, screen } from '@testing-library/react'
+import { MyComponent } from '@/components/ui/my-component'
+
+describe('MyComponent', () => {
+  it('renders correctly', () => {
+    render(<MyComponent prop="value" />)
+    expect(screen.getByText('Expected Text')).toBeInTheDocument()
+  })
+})
+
+// Utility test example
+import { myFunction } from '@/lib/my-utility'
+
+describe('myFunction', () => {
+  it('handles valid input', () => {
+    expect(myFunction('input')).toBe('expected')
+  })
+})
+```
+
+---
+
+## 10. Common Issues & Solutions
 
 ### "Column does not exist"
 - Check column names in Section 5.2
@@ -502,16 +568,16 @@ const safe = sanitizeFilename(tenantName)
 
 ---
 
-## 10. Development Guidelines
+## 11. Development Guidelines
 
-### 10.1 Adding a New Dashboard Page
+### 11.1 Adding a New Dashboard Page
 
 1. Create `src/app/(dashboard)/[module]/page.tsx`
 2. Wrap with `<PermissionGuard permission="module.view">`
 3. Add to navigation in layout
 4. Use `PageHeader`, `MetricsBar`, `DataTable` patterns
 
-### 10.2 Adding a New Database Table
+### 11.2 Adding a New Database Table
 
 1. Create migration in `supabase/migrations/`
 2. Add RLS policies using `owner_id` pattern
@@ -519,13 +585,13 @@ const safe = sanitizeFilename(tenantName)
 4. Create indexes for common queries
 5. Add to audit triggers if needed
 
-### 10.3 Adding a New Permission
+### 11.3 Adding a New Permission
 
 1. Update `src/lib/auth/types.ts` - PERMISSIONS constant
 2. Update role definitions in database
 3. Update navigation filtering
 
-### 10.4 Code Style
+### 11.4 Code Style
 
 - **TypeScript**: Strict mode, explicit types
 - **Logging**: Use structured logger (`src/lib/logger.ts`)
@@ -535,7 +601,7 @@ const safe = sanitizeFilename(tenantName)
 
 ---
 
-## 11. Workflows
+## 12. Workflows
 
 ### Tenant Workflow (`tenant.workflow.ts`)
 
@@ -564,7 +630,7 @@ const safe = sanitizeFilename(tenantName)
 
 ---
 
-## 12. Environment Variables
+## 13. Environment Variables
 
 ```env
 # Required
@@ -579,7 +645,7 @@ CRON_SECRET=<cron_secret>
 
 ---
 
-## 13. Deployment
+## 14. Deployment
 
 ### Quick Deploy
 ```bash
@@ -593,7 +659,7 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-## 14. Design Principles
+## 15. Design Principles
 
 1. **Standardized** - Consistent patterns everywhere
 2. **Modular** - Reusable, composable components
