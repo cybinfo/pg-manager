@@ -1119,15 +1119,17 @@ if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 }
 
 ### 4.2 High Severity Auth Issues
 
-#### AUTH-005: Missing Refunds Permissions
+#### AUTH-005: Missing Refunds Permissions ✅ FIXED
 - **Severity:** HIGH
 - **File:** `src/lib/auth/types.ts`
 - **Description:** `REFUNDS_VIEW`, `REFUNDS_CREATE`, `REFUNDS_EDIT`, `REFUNDS_DELETE` missing from PERMISSIONS constant. Refunds module exists but has no permission constants.
+- **Fixed:** Phase 9 - Added all four refunds permission constants to PERMISSIONS.
 
-#### AUTH-006: Context Switching Not Validated
+#### AUTH-006: Context Switching Not Validated ✅ FIXED
 - **Severity:** HIGH
 - **File:** `src/lib/auth/auth-context.tsx`
 - **Description:** `switchContext()` doesn't validate if user actually has access to target context before switching.
+- **Fixed:** Phase 9 - Added validation to verify user has access to target context before switching.
 
 #### AUTH-007: Tenant Layout Doesn't Use AuthProvider
 - **Severity:** HIGH
@@ -1156,15 +1158,17 @@ if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 }
 - **File:** `src/lib/auth/session.ts`
 - **Description:** No audit trail for logout events.
 
-#### AUTH-012: 30-Second Token Buffer Aggressive
+#### AUTH-012: 30-Second Token Buffer Aggressive ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/lib/auth/session.ts`
 - **Description:** Could cause unnecessary token refreshes during network latency.
+- **Fixed:** Phase 10 - Reduced TOKEN_REFRESH_BUFFER_SECONDS from 30s to 15s in constants.ts.
 
-#### AUTH-013: No Session Refresh Lock
+#### AUTH-013: No Session Refresh Lock ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/lib/auth/use-session.ts`
 - **Description:** Multiple components calling refreshSession() could cause race conditions.
+- **Fixed:** Phase 10 - Added isRefreshingRef and refreshPromiseRef to prevent concurrent refreshes.
 
 #### AUTH-014: Global Singleton State Without Thread Safety ✅ FIXED
 - **Severity:** MEDIUM
@@ -1367,10 +1371,11 @@ const newStatus = newOccupiedBeds === 0 ? "available" : "occupied"
 - **Description:** No checks for negative amounts (fake refunds possible).
 - **Fixed:** Phase 13 - Verified both workflows have `amount <= 0` validation with proper error handling.
 
-#### BL-012: Concurrent Approval Conflicts
+#### BL-012: Concurrent Approval Conflicts ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/lib/workflows/approval.workflow.ts`
 - **Description:** No handling of concurrent approvals on same tenant.
+- **Fixed:** Phase 10 - Added CONCURRENT_MODIFICATION error code and validation to prevent conflicting approvals.
 
 #### BL-013: Refund → Payment Linkage Incomplete
 - **Severity:** MEDIUM
@@ -1667,14 +1672,16 @@ const categories = categoriesParam
 
 ### 8.2 Medium Severity UI Issues
 
-#### UI-006: Select vs Combobox Undocumented
+#### UI-006: Select vs Combobox Undocumented ✅ FIXED
 - **Severity:** MEDIUM
 - **Description:** No pattern guide for when to use native Select vs searchable Combobox.
+- **Fixed:** Phase 10 - Added comprehensive documentation in CLAUDE.md section 9 with criteria table.
 
-#### UI-007: Color Scheme Inconsistency
+#### UI-007: Color Scheme Inconsistency ✅ FIXED
 - **Severity:** MEDIUM
 - **Files:** `src/components/ui/stat-card.tsx` vs `src/components/ui/status-badge.tsx`
 - **Description:** Color variants don't match between components.
+- **Fixed:** Phase 10 - Unified color scheme across stat-card and status-badge with shared palette.
 
 #### UI-008: Avatar Fallback Logic Varies ✅ FIXED
 - **Severity:** MEDIUM

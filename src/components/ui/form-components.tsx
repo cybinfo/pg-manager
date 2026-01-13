@@ -369,6 +369,8 @@ export function ToggleSwitch({
         onClick={() => onCheckedChange(!checked)}
         className={cn(
           "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+          // UI-005: Added focus styles for keyboard accessibility
+          "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2",
           checked ? "bg-teal-500" : "bg-slate-200",
           disabled && "opacity-50 cursor-not-allowed"
         )}
