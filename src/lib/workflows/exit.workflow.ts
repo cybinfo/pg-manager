@@ -77,6 +77,16 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
     {
       name: "validate_tenant",
       execute: async (context, input) => {
+        // BL-011: Validate deductions have positive amounts
+        if (input.deductions && input.deductions.length > 0) {
+          const invalidDeductions = input.deductions.filter(d => d.amount <= 0)
+          if (invalidDeductions.length > 0) {
+            return createErrorResult(
+              createServiceError(ERROR_CODES.VALIDATION_ERROR, "Deduction amounts must be greater than zero")
+            )
+          }
+        }
+
         // Use direct fetch to avoid Supabase client hanging issues
         const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
         const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

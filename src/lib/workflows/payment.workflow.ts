@@ -80,6 +80,13 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
     {
       name: "validate",
       execute: async (context, input) => {
+        // BL-011: Validate amount is positive
+        if (input.amount <= 0) {
+          return createErrorResult(
+            createServiceError(ERROR_CODES.VALIDATION_ERROR, "Payment amount must be greater than zero")
+          )
+        }
+
         const supabase = createClient()
 
         // Get bill with tenant info
@@ -95,6 +102,13 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
         if (billError || !bill) {
           return createErrorResult(
             createServiceError(ERROR_CODES.NOT_FOUND, "Bill not found")
+          )
+        }
+
+        // BL-014: Verify bill belongs to the specified tenant
+        if (bill.tenant_id !== input.tenant_id) {
+          return createErrorResult(
+            createServiceError(ERROR_CODES.VALIDATION_ERROR, "Bill does not belong to the specified tenant")
           )
         }
 

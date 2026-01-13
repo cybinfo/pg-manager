@@ -70,14 +70,18 @@ export function EmptyState({
   const ActionIcon = action?.icon || Plus
 
   return (
-    <div className={cn(
-      "flex flex-col items-center justify-center py-12 px-4 text-center animate-fade-in",
-      className
-    )}>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-12 px-4 text-center animate-fade-in",
+        className
+      )}
+      role="status"
+      aria-live="polite"
+    >
       <div className={cn(
         "p-4 rounded-full mb-4",
         config.iconBg
-      )}>
+      )} aria-hidden="true">
         <Icon className={cn("h-10 w-10", config.iconColor)} />
       </div>
 

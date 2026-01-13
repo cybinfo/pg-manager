@@ -25,15 +25,21 @@ export function PageLoader({
   className
 }: PageLoaderProps) {
   return (
-    <div className={cn(
-      "flex flex-col items-center justify-center",
-      heightClasses[height],
-      className
-    )}>
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center",
+        heightClasses[height],
+        className
+      )}
+      role="status"
+      aria-live="polite"
+      aria-label={message || "Loading content"}
+    >
+      <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
       {message && (
         <p className="mt-4 text-sm text-muted-foreground">{message}</p>
       )}
+      <span className="sr-only">{message || "Loading..."}</span>
     </div>
   )
 }

@@ -265,6 +265,41 @@ export async function GET(request: Request) {
       }
     }
 
+    // API-011: Add audit logging for daily summaries cron
+    if (results.sent > 0) {
+      // Log one audit event for the batch operation
+      for (const config of ownerConfigs || []) {
+        const ownerConfig = config as unknown as OwnerConfig
+        const owner = transformJoin(ownerConfig.owner) as Owner | null
+        if (!owner) continue
+
+        const { data: workspace } = await supabase
+          .from("workspaces")
+          .select("id")
+          .eq("owner_id", owner.id)
+          .single()
+
+        if (workspace) {
+          await supabase.from("audit_events").insert({
+            entity_type: "notice",
+            entity_id: "batch-summaries",
+            action: "create",
+            actor_id: "system",
+            actor_type: "system",
+            workspace_id: workspace.id,
+            metadata: {
+              operation: "daily_summaries",
+              summaries_sent: results.sent,
+              processed_owners: results.processed,
+              date: yesterday.toISOString().split("T")[0],
+            },
+            created_at: new Date().toISOString(),
+          })
+          break // Only need one audit event for the batch operation
+        }
+      }
+    }
+
     cronLogger.info("Daily summaries processed", results)
     return apiSuccess(results, { message: "Daily summaries processed" })
   } catch (error) {

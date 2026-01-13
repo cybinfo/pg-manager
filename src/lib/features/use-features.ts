@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import {
   FeatureFlags,
@@ -8,6 +8,26 @@ import {
   getDefaultFeatureFlags,
   isFeatureEnabled,
 } from "./index"
+
+// AUTH-016: Add feature flags caching to prevent multiple Supabase calls
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+let cachedFlags: FeatureFlags | null = null
+let cacheTimestamp: number | null = null
+let cachedUserId: string | null = null
+let fetchPromise: Promise<FeatureFlags> | null = null
+
+function isCacheValid(userId: string): boolean {
+  if (!cachedFlags || !cacheTimestamp || !cachedUserId) return false
+  if (cachedUserId !== userId) return false
+  return Date.now() - cacheTimestamp < CACHE_TTL_MS
+}
+
+export function invalidateFeatureCache(): void {
+  cachedFlags = null
+  cacheTimestamp = null
+  cachedUserId = null
+  fetchPromise = null
+}
 
 /**
  * Hook to check if features are enabled for the current owner.
@@ -17,8 +37,8 @@ import {
  * if (isEnabled("food")) { ... }
  */
 export function useFeatures() {
-  const [flags, setFlags] = useState<FeatureFlags>(getDefaultFeatureFlags())
-  const [loading, setLoading] = useState(true)
+  const [flags, setFlags] = useState<FeatureFlags>(cachedFlags || getDefaultFeatureFlags())
+  const [loading, setLoading] = useState(!cachedFlags)
 
   useEffect(() => {
     const fetchFeatures = async () => {
@@ -29,21 +49,49 @@ export function useFeatures() {
         } = await supabase.auth.getUser()
 
         if (user) {
-          const { data } = await supabase
-            .from("owner_config")
-            .select("feature_flags")
-            .eq("owner_id", user.id)
-            .single()
-
-          if (data?.feature_flags) {
-            setFlags({
-              ...getDefaultFeatureFlags(),
-              ...data.feature_flags,
-            })
+          // Check cache first
+          if (isCacheValid(user.id)) {
+            setFlags(cachedFlags!)
+            setLoading(false)
+            return
           }
+
+          // If already fetching, wait for that promise
+          if (fetchPromise) {
+            const result = await fetchPromise
+            setFlags(result)
+            setLoading(false)
+            return
+          }
+
+          // Start new fetch
+          fetchPromise = (async () => {
+            const { data } = await supabase
+              .from("owner_config")
+              .select("feature_flags")
+              .eq("owner_id", user.id)
+              .single()
+
+            const newFlags = {
+              ...getDefaultFeatureFlags(),
+              ...(data?.feature_flags || {}),
+            }
+
+            // Update cache
+            cachedFlags = newFlags
+            cacheTimestamp = Date.now()
+            cachedUserId = user.id
+            fetchPromise = null
+
+            return newFlags
+          })()
+
+          const result = await fetchPromise
+          setFlags(result)
         }
       } catch (error) {
         console.error("Error fetching feature flags:", error)
+        fetchPromise = null
       } finally {
         setLoading(false)
       }
@@ -130,6 +178,10 @@ export function useFeatureManagement() {
         .eq("id", configId)
 
       if (error) throw error
+
+      // Invalidate cache after successful save so other components get fresh data
+      invalidateFeatureCache()
+
       return true
     } catch (error) {
       console.error("Error saving feature flags:", error)

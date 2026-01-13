@@ -88,6 +88,9 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
   const retryCountRef = useRef(0)
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null)
   const checkTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // AUTH-013: Add refresh lock to prevent race conditions
+  const isRefreshingRef = useRef(false)
+  const refreshPromiseRef = useRef<Promise<boolean> | null>(null)
 
   // Update state safely (only if mounted)
   const safeSetState = useCallback((newState: Partial<SessionState>) => {
@@ -173,36 +176,51 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
     await initializationPromise.current
   }, [safeSetState, onError, state.session])
 
-  // Refresh session
+  // Refresh session with lock to prevent race conditions (AUTH-013)
   const refresh = useCallback(async (): Promise<boolean> => {
-    try {
-      const result = await refreshSession()
-
-      if (!mountedRef.current) return false
-
-      if (result.error) {
-        safeSetState({ error: result.error })
-        onError?.(result.error)
-        return false
-      }
-
-      safeSetState({
-        user: result.user,
-        session: result.session,
-        error: null,
-      })
-
-      if (result.session) {
-        const expiry = getTimeUntilExpiry(result.session)
-        setTimeUntilExpiry(expiry)
-        setWillExpireSoon(false)
-      }
-
-      return true
-    } catch (err) {
-      console.error("[useSession] Refresh error:", err)
-      return false
+    // If already refreshing, wait for the existing promise
+    if (isRefreshingRef.current && refreshPromiseRef.current) {
+      console.log("[useSession] Refresh already in progress, waiting...")
+      return refreshPromiseRef.current
     }
+
+    isRefreshingRef.current = true
+
+    refreshPromiseRef.current = (async () => {
+      try {
+        const result = await refreshSession()
+
+        if (!mountedRef.current) return false
+
+        if (result.error) {
+          safeSetState({ error: result.error })
+          onError?.(result.error)
+          return false
+        }
+
+        safeSetState({
+          user: result.user,
+          session: result.session,
+          error: null,
+        })
+
+        if (result.session) {
+          const expiry = getTimeUntilExpiry(result.session)
+          setTimeUntilExpiry(expiry)
+          setWillExpireSoon(false)
+        }
+
+        return true
+      } catch (err) {
+        console.error("[useSession] Refresh error:", err)
+        return false
+      } finally {
+        isRefreshingRef.current = false
+        refreshPromiseRef.current = null
+      }
+    })()
+
+    return refreshPromiseRef.current
   }, [safeSetState, onError])
 
   // Logout

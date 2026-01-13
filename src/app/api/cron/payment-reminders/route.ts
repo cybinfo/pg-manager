@@ -235,6 +235,41 @@ export async function GET(request: Request) {
       }
     }
 
+    // API-011: Add audit logging for payment reminders cron
+    if (results.reminders_sent > 0 || results.overdue_sent > 0) {
+      // Log one audit event per owner who had reminders sent
+      for (const config of ownerConfigs || []) {
+        const ownerConfig = config as unknown as OwnerConfig
+        const owner = transformJoin(ownerConfig.owner) as OwnerConfig["owner"] | null
+        if (!owner) continue
+
+        const { data: workspace } = await supabase
+          .from("workspaces")
+          .select("id")
+          .eq("owner_id", owner.id)
+          .single()
+
+        if (workspace) {
+          await supabase.from("audit_events").insert({
+            entity_type: "payment",
+            entity_id: "batch-reminders",
+            action: "update",
+            actor_id: "system",
+            actor_type: "system",
+            workspace_id: workspace.id,
+            metadata: {
+              operation: "payment_reminders",
+              reminders_sent: results.reminders_sent,
+              overdue_sent: results.overdue_sent,
+              processed_owners: results.processed,
+            },
+            created_at: new Date().toISOString(),
+          })
+          break // Only need one audit event for the batch operation
+        }
+      }
+    }
+
     cronLogger.info("Payment reminders processed", results)
     return apiSuccess(results, { message: "Payment reminders processed" })
   } catch (error) {

@@ -271,6 +271,33 @@ export async function GET(request: Request) {
 
       totalBillsGenerated += billsGenerated
 
+      // API-011: Add audit logging for cron operations
+      // Get workspace_id for this owner
+      const { data: workspace } = await supabaseAdmin
+        .from("workspaces")
+        .select("id")
+        .eq("owner_id", ownerId)
+        .single()
+
+      if (workspace) {
+        await supabaseAdmin.from("audit_events").insert({
+          entity_type: "bill",
+          entity_id: logEntry?.id || "batch",
+          action: "create",
+          actor_id: "system",
+          actor_type: "system",
+          workspace_id: workspace.id,
+          metadata: {
+            operation: "auto_billing",
+            for_month: currentMonth,
+            bills_generated: billsGenerated,
+            bills_failed: billsFailed,
+            total_amount: totalAmount,
+          },
+          created_at: new Date().toISOString(),
+        })
+      }
+
       cronLogger.info("Owner billing complete", { ownerId, billsGenerated, billsFailed })
     }
 

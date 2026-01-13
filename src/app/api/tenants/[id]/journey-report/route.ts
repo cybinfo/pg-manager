@@ -120,8 +120,15 @@ export async function GET(
       report_generated_by: user.email || undefined,
     }
 
-    // Generate PDF buffer
-    const pdfBuffer = await renderToBuffer(TenantJourneyReportPDF({ data: reportData }))
+    // API-006: Add timeout for PDF generation (30 seconds)
+    const PDF_TIMEOUT_MS = 30000
+    const pdfPromise = renderToBuffer(TenantJourneyReportPDF({ data: reportData }))
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("PDF generation timed out")), PDF_TIMEOUT_MS)
+    })
+
+    // Generate PDF buffer with timeout
+    const pdfBuffer = await Promise.race([pdfPromise, timeoutPromise])
 
     // Create safe filename
     const tenantNameSlug = result.data.tenant_name

@@ -13,6 +13,7 @@ import {
   csrfError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { validateEmail } from "@/lib/validators"
 
 // Create admin client with service role key
 function getAdminClient() {
@@ -101,10 +102,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(newEmail)) {
-      return badRequest("Invalid email format")
+    // SEC-017: Use proper RFC 5322 email validation with disposable domain blocking
+    const emailValidation = validateEmail(newEmail, { blockDisposable: true })
+    if (!emailValidation.isValid) {
+      return badRequest(emailValidation.error || "Invalid email format")
     }
 
     // SECURITY CHECK: Does this user have owner or staff contexts?

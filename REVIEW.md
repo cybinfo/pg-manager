@@ -27,7 +27,7 @@
 ## Remediation Status Log
 
 > **Last Updated:** 2026-01-13
-> **Status:** Phase 6 Complete
+> **Status:** Phase 7 Complete
 
 ### Phase 1: Security Fixes (2026-01-13) - COMPLETE ✅
 
@@ -270,14 +270,79 @@ function MyComponent() {
    - Added date range validation (from <= to)
    - Uses apiLogger for error handling
 
+### Phase 7: Medium/Low Priority Fixes (2026-01-13) - COMPLETE ✅
+
+| Issue ID | Description | Status | Files |
+|----------|-------------|--------|-------|
+| BL-011 | Add negative value validation in workflows | ✅ FIXED | payment.workflow.ts, exit.workflow.ts |
+| BL-014 | Add bill-payment ownership check | ✅ FIXED | payment.workflow.ts |
+| SEC-017 | Fix email format validation | ✅ FIXED | admin/update-user-email/route.ts |
+| UI-012 | Add aria-label to page-loader | ✅ FIXED | page-loader.tsx |
+| UI-015 | Add aria-live to empty-state | ✅ FIXED | empty-state.tsx |
+| ARCH-001 | Remove empty /src/hooks directory | ✅ FIXED | Directory removed |
+| ARCH-002 | Fix dead import path in components.json | ✅ FIXED | components.json |
+| API-006 | Add PDF generation timeout | ✅ FIXED | journey-report/route.ts |
+| API-011 | Add audit logging to cron routes | ✅ FIXED | All cron routes |
+| AUTH-013 | Fix session refresh race condition | ✅ FIXED | use-session.ts |
+| AUTH-016 | Add feature flags caching | ✅ FIXED | use-features.ts |
+
+**Summary of Phase 7 Changes:**
+
+1. **BL-011: Negative Value Validation**
+   - `payment.workflow.ts`: Added validation to reject payments with amount <= 0
+   - `exit.workflow.ts`: Added validation to reject deductions with amount <= 0
+   - Returns VALIDATION_ERROR with clear error messages
+
+2. **BL-014: Bill-Payment Ownership Check**
+   - `payment.workflow.ts`: Added check to ensure bill belongs to specified tenant
+   - Prevents cross-tenant payment recording
+   - Returns VALIDATION_ERROR if bill.tenant_id !== input.tenant_id
+
+3. **SEC-017: RFC 5322 Email Validation**
+   - `admin/update-user-email/route.ts`: Replaced weak regex with validateEmail()
+   - Uses RFC 5322 compliant email regex from validators.ts
+   - Added disposable email domain blocking for admin operations
+
+4. **UI-012, UI-015: Accessibility Improvements**
+   - `page-loader.tsx`: Added role="status", aria-live="polite", aria-label, aria-hidden
+   - `empty-state.tsx`: Added role="status", aria-live="polite", aria-hidden on icon
+
+5. **ARCH-001, ARCH-002: Clean Up Empty Hooks Directory**
+   - Removed empty `/src/hooks/` directory
+   - Updated `components.json` alias from `@/hooks` to `@/lib/hooks`
+
+6. **API-006: PDF Generation Timeout**
+   - `journey-report/route.ts`: Added 30-second timeout for renderToBuffer()
+   - Uses Promise.race pattern to prevent indefinite hangs
+   - Returns 500 error if PDF generation times out
+
+7. **API-011: Audit Logging in Cron Routes**
+   - `generate-bills/route.ts`: Added audit event after each owner's billing complete
+   - `payment-reminders/route.ts`: Added audit event after batch reminders sent
+   - `daily-summaries/route.ts`: Added audit event after batch summaries sent
+   - All use actor_type: "system" with detailed metadata
+
+8. **AUTH-013: Session Refresh Race Condition Fix**
+   - `use-session.ts`: Added refresh lock using refs
+   - Multiple concurrent refresh() calls now wait for existing promise
+   - Prevents race conditions in multi-component scenarios
+
+9. **AUTH-016: Feature Flags Caching**
+   - `use-features.ts`: Added 5-minute TTL cache for feature flags
+   - Prevents multiple Supabase calls per page load
+   - Added invalidateFeatureCache() function for manual invalidation
+   - Cache automatically invalidated on user change or after saveFeatures()
+
 ### Remaining Issues
 
 All HIGH priority issues have been addressed. Remaining issues are MEDIUM or LOW priority:
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| MEDIUM | 49 | Code quality, consistency, maintainability |
-| LOW | 14 | Minor improvements, documentation |
+| MEDIUM | 40 | Code quality, consistency, maintainability |
+| LOW | 12 | Minor improvements, documentation |
+
+*Updated after Phase 7: Fixed 9 MEDIUM and 2 LOW priority issues.*
 
 ---
 
