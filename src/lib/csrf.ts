@@ -15,7 +15,6 @@
  *   })
  */
 
-import crypto from "crypto"
 import { cookies } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -33,9 +32,12 @@ interface CsrfToken {
 
 /**
  * Generate a cryptographically secure CSRF token
+ * Uses Web Crypto API for Edge Runtime compatibility
  */
 export function generateCsrfToken(): string {
-  return crypto.randomBytes(32).toString("hex")
+  const array = new Uint8Array(32)
+  crypto.getRandomValues(array)
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("")
 }
 
 /**
@@ -50,17 +52,19 @@ export function createCsrfTokenData(): CsrfToken {
 
 /**
  * Encode token data for cookie storage
+ * Uses btoa for Edge Runtime compatibility
  */
 export function encodeCsrfToken(data: CsrfToken): string {
-  return Buffer.from(JSON.stringify(data)).toString("base64")
+  return btoa(JSON.stringify(data))
 }
 
 /**
  * Decode token data from cookie
+ * Uses atob for Edge Runtime compatibility
  */
 export function decodeCsrfToken(encoded: string): CsrfToken | null {
   try {
-    const decoded = Buffer.from(encoded, "base64").toString("utf-8")
+    const decoded = atob(encoded)
     const data = JSON.parse(decoded) as CsrfToken
     if (data.token && data.expires) {
       return data
@@ -133,14 +137,17 @@ export function validateCsrf(request: NextRequest): {
   }
 
   // Constant-time comparison to prevent timing attacks
-  const expectedBuffer = Buffer.from(tokenData.token)
-  const actualBuffer = Buffer.from(headerToken)
-
-  if (expectedBuffer.length !== actualBuffer.length) {
+  if (tokenData.token.length !== headerToken.length) {
     return { valid: false, error: "CSRF token mismatch" }
   }
 
-  if (!crypto.timingSafeEqual(expectedBuffer, actualBuffer)) {
+  // Constant-time string comparison
+  let mismatch = 0
+  for (let i = 0; i < tokenData.token.length; i++) {
+    mismatch |= tokenData.token.charCodeAt(i) ^ headerToken.charCodeAt(i)
+  }
+
+  if (mismatch !== 0) {
     return { valid: false, error: "CSRF token mismatch" }
   }
 
