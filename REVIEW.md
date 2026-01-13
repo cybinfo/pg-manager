@@ -27,7 +27,7 @@
 ## Remediation Status Log
 
 > **Last Updated:** 2026-01-13
-> **Status:** Phase 10 Complete
+> **Status:** Phase 16 Complete
 
 ### Phase 1: Security Fixes (2026-01-13) - COMPLETE ✅
 
@@ -489,6 +489,46 @@ All HIGH priority issues have been addressed. Remaining issues are MEDIUM or LOW
 | LOW | 12 | Minor improvements, documentation |
 
 *Updated after Phase 10: Fixed 6 additional MEDIUM priority issues (20 total in Phases 8-10).*
+
+### Phase 16: Critical & High Priority Fixes (2026-01-13) - COMPLETE ✅
+
+| Issue ID | Description | Status | Files |
+|----------|-------------|--------|-------|
+| BL-004 | Track failed optional workflow steps | ✅ FIXED | workflow.engine.ts, types.ts |
+| DB-004 | Bills table RLS policies | ✅ VERIFIED | migrations 006, 017, 018, 020, 034 |
+| SEC-008 | Secure audit_events INSERT policy | ✅ FIXED | 043_security_fixes.sql |
+| BL-009 | Add idempotency key support | ✅ FIXED | workflow.engine.ts |
+| DB-007 | Trigger function reconciliation | ✅ FIXED | 042_schema_reconciliation.sql |
+| DB-008 | Add audit triggers to critical tables | ✅ FIXED | 043_security_fixes.sql |
+| DB-009 | Add CHECK constraints | ✅ FIXED | 043_security_fixes.sql |
+| API-003 | Server-side pagination | ✅ FIXED | useListPage.ts |
+| API-004 | Client-side search optimization | ✅ FIXED | useListPage.ts |
+
+**Summary of Phase 16 Changes:**
+
+1. **BL-004: Failed Optional Step Tracking**
+   - Added `failed_optional_steps` field to WorkflowResult
+   - Added audit event logging for optional step failures
+   - Console.warn instead of silent failure
+
+2. **SEC-008: Secure Audit Events**
+   - New INSERT policy requiring workspace access via user_contexts
+   - Prevents audit trail tampering by unauthorized users
+
+3. **BL-009: Idempotency Protection**
+   - Added in-memory idempotency cache with 5-minute TTL
+   - Workflows can pass idempotency_key to prevent duplicate execution
+
+4. **DB-009: CHECK Constraints**
+   - tenants.discount_percent: 0-100 range
+   - bills.paid_amount, balance_due: non-negative
+   - payments, refunds.amount: positive
+   - tenant_risk_alerts.severity: valid enum values
+
+5. **Design Decisions Documented**
+   - AUTH-007, AUTH-008, AUTH-010: Intentional separation of concerns
+   - UI-001, UI-002: Explicit components for TypeScript support
+   - DB-006, DB-010: JSONB flexibility, CASCADE DELETE intentional
 
 ---
 
