@@ -122,6 +122,22 @@ export async function GET(request: Request) {
 
       for (const tenant of tenants || []) {
         try {
+          // CQ-006: Validate tenant has monthly rent set
+          const monthlyRent = Number(tenant.monthly_rent)
+          if (!tenant.monthly_rent || isNaN(monthlyRent) || monthlyRent <= 0) {
+            cronLogger.warn("Tenant missing valid monthly rent, skipping", {
+              tenantId: tenant.id,
+              tenantName: tenant.name,
+              monthlyRent: tenant.monthly_rent,
+            })
+            errors.push({
+              tenant_id: tenant.id,
+              error: "Missing or invalid monthly rent",
+            })
+            billsFailed++
+            continue
+          }
+
           // Build line items
           const lineItems: LineItem[] = []
 
@@ -129,7 +145,7 @@ export async function GET(request: Request) {
           lineItems.push({
             type: "Rent",
             description: `Monthly Rent - ${currentMonth}`,
-            amount: Number(tenant.monthly_rent),
+            amount: monthlyRent,
           })
 
           // Get pending charges if enabled
@@ -142,12 +158,21 @@ export async function GET(request: Request) {
               .is("bill_id", null)
 
             for (const charge of charges || []) {
+              // CQ-006: Skip charges with invalid amounts
+              const chargeAmount = Number(charge.amount)
+              if (isNaN(chargeAmount) || chargeAmount <= 0) {
+                cronLogger.debug("Skipping charge with invalid amount", {
+                  tenantId: tenant.id,
+                  chargeAmount: charge.amount,
+                })
+                continue
+              }
               // Use transformJoin for consistent handling of Supabase joins
               const chargeType = transformJoin(charge.charge_type) as { name?: string } | null
               lineItems.push({
                 type: chargeType?.name || "Charge",
                 description: charge.for_period || currentMonth,
-                amount: Number(charge.amount),
+                amount: chargeAmount,
               })
             }
           }
@@ -163,8 +188,12 @@ export async function GET(request: Request) {
             .gt("balance_due", 0)
             .neq("status", "paid")
 
+          // CQ-006: Safely calculate previous balance with null checks
           const previousBalance = (unpaidBills || []).reduce(
-            (sum, bill) => sum + Number(bill.balance_due),
+            (sum, bill) => {
+              const balanceDue = Number(bill.balance_due)
+              return sum + (isNaN(balanceDue) ? 0 : balanceDue)
+            },
             0
           )
 

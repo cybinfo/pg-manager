@@ -185,6 +185,12 @@ export const PERMISSIONS = {
   EXIT_CLEARANCE_PROCESS: 'exit_clearance.process',
   EXIT_CLEARANCE_APPROVE: 'exit_clearance.approve',
 
+  // Refunds (AUTH-005)
+  REFUNDS_VIEW: 'refunds.view',
+  REFUNDS_CREATE: 'refunds.create',
+  REFUNDS_EDIT: 'refunds.edit',
+  REFUNDS_DELETE: 'refunds.delete',
+
   // Staff
   STAFF_VIEW: 'staff.view',
   STAFF_CREATE: 'staff.create',

@@ -564,45 +564,55 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
         }
 
         const currentOccupied = room.occupied_beds as number || 1
+        const totalBeds = room.total_beds as number || 1
+
+        // BL-005: Helper to determine room status based on occupancy
+        const getRoomStatus = (occupied: number, total: number): string => {
+          if (occupied <= 0) return "available"
+          if (occupied >= total) return "occupied"
+          return "partially_occupied"
+        }
 
         // FIX BL-001: Use atomic decrement with optimistic locking
+        const newOccupied = Math.max(0, currentOccupied - 1)
         const { data, error } = await supabase
           .from("rooms")
           .update({
-            occupied_beds: Math.max(0, currentOccupied - 1),
-            status: currentOccupied - 1 <= 0 ? "available" : "occupied",
+            occupied_beds: newOccupied,
+            status: getRoomStatus(newOccupied, totalBeds),
             updated_at: new Date().toISOString(),
           })
           .eq("id", room.id)
           .eq("occupied_beds", currentOccupied) // Optimistic lock
           .select()
 
-        let finalOccupied = Math.max(0, currentOccupied - 1)
+        let finalOccupied = newOccupied
 
         if (error || !data || (Array.isArray(data) && data.length === 0)) {
           // Retry with fresh data if optimistic lock failed
           const { data: freshRoom } = await supabase
             .from("rooms")
-            .select("occupied_beds")
+            .select("occupied_beds, total_beds")
             .eq("id", room.id)
             .single()
 
           if (freshRoom) {
             const freshOccupied = freshRoom.occupied_beds || 0
+            const freshTotal = freshRoom.total_beds || 1
             finalOccupied = Math.max(0, freshOccupied - 1)
 
             await supabase
               .from("rooms")
               .update({
                 occupied_beds: finalOccupied,
-                status: finalOccupied <= 0 ? "available" : "occupied",
+                status: getRoomStatus(finalOccupied, freshTotal),
                 updated_at: new Date().toISOString(),
               })
               .eq("id", room.id)
           }
         }
 
-        const newStatus = finalOccupied === 0 ? "available" : "occupied"
+        const newStatus = getRoomStatus(finalOccupied, totalBeds)
 
         return createSuccessResult({
           room_released: true,

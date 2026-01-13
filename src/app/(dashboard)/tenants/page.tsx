@@ -14,7 +14,7 @@
 
 import { Users, UserCheck, UserMinus, Clock } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
-import { Avatar } from "@/components/ui/avatar"
+import { Avatar, getAvatarUrl } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { TENANT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
@@ -69,9 +69,10 @@ const columns: Column<Tenant>[] = [
     sortable: true,
     render: (tenant) => (
       <div className="flex items-center gap-3">
+        {/* UI-008: Use centralized avatar URL resolution */}
         <Avatar
           name={tenant.name}
-          src={tenant.profile_photo || tenant.photo_url}
+          src={getAvatarUrl(tenant)}
           size="sm"
           className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
         />

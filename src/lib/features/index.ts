@@ -5,6 +5,8 @@
  * Features can be enabled/disabled without code deployment.
  */
 
+import { SupabaseClient } from "@supabase/supabase-js"
+
 // All available feature flags with their default states
 export const FEATURE_FLAGS = {
   // Core Features
@@ -170,4 +172,63 @@ export const CATEGORY_LABELS: Record<string, string> = {
   billing: "Billing & Payments",
   notifications: "Notifications",
   special: "Special Features",
+}
+
+// ============================================
+// AUTH-009: Server-side Feature Flag Checking
+// ============================================
+
+/**
+ * AUTH-009: Check if a feature is enabled for a workspace (server-side)
+ * Use this in API routes to verify feature access before processing requests.
+ *
+ * @param supabase - Supabase server client
+ * @param workspaceId - The workspace ID (usually owner_id)
+ * @param feature - The feature flag key to check
+ * @returns boolean indicating if the feature is enabled
+ */
+export async function checkFeatureEnabled(
+  supabase: SupabaseClient,
+  workspaceId: string,
+  feature: FeatureFlagKey
+): Promise<boolean> {
+  try {
+    // Get workspace feature flags from database
+    const { data: workspace, error } = await supabase
+      .from("workspaces")
+      .select("settings")
+      .eq("id", workspaceId)
+      .single()
+
+    if (error || !workspace) {
+      // If workspace not found, fall back to defaults
+      return FEATURE_FLAGS[feature]?.defaultEnabled ?? false
+    }
+
+    // Feature flags are stored in workspace.settings.features
+    const settings = workspace.settings as { features?: FeatureFlags } | null
+    const flags = settings?.features
+
+    return isFeatureEnabled(flags, feature)
+  } catch {
+    // On error, fall back to defaults
+    return FEATURE_FLAGS[feature]?.defaultEnabled ?? false
+  }
+}
+
+/**
+ * AUTH-009: Create a feature flag error response for API routes
+ * Use when a feature is disabled to return a consistent error response.
+ */
+export function featureDisabledError(feature: FeatureFlagKey): {
+  error: string
+  code: string
+  feature: string
+} {
+  const featureConfig = FEATURE_FLAGS[feature]
+  return {
+    error: `The "${featureConfig?.name || feature}" feature is not enabled for this workspace`,
+    code: "FEATURE_DISABLED",
+    feature: feature,
+  }
 }

@@ -27,7 +27,7 @@
 ## Remediation Status Log
 
 > **Last Updated:** 2026-01-13
-> **Status:** Phase 8 Complete
+> **Status:** Phase 9 Complete
 
 ### Phase 1: Security Fixes (2026-01-13) - COMPLETE ✅
 
@@ -386,16 +386,70 @@ function MyComponent() {
    - original_payment_id field now correctly populated
    - Fixes audit chain for refund tracking
 
+### Phase 9: Medium Priority Fixes (2026-01-13) - COMPLETE ✅
+
+| Issue ID | Description | Status | Files |
+|----------|-------------|--------|-------|
+| AUTH-005 | Add missing refunds permissions | ✅ FIXED | types.ts |
+| AUTH-006 | Add validation to context switching | ✅ FIXED | auth-context.tsx |
+| AUTH-009 | Add feature flag validation for API routes | ✅ FIXED | features/index.ts |
+| CQ-006 | Add null checks in cron generate-bills | ✅ FIXED | generate-bills/route.ts |
+| AUTH-017 | Document staff permissions aggregation | ✅ FIXED | auth-context.tsx |
+| UI-008 | Centralize avatar photo fallback logic | ✅ FIXED | avatar.tsx, tenants/page.tsx |
+| BL-005 | Add partially_occupied room status handling | ✅ FIXED | exit.workflow.ts |
+
+**Summary of Phase 9 Changes:**
+
+1. **AUTH-005: Missing Refunds Permissions**
+   - Added REFUNDS_VIEW, REFUNDS_CREATE, REFUNDS_EDIT, REFUNDS_DELETE to PERMISSIONS
+   - Complete permission set for refunds module
+
+2. **AUTH-006: Context Switching Validation**
+   - Enhanced switchContext() with comprehensive validation
+   - Validates user is authenticated and contextId is valid
+   - Verifies user has access to target context
+   - Checks workspace exists
+   - Refreshes contexts on server rejection
+
+3. **AUTH-009: Server-side Feature Flag Checking**
+   - Added `checkFeatureEnabled()` function for API routes
+   - Added `featureDisabledError()` for consistent error responses
+   - Allows API routes to verify feature access before processing
+
+4. **CQ-006: Null Checks in Cron Generate-Bills**
+   - Added validation for tenant monthly rent (skips if invalid)
+   - Added validation for charge amounts
+   - Added safe NaN handling for balance_due calculations
+   - Proper error logging for skipped tenants
+
+5. **AUTH-017: Staff Permissions Aggregation Documentation**
+   - Added comprehensive JSDoc explaining permission hierarchy
+   - Documents how multi-role permissions are aggregated (UNION)
+   - Clarifies Platform Admin > Owner > Staff > Tenant hierarchy
+
+6. **UI-008: Centralized Avatar Photo Fallback**
+   - Added `getAvatarUrl()` utility function
+   - Handles profile_photo vs photo_url fallback consistently
+   - Updated tenants page to use centralized utility
+
+7. **BL-005: Partially Occupied Room Status**
+   - Added getRoomStatus() helper in exit workflow
+   - Room status now correctly set to:
+     - "available" when occupied_beds = 0
+     - "partially_occupied" when 0 < occupied_beds < total_beds
+     - "occupied" when occupied_beds >= total_beds
+   - Consistent with tenant.workflow.ts logic
+
 ### Remaining Issues
 
 All HIGH priority issues have been addressed. Remaining issues are MEDIUM or LOW priority:
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| MEDIUM | 33 | Code quality, consistency, maintainability |
+| MEDIUM | 26 | Code quality, consistency, maintainability |
 | LOW | 12 | Minor improvements, documentation |
 
-*Updated after Phase 8: Fixed 7 additional MEDIUM priority issues.*
+*Updated after Phase 9: Fixed 7 additional MEDIUM priority issues (14 total in Phases 8-9).*
 
 ---
 

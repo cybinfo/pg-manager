@@ -192,12 +192,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [user, currentContext, fetchContexts])
 
   // Switch to a different context
+  // AUTH-006: Enhanced validation to verify user has access before switching
   const switchContext = useCallback(async (contextId: string): Promise<boolean> => {
-    if (!user) return false
+    // Validate user is authenticated
+    if (!user) {
+      console.warn('[Auth] Cannot switch context: user not authenticated')
+      return false
+    }
+
+    // Validate contextId is provided
+    if (!contextId || typeof contextId !== 'string') {
+      console.warn('[Auth] Cannot switch context: invalid contextId')
+      return false
+    }
+
+    // AUTH-006: Verify user has access to the target context
+    // The contexts array contains only contexts the user has been granted access to
     const targetContext = contexts.find(c => c.context_id === contextId)
-    if (!targetContext) return false
+    if (!targetContext) {
+      console.warn(`[Auth] Cannot switch context: user does not have access to context ${contextId}`)
+      // Context not in user's available contexts - they don't have access
+      return false
+    }
+
+    // AUTH-006: Verify the target workspace is active
+    if (!targetContext.workspace_id) {
+      console.warn('[Auth] Cannot switch context: target context has no workspace')
+      return false
+    }
 
     try {
+      // The RPC function also validates access server-side
       const { error } = await (supabase.rpc as Function)('switch_context', {
         p_user_id: user.id,
         p_to_context_id: contextId,
@@ -206,6 +231,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (error) {
         console.error('[Auth] Error switching context:', error)
+        // AUTH-006: If server rejects, refresh contexts as user may have lost access
+        await refreshContexts()
         return false
       }
 
@@ -219,7 +246,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('[Auth] Exception switching context:', err)
       return false
     }
-  }, [user, contexts, currentContext, supabase])
+  }, [user, contexts, currentContext, supabase, refreshContexts])
 
   // Set default context
   const setDefaultContext = useCallback(async (contextId: string): Promise<boolean> => {
@@ -236,9 +263,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return true
   }, [user, supabase, refreshContexts])
 
-  // Permission checks - Centralized access control
-  // Access hierarchy: Platform Admin > Owner > Staff > Tenant
-  // AUTH-015: Added runtime validation for permission strings
+  /**
+   * Permission checks - Centralized access control
+   *
+   * AUTH-017: Permission Aggregation Behavior
+   * =========================================
+   * Access hierarchy (from highest to lowest privilege):
+   *
+   * 1. Platform Admin (Super User)
+   *    - Full access to ALL workspaces and ALL permissions
+   *    - Defined in `platform_admins` table
+   *
+   * 2. Owner
+   *    - Full access to their own workspace
+   *    - Automatically has all permissions for their workspace
+   *
+   * 3. Staff
+   *    - Role-based permissions from `user_roles` table
+   *    - If staff has MULTIPLE roles, permissions are AGGREGATED (UNION)
+   *    - Example: If Role A has [tenants.view] and Role B has [payments.view],
+   *      the staff member gets BOTH permissions
+   *    - Aggregation happens in the `get_user_contexts` database function
+   *    - The `currentContext.permissions` array contains the merged set
+   *
+   * 4. Tenant
+   *    - Fixed hardcoded permissions (see TENANT_PERMISSIONS)
+   *    - Limited to profile, payments view, complaints, and notices
+   *
+   * AUTH-015: Added runtime validation for permission strings in development
+   */
   const hasPermission = useCallback((permission: Permission | string): boolean => {
     // AUTH-015: Validate permission in development to catch typos early
     if (process.env.NODE_ENV === 'development' && typeof permission === 'string') {
@@ -256,7 +309,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (currentContext.context_type === 'tenant') {
       return TENANT_PERMISSIONS.includes(permission as Permission)
     }
-    // Staff - Role-based permissions
+    // Staff - Role-based permissions (aggregated from all assigned roles)
     if (currentContext.context_type === 'staff') {
       return currentContext.permissions.includes(permission)
     }

@@ -3,6 +3,36 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
+// ============================================
+// UI-008: Centralized Avatar Photo Resolution
+// ============================================
+
+/**
+ * UI-008: Centralized photo URL resolution
+ *
+ * Handles the common pattern where entities may have photos stored in
+ * different fields depending on whether they came from:
+ * - `profile_photo` (from user_profiles table)
+ * - `photo_url` (from tenants table)
+ *
+ * This utility ensures consistent fallback behavior across the app.
+ *
+ * @example
+ * // In a component with tenant data:
+ * <Avatar name={tenant.name} src={getAvatarUrl(tenant)} />
+ *
+ * // Or with explicit fields:
+ * <Avatar name={name} src={getAvatarUrl({ profile_photo, photo_url })} />
+ */
+export function getAvatarUrl(entity: {
+  profile_photo?: string | null
+  photo_url?: string | null
+} | null | undefined): string | undefined {
+  if (!entity) return undefined
+  // Prefer profile_photo (more specific/user-uploaded) over photo_url
+  return entity.profile_photo || entity.photo_url || undefined
+}
+
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl"
 
 const sizeClasses: Record<AvatarSize, string> = {
