@@ -783,10 +783,11 @@ console.error("[Workflow] Fetching tenant from:", tenantUrl)
 - **File:** `src/lib/workflows/exit.workflow.ts`
 - **Description:** Access tokens passed in plaintext through workflow context metadata.
 
-#### SEC-017: Missing Validation on Email Format
+#### SEC-017: Missing Validation on Email Format ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/app/api/admin/update-user-email/route.ts` (Lines 27-34)
 - **Description:** Email validation uses basic regex that allows invalid emails like `a@b.c`.
+- **Fixed:** Phase 13 - Verified uses `validateEmail()` from validators.ts with RFC 5322 regex and disposable domain blocking.
 
 #### SEC-018: File Download Manipulation Risk ✅ FIXED
 - **Severity:** MEDIUM
@@ -1177,10 +1178,11 @@ if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 }
 - **Description:** Function allows string instead of enforcing Permission type - typos fail silently.
 - **Fixed:** Phase 12 - Added `isValidPermission` type guard with development-mode warning for invalid permissions.
 
-#### AUTH-016: Feature Flags Fetch on Every Mount
+#### AUTH-016: Feature Flags Fetch on Every Mount ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/lib/features/use-features.ts`
 - **Description:** No caching, causes multiple Supabase calls per page load.
+- **Fixed:** Phase 13 - Verified 5-minute cache with TTL, user-based cache invalidation, and fetch deduplication already implemented.
 
 #### AUTH-017: Staff Permissions Aggregation Undocumented
 - **Severity:** MEDIUM
@@ -1358,10 +1360,11 @@ const newStatus = newOccupiedBeds === 0 ? "available" : "occupied"
 - **Severity:** MEDIUM
 - **Description:** Billing only via cron, no workflow for manual bill generation.
 
-#### BL-011: No Negative Value Validation
+#### BL-011: No Negative Value Validation ✅ FIXED
 - **Severity:** MEDIUM
 - **Files:** `payment.workflow.ts`, `exit.workflow.ts`
 - **Description:** No checks for negative amounts (fake refunds possible).
+- **Fixed:** Phase 13 - Verified both workflows have `amount <= 0` validation with proper error handling.
 
 #### BL-012: Concurrent Approval Conflicts
 - **Severity:** MEDIUM
@@ -1574,12 +1577,13 @@ const owner = Array.isArray(ownerConfig.owner) ? ownerConfig.owner[0] : ownerCon
 - **File:** `src/lib/hooks/useListPage.ts` (Lines 305-314)
 - **Description:** Search/filter happens after loading all data into memory.
 
-#### API-005: Inconsistent Error Response Formats
+#### API-005: Inconsistent Error Response Formats ✅ FIXED
 - **Severity:** HIGH
 - **Description:** Different error structures across routes:
   - `{ error: code, message: msg }` - Journey routes
   - `{ error: msg }` - Verify email routes
   - `{ success: true, message: msg, ...results }` - Cron routes
+- **Fixed:** Phase 13 - Verified all 9 API routes now use standardized api-response module with consistent format.
 
 ---
 
