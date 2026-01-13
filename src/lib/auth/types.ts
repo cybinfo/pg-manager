@@ -202,6 +202,28 @@ export const PERMISSIONS = {
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]
 
+// AUTH-015: Set of all valid permissions for runtime validation
+const ALL_PERMISSIONS = new Set<string>(Object.values(PERMISSIONS))
+
+/**
+ * AUTH-015: Type guard to check if a string is a valid Permission
+ * Use this when permissions come from external sources (database, API, etc.)
+ */
+export function isValidPermission(value: string): value is Permission {
+  return ALL_PERMISSIONS.has(value)
+}
+
+/**
+ * AUTH-015: Validate and cast a string to Permission, throwing if invalid
+ * Use this at boundaries where type safety is critical
+ */
+export function asPermission(value: string): Permission {
+  if (!isValidPermission(value)) {
+    throw new Error(`Invalid permission: "${value}". Valid permissions are: ${Array.from(ALL_PERMISSIONS).join(', ')}`)
+  }
+  return value
+}
+
 // Tenant fixed permissions
 export const TENANT_PERMISSIONS: Permission[] = [
   PERMISSIONS.PROFILE_VIEW,

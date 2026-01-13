@@ -37,14 +37,21 @@ import {
   ERROR_CODES,
 } from "./types"
 import { formatCurrency, formatDate } from "@/lib/format"
+import {
+  ONE_DAY_MS,
+  MAX_OVERDUE_PENALTY,
+  OVERDUE_PENALTY_DIVISOR,
+  NEW_TENANT_PAYMENT_SCORE,
+  PERFECT_PAYMENT_BONUS
+} from "@/lib/constants"
 
 // ============================================
 // Helper Functions
 // ============================================
 
 function daysBetween(date1: Date, date2: Date): number {
-  const oneDay = 24 * 60 * 60 * 1000
-  return Math.floor(Math.abs((date2.getTime() - date1.getTime()) / oneDay))
+  // CQ-010: Use named constant for day calculation
+  return Math.floor(Math.abs((date2.getTime() - date1.getTime()) / ONE_DAY_MS))
 }
 
 function normalizePhone(phone: string): string {
@@ -1093,14 +1100,15 @@ function calculatePredictiveInsights(
     }
 
     if (analytics.bills_paid_late === 0 && analytics.total_bills_paid >= 3) {
-      paymentScore += 10
+      paymentScore += PERFECT_PAYMENT_BONUS
     }
   } else if (analytics.total_bills_generated === 0) {
-    paymentScore = 60 // New tenant
+    paymentScore = NEW_TENANT_PAYMENT_SCORE
   }
 
+  // CQ-010: Use named constants for penalty calculation
   if (financial.total_overdue > 0) {
-    paymentScore -= Math.min(20, Math.round(financial.total_overdue / 1000))
+    paymentScore -= Math.min(MAX_OVERDUE_PENALTY, Math.round(financial.total_overdue / OVERDUE_PENALTY_DIVISOR))
   }
 
   paymentScore = Math.max(0, Math.min(100, paymentScore))

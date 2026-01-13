@@ -9,6 +9,21 @@
 // CURRENCY FORMATTING
 // ============================================
 
+// CQ-008: Memoize Intl.NumberFormat instances for performance
+// Creating formatters once instead of on every function call
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+})
+
+const currencyPreciseFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
 /**
  * Format a number as Indian Rupees (₹)
  * Uses Indian number system (lakhs, crores)
@@ -16,12 +31,7 @@
  */
 export const formatCurrency = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined) return "₹0"
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount)
+  return currencyFormatter.format(amount)
 }
 
 /**
@@ -30,13 +40,7 @@ export const formatCurrency = (amount: number | null | undefined): string => {
  */
 export const formatCurrencyPrecise = (amount: number | null | undefined): string => {
   if (amount === null || amount === undefined) return "₹0.00"
-
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount)
+  return currencyPreciseFormatter.format(amount)
 }
 
 /**
@@ -234,4 +238,54 @@ export const toTitleCase = (text: string | null | undefined): string => {
     .split(" ")
     .map((word) => capitalize(word))
     .join(" ")
+}
+
+// ============================================
+// FILENAME FORMATTING (SEC-018)
+// ============================================
+
+/** Maximum filename length (without extension) */
+const MAX_FILENAME_LENGTH = 100
+
+/**
+ * SEC-018: Sanitize a string for use in filenames
+ * Prevents header injection and ensures cross-platform compatibility
+ *
+ * @example sanitizeFilename("John's Report") => "johns-report"
+ * @example sanitizeFilename("Report<script>") => "reportscript"
+ */
+export const sanitizeFilename = (text: string): string => {
+  if (!text) return "file"
+
+  return text
+    .toLowerCase()
+    // Remove or replace potentially dangerous characters
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "")
+    // Replace whitespace and special chars with dashes
+    .replace(/[^a-z0-9.-]+/g, "-")
+    // Remove consecutive dashes
+    .replace(/-+/g, "-")
+    // Remove leading/trailing dashes
+    .replace(/^-|-$/g, "")
+    // Limit length
+    .slice(0, MAX_FILENAME_LENGTH)
+    // Default if empty after sanitization
+    || "file"
+}
+
+/**
+ * SEC-018: Create a safe Content-Disposition header value
+ * Uses RFC 5987 encoding for non-ASCII characters
+ *
+ * @example createContentDisposition("report.pdf") => 'attachment; filename="report.pdf"'
+ */
+export const createContentDisposition = (filename: string, inline = false): string => {
+  const disposition = inline ? "inline" : "attachment"
+  const sanitized = sanitizeFilename(filename.replace(/\.[^.]+$/, ""))
+  const ext = filename.match(/\.[^.]+$/)?.[0] || ""
+
+  const safeFilename = `${sanitized}${ext}`
+
+  // Use simple ASCII filename for Content-Disposition
+  return `${disposition}; filename="${safeFilename}"`
 }

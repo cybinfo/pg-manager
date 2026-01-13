@@ -553,10 +553,12 @@ export const refundPaymentWorkflow: WorkflowDefinition<RefundPaymentInput, Refun
   buildOutput: (results) => {
     const refundResult = results.create_refund as Record<string, unknown>
     const billResult = results.update_bill as Record<string, unknown>
+    // BL-013: Fix refund-payment linkage by getting payment_id from validate step
+    const paymentResult = results.validate_payment as Record<string, unknown>
 
     return {
       refund_id: refundResult?.refund_id as string,
-      original_payment_id: "",
+      original_payment_id: (paymentResult?.id as string) || "",
       bill_updated: billResult?.updated as boolean || false,
     }
   },

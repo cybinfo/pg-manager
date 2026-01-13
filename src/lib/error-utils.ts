@@ -5,6 +5,7 @@
  */
 
 import { toast } from "sonner"
+import { TOAST_DURATION_DEFAULT_MS, TOAST_DURATION_ERROR_MS, TOAST_MAX_WIDTH_PX } from "@/lib/constants"
 
 interface SupabaseError {
   message: string
@@ -123,13 +124,13 @@ export function showDetailedError(
   if (context.data) console.error("Data sent:", sanitizeData(context.data))
   console.error("=".repeat(60))
 
-  // Show toast with full details
+  // CQ-010: Show toast with full details using named constants
   toast.error(title, {
     description: description,
-    duration: 10000, // Show for 10 seconds during development
+    duration: TOAST_DURATION_ERROR_MS,
     style: {
       whiteSpace: "pre-wrap",
-      maxWidth: "500px",
+      maxWidth: `${TOAST_MAX_WIDTH_PX}px`,
     },
   })
 }
@@ -143,7 +144,7 @@ export function showDetailedSuccess(
 ): void {
   toast.success(`Success: ${operation}`, {
     description: details,
-    duration: 3000,
+    duration: TOAST_DURATION_DEFAULT_MS,
   })
 }
 

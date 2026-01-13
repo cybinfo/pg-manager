@@ -27,7 +27,7 @@
 ## Remediation Status Log
 
 > **Last Updated:** 2026-01-13
-> **Status:** Phase 7 Complete
+> **Status:** Phase 8 Complete
 
 ### Phase 1: Security Fixes (2026-01-13) - COMPLETE ✅
 
@@ -333,16 +333,69 @@ function MyComponent() {
    - Added invalidateFeatureCache() function for manual invalidation
    - Cache automatically invalidated on user change or after saveFeatures()
 
+### Phase 8: Additional Medium Priority Fixes (2026-01-13) - COMPLETE ✅
+
+| Issue ID | Description | Status | Files |
+|----------|-------------|--------|-------|
+| CQ-010 | Add named constants for magic numbers | ✅ FIXED | constants.ts, auth-context.tsx, error-utils.ts, journey.service.ts |
+| AUTH-015 | Fix hasPermission type safety | ✅ FIXED | types.ts, auth-context.tsx |
+| SEC-018 | Fix file download header injection risk | ✅ FIXED | format.ts, journey-report/route.ts, receipts/pdf/route.ts |
+| ARCH-003 | Add global error pages | ✅ FIXED | error.tsx, not-found.tsx, loading.tsx |
+| AUTH-011 | Add session revocation audit trail | ✅ FIXED | session.ts |
+| CQ-008 | Add memoization for formatters | ✅ FIXED | format.ts |
+| BL-013 | Fix refund-payment linkage | ✅ FIXED | payment.workflow.ts |
+
+**Summary of Phase 8 Changes:**
+
+1. **CQ-010: Named Constants for Magic Numbers**
+   - New file: `src/lib/constants.ts` with centralized configuration values
+   - Time constants (ONE_DAY_MS, AUTH_INIT_TIMEOUT_MS, etc.)
+   - Toast duration constants
+   - Analytics scoring constants
+   - Updated auth-context.tsx, error-utils.ts, journey.service.ts to use constants
+
+2. **AUTH-015: hasPermission Type Safety**
+   - Added `isValidPermission()` type guard in types.ts
+   - Added `asPermission()` for strict validation at boundaries
+   - hasPermission now logs warnings in development for invalid permissions
+   - Catches typos early without breaking production
+
+3. **SEC-018: File Download Header Injection Prevention**
+   - New utility: `sanitizeFilename()` in format.ts
+   - Removes dangerous characters, normalizes to lowercase
+   - Limits filename length to 100 characters
+   - Applied to journey-report and receipt PDF downloads
+
+4. **ARCH-003: Global Error Pages**
+   - `src/app/error.tsx`: Global error boundary with retry and navigation
+   - `src/app/not-found.tsx`: 404 page with navigation options
+   - `src/app/loading.tsx`: Global loading fallback with accessibility
+
+5. **AUTH-011: Session Revocation Audit Trail**
+   - signOut() now logs audit event before signing out
+   - Records user ID, email, timestamp, and workspace
+   - Non-blocking - continues even if audit logging fails
+
+6. **CQ-008: Memoized Formatters**
+   - Moved Intl.NumberFormat creation to module level
+   - formatCurrency and formatCurrencyPrecise now use shared formatter instances
+   - Reduces object creation on every function call
+
+7. **BL-013: Refund-Payment Linkage**
+   - buildOutput now extracts payment_id from validate_payment step result
+   - original_payment_id field now correctly populated
+   - Fixes audit chain for refund tracking
+
 ### Remaining Issues
 
 All HIGH priority issues have been addressed. Remaining issues are MEDIUM or LOW priority:
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| MEDIUM | 40 | Code quality, consistency, maintainability |
+| MEDIUM | 33 | Code quality, consistency, maintainability |
 | LOW | 12 | Minor improvements, documentation |
 
-*Updated after Phase 7: Fixed 9 MEDIUM and 2 LOW priority issues.*
+*Updated after Phase 8: Fixed 7 additional MEDIUM priority issues.*
 
 ---
 

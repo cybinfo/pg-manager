@@ -9,6 +9,7 @@ import {
   ContextType,
   Permission,
   TENANT_PERMISSIONS,
+  isValidPermission,
 } from './types'
 import {
   getSession as getSessionUtil,
@@ -18,6 +19,7 @@ import {
   setStoredContextId,
   SessionError,
 } from './session'
+import { AUTH_INIT_TIMEOUT_MS } from '@/lib/constants'
 
 // Singleton supabase client for the entire app
 let supabaseInstance: SupabaseClient | null = null
@@ -236,7 +238,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Permission checks - Centralized access control
   // Access hierarchy: Platform Admin > Owner > Staff > Tenant
+  // AUTH-015: Added runtime validation for permission strings
   const hasPermission = useCallback((permission: Permission | string): boolean => {
+    // AUTH-015: Validate permission in development to catch typos early
+    if (process.env.NODE_ENV === 'development' && typeof permission === 'string') {
+      if (!isValidPermission(permission)) {
+        console.warn(`[Auth] Invalid permission: "${permission}". This will fail silently in production.`)
+      }
+    }
     // Platform Admin (Super User) - Full access to everything
     if (isPlatformAdmin) return true
     // No context means no permissions
@@ -400,7 +409,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('[Auth] Setting up auth listener...')
     initializingRef.current = true
 
-    // Set a timeout - if no auth event fires within 3 seconds, assume not logged in
+    // CQ-010: Set a timeout - if no auth event fires within timeout, assume not logged in
     const authTimeout = setTimeout(() => {
       if (!globalAuthState.initialized && mountedRef.current) {
         console.log('[Auth] Auth timeout - assuming not logged in')
@@ -408,7 +417,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         initializingRef.current = false
         setIsLoading(false)
       }
-    }, 3000)
+    }, AUTH_INIT_TIMEOUT_MS)
 
     // Listen for auth state changes - this is the PRIMARY way to get session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {

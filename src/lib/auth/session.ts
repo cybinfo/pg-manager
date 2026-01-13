@@ -232,10 +232,51 @@ export async function refreshSession(): Promise<SessionResult> {
 /**
  * Sign out the current user.
  * Returns true if successful, false otherwise.
+ * AUTH-011: Now includes audit logging for session revocation.
  */
 export async function signOut(): Promise<{ success: boolean; error: SessionError | null }> {
   try {
     const supabase = createClient()
+
+    // AUTH-011: Get user info before signing out for audit trail
+    const { data: { user } } = await supabase.auth.getUser()
+    let workspaceId: string | null = null
+
+    if (user) {
+      // Try to get user's primary workspace for audit logging
+      const { data: context } = await supabase
+        .from("user_contexts")
+        .select("workspace_id")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .limit(1)
+        .single()
+
+      workspaceId = context?.workspace_id || null
+
+      // Log logout event to audit trail
+      if (workspaceId) {
+        await supabase.from("audit_events").insert({
+          entity_type: "staff",
+          entity_id: user.id,
+          action: "update",
+          actor_id: user.id,
+          actor_type: "staff",
+          workspace_id: workspaceId,
+          metadata: {
+            operation: "logout",
+            email: user.email,
+            timestamp: new Date().toISOString(),
+          },
+          created_at: new Date().toISOString(),
+        }).then(({ error: auditError }: { error: { message: string } | null }) => {
+          if (auditError) {
+            console.warn("[Session] Failed to log logout audit event:", auditError.message)
+          }
+        })
+      }
+    }
+
     const { error } = await supabase.auth.signOut()
 
     if (error) {

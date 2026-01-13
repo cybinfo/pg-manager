@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getTenantJourney } from "@/lib/services/journey.service"
+import { sanitizeFilename } from "@/lib/format"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { TenantJourneyReportPDF, JourneyReportData } from "@/lib/pdf-journey-report"
 import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
@@ -130,11 +131,8 @@ export async function GET(
     // Generate PDF buffer with timeout
     const pdfBuffer = await Promise.race([pdfPromise, timeoutPromise])
 
-    // Create safe filename
-    const tenantNameSlug = result.data.tenant_name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "")
+    // SEC-018: Create safe filename using sanitizeFilename utility
+    const tenantNameSlug = sanitizeFilename(result.data.tenant_name)
     const dateStr = new Date().toISOString().split("T")[0]
     const filename = `tenant-journey-${tenantNameSlug}-${dateStr}.pdf`
 
