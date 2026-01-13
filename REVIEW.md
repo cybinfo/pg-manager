@@ -788,12 +788,13 @@ console.error("[Workflow] Fetching tenant from:", tenantUrl)
 - **File:** `src/app/api/admin/update-user-email/route.ts` (Lines 27-34)
 - **Description:** Email validation uses basic regex that allows invalid emails like `a@b.c`.
 
-#### SEC-018: File Download Manipulation Risk
+#### SEC-018: File Download Manipulation Risk ✅ FIXED
 - **Severity:** MEDIUM
 - **Files:**
   - `src/app/api/receipts/[id]/pdf/route.ts` (Line 112)
   - `src/app/api/tenants/[id]/journey-report/route.ts` (Line 66)
 - **Description:** Filename uses user-controlled data, potential for header injection.
+- **Fixed:** Phase 12 - Both routes now use `createContentDisposition()` utility for safe header construction.
 
 ---
 
@@ -1170,10 +1171,11 @@ if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 }
 - **Description:** `globalInitialized`, `globalInitializing` flags without synchronization.
 - **Fixed:** Phase 11 - Added comprehensive documentation explaining thread safety in JavaScript single-threaded model. Added `resetSessionState()` for testing.
 
-#### AUTH-015: hasPermission Accepts Strings
+#### AUTH-015: hasPermission Accepts Strings ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/lib/auth/auth-context.tsx`
 - **Description:** Function allows string instead of enforcing Permission type - typos fail silently.
+- **Fixed:** Phase 12 - Added `isValidPermission` type guard with development-mode warning for invalid permissions.
 
 #### AUTH-016: Feature Flags Fetch on Every Mount
 - **Severity:** MEDIUM
@@ -1185,9 +1187,10 @@ if (!hasAccess) return NextResponse.json({ error: "Forbidden" }, { status: 403 }
 - **File:** `src/lib/auth/auth-context.tsx` (Line 245)
 - **Description:** Multi-role permission aggregation behavior not documented.
 
-#### AUTH-018: FeatureGuard/PermissionGuard Order Inconsistent
+#### AUTH-018: FeatureGuard/PermissionGuard Order Inconsistent ✅ FIXED
 - **Severity:** MEDIUM
 - **Description:** CLAUDE.md recommends FeatureGuard outside PermissionGuard but not enforced.
+- **Fixed:** Phase 12 - Enhanced CLAUDE.md documentation explaining why FeatureGuard must be outside PermissionGuard.
 
 ---
 
@@ -1380,10 +1383,11 @@ const newStatus = newOccupiedBeds === 0 ? "available" : "occupied"
 - **File:** `src/lib/workflows/exit.workflow.ts` (Lines 74-302)
 - **Description:** Settlement calculated but refund record not created.
 
-#### BL-016: Join Transform Inconsistency in Journey
+#### BL-016: Join Transform Inconsistency in Journey ✅ FIXED
 - **Severity:** MEDIUM
 - **File:** `src/lib/services/journey.service.ts` (Lines 156-160)
 - **Description:** Data transformation assumes consistent Supabase join formats.
+- **Fixed:** Phase 12 - Verified all join queries in journey service use `transformArrayJoins` consistently.
 
 ---
 
@@ -1666,9 +1670,10 @@ const categories = categoriesParam
 - **Files:** `src/components/ui/stat-card.tsx` vs `src/components/ui/status-badge.tsx`
 - **Description:** Color variants don't match between components.
 
-#### UI-008: Avatar Fallback Logic Varies
+#### UI-008: Avatar Fallback Logic Varies ✅ FIXED
 - **Severity:** MEDIUM
 - **Description:** Different pages handle `profile_photo || photo_url` fallback differently.
+- **Fixed:** Phase 12 - Added `getAvatarUrl()` utility function in avatar.tsx for centralized photo URL resolution.
 
 #### UI-009: Mobile Column Visibility Inconsistent ✅ FIXED
 - **Severity:** MEDIUM

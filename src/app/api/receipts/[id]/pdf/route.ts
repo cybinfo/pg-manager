@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { RentReceiptPDF, type ReceiptData } from "@/lib/pdf-receipt"
-import { sanitizeFilename } from "@/lib/format"
+import { createContentDisposition, sanitizeFilename } from "@/lib/format"
 import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 import {
   apiError,
@@ -159,12 +159,12 @@ export async function GET(
     const pdfElement = RentReceiptPDF({ data: receiptData })
     const pdfBuffer = await renderToBuffer(pdfElement)
 
-    // SEC-018: Return PDF response with sanitized filename
+    // SEC-018: Return PDF response with sanitized filename using createContentDisposition
     const safeReceiptNumber = sanitizeFilename(receiptNumber)
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="receipt-${safeReceiptNumber}.pdf"`,
+        "Content-Disposition": createContentDisposition(`receipt-${safeReceiptNumber}.pdf`),
       },
     })
   } catch (error) {

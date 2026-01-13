@@ -120,7 +120,10 @@ import { PermissionGuard } from "@/components/auth"
   {content}
 </PermissionGuard>
 
-// Feature-flagged (FeatureGuard OUTSIDE PermissionGuard)
+// Feature-flagged (AUTH-018: FeatureGuard MUST be OUTSIDE PermissionGuard)
+// Reason: Check if feature is enabled BEFORE checking user permissions
+// - If feature disabled: show "feature not available" message
+// - If feature enabled but no permission: show "no access" message
 import { FeatureGuard } from "@/components/auth"
 
 <FeatureGuard feature="expenses">
@@ -128,6 +131,9 @@ import { FeatureGuard } from "@/components/auth"
     {content}
   </PermissionGuard>
 </FeatureGuard>
+
+// WRONG: PermissionGuard outside FeatureGuard
+// This would check permissions first, which is wasteful if feature is disabled
 ```
 
 ### 3. Permission Checks

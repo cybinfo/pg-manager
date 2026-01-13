@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getTenantJourney } from "@/lib/services/journey.service"
-import { sanitizeFilename } from "@/lib/format"
+import { createContentDisposition, sanitizeFilename } from "@/lib/format"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { TenantJourneyReportPDF, JourneyReportData } from "@/lib/pdf-journey-report"
 import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
@@ -132,6 +132,7 @@ export async function GET(
     const pdfBuffer = await Promise.race([pdfPromise, timeoutPromise])
 
     // SEC-018: Create safe filename using sanitizeFilename utility
+    // SEC-018: Use createContentDisposition for safe filename handling
     const tenantNameSlug = sanitizeFilename(result.data.tenant_name)
     const dateStr = new Date().toISOString().split("T")[0]
     const filename = `tenant-journey-${tenantNameSlug}-${dateStr}.pdf`
@@ -144,7 +145,7 @@ export async function GET(
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": createContentDisposition(filename),
         "Content-Length": pdfBuffer.length.toString(),
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
