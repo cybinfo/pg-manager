@@ -21,7 +21,7 @@ export {
 } from './permission-gate'
 
 // Permission Guard (for page-level access control)
-export { PermissionGuard, OwnerGuard, withPermission } from './permission-guard'
+export { PermissionGuard, OwnerGuard, PlatformAdminGuard, withPermission } from './permission-guard'
 
 // Invitation Components
 export { InvitationForm, InvitationList, AcceptInvitation } from './invitation-components'

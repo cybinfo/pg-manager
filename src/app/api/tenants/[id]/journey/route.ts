@@ -33,6 +33,50 @@ export async function GET(
       )
     }
 
+    // SECURITY: Verify user has access to this tenant's workspace
+    const { data: tenant, error: tenantError } = await supabase
+      .from("tenants")
+      .select("id, owner_id")
+      .eq("id", tenantId)
+      .single()
+
+    if (tenantError || !tenant) {
+      return NextResponse.json(
+        { error: "NOT_FOUND", message: "Tenant not found" },
+        { status: 404 }
+      )
+    }
+
+    // Check access: user must be owner, platform admin, or have staff context for this workspace
+    const isOwner = tenant.owner_id === user.id
+
+    if (!isOwner) {
+      // Check if platform admin
+      const { data: platformAdmin } = await supabase
+        .from("platform_admins")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .single()
+
+      if (!platformAdmin) {
+        // Check if staff with access to this workspace
+        const { data: staffContext } = await supabase
+          .from("user_contexts")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("workspace_id", tenant.owner_id)
+          .eq("is_active", true)
+          .single()
+
+        if (!staffContext) {
+          return NextResponse.json(
+            { error: "FORBIDDEN", message: "You do not have access to this tenant's data" },
+            { status: 403 }
+          )
+        }
+      }
+    }
+
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams
     const limit = parseInt(searchParams.get("limit") || "50")
@@ -50,10 +94,10 @@ export async function GET(
       ? (categoriesParam.split(",") as EventCategoryType[])
       : undefined
 
-    // Fetch journey data
+    // Fetch journey data (use tenant's owner_id as workspace_id for proper data access)
     const result = await getTenantJourney({
       tenant_id: tenantId,
-      workspace_id: user.id,
+      workspace_id: tenant.owner_id,
       events_limit: Math.min(limit, 100), // Cap at 100 events per request
       events_offset: offset,
       event_categories: categories,

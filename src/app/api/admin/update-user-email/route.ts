@@ -1,20 +1,38 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { createClient as createServerClient } from "@/lib/supabase/server"
 
 // Create admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+function getAdminClient() {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!serviceRoleKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for admin operations")
   }
-)
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Verify authentication first
+    const supabase = await createServerClient()
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: "Unauthorized", message: "Authentication required" },
+        { status: 401 }
+      )
+    }
+
     const { userId, newEmail, tenantId } = await request.json()
 
     if (!userId || !newEmail) {
@@ -22,6 +40,43 @@ export async function POST(request: NextRequest) {
         { error: "userId and newEmail are required" },
         { status: 400 }
       )
+    }
+
+    // SECURITY: Get admin client after auth check
+    const supabaseAdmin = getAdminClient()
+
+    // SECURITY: Verify requester has permission to update this user's email
+    // Must be either: 1) Platform admin, or 2) Owner of the tenant record
+    const { data: platformAdmin } = await supabaseAdmin
+      .from("platform_admins")
+      .select("user_id")
+      .eq("user_id", currentUser.id)
+      .single()
+
+    const isPlatformAdmin = !!platformAdmin
+
+    // If not platform admin, check if they own the tenant
+    if (!isPlatformAdmin) {
+      if (!tenantId) {
+        return NextResponse.json(
+          { error: "Forbidden", message: "Only platform admins can update user emails without tenant context" },
+          { status: 403 }
+        )
+      }
+
+      // Check if current user owns the tenant record
+      const { data: tenant } = await supabaseAdmin
+        .from("tenants")
+        .select("owner_id")
+        .eq("id", tenantId)
+        .single()
+
+      if (!tenant || tenant.owner_id !== currentUser.id) {
+        return NextResponse.json(
+          { error: "Forbidden", message: "You do not have permission to update this user's email" },
+          { status: 403 }
+        )
+      }
     }
 
     // Validate email format

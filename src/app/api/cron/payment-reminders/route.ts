@@ -39,19 +39,23 @@ interface Tenant {
 }
 
 export async function GET(request: Request) {
-  // Verify the request is from Vercel Cron
+  // SECURITY: Always verify cron secret - no dev bypass
   const authHeader = request.headers.get("authorization")
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    // In development, allow without auth
-    if (process.env.NODE_ENV === "production") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  // SECURITY: Require service role key - fail loudly if missing
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!serviceRoleKey) {
+    console.error("[Cron] SUPABASE_SERVICE_ROLE_KEY is required for cron jobs")
+    return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
   }
 
   // Create admin Supabase client for cron job
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    serviceRoleKey
   )
 
   const results = {

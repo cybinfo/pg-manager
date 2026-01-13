@@ -169,6 +169,73 @@ export function OwnerGuard({
 }
 
 /**
+ * Guards page content for platform admins only.
+ * Non-platform-admins see Access Denied message.
+ */
+export function PlatformAdminGuard({
+  children,
+  fallback = "message",
+  redirectTo = "/dashboard",
+}: Omit<PermissionGuardProps, 'permission'>) {
+  const router = useRouter()
+  const { isLoading, isPlatformAdmin, currentContext } = useAuth()
+  const { isTenant } = useCurrentContext()
+
+  useEffect(() => {
+    if (!isLoading && !isPlatformAdmin) {
+      if (fallback === "redirect") {
+        router.push(redirectTo)
+      }
+    }
+  }, [isLoading, isPlatformAdmin, fallback, redirectTo, router])
+
+  useEffect(() => {
+    if (!isLoading && isTenant) {
+      router.push("/tenant")
+    }
+  }, [isLoading, isTenant, router])
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (isTenant) {
+    return null
+  }
+
+  if (!isPlatformAdmin) {
+    if (fallback === "redirect") {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <div className="p-4 bg-rose-50 rounded-full mb-4">
+          <ShieldAlert className="h-12 w-12 text-rose-500" />
+        </div>
+        <h2 className="text-xl font-semibold mb-2">Platform Admin Access Only</h2>
+        <p className="text-muted-foreground mb-4 max-w-md">
+          This page is only accessible to platform administrators.
+        </p>
+        <Link href="/dashboard">
+          <Button>Go to Dashboard</Button>
+        </Link>
+      </div>
+    )
+  }
+
+  return <>{children}</>
+}
+
+/**
  * Higher-order component for page-level permission checking
  */
 export function withPermission<P extends object>(
