@@ -1,7 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
-import { validateCsrf, csrfErrorResponse } from "@/lib/csrf"
+import { validateCsrf } from "@/lib/csrf"
+import {
+  apiSuccess,
+  apiError,
+  badRequest,
+  internalError,
+  csrfError,
+  ErrorCodes,
+} from "@/lib/api-response"
 
 // Service role client for database operations
 const supabaseAdmin = createClient(
@@ -16,14 +24,12 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = await authLimiter.check(clientId)
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: "TOO_MANY_REQUESTS",
-          message: "Too many verification attempts. Please try again later.",
-          retryAfter: rateLimitResult.retryAfter,
-        },
+      return apiError(
+        ErrorCodes.TOO_MANY_REQUESTS,
+        "Too many verification attempts. Please try again later.",
         {
           status: 429,
+          details: { retryAfter: rateLimitResult.retryAfter },
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
@@ -32,16 +38,13 @@ export async function POST(request: NextRequest) {
     // SECURITY: CSRF validation for state-changing requests
     const csrfResult = validateCsrf(request)
     if (!csrfResult.valid) {
-      return csrfErrorResponse(csrfResult.error || "CSRF validation failed")
+      return csrfError(csrfResult.error || "CSRF validation failed")
     }
 
     const { token } = await request.json()
 
     if (!token) {
-      return NextResponse.json(
-        { error: "Missing token" },
-        { status: 400 }
-      )
+      return badRequest("Missing token")
     }
 
     // Verify the token
@@ -52,32 +55,22 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Failed to verify token:", error)
-      return NextResponse.json(
-        { error: "Failed to verify token" },
-        { status: 500 }
-      )
+      return internalError("Failed to verify token")
     }
 
     // The RPC returns a table, get the first row
     const result = Array.isArray(data) ? data[0] : data
 
     if (!result?.success) {
-      return NextResponse.json(
-        { error: result?.message || "Invalid or expired token" },
-        { status: 400 }
-      )
+      return badRequest(result?.message || "Invalid or expired token")
     }
 
-    return NextResponse.json({
-      success: true,
-      email: result.value,
-      message: result.message,
-    })
+    return apiSuccess(
+      { email: result.value },
+      { message: result.message }
+    )
   } catch (error) {
     console.error("Error in verify email:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return internalError("Internal server error")
   }
 }

@@ -4,6 +4,14 @@ import { getTenantJourney } from "@/lib/services/journey.service"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { TenantJourneyReportPDF, JourneyReportData } from "@/lib/pdf-journey-report"
 import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import {
+  apiError,
+  unauthorized,
+  forbidden,
+  notFound,
+  internalError,
+  ErrorCodes,
+} from "@/lib/api-response"
 
 /**
  * GET /api/tenants/[id]/journey-report
@@ -25,14 +33,12 @@ export async function GET(
     const rateLimitResult = await apiLimiter.check(clientId)
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: "TOO_MANY_REQUESTS",
-          message: "Rate limit exceeded. Please try again later.",
-          retryAfter: rateLimitResult.retryAfter,
-        },
+      return apiError(
+        ErrorCodes.TOO_MANY_REQUESTS,
+        "Rate limit exceeded. Please try again later.",
         {
           status: 429,
+          details: { retryAfter: rateLimitResult.retryAfter },
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
@@ -47,10 +53,7 @@ export async function GET(
     } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized", message: "Please log in to access this resource" },
-        { status: 401 }
-      )
+      return unauthorized("Please log in to access this resource")
     }
 
     // SECURITY: Verify user has access to this tenant's workspace
@@ -61,10 +64,7 @@ export async function GET(
       .single()
 
     if (tenantError || !tenant) {
-      return NextResponse.json(
-        { error: "NOT_FOUND", message: "Tenant not found" },
-        { status: 404 }
-      )
+      return notFound("Tenant not found")
     }
 
     // Check access: user must be owner, platform admin, or have staff context for this workspace
@@ -89,10 +89,7 @@ export async function GET(
           .single()
 
         if (!staffContext) {
-          return NextResponse.json(
-            { error: "FORBIDDEN", message: "You do not have access to this tenant's data" },
-            { status: 403 }
-          )
+          return forbidden("You do not have access to this tenant's data")
         }
       }
     }
@@ -110,10 +107,11 @@ export async function GET(
     })
 
     if (!result.success || !result.data) {
-      return NextResponse.json(
-        { error: result.error?.code, message: result.error?.message },
-        { status: result.error?.code === "NOT_FOUND" ? 404 : 500 }
-      )
+      const errorCode = result.error?.code || ErrorCodes.INTERNAL_ERROR
+      const errorMessage = result.error?.message || "Failed to fetch journey data"
+      return apiError(errorCode, errorMessage, {
+        status: errorCode === "NOT_FOUND" ? 404 : 500,
+      })
     }
 
     // Prepare data for PDF
@@ -148,9 +146,6 @@ export async function GET(
     })
   } catch (error) {
     console.error("[Journey Report API] Error generating PDF:", error)
-    return NextResponse.json(
-      { error: "PDF_GENERATION_FAILED", message: "Failed to generate journey report PDF" },
-      { status: 500 }
-    )
+    return internalError("Failed to generate journey report PDF")
   }
 }

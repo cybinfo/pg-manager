@@ -1,9 +1,17 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendVerificationEmail } from "@/lib/email"
 import crypto from "crypto"
 import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
-import { validateCsrf, csrfErrorResponse } from "@/lib/csrf"
+import { validateCsrf } from "@/lib/csrf"
+import {
+  apiSuccess,
+  apiError,
+  badRequest,
+  internalError,
+  csrfError,
+  ErrorCodes,
+} from "@/lib/api-response"
 
 // Service role client for database operations
 const supabaseAdmin = createClient(
@@ -18,14 +26,12 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = await authLimiter.check(clientId)
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: "TOO_MANY_REQUESTS",
-          message: "Too many verification emails requested. Please try again later.",
-          retryAfter: rateLimitResult.retryAfter,
-        },
+      return apiError(
+        ErrorCodes.TOO_MANY_REQUESTS,
+        "Too many verification emails requested. Please try again later.",
         {
           status: 429,
+          details: { retryAfter: rateLimitResult.retryAfter },
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
@@ -34,16 +40,13 @@ export async function POST(request: NextRequest) {
     // SECURITY: CSRF validation for state-changing requests
     const csrfResult = validateCsrf(request)
     if (!csrfResult.valid) {
-      return csrfErrorResponse(csrfResult.error || "CSRF validation failed")
+      return csrfError(csrfResult.error || "CSRF validation failed")
     }
 
     const { userId, email, userName } = await request.json()
 
     if (!userId || !email) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      )
+      return badRequest("Missing required fields: userId and email are required")
     }
 
     // Generate a secure random token
@@ -61,10 +64,7 @@ export async function POST(request: NextRequest) {
 
     if (tokenError) {
       console.error("Failed to create verification token:", tokenError)
-      return NextResponse.json(
-        { error: "Failed to create verification token" },
-        { status: 500 }
-      )
+      return internalError("Failed to create verification token")
     }
 
     // Build the verification URL
@@ -81,18 +81,12 @@ export async function POST(request: NextRequest) {
     })
 
     if (!emailResult.success) {
-      return NextResponse.json(
-        { error: emailResult.error || "Failed to send verification email" },
-        { status: 500 }
-      )
+      return internalError(emailResult.error || "Failed to send verification email")
     }
 
-    return NextResponse.json({ success: true })
+    return apiSuccess(undefined, { message: "Verification email sent successfully" })
   } catch (error) {
     console.error("Error in send verification email:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return internalError("Internal server error")
   }
 }

@@ -3,6 +3,14 @@ import { createClient } from "@/lib/supabase/server"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { RentReceiptPDF, type ReceiptData } from "@/lib/pdf-receipt"
 import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import {
+  apiError,
+  unauthorized,
+  forbidden,
+  notFound,
+  internalError,
+  ErrorCodes,
+} from "@/lib/api-response"
 
 export async function GET(
   request: NextRequest,
@@ -14,14 +22,12 @@ export async function GET(
     const rateLimitResult = await apiLimiter.check(clientId)
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: "TOO_MANY_REQUESTS",
-          message: "Rate limit exceeded. Please try again later.",
-          retryAfter: rateLimitResult.retryAfter,
-        },
+      return apiError(
+        ErrorCodes.TOO_MANY_REQUESTS,
+        "Rate limit exceeded. Please try again later.",
         {
           status: 429,
+          details: { retryAfter: rateLimitResult.retryAfter },
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
@@ -36,7 +42,7 @@ export async function GET(
     } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return unauthorized()
     }
 
     // Fetch payment with related data (no owner filter - we'll check access below)
@@ -63,10 +69,7 @@ export async function GET(
       .single()
 
     if (paymentError || !payment) {
-      return NextResponse.json(
-        { error: "Payment not found" },
-        { status: 404 }
-      )
+      return notFound("Payment not found")
     }
 
     // Check access: Owner, Staff with permission, or Tenant who owns this payment
@@ -102,10 +105,7 @@ export async function GET(
     }
 
     if (!isOwner && !isTenantOwner && !isAuthorizedStaff) {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
-      )
+      return forbidden("Access denied")
     }
 
     // Fetch owner details (use payment's owner_id, not current user)
@@ -167,9 +167,6 @@ export async function GET(
     })
   } catch (error) {
     console.error("Error generating PDF:", error)
-    return NextResponse.json(
-      { error: "Failed to generate PDF" },
-      { status: 500 }
-    )
+    return internalError("Failed to generate PDF")
   }
 }

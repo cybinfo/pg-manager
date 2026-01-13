@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { PermissionGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -826,6 +827,7 @@ export default function NewTenantPage() {
   }
 
   return (
+    <PermissionGuard permission="tenants.create">
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Breadcrumbs */}
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -1468,5 +1470,6 @@ export default function NewTenantPage() {
         </div>
       </form>
     </div>
+    </PermissionGuard>
   )
 }

@@ -1,8 +1,18 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { sensitiveLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
-import { validateCsrf, csrfErrorResponse } from "@/lib/csrf"
+import { validateCsrf } from "@/lib/csrf"
+import {
+  apiSuccess,
+  apiError,
+  unauthorized,
+  forbidden,
+  badRequest,
+  internalError,
+  csrfError,
+  ErrorCodes,
+} from "@/lib/api-response"
 
 // Create admin client with service role key
 function getAdminClient() {
@@ -29,14 +39,12 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = await sensitiveLimiter.check(clientId)
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: "TOO_MANY_REQUESTS",
-          message: "Rate limit exceeded. Please try again later.",
-          retryAfter: rateLimitResult.retryAfter,
-        },
+      return apiError(
+        ErrorCodes.TOO_MANY_REQUESTS,
+        "Rate limit exceeded. Please try again later.",
         {
           status: 429,
+          details: { retryAfter: rateLimitResult.retryAfter },
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
@@ -45,7 +53,7 @@ export async function POST(request: NextRequest) {
     // SECURITY: CSRF validation for state-changing requests
     const csrfResult = validateCsrf(request)
     if (!csrfResult.valid) {
-      return csrfErrorResponse(csrfResult.error || "CSRF validation failed")
+      return csrfError(csrfResult.error || "CSRF validation failed")
     }
 
     // SECURITY: Verify authentication first
@@ -53,19 +61,13 @@ export async function POST(request: NextRequest) {
     const { data: { user: currentUser } } = await supabase.auth.getUser()
 
     if (!currentUser) {
-      return NextResponse.json(
-        { error: "Unauthorized", message: "Authentication required" },
-        { status: 401 }
-      )
+      return unauthorized("Authentication required")
     }
 
     const { userId, newEmail, tenantId } = await request.json()
 
     if (!userId || !newEmail) {
-      return NextResponse.json(
-        { error: "userId and newEmail are required" },
-        { status: 400 }
-      )
+      return badRequest("userId and newEmail are required")
     }
 
     // SECURITY: Get admin client after auth check
@@ -84,10 +86,7 @@ export async function POST(request: NextRequest) {
     // If not platform admin, check if they own the tenant
     if (!isPlatformAdmin) {
       if (!tenantId) {
-        return NextResponse.json(
-          { error: "Forbidden", message: "Only platform admins can update user emails without tenant context" },
-          { status: 403 }
-        )
+        return forbidden("Only platform admins can update user emails without tenant context")
       }
 
       // Check if current user owns the tenant record
@@ -98,20 +97,14 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (!tenant || tenant.owner_id !== currentUser.id) {
-        return NextResponse.json(
-          { error: "Forbidden", message: "You do not have permission to update this user's email" },
-          { status: 403 }
-        )
+        return forbidden("You do not have permission to update this user's email")
       }
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(newEmail)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      )
+      return badRequest("Invalid email format")
     }
 
     // SECURITY CHECK: Does this user have owner or staff contexts?
@@ -135,21 +128,17 @@ export async function POST(request: NextRequest) {
 
       if (tenantError) {
         console.error("Error updating tenants email:", tenantError)
-        return NextResponse.json(
-          { error: "Failed to update tenant email" },
-          { status: 500 }
-        )
+        return internalError("Failed to update tenant email")
       }
     }
 
     // If user has owner/staff context, ONLY update tenants.email (done above)
     // Do NOT change their login credentials!
     if (hasOwnerOrStaffContext) {
-      return NextResponse.json({
-        success: true,
-        message: "Tenant record email updated. Login email unchanged (user has owner/staff access).",
-        loginEmailUpdated: false,
-      })
+      return apiSuccess(
+        { loginEmailUpdated: false },
+        { message: "Tenant record email updated. Login email unchanged (user has owner/staff access)." }
+      )
     }
 
     // User is ONLY a tenant, safe to update login credentials
@@ -163,10 +152,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Email is already in use by another account" },
-        { status: 409 }
-      )
+      return apiError("CONFLICT", "Email is already in use by another account", { status: 409 })
     }
 
     // Update auth.users email using admin API
@@ -177,10 +163,7 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       console.error("Error updating auth.users email:", authError)
-      return NextResponse.json(
-        { error: `Failed to update auth email: ${authError.message}` },
-        { status: 500 }
-      )
+      return internalError(`Failed to update auth email: ${authError.message}`)
     }
 
     // Update user_profiles email
@@ -194,16 +177,12 @@ export async function POST(request: NextRequest) {
       // Don't fail completely, auth email is already updated
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Email updated successfully across all tables",
-      loginEmailUpdated: true,
-    })
+    return apiSuccess(
+      { loginEmailUpdated: true },
+      { message: "Email updated successfully across all tables" }
+    )
   } catch (error) {
     console.error("Error in update-user-email:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return internalError("Internal server error")
   }
 }

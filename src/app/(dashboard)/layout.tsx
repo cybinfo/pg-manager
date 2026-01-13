@@ -40,6 +40,41 @@ import { DemoModeProvider, DemoBanner, DemoWatermark } from "@/lib/demo-mode"
 import { useFeatures } from "@/lib/features/use-features"
 import { FeatureFlagKey } from "@/lib/features"
 
+// Path-to-permission mapping for route-level access control
+// This ensures direct URL access is also protected
+const pathPermissions: Record<string, string> = {
+  "/properties": "properties.view",
+  "/rooms": "rooms.view",
+  "/tenants": "tenants.view",
+  "/bills": "bills.view",
+  "/payments": "payments.view",
+  "/refunds": "payments.view",
+  "/expenses": "expenses.view",
+  "/meter-readings": "meter_readings.view",
+  "/exit-clearance": "exit_clearance.initiate",
+  "/visitors": "visitors.view",
+  "/complaints": "complaints.view",
+  "/notices": "notices.view",
+  "/reports": "reports.view",
+  "/architecture": "properties.view",
+  "/approvals": "tenants.view",
+  "/staff": "staff.view",
+}
+
+// Path-to-feature mapping for feature-gated routes
+const pathFeatures: Record<string, FeatureFlagKey> = {
+  "/expenses": "expenses",
+  "/meter-readings": "meterReadings",
+  "/exit-clearance": "exitClearance",
+  "/visitors": "visitors",
+  "/complaints": "complaints",
+  "/notices": "notices",
+  "/reports": "reports",
+  "/activity": "activityLog",
+  "/architecture": "architectureView",
+  "/approvals": "approvals",
+}
+
 // Navigation items with required permissions and feature flags
 // null permission means always visible, string means need that permission
 // feature: null means always visible, string means feature must be enabled
@@ -174,6 +209,52 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     )
+  }
+
+  // Route-level permission check - find matching path and check permission
+  const matchingPath = Object.keys(pathPermissions).find(path =>
+    pathname === path || pathname.startsWith(path + "/")
+  )
+
+  if (matchingPath) {
+    const requiredPermission = pathPermissions[matchingPath]
+    const requiredFeature = pathFeatures[matchingPath]
+
+    // Check feature flag first
+    if (requiredFeature && !isFeatureEnabled(requiredFeature)) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-50">
+          <div className="text-center p-8">
+            <div className="p-4 bg-amber-50 rounded-full mb-4 inline-block">
+              <Shield className="h-12 w-12 text-amber-500" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Feature Not Available</h2>
+            <p className="text-muted-foreground mb-4">This feature is not enabled for your subscription.</p>
+            <Link href="/dashboard">
+              <Button>Go to Dashboard</Button>
+            </Link>
+          </div>
+        </div>
+      )
+    }
+
+    // Check permission - owners always have access
+    if (!currentContext.isOwner && !hasPermission(requiredPermission)) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-50">
+          <div className="text-center p-8">
+            <div className="p-4 bg-rose-50 rounded-full mb-4 inline-block">
+              <Shield className="h-12 w-12 text-rose-500" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">You don't have permission to access this page.</p>
+            <Link href="/dashboard">
+              <Button>Go to Dashboard</Button>
+            </Link>
+          </div>
+        </div>
+      )
+    }
   }
 
   return (

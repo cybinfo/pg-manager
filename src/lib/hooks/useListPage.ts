@@ -31,6 +31,9 @@ export interface ListPageConfig<T> {
   joinFields?: (keyof T)[]
   computedFields?: (item: Record<string, unknown>) => Record<string, unknown>
   defaultFilters?: Record<string, string>
+  // Pagination settings
+  defaultPageSize?: number // defaults to 25
+  enableServerPagination?: boolean // defaults to true
 }
 
 export interface FilterConfig {
@@ -60,6 +63,15 @@ export interface MetricConfig<T> {
   compute: (items: T[]) => number | string
   format?: "number" | "currency" | "percentage"
   highlight?: (value: number | string, items: T[]) => boolean
+}
+
+export interface PaginationState {
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
 }
 
 export interface UseListPageOptions<T> {
@@ -98,6 +110,13 @@ export interface UseListPageReturn<T> {
   // Search
   searchQuery: string
   setSearchQuery: (query: string) => void
+
+  // Pagination
+  pagination: PaginationState
+  setPage: (page: number) => void
+  setPageSize: (size: number) => void
+  nextPage: () => void
+  prevPage: () => void
 }
 
 // ============================================
@@ -117,6 +136,10 @@ export function useListPage<T extends object>(
     enabled = true,
   } = options
 
+  // Pagination defaults
+  const defaultPageSize = config.defaultPageSize || 25
+  const enableServerPagination = config.enableServerPagination !== false
+
   // State
   const [data, setData] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
@@ -125,6 +148,11 @@ export function useListPage<T extends object>(
   const [selectedGroups, setSelectedGroups] = useState<string[]>(initialGroups)
   const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({})
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Pagination state
+  const [page, setPageState] = useState(1)
+  const [pageSize, setPageSizeState] = useState(defaultPageSize)
+  const [total, setTotal] = useState(0)
 
   // Use refs to store stable references - prevents infinite loops
   const configRef = useRef(config)
@@ -175,23 +203,40 @@ export function useListPage<T extends object>(
   }, []) // No dependencies - uses ref
 
   // Fetch main data - uses ref to avoid dependency issues
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (fetchPage?: number, fetchPageSize?: number) => {
     if (!enabled) return
 
     const currentConfig = configRef.current
+    const currentPage = fetchPage ?? page
+    const currentPageSize = fetchPageSize ?? pageSize
     setLoading(true)
     setError(null)
 
     try {
       const supabase = createClient()
 
-      const { data: rawData, error: fetchError } = await supabase
+      // Build query
+      let query = supabase
         .from(currentConfig.table)
-        .select(currentConfig.select)
+        .select(currentConfig.select, { count: "exact" })
         .order(currentConfig.defaultOrderBy, { ascending: currentConfig.defaultOrderDirection === "asc" })
+
+      // Apply server-side pagination if enabled
+      if (enableServerPagination) {
+        const from = (currentPage - 1) * currentPageSize
+        const to = from + currentPageSize - 1
+        query = query.range(from, to)
+      }
+
+      const { data: rawData, error: fetchError, count } = await query
 
       if (fetchError) {
         throw fetchError
+      }
+
+      // Update total count
+      if (count !== null) {
+        setTotal(count)
       }
 
       // Transform JOIN fields
@@ -216,7 +261,7 @@ export function useListPage<T extends object>(
     } finally {
       setLoading(false)
     }
-  }, [enabled]) // Only depend on enabled, use ref for config
+  }, [enabled, enableServerPagination, page, pageSize]) // Dependencies for pagination
 
   // Initial fetch - only run once
   useEffect(() => {
@@ -230,15 +275,58 @@ export function useListPage<T extends object>(
   // Filter setters
   const setFilter = useCallback((id: string, value: string) => {
     setFiltersState((prev) => ({ ...prev, [id]: value }))
+    // Reset to page 1 when filter changes
+    setPageState(1)
   }, [])
 
   const setFilters = useCallback((newFilters: Record<string, string>) => {
     setFiltersState(newFilters)
+    // Reset to page 1 when filters change
+    setPageState(1)
   }, [])
 
   const clearFilters = useCallback(() => {
     setFiltersState(configRef.current.defaultFilters || {})
+    setPageState(1)
   }, []) // Uses ref
+
+  // Pagination setters
+  const setPage = useCallback((newPage: number) => {
+    setPageState(newPage)
+    fetchData(newPage, pageSize)
+  }, [fetchData, pageSize])
+
+  const setPageSize = useCallback((newSize: number) => {
+    setPageSizeState(newSize)
+    setPageState(1) // Reset to page 1 when page size changes
+    fetchData(1, newSize)
+  }, [fetchData])
+
+  const nextPage = useCallback(() => {
+    const totalPages = Math.ceil(total / pageSize)
+    if (page < totalPages) {
+      setPage(page + 1)
+    }
+  }, [page, pageSize, total, setPage])
+
+  const prevPage = useCallback(() => {
+    if (page > 1) {
+      setPage(page - 1)
+    }
+  }, [page, setPage])
+
+  // Compute pagination state
+  const pagination = useMemo((): PaginationState => {
+    const totalPages = Math.ceil(total / pageSize) || 1
+    return {
+      page,
+      pageSize,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    }
+  }, [page, pageSize, total])
 
   // Filter data - uses refs for stable config references
   const filteredData = useMemo(() => {
@@ -343,7 +431,7 @@ export function useListPage<T extends object>(
     filteredData,
     loading,
     error,
-    refetch: fetchData,
+    refetch: () => fetchData(),
     filters,
     setFilter,
     setFilters,
@@ -355,6 +443,12 @@ export function useListPage<T extends object>(
     metricsData,
     searchQuery,
     setSearchQuery,
+    // Pagination
+    pagination,
+    setPage,
+    setPageSize,
+    nextPage,
+    prevPage,
   }
 }
 

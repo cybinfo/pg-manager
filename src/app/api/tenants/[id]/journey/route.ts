@@ -1,8 +1,17 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getTenantJourney } from "@/lib/services/journey.service"
 import { EventCategoryType } from "@/types/journey.types"
 import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import {
+  apiSuccess,
+  apiError,
+  unauthorized,
+  forbidden,
+  notFound,
+  internalError,
+  ErrorCodes,
+} from "@/lib/api-response"
 
 /**
  * GET /api/tenants/[id]/journey
@@ -24,14 +33,12 @@ export async function GET(
     const rateLimitResult = await apiLimiter.check(clientId)
 
     if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: "TOO_MANY_REQUESTS",
-          message: "Rate limit exceeded. Please try again later.",
-          retryAfter: rateLimitResult.retryAfter,
-        },
+      return apiError(
+        ErrorCodes.TOO_MANY_REQUESTS,
+        "Rate limit exceeded. Please try again later.",
         {
           status: 429,
+          details: { retryAfter: rateLimitResult.retryAfter },
           headers: rateLimitHeaders(rateLimitResult),
         }
       )
@@ -46,10 +53,7 @@ export async function GET(
     } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized", message: "Please log in to access this resource" },
-        { status: 401 }
-      )
+      return unauthorized("Please log in to access this resource")
     }
 
     // SECURITY: Verify user has access to this tenant's workspace
@@ -60,10 +64,7 @@ export async function GET(
       .single()
 
     if (tenantError || !tenant) {
-      return NextResponse.json(
-        { error: "NOT_FOUND", message: "Tenant not found" },
-        { status: 404 }
-      )
+      return notFound("Tenant not found")
     }
 
     // Check access: user must be owner, platform admin, or have staff context for this workspace
@@ -88,10 +89,7 @@ export async function GET(
           .single()
 
         if (!staffContext) {
-          return NextResponse.json(
-            { error: "FORBIDDEN", message: "You do not have access to this tenant's data" },
-            { status: 403 }
-          )
+          return forbidden("You do not have access to this tenant's data")
         }
       }
     }
@@ -129,18 +127,16 @@ export async function GET(
     })
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error?.code, message: result.error?.message },
-        { status: result.error?.code === "NOT_FOUND" ? 404 : 500 }
-      )
+      const errorCode = result.error?.code || ErrorCodes.INTERNAL_ERROR
+      const errorMessage = result.error?.message || "An unexpected error occurred"
+      return apiError(errorCode, errorMessage, {
+        status: errorCode === "NOT_FOUND" ? 404 : 500,
+      })
     }
 
-    return NextResponse.json(result.data)
+    return apiSuccess(result.data)
   } catch (error) {
     console.error("[Journey API] Unexpected error:", error)
-    return NextResponse.json(
-      { error: "INTERNAL_ERROR", message: "An unexpected error occurred" },
-      { status: 500 }
-    )
+    return internalError("An unexpected error occurred")
   }
 }
