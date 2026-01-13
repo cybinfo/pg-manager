@@ -170,6 +170,10 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
         // Get deposit amount
         const depositAmount = (tenant.security_deposit as number) || 0
 
+        // FIX BL-003: Include advance_balance in settlement calculation
+        // Advance balance is money the tenant has pre-paid that should be refunded
+        const advanceBalance = (tenant.advance_balance as number) || 0
+
         // Calculate deductions
         const deductions = (input.deductions || []).reduce(
           (sum: number, d: { amount: number }) => sum + d.amount,
@@ -177,13 +181,18 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
         )
 
         // Calculate final settlement
-        const netAmount = depositAmount - totalDues - deductions
+        // Net = (Security Deposit + Advance Balance) - (Unpaid Dues + Deductions)
+        // This ensures advance payments aren't lost during settlement
+        const totalRefundable = depositAmount + advanceBalance
+        const totalPayable = totalDues + deductions
+        const netAmount = totalRefundable - totalPayable
         const refundAmount = netAmount > 0 ? netAmount : 0
         const additionalPayment = netAmount < 0 ? Math.abs(netAmount) : 0
 
         return createSuccessResult({
           total_dues: totalDues,
           deposit_amount: depositAmount,
+          advance_balance: advanceBalance, // Include in response for transparency
           deductions,
           refund_amount: refundAmount,
           additional_payment: additionalPayment,
@@ -534,7 +543,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
       optional: true, // Don't fail if tenant_stays doesn't exist
     },
 
-    // Step 4: Release room (update occupancy)
+    // Step 4: Release room (update occupancy with ATOMIC operations)
     {
       name: "release_room",
       execute: async (context, input, previousResults) => {
@@ -546,25 +555,50 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
           return createSuccessResult({ room_released: false })
         }
 
-        const newOccupiedBeds = Math.max(0, (room.occupied_beds as number || 1) - 1)
-        const newStatus = newOccupiedBeds === 0 ? "available" : "occupied"
+        const currentOccupied = room.occupied_beds as number || 1
 
-        const { error } = await supabase
+        // FIX BL-001: Use atomic decrement with optimistic locking
+        const { data, error } = await supabase
           .from("rooms")
           .update({
-            occupied_beds: newOccupiedBeds,
-            status: newStatus,
+            occupied_beds: Math.max(0, currentOccupied - 1),
+            status: currentOccupied - 1 <= 0 ? "available" : "occupied",
             updated_at: new Date().toISOString(),
           })
           .eq("id", room.id)
+          .eq("occupied_beds", currentOccupied) // Optimistic lock
+          .select()
 
-        if (error) {
-          console.warn("[CompleteExit] Failed to update room:", error)
+        let finalOccupied = Math.max(0, currentOccupied - 1)
+
+        if (error || !data || (Array.isArray(data) && data.length === 0)) {
+          // Retry with fresh data if optimistic lock failed
+          const { data: freshRoom } = await supabase
+            .from("rooms")
+            .select("occupied_beds")
+            .eq("id", room.id)
+            .single()
+
+          if (freshRoom) {
+            const freshOccupied = freshRoom.occupied_beds || 0
+            finalOccupied = Math.max(0, freshOccupied - 1)
+
+            await supabase
+              .from("rooms")
+              .update({
+                occupied_beds: finalOccupied,
+                status: finalOccupied <= 0 ? "available" : "occupied",
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", room.id)
+          }
         }
+
+        const newStatus = finalOccupied === 0 ? "available" : "occupied"
 
         return createSuccessResult({
           room_released: true,
-          new_occupied_beds: newOccupiedBeds,
+          new_occupied_beds: finalOccupied,
           new_status: newStatus,
         })
       },

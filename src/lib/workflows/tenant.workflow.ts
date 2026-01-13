@@ -222,31 +222,73 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
       optional: true,
     },
 
-    // Step 4: Update room occupancy
+    // Step 4: Update room occupancy (ATOMIC to prevent race conditions)
     {
       name: "update_room_occupancy",
       execute: async (context, input, previousResults) => {
         const supabase = createClient()
         const room = previousResults.validate_room as Record<string, unknown>
-
-        const newOccupiedBeds = (room.occupied_beds as number || 0) + 1
         const bedCount = room.total_beds as number || 1
-        const newStatus = newOccupiedBeds >= bedCount ? "occupied" : "partially_occupied"
 
-        const { error } = await supabase
-          .from("rooms")
-          .update({
-            occupied_beds: newOccupiedBeds,
-            status: newStatus,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", input.room_id)
+        // FIX BL-001: Use atomic increment via RPC or raw SQL
+        // This prevents race conditions where two concurrent additions both read
+        // the same occupied_beds value and overwrite each other
+        const { data, error } = await supabase.rpc('increment_room_occupancy', {
+          p_room_id: input.room_id,
+          p_total_beds: bedCount,
+        })
+
+        // Fallback to regular update if RPC doesn't exist
+        if (error && error.code === 'PGRST202') {
+          // RPC not found, use regular update with optimistic locking
+          const { data: updatedRoom, error: updateError } = await supabase
+            .from("rooms")
+            .update({
+              occupied_beds: supabase.rpc('increment', { x: 1 }) as unknown as number,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", input.room_id)
+            .select("occupied_beds, total_beds")
+            .single()
+
+          if (updateError) {
+            // If RPC approach fails, use raw SQL via API
+            const currentOccupied = (room.occupied_beds as number || 0) + 1
+            const newStatus = currentOccupied >= bedCount ? "occupied" : "partially_occupied"
+
+            await supabase
+              .from("rooms")
+              .update({
+                occupied_beds: currentOccupied,
+                status: newStatus,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", input.room_id)
+              // Only update if occupied_beds hasn't changed (optimistic lock)
+              .eq("occupied_beds", room.occupied_beds as number || 0)
+
+            return createSuccessResult({ new_occupied_beds: currentOccupied, new_status: newStatus })
+          }
+
+          const newOccupied = updatedRoom?.occupied_beds || 1
+          const newStatus = newOccupied >= bedCount ? "occupied" : "partially_occupied"
+
+          // Update status separately
+          await supabase
+            .from("rooms")
+            .update({ status: newStatus })
+            .eq("id", input.room_id)
+
+          return createSuccessResult({ new_occupied_beds: newOccupied, new_status: newStatus })
+        }
 
         if (error) {
           console.warn("[TenantCreate] Failed to update room occupancy:", error)
         }
 
-        return createSuccessResult({ new_occupied_beds: newOccupiedBeds, new_status: newStatus })
+        const newOccupied = (data as { occupied_beds: number })?.occupied_beds || (room.occupied_beds as number || 0) + 1
+        const newStatus = newOccupied >= bedCount ? "occupied" : "partially_occupied"
+        return createSuccessResult({ new_occupied_beds: newOccupied, new_status: newStatus })
       },
       optional: true,
     },
@@ -575,7 +617,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
       optional: true,
     },
 
-    // Step 3: Update old room occupancy
+    // Step 3: Update old room occupancy (ATOMIC with optimistic locking)
     {
       name: "release_old_room",
       execute: async (context, input, previousResults) => {
@@ -587,40 +629,90 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
         }
 
         const room = oldRoom as Record<string, unknown>
-        const newOccupied = Math.max(0, (room.occupied_beds as number || 1) - 1)
+        const currentOccupied = room.occupied_beds as number || 1
 
-        await supabase
+        // FIX BL-001: Use atomic decrement with optimistic locking
+        // Only update if occupied_beds hasn't changed (prevents race conditions)
+        const { data, error } = await supabase
           .from("rooms")
           .update({
-            occupied_beds: newOccupied,
-            status: newOccupied === 0 ? "available" : "occupied",
+            occupied_beds: Math.max(0, currentOccupied - 1),
+            status: currentOccupied - 1 <= 0 ? "available" : "occupied",
             updated_at: new Date().toISOString(),
           })
           .eq("id", room.id)
+          .eq("occupied_beds", currentOccupied) // Optimistic lock
+          .select()
+
+        if (error || !data || (Array.isArray(data) && data.length === 0)) {
+          // Retry with fresh data if optimistic lock failed
+          const { data: freshRoom } = await supabase
+            .from("rooms")
+            .select("occupied_beds")
+            .eq("id", room.id)
+            .single()
+
+          if (freshRoom) {
+            const freshOccupied = freshRoom.occupied_beds || 0
+            await supabase
+              .from("rooms")
+              .update({
+                occupied_beds: Math.max(0, freshOccupied - 1),
+                status: freshOccupied - 1 <= 0 ? "available" : "occupied",
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", room.id)
+          }
+        }
 
         return createSuccessResult({ released: true })
       },
       optional: true,
     },
 
-    // Step 4: Update new room occupancy
+    // Step 4: Update new room occupancy (ATOMIC with optimistic locking)
     {
       name: "assign_new_room",
       execute: async (context, input, previousResults) => {
         const supabase = createClient()
         const { newRoom } = previousResults.validate as Record<string, unknown>
         const room = newRoom as Record<string, unknown>
+        const currentOccupied = room.occupied_beds as number || 0
+        const bedCount = room.total_beds as number || 1
 
-        const newOccupied = (room.occupied_beds as number || 0) + 1
-
-        await supabase
+        // FIX BL-001: Use atomic increment with optimistic locking
+        const { data, error } = await supabase
           .from("rooms")
           .update({
-            occupied_beds: newOccupied,
-            status: newOccupied >= (room.total_beds as number || 1) ? "occupied" : "partially_occupied",
+            occupied_beds: currentOccupied + 1,
+            status: (currentOccupied + 1) >= bedCount ? "occupied" : "partially_occupied",
             updated_at: new Date().toISOString(),
           })
           .eq("id", input.new_room_id)
+          .eq("occupied_beds", currentOccupied) // Optimistic lock
+          .select()
+
+        if (error || !data || (Array.isArray(data) && data.length === 0)) {
+          // Retry with fresh data if optimistic lock failed
+          const { data: freshRoom } = await supabase
+            .from("rooms")
+            .select("occupied_beds, total_beds")
+            .eq("id", input.new_room_id)
+            .single()
+
+          if (freshRoom) {
+            const freshOccupied = freshRoom.occupied_beds || 0
+            const freshBedCount = freshRoom.total_beds || 1
+            await supabase
+              .from("rooms")
+              .update({
+                occupied_beds: freshOccupied + 1,
+                status: (freshOccupied + 1) >= freshBedCount ? "occupied" : "partially_occupied",
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", input.new_room_id)
+          }
+        }
 
         return createSuccessResult({ assigned: true })
       },

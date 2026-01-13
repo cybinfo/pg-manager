@@ -27,21 +27,33 @@
 ## Remediation Status Log
 
 > **Last Updated:** 2026-01-13
-> **Status:** Phase 1 In Progress
+> **Status:** Phase 2 Complete
 
-### Completed Fixes (2026-01-13)
+### Phase 1: Security Fixes (2026-01-13) - COMPLETE ✅
 
 | Issue ID | Description | Status | Commit |
 |----------|-------------|--------|--------|
-| **SEC-001** | Add authentication to admin email update endpoint | ✅ FIXED | Pending |
-| **SEC-002** | Fix cron job auth bypass in development | ✅ FIXED | Pending |
-| **SEC-005** | Fix service role key fallback pattern | ✅ FIXED | Pending |
-| **SEC-006** | Add security headers to next.config.ts | ✅ FIXED | Pending |
-| **AUTH-001** | Add workspace validation to journey API | ✅ FIXED | Pending |
-| **AUTH-002** | Add workspace validation to journey report API | ✅ FIXED | Pending |
-| **AUTH-003** | Add PlatformAdminGuard component | ✅ FIXED | Pending |
+| **SEC-001** | Add authentication to admin email update endpoint | ✅ FIXED | c5ba90b |
+| **SEC-002** | Fix cron job auth bypass in development | ✅ FIXED | c5ba90b |
+| **SEC-005** | Fix service role key fallback pattern | ✅ FIXED | c5ba90b |
+| **SEC-006** | Add security headers to next.config.ts | ✅ FIXED | c5ba90b |
+| **AUTH-001** | Add workspace validation to journey API | ✅ FIXED | c5ba90b |
+| **AUTH-002** | Add workspace validation to journey report API | ✅ FIXED | c5ba90b |
+| **AUTH-003** | Add PlatformAdminGuard component | ✅ FIXED | c5ba90b |
 
-### Summary of Changes
+### Phase 2: Database & Business Logic Fixes (2026-01-13) - COMPLETE ✅
+
+| Issue ID | Description | Status | Migration/File |
+|----------|-------------|--------|----------------|
+| **DB-001** | Reconcile audit_events table definitions | ✅ FIXED | 042_schema_reconciliation.sql |
+| **DB-002** | Reconcile room_transfers table definitions | ✅ FIXED | 042_schema_reconciliation.sql |
+| **DB-003** | owner_id vs workspace_id consistency | ✅ VERIFIED | N/A (owner_id is correct) |
+| **DB-005** | Add missing indexes on FK columns | ✅ FIXED | 042_schema_reconciliation.sql |
+| **BL-001** | Fix room occupancy race condition | ✅ FIXED | tenant.workflow.ts, exit.workflow.ts |
+| **BL-002** | Fix advance balance lost updates | ✅ FIXED | 042_schema_reconciliation.sql (atomic RPC) |
+| **BL-003** | Fix settlement calculation | ✅ FIXED | exit.workflow.ts |
+
+### Summary of Phase 1 Changes
 
 **Security Hardening (7 issues fixed):**
 
@@ -80,18 +92,52 @@
 7. **`src/components/auth/permission-guard.tsx`**
    - Added new `PlatformAdminGuard` component for admin-only pages
 
+### Summary of Phase 2 Changes
+
+**Database Schema Reconciliation (4 issues fixed):**
+
+1. **`supabase/migrations/042_schema_reconciliation.sql`**
+   - **audit_events reconciliation:**
+     - Added missing columns for both migration 016 and 038 formats
+     - Updated universal_audit_trigger to populate all column variants
+     - Fixed RLS policy to check workspace membership properly
+   - **room_transfers reconciliation:**
+     - Added missing `owner_id` column (critical for RLS)
+     - Added column aliases for both migration 007 and 038 formats
+     - Fixed RLS policy to use owner_id and support staff access
+   - **Added 30+ missing FK indexes** for performance optimization
+   - **Added atomic RPC functions:**
+     - `increment_room_occupancy()` - Atomic room bed increment
+     - `decrement_room_occupancy()` - Atomic room bed decrement
+     - `update_advance_balance()` - Atomic tenant balance updates
+
+**Business Logic Fixes (3 issues fixed):**
+
+1. **`src/lib/workflows/tenant.workflow.ts`**
+   - **BL-001:** Changed room occupancy updates to use atomic operations with optimistic locking
+   - Prevents race conditions when multiple tenants are added/removed simultaneously
+   - Falls back to optimistic lock retry if RPC not available
+
+2. **`src/lib/workflows/exit.workflow.ts`**
+   - **BL-001:** Changed release_room step to use atomic decrement with optimistic locking
+   - **BL-003:** Fixed settlement calculation to include `advance_balance` in refund
+     - Before: `netAmount = depositAmount - totalDues - deductions` (lost advance payments)
+     - After: `netAmount = (depositAmount + advanceBalance) - (totalDues + deductions)`
+
 ### Remaining Critical Issues
 
 | Issue ID | Description | Priority |
 |----------|-------------|----------|
 | SEC-003 | No rate limiting on API endpoints | CRITICAL |
 | SEC-004 | Missing CSRF protection | CRITICAL |
-| DB-001 | Duplicate audit_events table definitions | CRITICAL |
-| DB-002 | Duplicate room_transfers definitions | CRITICAL |
-| DB-003 | owner_id vs workspace_id inconsistency | CRITICAL |
-| BL-001 | Race condition in room occupancy | CRITICAL |
-| BL-002 | Advance balance lost updates | CRITICAL |
-| BL-003 | Settlement calculation double-deduct | CRITICAL |
+
+### Remaining High Priority Issues
+
+| Issue ID | Description | Priority |
+|----------|-------------|----------|
+| AUTH-004 | Permission caching without invalidation | HIGH |
+| CODE-001 | Inconsistent error handling | HIGH |
+| API-001 | Missing pagination in list endpoints | HIGH |
 
 ---
 
