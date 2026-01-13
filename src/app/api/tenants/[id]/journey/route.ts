@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getTenantJourney } from "@/lib/services/journey.service"
 import { EventCategoryType } from "@/types/journey.types"
+import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 
 /**
  * GET /api/tenants/[id]/journey
@@ -18,6 +19,24 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // SECURITY: Rate limiting - 100 requests per minute for API
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = await apiLimiter.check(clientId)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "TOO_MANY_REQUESTS",
+          message: "Rate limit exceeded. Please try again later.",
+          retryAfter: rateLimitResult.retryAfter,
+        },
+        {
+          status: 429,
+          headers: rateLimitHeaders(rateLimitResult),
+        }
+      )
+    }
+
     const { id: tenantId } = await params
     const supabase = await createClient()
 

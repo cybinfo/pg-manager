@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendDailySummary } from "@/lib/email"
 import { formatCurrency, formatDate } from "@/lib/notifications"
+import { cronLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 
 interface Owner {
   id: string
@@ -45,6 +46,24 @@ interface DailySummaryData {
 }
 
 export async function GET(request: Request) {
+  // SECURITY: Rate limiting - 2 requests per minute for cron jobs
+  const clientId = getClientIdentifier(request)
+  const rateLimitResult = await cronLimiter.check(clientId)
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      {
+        error: "TOO_MANY_REQUESTS",
+        message: "Rate limit exceeded for cron endpoint",
+        retryAfter: rateLimitResult.retryAfter,
+      },
+      {
+        status: 429,
+        headers: rateLimitHeaders(rateLimitResult),
+      }
+    )
+  }
+
   // SECURITY: Always verify cron secret - no dev bypass
   const authHeader = request.headers.get("authorization")
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

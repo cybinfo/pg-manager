@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { cronLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 
 interface AutoBillingSettings {
   enabled: boolean
@@ -18,6 +19,24 @@ interface LineItem {
 
 export async function GET(request: Request) {
   try {
+    // SECURITY: Rate limiting - 2 requests per minute for cron jobs
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = await cronLimiter.check(clientId)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "TOO_MANY_REQUESTS",
+          message: "Rate limit exceeded for cron endpoint",
+          retryAfter: rateLimitResult.retryAfter,
+        },
+        {
+          status: 429,
+          headers: rateLimitHeaders(rateLimitResult),
+        }
+      )
+    }
+
     // Verify cron secret
     const authHeader = request.headers.get("authorization")
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

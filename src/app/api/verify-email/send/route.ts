@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendVerificationEmail } from "@/lib/email"
 import crypto from "crypto"
+import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 
 // Service role client for database operations
 const supabaseAdmin = createClient(
@@ -11,6 +12,24 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - 5 requests per minute for auth operations
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = await authLimiter.check(clientId)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "TOO_MANY_REQUESTS",
+          message: "Too many verification emails requested. Please try again later.",
+          retryAfter: rateLimitResult.retryAfter,
+        },
+        {
+          status: 429,
+          headers: rateLimitHeaders(rateLimitResult),
+        }
+      )
+    }
+
     const { userId, email, userName } = await request.json()
 
     if (!userId || !email) {

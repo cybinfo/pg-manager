@@ -124,11 +124,29 @@
      - Before: `netAmount = depositAmount - totalDues - deductions` (lost advance payments)
      - After: `netAmount = (depositAmount + advanceBalance) - (totalDues + deductions)`
 
+### Phase 3: Rate Limiting Implementation (2026-01-13) - COMPLETE ✅
+
+| Endpoint | Limiter | Limit |
+|----------|---------|-------|
+| `/api/admin/update-user-email` | sensitiveLimiter | 3 req/min |
+| `/api/verify-email/send` | authLimiter | 5 req/min |
+| `/api/verify-email/confirm` | authLimiter | 5 req/min |
+| `/api/cron/payment-reminders` | cronLimiter | 2 req/min |
+| `/api/cron/daily-summaries` | cronLimiter | 2 req/min |
+| `/api/cron/generate-bills` | cronLimiter | 2 req/min |
+| `/api/tenants/[id]/journey` | apiLimiter | 100 req/min |
+| `/api/tenants/[id]/journey-report` | apiLimiter | 100 req/min |
+| `/api/receipts/[id]/pdf` | apiLimiter | 100 req/min |
+
+**New utility:** `src/lib/rate-limit.ts`
+- In-memory sliding window rate limiter
+- Pre-configured limiters: authLimiter, adminLimiter, apiLimiter, sensitiveLimiter, cronLimiter
+- Helper functions: getClientIdentifier, rateLimitHeaders, withRateLimit
+
 ### Remaining Critical Issues
 
 | Issue ID | Description | Priority |
 |----------|-------------|----------|
-| SEC-003 | No rate limiting on API endpoints | CRITICAL |
 | SEC-004 | Missing CSRF protection | CRITICAL |
 
 ### Remaining High Priority Issues

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { sensitiveLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 
 // Create admin client with service role key
 function getAdminClient() {
@@ -22,6 +23,24 @@ function getAdminClient() {
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - 3 requests per minute for sensitive operations
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = await sensitiveLimiter.check(clientId)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "TOO_MANY_REQUESTS",
+          message: "Rate limit exceeded. Please try again later.",
+          retryAfter: rateLimitResult.retryAfter,
+        },
+        {
+          status: 429,
+          headers: rateLimitHeaders(rateLimitResult),
+        }
+      )
+    }
+
     // SECURITY: Verify authentication first
     const supabase = await createServerClient()
     const { data: { user: currentUser } } = await supabase.auth.getUser()

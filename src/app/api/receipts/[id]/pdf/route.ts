@@ -2,12 +2,31 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { RentReceiptPDF, type ReceiptData } from "@/lib/pdf-receipt"
+import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // SECURITY: Rate limiting - 100 requests per minute for API
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = await apiLimiter.check(clientId)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "TOO_MANY_REQUESTS",
+          message: "Rate limit exceeded. Please try again later.",
+          retryAfter: rateLimitResult.retryAfter,
+        },
+        {
+          status: 429,
+          headers: rateLimitHeaders(rateLimitResult),
+        }
+      )
+    }
+
     const { id } = await params
     const supabase = await createClient()
 

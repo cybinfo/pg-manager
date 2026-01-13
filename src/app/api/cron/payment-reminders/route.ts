@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendPaymentReminder, sendOverdueAlert } from "@/lib/email"
+import { cronLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 
 interface NotificationSettings {
   email_reminders_enabled: boolean
@@ -39,6 +40,24 @@ interface Tenant {
 }
 
 export async function GET(request: Request) {
+  // SECURITY: Rate limiting - 2 requests per minute for cron jobs
+  const clientId = getClientIdentifier(request)
+  const rateLimitResult = await cronLimiter.check(clientId)
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      {
+        error: "TOO_MANY_REQUESTS",
+        message: "Rate limit exceeded for cron endpoint",
+        retryAfter: rateLimitResult.retryAfter,
+      },
+      {
+        status: 429,
+        headers: rateLimitHeaders(rateLimitResult),
+      }
+    )
+  }
+
   // SECURITY: Always verify cron secret - no dev bypass
   const authHeader = request.headers.get("authorization")
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

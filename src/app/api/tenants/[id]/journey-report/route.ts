@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getTenantJourney } from "@/lib/services/journey.service"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { TenantJourneyReportPDF, JourneyReportData } from "@/lib/pdf-journey-report"
+import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 
 /**
  * GET /api/tenants/[id]/journey-report
@@ -19,6 +20,24 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // SECURITY: Rate limiting - 100 requests per minute for API
+    const clientId = getClientIdentifier(request)
+    const rateLimitResult = await apiLimiter.check(clientId)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "TOO_MANY_REQUESTS",
+          message: "Rate limit exceeded. Please try again later.",
+          retryAfter: rateLimitResult.retryAfter,
+        },
+        {
+          status: 429,
+          headers: rateLimitHeaders(rateLimitResult),
+        }
+      )
+    }
+
     const { id: tenantId } = await params
     const supabase = await createClient()
 
