@@ -1,53 +1,63 @@
 # ManageKar - AI Development Guide
 
-> **CRITICAL**: This is the definitive source of truth for AI development on ManageKar. Read completely before any code changes.
+> **Essential Reference**: Read this before making any code changes.
+> **Last Updated**: 2026-01-13
+
+---
 
 ## Quick Reference
 
-| | |
-|---|---|
-| **Production** | https://managekar.com |
+| Item | Value |
+|------|-------|
+| **Production URL** | https://managekar.com |
 | **Stack** | Next.js 16 + TypeScript + Supabase + Tailwind + shadcn/ui |
-| **Deploy** | `git add . && git commit -m "msg" && git push && vercel --prod` |
+| **Database** | PostgreSQL with Row Level Security (RLS) |
+| **Migrations** | 43 total (001-043) |
 
 ```bash
-npm run dev      # localhost:3000
-npm run build    # Production build
-npx tsc --noEmit # Type check
+npm run dev          # Development server at localhost:3000
+npm run build        # Production build
+npx tsc --noEmit     # Type check
+vercel --prod        # Deploy to production
 ```
 
 ---
 
-## Product Context
+## 1. Product Overview
 
-**ManageKar** = "Let's Manage" in Hindi. A SaaS platform for Indian small businesses, starting with **PG Manager** for Paying Guest accommodations and hostels.
+**ManageKar** ("Let's Manage" in Hindi) is a SaaS platform for Indian small businesses, starting with **PG Manager** for Paying Guest accommodations and hostels.
 
 ### Target Users
-- PG/Hostel owners managing 1-50 properties
-- Staff members (managers, accountants, receptionists)
-- Tenants (self-service portal)
+
+| User Type | Description |
+|-----------|-------------|
+| **Owners** | PG/Hostel owners managing 1-50 properties |
+| **Staff** | Property managers, accountants, receptionists |
+| **Tenants** | Self-service portal users |
 
 ### Business Model
+
 ```
 Free Trial (3 months) → Free Tier (1 PG/10 rooms) → Pro ₹499/month → Business ₹999/month
 ```
 
 ---
 
-## Architecture Overview
+## 2. Architecture
 
 ### Directory Structure
+
 ```
 src/
 ├── app/
-│   ├── (auth)/              # Login, Register, Forgot Password
+│   ├── (auth)/              # Login, Register, Password Reset
 │   ├── (dashboard)/         # 19 dashboard modules
 │   ├── (tenant)/            # Tenant self-service portal
 │   ├── pg/[slug]/           # Public PG websites
 │   └── api/                 # API routes + cron jobs
 ├── components/
 │   ├── ui/                  # shadcn + custom components
-│   ├── forms/               # Shared form components
+│   ├── forms/               # Form components
 │   ├── shared/              # Templates (ListPageTemplate)
 │   ├── auth/                # PermissionGuard, FeatureGuard
 │   └── journey/             # Tenant journey components
@@ -55,7 +65,7 @@ src/
     ├── supabase/            # Clients + transforms
     ├── auth/                # Auth context + hooks
     ├── features/            # Feature flags
-    ├── services/            # Service layer (journey, analytics)
+    ├── services/            # Service layer (workflow engine, audit)
     ├── workflows/           # Business workflows
     └── hooks/               # Reusable hooks
 ```
@@ -68,7 +78,7 @@ src/
 | Properties | `/properties` | Building management |
 | Rooms | `/rooms` | Room + bed management |
 | Tenants | `/tenants` | Tenant lifecycle |
-| **Tenant Journey** | `/tenants/[id]/journey` | **AI-powered lifecycle tracking** |
+| Tenant Journey | `/tenants/[id]/journey` | AI-powered lifecycle tracking |
 | Bills | `/bills` | Billing system |
 | Payments | `/payments` | Payment tracking |
 | Refunds | `/refunds` | Refund processing |
@@ -86,9 +96,9 @@ src/
 
 ---
 
-## Critical Patterns (MUST FOLLOW)
+## 3. Critical Patterns
 
-### 1. Supabase Join Transform (MANDATORY)
+### 3.1 Supabase Join Transform (MANDATORY)
 
 Supabase returns JOINs in inconsistent formats. **ALWAYS transform:**
 
@@ -110,7 +120,7 @@ const transformed = data?.map(item => ({
 const items = transformArrayJoins(data || [], ["property", "room", "charge_type"])
 ```
 
-### 2. Page Protection
+### 3.2 Page Protection
 
 ```typescript
 // Permission-based (ALWAYS use for dashboard pages)
@@ -120,10 +130,7 @@ import { PermissionGuard } from "@/components/auth"
   {content}
 </PermissionGuard>
 
-// Feature-flagged (AUTH-018: FeatureGuard MUST be OUTSIDE PermissionGuard)
-// Reason: Check if feature is enabled BEFORE checking user permissions
-// - If feature disabled: show "feature not available" message
-// - If feature enabled but no permission: show "no access" message
+// Feature-flagged (FeatureGuard OUTSIDE PermissionGuard)
 import { FeatureGuard } from "@/components/auth"
 
 <FeatureGuard feature="expenses">
@@ -131,12 +138,9 @@ import { FeatureGuard } from "@/components/auth"
     {content}
   </PermissionGuard>
 </FeatureGuard>
-
-// WRONG: PermissionGuard outside FeatureGuard
-// This would check permissions first, which is wasteful if feature is disabled
 ```
 
-### 3. Permission Checks
+### 3.3 Permission Checks
 
 ```typescript
 import { useAuth, useCurrentContext } from "@/lib/auth"
@@ -148,7 +152,24 @@ if (hasPermission("tenants.create")) { /* allowed */ }
 if (isOwner) { /* owner-only logic */ }
 ```
 
-### 4. Select Component (NOT shadcn)
+### 3.4 Platform Admin Check
+
+```typescript
+// In SQL - use is_platform_admin() function (NOT pa.is_active column)
+-- The platform_admins table only has: user_id, created_at, created_by, notes
+
+-- In RLS policies:
+OR is_platform_admin(auth.uid())
+
+// In TypeScript:
+const isPlatformAdmin = await checkPlatformAdmin(userId)
+```
+
+---
+
+## 4. UI Component Patterns
+
+### 4.1 Select Component (NOT shadcn)
 
 ```typescript
 // USE THIS - Custom Select from form-components
@@ -166,7 +187,16 @@ import { Select } from "@/components/ui/form-components"
 // DO NOT USE shadcn Select with SelectItem children
 ```
 
-### 5. DataTable
+### 4.2 Select vs Combobox Decision
+
+| Criteria | Use Select | Use Combobox |
+|----------|------------|--------------|
+| Items | 10 or fewer | More than 10 |
+| Searchable | No | Yes |
+| Dynamic data | No | Yes |
+| Mobile UX | Native dropdown | Custom popover |
+
+### 4.3 DataTable
 
 ```typescript
 import { DataTable, Column } from "@/components/ui/data-table"
@@ -190,7 +220,7 @@ const columns: Column<T>[] = [
 />
 ```
 
-### 6. Entity Links
+### 4.4 Entity Links
 
 ```typescript
 import { PropertyLink, TenantLink, RoomLink } from "@/components/ui/entity-link"
@@ -200,7 +230,7 @@ import { PropertyLink, TenantLink, RoomLink } from "@/components/ui/entity-link"
 <RoomLink id={room.id} roomNumber={room.room_number} />
 ```
 
-### 7. Avatar Component
+### 4.5 Avatar Component
 
 ```typescript
 import { Avatar } from "@/components/ui/avatar"
@@ -210,71 +240,27 @@ import { Avatar } from "@/components/ui/avatar"
 // Sizes: xs | sm | md | lg | xl
 ```
 
-### 8. Platform Admin Check
+### 4.6 Common UI Components
 
-```typescript
-// Use is_platform_admin() function in SQL, NOT pa.is_active column
-// The platform_admins table only has: user_id, created_at, created_by, notes
-
-// In RLS policies:
-OR is_platform_admin(auth.uid())
-
-// In TypeScript:
-const isPlatformAdmin = await checkPlatformAdmin(userId)
-```
-
-### 9. Select vs Combobox (UI-006)
-
-**Use native Select for:**
-- Static options (≤ 10 items)
-- Simple enum values (status, type, etc.)
-- No user input needed
-- Mobile-friendly required
-
-```typescript
-import { Select } from "@/components/ui/form-components"
-
-<Select
-  value={status}
-  onChange={(e) => setStatus(e.target.value)}
-  options={[
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-  ]}
-/>
-```
-
-**Use Combobox for:**
-- Dynamic options (> 10 items)
-- Searchable lists (tenants, properties, rooms)
-- User can type to filter
-- Server-side search needed
-
-```typescript
-import { Combobox } from "@/components/ui/combobox"
-
-<Combobox
-  value={selectedTenant}
-  onValueChange={setSelectedTenant}
-  options={tenants.map(t => ({ value: t.id, label: t.name }))}
-  placeholder="Search tenants..."
-  searchable
-/>
-```
-
-| Criteria | Select | Combobox |
-|----------|--------|----------|
-| Items | ≤ 10 | > 10 |
-| Searchable | No | Yes |
-| Dynamic data | No | Yes |
-| Mobile UX | Native | Custom |
-| Keyboard nav | Limited | Full |
+| Component | Import | Usage |
+|-----------|--------|-------|
+| `PageHeader` | `@/components/ui/page-header` | Title + actions |
+| `MetricsBar` | `@/components/ui/metrics-bar` | Stats row |
+| `DataTable` | `@/components/ui/data-table` | Table + search |
+| `PageLoader` | `@/components/ui/page-loader` | Loading state |
+| `StatCard` | `@/components/ui/stat-card` | Metric card |
+| `TableBadge` | `@/components/ui/table-badge` | Status badges |
+| `StatusBadge` | `@/components/ui/status-badge` | Entity status |
+| `Combobox` | `@/components/ui/combobox` | Searchable select |
+| `EmptyState` | `@/components/ui/empty-state` | No data placeholder |
+| `Currency` | `@/components/ui/currency` | INR formatting |
+| `Pagination` | `@/components/ui/pagination` | Page navigation |
 
 ---
 
-## Database Schema
+## 5. Database Schema
 
-### Key Tables
+### 5.1 Key Tables
 
 | Table | Purpose |
 |-------|---------|
@@ -294,159 +280,206 @@ import { Combobox } from "@/components/ui/combobox"
 | `communications` | Message tracking |
 | `audit_events` | Comprehensive audit trail |
 
-### Critical Column Names
+### 5.2 Critical Column Names
 
 | Table | Correct Column | NOT |
-|-------|---------------|-----|
+|-------|----------------|-----|
 | `rooms` | `total_beds` | ~~bed_count~~ |
 | `tenants` | `phone_numbers` (JSONB) | ~~phones~~ |
 | `tenants` | `guardian_contacts` (JSONB) | ~~guardians~~ |
 | `tenant_stays` | `join_date` | ~~start_date~~ |
 | `exit_clearance` | `settlement_status` | ~~status~~ |
-| `platform_admins` | NO `is_active` | ~~is_active~~ |
+| `platform_admins` | NO `is_active` column | ~~is_active~~ |
 
-### UUID Generation (DB-012)
+### 5.3 UUID Generation
 
-All tables use UUID primary keys. Use these approaches:
-
-**Database (Postgres):**
 ```sql
--- PREFERRED: Native function, no extension required
+-- Postgres (preferred)
 id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 
--- LEGACY: Requires uuid-ossp extension (some older tables use this)
-id UUID PRIMARY KEY DEFAULT uuid_generate_v4()
-```
-
-**Client-side (TypeScript):**
-```typescript
-// For generating IDs before insert (e.g., line_items array)
+-- Client-side (TypeScript)
 const id = crypto.randomUUID()
 ```
 
-**Validation:**
-```typescript
-// Validate UUID format
-const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-const isValid = uuidRegex.test(str)
-```
-
-> **Note:** New tables should use `gen_random_uuid()`. Both functions produce valid v4 UUIDs.
-
-### Migrations (41 total)
+### 5.4 Key Migrations
 
 | # | File | Purpose |
 |---|------|---------|
 | 001 | initial_schema.sql | Core tables |
 | 007 | tenant_history.sql | Re-joining tenants, room transfers |
-| 011 | tenant_enhanced_fields.sql | JSONB fields |
 | 012 | unified_identity.sql | Multi-context auth |
 | 016 | audit_logging.sql | Audit trail |
 | 017 | platform_admins.sql | Superuser system |
 | 038 | comprehensive_audit_system.sql | Universal triggers |
 | 039 | refunds_table.sql | Refund tracking |
-| 040 | fix_schema_gaps.sql | Feature flags, RLS fixes |
-| **041** | **tenant_journey_analytics.sql** | **Risk alerts, communications** |
+| 040 | fix_schema_gaps.sql | Feature flags, RLS |
+| 041 | tenant_journey_analytics.sql | Risk alerts |
+| 042 | schema_reconciliation.sql | FK indexes, atomic RPCs |
+| 043 | security_fixes.sql | Audit policy, CHECK constraints |
+
+### 5.5 CHECK Constraints (Migration 043)
+
+```sql
+tenants.discount_percent: 0-100 range
+bills.paid_amount: non-negative
+bills.balance_due: non-negative
+payments.amount: positive (> 0)
+refunds.amount: positive (> 0)
+tenant_risk_alerts.severity: 'low', 'medium', 'high', 'critical'
+```
 
 ---
 
-## Key Systems
+## 6. Service Layer
 
-### Multi-Context Identity
+### 6.1 Workflow Engine
+
+The workflow engine (`src/lib/services/workflow.engine.ts`) orchestrates multi-step operations:
+
+```typescript
+import { executeWorkflow, WorkflowDefinition } from "@/lib/services/workflow.engine"
+
+const myWorkflow: WorkflowDefinition<InputType, OutputType> = {
+  name: "my_workflow",
+  steps: [
+    { name: "validate", execute: async (ctx, input) => { /* ... */ } },
+    { name: "process", execute: async (ctx, input, results) => { /* ... */ } },
+  ],
+  buildOutput: (results) => results.process as OutputType,
+}
+
+// Execute with idempotency key to prevent duplicates
+const result = await executeWorkflow(
+  myWorkflow,
+  input,
+  actorId,
+  actorType,
+  workspaceId,
+  { idempotency_key: `payment-${paymentId}` }
+)
+```
+
+### 6.2 Audit Service
+
+```typescript
+import { createAuditEvent, logAuditEvent } from "@/lib/services/audit.service"
+
+const event = createAuditEvent(
+  "tenant",           // entity_type
+  tenantId,           // entity_id
+  "update",           // action
+  { actor_id, actor_type, workspace_id },
+  { before: oldData, after: newData }
+)
+await logAuditEvent(event)
+```
+
+### 6.3 API Response Pattern
+
+```typescript
+import { apiSuccess, apiError, unauthorized, notFound } from "@/lib/api-response"
+
+// Success
+return apiSuccess(data, "Operation successful")
+
+// Errors
+return unauthorized()
+return notFound("Tenant")
+return apiError(ErrorCodes.VALIDATION_ERROR, "Invalid input", details)
+```
+
+### 6.4 Structured Logging
+
+```typescript
+import { cronLogger, apiLogger, workflowLogger } from "@/lib/logger"
+
+cronLogger.info("Bill generation started", { ownerId, count: tenants.length })
+apiLogger.error("Request failed", { error: extractErrorMeta(err) })
+```
+
+---
+
+## 7. Authentication & Authorization
+
+### 7.1 Multi-Context Identity
+
 - One login, multiple roles
 - Same email can be owner at one PG, staff at another
 - Context switching via header dropdown
 - `user_contexts` table with `is_active` flag
 
-### RBAC System
+### 7.2 RBAC System
+
 - 50+ permissions organized by module
 - 5 default roles: Admin, Property Manager, Accountant, Maintenance, Receptionist
 - Multi-role support via `user_roles`
-- Permissions aggregated from ALL assigned roles
+- Permissions aggregated from ALL assigned roles (UNION)
 
-### Tenant Journey System (NEW)
-- Visual timeline of all tenant events
-- AI-powered predictive insights:
-  - Payment Reliability Score (0-100)
-  - Churn Risk Score (0-100)
-  - Satisfaction Level (High/Medium/Low)
-- Financial summary with breakdown
-- PDF export for reports
-- Visitor-to-tenant linkage detection
+### 7.3 Permission Hierarchy
 
-### Feature Flags
+```
+Platform Admin > Owner > Staff > Tenant
+```
+
+### 7.4 Permissions List
+
 ```typescript
-import { useFeatures } from "@/lib/features"
-
-const { isEnabled } = useFeatures()
-if (isEnabled("food")) { /* show food features */ }
+// All permissions from src/lib/auth/types.ts
+DASHBOARD_VIEW, PROPERTIES_*, ROOMS_*, TENANTS_*,
+BILLS_*, PAYMENTS_*, EXPENSES_*, REFUNDS_*,
+METER_READINGS_*, STAFF_*, NOTICES_*, COMPLAINTS_*,
+VISITORS_*, EXIT_CLEARANCE_*, REPORTS_*, APPROVALS_*,
+SETTINGS_*, ARCHITECTURE_VIEW, ACTIVITY_VIEW
 ```
 
 ---
 
-## Workflows
+## 8. Security
 
-Business logic centralized in `src/lib/workflows/`:
+### 8.1 Implemented Protections
 
-### Tenant Workflow (`tenant.workflow.ts`)
-1. `validate_room` - Check capacity
-2. `create_tenant` - Insert tenant record
-3. `create_tenant_stay` - Track stay history
-4. `update_room_occupancy` - Update room stats
-5. `update_bed` - Assign bed if applicable
-6. `save_documents` - Store ID documents
-7. `generate_initial_bill` - Optional first bill
+| Protection | Location | Description |
+|------------|----------|-------------|
+| Rate Limiting | `src/lib/rate-limit.ts` | All API routes |
+| CSRF Protection | `src/lib/csrf.ts` | Sensitive POST endpoints |
+| Security Headers | `next.config.ts` | CSP, HSTS, X-Frame-Options |
+| RLS | All tables | Row Level Security |
+| Audit Logging | Universal triggers | Critical tables |
+| Input Validation | API routes | UUID, date, limit validation |
 
-### Exit Workflow (`exit.workflow.ts`)
-1. Initiate exit clearance
-2. Calculate settlement (dues - refundable)
-3. Process checklist (inspection, key return)
-4. Create refund record
-5. Update tenant status
+### 8.2 Rate Limiters
 
----
+| Limiter | Limit | Usage |
+|---------|-------|-------|
+| `authLimiter` | 5 req/min | Login, verification |
+| `apiLimiter` | 100 req/min | General API routes |
+| `sensitiveLimiter` | 3 req/min | Admin operations |
+| `cronLimiter` | 2 req/min | Cron jobs |
 
-## UI Components Reference
+### 8.3 Security Patterns
 
-| Component | Import | Usage |
-|-----------|--------|-------|
-| `PageHeader` | `@/components/ui/page-header` | Title + actions |
-| `MetricsBar` | `@/components/ui/metrics-bar` | Stats row |
-| `DataTable` | `@/components/ui/data-table` | Table + search |
-| `PageLoader` | `@/components/ui/page-loader` | Loading state |
-| `Avatar` | `@/components/ui/avatar` | User avatar (name + src props) |
-| `StatCard` | `@/components/ui/stat-card` | Metric card |
-| `EntityLink` | `@/components/ui/entity-link` | Clickable links |
-| `Select` | `@/components/ui/form-components` | Dropdown (NOT shadcn) |
-| `TableBadge` | `@/components/ui/table-badge` | Status badges |
-| `StatusBadge` | `@/components/ui/status-badge` | Entity status |
-| `Combobox` | `@/components/ui/combobox` | Searchable select |
-| `EmptyState` | `@/components/ui/empty-state` | No data placeholder |
+```typescript
+// Rate limiting
+import { withRateLimit, apiLimiter } from "@/lib/rate-limit"
+const { limited, headers } = await withRateLimit(request, apiLimiter)
+if (limited) return rateLimited()
 
-### Journey Components
-| Component | Import | Usage |
-|-----------|--------|-------|
-| `Timeline` | `@/components/journey` | Event timeline |
-| `TimelineEvent` | `@/components/journey` | Single event card |
-| `JourneyHeader` | `@/components/journey` | Page header |
-| `JourneyAnalytics` | `@/components/journey` | Metric cards |
-| `FinancialSummary` | `@/components/journey` | Financial overview |
-| `PredictiveInsights` | `@/components/journey` | AI scores |
-| `JourneyFilters` | `@/components/journey` | Filter controls |
+// CSRF protection
+import { validateCsrfToken } from "@/lib/csrf"
+const valid = await validateCsrfToken(request)
+if (!valid) return csrfError()
 
-### Button Variants
-- `variant="gradient"` - Primary CTAs (teal gradient)
-- `variant="default"` - Standard primary
-- `variant="outline"` - Secondary actions
-- `variant="ghost"` - Tertiary/subtle
-- `size="xl"` - Large marketing CTAs
+// Filename sanitization for downloads
+import { sanitizeFilename } from "@/lib/format"
+const safe = sanitizeFilename(tenantName)
+```
 
 ---
 
-## Common Issues & Solutions
+## 9. Common Issues & Solutions
 
 ### "Column does not exist"
-- Check column names in schema section
+- Check column names in Section 5.2
 - Common mistakes: `bed_count` vs `total_beds`, `is_active` on `platform_admins`
 
 ### 400 Bad Request on insert
@@ -469,46 +502,86 @@ Business logic centralized in `src/lib/workflows/`:
 
 ---
 
-## Adding New Features
+## 10. Development Guidelines
 
-### New Dashboard Page
+### 10.1 Adding a New Dashboard Page
+
 1. Create `src/app/(dashboard)/[module]/page.tsx`
 2. Wrap with `<PermissionGuard permission="module.view">`
 3. Add to navigation in layout
 4. Use `PageHeader`, `MetricsBar`, `DataTable` patterns
 
-### New Database Table
+### 10.2 Adding a New Database Table
+
 1. Create migration in `supabase/migrations/`
 2. Add RLS policies using `owner_id` pattern
 3. Use `is_platform_admin()` for admin bypass
 4. Create indexes for common queries
 5. Add to audit triggers if needed
 
-### New Permission
+### 10.3 Adding a New Permission
+
 1. Update `src/lib/auth/types.ts` - PERMISSIONS constant
 2. Update role definitions in database
 3. Update navigation filtering
 
-### New Journey Event Type
-1. Add to `EventType` in `src/types/journey.types.ts`
-2. Create normalizer in `journey.service.ts`
-3. Add icon mapping in `EventIcon.tsx`
+### 10.4 Code Style
+
+- **TypeScript**: Strict mode, explicit types
+- **Logging**: Use structured logger (`src/lib/logger.ts`)
+- **Errors**: Use API response helpers (`src/lib/api-response.ts`)
+- **Constants**: Use `src/lib/constants.ts` for magic numbers
+- **Formatting**: Use `src/lib/format.ts` for currency, dates
 
 ---
 
-## Environment Variables
+## 11. Workflows
+
+### Tenant Workflow (`tenant.workflow.ts`)
+
+1. `validate_room` - Check capacity
+2. `create_tenant` - Insert tenant record
+3. `create_tenant_stay` - Track stay history
+4. `update_room_occupancy` - Atomic increment
+5. `update_bed` - Assign bed if applicable
+6. `save_documents` - Store ID documents
+7. `generate_initial_bill` - Optional first bill
+
+### Exit Workflow (`exit.workflow.ts`)
+
+1. Initiate exit clearance
+2. Calculate settlement (dues - refundable + advance)
+3. Process checklist (inspection, key return)
+4. Create refund record
+5. Update tenant and room status
+
+### Payment Workflow (`payment.workflow.ts`)
+
+1. Validate payment amount (positive)
+2. Verify bill belongs to tenant
+3. Record payment
+4. Update bill status
+
+---
+
+## 12. Environment Variables
 
 ```env
+# Required
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon_key>
+SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
+
+# Optional
 RESEND_API_KEY=<resend_key>
+CRON_SECRET=<cron_secret>
 ```
 
 ---
 
-## Deployment
+## 13. Deployment
 
-### Production Deploy
+### Quick Deploy
 ```bash
 git add . && git commit -m "description" && git push && vercel --prod
 ```
@@ -520,7 +593,7 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-## Design Principles
+## 14. Design Principles
 
 1. **Standardized** - Consistent patterns everywhere
 2. **Modular** - Reusable, composable components
@@ -531,7 +604,7 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-## Contacts
+## Contact
 
 - **Developer**: Rajat Seth (sethrajat0711@gmail.com)
 - **Repository**: https://github.com/cybinfo/pg-manager
@@ -539,4 +612,4 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-*Last updated: 2026-01-10*
+*Last Updated: 2026-01-13*

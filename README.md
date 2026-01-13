@@ -1,109 +1,100 @@
-# ManageKar - PG & Hostel Management Software
+# ManageKar - PG & Hostel Management Platform
 
 <div align="center">
-  <img src="public/logo.svg" alt="ManageKar Logo" width="80" />
-  <h3>India's Smartest PG & Hostel Management Platform</h3>
-  <p>"Kar" means "do" in Hindi — ManageKar = "Let's Manage"</p>
+  <img src="public/logo.svg" alt="ManageKar Logo" width="100" />
 
-  **[Live Demo](https://managekar.com)** | **[Product Page](https://managekar.com/products/pg-manager)** | **[Pricing](https://managekar.com/pricing)**
+  **India's Smartest PG & Hostel Management Software**
+
+  *"Kar" means "do" in Hindi - ManageKar = "Let's Manage"*
+
+  [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+  [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)](https://supabase.com/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+  [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+  [Live Demo](https://managekar.com) | [Product Page](https://managekar.com/products/pg-manager) | [Pricing](https://managekar.com/pricing) | [Documentation](CLAUDE.md)
+
 </div>
 
 ---
 
-## Why ManageKar?
+## Overview
 
-ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (Paying Guest) and hostel owners. Built with modern technology and a mobile-first approach, it helps you manage your entire PG business from anywhere.
+ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (Paying Guest) and hostel owners. Built with modern technology and a mobile-first approach, it helps manage your entire PG business from anywhere.
 
-### Key Highlights
+### Why ManageKar?
 
-- **Multi-Property Support** - Manage multiple PGs from one dashboard
-- **Complete Tenant Lifecycle** - From onboarding to exit clearance with notice period workflow
-- **Tenant Journey Intelligence** - AI-powered insights with timeline view, risk scores, and predictive analytics
-- **Smart Billing** - Auto-generate bills, track meter readings, record payments
-- **Refund Tracking** - Comprehensive refund management for deposits and overpayments
-- **Staff Management** - Role-based access with 50+ granular permissions
-- **Mobile-First** - Works beautifully on phones
-- **Public PG Websites** - Auto-generate website for each property
-- **WhatsApp Integration** - Send bills, receipts, and reminders via WhatsApp
-- **Reports & Analytics** - Track revenue, occupancy, and collection rates
-- **PDF Export** - Generate professional reports and journey summaries
+- **Purpose-Built for India**: Supports INR, Indian mobile numbers, WhatsApp integration
+- **Multi-Property Support**: Manage multiple PGs from one dashboard
+- **Complete Lifecycle**: From tenant onboarding to exit clearance
+- **AI-Powered Insights**: Predictive analytics for tenant behavior
+- **Role-Based Access**: 50+ granular permissions for staff management
+- **Mobile-First Design**: Works seamlessly on any device
 
 ---
 
 ## Features
 
-### 19 Dashboard Modules
+### Core Modules (19 Dashboard Pages)
 
-| Module | Description |
-|--------|-------------|
-| **Dashboard** | Overview with key metrics and quick actions |
-| **Properties** | Multi-property management with 2D architecture view |
-| **Rooms** | Room types, capacity tracking, occupancy status |
-| **Tenants** | Complete lifecycle with document upload and returning tenant detection |
-| **Tenant Journey** | AI-powered timeline, analytics, risk scores, and PDF export |
-| **Bills** | Itemized monthly bills with auto-generation |
-| **Payments** | Payment recording with WhatsApp receipts |
-| **Refunds** | Deposit refunds, overpayment refunds, adjustments |
-| **Expenses** | Track property expenses by category |
-| **Meter Readings** | Electricity, water, gas with auto-charge generation |
-| **Staff** | Staff members with email invitations |
-| **Notices** | Announcements for tenants |
-| **Complaints** | Tenant issue tracking with priority levels |
-| **Visitors** | Visitor log with multi-day overnight stays |
-| **Exit Clearance** | Systematic checkout with settlement calculation |
-| **Reports** | Revenue trends, occupancy stats, dues aging |
-| **Architecture** | Interactive 2D property floor plan |
-| **Approvals** | Tenant request workflow (profile changes, disputes) |
-| **Settings** | Configuration for billing, room types, features |
+| Module | Description | Key Features |
+|--------|-------------|--------------|
+| **Dashboard** | Overview & metrics | Quick actions, key stats, alerts |
+| **Properties** | Multi-property management | 2D architecture view, settings |
+| **Rooms** | Room & bed management | Capacity tracking, occupancy status |
+| **Tenants** | Complete lifecycle | Documents, history, returning tenant detection |
+| **Tenant Journey** | AI-powered insights | Timeline, risk scores, PDF export |
+| **Bills** | Billing system | Auto-generation, itemized line items |
+| **Payments** | Payment tracking | WhatsApp receipts, partial payments |
+| **Refunds** | Refund processing | Deposit refunds, adjustments |
+| **Expenses** | Expense tracking | Categories, receipts, reports |
+| **Meter Readings** | Utility management | Electricity, water, gas readings |
+| **Staff** | Staff management | RBAC with 50+ permissions |
+| **Notices** | Announcements | Property-wide or targeted notices |
+| **Complaints** | Issue tracking | Priority levels, resolution workflow |
+| **Visitors** | Visitor log | Multi-day stays, tenant linking |
+| **Exit Clearance** | Checkout process | Settlement calculation, checklist |
+| **Reports** | Analytics | Revenue, occupancy, dues aging |
+| **Architecture** | Property visualization | Interactive 2D floor plan |
+| **Approvals** | Request workflow | Tenant requests, dispute handling |
+| **Settings** | Configuration | Billing rules, room types, features |
 
-### Tenant Journey Intelligence (NEW)
+### Tenant Journey Intelligence
 
-The Tenant Journey feature provides a comprehensive 360° view of each tenant:
+The flagship feature providing a 360-degree view of each tenant:
 
-- **Visual Timeline** - Chronological events from onboarding to exit
-- **Event Categories** - Financial, accommodation, complaints, visitors, system events
-- **Journey Analytics** - Total stays, payments, complaints, room transfers
+- **Visual Timeline**: Chronological events from onboarding to exit
+- **Event Categories**: Financial, accommodation, complaints, visitors
 - **AI-Powered Scores**:
-  - **Payment Reliability Index** (0-100) - Based on payment patterns
-  - **Churn Risk Score** (0-100) - Predicts likelihood of leaving
-  - **Satisfaction Indicator** - High/Medium/Low based on interactions
-- **Predictive Insights** - Automated alerts and recommendations
-- **Visitor Linkage** - Connect visitors to tenants who later joined
-- **PDF Export** - Professional journey report for documentation
+  - Payment Reliability Index (0-100)
+  - Churn Risk Score (0-100)
+  - Satisfaction Indicator (High/Medium/Low)
+- **Predictive Insights**: Automated alerts and recommendations
+- **PDF Export**: Professional journey reports
 
-### Staff & Permissions (RBAC)
+### Security & Access Control
 
-- **5 Default Roles**: Admin, Property Manager, Accountant, Maintenance, Receptionist
-- **50+ Permissions**: Granular control across all modules
-- **Multi-Role Support**: Staff can have multiple roles
-- **Property-Level Access**: Assign roles to specific properties
+- **Role-Based Access Control (RBAC)**:
+  - 5 default roles: Admin, Property Manager, Accountant, Maintenance, Receptionist
+  - 50+ granular permissions
+  - Multi-role support per staff member
+  - Property-level access control
 
-### Billing System
-
-- Monthly bills with itemized line items
-- Auto-generation via configurable schedule
-- Support for rent, electricity, water, and custom charges
-- Meter readings with per-unit or flat rate billing
-- Calendar month or check-in anniversary billing modes
-- PDF receipts and WhatsApp sharing
-
-### Exit Clearance & Refunds
-
-- **Notice Period Tracking**: Record notice date and expected exit date
-- **Notice Period Analysis**: Compare actual notice vs configured notice days
-- **Settlement Calculation**: Auto-calculate dues, deposits, and deductions
-- **Checkout Checklist**: Room inspection, key return tracking
-- **Refund Processing**: Track deposit refunds, overpayments, and adjustments
-- **Refund Status**: Pending → Processing → Completed workflow
+- **Security Features**:
+  - Row Level Security (RLS) on all tables
+  - CSRF protection on sensitive endpoints
+  - Rate limiting on all API routes
+  - Security headers (CSP, HSTS, etc.)
+  - Comprehensive audit logging
 
 ### Additional Features
 
-- **Public PG Websites** - Each property gets a page at managekar.com/pg/your-slug
-- **Tenant Portal** - Tenants can view bills, raise complaints, report issues
-- **Feature Flags** - Enable/disable features per workspace
-- **Activity Log** - Comprehensive audit trail for all actions
-- **Platform Admin** - Superuser access for support
-- **Configurable Types** - Custom room types, charge types, expense types
+- **Public PG Websites**: Auto-generated pages at `managekar.com/pg/your-slug`
+- **Tenant Portal**: Self-service bill viewing, complaint submission
+- **WhatsApp Integration**: Bills, receipts, reminders via WhatsApp
+- **Feature Flags**: Enable/disable features per workspace
+- **Platform Admin**: Superuser access for support operations
 
 ---
 
@@ -111,15 +102,15 @@ The Tenant Journey feature provides a comprehensive 360° view of each tenant:
 
 | Category | Technology |
 |----------|------------|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript |
-| Database | Supabase (PostgreSQL) with RLS |
-| Auth | Supabase Auth |
-| Styling | Tailwind CSS + shadcn/ui |
-| Charts | Recharts |
-| PDF | @react-pdf/renderer |
-| Email | Resend API |
-| Hosting | Vercel |
+| **Framework** | Next.js 16 (App Router) |
+| **Language** | TypeScript (Strict Mode) |
+| **Database** | PostgreSQL via Supabase |
+| **Authentication** | Supabase Auth |
+| **Styling** | Tailwind CSS + shadcn/ui |
+| **Charts** | Recharts |
+| **PDF Generation** | @react-pdf/renderer |
+| **Email** | Resend API |
+| **Hosting** | Vercel |
 
 ---
 
@@ -128,7 +119,7 @@ The Tenant Journey feature provides a comprehensive 360° view of each tenant:
 ### Prerequisites
 
 - Node.js 18+
-- npm or yarn
+- npm, yarn, or pnpm
 - Supabase account
 
 ### Installation
@@ -144,21 +135,23 @@ The Tenant Journey feature provides a comprehensive 360° view of each tenant:
    npm install
    ```
 
-3. **Set up environment variables**
+3. **Configure environment**
    ```bash
    cp .env.example .env.local
    ```
 
-   Add your credentials:
+   Edit `.env.local`:
    ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-   RESEND_API_KEY=your_resend_key  # Optional, for emails
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   RESEND_API_KEY=your-resend-key
+   CRON_SECRET=your-cron-secret
    ```
 
 4. **Run database migrations**
 
-   Run migrations in order from `supabase/migrations/` (001 through 041)
+   Execute migrations 001-043 in order via Supabase Dashboard > SQL Editor
 
 5. **Start development server**
    ```bash
@@ -167,67 +160,84 @@ The Tenant Journey feature provides a comprehensive 360° view of each tenant:
 
 6. **Open [http://localhost:3000](http://localhost:3000)**
 
+### Commands
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npx tsc --noEmit     # Type check
+npm run lint         # Run ESLint
+```
+
 ---
 
 ## Project Structure
 
 ```
-src/
-├── app/
-│   ├── page.tsx                # Platform homepage
-│   ├── pricing/                # Pricing page
-│   ├── products/pg-manager/    # Product landing page
-│   ├── (auth)/                 # Login, Register, Password Reset
-│   ├── (dashboard)/            # Owner/Staff dashboard (19 modules)
-│   │   ├── dashboard/          # Main dashboard (/dashboard)
-│   │   ├── properties/         # Properties (/properties)
-│   │   ├── rooms/              # Rooms (/rooms)
-│   │   ├── tenants/            # Tenants (/tenants)
-│   │   │   └── [id]/journey/   # Tenant Journey (/tenants/[id]/journey)
-│   │   ├── bills/              # Bills (/bills)
-│   │   ├── payments/           # Payments (/payments)
-│   │   ├── refunds/            # Refunds (/refunds)
-│   │   ├── expenses/           # Expenses (/expenses)
-│   │   ├── meter-readings/     # Meter Readings (/meter-readings)
-│   │   ├── staff/              # Staff (/staff)
-│   │   ├── notices/            # Notices (/notices)
-│   │   ├── complaints/         # Complaints (/complaints)
-│   │   ├── visitors/           # Visitors (/visitors)
-│   │   ├── exit-clearance/     # Exit Clearance (/exit-clearance)
-│   │   ├── reports/            # Reports (/reports)
-│   │   ├── architecture/       # Architecture View (/architecture)
-│   │   ├── activity/           # Activity Log (/activity)
-│   │   ├── approvals/          # Approvals (/approvals)
-│   │   ├── admin/              # Platform Admin (/admin)
-│   │   └── settings/           # Settings (/settings)
-│   ├── (tenant)/               # Tenant portal
-│   ├── pg/[slug]/              # Public PG websites
-│   └── api/                    # API routes
-│       └── tenants/[id]/
-│           └── journey-report/ # Journey PDF export
-├── components/
-│   ├── ui/                     # Reusable UI components
-│   ├── forms/                  # Form components
-│   ├── shared/                 # Shared templates
-│   ├── auth/                   # Auth components
-│   └── journey/                # Journey components
-│       ├── Timeline.tsx        # Vertical event timeline
-│       ├── TimelineEvent.tsx   # Individual event card
-│       ├── JourneyHeader.tsx   # Header with tenant info
-│       ├── JourneyAnalytics.tsx # Analytics metric cards
-│       ├── FinancialSummary.tsx # Financial overview
-│       ├── PredictiveInsights.tsx # AI scores display
-│       └── JourneyFilters.tsx  # Filter controls
-└── lib/
-    ├── supabase/               # Database clients
-    ├── auth/                   # Auth context & hooks
-    ├── features/               # Feature flags
-    ├── services/               # Service layer
-    │   └── journey.service.ts  # Journey data aggregation
-    ├── workflows/              # Business workflows
-    ├── hooks/                  # Custom hooks
-    └── pdf-journey-report.tsx  # Journey PDF template
+pg-manager/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── (auth)/             # Authentication pages
+│   │   ├── (dashboard)/        # Dashboard modules (19 pages)
+│   │   ├── (tenant)/           # Tenant portal
+│   │   ├── pg/[slug]/          # Public PG websites
+│   │   └── api/                # API routes
+│   ├── components/
+│   │   ├── ui/                 # Reusable UI components
+│   │   ├── forms/              # Form components
+│   │   ├── shared/             # Shared templates
+│   │   ├── auth/               # Auth guards
+│   │   └── journey/            # Tenant journey components
+│   ├── lib/
+│   │   ├── supabase/           # Database clients & transforms
+│   │   ├── auth/               # Auth context & hooks
+│   │   ├── services/           # Service layer
+│   │   ├── workflows/          # Business workflows
+│   │   ├── hooks/              # Custom hooks
+│   │   └── features/           # Feature flags
+│   └── types/                  # TypeScript type definitions
+├── supabase/
+│   └── migrations/             # Database migrations (001-043)
+├── public/                     # Static assets
+├── CLAUDE.md                   # AI Development Guide
+└── REVIEW.md                   # Code Review Document
 ```
+
+---
+
+## Database Schema
+
+### Key Tables
+
+| Table | Purpose |
+|-------|---------|
+| `workspaces` | One per owner (auto-created on registration) |
+| `user_profiles` | Central identity for all users |
+| `user_contexts` | Links users to workspaces with roles |
+| `platform_admins` | Superuser access table |
+| `properties` | Building/property records |
+| `rooms` | Room definitions with capacity |
+| `tenants` | Tenant records with documents |
+| `tenant_stays` | Stay history (supports re-joining) |
+| `bills` | Monthly bills with line items |
+| `payments` | Payment records |
+| `refunds` | Refund tracking |
+| `exit_clearance` | Checkout process tracking |
+| `audit_events` | Comprehensive audit trail |
+
+### Migrations
+
+43 migrations covering:
+- Core schema (001-010)
+- Unified identity system (012)
+- RBAC and permissions (013-014)
+- Audit logging (016, 038)
+- Platform admins (017)
+- Billing enhancements (018-025)
+- Tenant journey (041)
+- Schema reconciliation (042)
+- Security fixes (043)
 
 ---
 
@@ -242,43 +252,82 @@ vercel --prod
 
 Or connect your GitHub repository for automatic deployments.
 
-### Environment Variables
+### Environment Variables (Production)
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-RESEND_API_KEY=your_resend_key
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+RESEND_API_KEY=your-resend-key
+CRON_SECRET=your-secure-cron-secret
 ```
 
----
+### Cron Jobs
 
-## Database Migrations
-
-The project uses 41 migrations. Key ones:
-
-| Migration | Purpose |
-|-----------|---------|
-| `012_unified_identity.sql` | Multi-context auth system |
-| `013_default_roles.sql` | System roles setup |
-| `015_storage_buckets.sql` | Photo uploads |
-| `035_configurable_room_types.sql` | Custom types |
-| `038_comprehensive_audit_system.sql` | Audit logging |
-| `039_refunds_table.sql` | Refund tracking |
-| `040_fix_schema_gaps.sql` | Feature flags, RLS fixes |
-| `041_tenant_journey_analytics.sql` | Journey analytics, risk alerts, communications |
-
-Run migrations via Supabase Dashboard → SQL Editor.
+Configure in `vercel.json` for automated tasks:
+- Bill generation (1st of month)
+- Payment reminders (configurable)
+- Daily summaries (09:30 IST)
 
 ---
 
 ## Pricing
 
-| Plan | Price | Features |
-|------|-------|----------|
-| **Free Trial** | 3 months free | Full access to all features |
-| **Free Forever** | ₹0/month | 1 PG, 10 rooms, 20 tenants |
-| **Pro** | ₹499/month | 3 PGs, 50 rooms, unlimited tenants |
-| **Business** | ₹999/month | Unlimited everything + priority support |
+| Plan | Price | Limits |
+|------|-------|--------|
+| **Free Trial** | 3 months free | Full access |
+| **Free Forever** | Free | 1 PG, 10 rooms, 20 tenants |
+| **Pro** | Rs.499/month | 3 PGs, 50 rooms, unlimited tenants |
+| **Business** | Rs.999/month | Unlimited + priority support |
+
+---
+
+## Development
+
+### For AI Development
+
+See [CLAUDE.md](CLAUDE.md) for comprehensive AI development guidelines including:
+- Critical patterns and conventions
+- Database schema details
+- Component usage guidelines
+- Common issues and solutions
+
+### Code Quality
+
+The codebase follows:
+- TypeScript strict mode
+- ESLint with Next.js config
+- Consistent API error handling
+- Structured logging
+- Comprehensive audit trail
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Commit Convention
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation
+- `refactor:` Code refactoring
+- `test:` Tests
+- `chore:` Maintenance
+
+---
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/cybinfo/pg-manager/issues)
+- **Email**: sethrajat0711@gmail.com
+- **Documentation**: [CLAUDE.md](CLAUDE.md)
 
 ---
 
@@ -292,11 +341,11 @@ Run migrations via Supabase Dashboard → SQL Editor.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
 <div align="center">
-  <p>Made with love for Indian PG owners</p>
+  <p>Made with care for Indian PG owners</p>
   <p><strong>ManageKar</strong> - Simple Software for Indian Small Businesses</p>
 </div>
