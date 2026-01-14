@@ -592,13 +592,28 @@ export const STAFF_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "staff_members",
   select: `
     *,
-    user:user_profiles(id, name, email),
-    roles:user_roles(id, role:roles(id, name))
+    roles:user_roles(
+      id,
+      role:roles(id, name, description),
+      property:properties(id, name)
+    )
   `,
-  defaultOrderBy: "created_at",
-  defaultOrderDirection: "desc",
+  defaultOrderBy: "name",
+  defaultOrderDirection: "asc",
   searchFields: ["name", "email", "phone"],
-  joinFields: ["user"],
+  joinFields: [],
+  computedFields: (item) => {
+    const date = item.created_at ? new Date(item.created_at as string) : new Date()
+    const roles = (item.roles as { role: { name: string } | null }[] | null) || []
+    const firstRole = roles[0]?.role
+    return {
+      status_label: item.is_active ? "Active" : "Inactive",
+      primary_role: firstRole?.name || "No Role",
+      account_status: item.user_id ? "Has Login" : "Pending Invite",
+      joined_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      joined_year: date.getFullYear().toString(),
+    }
+  },
 }
 
 export const PROPERTY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
@@ -668,6 +683,23 @@ export const NOTICE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   defaultOrderDirection: "desc",
   searchFields: ["title", "content"],
   joinFields: ["property"],
+  computedFields: (item) => {
+    const date = item.created_at ? new Date(item.created_at as string) : new Date()
+    const typeLabels: Record<string, string> = {
+      general: "General",
+      maintenance: "Maintenance",
+      payment_reminder: "Payment Reminder",
+      emergency: "Emergency",
+    }
+    const isExpired = item.expires_at ? new Date(item.expires_at as string) < new Date() : false
+    return {
+      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_year: date.getFullYear().toString(),
+      active_label: item.is_active && !isExpired ? "Active" : "Inactive",
+      type_label: typeLabels[item.type as string] || (item.type as string),
+      is_expired: isExpired,
+    }
+  },
 }
 
 export const METER_READING_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
@@ -675,12 +707,21 @@ export const METER_READING_LIST_CONFIG: ListPageConfig<Record<string, unknown>> 
   select: `
     *,
     property:properties(id, name),
-    room:rooms(id, room_number)
+    room:rooms(id, room_number),
+    charge_type:charge_types(id, name)
   `,
   defaultOrderBy: "reading_date",
   defaultOrderDirection: "desc",
-  searchFields: ["meter_id"],
-  joinFields: ["property", "room"],
+  searchFields: ["property.name", "room.room_number"],
+  joinFields: ["property", "room", "charge_type"],
+  computedFields: (item) => {
+    const date = item.reading_date ? new Date(item.reading_date as string) : new Date()
+    return {
+      reading_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      reading_year: date.getFullYear().toString(),
+      meter_type: ((item.charge_type as Record<string, unknown>)?.name as string)?.toLowerCase() || "electricity",
+    }
+  },
 }
 
 export const APPROVAL_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
@@ -694,4 +735,40 @@ export const APPROVAL_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   defaultOrderDirection: "desc",
   searchFields: ["type", "tenant.name"],
   joinFields: ["tenant", "property"],
+}
+
+export const REFUND_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "refunds",
+  select: `
+    *,
+    tenant:tenants(id, name, phone, photo_url),
+    property:properties(id, name),
+    exit_clearance:exit_clearance(id, expected_exit_date)
+  `,
+  defaultOrderBy: "created_at",
+  defaultOrderDirection: "desc",
+  searchFields: ["tenant.name", "reference_number"],
+  joinFields: ["tenant", "property", "exit_clearance"],
+  computedFields: (item) => {
+    const date = item.created_at ? new Date(item.created_at as string) : new Date()
+    const statusLabels: Record<string, string> = {
+      pending: "Pending",
+      processing: "Processing",
+      completed: "Completed",
+      failed: "Failed",
+      cancelled: "Cancelled",
+    }
+    const typeLabels: Record<string, string> = {
+      deposit_refund: "Deposit Refund",
+      overpayment: "Overpayment",
+      adjustment: "Adjustment",
+      other: "Other",
+    }
+    return {
+      refund_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      refund_year: date.getFullYear().toString(),
+      status_label: statusLabels[item.status as string] || (item.status as string),
+      type_label: typeLabels[item.refund_type as string] || (item.refund_type as string),
+    }
+  },
 }

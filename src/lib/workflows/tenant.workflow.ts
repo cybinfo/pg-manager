@@ -186,7 +186,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
       },
     },
 
-    // Step 3: Create tenant_stays record
+    // Step 3: Create tenant_stays record (REQUIRED - tracks stay history)
     {
       name: "create_tenant_stay",
       execute: async (context, input, previousResults) => {
@@ -212,17 +212,25 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           .single()
 
         if (error) {
-          // Don't fail the workflow if tenant_stays table doesn't exist
-          console.warn("[TenantCreate] Failed to create tenant_stay:", error)
-          return createSuccessResult(null)
+          return createErrorResult(
+            createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Failed to create tenant stay record", { error })
+          )
         }
 
         return createSuccessResult(stay)
       },
-      optional: true,
+      // Rollback: Delete the tenant_stay record
+      rollback: async (context, input, stepResult) => {
+        const supabase = createClient()
+        const stay = stepResult as Record<string, unknown>
+        if (stay?.id) {
+          await supabase.from("tenant_stays").delete().eq("id", stay.id)
+        }
+      },
+      optional: false, // CRITICAL: Stay history must be recorded
     },
 
-    // Step 4: Update room occupancy (ATOMIC to prevent race conditions)
+    // Step 4: Update room occupancy (ATOMIC - NO FALLBACKS to prevent race conditions)
     {
       name: "update_room_occupancy",
       execute: async (context, input, previousResults) => {
@@ -230,67 +238,43 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const room = previousResults.validate_room as Record<string, unknown>
         const bedCount = room.total_beds as number || 1
 
-        // FIX BL-001: Use atomic increment via RPC or raw SQL
-        // This prevents race conditions where two concurrent additions both read
-        // the same occupied_beds value and overwrite each other
+        // FIX BL-001: Use ONLY atomic increment via RPC
+        // NO FALLBACKS - race conditions are unacceptable for occupancy tracking
         const { data, error } = await supabase.rpc('increment_room_occupancy', {
           p_room_id: input.room_id,
           p_total_beds: bedCount,
         })
 
-        // Fallback to regular update if RPC doesn't exist
-        if (error && error.code === 'PGRST202') {
-          // RPC not found, use regular update with optimistic locking
-          const { data: updatedRoom, error: updateError } = await supabase
-            .from("rooms")
-            .update({
-              occupied_beds: supabase.rpc('increment', { x: 1 }) as unknown as number,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", input.room_id)
-            .select("occupied_beds, total_beds")
-            .single()
-
-          if (updateError) {
-            // If RPC approach fails, use raw SQL via API
-            const currentOccupied = (room.occupied_beds as number || 0) + 1
-            const newStatus = currentOccupied >= bedCount ? "occupied" : "partially_occupied"
-
-            await supabase
-              .from("rooms")
-              .update({
-                occupied_beds: currentOccupied,
-                status: newStatus,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", input.room_id)
-              // Only update if occupied_beds hasn't changed (optimistic lock)
-              .eq("occupied_beds", room.occupied_beds as number || 0)
-
-            return createSuccessResult({ new_occupied_beds: currentOccupied, new_status: newStatus })
-          }
-
-          const newOccupied = updatedRoom?.occupied_beds || 1
-          const newStatus = newOccupied >= bedCount ? "occupied" : "partially_occupied"
-
-          // Update status separately
-          await supabase
-            .from("rooms")
-            .update({ status: newStatus })
-            .eq("id", input.room_id)
-
-          return createSuccessResult({ new_occupied_beds: newOccupied, new_status: newStatus })
-        }
-
         if (error) {
-          console.warn("[TenantCreate] Failed to update room occupancy:", error)
+          // If RPC doesn't exist, fail the step (migration 042 should have created it)
+          return createErrorResult(
+            createServiceError(
+              ERROR_CODES.UNKNOWN_ERROR,
+              "Failed to update room occupancy. Atomic RPC function may not exist.",
+              { error, hint: "Run migration 042_schema_reconciliation.sql" }
+            )
+          )
         }
 
-        const newOccupied = (data as { occupied_beds: number })?.occupied_beds || (room.occupied_beds as number || 0) + 1
+        const newOccupied = (data as { occupied_beds: number })?.occupied_beds ?? ((room.occupied_beds as number || 0) + 1)
         const newStatus = newOccupied >= bedCount ? "occupied" : "partially_occupied"
+
+        // Update room status based on new occupancy
+        await supabase
+          .from("rooms")
+          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .eq("id", input.room_id)
+
         return createSuccessResult({ new_occupied_beds: newOccupied, new_status: newStatus })
       },
-      optional: true,
+      // Rollback: Decrement room occupancy
+      rollback: async (context, input) => {
+        const supabase = createClient()
+        await supabase.rpc('decrement_room_occupancy', {
+          p_room_id: input.room_id,
+        }).catch((err: unknown) => console.warn("[TenantCreate] Rollback decrement failed:", err))
+      },
+      optional: false, // CRITICAL: Room occupancy must be accurate
     },
 
     // Step 5: Update bed assignment
@@ -298,7 +282,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
       name: "update_bed",
       execute: async (context, input, previousResults) => {
         if (!input.bed_id) {
-          return createSuccessResult({ bed_updated: false })
+          return createSuccessResult({ bed_updated: false, bed_id: null })
         }
 
         const supabase = createClient()
@@ -315,11 +299,26 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
 
         if (error) {
           console.warn("[TenantCreate] Failed to update bed:", error)
+          return createSuccessResult({ bed_updated: false, bed_id: input.bed_id })
         }
 
-        return createSuccessResult({ bed_updated: true })
+        return createSuccessResult({ bed_updated: true, bed_id: input.bed_id })
       },
-      optional: true,
+      // Rollback: Clear bed assignment
+      rollback: async (context, input) => {
+        if (!input.bed_id) return
+        const supabase = createClient()
+        await supabase
+          .from("beds")
+          .update({
+            current_tenant_id: null,
+            status: "available",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", input.bed_id)
+          .catch((err: unknown) => console.warn("[TenantCreate] Rollback bed assignment failed:", err))
+      },
+      optional: true, // Bed assignment is optional (not all rooms have beds)
     },
 
     // Step 6: Save ID documents
@@ -327,7 +326,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
       name: "save_documents",
       execute: async (context, input, previousResults) => {
         if (!input.id_documents || input.id_documents.length === 0) {
-          return createSuccessResult({ documents_saved: 0 })
+          return createSuccessResult({ documents_saved: 0, document_ids: [] })
         }
 
         const supabase = createClient()
@@ -342,16 +341,30 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const { data, error } = await supabase
           .from("tenant_documents")
           .insert(documents)
-          .select()
+          .select("id")
 
         if (error) {
           console.warn("[TenantCreate] Failed to save documents:", error)
-          return createSuccessResult({ documents_saved: 0 })
+          return createSuccessResult({ documents_saved: 0, document_ids: [] })
         }
 
-        return createSuccessResult({ documents_saved: data.length })
+        return createSuccessResult({
+          documents_saved: data.length,
+          document_ids: data.map((d: { id: string }) => d.id),
+        })
       },
-      optional: true,
+      // Rollback: Delete saved documents
+      rollback: async (context, input, stepResult) => {
+        const result = stepResult as { document_ids?: string[] }
+        if (!result?.document_ids || result.document_ids.length === 0) return
+        const supabase = createClient()
+        await supabase
+          .from("tenant_documents")
+          .delete()
+          .in("id", result.document_ids)
+          .catch((err: unknown) => console.warn("[TenantCreate] Rollback documents failed:", err))
+      },
+      optional: true, // Documents are optional
     },
 
     // Step 7: Generate initial bill (if requested)
@@ -439,7 +452,18 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           total_amount: totalAmount,
         })
       },
-      optional: true,
+      // Rollback: Delete the generated bill
+      rollback: async (context, input, stepResult) => {
+        const result = stepResult as { bill_id?: string }
+        if (!result?.bill_id) return
+        const supabase = createClient()
+        await supabase
+          .from("bills")
+          .delete()
+          .eq("id", result.bill_id)
+          .catch((err: unknown) => console.warn("[TenantCreate] Rollback bill failed:", err))
+      },
+      optional: true, // Initial bill generation is optional
     },
   ],
 

@@ -43,6 +43,15 @@ export const AUTH_MAX_RETRY_ATTEMPTS = 3
 /** Delay between auth retries (ms) */
 export const AUTH_RETRY_DELAY_MS = 1000
 
+/** Base retry delay for exponential backoff (ms) */
+export const AUTH_BASE_RETRY_DELAY_MS = 500
+
+/** Maximum retry delay cap for exponential backoff (ms) */
+export const AUTH_MAX_RETRY_DELAY_MS = 10000
+
+/** Session refresh buffer - refresh this many ms before expiry */
+export const SESSION_REFRESH_BUFFER_MS = 5 * 60 * 1000
+
 // ============================================
 // Toast & UI Notification Constants
 // ============================================

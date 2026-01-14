@@ -24,16 +24,13 @@ import {
   clearStoredContextId,
   createSessionError,
 } from "./session"
-
-// ============================================
-// Configuration
-// ============================================
-
-const SESSION_REFRESH_BUFFER = 5 * 60 * 1000 // Refresh 5 minutes before expiry
-const SESSION_CHECK_INTERVAL = 60 * 1000 // Check session every minute
-const MAX_RETRY_ATTEMPTS = 3
-const BASE_RETRY_DELAY = 500 // Base delay for exponential backoff (ms)
-const MAX_RETRY_DELAY = 10000 // Maximum delay cap (ms)
+import {
+  SESSION_CHECK_INTERVAL_MS,
+  SESSION_REFRESH_BUFFER_MS,
+  AUTH_MAX_RETRY_ATTEMPTS,
+  AUTH_BASE_RETRY_DELAY_MS,
+  AUTH_MAX_RETRY_DELAY_MS,
+} from "@/lib/constants"
 
 /**
  * CQ-011: Calculate exponential backoff delay with jitter
@@ -49,8 +46,8 @@ const MAX_RETRY_DELAY = 10000 // Maximum delay cap (ms)
  */
 function getExponentialBackoffDelay(
   attempt: number,
-  base: number = BASE_RETRY_DELAY,
-  cap: number = MAX_RETRY_DELAY
+  base: number = AUTH_BASE_RETRY_DELAY_MS,
+  cap: number = AUTH_MAX_RETRY_DELAY_MS
 ): number {
   // Exponential backoff: base * 2^attempt
   const exponentialDelay = base * Math.pow(2, attempt)
@@ -181,10 +178,10 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
 
         if (result.error) {
           // CQ-011: Retry on network errors with exponential backoff + jitter
-          if (result.error.code === "NETWORK_ERROR" && retryCountRef.current < MAX_RETRY_ATTEMPTS) {
+          if (result.error.code === "NETWORK_ERROR" && retryCountRef.current < AUTH_MAX_RETRY_ATTEMPTS) {
             const delay = getExponentialBackoffDelay(retryCountRef.current)
             retryCountRef.current++
-            console.log(`[useSession] Retry attempt ${retryCountRef.current}/${MAX_RETRY_ATTEMPTS} in ${delay}ms`)
+            console.log(`[useSession] Retry attempt ${retryCountRef.current}/${AUTH_MAX_RETRY_ATTEMPTS} in ${delay}ms`)
             setTimeout(() => initializeSession(), delay)
             return
           }
@@ -215,7 +212,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
         if (result.session) {
           const expiry = getTimeUntilExpiry(result.session)
           setTimeUntilExpiry(expiry)
-          setWillExpireSoon(expiry !== null && expiry < SESSION_REFRESH_BUFFER)
+          setWillExpireSoon(expiry !== null && expiry < SESSION_REFRESH_BUFFER_MS)
         }
       } catch (err) {
         console.error("[useSession] Initialization error:", err)
@@ -337,7 +334,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
             if (session) {
               const expiry = getTimeUntilExpiry(session)
               setTimeUntilExpiry(expiry)
-              setWillExpireSoon(expiry !== null && expiry < SESSION_REFRESH_BUFFER)
+              setWillExpireSoon(expiry !== null && expiry < SESSION_REFRESH_BUFFER_MS)
             }
             break
 
@@ -385,7 +382,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
       if (expiry === null) return
 
       // Refresh 5 minutes before expiry
-      const refreshIn = Math.max(0, expiry - SESSION_REFRESH_BUFFER)
+      const refreshIn = Math.max(0, expiry - SESSION_REFRESH_BUFFER_MS)
 
       if (refreshIn > 0) {
         console.log(`[useSession] Scheduling refresh in ${Math.round(refreshIn / 1000)}s`)
@@ -426,10 +423,10 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
       // Update expiry time
       const expiry = getTimeUntilExpiry(state.session)
       setTimeUntilExpiry(expiry)
-      setWillExpireSoon(expiry !== null && expiry < SESSION_REFRESH_BUFFER)
+      setWillExpireSoon(expiry !== null && expiry < SESSION_REFRESH_BUFFER_MS)
     }
 
-    checkTimerRef.current = setInterval(checkSession, SESSION_CHECK_INTERVAL)
+    checkTimerRef.current = setInterval(checkSession, SESSION_CHECK_INTERVAL_MS)
 
     return () => {
       if (checkTimerRef.current) {

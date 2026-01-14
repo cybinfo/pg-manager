@@ -220,3 +220,329 @@ export function validateGST(gst: string): {
 
   return { isValid: true, error: null }
 }
+
+/**
+ * UUID Validator
+ * Validates UUID v4 format (xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx)
+ * Also accepts UUIDs without dashes
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const UUID_NO_DASHES_REGEX = /^[0-9a-f]{32}$/i
+
+export function validateUUID(uuid: string): {
+  isValid: boolean
+  normalized: string | null
+  error: string | null
+} {
+  if (!uuid || typeof uuid !== 'string') {
+    return { isValid: false, normalized: null, error: "UUID is required" }
+  }
+
+  const trimmed = uuid.trim().toLowerCase()
+
+  // Check standard format with dashes
+  if (UUID_REGEX.test(trimmed)) {
+    return { isValid: true, normalized: trimmed, error: null }
+  }
+
+  // Check format without dashes and normalize
+  if (UUID_NO_DASHES_REGEX.test(trimmed)) {
+    const normalized = `${trimmed.slice(0, 8)}-${trimmed.slice(8, 12)}-${trimmed.slice(12, 16)}-${trimmed.slice(16, 20)}-${trimmed.slice(20)}`
+    // Verify it matches UUID v4 pattern after normalization
+    if (UUID_REGEX.test(normalized)) {
+      return { isValid: true, normalized, error: null }
+    }
+  }
+
+  // Provide specific error messages
+  if (trimmed.length < 32) {
+    return { isValid: false, normalized: null, error: "UUID is too short" }
+  }
+  if (trimmed.length > 36) {
+    return { isValid: false, normalized: null, error: "UUID is too long" }
+  }
+
+  return { isValid: false, normalized: null, error: "Invalid UUID format" }
+}
+
+/**
+ * Quick UUID check (non-strict, accepts any valid-looking UUID)
+ * Useful for quick validation where strict v4 compliance isn't required
+ */
+const UUID_LOOSE_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export function isValidUUID(uuid: string): boolean {
+  if (!uuid || typeof uuid !== 'string') return false
+  return UUID_LOOSE_REGEX.test(uuid.trim())
+}
+
+/**
+ * Date Range Validator
+ * Validates that start date is before end date
+ * Optionally validates against min/max bounds
+ */
+export function validateDateRange(
+  startDate: string | Date,
+  endDate: string | Date,
+  options: {
+    allowSameDay?: boolean
+    minDate?: string | Date
+    maxDate?: string | Date
+    startLabel?: string
+    endLabel?: string
+  } = {}
+): {
+  isValid: boolean
+  error: string | null
+} {
+  const {
+    allowSameDay = true,
+    minDate,
+    maxDate,
+    startLabel = "Start date",
+    endLabel = "End date",
+  } = options
+
+  // Parse dates
+  const start = startDate instanceof Date ? startDate : new Date(startDate)
+  const end = endDate instanceof Date ? endDate : new Date(endDate)
+
+  // Validate dates are valid
+  if (isNaN(start.getTime())) {
+    return { isValid: false, error: `${startLabel} is invalid` }
+  }
+  if (isNaN(end.getTime())) {
+    return { isValid: false, error: `${endLabel} is invalid` }
+  }
+
+  // Compare dates (at day level for date-only comparison)
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+
+  if (allowSameDay) {
+    if (startDay > endDay) {
+      return { isValid: false, error: `${startLabel} must be on or before ${endLabel.toLowerCase()}` }
+    }
+  } else {
+    if (startDay >= endDay) {
+      return { isValid: false, error: `${startLabel} must be before ${endLabel.toLowerCase()}` }
+    }
+  }
+
+  // Validate against min/max bounds
+  if (minDate) {
+    const min = minDate instanceof Date ? minDate : new Date(minDate)
+    if (!isNaN(min.getTime()) && startDay < min) {
+      return { isValid: false, error: `${startLabel} cannot be before ${min.toLocaleDateString()}` }
+    }
+  }
+
+  if (maxDate) {
+    const max = maxDate instanceof Date ? maxDate : new Date(maxDate)
+    if (!isNaN(max.getTime()) && endDay > max) {
+      return { isValid: false, error: `${endLabel} cannot be after ${max.toLocaleDateString()}` }
+    }
+  }
+
+  return { isValid: true, error: null }
+}
+
+/**
+ * Single Date Validator
+ * Validates a date string or Date object
+ */
+export function validateDate(
+  date: string | Date | null | undefined,
+  options: {
+    required?: boolean
+    minDate?: string | Date
+    maxDate?: string | Date
+    label?: string
+  } = {}
+): {
+  isValid: boolean
+  parsed: Date | null
+  error: string | null
+} {
+  const { required = true, minDate, maxDate, label = "Date" } = options
+
+  if (!date) {
+    if (required) {
+      return { isValid: false, parsed: null, error: `${label} is required` }
+    }
+    return { isValid: true, parsed: null, error: null }
+  }
+
+  const parsed = date instanceof Date ? date : new Date(date)
+
+  if (isNaN(parsed.getTime())) {
+    return { isValid: false, parsed: null, error: `${label} is invalid` }
+  }
+
+  if (minDate) {
+    const min = minDate instanceof Date ? minDate : new Date(minDate)
+    if (!isNaN(min.getTime()) && parsed < min) {
+      return { isValid: false, parsed: null, error: `${label} cannot be before ${min.toLocaleDateString()}` }
+    }
+  }
+
+  if (maxDate) {
+    const max = maxDate instanceof Date ? maxDate : new Date(maxDate)
+    if (!isNaN(max.getTime()) && parsed > max) {
+      return { isValid: false, parsed: null, error: `${label} cannot be after ${max.toLocaleDateString()}` }
+    }
+  }
+
+  return { isValid: true, parsed, error: null }
+}
+
+/**
+ * Amount/Currency Validator
+ * Validates monetary amounts with various constraints
+ */
+export function validateAmount(
+  amount: number | string | null | undefined,
+  options: {
+    required?: boolean
+    min?: number
+    max?: number
+    allowZero?: boolean
+    allowNegative?: boolean
+    maxDecimals?: number
+    label?: string
+  } = {}
+): {
+  isValid: boolean
+  value: number | null
+  error: string | null
+} {
+  const {
+    required = true,
+    min,
+    max,
+    allowZero = true,
+    allowNegative = false,
+    maxDecimals = 2,
+    label = "Amount",
+  } = options
+
+  // Handle null/undefined
+  if (amount === null || amount === undefined || amount === '') {
+    if (required) {
+      return { isValid: false, value: null, error: `${label} is required` }
+    }
+    return { isValid: true, value: null, error: null }
+  }
+
+  // Parse to number
+  const value = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, '')) : amount
+
+  if (isNaN(value)) {
+    return { isValid: false, value: null, error: `${label} must be a valid number` }
+  }
+
+  // Check negative
+  if (!allowNegative && value < 0) {
+    return { isValid: false, value: null, error: `${label} cannot be negative` }
+  }
+
+  // Check zero
+  if (!allowZero && value === 0) {
+    return { isValid: false, value: null, error: `${label} cannot be zero` }
+  }
+
+  // Check minimum
+  if (min !== undefined && value < min) {
+    return { isValid: false, value: null, error: `${label} must be at least ${min}` }
+  }
+
+  // Check maximum
+  if (max !== undefined && value > max) {
+    return { isValid: false, value: null, error: `${label} cannot exceed ${max}` }
+  }
+
+  // Check decimal places
+  const decimalPart = value.toString().split('.')[1]
+  if (decimalPart && decimalPart.length > maxDecimals) {
+    return { isValid: false, value: null, error: `${label} cannot have more than ${maxDecimals} decimal places` }
+  }
+
+  return { isValid: true, value, error: null }
+}
+
+/**
+ * Positive Amount Validator (convenience function)
+ * Validates that an amount is positive (greater than zero)
+ */
+export function validatePositiveAmount(
+  amount: number | string | null | undefined,
+  label = "Amount"
+): {
+  isValid: boolean
+  value: number | null
+  error: string | null
+} {
+  return validateAmount(amount, {
+    required: true,
+    allowZero: false,
+    allowNegative: false,
+    label,
+  })
+}
+
+/**
+ * Non-negative Amount Validator (convenience function)
+ * Validates that an amount is zero or positive
+ */
+export function validateNonNegativeAmount(
+  amount: number | string | null | undefined,
+  label = "Amount"
+): {
+  isValid: boolean
+  value: number | null
+  error: string | null
+} {
+  return validateAmount(amount, {
+    required: true,
+    allowZero: true,
+    allowNegative: false,
+    label,
+  })
+}
+
+/**
+ * Percentage Validator
+ * Validates that a value is a valid percentage (0-100)
+ */
+export function validatePercentage(
+  value: number | string | null | undefined,
+  options: {
+    required?: boolean
+    allowDecimals?: boolean
+    label?: string
+  } = {}
+): {
+  isValid: boolean
+  value: number | null
+  error: string | null
+} {
+  const { required = true, allowDecimals = true, label = "Percentage" } = options
+
+  const result = validateAmount(value, {
+    required,
+    min: 0,
+    max: 100,
+    allowZero: true,
+    allowNegative: false,
+    maxDecimals: allowDecimals ? 2 : 0,
+    label,
+  })
+
+  if (!result.isValid) return result
+
+  if (!allowDecimals && result.value !== null && !Number.isInteger(result.value)) {
+    return { isValid: false, value: null, error: `${label} must be a whole number` }
+  }
+
+  return result
+}

@@ -34,17 +34,19 @@ export function PermissionGuard({
   const permissions = Array.isArray(permission) ? permission : [permission]
   const hasAccess = isOwner || hasAnyPermission(permissions)
 
-  // Debug logging
-  console.log('[PermissionGuard] Checking access:', {
-    permission,
-    isOwner,
-    isStaff,
-    isTenant,
-    contextType: currentContext?.context_type,
-    contextPermissions: currentContext?.permissions,
-    hasAccess,
-    isLoading,
-  })
+  // Debug logging only in development
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line no-console
+    console.debug('[PermissionGuard] Checking access:', {
+      permission,
+      isOwner,
+      isStaff,
+      isTenant,
+      contextType: currentContext?.context_type,
+      hasAccess,
+      isLoading,
+    })
+  }
 
   useEffect(() => {
     if (!isLoading && !hasAccess) {

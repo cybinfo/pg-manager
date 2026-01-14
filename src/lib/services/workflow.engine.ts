@@ -118,17 +118,64 @@ export interface WorkflowDefinition<TInput, TOutput> {
   buildOutput: (results: Record<string, unknown>) => TOutput
 }
 
-// BL-009: In-memory idempotency cache to prevent duplicate workflow execution
-const idempotencyCache = new Map<string, { result: WorkflowResult<unknown>; timestamp: number }>()
-const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000 // 5 minutes
+// BL-009: Database-backed idempotency to prevent duplicate workflow execution
+// This replaces the in-memory cache which didn't work across serverless instances
+const IDEMPOTENCY_TTL_MINUTES = 5
 
-// Clean up expired idempotency entries periodically
-function cleanIdempotencyCache() {
-  const now = Date.now()
-  for (const [key, value] of idempotencyCache.entries()) {
-    if (now - value.timestamp > IDEMPOTENCY_TTL_MS) {
-      idempotencyCache.delete(key)
+// Check idempotency using database (works across all instances)
+async function checkIdempotency(
+  key: string,
+  actorId: string
+): Promise<{ isDuplicate: boolean; cachedResult: WorkflowResult<unknown> | null }> {
+  try {
+    const supabase = createClient()
+    const { data, error } = await supabase.rpc('check_idempotency_key', {
+      p_key: key,
+      p_workflow_name: 'workflow',
+      p_actor_id: actorId,
+      p_workspace_id: null,
+      p_ttl_minutes: IDEMPOTENCY_TTL_MINUTES,
+    })
+
+    if (error) {
+      // If RPC doesn't exist, fall back gracefully (no idempotency check)
+      console.warn('[Workflow] Idempotency check failed (RPC may not exist):', error.message)
+      return { isDuplicate: false, cachedResult: null }
     }
+
+    const result = data?.[0]
+    if (result?.is_duplicate) {
+      return { isDuplicate: true, cachedResult: result.cached_result as WorkflowResult<unknown> }
+    }
+
+    return { isDuplicate: false, cachedResult: null }
+  } catch (err) {
+    console.warn('[Workflow] Idempotency check error:', err)
+    return { isDuplicate: false, cachedResult: null }
+  }
+}
+
+// Store idempotency result in database
+async function storeIdempotencyResult(
+  key: string,
+  workflowName: string,
+  result: WorkflowResult<unknown>,
+  actorId: string,
+  workspaceId: string
+): Promise<void> {
+  try {
+    const supabase = createClient()
+    await supabase.rpc('store_idempotency_result', {
+      p_key: key,
+      p_workflow_name: workflowName,
+      p_result: result,
+      p_actor_id: actorId,
+      p_workspace_id: workspaceId || null,
+      p_ttl_minutes: IDEMPOTENCY_TTL_MINUTES,
+    })
+  } catch (err) {
+    // Non-fatal - just log and continue
+    console.warn('[Workflow] Failed to store idempotency result:', err)
   }
 }
 
@@ -145,15 +192,15 @@ export async function executeWorkflow<TInput, TOutput>(
     idempotency_key?: string // BL-009: Optional idempotency key to prevent duplicate execution
   }
 ): Promise<WorkflowResult<TOutput>> {
-  // BL-009: Check idempotency cache
+  // BL-009: Check database-backed idempotency
   if (options?.idempotency_key) {
-    cleanIdempotencyCache()
-    const cached = idempotencyCache.get(options.idempotency_key)
-    if (cached) {
+    const { isDuplicate, cachedResult } = await checkIdempotency(options.idempotency_key, actorId)
+    if (isDuplicate && cachedResult) {
       console.log(`[Workflow] Returning cached result for idempotency key: ${options.idempotency_key}`)
-      return cached.result as WorkflowResult<TOutput>
+      return cachedResult as WorkflowResult<TOutput>
     }
   }
+
   const context = createWorkflowContext(
     definition.name,
     actorId,
@@ -289,9 +336,15 @@ export async function executeWorkflow<TInput, TOutput>(
       : undefined,
   }
 
-  // BL-009: Cache result for idempotency
+  // BL-009: Store result in database for idempotency (async, non-blocking)
   if (options?.idempotency_key) {
-    idempotencyCache.set(options.idempotency_key, { result, timestamp: Date.now() })
+    storeIdempotencyResult(
+      options.idempotency_key,
+      definition.name,
+      result,
+      actorId,
+      workspaceId
+    ).catch(err => console.warn('[Workflow] Idempotency store failed:', err))
   }
 
   return result
