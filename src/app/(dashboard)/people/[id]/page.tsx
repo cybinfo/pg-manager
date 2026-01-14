@@ -55,6 +55,24 @@ import {
   GENDER_LABELS,
 } from "@/types/people.types"
 
+// Staff history type
+interface PersonStaffHistory {
+  id: string
+  is_active: boolean
+  created_at: string
+  user_id: string | null
+}
+
+// Timeline event type
+interface TimelineEvent {
+  id: string
+  type: "tenant_join" | "tenant_leave" | "staff_join" | "staff_leave" | "visit" | "verified" | "blocked"
+  date: string
+  title: string
+  subtitle?: string
+  metadata?: Record<string, unknown>
+}
+
 // ============================================
 // Tag Badge Component
 // ============================================
@@ -95,7 +113,9 @@ export default function PersonDetailPage() {
   const [loading, setLoading] = useState(true)
   const [person, setPerson] = useState<Person | null>(null)
   const [tenantHistory, setTenantHistory] = useState<PersonTenantHistory[]>([])
+  const [staffHistory, setStaffHistory] = useState<PersonStaffHistory[]>([])
   const [visitHistory, setVisitHistory] = useState<PersonVisitHistory[]>([])
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [summary, setSummary] = useState({
     total_stays: 0,
     total_visits: 0,
@@ -201,14 +221,20 @@ export default function PersonDetailPage() {
         }
       }
 
+      // Fetch staff history
+      const { data: staffRecords } = await supabase
+        .from("staff_members")
+        .select("id, is_active, created_at, user_id")
+        .eq("person_id", params.id)
+        .order("created_at", { ascending: false })
+
+      if (staffRecords) {
+        setStaffHistory(staffRecords)
+      }
+
       // Calculate summary
       const currentTenant = tenants?.some((t: { status: string }) => t.status === "active")
-      const { data: staffData } = await supabase
-        .from("staff_members")
-        .select("id")
-        .eq("person_id", params.id)
-        .eq("is_active", true)
-        .single()
+      const activeStaff = staffRecords?.some((s: { is_active: boolean }) => s.is_active)
 
       const { data: visitCount } = await supabase
         .from("visitor_contacts")
@@ -220,14 +246,151 @@ export default function PersonDetailPage() {
         total_stays: tenants?.length || 0,
         total_visits: visitCount?.visit_count || 0,
         is_current_tenant: currentTenant || false,
-        is_staff: !!staffData,
+        is_staff: activeStaff || false,
       })
+
+      // Build unified timeline
+      const timelineEvents: TimelineEvent[] = []
+
+      // Add tenant events
+      if (tenants) {
+        tenants.forEach((t: {
+          id: string
+          check_in_date: string
+          check_out_date: string | null
+          status: string
+          property: { name: string }[] | null
+          room: { room_number: string }[] | null
+        }) => {
+          const propertyName = Array.isArray(t.property) ? t.property[0]?.name : (t.property as { name: string } | null)?.name || "Unknown"
+          const roomNumber = Array.isArray(t.room) ? t.room[0]?.room_number : (t.room as { room_number: string } | null)?.room_number || "Unknown"
+
+          timelineEvents.push({
+            id: `tenant_join_${t.id}`,
+            type: "tenant_join",
+            date: t.check_in_date,
+            title: "Joined as Tenant",
+            subtitle: `${propertyName} - Room ${roomNumber}`,
+          })
+
+          if (t.check_out_date) {
+            timelineEvents.push({
+              id: `tenant_leave_${t.id}`,
+              type: "tenant_leave",
+              date: t.check_out_date,
+              title: "Checked Out",
+              subtitle: `${propertyName} - Room ${roomNumber}`,
+            })
+          }
+        })
+      }
+
+      // Add staff events
+      if (staffRecords) {
+        staffRecords.forEach((s: { id: string; created_at: string; is_active: boolean }) => {
+          timelineEvents.push({
+            id: `staff_join_${s.id}`,
+            type: "staff_join",
+            date: s.created_at,
+            title: "Added as Staff",
+            subtitle: s.is_active ? "Currently Active" : "No longer active",
+          })
+        })
+      }
+
+      // Add verification event
+      if (personData.verified_at) {
+        timelineEvents.push({
+          id: "verified",
+          type: "verified",
+          date: personData.verified_at,
+          title: "Identity Verified",
+          subtitle: "Documents verified successfully",
+        })
+      }
+
+      // Add blocked event
+      if (personData.is_blocked && personData.blocked_at) {
+        timelineEvents.push({
+          id: "blocked",
+          type: "blocked",
+          date: personData.blocked_at,
+          title: "Account Blocked",
+          subtitle: personData.blocked_reason || "No reason provided",
+        })
+      }
+
+      // Sort timeline by date (newest first)
+      timelineEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      setTimeline(timelineEvents)
 
       setLoading(false)
     }
 
     fetchPerson()
   }, [params.id, router])
+
+  // Handle verify person
+  const handleVerify = async () => {
+    if (!person) return
+
+    const supabase = createClient()
+    const { error } = await supabase.rpc("verify_person", { p_person_id: person.id })
+
+    if (error) {
+      console.error("Error verifying person:", error)
+      toast.error("Failed to verify person")
+      return
+    }
+
+    toast.success("Person verified successfully")
+    setPerson({ ...person, is_verified: true, verified_at: new Date().toISOString() })
+  }
+
+  // Handle block person
+  const handleBlock = async () => {
+    if (!person) return
+
+    const reason = window.prompt("Enter reason for blocking this person:")
+    if (reason === null) return // User cancelled
+
+    const supabase = createClient()
+    const { error } = await supabase.rpc("block_person", {
+      p_person_id: person.id,
+      p_reason: reason || "No reason provided",
+    })
+
+    if (error) {
+      console.error("Error blocking person:", error)
+      toast.error("Failed to block person")
+      return
+    }
+
+    toast.success("Person blocked successfully")
+    setPerson({
+      ...person,
+      is_blocked: true,
+      blocked_at: new Date().toISOString(),
+      blocked_reason: reason || "No reason provided",
+    })
+  }
+
+  // Handle unblock person
+  const handleUnblock = async () => {
+    if (!person) return
+
+    const supabase = createClient()
+    const { error } = await supabase.rpc("unblock_person", { p_person_id: person.id })
+
+    if (error) {
+      console.error("Error unblocking person:", error)
+      toast.error("Failed to unblock person")
+      return
+    }
+
+    toast.success("Person unblocked successfully")
+    setPerson({ ...person, is_blocked: false, blocked_at: null, blocked_reason: null })
+  }
 
   if (loading) {
     return <PageLoader />
@@ -624,6 +787,71 @@ export default function PersonDetailPage() {
           </Card>
         )}
 
+        {/* Staff History */}
+        {staffHistory.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Briefcase className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle>Staff History</CardTitle>
+                  <CardDescription>
+                    {staffHistory.length} staff record{staffHistory.length > 1 ? "s" : ""}
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {staffHistory.map((staff) => (
+                  <Link
+                    key={staff.id}
+                    href={`/staff/${staff.id}`}
+                    className="block p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                          staff.is_active ? "bg-green-100" : "bg-slate-100"
+                        }`}>
+                          <Briefcase className={`h-5 w-5 ${
+                            staff.is_active ? "text-green-600" : "text-slate-600"
+                          }`} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Staff Member</span>
+                            {staff.is_active && (
+                              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                Active
+                              </span>
+                            )}
+                            {!staff.is_active && (
+                              <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+                                Inactive
+                              </span>
+                            )}
+                            {staff.user_id && (
+                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                Can Login
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Added {formatDate(staff.created_at)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Visit History */}
         {visitHistory.length > 0 && (
           <Card>
@@ -699,35 +927,165 @@ export default function PersonDetailPage() {
           </Card>
         )}
 
+        {/* Activity Timeline */}
+        {timeline.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Clock className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Activity Timeline</CardTitle>
+                  <CardDescription>Complete history of this person&apos;s journey</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="relative">
+                {/* Vertical line */}
+                <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-border" />
+
+                <div className="space-y-4">
+                  {timeline.map((event, index) => {
+                    const getEventIcon = () => {
+                      switch (event.type) {
+                        case "tenant_join":
+                          return <Home className="h-4 w-4 text-blue-600" />
+                        case "tenant_leave":
+                          return <Home className="h-4 w-4 text-slate-500" />
+                        case "staff_join":
+                          return <Briefcase className="h-4 w-4 text-green-600" />
+                        case "staff_leave":
+                          return <Briefcase className="h-4 w-4 text-slate-500" />
+                        case "visit":
+                          return <UserCircle className="h-4 w-4 text-purple-600" />
+                        case "verified":
+                          return <BadgeCheck className="h-4 w-4 text-emerald-600" />
+                        case "blocked":
+                          return <Ban className="h-4 w-4 text-red-600" />
+                        default:
+                          return <Clock className="h-4 w-4 text-slate-500" />
+                      }
+                    }
+
+                    const getEventBg = () => {
+                      switch (event.type) {
+                        case "tenant_join":
+                          return "bg-blue-100"
+                        case "tenant_leave":
+                          return "bg-slate-100"
+                        case "staff_join":
+                          return "bg-green-100"
+                        case "staff_leave":
+                          return "bg-slate-100"
+                        case "visit":
+                          return "bg-purple-100"
+                        case "verified":
+                          return "bg-emerald-100"
+                        case "blocked":
+                          return "bg-red-100"
+                        default:
+                          return "bg-slate-100"
+                      }
+                    }
+
+                    return (
+                      <div key={event.id} className="relative flex items-start gap-4 pl-2">
+                        <div className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${getEventBg()}`}>
+                          {getEventIcon()}
+                        </div>
+                        <div className="flex-1 pt-0.5">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium">{event.title}</p>
+                            <p className="text-sm text-muted-foreground">{formatDate(event.date)}</p>
+                          </div>
+                          {event.subtitle && (
+                            <p className="text-sm text-muted-foreground">{event.subtitle}</p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Quick Actions */}
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {!person.tags?.includes("tenant") && (
-                <Link href={`/tenants/new?person_id=${person.id}`}>
-                  <Button variant="outline">
-                    <Home className="mr-2 h-4 w-4" />
-                    Add as Tenant
-                  </Button>
-                </Link>
-              )}
-              <Link href={`/visitors/new?person_id=${person.id}`}>
-                <Button variant="outline">
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  Check In as Visitor
-                </Button>
-              </Link>
-              {!person.tags?.includes("staff") && (
-                <Link href={`/staff/new?person_id=${person.id}`}>
-                  <Button variant="outline">
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    Add as Staff
-                  </Button>
-                </Link>
-              )}
+            <div className="space-y-4">
+              {/* Role Actions */}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Add to Role</p>
+                <div className="flex flex-wrap gap-3">
+                  {!person.tags?.includes("tenant") && !person.is_blocked && (
+                    <Link href={`/tenants/new?person_id=${person.id}`}>
+                      <Button variant="outline">
+                        <Home className="mr-2 h-4 w-4" />
+                        Add as Tenant
+                      </Button>
+                    </Link>
+                  )}
+                  {!person.is_blocked && (
+                    <Link href={`/visitors/new?person_id=${person.id}`}>
+                      <Button variant="outline">
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        Check In as Visitor
+                      </Button>
+                    </Link>
+                  )}
+                  {!person.tags?.includes("staff") && !person.is_blocked && (
+                    <Link href={`/staff/new?person_id=${person.id}`}>
+                      <Button variant="outline">
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        Add as Staff
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              {/* Verification & Status Actions */}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Verification & Status</p>
+                <div className="flex flex-wrap gap-3">
+                  {!person.is_verified && (
+                    <PermissionGate permission="tenants.update" hide>
+                      <Button variant="outline" onClick={handleVerify}>
+                        <BadgeCheck className="mr-2 h-4 w-4 text-emerald-600" />
+                        Verify Identity
+                      </Button>
+                    </PermissionGate>
+                  )}
+                  {person.is_verified && (
+                    <Button variant="outline" disabled>
+                      <BadgeCheck className="mr-2 h-4 w-4 text-emerald-600" />
+                      Identity Verified
+                    </Button>
+                  )}
+                  {!person.is_blocked ? (
+                    <PermissionGate permission="tenants.update" hide>
+                      <Button variant="outline" onClick={handleBlock} className="text-red-600 hover:text-red-700">
+                        <Ban className="mr-2 h-4 w-4" />
+                        Block Person
+                      </Button>
+                    </PermissionGate>
+                  ) : (
+                    <PermissionGate permission="tenants.update" hide>
+                      <Button variant="outline" onClick={handleUnblock} className="text-green-600 hover:text-green-700">
+                        <Shield className="mr-2 h-4 w-4" />
+                        Unblock Person
+                      </Button>
+                    </PermissionGate>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
