@@ -87,11 +87,19 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
           }
         }
 
-        // Use direct fetch to avoid Supabase client hanging issues
+        // WF-006: Direct REST API calls with AbortController timeout
+        // Using fetch instead of Supabase client to avoid connection hanging
+        // in long-running workflow contexts. This is a known pattern for
+        // workflow steps that need reliable timeout behavior.
+        // The Supabase client can be revisited once connection pooling is improved.
         const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
         const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         // Use user's access token for RLS context, fallback to anon key
         const authToken = (context.metadata?.accessToken as string) || apiKey
+
+        // WF-006: Add timeout to prevent indefinite hanging
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
 
         workflowLogger.debug("[Exit] validate_tenant starting", { tenantId: input.tenant_id, hasAccessToken: !!context.metadata?.accessToken })
 
@@ -104,7 +112,8 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
               'apikey': apiKey,
               'Authorization': `Bearer ${authToken}`,
               'Content-Type': 'application/json',
-            }
+            },
+            signal: controller.signal,
           })
 
           const tenantData = await tenantResponse.json()
@@ -135,7 +144,8 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
               'apikey': apiKey,
               'Authorization': `Bearer ${authToken}`,
               'Content-Type': 'application/json',
-            }
+            },
+            signal: controller.signal,
           })
           const clearanceData = await clearanceResponse.json()
           workflowLogger.debug("[Exit] Existing clearance check complete", { hasExisting: Array.isArray(clearanceData) && clearanceData.length > 0 })
@@ -146,8 +156,17 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
             )
           }
 
+          clearTimeout(timeoutId)
           return createSuccessResult(tenant)
         } catch (err) {
+          clearTimeout(timeoutId)
+          // WF-006: Handle timeout abort specifically
+          if (err instanceof Error && err.name === 'AbortError') {
+            workflowLogger.error("[Exit] validate_tenant timeout", { tenantId: input.tenant_id })
+            return createErrorResult(
+              createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Request timed out while validating tenant")
+            )
+          }
           workflowLogger.error("[Exit] validate_tenant error", { error: err instanceof Error ? err.message : String(err) })
           return createErrorResult(
             createServiceError(ERROR_CODES.NOT_FOUND, "Failed to validate tenant")
@@ -253,10 +272,14 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
         const settlement = previousResults.calculate_settlement as Record<string, unknown>
         const tenant = previousResults.validate_tenant as Record<string, unknown>
 
-        // Use direct fetch with access token for RLS
+        // WF-006: Use direct fetch with timeout for reliable workflow execution
         const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
         const apiKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
         const authToken = (context.metadata?.accessToken as string) || apiKey
+
+        // WF-006: Add timeout to prevent indefinite hanging
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
 
         // Map to actual table columns
         const clearanceData = {
@@ -276,29 +299,43 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
 
         workflowLogger.debug("[Exit] Creating exit_clearance", { tenantId: input.tenant_id, settlementStatus: clearanceData.settlement_status })
 
-        const response = await fetch(`${baseUrl}/rest/v1/exit_clearance?select=*`, {
-          method: 'POST',
-          headers: {
-            'apikey': apiKey,
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation',
-          },
-          body: JSON.stringify(clearanceData),
-        })
+        try {
+          const response = await fetch(`${baseUrl}/rest/v1/exit_clearance?select=*`, {
+            method: 'POST',
+            headers: {
+              'apikey': apiKey,
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation',
+            },
+            body: JSON.stringify(clearanceData),
+            signal: controller.signal,
+          })
 
-        const responseData = await response.json()
-        workflowLogger.debug("[Exit] Create clearance response", { status: response.status, hasData: !!responseData })
+          const responseData = await response.json()
+          clearTimeout(timeoutId)
+          workflowLogger.debug("[Exit] Create clearance response", { status: response.status, hasData: !!responseData })
 
-        if (!response.ok) {
-          return createErrorResult(
-            createServiceError(ERROR_CODES.UNKNOWN_ERROR, `Failed to create exit clearance: ${responseData.message || response.statusText}`, { error: responseData })
-          )
+          if (!response.ok) {
+            return createErrorResult(
+              createServiceError(ERROR_CODES.UNKNOWN_ERROR, `Failed to create exit clearance: ${responseData.message || response.statusText}`, { error: responseData })
+            )
+          }
+
+          // Response is an array when using Prefer: return=representation
+          const clearance = Array.isArray(responseData) ? responseData[0] : responseData
+          return createSuccessResult(clearance)
+        } catch (err) {
+          clearTimeout(timeoutId)
+          // WF-006: Handle timeout abort specifically
+          if (err instanceof Error && err.name === 'AbortError') {
+            workflowLogger.error("[Exit] create_clearance_record timeout", { tenantId: input.tenant_id })
+            return createErrorResult(
+              createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Request timed out while creating clearance record")
+            )
+          }
+          throw err
         }
-
-        // Response is an array when using Prefer: return=representation
-        const clearance = Array.isArray(responseData) ? responseData[0] : responseData
-        return createSuccessResult(clearance)
       },
       rollback: async (context, input, stepResult) => {
         const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

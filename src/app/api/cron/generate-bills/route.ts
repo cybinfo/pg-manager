@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import { cronLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { timingSafeEqual } from "@/lib/csrf"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { apiSuccess, apiError, unauthorized, internalError, ErrorCodes } from "@/lib/api-response"
@@ -38,8 +39,10 @@ export async function GET(request: Request) {
     }
 
     // Verify cron secret
+    // SEC-001: Use constant-time comparison to prevent timing attacks
     const authHeader = request.headers.get("authorization")
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const expectedSecret = `Bearer ${process.env.CRON_SECRET}`
+    if (!timingSafeEqual(authHeader, expectedSecret)) {
       return unauthorized("Invalid cron secret")
     }
 

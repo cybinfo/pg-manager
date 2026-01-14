@@ -135,8 +135,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (Array.isArray(data)) {
         return data as ContextWithDetails[]
       }
+      // UTIL-002: Log unexpected response format
+      console.warn('[Auth] fetchContexts: unexpected response format', { data })
       return []
-    } catch {
+    } catch (err) {
+      // UTIL-002: Log fetch errors for debugging (was silent before)
+      console.error('[Auth] fetchContexts failed:', err)
       return []
     }
   }, [])
@@ -159,8 +163,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (Array.isArray(data) && data.length > 0) {
         return data[0] as UserProfile
       }
+      // UTIL-002: Log when profile not found (vs. fetch error)
+      if (Array.isArray(data) && data.length === 0) {
+        console.warn('[Auth] fetchProfile: no profile found for user', { userId })
+      } else {
+        console.warn('[Auth] fetchProfile: unexpected response format', { data })
+      }
       return null
-    } catch {
+    } catch (err) {
+      // UTIL-002: Log fetch errors for debugging (was silent before)
+      console.error('[Auth] fetchProfile failed:', err)
       return null
     }
   }, [])
@@ -371,8 +383,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const data = await response.json()
 
       // Check if user exists in platform_admins
-      return Array.isArray(data) && data.length > 0
-    } catch {
+      if (Array.isArray(data)) {
+        return data.length > 0
+      }
+      // UTIL-002: Log unexpected response format
+      console.warn('[Auth] checkPlatformAdmin: unexpected response format', { data })
+      return false
+    } catch (err) {
+      // UTIL-002: Log fetch errors for debugging (was silent before)
+      console.error('[Auth] checkPlatformAdmin failed:', err)
       return false
     }
   }, [])

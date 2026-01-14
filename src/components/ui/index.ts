@@ -27,7 +27,6 @@ export {
   FormField,
   Select,
   CurrencyInput,
-  PhoneInput,
   EmailInput,
   DateInput,
   SearchInput,
@@ -35,6 +34,9 @@ export {
   FormSection,
   ToggleSwitch,
 } from "./form-components"
+
+// UI-001: Consolidated phone input components
+export { PhoneInput, SimplePhoneInput } from "./phone-input"
 
 // Combobox Components (searchable dropdowns)
 export { Combobox, MultiCombobox, AsyncCombobox } from "./combobox"

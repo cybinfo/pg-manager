@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { useAuth, useCurrentContext } from "@/lib/auth"
+import { PermissionGuard } from "@/components/auth/permission-guard"
 import Link from "next/link"
 import {
   BarChart,
@@ -348,7 +349,19 @@ export default function DashboardPage() {
     return null
   }
 
+  // AUTH-001: Dashboard accessible to staff with any core permission
+  // Content is filtered per-permission basis inside the page
   return (
+    <PermissionGuard
+      permission={[
+        "properties.view",
+        "tenants.view",
+        "payments.view",
+        "bills.view",
+        "rooms.view",
+        "reports.view",
+      ]}
+    >
     <div className="space-y-6">
       {/* Welcome header with greeting */}
       <div className="flex items-center justify-between">
@@ -644,5 +657,6 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+    </PermissionGuard>
   )
 }

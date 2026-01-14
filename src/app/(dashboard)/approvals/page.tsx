@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+// ARCH-001: Use centralized useListPage hook for data fetching
+import { useListPage, ListPageConfig, GroupByOption, MetricConfig } from "@/lib/hooks/useListPage"
 
 interface AttachedDocument {
   id: string
@@ -86,8 +88,8 @@ const PRIORITY_COLORS: Record<string, string> = {
   urgent: "bg-rose-100 text-rose-700",
 }
 
-// Group by options for approvals
-const approvalGroupByOptions = [
+// ARCH-001: Group by options for approvals (using useListPage pattern)
+const approvalGroupByOptions: GroupByOption[] = [
   { value: "type_label", label: "Type" },
   { value: "status", label: "Status" },
   { value: "priority_label", label: "Priority" },
@@ -97,9 +99,74 @@ const approvalGroupByOptions = [
   { value: "created_year", label: "Year" },
 ]
 
+// ARCH-001: Centralized config for approvals list
+const APPROVAL_CONFIG: ListPageConfig<Approval> = {
+  table: "approvals",
+  select: `
+    *,
+    requester_tenant:tenants(id, name, phone, user_id)
+  `,
+  defaultOrderBy: "created_at",
+  defaultOrderDirection: "desc",
+  searchFields: ["title", "type"],
+  joinFields: ["requester_tenant"],
+  computedFields: (item: Record<string, unknown>) => {
+    const date = new Date(item.created_at as string)
+    return {
+      type_label: TYPE_LABELS[item.type as keyof typeof TYPE_LABELS] || item.type,
+      priority_label: (item.priority as string)?.charAt(0).toUpperCase() + (item.priority as string)?.slice(1),
+      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_year: date.getFullYear().toString(),
+      has_docs_label: (item.document_ids && (item.document_ids as string[]).length > 0) ? "With Documents" : "No Documents",
+    }
+  },
+}
+
+// ARCH-001: Metrics config for approvals
+const approvalMetrics: MetricConfig<Approval>[] = [
+  {
+    id: "pending",
+    label: "Pending",
+    icon: Clock,
+    compute: (items) => items.filter(a => a.status === "pending").length,
+  },
+  {
+    id: "approved",
+    label: "Approved",
+    icon: CheckCircle,
+    compute: (items) => items.filter(a => a.status === "approved").length,
+  },
+  {
+    id: "rejected",
+    label: "Rejected",
+    icon: XCircle,
+    compute: (items) => items.filter(a => a.status === "rejected").length,
+  },
+  {
+    id: "urgent",
+    label: "Urgent",
+    icon: AlertTriangle,
+    compute: (items) => items.filter(a => a.status === "pending" && a.priority === "urgent").length,
+    highlight: (value) => Number(value) > 0,
+  },
+]
+
 export default function ApprovalsPage() {
-  const [loading, setLoading] = useState(true)
-  const [approvals, setApprovals] = useState<Approval[]>([])
+  // ARCH-001: Use centralized hook for data fetching
+  const {
+    data: approvals,
+    loading,
+    selectedGroups,
+    setSelectedGroups,
+    metricsData,
+    refetch,
+  } = useListPage<Approval>({
+    config: APPROVAL_CONFIG,
+    groupByOptions: approvalGroupByOptions,
+    metrics: approvalMetrics,
+  })
+
+  // Local state for custom UI elements
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null)
   const [attachedDocs, setAttachedDocs] = useState<AttachedDocument[]>([])
   const [loadingDocs, setLoadingDocs] = useState(false)
@@ -107,48 +174,7 @@ export default function ApprovalsPage() {
   const [processing, setProcessing] = useState(false)
   const [decisionNotes, setDecisionNotes] = useState("")
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending")
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false)
-
-  useEffect(() => {
-    fetchApprovals()
-  }, [])
-
-  const fetchApprovals = async () => {
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-      .from("approvals")
-      .select(`
-        *,
-        requester_tenant:tenants(id, name, phone, user_id)
-      `)
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error("Error fetching approvals:", error)
-      toast.error("Failed to load approvals")
-    } else {
-      // Transform Supabase array joins
-      const transformed = (data || []).map((a: Record<string, unknown>) => {
-        const date = new Date(a.created_at as string)
-        return {
-          ...a,
-          requester_tenant: Array.isArray(a.requester_tenant)
-            ? a.requester_tenant[0]
-            : a.requester_tenant,
-          type_label: TYPE_LABELS[a.type as keyof typeof TYPE_LABELS] || a.type,
-          priority_label: (a.priority as string).charAt(0).toUpperCase() + (a.priority as string).slice(1),
-          created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-          created_year: date.getFullYear().toString(),
-          has_docs_label: (a.document_ids && (a.document_ids as string[]).length > 0) ? "With Documents" : "No Documents",
-        }
-      }) as Approval[]
-      setApprovals(transformed)
-    }
-
-    setLoading(false)
-  }
 
   const fetchAttachedDocuments = async (docIds: string[]) => {
     if (!docIds || docIds.length === 0) {
@@ -222,7 +248,8 @@ export default function ApprovalsPage() {
             toast.warning("Request approved but login email needs manual update in Supabase")
           } else {
             toast.success("Request approved and email updated everywhere!")
-            fetchApprovals()
+            // ARCH-001: Use centralized refetch
+            refetch()
             setProcessing(false)
             setDialogOpen(false)
             setDecisionNotes("")
@@ -240,7 +267,8 @@ export default function ApprovalsPage() {
         toast.success("Request approved and change applied!")
       }
 
-      fetchApprovals()
+      // ARCH-001: Use centralized refetch
+      refetch()
     }
 
     setProcessing(false)
@@ -274,7 +302,8 @@ export default function ApprovalsPage() {
       toast.error("Failed to reject request")
     } else {
       toast.success("Request rejected")
-      fetchApprovals()
+      // ARCH-001: Use centralized refetch
+      refetch()
     }
 
     setProcessing(false)
@@ -282,24 +311,26 @@ export default function ApprovalsPage() {
     setDecisionNotes("")
   }
 
-  // Filter approvals
-  const filteredApprovals = approvals.filter(a => {
-    if (filter === "all") return true
-    return a.status === filter
-  })
+  // ARCH-001: Filter approvals using memoized computation
+  const filteredApprovals = useMemo(() => {
+    if (filter === "all") return approvals
+    return approvals.filter(a => a.status === filter)
+  }, [approvals, filter])
 
-  // Metrics
-  const pendingCount = approvals.filter(a => a.status === "pending").length
-  const approvedCount = approvals.filter(a => a.status === "approved").length
-  const rejectedCount = approvals.filter(a => a.status === "rejected").length
-  const urgentCount = approvals.filter(a => a.status === "pending" && a.priority === "urgent").length
+  // ARCH-001: Derive pending count for filter badge
+  const pendingCount = useMemo(() => {
+    return approvals.filter(a => a.status === "pending").length
+  }, [approvals])
 
-  const metrics: MetricItem[] = [
-    { label: "Pending", value: pendingCount, icon: Clock },
-    { label: "Approved", value: approvedCount, icon: CheckCircle },
-    { label: "Rejected", value: rejectedCount, icon: XCircle },
-    { label: "Urgent", value: urgentCount, icon: AlertTriangle },
-  ]
+  // ARCH-001: Transform metricsData to MetricItem format for MetricsBar
+  const metrics: MetricItem[] = useMemo(() => {
+    return metricsData.map(m => ({
+      label: m.label,
+      value: m.value,
+      icon: m.icon as MetricItem["icon"],
+      highlight: m.highlight,
+    }))
+  }, [metricsData])
 
   const getStatusInfo = (status: string) => {
     switch (status) {

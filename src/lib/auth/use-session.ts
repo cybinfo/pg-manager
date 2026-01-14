@@ -143,6 +143,8 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
   const retryCountRef = useRef(0)
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null)
   const checkTimerRef = useRef<NodeJS.Timeout | null>(null)
+  // UTIL-001: Track retry timeout to prevent memory leak
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   // AUTH-013: Add refresh lock to prevent race conditions
   const isRefreshingRef = useRef(false)
   const refreshPromiseRef = useRef<Promise<boolean> | null>(null)
@@ -182,7 +184,8 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
             const delay = getExponentialBackoffDelay(retryCountRef.current)
             retryCountRef.current++
             console.log(`[useSession] Retry attempt ${retryCountRef.current}/${AUTH_MAX_RETRY_ATTEMPTS} in ${delay}ms`)
-            setTimeout(() => initializeSession(), delay)
+            // UTIL-001: Store timeout ref to prevent memory leak
+            retryTimeoutRef.current = setTimeout(() => initializeSession(), delay)
             return
           }
 
@@ -366,6 +369,10 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
     return () => {
       mountedRef.current = false
       subscription.unsubscribe()
+      // UTIL-001: Clean up retry timeout to prevent memory leak
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+      }
     }
   }, [initializeSession, safeSetState, onSessionExpired])
 

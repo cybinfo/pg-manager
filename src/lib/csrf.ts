@@ -31,6 +31,33 @@ interface CsrfToken {
 }
 
 /**
+ * SEC-001: Constant-time string comparison to prevent timing attacks
+ * Uses bitwise XOR to compare all characters regardless of mismatch position
+ * This prevents attackers from inferring correct characters based on response time
+ *
+ * @param a First string to compare
+ * @param b Second string to compare
+ * @returns true if strings are equal, false otherwise
+ */
+export function timingSafeEqual(a: string | null | undefined, b: string | null | undefined): boolean {
+  // Handle null/undefined cases - return false immediately
+  // (This doesn't leak timing info as the strings don't exist)
+  if (!a || !b) return false
+
+  // Length mismatch - return false
+  // (This is acceptable as length is typically not secret)
+  if (a.length !== b.length) return false
+
+  // Constant-time comparison using XOR
+  let mismatch = 0
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  }
+
+  return mismatch === 0
+}
+
+/**
  * Generate a cryptographically secure CSRF token
  * Uses Web Crypto API for Edge Runtime compatibility
  */
@@ -136,18 +163,8 @@ export function validateCsrf(request: NextRequest): {
     return { valid: false, error: "CSRF token expired" }
   }
 
-  // Constant-time comparison to prevent timing attacks
-  if (tokenData.token.length !== headerToken.length) {
-    return { valid: false, error: "CSRF token mismatch" }
-  }
-
-  // Constant-time string comparison
-  let mismatch = 0
-  for (let i = 0; i < tokenData.token.length; i++) {
-    mismatch |= tokenData.token.charCodeAt(i) ^ headerToken.charCodeAt(i)
-  }
-
-  if (mismatch !== 0) {
+  // SEC-001: Constant-time comparison to prevent timing attacks
+  if (!timingSafeEqual(tokenData.token, headerToken)) {
     return { valid: false, error: "CSRF token mismatch" }
   }
 

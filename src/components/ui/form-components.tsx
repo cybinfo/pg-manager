@@ -4,7 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, LucideIcon, IndianRupee, Phone, Mail, Calendar, Search } from "lucide-react"
+import { ChevronDown, LucideIcon, IndianRupee, Mail, Calendar, Search } from "lucide-react"
 
 // ============================================
 // Form Field Wrapper
@@ -153,32 +153,9 @@ export function CurrencyInput({
 }
 
 // ============================================
-// Phone Input
+// Phone Input - UI-001: Consolidated in phone-input.tsx
+// Import from "@/components/ui/phone-input" or "@/components/ui"
 // ============================================
-interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  countryCode?: string
-}
-
-export function PhoneInput({
-  countryCode = "+91",
-  className,
-  ...props
-}: PhoneInputProps) {
-  return (
-    <div className="relative">
-      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <span className="absolute left-9 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-        {countryCode}
-      </span>
-      <Input
-        type="tel"
-        className={cn("pl-[4.5rem]", className)}
-        placeholder="9876543210"
-        {...props}
-      />
-    </div>
-  )
-}
 
 // ============================================
 // Email Input
