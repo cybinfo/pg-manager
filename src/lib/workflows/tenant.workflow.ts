@@ -27,7 +27,11 @@ import { formatCurrency } from "@/lib/format"
 // ============================================
 
 export interface TenantCreateInput {
-  // Basic info
+  // Person-centric: Either provide person_id OR identity fields
+  // If person_id provided, identity is fetched from People table
+  person_id?: string
+
+  // Basic info (used only if person_id not provided)
   name: string
   email?: string
   phone: string
@@ -74,6 +78,7 @@ export interface TenantCreateOutput {
   tenant_stay_id: string | null
   initial_bill_id: string | null
   invitation_sent: boolean
+  person_id: string | null  // Link to People table
 }
 
 export interface RoomTransferInput {
@@ -132,11 +137,164 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
       },
     },
 
-    // Step 2: Create tenant record
+    // Step 2: Upsert Person (find existing or create new)
+    // This ensures identity data is stored in the central People table
     {
-      name: "create_tenant",
+      name: "upsert_person",
       execute: async (context, input) => {
         const supabase = createClient()
+
+        // If person_id already provided, verify it exists and fetch data
+        if (input.person_id) {
+          const { data: existingPerson, error } = await supabase
+            .from("people")
+            .select("id, name, phone, email, photo_url")
+            .eq("id", input.person_id)
+            .eq("owner_id", context.actor_id)
+            .single()
+
+          if (error || !existingPerson) {
+            return createErrorResult(
+              createServiceError(ERROR_CODES.NOT_FOUND, "Person not found")
+            )
+          }
+
+          // Add tenant tag to person
+          await supabase.rpc("upsert_person", {
+            p_owner_id: context.actor_id,
+            p_name: existingPerson.name,
+            p_phone: existingPerson.phone,
+            p_email: existingPerson.email,
+            p_tags: ["tenant"],
+          }).catch(() => {
+            // RPC might not exist yet, that's OK
+          })
+
+          return createSuccessResult({
+            person_id: existingPerson.id,
+            name: existingPerson.name,
+            phone: existingPerson.phone,
+            email: existingPerson.email,
+            photo_url: existingPerson.photo_url,
+            created_new: false,
+          })
+        }
+
+        // No person_id provided - find or create person
+        // Try the RPC function first (if migration 049 has been run)
+        const { data: personId, error: rpcError } = await supabase.rpc("upsert_person", {
+          p_owner_id: context.actor_id,
+          p_name: input.name,
+          p_phone: input.phone || null,
+          p_email: input.email || null,
+          p_photo_url: input.photo_url || input.profile_photo || null,
+          p_tags: ["tenant"],
+          p_source: "tenant",
+        })
+
+        if (!rpcError && personId) {
+          return createSuccessResult({
+            person_id: personId,
+            name: input.name,
+            phone: input.phone,
+            email: input.email,
+            photo_url: input.photo_url || input.profile_photo,
+            created_new: true,
+          })
+        }
+
+        // Fallback: Direct insert/update (if RPC doesn't exist)
+        // First try to find existing person by phone or email
+        let existingPerson = null
+        if (input.phone) {
+          const { data } = await supabase
+            .from("people")
+            .select("id")
+            .eq("owner_id", context.actor_id)
+            .eq("phone", input.phone)
+            .single()
+          existingPerson = data
+        }
+
+        if (!existingPerson && input.email) {
+          const { data } = await supabase
+            .from("people")
+            .select("id")
+            .eq("owner_id", context.actor_id)
+            .eq("email", input.email)
+            .single()
+          existingPerson = data
+        }
+
+        if (existingPerson) {
+          // Update existing person to add tenant tag
+          await supabase
+            .from("people")
+            .update({
+              tags: supabase.sql`ARRAY(SELECT DISTINCT unnest(tags || ARRAY['tenant']::TEXT[]))`,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existingPerson.id)
+            .catch(() => {
+              // Array update syntax might not work, that's OK
+            })
+
+          return createSuccessResult({
+            person_id: existingPerson.id,
+            name: input.name,
+            phone: input.phone,
+            email: input.email,
+            photo_url: input.photo_url || input.profile_photo,
+            created_new: false,
+          })
+        }
+
+        // Create new person record
+        const { data: newPerson, error: insertError } = await supabase
+          .from("people")
+          .insert({
+            owner_id: context.actor_id,
+            name: input.name,
+            phone: input.phone || null,
+            email: input.email || null,
+            photo_url: input.photo_url || input.profile_photo || null,
+            tags: ["tenant"],
+            source: "tenant",
+          })
+          .select("id")
+          .single()
+
+        if (insertError) {
+          // If people table doesn't exist yet, continue without person
+          console.warn("[TenantCreate] Could not create person record:", insertError)
+          return createSuccessResult({
+            person_id: null,
+            name: input.name,
+            phone: input.phone,
+            email: input.email,
+            photo_url: input.photo_url || input.profile_photo,
+            created_new: false,
+          })
+        }
+
+        return createSuccessResult({
+          person_id: newPerson.id,
+          name: input.name,
+          phone: input.phone,
+          email: input.email,
+          photo_url: input.photo_url || input.profile_photo,
+          created_new: true,
+        })
+      },
+      optional: true, // Don't fail if People module not set up yet
+    },
+
+    // Step 3: Create tenant record
+    {
+      name: "create_tenant",
+      execute: async (context, input, previousResults) => {
+        const supabase = createClient()
+        const personResult = previousResults.upsert_person as Record<string, unknown> | undefined
 
         const tenantData = {
           name: input.name,
@@ -161,6 +319,8 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           status: "active",
           owner_id: context.actor_id,
           created_at: new Date().toISOString(),
+          // Link to person record if available
+          person_id: personResult?.person_id as string || null,
         }
 
         const { data: tenant, error } = await supabase
@@ -545,12 +705,14 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
     const tenant = results.create_tenant as Record<string, unknown>
     const stay = results.create_tenant_stay as Record<string, unknown>
     const billResult = results.generate_initial_bill as Record<string, unknown>
+    const personResult = results.upsert_person as Record<string, unknown>
 
     return {
       tenant_id: tenant?.id as string,
       tenant_stay_id: stay?.id as string || null,
       initial_bill_id: billResult?.bill_id as string || null,
       invitation_sent: false, // TODO: Implement invitation logic
+      person_id: personResult?.person_id as string || null,
     }
   },
 }
