@@ -1,19 +1,30 @@
 /**
  * Visitors List Page (Refactored)
  *
- * BEFORE: ~400 lines of code
- * AFTER: ~130 lines of code (67% reduction)
+ * Supports multiple visitor types:
+ * - tenant_visitor: Visiting existing tenant
+ * - enquiry: Prospective tenant viewing the PG
+ * - service_provider: Plumbers, electricians, etc.
+ * - general: Any other visitor
  */
 
 "use client"
 
-import { Users, UserCheck, Clock, CalendarDays } from "lucide-react"
+import { Users, UserCheck, Clock, CalendarDays, Search, Wrench, User } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { VISITOR_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatDate } from "@/lib/format"
+import {
+  VisitorType,
+  VISITOR_TYPE_LABELS,
+  VISITOR_TYPE_COLORS,
+  ENQUIRY_STATUS_LABELS,
+  ENQUIRY_STATUS_COLORS,
+  EnquiryStatus,
+} from "@/types/visitors.types"
 
 // ============================================
 // Types
@@ -23,10 +34,15 @@ interface Visitor {
   id: string
   visitor_name: string
   visitor_phone: string | null
+  visitor_type: VisitorType
   purpose: string | null
   check_in_date: string
   check_out_date: string | null
   status: string
+  // Type-specific fields
+  company_name: string | null
+  service_type: string | null
+  enquiry_status: EnquiryStatus | null
   tenant: { id: string; name: string } | null
   property: { id: string; name: string } | null
   created_at: string
@@ -48,6 +64,45 @@ const getStatusInfo = (status: string): { status: "success" | "warning" | "muted
 }
 
 // ============================================
+// Visitor Type Badge
+// ============================================
+
+const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
+  tenant_visitor: "bg-blue-100 text-blue-700",
+  enquiry: "bg-purple-100 text-purple-700",
+  service_provider: "bg-orange-100 text-orange-700",
+  general: "bg-slate-100 text-slate-700",
+}
+
+const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
+  tenant_visitor: <Users className="h-3 w-3" />,
+  enquiry: <Search className="h-3 w-3" />,
+  service_provider: <Wrench className="h-3 w-3" />,
+  general: <User className="h-3 w-3" />,
+}
+
+const VisitorTypeBadge = ({ type }: { type: VisitorType }) => (
+  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${VISITOR_TYPE_BADGE_COLORS[type]}`}>
+    {VISITOR_TYPE_ICONS[type]}
+    {VISITOR_TYPE_LABELS[type]}
+  </span>
+)
+
+const EnquiryStatusBadge = ({ status }: { status: EnquiryStatus }) => {
+  const colorMap: Record<EnquiryStatus, string> = {
+    pending: "bg-yellow-100 text-yellow-700",
+    follow_up: "bg-blue-100 text-blue-700",
+    converted: "bg-green-100 text-green-700",
+    lost: "bg-red-100 text-red-700",
+  }
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${colorMap[status]}`}>
+      {ENQUIRY_STATUS_LABELS[status]}
+    </span>
+  )
+}
+
+// ============================================
 // Column Definitions
 // ============================================
 
@@ -59,8 +114,8 @@ const columns: Column<Visitor>[] = [
     sortable: true,
     render: (visitor) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-          <Users className="h-4 w-4 text-indigo-600" />
+        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${VISITOR_TYPE_BADGE_COLORS[visitor.visitor_type]}`}>
+          {VISITOR_TYPE_ICONS[visitor.visitor_type]}
         </div>
         <div className="min-w-0">
           <div className="font-medium truncate">{visitor.visitor_name}</div>
@@ -72,15 +127,35 @@ const columns: Column<Visitor>[] = [
     ),
   },
   {
+    key: "visitor_type",
+    header: "Type",
+    width: "badge",
+    sortable: true,
+    render: (visitor) => (
+      <div className="space-y-1">
+        <VisitorTypeBadge type={visitor.visitor_type} />
+        {visitor.visitor_type === "enquiry" && visitor.enquiry_status && (
+          <div><EnquiryStatusBadge status={visitor.enquiry_status} /></div>
+        )}
+      </div>
+    ),
+  },
+  {
     key: "tenant",
-    header: "Visiting",
+    header: "Details",
     width: "secondary",
     sortable: true,
     sortKey: "tenant.name",
     render: (visitor) => (
       <div className="text-sm">
-        {visitor.tenant && (
+        {visitor.visitor_type === "tenant_visitor" && visitor.tenant && (
           <div><TenantLink id={visitor.tenant.id} name={visitor.tenant.name} size="sm" /></div>
+        )}
+        {visitor.visitor_type === "service_provider" && visitor.service_type && (
+          <div className="text-muted-foreground">
+            <span className="font-medium">{visitor.service_type}</span>
+            {visitor.company_name && <span> - {visitor.company_name}</span>}
+          </div>
         )}
         {visitor.property && (
           <div><PropertyLink id={visitor.property.id} name={visitor.property.name} size="sm" /></div>
@@ -125,6 +200,18 @@ const columns: Column<Visitor>[] = [
 
 const filters: FilterConfig[] = [
   {
+    id: "visitor_type",
+    label: "Type",
+    type: "select",
+    placeholder: "All Types",
+    options: [
+      { value: "tenant_visitor", label: "Tenant Visitor" },
+      { value: "enquiry", label: "Enquiry" },
+      { value: "service_provider", label: "Service Provider" },
+      { value: "general", label: "General" },
+    ],
+  },
+  {
     id: "property",
     label: "Property",
     type: "select",
@@ -152,10 +239,11 @@ const filters: FilterConfig[] = [
 // ============================================
 
 const groupByOptions: GroupByOption[] = [
+  { value: "visitor_type", label: "Visitor Type" },
   { value: "property.name", label: "Property" },
   { value: "tenant.name", label: "Tenant" },
   { value: "status", label: "Status" },
-  { value: "purpose", label: "Purpose" },
+  { value: "service_type", label: "Service Type" },
 ]
 
 // ============================================
@@ -177,6 +265,13 @@ const metrics: MetricConfig<Visitor>[] = [
     highlight: (value) => (value as number) > 0,
   },
   {
+    id: "enquiries",
+    label: "Enquiries",
+    icon: Search,
+    compute: (items) => items.filter((v) => v.visitor_type === "enquiry").length,
+    highlight: (value) => (value as number) > 0,
+  },
+  {
     id: "today",
     label: "Today",
     icon: CalendarDays,
@@ -184,12 +279,6 @@ const metrics: MetricConfig<Visitor>[] = [
       const today = new Date().toDateString()
       return items.filter((v) => new Date(v.check_in_date).toDateString() === today).length
     },
-  },
-  {
-    id: "left",
-    label: "Checked Out",
-    icon: Clock,
-    compute: (items) => items.filter((v) => v.status === "checked_out").length,
   },
 ]
 
@@ -201,7 +290,7 @@ export default function VisitorsPage() {
   return (
     <ListPageTemplate
       title="Visitors"
-      description="Track visitor entries and exits"
+      description="Manage all visitor entries - tenants, enquiries, service providers"
       icon={Users}
       permission="visitors.view"
       feature="visitors"
@@ -210,9 +299,9 @@ export default function VisitorsPage() {
       groupByOptions={groupByOptions}
       metrics={metrics}
       columns={columns}
-      searchPlaceholder="Search by visitor name, tenant..."
+      searchPlaceholder="Search by visitor name, phone, company..."
       createHref="/visitors/new"
-      createLabel="Log Visitor"
+      createLabel="Check In Visitor"
       createPermission="visitors.create"
       detailHref={(visitor) => `/visitors/${visitor.id}`}
       emptyTitle="No visitors logged"

@@ -19,26 +19,62 @@ import {
   IndianRupee,
   Calendar,
   User,
-  Pencil,
-  Trash2
+  Trash2,
+  Search,
+  Wrench,
+  Briefcase,
+  Car,
+  CreditCard,
+  MessageSquare,
+  CalendarCheck,
+  UserPlus,
+  TrendingUp,
+  X,
 } from "lucide-react"
 import { toast } from "sonner"
-import { formatDateTime, formatCurrency } from "@/lib/format"
-import { useAuth } from "@/lib/auth"
+import { formatDateTime, formatCurrency, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
 import { PageLoader } from "@/components/ui/page-loader"
+import {
+  VisitorType,
+  VISITOR_TYPE_LABELS,
+  EnquiryStatus,
+  ENQUIRY_STATUS_LABELS,
+  ENQUIRY_SOURCE_LABELS,
+  EnquirySource,
+} from "@/types/visitors.types"
 
 interface Visitor {
   id: string
   visitor_name: string
   visitor_phone: string | null
+  visitor_type: VisitorType
   relation: string | null
   purpose: string | null
   check_in_time: string
   check_out_time: string | null
   is_overnight: boolean
   overnight_charge: number | null
+  num_nights: number | null
+  charge_per_night: number | null
+  expected_checkout_date: string | null
+  // Service provider fields
+  company_name: string | null
+  service_type: string | null
+  // Enquiry fields
+  enquiry_status: EnquiryStatus | null
+  enquiry_source: EnquirySource | null
+  rooms_interested: string[] | null
+  follow_up_date: string | null
+  converted_tenant_id: string | null
+  // General visitor fields
+  notes: string | null
+  id_type: string | null
+  id_number: string | null
+  vehicle_number: string | null
+  host_name: string | null
+  department: string | null
   created_at: string
   tenant: {
     id: string
@@ -58,17 +94,7 @@ interface Visitor {
   } | null
 }
 
-interface RawVisitor {
-  id: string
-  visitor_name: string
-  visitor_phone: string | null
-  relation: string | null
-  purpose: string | null
-  check_in_time: string
-  check_out_time: string | null
-  is_overnight: boolean
-  overnight_charge: number | null
-  created_at: string
+interface RawVisitor extends Omit<Visitor, 'tenant' | 'property' | 'room'> {
   tenant: {
     id: string
     name: string
@@ -82,6 +108,45 @@ interface RawVisitor {
     name: string
     address: string | null
   }[] | null
+}
+
+// ============================================
+// Visitor Type Badge Components
+// ============================================
+
+const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
+  tenant_visitor: "bg-blue-100 text-blue-700",
+  enquiry: "bg-purple-100 text-purple-700",
+  service_provider: "bg-orange-100 text-orange-700",
+  general: "bg-slate-100 text-slate-700",
+}
+
+const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
+  tenant_visitor: <Users className="h-4 w-4" />,
+  enquiry: <Search className="h-4 w-4" />,
+  service_provider: <Wrench className="h-4 w-4" />,
+  general: <User className="h-4 w-4" />,
+}
+
+const VisitorTypeBadge = ({ type }: { type: VisitorType }) => (
+  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${VISITOR_TYPE_BADGE_COLORS[type]}`}>
+    {VISITOR_TYPE_ICONS[type]}
+    {VISITOR_TYPE_LABELS[type]}
+  </span>
+)
+
+const EnquiryStatusBadge = ({ status }: { status: EnquiryStatus }) => {
+  const colorMap: Record<EnquiryStatus, string> = {
+    pending: "bg-yellow-100 text-yellow-700",
+    follow_up: "bg-blue-100 text-blue-700",
+    converted: "bg-green-100 text-green-700",
+    lost: "bg-red-100 text-red-700",
+  }
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorMap[status]}`}>
+      {ENQUIRY_STATUS_LABELS[status]}
+    </span>
+  )
 }
 
 export default function VisitorDetailPage() {
@@ -172,6 +237,26 @@ export default function VisitorDetailPage() {
     setActionLoading(false)
   }
 
+  const handleUpdateEnquiryStatus = async (newStatus: EnquiryStatus) => {
+    if (!visitor) return
+
+    setActionLoading(true)
+    const supabase = createClient()
+
+    const { error } = await supabase
+      .from("visitors")
+      .update({ enquiry_status: newStatus })
+      .eq("id", visitor.id)
+
+    if (error) {
+      toast.error("Failed to update enquiry status")
+    } else {
+      toast.success(`Enquiry marked as ${ENQUIRY_STATUS_LABELS[newStatus]}`)
+      setVisitor({ ...visitor, enquiry_status: newStatus })
+    }
+    setActionLoading(false)
+  }
+
   const handleDelete = async () => {
     if (!visitor) return
 
@@ -217,12 +302,13 @@ export default function VisitorDetailPage() {
             </Button>
           </Link>
           <div className="flex items-center gap-4">
-            <div className={`h-16 w-16 rounded-full flex items-center justify-center ${isCheckedIn ? "bg-green-100" : "bg-gray-100"}`}>
-              <Users className={`h-8 w-8 ${isCheckedIn ? "text-green-600" : "text-gray-600"}`} />
+            <div className={`h-16 w-16 rounded-full flex items-center justify-center ${VISITOR_TYPE_BADGE_COLORS[visitor.visitor_type]}`}>
+              {VISITOR_TYPE_ICONS[visitor.visitor_type]}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl md:text-3xl font-bold">{visitor.visitor_name}</h1>
+                <VisitorTypeBadge type={visitor.visitor_type} />
                 {visitor.is_overnight && (
                   <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
                     Overnight
@@ -230,16 +316,33 @@ export default function VisitorDetailPage() {
                 )}
               </div>
               <p className="text-muted-foreground">
-                Visiting {visitor.tenant?.name}
+                {visitor.visitor_type === "tenant_visitor" && visitor.tenant
+                  ? `Visiting ${visitor.tenant.name}`
+                  : visitor.visitor_type === "service_provider" && visitor.service_type
+                  ? `${visitor.service_type}${visitor.company_name ? ` - ${visitor.company_name}` : ""}`
+                  : visitor.visitor_type === "enquiry"
+                  ? "Prospective Tenant"
+                  : visitor.property?.name || "Visitor"
+                }
               </p>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {isCheckedIn && (
             <Button onClick={handleCheckOut} disabled={actionLoading}>
               <LogOut className="mr-2 h-4 w-4" />
               Check Out
+            </Button>
+          )}
+          {visitor.visitor_type === "enquiry" && visitor.enquiry_status !== "converted" && (
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/tenants/new?from_enquiry=${visitor.id}&name=${encodeURIComponent(visitor.visitor_name)}&phone=${encodeURIComponent(visitor.visitor_phone || "")}`)}
+              disabled={actionLoading}
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Convert to Tenant
             </Button>
           )}
           <PermissionGate permission="visitors.delete" hide>
@@ -280,6 +383,78 @@ export default function VisitorDetailPage() {
         </CardContent>
       </Card>
 
+      {/* Enquiry Status Card - Only for enquiries */}
+      {visitor.visitor_type === "enquiry" && (
+        <Card className="border-purple-200 bg-purple-50/50">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <CardTitle>Enquiry Status</CardTitle>
+                <CardDescription>Track this prospective tenant</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap items-center gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Current Status</p>
+                {visitor.enquiry_status && <EnquiryStatusBadge status={visitor.enquiry_status} />}
+              </div>
+              {visitor.enquiry_status !== "converted" && visitor.enquiry_status !== "lost" && (
+                <div className="flex gap-2 ml-auto">
+                  {visitor.enquiry_status === "pending" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleUpdateEnquiryStatus("follow_up")}
+                      disabled={actionLoading}
+                    >
+                      <CalendarCheck className="mr-1 h-4 w-4" />
+                      Mark Follow Up
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-green-600 border-green-300 hover:bg-green-50"
+                    onClick={() => handleUpdateEnquiryStatus("converted")}
+                    disabled={actionLoading}
+                  >
+                    <UserPlus className="mr-1 h-4 w-4" />
+                    Mark Converted
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                    onClick={() => handleUpdateEnquiryStatus("lost")}
+                    disabled={actionLoading}
+                  >
+                    <X className="mr-1 h-4 w-4" />
+                    Mark Lost
+                  </Button>
+                </div>
+              )}
+            </div>
+            {visitor.enquiry_source && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">Source</p>
+                <p className="font-medium">{ENQUIRY_SOURCE_LABELS[visitor.enquiry_source]}</p>
+              </div>
+            )}
+            {visitor.follow_up_date && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">Follow-up Date</p>
+                <p className="font-medium">{formatDate(visitor.follow_up_date)}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid md:grid-cols-2 gap-6">
         {/* Visitor Details */}
         <Card>
@@ -310,16 +485,43 @@ export default function VisitorDetailPage() {
                 </a>
               </div>
             )}
-            {visitor.relation && (
+            {visitor.visitor_type === "tenant_visitor" && visitor.relation && (
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-muted-foreground">Relation</span>
                 <span className="font-medium">{visitor.relation}</span>
+              </div>
+            )}
+            {visitor.vehicle_number && (
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground flex items-center gap-2">
+                  <Car className="h-4 w-4" />
+                  Vehicle
+                </span>
+                <span className="font-medium">{visitor.vehicle_number}</span>
+              </div>
+            )}
+            {visitor.id_type && (
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  ID ({visitor.id_type})
+                </span>
+                <span className="font-medium">{visitor.id_number || "—"}</span>
               </div>
             )}
             {visitor.purpose && (
               <div className="py-2">
                 <p className="text-muted-foreground mb-1">Purpose of Visit</p>
                 <p className="font-medium">{visitor.purpose}</p>
+              </div>
+            )}
+            {visitor.notes && (
+              <div className="py-2 border-t">
+                <p className="text-muted-foreground mb-1 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Notes
+                </p>
+                <p className="font-medium">{visitor.notes}</p>
               </div>
             )}
           </CardContent>
@@ -365,8 +567,8 @@ export default function VisitorDetailPage() {
                     <Moon className="h-4 w-4" />
                     Overnight Stay
                   </span>
-                  <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
-                    Yes
+                  <span className="font-medium">
+                    {visitor.num_nights} night{(visitor.num_nights || 1) > 1 ? "s" : ""}
                   </span>
                 </div>
                 {visitor.overnight_charge !== null && visitor.overnight_charge > 0 && (
@@ -383,7 +585,72 @@ export default function VisitorDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Tenant & Property */}
+        {/* Service Provider Details - Only for service_provider type */}
+        {visitor.visitor_type === "service_provider" && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Wrench className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <CardTitle>Service Details</CardTitle>
+                  <CardDescription>Information about the service provider</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {visitor.service_type && (
+                <div className="flex items-center justify-between py-2 border-b">
+                  <span className="text-muted-foreground">Service Type</span>
+                  <span className="font-medium">{visitor.service_type}</span>
+                </div>
+              )}
+              {visitor.company_name && (
+                <div className="flex items-center justify-between py-2 border-b">
+                  <span className="text-muted-foreground flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    Company
+                  </span>
+                  <span className="font-medium">{visitor.company_name}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* General Visitor Details - Only for general type */}
+        {visitor.visitor_type === "general" && (visitor.host_name || visitor.department) && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-slate-100 rounded-lg">
+                  <User className="h-5 w-5 text-slate-600" />
+                </div>
+                <div>
+                  <CardTitle>Visit Details</CardTitle>
+                  <CardDescription>Additional visit information</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {visitor.host_name && (
+                <div className="flex items-center justify-between py-2 border-b">
+                  <span className="text-muted-foreground">Meeting With</span>
+                  <span className="font-medium">{visitor.host_name}</span>
+                </div>
+              )}
+              {visitor.department && (
+                <div className="flex items-center justify-between py-2 border-b">
+                  <span className="text-muted-foreground">Department</span>
+                  <span className="font-medium">{visitor.department}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tenant & Property - Only show tenant if tenant_visitor */}
         <Card className="md:col-span-2">
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -391,65 +658,76 @@ export default function VisitorDetailPage() {
                 <Building2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>Visiting</CardTitle>
-                <CardDescription>Tenant and property information</CardDescription>
+                <CardTitle>
+                  {visitor.visitor_type === "tenant_visitor" ? "Visiting" : "Property"}
+                </CardTitle>
+                <CardDescription>
+                  {visitor.visitor_type === "tenant_visitor"
+                    ? "Tenant and property information"
+                    : "Property information"
+                  }
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Tenant Info */}
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center gap-3 mb-3">
-                  <Avatar name={visitor.tenant?.name || "?"} src={visitor.tenant?.profile_photo || visitor.tenant?.photo_url} size="md" />
-                  <div>
-                    <p className="font-semibold">{visitor.tenant?.name}</p>
-                    <p className="text-sm text-muted-foreground">Tenant</p>
-                  </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    <a href={`tel:${visitor.tenant?.phone}`} className="hover:text-primary">
-                      {visitor.tenant?.phone}
-                    </a>
-                  </div>
-                  {visitor.room && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Home className="h-4 w-4" />
-                      Room {visitor.room.room_number}
+            <div className={`grid ${visitor.visitor_type === "tenant_visitor" && visitor.tenant ? "md:grid-cols-2" : "md:grid-cols-1"} gap-6`}>
+              {/* Tenant Info - Only for tenant_visitor */}
+              {visitor.visitor_type === "tenant_visitor" && visitor.tenant && (
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Avatar name={visitor.tenant.name} src={visitor.tenant.profile_photo || visitor.tenant.photo_url} size="md" />
+                    <div>
+                      <p className="font-semibold">{visitor.tenant.name}</p>
+                      <p className="text-sm text-muted-foreground">Tenant</p>
                     </div>
-                  )}
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Phone className="h-4 w-4" />
+                      <a href={`tel:${visitor.tenant.phone}`} className="hover:text-primary">
+                        {visitor.tenant.phone}
+                      </a>
+                    </div>
+                    {visitor.room && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Home className="h-4 w-4" />
+                        Room {visitor.room.room_number}
+                      </div>
+                    )}
+                  </div>
+                  <Link href={`/tenants/${visitor.tenant.id}`}>
+                    <Button variant="outline" size="sm" className="w-full mt-3">
+                      View Tenant Profile
+                    </Button>
+                  </Link>
                 </div>
-                <Link href={`/tenants/${visitor.tenant?.id}`}>
-                  <Button variant="outline" size="sm" className="w-full mt-3">
-                    View Tenant Profile
-                  </Button>
-                </Link>
-              </div>
+              )}
 
               {/* Property Info */}
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-primary" />
+              {visitor.property && (
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Building2 className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">{visitor.property.name}</p>
+                      <p className="text-sm text-muted-foreground">Property</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold">{visitor.property?.name}</p>
-                    <p className="text-sm text-muted-foreground">Property</p>
-                  </div>
+                  {visitor.property.address && (
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {visitor.property.address}
+                    </p>
+                  )}
+                  <Link href={`/properties/${visitor.property.id}`}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      View Property
+                    </Button>
+                  </Link>
                 </div>
-                {visitor.property?.address && (
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {visitor.property.address}
-                  </p>
-                )}
-                <Link href={`/properties/${visitor.property?.id}`}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    View Property
-                  </Button>
-                </Link>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>

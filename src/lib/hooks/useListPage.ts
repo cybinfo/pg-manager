@@ -582,9 +582,9 @@ export const VISITOR_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     tenant:tenants(id, name),
     property:properties(id, name)
   `,
-  defaultOrderBy: "check_in_date",
+  defaultOrderBy: "check_in_time",
   defaultOrderDirection: "desc",
-  searchFields: ["visitor_name", "tenant.name"],
+  searchFields: ["visitor_name", "visitor_phone", "company_name", "service_type", "tenant.name"],
   joinFields: ["tenant", "property"],
 }
 
