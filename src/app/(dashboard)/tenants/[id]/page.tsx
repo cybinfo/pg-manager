@@ -48,6 +48,9 @@ import {
   Gauge,
   Zap,
   Droplets,
+  ExternalLink,
+  Briefcase,
+  Heart,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatCurrency } from "@/lib/format"
@@ -56,8 +59,32 @@ import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
 
 // Types
+interface Person {
+  id: string
+  name: string
+  phone: string | null
+  email: string | null
+  photo_url: string | null
+  date_of_birth: string | null
+  gender: string | null
+  aadhaar_number: string | null
+  pan_number: string | null
+  permanent_address: string | null
+  permanent_city: string | null
+  permanent_state: string | null
+  permanent_pincode: string | null
+  current_address: string | null
+  occupation: string | null
+  company_name: string | null
+  emergency_contacts: { name: string; relation: string; phone: string }[] | null
+  blood_group: string | null
+  is_verified: boolean
+  is_blocked: boolean
+}
+
 interface Tenant {
   id: string
+  person_id: string
   name: string
   email: string | null
   phone: string
@@ -73,9 +100,11 @@ interface Tenant {
   agreement_signed: boolean
   notes: string | null
   custom_fields: Record<string, string>
+  guardian_contacts: { name: string; relation: string; phone: string; email?: string }[] | null
   created_at: string
   property: { id: string; name: string; address: string } | null
   room: { id: string; room_number: string; room_type: string } | null
+  person?: Person | null
 }
 
 interface Payment {
@@ -184,10 +213,20 @@ export default function TenantDetailPage() {
     const fetchTenant = async () => {
       const supabase = createClient()
 
-      // Fetch tenant details
+      // Fetch tenant details with person data
       const { data: tenantData, error: tenantError } = await supabase
         .from("tenants")
-        .select(`*, property:properties(id, name, address), room:rooms(id, room_number, room_type)`)
+        .select(`
+          *,
+          property:properties(id, name, address),
+          room:rooms(id, room_number, room_type),
+          person:people(
+            id, name, phone, email, photo_url, date_of_birth, gender,
+            aadhaar_number, pan_number, permanent_address, permanent_city,
+            permanent_state, permanent_pincode, current_address, occupation,
+            company_name, emergency_contacts, blood_group, is_verified, is_blocked
+          )
+        `)
         .eq("id", params.id)
         .single()
 
@@ -202,6 +241,7 @@ export default function TenantDetailPage() {
         ...tenantData,
         property: Array.isArray(tenantData.property) ? tenantData.property[0] : tenantData.property,
         room: Array.isArray(tenantData.room) ? tenantData.room[0] : tenantData.room,
+        person: Array.isArray(tenantData.person) ? tenantData.person[0] : tenantData.person,
       }
       setTenant(transformedTenant)
 
@@ -499,17 +539,17 @@ export default function TenantDetailPage() {
     <div className="space-y-6">
       {/* Hero Header */}
       <DetailHero
-        title={tenant.name}
+        title={tenant.person?.name || tenant.name}
         subtitle={
           <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1">
               <Phone className="h-4 w-4" />
-              {tenant.phone}
+              {tenant.person?.phone || tenant.phone}
             </span>
-            {tenant.email && (
+            {(tenant.person?.email || tenant.email) && (
               <span className="flex items-center gap-1">
                 <Mail className="h-4 w-4" />
-                {tenant.email}
+                {tenant.person?.email || tenant.email}
               </span>
             )}
           </div>
@@ -519,8 +559,8 @@ export default function TenantDetailPage() {
         status={getStatusKey(tenant.status)}
         avatar={
           <Avatar
-            name={tenant.name}
-            src={tenant.profile_photo || tenant.photo_url}
+            name={tenant.person?.name || tenant.name}
+            src={tenant.person?.photo_url || tenant.profile_photo || tenant.photo_url}
             size="xl"
             className="h-16 w-16 text-2xl shadow-lg shadow-teal-500/20"
           />
@@ -530,7 +570,7 @@ export default function TenantDetailPage() {
             <Link href={`/tenants/${tenant.id}/edit`}>
               <Button variant="outline" size="sm">
                 <Pencil className="mr-2 h-4 w-4" />
-                Edit
+                Edit Tenancy
               </Button>
             </Link>
             <Link href={`/tenants/${tenant.id}/journey`}>
@@ -649,28 +689,138 @@ export default function TenantDetailPage() {
           )}
         </DetailSection>
 
-        {/* Contact & Documents */}
-        <DetailSection title="Contact & Documents" description="Personal information" icon={FileText}>
+        {/* Personal Information (from People module - read only) */}
+        <DetailSection
+          title="Personal Information"
+          description="From People module"
+          icon={User}
+          actions={
+            tenant.person_id && (
+              <Link href={`/people/${tenant.person_id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Edit in People
+                </Button>
+              </Link>
+            )
+          }
+        >
           <InfoRow
             label="Phone"
             value={
-              <a href={`tel:${tenant.phone}`} className="text-teal-600 hover:underline">
-                {tenant.phone}
+              <a href={`tel:${tenant.person?.phone || tenant.phone}`} className="text-teal-600 hover:underline">
+                {tenant.person?.phone || tenant.phone}
               </a>
             }
             icon={Phone}
           />
-          {tenant.email && (
+          {(tenant.person?.email || tenant.email) && (
             <InfoRow
               label="Email"
               value={
-                <a href={`mailto:${tenant.email}`} className="text-teal-600 hover:underline">
-                  {tenant.email}
+                <a href={`mailto:${tenant.person?.email || tenant.email}`} className="text-teal-600 hover:underline">
+                  {tenant.person?.email || tenant.email}
                 </a>
               }
               icon={Mail}
             />
           )}
+          {tenant.person?.date_of_birth && (
+            <InfoRow label="Date of Birth" value={formatDate(tenant.person.date_of_birth)} icon={Calendar} />
+          )}
+          {tenant.person?.gender && (
+            <InfoRow label="Gender" value={tenant.person.gender} />
+          )}
+          {(tenant.person?.occupation || tenant.person?.company_name) && (
+            <InfoRow
+              label="Occupation"
+              value={[tenant.person?.occupation, tenant.person?.company_name].filter(Boolean).join(" at ")}
+              icon={Briefcase}
+            />
+          )}
+          {tenant.person?.blood_group && (
+            <InfoRow label="Blood Group" value={tenant.person.blood_group} icon={Heart} />
+          )}
+          {tenant.person?.permanent_address && (
+            <InfoRow
+              label="Permanent Address"
+              value={[
+                tenant.person.permanent_address,
+                tenant.person.permanent_city,
+                tenant.person.permanent_state,
+                tenant.person.permanent_pincode
+              ].filter(Boolean).join(", ")}
+              icon={MapPin}
+            />
+          )}
+          {tenant.person?.aadhaar_number && (
+            <InfoRow label="Aadhaar" value={`XXXX-XXXX-${tenant.person.aadhaar_number.slice(-4)}`} icon={Shield} />
+          )}
+          {tenant.person?.pan_number && (
+            <InfoRow label="PAN" value={tenant.person.pan_number} icon={FileText} />
+          )}
+          {tenant.person?.is_verified && (
+            <InfoRow
+              label="Verification"
+              value={
+                <span className="flex items-center gap-1 text-emerald-600">
+                  <CheckCircle className="h-4 w-4" /> Verified
+                </span>
+              }
+            />
+          )}
+        </DetailSection>
+
+        {/* Emergency Contacts (from People) */}
+        {tenant.person?.emergency_contacts && tenant.person.emergency_contacts.length > 0 && (
+          <DetailSection
+            title="Emergency Contacts"
+            description="From People module"
+            icon={Users}
+            actions={
+              tenant.person_id && (
+                <Link href={`/people/${tenant.person_id}/edit`}>
+                  <Button variant="ghost" size="sm">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                </Link>
+              )
+            }
+          >
+            {tenant.person.emergency_contacts.map((contact, idx) => (
+              <div key={idx} className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
+                <div>
+                  <p className="font-medium">{contact.name}</p>
+                  <p className="text-xs text-muted-foreground">{contact.relation}</p>
+                </div>
+                <a href={`tel:${contact.phone}`} className="text-teal-600 hover:underline text-sm">
+                  {contact.phone}
+                </a>
+              </div>
+            ))}
+          </DetailSection>
+        )}
+
+        {/* Guardian Contacts (tenant-specific, legacy) */}
+        {tenant.guardian_contacts && tenant.guardian_contacts.length > 0 && (
+          <DetailSection title="Guardian Contacts" description="Tenant-specific contacts" icon={Users}>
+            {tenant.guardian_contacts.map((guardian, idx) => (
+              <div key={idx} className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
+                <div>
+                  <p className="font-medium">{guardian.name}</p>
+                  <p className="text-xs text-muted-foreground">{guardian.relation}</p>
+                </div>
+                <a href={`tel:${guardian.phone}`} className="text-teal-600 hover:underline text-sm">
+                  {guardian.phone}
+                </a>
+              </div>
+            ))}
+          </DetailSection>
+        )}
+
+        {/* Tenancy Verification Status */}
+        <DetailSection title="Verification Status" description="Tenancy verification" icon={Shield}>
           <InfoRow
             label="Police Verification"
             value={<StatusBadge status={tenant.police_verification_status === "verified" ? "verified" : tenant.police_verification_status === "submitted" ? "pending" : "unverified"} size="sm" />}
@@ -692,35 +842,6 @@ export default function TenantDetailPage() {
             icon={FileText}
           />
         </DetailSection>
-
-        {/* Additional Details (Custom Fields) */}
-        {Object.keys(tenant.custom_fields || {}).length > 0 && (
-          <DetailSection title="Additional Details" description="Family & ID information" icon={Users}>
-            {tenant.custom_fields.parent_name && (
-              <InfoRow label="Parent/Guardian" value={tenant.custom_fields.parent_name} icon={User} />
-            )}
-            {tenant.custom_fields.parent_phone && (
-              <InfoRow
-                label="Parent Phone"
-                value={
-                  <a href={`tel:${tenant.custom_fields.parent_phone}`} className="text-teal-600 hover:underline">
-                    {tenant.custom_fields.parent_phone}
-                  </a>
-                }
-                icon={Phone}
-              />
-            )}
-            {tenant.custom_fields.id_proof_type && (
-              <InfoRow label="ID Proof Type" value={tenant.custom_fields.id_proof_type} />
-            )}
-            {tenant.custom_fields.id_proof_number && (
-              <InfoRow label="ID Proof Number" value={tenant.custom_fields.id_proof_number} />
-            )}
-            {tenant.custom_fields.permanent_address && (
-              <InfoRow label="Permanent Address" value={tenant.custom_fields.permanent_address} icon={MapPin} />
-            )}
-          </DetailSection>
-        )}
 
         {/* Pending Dues */}
         <DetailSection
