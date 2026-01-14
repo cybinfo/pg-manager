@@ -32,9 +32,12 @@ import {
   X,
   Check,
   AlertCircle,
+  UserCheck,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PageLoader } from "@/components/ui/page-loader"
+import { PersonSelector } from "@/components/people"
+import { PersonSearchResult } from "@/types/people.types"
 import {
   VisitorType,
   VisitorContactSearchResult,
@@ -101,7 +104,11 @@ export default function NewVisitorPage() {
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
-  // Contact search state
+  // Person-centric: Select person from central registry
+  const [ownerId, setOwnerId] = useState<string>("")
+  const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null)
+
+  // Legacy contact search state (keeping for backwards compatibility)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<VisitorContactSearchResult[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
@@ -245,6 +252,12 @@ export default function NewVisitorPage() {
     const fetchData = async () => {
       const supabase = createClient()
 
+      // Get current user ID for PersonSelector
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setOwnerId(user.id)
+      }
+
       const [propertiesRes, tenantsRes, roomsRes] = await Promise.all([
         supabase.from("properties").select("id, name").order("name"),
         supabase
@@ -302,6 +315,32 @@ export default function NewVisitorPage() {
       ...prev,
       [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }))
+  }
+
+  // Handle person selection from PersonSelector
+  const handlePersonSelect = (person: PersonSearchResult | null) => {
+    setSelectedPerson(person)
+    // Clear legacy contact when using person
+    setSelectedContact(null)
+
+    if (person) {
+      // Determine visitor type based on person's tags
+      let visitorType: VisitorType = formData.visitor_type
+      if (person.tags?.includes("service_provider")) {
+        visitorType = "service_provider"
+      } else if (person.tags?.includes("visitor")) {
+        visitorType = formData.visitor_type // Keep current selection
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        visitor_name: person.name,
+        visitor_phone: person.phone || "",
+        visitor_type: visitorType,
+      }))
+
+      toast.success(`Selected: ${person.name}`)
+    }
   }
 
   const handleVisitorTypeChange = (type: VisitorType) => {
@@ -563,21 +602,55 @@ export default function NewVisitorPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Returning Visitor Search */}
-        <Card className="border-primary/20 bg-primary/5">
+        {/* Step 1: Select or Create Person */}
+        <Card className="border-2 border-primary/20">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
                 <Search className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>Find Returning Visitor</CardTitle>
-                <CardDescription>Search by name, phone, or company</CardDescription>
+                <CardTitle>Step 1: Select Visitor</CardTitle>
+                <CardDescription>
+                  Search for an existing person or add a new visitor
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            {selectedContact ? (
+          <CardContent className="space-y-4">
+            {ownerId ? (
+              <PersonSelector
+                ownerId={ownerId}
+                selectedPersonId={selectedPerson?.id}
+                onSelect={handlePersonSelect}
+                excludeTags={["blocked"]}
+                placeholder="Search by name, phone, or email..."
+                disabled={loading}
+              />
+            ) : (
+              <div className="h-10 flex items-center text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Loading...
+              </div>
+            )}
+
+            {/* Show selected person info */}
+            {selectedPerson && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-emerald-700">
+                  <UserCheck className="h-4 w-4" />
+                  <span>
+                    <strong>{selectedPerson.name}</strong> selected
+                    {selectedPerson.tags?.includes("visitor") && " (returning visitor)"}
+                    {selectedPerson.tags?.includes("service_provider") && " (service provider)"}
+                    {selectedPerson.is_verified && " • Verified"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Legacy contact display (if selected via old method) */}
+            {selectedContact && !selectedPerson && (
               <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-green-200">
                 <div className="flex items-center gap-3">
                   <div className={`h-10 w-10 rounded-full flex items-center justify-center ${VISITOR_TYPE_COLORS[selectedContact.visitor_type]}`}>
@@ -600,81 +673,6 @@ export default function NewVisitorPage() {
                 <Button type="button" variant="ghost" size="sm" onClick={handleClearContact}>
                   <X className="h-4 w-4" />
                 </Button>
-              </div>
-            ) : (
-              <div ref={searchRef} className="relative">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name, phone number, or company..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value)
-                      setShowSearchResults(true)
-                    }}
-                    onFocus={() => setShowSearchResults(true)}
-                    className="pl-9 bg-white"
-                  />
-                  {searchLoading && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                  )}
-                </div>
-
-                {/* Search Results Dropdown */}
-                {showSearchResults && searchResults.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-80 overflow-auto">
-                    {searchResults.map((contact) => (
-                      <button
-                        key={contact.id}
-                        type="button"
-                        onClick={() => handleSelectContact(contact)}
-                        disabled={contact.is_blocked}
-                        className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 border-b last:border-b-0 text-left ${
-                          contact.is_blocked ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                      >
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${VISITOR_TYPE_COLORS[contact.visitor_type]}`}>
-                          {VISITOR_TYPE_ICONS[contact.visitor_type]}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium truncate">{contact.name}</span>
-                            {contact.is_frequent && (
-                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
-                            )}
-                            {contact.is_blocked && (
-                              <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-xs">Blocked</span>
-                            )}
-                          </div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-2">
-                            {contact.phone && <span>{contact.phone}</span>}
-                            {contact.service_type && <span>- {contact.service_type}</span>}
-                            {contact.company_name && <span>({contact.company_name})</span>}
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="text-sm font-medium">{contact.visit_count} visits</div>
-                          {contact.last_visit_at && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatDate(contact.last_visit_at)}
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {showSearchResults && searchQuery.length >= 2 && searchResults.length === 0 && !searchLoading && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 p-4 text-center text-muted-foreground">
-                    No matching visitors found. Fill in details below for a new visitor.
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground mt-2">
-                  Or fill in visitor details below for a new visitor
-                </p>
               </div>
             )}
           </CardContent>

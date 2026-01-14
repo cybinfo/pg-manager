@@ -18,11 +18,14 @@ import {
   Shield,
   Building2,
   Plus,
-  X
+  X,
+  UserCheck,
 } from "lucide-react"
 import { toast } from "sonner"
 import { sendInvitationEmail } from "@/lib/email"
 import { PageLoader } from "@/components/ui/page-loader"
+import { PersonSelector } from "@/components/people"
+import { PersonSearchResult } from "@/types/people.types"
 
 interface Role {
   id: string
@@ -49,6 +52,10 @@ export default function NewStaffPage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([])
 
+  // Person-centric: Select person first
+  const [ownerId, setOwnerId] = useState<string>("")
+  const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null)
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -58,6 +65,12 @@ export default function NewStaffPage() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
+
+      // Get current user ID for PersonSelector
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setOwnerId(user.id)
+      }
 
       const [rolesRes, propertiesRes] = await Promise.all([
         supabase
@@ -89,6 +102,18 @@ export default function NewStaffPage() {
     }))
   }
 
+  // Handle person selection from PersonSelector
+  const handlePersonSelect = (person: PersonSearchResult | null) => {
+    setSelectedPerson(person)
+    if (person) {
+      setFormData({
+        name: person.name,
+        email: person.email || "",
+        phone: person.phone || "",
+      })
+    }
+  }
+
   const addRoleAssignment = () => {
     if (roles.length === 0) {
       toast.error("No roles available. Create a role first.")
@@ -112,14 +137,19 @@ export default function NewStaffPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email) {
-      toast.error("Please fill in name and email")
+    // Get data from selected person or form
+    const staffName = selectedPerson?.name || formData.name
+    const staffEmail = selectedPerson?.email || formData.email
+    const staffPhone = selectedPerson?.phone || formData.phone
+
+    if (!staffName || !staffEmail) {
+      toast.error("Please select a person or fill in name and email")
       return
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(staffEmail)) {
       toast.error("Please enter a valid email address")
       return
     }
@@ -140,7 +170,7 @@ export default function NewStaffPage() {
       const { data: existingProfile } = await supabase
         .from("user_profiles")
         .select("user_id, name")
-        .eq("email", formData.email.toLowerCase())
+        .eq("email", staffEmail.toLowerCase())
         .single()
 
       // Step 2: Get owner's workspace
@@ -150,16 +180,42 @@ export default function NewStaffPage() {
         .eq("owner_user_id", user.id)
         .single()
 
-      // Step 3: Create staff member (with user_id if exists)
+      // Step 2.5: Create or link person record if person_id is provided
+      let personId = selectedPerson?.id || null
+      if (!personId && (staffName || staffPhone || staffEmail)) {
+        // Try to create/find person using upsert_person RPC
+        const { data: newPersonId } = await supabase.rpc("upsert_person", {
+          p_owner_id: user.id,
+          p_name: staffName,
+          p_phone: staffPhone || null,
+          p_email: staffEmail || null,
+          p_tags: ["staff"],
+          p_source: "staff",
+        }).catch(() => ({ data: null }))
+
+        personId = newPersonId || null
+      } else if (personId) {
+        // Add staff tag to existing person
+        await supabase.rpc("upsert_person", {
+          p_owner_id: user.id,
+          p_name: staffName,
+          p_phone: staffPhone || null,
+          p_email: staffEmail || null,
+          p_tags: ["staff"],
+        }).catch(() => null)
+      }
+
+      // Step 3: Create staff member (with user_id and person_id if exists)
       const { data: staffData, error: staffError } = await supabase
         .from("staff_members")
         .insert({
           owner_id: user.id,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
+          name: staffName,
+          email: staffEmail,
+          phone: staffPhone || null,
           is_active: true,
           user_id: existingProfile?.user_id || null, // Link if user exists
+          person_id: personId, // Link to person record
         })
         .select()
         .single()
@@ -303,76 +359,110 @@ export default function NewStaffPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
-        <Card>
+        {/* Step 1: Select or Create Person */}
+        <Card className="border-2 border-primary/20">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
                 <User className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>Basic Information</CardTitle>
-                <CardDescription>Staff member details</CardDescription>
+                <CardTitle>Step 1: Select Person</CardTitle>
+                <CardDescription>
+                  Search for an existing person or add a new one
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="Enter full name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  className="pl-9"
-                />
+            {ownerId ? (
+              <PersonSelector
+                ownerId={ownerId}
+                selectedPersonId={selectedPerson?.id}
+                onSelect={handlePersonSelect}
+                excludeTags={["blocked"]}
+                placeholder="Search by name, phone, or email..."
+                disabled={loading}
+                required
+              />
+            ) : (
+              <div className="h-10 flex items-center text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Loading...
               </div>
-            </div>
+            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="staff@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  className="pl-9"
-                />
+            {/* Show selected person info */}
+            {selectedPerson && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-emerald-700">
+                  <UserCheck className="h-4 w-4" />
+                  <span>
+                    <strong>{selectedPerson.name}</strong> selected
+                    {selectedPerson.tags?.includes("staff") && " (existing staff)"}
+                    {selectedPerson.is_verified && " • Verified"}
+                  </span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                An invitation email will be sent to this address
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="+91 98765 43210"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="pl-9"
-                />
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Contact Details (email required for invitation) */}
+        {selectedPerson && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Mail className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Contact Details</CardTitle>
+                  <CardDescription>Email is required for sending invitation</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="staff@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    disabled={loading}
+                    className="pl-9"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  An invitation email will be sent to this address
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    disabled={loading}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Role Assignment */}
         <Card>
