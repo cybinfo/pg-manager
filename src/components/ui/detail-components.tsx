@@ -15,7 +15,7 @@ interface DetailHeroProps {
   subtitle?: string | React.ReactNode
   backHref: string
   backLabel?: string
-  status?: string
+  status?: string | React.ReactNode
   statusLabel?: string
   icon?: LucideIcon
   avatar?: string | React.ReactNode
@@ -70,7 +70,11 @@ export function DetailHero({
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
               {status && (
-                <StatusBadge status={status as any} label={statusLabel} />
+                typeof status === 'string' ? (
+                  <StatusBadge status={status as any} label={statusLabel} />
+                ) : (
+                  status
+                )
               )}
             </div>
             {subtitle && (

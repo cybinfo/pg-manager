@@ -8,23 +8,28 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
-  ArrowLeft,
+  DetailHero,
+  InfoCard,
+} from "@/components/ui/detail-components"
+import { Currency } from "@/components/ui/currency"
+import { PageLoading } from "@/components/ui/loading"
+import {
   Printer,
   Building2,
   User,
   Phone,
   Home,
   CheckCircle,
-  MessageCircle,
   Download,
   Trash2,
+  Receipt,
+  IndianRupee,
 } from "lucide-react"
 import { toast } from "sonner"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
-import { PageLoader } from "@/components/ui/page-loader"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
@@ -244,7 +249,7 @@ export default function PaymentReceiptPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageLoading message="Loading payment details..." />
   }
 
   if (!payment) {
@@ -254,63 +259,75 @@ export default function PaymentReceiptPage() {
   return (
     <div className="space-y-6">
       {/* Header - Hidden in print */}
-      <div className="flex items-center justify-between print:hidden">
-        <div className="flex items-center gap-4">
-          <Link href="/payments">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">Payment Receipt</h1>
-            <p className="text-muted-foreground">
-              Receipt #{payment.receipt_number || payment.id.slice(0, 8).toUpperCase()}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {payment.tenant?.phone && (
-            <WhatsAppButton
-              phone={payment.tenant.phone}
-              message={messageTemplates.paymentReceipt({
-                tenantName: payment.tenant.name,
-                amount: Number(payment.amount),
-                receiptNumber: payment.receipt_number || payment.id.slice(0, 8).toUpperCase(),
-                propertyName: payment.property?.name || "Property",
-                propertyAddress: payment.property?.address
-                  ? `${payment.property.address}, ${payment.property.city}`
-                  : payment.property?.city || undefined,
-                roomNumber: payment.tenant?.room?.room_number || undefined,
-                paymentDate: payment.payment_date,
-                paymentMethod: payment.payment_method,
-                ownerName: payment.owner.business_name || payment.owner.name,
-                ownerPhone: payment.owner.phone || undefined,
-                forPeriod: payment.for_period || undefined,
-                description: payment.charge_type?.name || undefined,
-              })}
-              label="Send Receipt"
-              variant="default"
-            />
-          )}
-          <Button variant="outline" onClick={handleDownloadPDF}>
-            <Download className="mr-2 h-4 w-4" />
-            Download PDF
-          </Button>
-          <Button variant="outline" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print
-          </Button>
-          <PermissionGate permission="payments.delete" hide>
-            <Button
-              variant="destructive"
-              onClick={() => setShowDeleteDialog(true)}
-              disabled={deleting}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          </PermissionGate>
-        </div>
+      <div className="print:hidden">
+        <DetailHero
+          title="Payment Receipt"
+          subtitle={`Receipt #${payment.receipt_number || payment.id.slice(0, 8).toUpperCase()}`}
+          backHref="/payments"
+          backLabel="All Payments"
+          avatar={
+            <div className="p-3 bg-emerald-100 rounded-lg">
+              <Receipt className="h-8 w-8 text-emerald-600" />
+            </div>
+          }
+          actions={
+            <div className="flex gap-2">
+              {payment.tenant?.phone && (
+                <WhatsAppButton
+                  phone={payment.tenant.phone}
+                  message={messageTemplates.paymentReceipt({
+                    tenantName: payment.tenant.name,
+                    amount: Number(payment.amount),
+                    receiptNumber: payment.receipt_number || payment.id.slice(0, 8).toUpperCase(),
+                    propertyName: payment.property?.name || "Property",
+                    propertyAddress: payment.property?.address
+                      ? `${payment.property.address}, ${payment.property.city}`
+                      : payment.property?.city || undefined,
+                    roomNumber: payment.tenant?.room?.room_number || undefined,
+                    paymentDate: payment.payment_date,
+                    paymentMethod: payment.payment_method,
+                    ownerName: payment.owner.business_name || payment.owner.name,
+                    ownerPhone: payment.owner.phone || undefined,
+                    forPeriod: payment.for_period || undefined,
+                    description: payment.charge_type?.name || undefined,
+                  })}
+                  label="Send Receipt"
+                  variant="default"
+                />
+              )}
+              <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+              </Button>
+              <Button variant="outline" size="sm" onClick={handlePrint}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print
+              </Button>
+              <PermissionGate permission="payments.delete" hide>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={deleting}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </PermissionGate>
+            </div>
+          }
+        />
+      </div>
+
+      {/* Amount Card - Hidden in print */}
+      <div className="print:hidden">
+        <InfoCard
+          label="Amount Received"
+          value={<Currency amount={payment.amount} />}
+          icon={IndianRupee}
+          variant="success"
+          className="max-w-sm"
+        />
       </div>
 
       {/* Receipt */}

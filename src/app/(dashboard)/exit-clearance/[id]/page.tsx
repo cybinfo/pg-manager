@@ -8,31 +8,37 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  ArrowLeft,
+  DetailHero,
+  InfoCard,
+  DetailSection,
+  InfoRow,
+} from "@/components/ui/detail-components"
+import { Currency } from "@/components/ui/currency"
+import { PageLoading } from "@/components/ui/loading"
+import {
   Loader2,
   User,
   Building2,
-  Home,
+  DoorOpen,
   Calendar,
-  IndianRupee,
   Phone,
   CheckCircle,
   Clock,
   AlertCircle,
   Key,
   ClipboardCheck,
-  Printer,
   Save,
   Plus,
   Trash2,
   Wallet,
+  Receipt,
+  IndianRupee,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { PageLoader } from "@/components/ui/page-loader"
+import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 
 interface Deduction {
   reason: string
@@ -326,7 +332,6 @@ export default function ExitClearanceDetailPage() {
     }
   }
 
-
   const getDaysStayed = () => {
     if (!clearance || !clearance.tenant) return 0
     const checkIn = new Date(clearance.tenant.check_in_date)
@@ -335,7 +340,7 @@ export default function ExitClearanceDetailPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageLoading message="Loading exit clearance..." />
   }
 
   if (!clearance) return null
@@ -345,104 +350,114 @@ export default function ExitClearanceDetailPage() {
   const isCleared = clearance.settlement_status === "cleared"
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/exit-clearance">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <StatusBadge
-                variant={exitStatusMap[clearance.settlement_status]?.variant || "muted"}
-                label={exitStatusMap[clearance.settlement_status]?.label || clearance.settlement_status}
-              />
-            </div>
-            <h1 className="text-2xl font-bold">Exit Clearance</h1>
+    <div className="space-y-6">
+      {/* Hero Header */}
+      <DetailHero
+        title="Exit Clearance"
+        subtitle={clearance.tenant?.name || "Unknown Tenant"}
+        backHref="/exit-clearance"
+        backLabel="All Exit Clearances"
+        avatar={
+          <div className="p-3 bg-orange-100 rounded-lg">
+            <DoorOpen className="h-8 w-8 text-orange-600" />
           </div>
-        </div>
-        {!isCleared && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSave} disabled={saving}>
+        }
+        status={
+          <StatusBadge
+            variant={exitStatusMap[clearance.settlement_status]?.variant || "muted"}
+            label={exitStatusMap[clearance.settlement_status]?.label || clearance.settlement_status}
+          />
+        }
+        actions={
+          !isCleared && (
+            <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Save
             </Button>
-          </div>
-        )}
-      </div>
+          )
+        }
+      />
+
+      {/* Settlement Amount Card */}
+      <InfoCard
+        label={isRefund ? "Refund Due" : "Amount Due"}
+        value={<Currency amount={Math.abs(finalAmount)} />}
+        icon={IndianRupee}
+        variant={isRefund ? "success" : "error"}
+        className="max-w-sm"
+      />
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="md:col-span-2 space-y-6">
           {/* Tenant Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Tenant Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-start gap-4">
-                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-7 w-7 text-primary" />
-                </div>
-                <div className="flex-1">
-                  {clearance.tenant ? (
-                    <Link href={`/tenants/${clearance.tenant.id}`} className="text-xl font-semibold hover:text-primary transition-colors">
-                      {clearance.tenant.name}
-                    </Link>
-                  ) : (
-                    <h3 className="text-xl font-semibold">Unknown Tenant</h3>
-                  )}
-                  <div className="flex items-center gap-2 text-muted-foreground mt-1">
+          <DetailSection
+            title="Tenant Information"
+            description="Tenant and location details"
+            icon={User}
+          >
+            <InfoRow
+              label="Tenant"
+              value={
+                clearance.tenant ? (
+                  <TenantLink id={clearance.tenant.id} name={clearance.tenant.name} />
+                ) : (
+                  "Unknown Tenant"
+                )
+              }
+            />
+            <InfoRow
+              label="Phone"
+              value={
+                clearance.tenant?.phone ? (
+                  <a href={`tel:${clearance.tenant.phone}`} className="text-primary hover:underline flex items-center gap-1">
                     <Phone className="h-4 w-4" />
-                    <a href={`tel:${clearance.tenant?.phone}`} className="hover:text-primary">
-                      {clearance.tenant?.phone}
-                    </a>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      {clearance.property ? (
-                        <Link href={`/properties/${clearance.property.id}`} className="hover:text-primary transition-colors">
-                          {clearance.property.name}
-                        </Link>
-                      ) : (
-                        <span>N/A</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Home className="h-4 w-4 text-muted-foreground" />
-                      {clearance.room ? (
-                        <Link href={`/rooms/${clearance.room.id}`} className="hover:text-primary transition-colors">
-                          Room {clearance.room.room_number}
-                        </Link>
-                      ) : (
-                        <span>N/A</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>Since {clearance.tenant?.check_in_date ? formatDate(clearance.tenant.check_in_date) : 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{getDaysStayed()} days stayed</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                    {clearance.tenant.phone}
+                  </a>
+                ) : (
+                  "N/A"
+                )
+              }
+            />
+            <InfoRow
+              label="Property"
+              value={
+                clearance.property ? (
+                  <PropertyLink id={clearance.property.id} name={clearance.property.name} />
+                ) : (
+                  "N/A"
+                )
+              }
+            />
+            <InfoRow
+              label="Room"
+              value={
+                clearance.room ? (
+                  <RoomLink id={clearance.room.id} roomNumber={clearance.room.room_number} />
+                ) : (
+                  "N/A"
+                )
+              }
+            />
+            <InfoRow
+              label="Check-in Date"
+              value={clearance.tenant?.check_in_date ? formatDate(clearance.tenant.check_in_date) : "N/A"}
+              icon={Calendar}
+            />
+            <InfoRow
+              label="Days Stayed"
+              value={`${getDaysStayed()} days`}
+              icon={Clock}
+            />
+          </DetailSection>
 
-          {/* Checklist */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Checkout Checklist</CardTitle>
-              <CardDescription>Complete all items before finalizing</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          {/* Checkout Checklist */}
+          <DetailSection
+            title="Checkout Checklist"
+            description="Complete all items before finalizing"
+            icon={ClipboardCheck}
+          >
+            <div className="space-y-4">
               <div className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <ClipboardCheck className={`h-5 w-5 ${formData.room_inspection_done ? "text-green-600" : "text-muted-foreground"}`} />
@@ -498,16 +513,16 @@ export default function ExitClearanceDetailPage() {
                   className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </DetailSection>
 
           {/* Deductions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Deductions</CardTitle>
-              <CardDescription>Damages, cleaning, or other charges</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <DetailSection
+            title="Deductions"
+            description="Damages, cleaning, or other charges"
+            icon={Receipt}
+          >
+            <div className="space-y-4">
               {deductions.length > 0 && (
                 <div className="space-y-2">
                   {deductions.map((deduction, index) => (
@@ -560,18 +575,19 @@ export default function ExitClearanceDetailPage() {
               {deductions.length === 0 && isCleared && (
                 <p className="text-muted-foreground text-center py-4">No deductions</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </DetailSection>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Settlement Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Settlement</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          <DetailSection
+            title="Settlement"
+            description="Financial summary"
+            icon={Wallet}
+          >
+            <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Pending Dues</span>
                 <span>{formatCurrency(clearance.total_dues)}</span>
@@ -592,44 +608,49 @@ export default function ExitClearanceDetailPage() {
                   {formatCurrency(Math.abs(finalAmount))}
                 </span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </DetailSection>
 
-          {/* Dates */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Timeline</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
+          {/* Timeline */}
+          <DetailSection
+            title="Timeline"
+            description="Key dates"
+            icon={Calendar}
+          >
+            <div className="space-y-3 text-sm">
               {clearance.notice_given_date && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Notice Given</span>
-                  <span>{formatDate(clearance.notice_given_date)}</span>
-                </div>
+                <InfoRow
+                  label="Notice Given"
+                  value={formatDate(clearance.notice_given_date)}
+                />
               )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Expected Exit</span>
-                <span>{formatDate(clearance.expected_exit_date)}</span>
-              </div>
+              <InfoRow
+                label="Expected Exit"
+                value={formatDate(clearance.expected_exit_date)}
+              />
               {(formData.actual_exit_date || clearance.actual_exit_date) && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Actual Exit</span>
-                  <span>{formatDate(formData.actual_exit_date || clearance.actual_exit_date!)}</span>
-                </div>
+                <InfoRow
+                  label="Actual Exit"
+                  value={formatDate(formData.actual_exit_date || clearance.actual_exit_date!)}
+                />
               )}
               {clearance.completed_at && (
-                <div className="flex justify-between text-green-600">
-                  <span>Completed</span>
-                  <span>{formatDate(clearance.completed_at)}</span>
-                </div>
+                <InfoRow
+                  label="Completed"
+                  value={<span className="text-green-600">{formatDate(clearance.completed_at)}</span>}
+                />
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </DetailSection>
 
           {/* Actions */}
           {!isCleared && (
-            <Card>
-              <CardContent className="p-4 space-y-3">
+            <DetailSection
+              title="Actions"
+              description="Complete the clearance"
+              icon={CheckCircle}
+            >
+              <div className="space-y-3">
                 {clearance.settlement_status === "initiated" && (
                   <Button
                     className="w-full"
@@ -658,19 +679,17 @@ export default function ExitClearanceDetailPage() {
                     Complete checklist items to enable
                   </p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </DetailSection>
           )}
 
           {/* Cleared Badge */}
           {isCleared && (
-            <Card className="bg-green-50 border-green-200">
-              <CardContent className="p-4 text-center">
-                <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
-                <p className="font-semibold text-green-800">Clearance Completed</p>
-                <p className="text-sm text-green-600">Room is now available</p>
-              </CardContent>
-            </Card>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
+              <p className="font-semibold text-green-800">Clearance Completed</p>
+              <p className="text-sm text-green-600">Room is now available</p>
+            </div>
           )}
 
           {/* Record Refund Button - show when clearance is complete and refund is due */}

@@ -6,17 +6,18 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  ArrowLeft,
+  DetailHero,
+  DetailSection,
+  InfoRow,
+} from "@/components/ui/detail-components"
+import { PageLoading } from "@/components/ui/loading"
+import {
   Loader2,
-  AlertCircle,
-  Clock,
+  AlertTriangle,
   CheckCircle,
-  Wrench,
-  Eye,
   Building2,
   User,
   Phone,
@@ -24,13 +25,16 @@ import {
   MessageSquare,
   Edit2,
   Save,
-  X
+  X,
+  MapPin,
+  FileText,
+  ClipboardList,
+  Wrench,
 } from "lucide-react"
-import { PropertyLink, RoomLink, TenantLink } from "@/components/ui/entity-link"
+import { RoomLink, TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { toast } from "sonner"
-import { formatDate, formatDateTime } from "@/lib/format"
+import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
-import { PageLoader } from "@/components/ui/page-loader"
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 
 interface Complaint {
@@ -256,50 +260,49 @@ export default function ComplaintDetailPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageLoading message="Loading complaint details..." />
   }
 
   if (!complaint) {
     return null
   }
 
-    const currentStatusIndex = statusFlow.indexOf(complaint.status)
+  const currentStatusIndex = statusFlow.indexOf(complaint.status)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/complaints">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <PriorityBadge priority={complaint.priority as "low" | "medium" | "high" | "urgent"} />
-              <span className="text-sm text-muted-foreground">
-                {categoryLabels[complaint.category] || complaint.category}
-              </span>
-            </div>
-            <h1 className="text-2xl font-bold">{complaint.title}</h1>
+    <div className="space-y-6">
+      {/* Hero Header */}
+      <DetailHero
+        title={complaint.title}
+        subtitle={categoryLabels[complaint.category] || complaint.category}
+        backHref="/complaints"
+        backLabel="All Complaints"
+        avatar={
+          <div className="p-3 bg-amber-100 rounded-lg">
+            <AlertTriangle className="h-8 w-8 text-amber-600" />
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {!editing ? (
+        }
+        status={
+          <div className="flex items-center gap-2">
+            <PriorityBadge priority={complaint.priority as "low" | "medium" | "high" | "urgent"} />
+            <StatusBadge status={complaint.status as "open" | "acknowledged" | "in_progress" | "resolved" | "closed"} />
+          </div>
+        }
+        actions={
+          !editing ? (
             <PermissionGate permission="complaints.edit" hide>
-              <Button variant="outline" onClick={() => setEditing(true)}>
+              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                 <Edit2 className="mr-2 h-4 w-4" />
                 Edit
               </Button>
             </PermissionGate>
           ) : (
-            <>
-              <Button variant="outline" onClick={() => setEditing(false)} disabled={updating}>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setEditing(false)} disabled={updating}>
                 <X className="mr-2 h-4 w-4" />
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={updating}>
+              <Button size="sm" onClick={handleSave} disabled={updating}>
                 {updating ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -307,22 +310,26 @@ export default function ComplaintDetailPage() {
                 )}
                 Save
               </Button>
-            </>
-          )}
-        </div>
-      </div>
+            </div>
+          )
+        }
+      />
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="md:col-span-2 space-y-6">
-          {/* Status Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 mb-4">
-                <StatusBadge status={complaint.status as "open" | "acknowledged" | "in_progress" | "resolved" | "closed"} size="lg" />
+          {/* Status Actions */}
+          <DetailSection
+            title="Status"
+            description="Current status and workflow"
+            icon={ClipboardList}
+          >
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <StatusBadge
+                  status={complaint.status as "open" | "acknowledged" | "in_progress" | "resolved" | "closed"}
+                  size="lg"
+                />
               </div>
 
               {/* Status Flow Buttons */}
@@ -361,159 +368,155 @@ export default function ComplaintDetailPage() {
                   </select>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </DetailSection>
 
           {/* Description */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Description</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {complaint.description ? (
-                <p className="text-muted-foreground whitespace-pre-wrap">{complaint.description}</p>
-              ) : (
-                <p className="text-muted-foreground italic">No description provided</p>
-              )}
-            </CardContent>
-          </Card>
+          <DetailSection
+            title="Description"
+            description="Details about the complaint"
+            icon={MessageSquare}
+          >
+            {complaint.description ? (
+              <p className="text-muted-foreground whitespace-pre-wrap">{complaint.description}</p>
+            ) : (
+              <p className="text-muted-foreground italic">No description provided</p>
+            )}
+          </DetailSection>
 
           {/* Resolution Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Resolution Notes</CardTitle>
-              <CardDescription>Notes about how this complaint was resolved</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {editing ? (
-                <textarea
-                  value={editData.resolution_notes}
-                  onChange={(e) => setEditData((prev) => ({ ...prev, resolution_notes: e.target.value }))}
-                  placeholder="Add resolution notes..."
-                  rows={4}
-                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
-                />
-              ) : complaint.resolution_notes ? (
-                <p className="text-muted-foreground whitespace-pre-wrap">{complaint.resolution_notes}</p>
-              ) : (
-                <p className="text-muted-foreground italic">No resolution notes yet</p>
-              )}
-            </CardContent>
-          </Card>
+          <DetailSection
+            title="Resolution Notes"
+            description="Notes about how this complaint was resolved"
+            icon={FileText}
+          >
+            {editing ? (
+              <textarea
+                value={editData.resolution_notes}
+                onChange={(e) => setEditData((prev) => ({ ...prev, resolution_notes: e.target.value }))}
+                placeholder="Add resolution notes..."
+                rows={4}
+                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+              />
+            ) : complaint.resolution_notes ? (
+              <p className="text-muted-foreground whitespace-pre-wrap">{complaint.resolution_notes}</p>
+            ) : (
+              <p className="text-muted-foreground italic">No resolution notes yet</p>
+            )}
+          </DetailSection>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Priority */}
-              <div>
-                <Label className="text-xs text-muted-foreground">Priority</Label>
-                {editing ? (
-                  <select
-                    value={editData.priority}
-                    onChange={(e) => setEditData((prev) => ({ ...prev, priority: e.target.value }))}
-                    className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm mt-1"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                ) : (
+          <DetailSection
+            title="Details"
+            description="Complaint information"
+            icon={Wrench}
+          >
+            {/* Priority */}
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Priority</Label>
+              {editing ? (
+                <select
+                  value={editData.priority}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, priority: e.target.value }))}
+                  className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              ) : (
+                <div className="pt-1">
                   <PriorityBadge priority={complaint.priority as "low" | "medium" | "high" | "urgent"} />
-                )}
-              </div>
-
-              {/* Assigned To */}
-              <div>
-                <Label className="text-xs text-muted-foreground">Assigned To</Label>
-                {editing ? (
-                  <Input
-                    value={editData.assigned_to}
-                    onChange={(e) => setEditData((prev) => ({ ...prev, assigned_to: e.target.value }))}
-                    placeholder="Staff name"
-                    className="mt-1"
-                  />
-                ) : (
-                  <p className="font-medium">{complaint.assigned_to || "Unassigned"}</p>
-                )}
-              </div>
-
-              {/* Dates */}
-              <div>
-                <Label className="text-xs text-muted-foreground">Created</Label>
-                <p className="font-medium flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  {formatDateTime(complaint.created_at)}
-                </p>
-              </div>
-
-              {complaint.resolved_at && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Resolved</Label>
-                  <p className="font-medium flex items-center gap-2 text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    {formatDateTime(complaint.resolved_at)}
-                  </p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Assigned To */}
+            <div className="space-y-1 mt-4">
+              <Label className="text-xs text-muted-foreground">Assigned To</Label>
+              {editing ? (
+                <Input
+                  value={editData.assigned_to}
+                  onChange={(e) => setEditData((prev) => ({ ...prev, assigned_to: e.target.value }))}
+                  placeholder="Staff name"
+                />
+              ) : (
+                <p className="font-medium pt-1">{complaint.assigned_to || "Unassigned"}</p>
+              )}
+            </div>
+
+            {/* Dates */}
+            <InfoRow
+              label="Created"
+              value={formatDateTime(complaint.created_at)}
+              icon={Calendar}
+            />
+
+            {complaint.resolved_at && (
+              <InfoRow
+                label="Resolved"
+                value={<span className="text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" />{formatDateTime(complaint.resolved_at)}</span>}
+              />
+            )}
+          </DetailSection>
 
           {/* Location */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Location</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {complaint.property && (
-                <Link href={`/properties/${complaint.property.id}`} className="flex items-center gap-2 hover:text-primary transition-colors">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{complaint.property.name}</p>
-                    {complaint.property.address && (
-                      <p className="text-xs text-muted-foreground">
-                        {complaint.property.address}, {complaint.property.city}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              )}
-              {complaint.room && (
-                <RoomLink id={complaint.room.id} roomNumber={complaint.room.room_number} />
-              )}
-            </CardContent>
-          </Card>
+          <DetailSection
+            title="Location"
+            description="Property and room"
+            icon={MapPin}
+          >
+            {complaint.property && (
+              <InfoRow
+                label="Property"
+                value={<PropertyLink id={complaint.property.id} name={complaint.property.name} />}
+                icon={Building2}
+              />
+            )}
+            {complaint.property?.address && (
+              <InfoRow
+                label="Address"
+                value={`${complaint.property.address}, ${complaint.property.city}`}
+              />
+            )}
+            {complaint.room && (
+              <InfoRow
+                label="Room"
+                value={<RoomLink id={complaint.room.id} roomNumber={complaint.room.room_number} />}
+              />
+            )}
+          </DetailSection>
 
           {/* Reported By */}
           {complaint.tenant && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Reported By</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <p className="font-medium">{complaint.tenant.name}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <a href={`tel:${complaint.tenant.phone}`} className="text-primary hover:underline">
+            <DetailSection
+              title="Reported By"
+              description="Tenant who filed the complaint"
+              icon={User}
+            >
+              <InfoRow
+                label="Name"
+                value={<TenantLink id={complaint.tenant.id} name={complaint.tenant.name} />}
+              />
+              <InfoRow
+                label="Phone"
+                value={
+                  <a href={`tel:${complaint.tenant.phone}`} className="text-primary hover:underline flex items-center gap-1">
+                    <Phone className="h-4 w-4" />
                     {complaint.tenant.phone}
                   </a>
-                </div>
-                <Link href={`/tenants/${complaint.tenant.id}`}>
-                  <Button variant="outline" size="sm" className="w-full mt-2">
-                    View Tenant Profile
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                }
+              />
+              <Link href={`/tenants/${complaint.tenant.id}`}>
+                <Button variant="outline" size="sm" className="w-full mt-3">
+                  View Tenant Profile
+                </Button>
+              </Link>
+            </DetailSection>
           )}
         </div>
       </div>

@@ -7,13 +7,15 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  ArrowLeft,
-  Bell,
-  Loader2,
-  Building2,
+  DetailHero,
+  DetailSection,
+  InfoRow,
+} from "@/components/ui/detail-components"
+import { PageLoading } from "@/components/ui/loading"
+import {
   Megaphone,
+  Loader2,
   AlertTriangle,
   Wrench,
   CreditCard,
@@ -23,14 +25,14 @@ import {
   EyeOff,
   Save,
   Trash2,
-  Clock
+  Clock,
+  FileText,
+  Target,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDateTime } from "@/lib/format"
-import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { PageLoader } from "@/components/ui/page-loader"
 
 interface Notice {
   id: string
@@ -276,7 +278,7 @@ export default function NoticeDetailPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageLoading message="Loading notice..." />
   }
 
   if (!notice) {
@@ -288,274 +290,281 @@ export default function NoticeDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/notices">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeConfig?.bgColor} ${typeConfig?.color}`}>
-                {typeConfig?.label || formData.type}
-              </span>
-              {!formData.is_active && (
-                <StatusBadge variant="muted" label="Inactive" />
-              )}
-              {isExpired() && (
-                <StatusBadge variant="error" label="Expired" />
-              )}
-            </div>
-            <h1 className="text-2xl font-bold">Edit Notice</h1>
+      {/* Hero Header */}
+      <DetailHero
+        title="Edit Notice"
+        subtitle={typeConfig?.label || formData.type}
+        backHref="/notices"
+        backLabel="All Notices"
+        avatar={
+          <div className={`p-3 rounded-lg ${typeConfig?.bgColor || "bg-blue-100"}`}>
+            <TypeIcon className={`h-8 w-8 ${typeConfig?.color || "text-blue-600"}`} />
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={toggleActive}
-            disabled={saving}
-          >
-            {formData.is_active ? (
-              <>
-                <EyeOff className="mr-2 h-4 w-4" />
-                Deactivate
-              </>
-            ) : (
-              <>
-                <Eye className="mr-2 h-4 w-4" />
-                Activate
-              </>
+        }
+        status={
+          <div className="flex items-center gap-2">
+            {!formData.is_active && (
+              <StatusBadge variant="muted" label="Inactive" />
             )}
-          </Button>
-          <PermissionGate permission="notices.delete" hide>
+            {isExpired() && (
+              <StatusBadge variant="error" label="Expired" />
+            )}
+            {formData.is_active && !isExpired() && (
+              <StatusBadge variant="success" label="Active" />
+            )}
+          </div>
+        }
+        actions={
+          <div className="flex items-center gap-2">
             <Button
-              variant="destructive"
-              onClick={handleDelete}
+              variant="outline"
+              size="sm"
+              onClick={toggleActive}
               disabled={saving}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              {formData.is_active ? (
+                <>
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  Deactivate
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Activate
+                </>
+              )}
             </Button>
-          </PermissionGate>
-        </div>
-      </div>
+            <PermissionGate permission="notices.delete" hide>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={saving}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </PermissionGate>
+          </div>
+        }
+      />
 
       {/* Metadata */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              Created: {formatDateTime(notice.created_at)}
-            </span>
-            {notice.updated_at !== notice.created_at && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Updated: {formatDateTime(notice.updated_at)}
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <DetailSection
+        title="Record Info"
+        description="Creation and update timestamps"
+        icon={Clock}
+      >
+        <div className="flex flex-wrap gap-4 text-sm">
+          <InfoRow
+            label="Created"
+            value={formatDateTime(notice.created_at)}
+            icon={Calendar}
+          />
+          {notice.updated_at !== notice.created_at && (
+            <InfoRow
+              label="Updated"
+              value={formatDateTime(notice.updated_at)}
+              icon={Clock}
+            />
+          )}
+        </div>
+      </DetailSection>
 
-      {/* Form */}
-      <div className="space-y-6">
-        {/* Notice Type */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Notice Type</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              {noticeTypes.map((type) => {
-                const Icon = type.icon
-                const isSelected = formData.type === type.value
-                return (
+      {/* Notice Type */}
+      <DetailSection
+        title="Notice Type"
+        description="Select the type of notice"
+        icon={Megaphone}
+      >
+        <div className="grid grid-cols-2 gap-3">
+          {noticeTypes.map((type) => {
+            const Icon = type.icon
+            const isSelected = formData.type === type.value
+            return (
+              <button
+                key={type.value}
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, type: type.value }))}
+                className={`p-3 rounded-lg border text-left transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-input hover:border-primary/50"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className={`h-4 w-4 ${type.color}`} />
+                  <span className="font-medium text-sm">{type.label}</span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </DetailSection>
+
+      {/* Target Audience */}
+      <DetailSection
+        title="Target Audience"
+        description="Who should see this notice"
+        icon={Target}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="property_id">Property</Label>
+            <select
+              id="property_id"
+              name="property_id"
+              value={formData.property_id}
+              onChange={handleChange}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              disabled={saving}
+            >
+              <option value="">All Properties</option>
+              {properties.map((property) => (
+                <option key={property.id} value={property.id}>
+                  {property.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Audience</Label>
+            <select
+              name="target_audience"
+              value={formData.target_audience}
+              onChange={handleChange}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              disabled={saving}
+            >
+              <option value="all">All Residents</option>
+              <option value="tenants_only">Tenants Only</option>
+              <option value="specific_rooms">Specific Rooms</option>
+            </select>
+          </div>
+
+          {/* Room Selection */}
+          {formData.target_audience === "specific_rooms" && formData.property_id && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Select Rooms</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={selectAllRooms}
+                >
+                  {selectedRooms.length === filteredRooms.length ? "Deselect All" : "Select All"}
+                </Button>
+              </div>
+              <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 border rounded-lg">
+                {filteredRooms.map((room) => (
                   <button
-                    key={type.value}
+                    key={room.id}
                     type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, type: type.value }))}
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      isSelected
-                        ? "border-primary bg-primary/5 ring-1 ring-primary"
-                        : "border-input hover:border-primary/50"
+                    onClick={() => handleRoomToggle(room.id)}
+                    className={`p-2 rounded text-sm font-medium transition-colors ${
+                      selectedRooms.includes(room.id)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80"
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <Icon className={`h-4 w-4 ${type.color}`} />
-                      <span className="font-medium text-sm">{type.label}</span>
-                    </div>
+                    {room.room_number}
                   </button>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Target Audience */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Target Audience</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="property_id">Property</Label>
-              <select
-                id="property_id"
-                name="property_id"
-                value={formData.property_id}
-                onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                disabled={saving}
-              >
-                <option value="">All Properties</option>
-                {properties.map((property) => (
-                  <option key={property.id} value={property.id}>
-                    {property.name}
-                  </option>
                 ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Audience</Label>
-              <select
-                name="target_audience"
-                value={formData.target_audience}
-                onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                disabled={saving}
-              >
-                <option value="all">All Residents</option>
-                <option value="tenants_only">Tenants Only</option>
-                <option value="specific_rooms">Specific Rooms</option>
-              </select>
-            </div>
-
-            {/* Room Selection */}
-            {formData.target_audience === "specific_rooms" && formData.property_id && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Select Rooms</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={selectAllRooms}
-                  >
-                    {selectedRooms.length === filteredRooms.length ? "Deselect All" : "Select All"}
-                  </Button>
-                </div>
-                <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 border rounded-lg">
-                  {filteredRooms.map((room) => (
-                    <button
-                      key={room.id}
-                      type="button"
-                      onClick={() => handleRoomToggle(room.id)}
-                      className={`p-2 rounded text-sm font-medium transition-colors ${
-                        selectedRooms.includes(room.id)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80"
-                      }`}
-                    >
-                      {room.room_number}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Notice Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Notice Content</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                name="title"
-                placeholder="Notice title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                disabled={saving}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="content">Content *</Label>
-              <textarea
-                id="content"
-                name="content"
-                placeholder="Write your notice content here..."
-                value={formData.content}
-                onChange={handleChange}
-                required
-                disabled={saving}
-                rows={6}
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expires_at">Expires On</Label>
-                <Input
-                  id="expires_at"
-                  name="expires_at"
-                  type="date"
-                  value={formData.expires_at}
-                  onChange={handleChange}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <div className="flex items-center gap-2 h-10">
-                  <input
-                    type="checkbox"
-                    id="is_active"
-                    name="is_active"
-                    checked={formData.is_active}
-                    onChange={handleChange}
-                    className="h-4 w-4 rounded border-input"
-                  />
-                  <label htmlFor="is_active" className="text-sm">
-                    Active
-                  </label>
-                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end gap-4">
-          <Link href="/notices">
-            <Button type="button" variant="outline" disabled={saving}>
-              Cancel
-            </Button>
-          </Link>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Changes
-              </>
-            )}
-          </Button>
+          )}
         </div>
+      </DetailSection>
+
+      {/* Notice Content */}
+      <DetailSection
+        title="Notice Content"
+        description="Title and message"
+        icon={FileText}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Title *</Label>
+            <Input
+              id="title"
+              name="title"
+              placeholder="Notice title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+              disabled={saving}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="content">Content *</Label>
+            <textarea
+              id="content"
+              name="content"
+              placeholder="Write your notice content here..."
+              value={formData.content}
+              onChange={handleChange}
+              required
+              disabled={saving}
+              rows={6}
+              className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="expires_at">Expires On</Label>
+              <Input
+                id="expires_at"
+                name="expires_at"
+                type="date"
+                value={formData.expires_at}
+                onChange={handleChange}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <div className="flex items-center gap-2 h-10">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  name="is_active"
+                  checked={formData.is_active}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded border-input"
+                />
+                <label htmlFor="is_active" className="text-sm">
+                  Active
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </DetailSection>
+
+      <div className="flex justify-end gap-4">
+        <Link href="/notices">
+          <Button type="button" variant="outline" disabled={saving}>
+            Cancel
+          </Button>
+        </Link>
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
+          )}
+        </Button>
       </div>
     </div>
   )

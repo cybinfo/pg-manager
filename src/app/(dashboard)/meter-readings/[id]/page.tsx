@@ -5,10 +5,16 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  ArrowLeft,
-  Loader2,
+  DetailHero,
+  InfoCard,
+  DetailSection,
+  InfoRow,
+} from "@/components/ui/detail-components"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { Currency } from "@/components/ui/currency"
+import { PageLoading } from "@/components/ui/loading"
+import {
   Gauge,
   Building2,
   Home,
@@ -27,15 +33,13 @@ import {
   Receipt,
   User,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
-import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { PageLoader } from "@/components/ui/page-loader"
 
 interface MeterReadingRaw {
   id: string
@@ -106,7 +110,6 @@ const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: 
   gas: { label: "Gas", icon: Flame, color: "text-orange-700", bgColor: "bg-orange-100", unit: "m³" },
 }
 
-
 export default function MeterReadingDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -139,7 +142,6 @@ export default function MeterReadingDetailPage() {
         return
       }
 
-      // Transform data
       const rawReading = data as MeterReadingRaw
       const transformedReading: MeterReading = {
         ...rawReading,
@@ -149,7 +151,6 @@ export default function MeterReadingDetailPage() {
       }
       setReading(transformedReading)
 
-      // Fetch related charges
       const { data: chargesData } = await supabase
         .from("charges")
         .select(`
@@ -224,7 +225,6 @@ export default function MeterReadingDetailPage() {
         return
       }
 
-      // Find active tenants in the room
       const { data: tenants, error: tenantsError } = await supabase
         .from("tenants")
         .select("id, name")
@@ -245,12 +245,10 @@ export default function MeterReadingDetailPage() {
       const totalAmount = reading.units_consumed * ratePerUnit
       const amountPerTenant = splitByOccupants ? totalAmount / tenants.length : totalAmount
 
-      // Create due date (end of reading month)
       const readingDate = new Date(reading.reading_date)
       const dueDate = new Date(readingDate.getFullYear(), readingDate.getMonth() + 1, 0)
       const forPeriod = readingDate.toLocaleDateString("en-IN", { month: "long", year: "numeric" })
 
-      // Create charges for each tenant
       const chargeInserts = tenants.map((tenant: { id: string; name: string }) => ({
         owner_id: user.id,
         tenant_id: tenant.id,
@@ -295,7 +293,6 @@ export default function MeterReadingDetailPage() {
         return
       }
 
-      // Transform and add new charges to state
       if (newCharges) {
         const transformedCharges: Charge[] = (newCharges as ChargeRaw[]).map((charge) => ({
           ...charge,
@@ -313,11 +310,8 @@ export default function MeterReadingDetailPage() {
     }
   }
 
-  const totalChargesAmount = charges.reduce((sum, c) => sum + c.amount, 0)
-  const totalPaidAmount = charges.reduce((sum, c) => sum + (c.paid_amount || 0), 0)
-
   if (loading) {
-    return <PageLoader />
+    return <PageLoading message="Loading meter reading..." />
   }
 
   if (!reading) {
@@ -328,314 +322,202 @@ export default function MeterReadingDetailPage() {
   const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
   const Icon = config.icon
   const ratePerUnit = (reading.charge_type?.calculation_config as { rate_per_unit?: number })?.rate_per_unit
+  const totalChargesAmount = charges.reduce((sum, c) => sum + c.amount, 0)
+  const totalPaidAmount = charges.reduce((sum, c) => sum + (c.paid_amount || 0), 0)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link href="/meter-readings">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div className="flex items-center gap-4">
-            <div className={`p-4 rounded-xl ${config.bgColor}`}>
-              <Icon className={`h-8 w-8 ${config.color}`} />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">{config.label} Reading</h1>
-              <p className="text-muted-foreground flex items-center gap-1 flex-wrap">
-                {reading.property ? (
-                  <Link href={`/properties/${reading.property.id}`} className="hover:text-primary transition-colors flex items-center gap-1">
-                    <Building2 className="h-4 w-4" />
-                    {reading.property.name}
-                  </Link>
-                ) : "N/A"}
-                <span>-</span>
-                {reading.room ? (
-                  <Link href={`/rooms/${reading.room.id}`} className="hover:text-primary transition-colors flex items-center gap-1">
-                    <Home className="h-4 w-4" />
-                    Room {reading.room.room_number}
-                  </Link>
-                ) : "N/A"}
-              </p>
-            </div>
+    <div className="space-y-6">
+      {/* Hero Header */}
+      <DetailHero
+        title={`${config.label} Reading`}
+        subtitle={
+          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+            {reading.property && (
+              <Link href={`/properties/${reading.property.id}`} className="hover:text-primary flex items-center gap-1">
+                <Building2 className="h-4 w-4" />
+                {reading.property.name}
+              </Link>
+            )}
+            {reading.room && (
+              <Link href={`/rooms/${reading.room.id}`} className="hover:text-primary flex items-center gap-1">
+                <Home className="h-4 w-4" />
+                Room {reading.room.room_number}
+              </Link>
+            )}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href={`/meter-readings/${reading.id}/edit`}>
-            <Button variant="outline">
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-          </Link>
-          <PermissionGate permission="meter_readings.delete" hide>
-            <Button variant="destructive" disabled={deleting} onClick={() => setShowDeleteDialog(true)}>
-              {deleting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
+        }
+        backHref="/meter-readings"
+        backLabel="All Readings"
+        avatar={
+          <div className={`p-3 rounded-lg ${config.bgColor}`}>
+            <Icon className={`h-8 w-8 ${config.color}`} />
+          </div>
+        }
+        actions={
+          <div className="flex items-center gap-2">
+            <Link href={`/meter-readings/${reading.id}/edit`}>
+              <Button variant="outline" size="sm">
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </Link>
+            <PermissionGate permission="meter_readings.delete" hide>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={deleting}
+                onClick={() => setShowDeleteDialog(true)}
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
-              )}
-              Delete
-            </Button>
-          </PermissionGate>
-        </div>
-      </div>
+                Delete
+              </Button>
+            </PermissionGate>
+          </div>
+        }
+      />
 
-      {/* Reading Value Cards */}
+      {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${config.bgColor}`}>
-                <Gauge className={`h-5 w-5 ${config.color}`} />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Current Reading</p>
-                <p className="text-2xl font-bold">{reading.reading_value.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <Gauge className="h-5 w-5 text-gray-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Previous Reading</p>
-                <p className="text-2xl font-bold">
-                  {reading.previous_reading !== null ? reading.previous_reading.toLocaleString() : "N/A"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Calculator className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Units Consumed</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {reading.units_consumed !== null ? (
-                    <>
-                      {reading.units_consumed.toLocaleString()}
-                      <span className="text-sm font-normal ml-1">{config.unit}</span>
-                    </>
-                  ) : (
-                    "N/A"
-                  )}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Reading Date</p>
-                <p className="text-lg font-bold">{formatDate(reading.reading_date)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <InfoCard
+          label="Current Reading"
+          value={reading.reading_value.toLocaleString()}
+          icon={Gauge}
+          variant="default"
+        />
+        <InfoCard
+          label="Previous Reading"
+          value={reading.previous_reading !== null ? reading.previous_reading.toLocaleString() : "N/A"}
+          icon={Gauge}
+          variant="default"
+        />
+        <InfoCard
+          label="Units Consumed"
+          value={reading.units_consumed !== null ? `${reading.units_consumed.toLocaleString()} ${config.unit}` : "N/A"}
+          icon={Calculator}
+          variant="success"
+        />
+        <InfoCard
+          label="Reading Date"
+          value={formatDate(reading.reading_date)}
+          icon={Calendar}
+          variant="default"
+        />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Location Details */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Home className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Location</CardTitle>
-                <CardDescription>Property and room details</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Property
-              </span>
-              {reading.property ? (
-                <Link href={`/properties/${reading.property.id}`} className="font-medium hover:text-primary transition-colors">
+        <DetailSection
+          title="Location"
+          description="Property and room details"
+          icon={Home}
+        >
+          {reading.property && (
+            <InfoRow
+              label="Property"
+              value={
+                <Link href={`/properties/${reading.property.id}`} className="text-primary hover:underline">
                   {reading.property.name}
                 </Link>
-              ) : (
-                <span className="font-medium">N/A</span>
-              )}
-            </div>
-            {reading.property?.address && (
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Address</span>
-                <span className="font-medium text-right max-w-[60%]">{reading.property.address}</span>
-              </div>
-            )}
-            <div className="flex items-center justify-between py-2">
-              <span className="text-muted-foreground flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                Room
-              </span>
-              {reading.room ? (
-                <Link href={`/rooms/${reading.room.id}`} className="font-medium hover:text-primary transition-colors">
+              }
+              icon={Building2}
+            />
+          )}
+          {reading.property?.address && (
+            <InfoRow label="Address" value={reading.property.address} />
+          )}
+          {reading.room && (
+            <InfoRow
+              label="Room"
+              value={
+                <Link href={`/rooms/${reading.room.id}`} className="text-primary hover:underline">
                   Room {reading.room.room_number}
                 </Link>
-              ) : (
-                <span className="font-medium">N/A</span>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              }
+              icon={Home}
+            />
+          )}
+        </DetailSection>
 
         {/* Meter Details */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${config.bgColor}`}>
-                <Icon className={`h-5 w-5 ${config.color}`} />
-              </div>
-              <div>
-                <CardTitle>Meter Details</CardTitle>
-                <CardDescription>Type and calculation info</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Meter Type</span>
+        <DetailSection
+          title="Meter Details"
+          description="Type and calculation info"
+          icon={Icon}
+        >
+          <InfoRow
+            label="Meter Type"
+            value={
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.bgColor} ${config.color}`}>
                 {config.label}
               </span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Unit of Measurement</span>
-              <span className="font-medium">{config.unit}</span>
-            </div>
-            {ratePerUnit && (
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Rate per Unit</span>
-                <span className="font-medium">{formatCurrency(ratePerUnit)}</span>
-              </div>
-            )}
-            {ratePerUnit && reading.units_consumed !== null && (
-              <div className="flex items-center justify-between py-2">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  Estimated Cost
-                </span>
-                <span className="font-bold text-lg text-primary">
-                  {formatCurrency(ratePerUnit * reading.units_consumed)}
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            }
+          />
+          <InfoRow label="Unit of Measurement" value={config.unit} />
+          {ratePerUnit && (
+            <InfoRow label="Rate per Unit" value={formatCurrency(ratePerUnit)} />
+          )}
+          {ratePerUnit && reading.units_consumed !== null && (
+            <InfoRow
+              label="Estimated Cost"
+              value={<span className="font-bold text-primary">{formatCurrency(ratePerUnit * reading.units_consumed)}</span>}
+              icon={TrendingUp}
+            />
+          )}
+        </DetailSection>
 
-        {/* Timestamp Info */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <Clock className="h-5 w-5 text-gray-600" />
-              </div>
-              <div>
-                <CardTitle>Record Info</CardTitle>
-                <CardDescription>When this reading was recorded</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Reading Date</span>
-              <span className="font-medium">{formatDate(reading.reading_date)}</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-muted-foreground">Recorded At</span>
-              <span className="font-medium">{formatDateTime(reading.created_at)}</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Record Info */}
+        <DetailSection
+          title="Record Info"
+          description="When this reading was recorded"
+          icon={Clock}
+        >
+          <InfoRow label="Reading Date" value={formatDate(reading.reading_date)} icon={Calendar} />
+          <InfoRow label="Recorded At" value={formatDateTime(reading.created_at)} icon={Clock} />
+        </DetailSection>
 
         {/* Meter Image */}
         {reading.image_url && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <ImageIcon className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <CardTitle>Meter Photo</CardTitle>
-                  <CardDescription>Captured meter image</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                <img
-                  src={reading.image_url}
-                  alt="Meter reading"
-                  className="object-cover w-full h-full"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <DetailSection
+            title="Meter Photo"
+            description="Captured meter image"
+            icon={ImageIcon}
+          >
+            <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+              <img
+                src={reading.image_url}
+                alt="Meter reading"
+                className="object-cover w-full h-full"
+              />
+            </div>
+          </DetailSection>
         )}
-      </div>
 
-      {/* Notes */}
-      {reading.notes && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <CardTitle>Notes</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
+        {/* Notes */}
+        {reading.notes && (
+          <DetailSection
+            title="Notes"
+            description="Additional information"
+            icon={FileText}
+            className="md:col-span-2"
+          >
             <p className="text-muted-foreground whitespace-pre-wrap">{reading.notes}</p>
-          </CardContent>
-        </Card>
-      )}
+          </DetailSection>
+        )}
 
-      {/* Generated Charges */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Receipt className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <CardTitle>Generated Charges</CardTitle>
-                <CardDescription>Charges created from this meter reading</CardDescription>
-              </div>
-            </div>
-            {charges.length > 0 ? (
+        {/* Generated Charges */}
+        <DetailSection
+          title="Generated Charges"
+          description="Charges created from this meter reading"
+          icon={Receipt}
+          className="md:col-span-2"
+          actions={
+            charges.length > 0 ? (
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Total Amount</p>
                 <p className="text-lg font-bold text-primary">{formatCurrency(totalChargesAmount)}</p>
               </div>
             ) : reading.units_consumed && reading.units_consumed > 0 && ratePerUnit ? (
-              <Button onClick={handleGenerateCharges} disabled={generating}>
+              <Button onClick={handleGenerateCharges} disabled={generating} size="sm">
                 {generating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -648,10 +530,9 @@ export default function MeterReadingDetailPage() {
                   </>
                 )}
               </Button>
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent>
+            ) : null
+          }
+        >
           {charges.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
               <Receipt className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -669,39 +550,46 @@ export default function MeterReadingDetailPage() {
           ) : (
             <div className="space-y-3">
               {charges.map((charge) => (
-                  <div key={charge.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        {charge.tenant ? (
-                          <Link href={`/tenants/${charge.tenant.id}`} className="font-medium hover:text-primary transition-colors">
-                            {charge.tenant.name}
-                          </Link>
-                        ) : (
-                          <p className="font-medium">Unknown Tenant</p>
-                        )}
-                        <p className="text-sm text-muted-foreground">
-                          {charge.for_period || "No period specified"}
-                        </p>
-                      </div>
+                <div key={charge.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <User className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-bold">{formatCurrency(charge.amount)}</p>
-                        {charge.paid_amount > 0 && (
-                          <p className="text-sm text-green-600">
-                            Paid: {formatCurrency(charge.paid_amount)}
-                          </p>
-                        )}
-                      </div>
-                      <StatusBadge status={charge.status as "pending" | "partial" | "paid" | "overdue"} />
+                    <div>
+                      {charge.tenant ? (
+                        <Link href={`/tenants/${charge.tenant.id}`} className="font-medium hover:text-primary transition-colors">
+                          {charge.tenant.name}
+                        </Link>
+                      ) : (
+                        <p className="font-medium">Unknown Tenant</p>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {charge.for_period || "No period specified"}
+                      </p>
                     </div>
                   </div>
-                ))}
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-bold">{formatCurrency(charge.amount)}</p>
+                      {charge.paid_amount > 0 && (
+                        <p className="text-sm text-green-600">
+                          Paid: {formatCurrency(charge.paid_amount)}
+                        </p>
+                      )}
+                    </div>
+                    <StatusBadge
+                      status={
+                        charge.status === "paid" ? "success" :
+                        charge.status === "partial" ? "info" :
+                        charge.status === "overdue" ? "error" : "warning"
+                      }
+                      label={charge.status}
+                      size="sm"
+                    />
+                  </div>
+                </div>
+              ))}
 
-              {/* Summary */}
               {charges.length > 1 && (
                 <div className="flex items-center justify-between pt-4 border-t mt-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -726,8 +614,8 @@ export default function MeterReadingDetailPage() {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </DetailSection>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

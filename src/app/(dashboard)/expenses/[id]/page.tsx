@@ -5,10 +5,15 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Loader2,
-  ArrowLeft,
+  DetailHero,
+  InfoCard,
+  DetailSection,
+  InfoRow,
+} from "@/components/ui/detail-components"
+import { Currency } from "@/components/ui/currency"
+import { PageLoading } from "@/components/ui/loading"
+import {
   Receipt,
   Building2,
   Calendar,
@@ -18,12 +23,11 @@ import {
   Trash2,
   User,
   Hash,
+  Clock,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
-import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
-import { PageLoader } from "@/components/ui/page-loader"
 
 interface ExpenseType {
   id: string
@@ -88,7 +92,6 @@ export default function ExpenseDetailPage() {
 
       if (error) throw error
 
-      // Transform Supabase array joins
       const transformed = {
         ...data,
         expense_type: Array.isArray(data.expense_type)
@@ -137,7 +140,7 @@ export default function ExpenseDetailPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageLoading message="Loading expense details..." />
   }
 
   if (!expense) {
@@ -153,168 +156,132 @@ export default function ExpenseDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-        <div className="flex items-center gap-4">
-          <Link href="/expenses">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">{expense.expense_type?.name || "Expense"}</h1>
-            <p className="text-muted-foreground">
-              {formatDate(expense.expense_date)}
-            </p>
+      {/* Hero Header */}
+      <DetailHero
+        title={expense.expense_type?.name || "Expense"}
+        subtitle={formatDate(expense.expense_date)}
+        backHref="/expenses"
+        backLabel="All Expenses"
+        avatar={
+          <div className="p-3 bg-rose-100 rounded-lg">
+            <Receipt className="h-8 w-8 text-rose-600" />
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/expenses/${expense.id}/edit`}>
-            <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          </Link>
-          <PermissionGate permission="expenses.delete" hide>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4 mr-2" />
-              )}
-              Delete
-            </Button>
-          </PermissionGate>
-        </div>
-      </div>
+        }
+        actions={
+          <div className="flex items-center gap-2">
+            <Link href={`/expenses/${expense.id}/edit`}>
+              <Button variant="outline" size="sm">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </Link>
+            <PermissionGate permission="expenses.delete" hide>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </PermissionGate>
+          </div>
+        }
+      />
 
       {/* Amount Card */}
-      <Card className="bg-gradient-to-r from-rose-500 to-rose-600 text-white">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-rose-100 text-sm">Amount</p>
-              <p className="text-4xl font-bold">
-                {formatCurrency(Number(expense.amount))}
-              </p>
-            </div>
-            <div className="p-4 bg-white/20 rounded-full">
-              <Receipt className="h-8 w-8" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <InfoCard
+        label="Amount"
+        value={<Currency amount={expense.amount} />}
+        icon={Receipt}
+        variant="error"
+        className="max-w-sm"
+      />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid md:grid-cols-2 gap-6">
         {/* Expense Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" />
-              Expense Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Category</span>
-              <span className="font-medium">{expense.expense_type?.name || "N/A"}</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Date</span>
-              <span className="font-medium flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                {formatDate(expense.expense_date)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Property</span>
-              {expense.property ? (
-                <Link href={`/properties/${expense.property.id}`} className="font-medium flex items-center gap-2 hover:text-primary transition-colors">
+        <DetailSection
+          title="Expense Details"
+          description="Category and description"
+          icon={Receipt}
+        >
+          <InfoRow label="Category" value={expense.expense_type?.name || "N/A"} />
+          <InfoRow
+            label="Date"
+            value={formatDate(expense.expense_date)}
+            icon={Calendar}
+          />
+          <InfoRow
+            label="Property"
+            value={
+              expense.property ? (
+                <Link href={`/properties/${expense.property.id}`} className="text-primary hover:underline flex items-center gap-1">
                   <Building2 className="h-4 w-4" />
                   {expense.property.name}
                 </Link>
               ) : (
-                <span className="font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  All Properties
-                </span>
-              )}
-            </div>
-            {expense.description && (
-              <div className="py-2 border-b">
-                <span className="text-muted-foreground block mb-1">Description</span>
-                <p className="font-medium">{expense.description}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                <span>All Properties</span>
+              )
+            }
+          />
+          {expense.description && (
+            <InfoRow label="Description" value={expense.description} />
+          )}
+        </DetailSection>
 
-        {/* Payment Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5" />
-              Payment Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between py-2 border-b">
-              <span className="text-muted-foreground">Payment Method</span>
-              <span className="font-medium">
-                {paymentMethodLabels[expense.payment_method] || expense.payment_method}
-              </span>
-            </div>
-            {expense.vendor_name && (
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Vendor / Payee</span>
-                <span className="font-medium flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  {expense.vendor_name}
-                </span>
-              </div>
-            )}
-            {expense.reference_number && (
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Reference #</span>
-                <span className="font-medium flex items-center gap-2">
-                  <Hash className="h-4 w-4" />
-                  {expense.reference_number}
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        {/* Payment Information */}
+        <DetailSection
+          title="Payment Information"
+          description="Method and vendor details"
+          icon={Wallet}
+        >
+          <InfoRow
+            label="Payment Method"
+            value={paymentMethodLabels[expense.payment_method] || expense.payment_method}
+          />
+          {expense.vendor_name && (
+            <InfoRow
+              label="Vendor / Payee"
+              value={expense.vendor_name}
+              icon={User}
+            />
+          )}
+          {expense.reference_number && (
+            <InfoRow
+              label="Reference #"
+              value={expense.reference_number}
+              icon={Hash}
+            />
+          )}
+        </DetailSection>
 
-      {/* Notes */}
-      {expense.notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Notes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Notes */}
+        {expense.notes && (
+          <DetailSection
+            title="Notes"
+            description="Additional information"
+            icon={FileText}
+            className="md:col-span-2"
+          >
             <p className="text-muted-foreground whitespace-pre-wrap">{expense.notes}</p>
-          </CardContent>
-        </Card>
-      )}
+          </DetailSection>
+        )}
 
-      {/* Metadata */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+        {/* Metadata */}
+        <DetailSection
+          title="Record Info"
+          description="Creation and update timestamps"
+          icon={Clock}
+          className="md:col-span-2"
+        >
+          <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
             <span>Created: {formatDateTime(expense.created_at)}</span>
             <span>Updated: {formatDateTime(expense.updated_at)}</span>
             <span>ID: {expense.id}</span>
           </div>
-        </CardContent>
-      </Card>
+        </DetailSection>
+      </div>
     </div>
   )
 }
