@@ -2,6 +2,7 @@
  * Edit Person Page
  *
  * Form to edit an existing person in the central registry
+ * Uses single-column layout with DetailSection for consistency
  */
 
 "use client"
@@ -11,13 +12,16 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { PageLoader } from "@/components/ui/page-loader"
 import {
-  ArrowLeft,
+  DetailHero,
+  DetailSection,
+} from "@/components/ui/detail-components"
+import { PageLoading } from "@/components/ui/loading"
+import { Avatar } from "@/components/ui/avatar"
+import {
   User,
   Phone,
   Mail,
@@ -28,6 +32,7 @@ import {
   Plus,
   Trash2,
   Heart,
+  Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PermissionGuard } from "@/components/auth"
@@ -48,6 +53,7 @@ export default function EditPersonPage() {
   const router = useRouter()
   const [pageLoading, setPageLoading] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [formData, setFormData] = useState<PersonFormData>({
     name: "",
     phone: "",
@@ -98,6 +104,7 @@ export default function EditPersonPage() {
         tags: data.tags || [],
         notes: data.notes || "",
       })
+      setPhotoUrl(data.photo_url)
       setOriginalPhone(data.phone)
       setPageLoading(false)
     }
@@ -107,7 +114,6 @@ export default function EditPersonPage() {
 
   const updateField = (field: keyof PersonFormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-    // Clear error when field is updated
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev }
@@ -230,203 +236,182 @@ export default function EditPersonPage() {
   }
 
   if (pageLoading) {
-    return <PageLoader />
+    return <PageLoading message="Loading person details..." />
   }
 
   return (
     <PermissionGuard permission="tenants.update">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link href={`/people/${params.id}`}>
-            <Button type="button" variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Edit Person</h1>
-            <p className="text-muted-foreground">
-              Update personal information
-            </p>
-          </div>
-        </div>
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+        {/* Hero Header */}
+        <DetailHero
+          title="Edit Person"
+          subtitle={`Update details for ${formData.name}`}
+          backHref={`/people/${params.id}`}
+          backLabel="Back to Person"
+          avatar={
+            <Avatar
+              name={formData.name || "P"}
+              src={photoUrl}
+              size="lg"
+              className="h-14 w-14 text-xl"
+            />
+          }
+        />
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Basic Information</CardTitle>
-                  <CardDescription>Personal identity details</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="name">Full Name *</Label>
+        {/* Basic Information */}
+        <DetailSection
+          title="Basic Information"
+          description="Personal identity details"
+          icon={User}
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => updateField("name", e.target.value)}
+                placeholder="Enter full name"
+                className={errors.name ? "border-red-500" : ""}
+              />
+              {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Mobile Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => updateField("name", e.target.value)}
-                  placeholder="Enter full name"
-                  className={errors.name ? "border-red-500" : ""}
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => updateField("phone", e.target.value)}
+                  placeholder="10-digit mobile number"
+                  className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
                 />
-                {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
               </div>
+              {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
+            </div>
 
-              <div>
-                <Label htmlFor="phone">Mobile Number</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => updateField("phone", e.target.value)}
-                    placeholder="10-digit mobile number"
-                    className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
-                  />
-                </div>
-                {errors.phone && <p className="text-sm text-red-500 mt-1">{errors.phone}</p>}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => updateField("email", e.target.value)}
+                  placeholder="email@example.com"
+                  className="pl-10"
+                />
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => updateField("email", e.target.value)}
-                    placeholder="email@example.com"
-                    className="pl-10"
-                  />
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dob">Date of Birth</Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={(e) => updateField("date_of_birth", e.target.value)}
+                />
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="dob">Date of Birth</Label>
-                  <Input
-                    id="dob"
-                    type="date"
-                    value={formData.date_of_birth}
-                    onChange={(e) => updateField("date_of_birth", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="gender">Gender</Label>
-                  <Select
-                    value={formData.gender || ""}
-                    onChange={(e) => updateField("gender", e.target.value as Gender)}
-                    options={[
-                      { value: "", label: "Select gender" },
-                      ...Object.entries(GENDER_LABELS).map(([value, label]) => ({
-                        value,
-                        label,
-                      })),
-                    ]}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="blood_group">Blood Group</Label>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
                 <Select
-                  value={formData.blood_group || ""}
-                  onChange={(e) => updateField("blood_group", e.target.value)}
+                  value={formData.gender || ""}
+                  onChange={(e) => updateField("gender", e.target.value as Gender)}
                   options={[
-                    { value: "", label: "Select blood group" },
-                    ...BLOOD_GROUPS.map((bg) => ({ value: bg, label: bg })),
+                    { value: "", label: "Select gender" },
+                    ...Object.entries(GENDER_LABELS).map(([value, label]) => ({
+                      value,
+                      label,
+                    })),
                   ]}
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* ID Documents */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>ID Documents</CardTitle>
-                  <CardDescription>Identity verification documents</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="aadhaar">Aadhaar Number</Label>
-                <Input
-                  id="aadhaar"
-                  value={formData.aadhaar_number}
-                  onChange={(e) => updateField("aadhaar_number", e.target.value)}
-                  placeholder="12-digit Aadhaar number"
-                  className={errors.aadhaar_number ? "border-red-500" : ""}
-                />
-                {errors.aadhaar_number && (
-                  <p className="text-sm text-red-500 mt-1">{errors.aadhaar_number}</p>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="blood_group">Blood Group</Label>
+              <Select
+                value={formData.blood_group || ""}
+                onChange={(e) => updateField("blood_group", e.target.value)}
+                options={[
+                  { value: "", label: "Select blood group" },
+                  ...BLOOD_GROUPS.map((bg) => ({ value: bg, label: bg })),
+                ]}
+              />
+            </div>
+          </div>
+        </DetailSection>
 
-              <div>
-                <Label htmlFor="pan">PAN Number</Label>
-                <Input
-                  id="pan"
-                  value={formData.pan_number}
-                  onChange={(e) => updateField("pan_number", e.target.value.toUpperCase())}
-                  placeholder="ABCDE1234F"
-                  className={errors.pan_number ? "border-red-500" : ""}
-                />
-                {errors.pan_number && (
-                  <p className="text-sm text-red-500 mt-1">{errors.pan_number}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        {/* ID Documents */}
+        <DetailSection
+          title="ID Documents"
+          description="Identity verification documents"
+          icon={CreditCard}
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="aadhaar">Aadhaar Number</Label>
+              <Input
+                id="aadhaar"
+                value={formData.aadhaar_number}
+                onChange={(e) => updateField("aadhaar_number", e.target.value)}
+                placeholder="12-digit Aadhaar number"
+                className={errors.aadhaar_number ? "border-red-500" : ""}
+              />
+              {errors.aadhaar_number && (
+                <p className="text-sm text-red-500">{errors.aadhaar_number}</p>
+              )}
+            </div>
 
-          {/* Professional Info */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Building2 className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Professional Info</CardTitle>
-                  <CardDescription>Work and occupation details</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="occupation">Occupation</Label>
-                <Input
-                  id="occupation"
-                  value={formData.occupation}
-                  onChange={(e) => updateField("occupation", e.target.value)}
-                  placeholder="e.g., Software Engineer, Student"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="pan">PAN Number</Label>
+              <Input
+                id="pan"
+                value={formData.pan_number}
+                onChange={(e) => updateField("pan_number", e.target.value.toUpperCase())}
+                placeholder="ABCDE1234F"
+                className={errors.pan_number ? "border-red-500" : ""}
+              />
+              {errors.pan_number && (
+                <p className="text-sm text-red-500">{errors.pan_number}</p>
+              )}
+            </div>
+          </div>
+        </DetailSection>
 
-              <div>
+        {/* Professional Info */}
+        <DetailSection
+          title="Professional Info"
+          description="Work and occupation details"
+          icon={Building2}
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="occupation">Occupation</Label>
+              <Input
+                id="occupation"
+                value={formData.occupation}
+                onChange={(e) => updateField("occupation", e.target.value)}
+                placeholder="e.g., Software Engineer, Student"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label htmlFor="company">Company / Institution</Label>
                 <Input
                   id="company"
                   value={formData.company_name}
                   onChange={(e) => updateField("company_name", e.target.value)}
-                  placeholder="Company or institution name"
+                  placeholder="Company or institution"
                 />
               </div>
-
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="designation">Designation</Label>
                 <Input
                   id="designation"
@@ -435,198 +420,180 @@ export default function EditPersonPage() {
                   placeholder="Job title or role"
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+        </DetailSection>
 
-          {/* Address */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <MapPin className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Permanent Address</CardTitle>
-                  <CardDescription>Home address details</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="address">Address</Label>
-                <Textarea
-                  id="address"
-                  value={formData.permanent_address}
-                  onChange={(e) => updateField("permanent_address", e.target.value)}
-                  placeholder="Street address, landmark"
-                  rows={2}
-                />
-              </div>
+        {/* Permanent Address */}
+        <DetailSection
+          title="Permanent Address"
+          description="Home address details"
+          icon={MapPin}
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Textarea
+                id="address"
+                value={formData.permanent_address}
+                onChange={(e) => updateField("permanent_address", e.target.value)}
+                placeholder="Street address, landmark"
+                rows={2}
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    value={formData.permanent_city}
-                    onChange={(e) => updateField("permanent_city", e.target.value)}
-                    placeholder="City"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="pincode">Pincode</Label>
-                  <Input
-                    id="pincode"
-                    value={formData.permanent_pincode}
-                    onChange={(e) => updateField("permanent_pincode", e.target.value)}
-                    placeholder="6-digit pincode"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="state">State</Label>
-                <Select
-                  value={formData.permanent_state || ""}
-                  onChange={(e) => updateField("permanent_state", e.target.value)}
-                  options={[
-                    { value: "", label: "Select state" },
-                    ...INDIAN_STATES.map((state) => ({ value: state, label: state })),
-                  ]}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Current Address */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <MapPin className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Current Address</CardTitle>
-                  <CardDescription>Present living address (if different)</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="current_address">Address</Label>
-                <Textarea
-                  id="current_address"
-                  value={formData.current_address}
-                  onChange={(e) => updateField("current_address", e.target.value)}
-                  placeholder="Street address, landmark"
-                  rows={2}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="current_city">City</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
                 <Input
-                  id="current_city"
-                  value={formData.current_city}
-                  onChange={(e) => updateField("current_city", e.target.value)}
+                  id="city"
+                  value={formData.permanent_city}
+                  onChange={(e) => updateField("permanent_city", e.target.value)}
                   placeholder="City"
                 />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Emergency Contacts */}
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 rounded-lg">
-                    <Heart className="h-5 w-5 text-red-600" />
-                  </div>
-                  <div>
-                    <CardTitle>Emergency Contacts</CardTitle>
-                    <CardDescription>People to contact in emergencies</CardDescription>
-                  </div>
-                </div>
-                <Button type="button" variant="outline" size="sm" onClick={addEmergencyContact}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Contact
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="pincode">Pincode</Label>
+                <Input
+                  id="pincode"
+                  value={formData.permanent_pincode}
+                  onChange={(e) => updateField("permanent_pincode", e.target.value)}
+                  placeholder="6-digit pincode"
+                />
               </div>
-            </CardHeader>
-            <CardContent>
-              {formData.emergency_contacts && formData.emergency_contacts.length > 0 ? (
-                <div className="space-y-4">
-                  {formData.emergency_contacts.map((contact, index) => (
-                    <div key={index} className="p-4 border rounded-lg">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 grid md:grid-cols-3 gap-4">
-                          <div>
-                            <Label>Name</Label>
-                            <Input
-                              value={contact.name}
-                              onChange={(e) => updateEmergencyContact(index, "name", e.target.value)}
-                              placeholder="Contact name"
-                            />
-                          </div>
-                          <div>
-                            <Label>Phone</Label>
-                            <Input
-                              value={contact.phone}
-                              onChange={(e) => updateEmergencyContact(index, "phone", e.target.value)}
-                              placeholder="Phone number"
-                            />
-                          </div>
-                          <div>
-                            <Label>Relation</Label>
-                            <Select
-                              value={contact.relation}
-                              onChange={(e) => updateEmergencyContact(index, "relation", e.target.value)}
-                              options={[
-                                { value: "", label: "Select relation" },
-                                ...RELATIONS.map((rel) => ({ value: rel, label: rel })),
-                              ]}
-                            />
-                          </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              <Select
+                value={formData.permanent_state || ""}
+                onChange={(e) => updateField("permanent_state", e.target.value)}
+                options={[
+                  { value: "", label: "Select state" },
+                  ...INDIAN_STATES.map((state) => ({ value: state, label: state })),
+                ]}
+              />
+            </div>
+          </div>
+        </DetailSection>
+
+        {/* Current Address */}
+        <DetailSection
+          title="Current Address"
+          description="Present living address (if different)"
+          icon={MapPin}
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="current_address">Address</Label>
+              <Textarea
+                id="current_address"
+                value={formData.current_address}
+                onChange={(e) => updateField("current_address", e.target.value)}
+                placeholder="Street address, landmark"
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="current_city">City</Label>
+              <Input
+                id="current_city"
+                value={formData.current_city}
+                onChange={(e) => updateField("current_city", e.target.value)}
+                placeholder="City"
+              />
+            </div>
+          </div>
+        </DetailSection>
+
+        {/* Emergency Contacts */}
+        <DetailSection
+          title="Emergency Contacts"
+          description="People to contact in emergencies"
+          icon={Heart}
+          actions={
+            <Button type="button" variant="outline" size="sm" onClick={addEmergencyContact}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Contact
+            </Button>
+          }
+        >
+          {formData.emergency_contacts && formData.emergency_contacts.length > 0 ? (
+            <div className="space-y-4">
+              {formData.emergency_contacts.map((contact, index) => (
+                <div key={index} className="p-4 border rounded-lg bg-muted/30">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-4">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Name</Label>
+                          <Input
+                            value={contact.name}
+                            onChange={(e) => updateEmergencyContact(index, "name", e.target.value)}
+                            placeholder="Contact name"
+                          />
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeEmergencyContact(index)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="space-y-2">
+                          <Label>Phone</Label>
+                          <Input
+                            value={contact.phone}
+                            onChange={(e) => updateEmergencyContact(index, "phone", e.target.value)}
+                            placeholder="Phone number"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Relation</Label>
+                          <Select
+                            value={contact.relation}
+                            onChange={(e) => updateEmergencyContact(index, "relation", e.target.value)}
+                            options={[
+                              { value: "", label: "Select relation" },
+                              ...RELATIONS.map((rel) => ({ value: rel, label: rel })),
+                            ]}
+                          />
+                        </div>
                       </div>
                     </div>
-                  ))}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeEmergencyContact(index)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No emergency contacts added. Click &quot;Add Contact&quot; to add one.
-                </p>
-              )}
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No emergency contacts added. Click "Add Contact" to add one.
+            </p>
+          )}
+        </DetailSection>
 
-          {/* Notes */}
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Additional Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={formData.notes}
-                onChange={(e) => updateField("notes", e.target.value)}
-                placeholder="Any additional information about this person..."
-                rows={3}
-              />
-            </CardContent>
-          </Card>
-        </div>
+        {/* Notes */}
+        <DetailSection
+          title="Additional Notes"
+          description="Any other important information"
+          icon={User}
+        >
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => updateField("notes", e.target.value)}
+              placeholder="Any additional information about this person..."
+              rows={3}
+            />
+          </div>
+        </DetailSection>
 
-        {/* Submit Button */}
+        {/* Submit Buttons */}
         <div className="flex justify-end gap-4">
           <Link href={`/people/${params.id}`}>
             <Button type="button" variant="outline">
@@ -634,8 +601,17 @@ export default function EditPersonPage() {
             </Button>
           </Link>
           <Button type="submit" disabled={loading}>
-            <Save className="mr-2 h-4 w-4" />
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </>
+            )}
           </Button>
         </div>
       </form>
