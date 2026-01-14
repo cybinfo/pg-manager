@@ -1,6 +1,7 @@
 /**
  * Visitor Management System Types
  * Supporting: tenant visitors, enquiries, service providers, and general visitors
+ * Includes Visitor Directory (contacts) for returning visitors
  */
 
 // ============================================
@@ -13,13 +14,52 @@ export type EnquiryStatus = 'pending' | 'follow_up' | 'converted' | 'lost'
 export type EnquirySource = 'walk_in' | 'referral' | 'online' | 'social_media' | 'other'
 
 // ============================================
-// Main Visitor Interface
+// Visitor Contact (Directory Entry)
+// ============================================
+export interface VisitorContact {
+  id: string
+  owner_id: string
+  name: string
+  phone: string | null
+  email: string | null
+  visitor_type: VisitorType
+  company_name: string | null
+  service_type: string | null
+  id_type: string | null
+  id_number: string | null
+  notes: string | null
+  photo_url: string | null
+  is_frequent: boolean
+  is_blocked: boolean
+  blocked_reason: string | null
+  visit_count: number
+  last_visit_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface VisitorContactSearchResult {
+  id: string
+  name: string
+  phone: string | null
+  visitor_type: VisitorType
+  company_name: string | null
+  service_type: string | null
+  visit_count: number
+  last_visit_at: string | null
+  is_frequent: boolean
+  is_blocked: boolean
+}
+
+// ============================================
+// Main Visitor Interface (Visit Entry)
 // ============================================
 export interface Visitor {
   id: string
   owner_id: string
   property_id: string
   tenant_id: string | null
+  visitor_contact_id: string | null
   visitor_type: VisitorType
   visitor_name: string
   visitor_phone: string | null
@@ -60,12 +100,14 @@ export interface Visitor {
   // Joined fields
   property?: { id: string; name: string }
   tenant?: { id: string; name: string } | null
+  visitor_contact?: VisitorContact | null
 }
 
 // ============================================
 // Form Input Type
 // ============================================
 export interface VisitorFormData {
+  visitor_contact_id?: string
   visitor_type: VisitorType
   property_id: string
   tenant_id?: string

@@ -30,6 +30,9 @@ import {
   UserPlus,
   TrendingUp,
   X,
+  History,
+  Star,
+  Ban,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDateTime, formatCurrency, formatDate } from "@/lib/format"
@@ -43,6 +46,7 @@ import {
   ENQUIRY_STATUS_LABELS,
   ENQUIRY_SOURCE_LABELS,
   EnquirySource,
+  VisitorContact,
 } from "@/types/visitors.types"
 
 interface Visitor {
@@ -50,6 +54,7 @@ interface Visitor {
   visitor_name: string
   visitor_phone: string | null
   visitor_type: VisitorType
+  visitor_contact_id: string | null
   relation: string | null
   purpose: string | null
   check_in_time: string
@@ -92,6 +97,16 @@ interface Visitor {
   room: {
     room_number: string
   } | null
+  visitor_contact?: VisitorContact | null
+}
+
+interface VisitHistoryEntry {
+  id: string
+  check_in_time: string
+  check_out_time: string | null
+  visitor_type: VisitorType
+  purpose: string | null
+  property: { name: string } | null
 }
 
 interface RawVisitor extends Omit<Visitor, 'tenant' | 'property' | 'room'> {
@@ -154,6 +169,7 @@ export default function VisitorDetailPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [visitor, setVisitor] = useState<Visitor | null>(null)
+  const [visitHistory, setVisitHistory] = useState<VisitHistoryEntry[]>([])
   const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
@@ -165,7 +181,8 @@ export default function VisitorDetailPage() {
         .select(`
           *,
           tenant:tenants(id, name, phone, photo_url, profile_photo, room:rooms(room_number)),
-          property:properties(id, name, address)
+          property:properties(id, name, address),
+          visitor_contact:visitor_contacts(*)
         `)
         .eq("id", params.id)
         .single()
@@ -178,9 +195,10 @@ export default function VisitorDetailPage() {
       }
 
       // Transform the data from arrays to single objects
-      const rawData = data as RawVisitor
+      const rawData = data as RawVisitor & { visitor_contact: VisitorContact[] | null }
       const tenant = transformJoin(rawData.tenant)
       const property = transformJoin(rawData.property)
+      const visitorContact = transformJoin(rawData.visitor_contact)
 
       // Flatten the room data from tenant
       const visitorData: Visitor = {
@@ -191,8 +209,43 @@ export default function VisitorDetailPage() {
         } : null,
         property,
         room: tenant ? transformJoin(tenant.room) : null,
+        visitor_contact: visitorContact,
       }
       setVisitor(visitorData)
+
+      // Fetch visit history if there's a visitor contact
+      if (visitorData.visitor_contact_id) {
+        const { data: historyData } = await supabase
+          .from("visitors")
+          .select(`
+            id,
+            check_in_time,
+            check_out_time,
+            visitor_type,
+            purpose,
+            property:properties(name)
+          `)
+          .eq("visitor_contact_id", visitorData.visitor_contact_id)
+          .neq("id", params.id)
+          .order("check_in_time", { ascending: false })
+          .limit(10)
+
+        if (historyData) {
+          const transformedHistory = historyData.map((h: {
+            id: string
+            check_in_time: string
+            check_out_time: string | null
+            visitor_type: VisitorType
+            purpose: string | null
+            property: { name: string }[] | null
+          }) => ({
+            ...h,
+            property: transformJoin(h.property),
+          }))
+          setVisitHistory(transformedHistory)
+        }
+      }
+
       setLoading(false)
     }
 
@@ -731,6 +784,129 @@ export default function VisitorDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Visitor Contact Info - Only if linked to a contact */}
+        {visitor.visitor_contact && (
+          <Card className="border-blue-200 bg-blue-50/30">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <User className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <CardTitle>Visitor Profile</CardTitle>
+                  <CardDescription>Contact directory entry</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  {visitor.visitor_contact.is_frequent && (
+                    <span className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                      <Star className="h-3 w-3" />
+                      Frequent
+                    </span>
+                  )}
+                  {visitor.visitor_contact.is_blocked && (
+                    <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                      <Ban className="h-3 w-3" />
+                      Blocked
+                    </span>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="p-3 bg-white rounded-lg border">
+                  <p className="text-sm text-muted-foreground">Total Visits</p>
+                  <p className="text-2xl font-bold text-blue-600">{visitor.visitor_contact.visit_count}</p>
+                </div>
+                <div className="p-3 bg-white rounded-lg border">
+                  <p className="text-sm text-muted-foreground">First Visit</p>
+                  <p className="font-medium">{formatDate(visitor.visitor_contact.created_at)}</p>
+                </div>
+                <div className="p-3 bg-white rounded-lg border">
+                  <p className="text-sm text-muted-foreground">Last Visit</p>
+                  <p className="font-medium">
+                    {visitor.visitor_contact.last_visit_at
+                      ? formatDate(visitor.visitor_contact.last_visit_at)
+                      : "This visit"}
+                  </p>
+                </div>
+              </div>
+              {visitor.visitor_contact.notes && (
+                <div className="mt-4 p-3 bg-white rounded-lg border">
+                  <p className="text-sm text-muted-foreground mb-1">Contact Notes</p>
+                  <p className="text-sm">{visitor.visitor_contact.notes}</p>
+                </div>
+              )}
+              <Link href="/visitors/directory">
+                <Button variant="outline" size="sm" className="mt-4">
+                  View in Directory
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Visit History - Only if there are previous visits */}
+        {visitHistory.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <History className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Visit History</CardTitle>
+                  <CardDescription>
+                    Previous visits from this person ({visitHistory.length} total)
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {visitHistory.map((visit) => (
+                  <Link
+                    key={visit.id}
+                    href={`/visitors/${visit.id}`}
+                    className="block p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${VISITOR_TYPE_BADGE_COLORS[visit.visitor_type]}`}>
+                          {VISITOR_TYPE_ICONS[visit.visitor_type]}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                              {formatDate(visit.check_in_time)}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${VISITOR_TYPE_BADGE_COLORS[visit.visitor_type]}`}>
+                              {VISITOR_TYPE_LABELS[visit.visitor_type]}
+                            </span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {visit.property?.name || "Unknown Property"}
+                            {visit.purpose && ` - ${visit.purpose}`}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right text-sm">
+                        {visit.check_out_time ? (
+                          <span className="text-muted-foreground">
+                            {getDuration(visit.check_in_time, visit.check_out_time)}
+                          </span>
+                        ) : (
+                          <span className="text-green-600 font-medium">Currently here</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

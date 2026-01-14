@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -27,11 +27,17 @@ import {
   Car,
   CreditCard,
   MessageSquare,
+  Star,
+  Clock,
+  X,
+  Check,
+  AlertCircle,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PageLoader } from "@/components/ui/page-loader"
 import {
   VisitorType,
+  VisitorContactSearchResult,
   VISITOR_TYPE_LABELS,
   VISITOR_TYPE_DESCRIPTIONS,
   SERVICE_TYPES,
@@ -40,6 +46,7 @@ import {
   EnquirySource,
   ENQUIRY_SOURCE_LABELS,
 } from "@/types/visitors.types"
+import { formatDate } from "@/lib/format"
 
 interface Property {
   id: string
@@ -94,7 +101,17 @@ export default function NewVisitorPage() {
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
+  // Contact search state
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<VisitorContactSearchResult[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const [selectedContact, setSelectedContact] = useState<VisitorContactSearchResult | null>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   const [formData, setFormData] = useState({
+    visitor_contact_id: "",
     visitor_type: "tenant_visitor" as VisitorType,
     property_id: "",
     tenant_id: "",
@@ -127,6 +144,102 @@ export default function NewVisitorPage() {
   const totalCharge = formData.is_overnight && formData.charge_per_night
     ? parseFloat(formData.charge_per_night) * parseInt(formData.num_nights || "1")
     : 0
+
+  // Search for existing contacts
+  const searchContacts = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults([])
+      return
+    }
+
+    setSearchLoading(true)
+    const supabase = createClient()
+
+    const { data, error } = await supabase
+      .from("visitor_contacts")
+      .select("id, name, phone, visitor_type, company_name, service_type, visit_count, last_visit_at, is_frequent, is_blocked")
+      .or(`name.ilike.%${query}%,phone.ilike.%${query}%,company_name.ilike.%${query}%`)
+      .order("is_frequent", { ascending: false })
+      .order("visit_count", { ascending: false })
+      .limit(10)
+
+    setSearchLoading(false)
+
+    if (error) {
+      console.error("Error searching contacts:", error)
+      return
+    }
+
+    setSearchResults(data || [])
+  }, [])
+
+  // Debounced search
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    if (searchQuery.length >= 2) {
+      searchTimeoutRef.current = setTimeout(() => {
+        searchContacts(searchQuery)
+      }, 300)
+    } else {
+      setSearchResults([])
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+    }
+  }, [searchQuery, searchContacts])
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Select a contact and auto-fill form
+  const handleSelectContact = (contact: VisitorContactSearchResult) => {
+    if (contact.is_blocked) {
+      toast.error(`This visitor is blocked: ${contact.name}`)
+      return
+    }
+
+    setSelectedContact(contact)
+    setFormData((prev) => ({
+      ...prev,
+      visitor_contact_id: contact.id,
+      visitor_type: contact.visitor_type,
+      visitor_name: contact.name,
+      visitor_phone: contact.phone || "",
+      company_name: contact.company_name || "",
+      service_type: contact.service_type || "",
+    }))
+    setSearchQuery("")
+    setShowSearchResults(false)
+    toast.success(`Selected: ${contact.name}${contact.visit_count > 0 ? ` (${contact.visit_count} previous visits)` : ""}`)
+  }
+
+  // Clear selected contact
+  const handleClearContact = () => {
+    setSelectedContact(null)
+    setFormData((prev) => ({
+      ...prev,
+      visitor_contact_id: "",
+      visitor_name: "",
+      visitor_phone: "",
+      company_name: "",
+      service_type: "",
+    }))
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -172,16 +285,16 @@ export default function NewVisitorPage() {
     if (formData.property_id) {
       const filtered = tenants.filter((t) => t.property_id === formData.property_id)
       setFilteredTenants(filtered)
-      if (filtered.length > 0 && formData.visitor_type === "tenant_visitor") {
+      if (filtered.length > 0 && formData.visitor_type === "tenant_visitor" && !formData.tenant_id) {
         setFormData((prev) => ({ ...prev, tenant_id: filtered[0].id }))
-      } else {
+      } else if (filtered.length === 0) {
         setFormData((prev) => ({ ...prev, tenant_id: "" }))
       }
 
       const filteredR = rooms.filter((r) => r.property_id === formData.property_id)
       setFilteredRooms(filteredR)
     }
-  }, [formData.property_id, tenants, rooms, formData.visitor_type])
+  }, [formData.property_id, tenants, rooms, formData.visitor_type, formData.tenant_id])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
@@ -238,6 +351,49 @@ export default function NewVisitorPage() {
         toast.error("Session expired. Please login again.")
         router.push("/login")
         return
+      }
+
+      // Create or update visitor contact
+      let visitorContactId = formData.visitor_contact_id
+
+      if (!visitorContactId) {
+        // Create new contact
+        const { data: contactData, error: contactError } = await supabase
+          .from("visitor_contacts")
+          .insert({
+            owner_id: user.id,
+            name: formData.visitor_name,
+            phone: formData.visitor_phone || null,
+            visitor_type: formData.visitor_type,
+            company_name: formData.company_name || null,
+            service_type: formData.service_type || null,
+            id_type: formData.id_type || null,
+            id_number: formData.id_number || null,
+            notes: formData.notes || null,
+          })
+          .select("id")
+          .single()
+
+        if (contactError) {
+          console.error("Error creating visitor contact:", contactError)
+          // Continue without contact - don't block the visit
+        } else {
+          visitorContactId = contactData.id
+        }
+      } else {
+        // Update existing contact with any new info
+        await supabase
+          .from("visitor_contacts")
+          .update({
+            name: formData.visitor_name,
+            phone: formData.visitor_phone || null,
+            company_name: formData.company_name || null,
+            service_type: formData.service_type || null,
+            id_type: formData.id_type || null,
+            id_number: formData.id_number || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", visitorContactId)
       }
 
       const numNights = formData.is_overnight ? parseInt(formData.num_nights || "1") : null
@@ -298,6 +454,7 @@ export default function NewVisitorPage() {
       const visitorData: Record<string, unknown> = {
         owner_id: user.id,
         property_id: formData.property_id,
+        visitor_contact_id: visitorContactId || null,
         visitor_type: formData.visitor_type,
         visitor_name: formData.visitor_name,
         visitor_phone: formData.visitor_phone || null,
@@ -341,6 +498,8 @@ export default function NewVisitorPage() {
 
       const message = billId
         ? "Visitor checked in and bill created!"
+        : selectedContact
+        ? `${formData.visitor_name} checked in (visit #${(selectedContact.visit_count || 0) + 1})`
         : "Visitor checked in successfully!"
       toast.success(message)
       router.push("/visitors")
@@ -398,12 +557,129 @@ export default function NewVisitorPage() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold">Check In Visitor</h1>
-          <p className="text-muted-foreground">Register a new visitor</p>
+          <p className="text-muted-foreground">Register a new or returning visitor</p>
         </div>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Returning Visitor Search */}
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Search className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Find Returning Visitor</CardTitle>
+                <CardDescription>Search by name, phone, or company</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {selectedContact ? (
+              <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-green-200">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center ${VISITOR_TYPE_COLORS[selectedContact.visitor_type]}`}>
+                    {VISITOR_TYPE_ICONS[selectedContact.visitor_type]}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{selectedContact.name}</span>
+                      {selectedContact.is_frequent && (
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                      )}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {selectedContact.phone && <span>{selectedContact.phone}</span>}
+                      {selectedContact.company_name && <span> - {selectedContact.company_name}</span>}
+                      <span className="ml-2">({selectedContact.visit_count} visits)</span>
+                    </div>
+                  </div>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={handleClearContact}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div ref={searchRef} className="relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, phone number, or company..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value)
+                      setShowSearchResults(true)
+                    }}
+                    onFocus={() => setShowSearchResults(true)}
+                    className="pl-9 bg-white"
+                  />
+                  {searchLoading && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
+                </div>
+
+                {/* Search Results Dropdown */}
+                {showSearchResults && searchResults.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-80 overflow-auto">
+                    {searchResults.map((contact) => (
+                      <button
+                        key={contact.id}
+                        type="button"
+                        onClick={() => handleSelectContact(contact)}
+                        disabled={contact.is_blocked}
+                        className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 border-b last:border-b-0 text-left ${
+                          contact.is_blocked ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                      >
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${VISITOR_TYPE_COLORS[contact.visitor_type]}`}>
+                          {VISITOR_TYPE_ICONS[contact.visitor_type]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium truncate">{contact.name}</span>
+                            {contact.is_frequent && (
+                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                            )}
+                            {contact.is_blocked && (
+                              <span className="px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-xs">Blocked</span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            {contact.phone && <span>{contact.phone}</span>}
+                            {contact.service_type && <span>- {contact.service_type}</span>}
+                            {contact.company_name && <span>({contact.company_name})</span>}
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div className="text-sm font-medium">{contact.visit_count} visits</div>
+                          {contact.last_visit_at && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatDate(contact.last_visit_at)}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {showSearchResults && searchQuery.length >= 2 && searchResults.length === 0 && !searchLoading && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 p-4 text-center text-muted-foreground">
+                    No matching visitors found. Fill in details below for a new visitor.
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground mt-2">
+                  Or fill in visitor details below for a new visitor
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Visitor Type Selection */}
         <Card>
           <CardHeader>
@@ -424,11 +700,12 @@ export default function NewVisitorPage() {
                   key={type}
                   type="button"
                   onClick={() => handleVisitorTypeChange(type)}
+                  disabled={!!selectedContact && selectedContact.visitor_type !== type}
                   className={`p-4 rounded-lg border-2 transition-all text-left ${
                     formData.visitor_type === type
                       ? VISITOR_TYPE_COLORS[type] + " border-current"
                       : "border-gray-200 hover:border-gray-300"
-                  }`}
+                  } ${selectedContact && selectedContact.visitor_type !== type ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${
@@ -491,7 +768,9 @@ export default function NewVisitorPage() {
               </div>
               <div>
                 <CardTitle>Visitor Information</CardTitle>
-                <CardDescription>Details about the visitor</CardDescription>
+                <CardDescription>
+                  {selectedContact ? "Review and update if needed" : "Details about the visitor"}
+                </CardDescription>
               </div>
             </div>
           </CardHeader>

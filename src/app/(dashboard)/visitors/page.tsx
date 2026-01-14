@@ -10,8 +10,10 @@
 
 "use client"
 
-import { Users, UserCheck, Clock, CalendarDays, Search, Wrench, User } from "lucide-react"
+import Link from "next/link"
+import { Users, UserCheck, Clock, CalendarDays, Search, Wrench, User, Star, Ban, BookUser } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { VISITOR_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
@@ -45,6 +47,11 @@ interface Visitor {
   enquiry_status: EnquiryStatus | null
   tenant: { id: string; name: string } | null
   property: { id: string; name: string } | null
+  visitor_contact: { id: string; name: string; visit_count: number; is_frequent: boolean; is_blocked: boolean } | null
+  // Computed fields from config
+  total_visits: number
+  is_frequent_visitor: boolean
+  is_blocked_visitor: boolean
   created_at: string
 }
 
@@ -118,10 +125,21 @@ const columns: Column<Visitor>[] = [
           {VISITOR_TYPE_ICONS[visitor.visitor_type]}
         </div>
         <div className="min-w-0">
-          <div className="font-medium truncate">{visitor.visitor_name}</div>
-          {visitor.visitor_phone && (
-            <div className="text-xs text-muted-foreground">{visitor.visitor_phone}</div>
-          )}
+          <div className="flex items-center gap-2">
+            <span className="font-medium truncate">{visitor.visitor_name}</span>
+            {visitor.is_frequent_visitor && (
+              <Star className="h-3 w-3 text-yellow-500 flex-shrink-0" />
+            )}
+            {visitor.is_blocked_visitor && (
+              <Ban className="h-3 w-3 text-red-500 flex-shrink-0" />
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {visitor.visitor_phone && <span>{visitor.visitor_phone}</span>}
+            {visitor.total_visits > 1 && (
+              <span className="text-blue-600">({visitor.total_visits} visits)</span>
+            )}
+          </div>
         </div>
       </div>
     ),
@@ -253,7 +271,7 @@ const groupByOptions: GroupByOption[] = [
 const metrics: MetricConfig<Visitor>[] = [
   {
     id: "total",
-    label: "Total Visitors",
+    label: "Total Entries",
     icon: Users,
     compute: (items) => items.length,
   },
@@ -265,11 +283,10 @@ const metrics: MetricConfig<Visitor>[] = [
     highlight: (value) => (value as number) > 0,
   },
   {
-    id: "enquiries",
-    label: "Enquiries",
-    icon: Search,
-    compute: (items) => items.filter((v) => v.visitor_type === "enquiry").length,
-    highlight: (value) => (value as number) > 0,
+    id: "frequent",
+    label: "Frequent Visitors",
+    icon: Star,
+    compute: (items) => items.filter((v) => v.is_frequent_visitor).length,
   },
   {
     id: "today",
@@ -306,6 +323,14 @@ export default function VisitorsPage() {
       detailHref={(visitor) => `/visitors/${visitor.id}`}
       emptyTitle="No visitors logged"
       emptyDescription="Start logging visitor entries"
+      headerActions={
+        <Link href="/visitors/directory">
+          <Button variant="outline" size="sm">
+            <BookUser className="mr-2 h-4 w-4" />
+            Directory
+          </Button>
+        </Link>
+      }
     />
   )
 }

@@ -580,12 +580,26 @@ export const VISITOR_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   select: `
     *,
     tenant:tenants(id, name),
-    property:properties(id, name)
+    property:properties(id, name),
+    visitor_contact:visitor_contacts(id, name, visit_count, is_frequent, is_blocked)
   `,
   defaultOrderBy: "check_in_time",
   defaultOrderDirection: "desc",
   searchFields: ["visitor_name", "visitor_phone", "company_name", "service_type", "tenant.name"],
-  joinFields: ["tenant", "property"],
+  joinFields: ["tenant", "property", "visitor_contact"],
+  computedFields: (item) => {
+    const date = item.check_in_time ? new Date(item.check_in_time as string) : new Date()
+    const contact = item.visitor_contact as { visit_count?: number; is_frequent?: boolean; is_blocked?: boolean } | null
+    return {
+      check_in_date: date.toISOString().split("T")[0],
+      check_in_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      check_in_year: date.getFullYear().toString(),
+      status: item.check_out_time ? "checked_out" : "checked_in",
+      total_visits: contact?.visit_count || 1,
+      is_frequent_visitor: contact?.is_frequent || false,
+      is_blocked_visitor: contact?.is_blocked || false,
+    }
+  },
 }
 
 export const STAFF_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
