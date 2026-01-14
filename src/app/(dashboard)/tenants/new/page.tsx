@@ -22,6 +22,8 @@ import { showDetailedError, debugLog } from "@/lib/error-utils"
 import { PageLoader } from "@/components/ui/page-loader"
 import { sendInvitationEmail } from "@/lib/email"
 import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
+import { PersonSelector } from "@/components/people"
+import { PersonSearchResult } from "@/types/people.types"
 
 // Shared form components
 import {
@@ -77,6 +79,10 @@ export default function NewTenantPage() {
   const [checkingPhone, setCheckingPhone] = useState(false)
   const [isRejoining, setIsRejoining] = useState(false)
 
+  // Person-centric: Select person first, then add tenant-specific data
+  const [ownerId, setOwnerId] = useState<string>("")
+  const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null)
+
   // Basic form data
   const [formData, setFormData] = useState({
     property_id: "",
@@ -117,6 +123,12 @@ export default function NewTenantPage() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
+
+      // Get current user ID for PersonSelector
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setOwnerId(user.id)
+      }
 
       const [propertiesRes, roomsRes] = await Promise.all([
         supabase.from("properties").select("id, name").order("name"),
@@ -193,6 +205,31 @@ export default function NewTenantPage() {
       ...prev,
       [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }))
+  }
+
+  // Handle person selection from PersonSelector
+  const handlePersonSelect = (person: PersonSearchResult | null) => {
+    setSelectedPerson(person)
+    if (person) {
+      // Pre-fill form with person data
+      setFormData((prev) => ({
+        ...prev,
+        name: person.name,
+      }))
+      // Set phone if available
+      if (person.phone) {
+        setPhones([{
+          number: person.phone,
+          type: "primary",
+          is_primary: true,
+          is_whatsapp: true
+        }])
+      }
+      // Set email if available
+      if (person.email) {
+        setEmails([{ email: person.email, type: "primary", is_primary: true }])
+      }
+    }
   }
 
   // Phone handlers
@@ -449,12 +486,15 @@ export default function NewTenantPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Validate required fields
-    const primaryPhone = phones.find(p => p.is_primary)?.number || phones[0]?.number
-    if (!formData.property_id || !formData.room_id || !formData.name || !primaryPhone || !formData.monthly_rent) {
+    // Get name and phone from selected person or form
+    const personName = selectedPerson?.name || formData.name
+    const primaryPhone = selectedPerson?.phone || phones.find(p => p.is_primary)?.number || phones[0]?.number
+
+    // Validate required fields - now person OR manual entry
+    if (!formData.property_id || !formData.room_id || !personName || !primaryPhone || !formData.monthly_rent) {
       toast.error("Validation Error: Please fill in all required fields", {
         description: `Missing: ${[
-          !formData.name && "Name",
+          !personName && "Person/Name",
           !primaryPhone && "Phone",
           !formData.property_id && "Property",
           !formData.room_id && "Room",
@@ -595,11 +635,14 @@ export default function NewTenantPage() {
 
       // Build workflow input
       const workflowInput: TenantCreateInput = {
-        name: formData.name,
-        email: primaryEmail || undefined,
+        // Person-centric: If person selected, pass person_id for linking
+        person_id: selectedPerson?.id,
+        // Use person data or form data
+        name: personName,
+        email: selectedPerson?.email || primaryEmail || undefined,
         phone: primaryPhone,
-        photo_url: formData.profile_photo || undefined,
-        profile_photo: formData.profile_photo || undefined,
+        photo_url: formData.profile_photo || selectedPerson?.photo_url || undefined,
+        profile_photo: formData.profile_photo || selectedPerson?.photo_url || undefined,
         property_id: formData.property_id,
         room_id: formData.room_id,
         check_in_date: formData.check_in_date,
@@ -639,7 +682,7 @@ export default function NewTenantPage() {
             file_urls: d.file_urls,
           })),
         generate_initial_bill: false, // Let owner manually create first bill
-        send_welcome_notification: !!primaryEmail,
+        send_welcome_notification: !!(selectedPerson?.email || primaryEmail),
         send_invitation: false, // We handle invitation separately below
       }
 
@@ -858,47 +901,55 @@ export default function NewTenantPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info with Photo */}
-        <Card>
+        {/* Step 1: Select or Create Person */}
+        <Card className="border-2 border-primary/20">
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>Basic Information</CardTitle>
-                <CardDescription>Tenant&apos;s personal details</CardDescription>
+                <CardTitle>Step 1: Select Person</CardTitle>
+                <CardDescription>
+                  Search for an existing person or add a new one. Identity data is stored centrally.
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-6">
-              <div className="space-y-2">
-                <Label>Profile Photo</Label>
-                <ProfilePhotoUpload
-                  bucket="tenant-photos"
-                  folder="profiles"
-                  value={formData.profile_photo}
-                  onChange={(url) => setFormData(prev => ({ ...prev, profile_photo: url }))}
-                  size="lg"
-                />
+            {ownerId ? (
+              <PersonSelector
+                ownerId={ownerId}
+                selectedPersonId={selectedPerson?.id}
+                onSelect={handlePersonSelect}
+                excludeTags={["blocked"]}
+                placeholder="Search by name, phone, or email..."
+                disabled={loading}
+                required
+              />
+            ) : (
+              <div className="h-10 flex items-center text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Loading...
               </div>
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="e.g., Rahul Sharma"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-              </div>
-            </div>
+            )}
 
-            {/* Returning Tenant Banner */}
-            {returningTenant && !isRejoining && (
+            {/* Show selected person info */}
+            {selectedPerson && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-emerald-700">
+                  <UserCheck className="h-4 w-4" />
+                  <span>
+                    <strong>{selectedPerson.name}</strong> selected
+                    {selectedPerson.tags?.includes("tenant") && " (existing tenant)"}
+                    {selectedPerson.is_verified && " • Verified"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Returning Tenant Banner - still works with phone lookup */}
+            {returningTenant && !isRejoining && !selectedPerson && (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <div className="flex items-start gap-3">
                   <UserCheck className="h-5 w-5 text-amber-600 mt-0.5" />
@@ -937,6 +988,32 @@ export default function NewTenantPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Profile Photo (optional, can override person's photo) */}
+        {selectedPerson && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Contact className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Profile Photo</CardTitle>
+                  <CardDescription>Optional: Upload a new photo for this tenant</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ProfilePhotoUpload
+                bucket="tenant-photos"
+                folder="profiles"
+                value={formData.profile_photo || selectedPerson.photo_url || ""}
+                onChange={(url) => setFormData(prev => ({ ...prev, profile_photo: url }))}
+                size="lg"
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Contact Information */}
         <Card>
