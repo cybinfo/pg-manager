@@ -5,6 +5,9 @@
  * Use these throughout the application for consistent display.
  */
 
+// UTIL-003: Import phone formatter from validators for consolidation
+import { formatIndianMobile } from "./validators"
+
 // ============================================
 // CURRENCY FORMATTING
 // ============================================
@@ -177,30 +180,48 @@ export const formatMonthYear = (date: string | Date | null | undefined): string 
 }
 
 // ============================================
-// PHONE FORMATTING
+// PHONE FORMATTING (UTIL-003: Consolidated with validators.ts)
 // ============================================
 
 /**
  * Format Indian phone number
+ * UTIL-003: Delegates to formatIndianMobile for consistency
  * @example formatPhone("9876543210") => "+91 98765 43210"
  */
 export const formatPhone = (phone: string | null | undefined): string => {
   if (!phone) return "-"
 
-  // Remove all non-digits
+  // Normalize the input: remove all non-digits first
   const digits = phone.replace(/\D/g, "")
 
-  // If 10 digits, format as Indian number
-  if (digits.length === 10) {
-    return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`
+  // Handle various formats and normalize to 10-digit form
+  let tenDigits: string | null = null
+
+  if (digits.length === 10 && /^[6-9]/.test(digits)) {
+    // Already 10 digits starting with 6-9 (valid Indian mobile)
+    tenDigits = digits
+  } else if (digits.length === 12 && digits.startsWith("91") && /^[6-9]/.test(digits.slice(2))) {
+    // 91XXXXXXXXXX format (12 digits with country code)
+    tenDigits = digits.slice(2)
+  } else if (digits.length === 11 && digits.startsWith("0") && /^[6-9]/.test(digits.slice(1))) {
+    // 0XXXXXXXXXX format (11 digits with leading zero)
+    tenDigits = digits.slice(1)
   }
 
-  // If already has country code
-  if (digits.length === 12 && digits.startsWith("91")) {
-    return `+91 ${digits.slice(2, 7)} ${digits.slice(7)}`
+  // If we extracted valid 10 digits, format them
+  if (tenDigits) {
+    return `+91 ${tenDigits.slice(0, 5)} ${tenDigits.slice(5)}`
   }
 
-  // Return as-is if different format
+  // Fallback: try the canonical formatter
+  const formatted = formatIndianMobile(phone)
+
+  // If formatter returns something different and valid, use it
+  if (formatted && formatted !== phone) {
+    return formatted
+  }
+
+  // Return original if no formatting could be done
   return phone
 }
 

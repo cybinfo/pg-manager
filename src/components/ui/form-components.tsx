@@ -222,20 +222,22 @@ export function SearchInput({
 }
 
 // ============================================
-// Textarea with character count
+// Textarea with character count (UI-003: Renamed to avoid conflict with base Textarea)
+// Use base Textarea from @/components/ui/textarea for simple cases
+// Use TextareaWithCount when you need character counting
 // ============================================
-interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextareaWithCountProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   maxLength?: number
   showCount?: boolean
 }
 
-export function Textarea({
+export function TextareaWithCount({
   className,
   maxLength,
   showCount = false,
   value,
   ...props
-}: TextareaProps) {
+}: TextareaWithCountProps) {
   const charCount = typeof value === 'string' ? value.length : 0
 
   return (
@@ -261,6 +263,9 @@ export function Textarea({
     </div>
   )
 }
+
+// Backward compatibility alias
+export const Textarea = TextareaWithCount
 
 // ============================================
 // Form Section Wrapper

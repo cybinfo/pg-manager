@@ -30,10 +30,13 @@ export {
   EmailInput,
   DateInput,
   SearchInput,
-  Textarea,
+  TextareaWithCount,
   FormSection,
   ToggleSwitch,
 } from "./form-components"
+
+// UI-003: Base Textarea (shadcn) - use for simple cases
+export { Textarea } from "./textarea"
 
 // UI-001: Consolidated phone input components
 export { PhoneInput, SimplePhoneInput } from "./phone-input"

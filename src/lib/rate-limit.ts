@@ -159,6 +159,7 @@ export const cronLimiter = createRateLimiter({
 /**
  * Get client identifier from request
  * Uses X-Forwarded-For for proxied requests, falls back to IP
+ * SEC-002: Improved fallback to generate unique identifier from request fingerprint
  */
 export function getClientIdentifier(request: Request): string {
   // Check for forwarded IP (from proxy/load balancer)
@@ -180,9 +181,30 @@ export function getClientIdentifier(request: Request): string {
     return cfIp
   }
 
-  // Fallback to a generic identifier if no IP available
-  // This shouldn't happen in production
-  return "unknown"
+  // SEC-002: Generate fingerprint from available headers when no IP available
+  // This creates a somewhat unique identifier for rate limiting purposes
+  const userAgent = request.headers.get("user-agent") || ""
+  const acceptLang = request.headers.get("accept-language") || ""
+  const acceptEnc = request.headers.get("accept-encoding") || ""
+
+  // Create a simple hash-like string from available headers
+  // This isn't cryptographically secure but provides differentiation for rate limiting
+  const fingerprint = `${userAgent.slice(0, 50)}|${acceptLang.slice(0, 10)}|${acceptEnc.slice(0, 10)}`
+
+  // If we have some fingerprint data, use it with prefix
+  if (fingerprint.length > 3) {
+    // Simple string-based hash for consistent identifier
+    let hash = 0
+    for (let i = 0; i < fingerprint.length; i++) {
+      const char = fingerprint.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32-bit integer
+    }
+    return `fp_${Math.abs(hash).toString(36)}`
+  }
+
+  // Ultimate fallback - should rarely happen in real requests
+  return `unknown_${Date.now().toString(36)}`
 }
 
 /**

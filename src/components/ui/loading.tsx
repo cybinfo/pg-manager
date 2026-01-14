@@ -10,9 +10,10 @@ import { Loader2 } from "lucide-react"
 interface SpinnerProps {
   size?: "sm" | "default" | "lg"
   className?: string
+  "aria-hidden"?: boolean
 }
 
-export function Spinner({ size = "default", className }: SpinnerProps) {
+export function Spinner({ size = "default", className, "aria-hidden": ariaHidden }: SpinnerProps) {
   const sizes = {
     sm: "h-4 w-4",
     default: "h-6 w-6",
@@ -20,20 +21,29 @@ export function Spinner({ size = "default", className }: SpinnerProps) {
   }
 
   return (
-    <Loader2 className={cn("animate-spin text-primary", sizes[size], className)} />
+    <Loader2
+      className={cn("animate-spin text-primary", sizes[size], className)}
+      aria-hidden={ariaHidden}
+    />
   )
 }
 
 // ============================================
-// Page Loading
+// Page Loading (UI-002: Added accessibility attributes)
 // ============================================
 export function PageLoading({ message }: { message?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center h-64 gap-4">
-      <Spinner size="lg" />
+    <div
+      className="flex flex-col items-center justify-center h-64 gap-4"
+      role="status"
+      aria-live="polite"
+      aria-label={message || "Loading content"}
+    >
+      <Spinner size="lg" aria-hidden={true} />
       {message && (
         <p className="text-sm text-muted-foreground animate-pulse">{message}</p>
       )}
+      <span className="sr-only">{message || "Loading..."}</span>
     </div>
   )
 }
