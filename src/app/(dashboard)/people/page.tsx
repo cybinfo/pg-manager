@@ -35,6 +35,7 @@ import {
   Edit,
   Star,
   Merge,
+  AlertTriangle,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate } from "@/lib/format"
@@ -99,6 +100,7 @@ export default function PeoplePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterTag, setFilterTag] = useState<string>("")
   const [filterStatus, setFilterStatus] = useState<string>("")
+  const [duplicateCount, setDuplicateCount] = useState(0)
 
   const fetchPeople = useCallback(async () => {
     const supabase = createClient()
@@ -146,9 +148,22 @@ export default function PeoplePage() {
     setLoading(false)
   }, [searchQuery, filterTag, filterStatus])
 
+  // Fetch duplicate count
+  const fetchDuplicateCount = useCallback(async () => {
+    const supabase = createClient()
+    const { count, error } = await supabase
+      .from("duplicate_people_summary")
+      .select("*", { count: "exact", head: true })
+
+    if (!error && count !== null) {
+      setDuplicateCount(count)
+    }
+  }, [])
+
   useEffect(() => {
     fetchPeople()
-  }, [fetchPeople])
+    fetchDuplicateCount()
+  }, [fetchPeople, fetchDuplicateCount])
 
   const metrics = {
     total: people.length,
@@ -173,10 +188,18 @@ export default function PeoplePage() {
           icon={Users}
           actions={
             <div className="flex gap-2">
+              {duplicateCount > 0 && (
+                <Link href="/people/duplicates">
+                  <Button variant="outline" className="border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700">
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    {duplicateCount} Duplicate{duplicateCount > 1 ? "s" : ""} Found
+                  </Button>
+                </Link>
+              )}
               <Link href="/people/merge">
                 <Button variant="outline">
                   <Merge className="mr-2 h-4 w-4" />
-                  Merge Duplicates
+                  Merge People
                 </Button>
               </Link>
               <Link href="/people/new">
