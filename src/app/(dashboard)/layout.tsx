@@ -31,6 +31,7 @@ import {
   Shield,
   Activity,
   Wallet,
+  Contact,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -46,6 +47,7 @@ const pathPermissions: Record<string, string> = {
   "/properties": "properties.view",
   "/rooms": "rooms.view",
   "/tenants": "tenants.view",
+  "/people": "tenants.view",
   "/bills": "bills.view",
   "/payments": "payments.view",
   "/refunds": "payments.view",
@@ -89,6 +91,7 @@ const navigation: {
   { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", feature: null },
   { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", feature: null },
   { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
+  { name: "People", href: "/people", icon: Contact, permission: "tenants.view", feature: null },
   { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
   { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
   { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", feature: null },
