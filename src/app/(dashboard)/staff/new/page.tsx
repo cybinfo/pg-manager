@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -46,6 +46,8 @@ interface RoleAssignment {
 
 export default function NewStaffPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const personIdFromUrl = searchParams.get("person_id")
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [roles, setRoles] = useState<Role[]>([])
@@ -94,6 +96,28 @@ export default function NewStaffPage() {
 
     fetchData()
   }, [])
+
+  // Load person from URL query param
+  useEffect(() => {
+    const loadPersonFromUrl = async () => {
+      if (!personIdFromUrl || selectedPerson) return
+
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("people")
+        .select("id, name, phone, email, photo_url, tags, is_verified, is_blocked, created_at")
+        .eq("id", personIdFromUrl)
+        .single()
+
+      if (data && !data.is_blocked) {
+        handlePersonSelect(data)
+      } else if (data?.is_blocked) {
+        toast.error("This person is blocked and cannot be added as staff")
+      }
+    }
+
+    loadPersonFromUrl()
+  }, [personIdFromUrl])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
