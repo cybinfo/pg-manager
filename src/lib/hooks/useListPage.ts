@@ -786,3 +786,24 @@ export const REFUND_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     }
   },
 }
+
+export const PEOPLE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "people",
+  select: "*",
+  defaultOrderBy: "name",
+  defaultOrderDirection: "asc",
+  searchFields: ["name", "phone", "email", "aadhaar_number", "pan_number"],
+  computedFields: (item) => {
+    const date = item.created_at ? new Date(item.created_at as string) : new Date()
+    const tags = (item.tags as string[]) || []
+    return {
+      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_year: date.getFullYear().toString(),
+      status_label: item.is_blocked ? "Blocked" : item.is_verified ? "Verified" : "Active",
+      is_tenant: tags.includes("tenant"),
+      is_staff: tags.includes("staff"),
+      is_visitor: tags.includes("visitor"),
+      primary_role: tags.includes("tenant") ? "Tenant" : tags.includes("staff") ? "Staff" : tags.includes("visitor") ? "Visitor" : "Other",
+    }
+  },
+}

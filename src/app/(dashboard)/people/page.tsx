@@ -1,61 +1,57 @@
 /**
- * People Directory Page
+ * People Directory Page (Refactored)
  *
  * Central registry for all persons - tenants, staff, visitors, service providers
- * Single source of truth for identity management
+ * Now uses centralized ListPageTemplate for consistent UI
  */
 
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { PageHeader } from "@/components/ui/page-header"
-import { Avatar } from "@/components/ui/avatar"
-import { InfoCard } from "@/components/ui/detail-components"
 import {
   Users,
-  Search,
   Phone,
   Mail,
   Building2,
-  UserPlus,
-  Filter,
   BadgeCheck,
   Ban,
   Home,
   Briefcase,
-  Wrench,
   UserCircle,
-  MoreVertical,
-  Eye,
-  Edit,
+  Wrench,
   Star,
   Merge,
   AlertTriangle,
 } from "lucide-react"
-import { toast } from "sonner"
-import { formatDate } from "@/lib/format"
-import { PermissionGuard } from "@/components/auth"
-import { PageLoader } from "@/components/ui/page-loader"
-import { Select } from "@/components/ui/form-components"
-import { EmptyState } from "@/components/ui/empty-state"
-import {
-  Person,
-  PersonSearchResult,
-  PERSON_TAGS,
-} from "@/types/people.types"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
+import { PEOPLE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { FilterConfig } from "@/components/ui/list-page-filters"
+import { Avatar } from "@/components/ui/avatar"
+import { useEffect, useState, useCallback } from "react"
+import { createClient } from "@/lib/supabase/client"
+
+// ============================================
+// Types
+// ============================================
+
+interface Person {
+  id: string
+  name: string
+  phone: string | null
+  email: string | null
+  photo_url: string | null
+  company_name: string | null
+  occupation: string | null
+  tags: string[] | null
+  is_verified: boolean
+  is_blocked: boolean
+  created_at: string
+  // Computed fields
+  status_label?: string
+  primary_role?: string
+}
 
 // ============================================
 // Tag Badge Component
@@ -68,8 +64,6 @@ const TAG_COLORS: Record<string, string> = {
   service_provider: "bg-orange-100 text-orange-700",
   frequent: "bg-yellow-100 text-yellow-700",
   vip: "bg-amber-100 text-amber-700",
-  blocked: "bg-red-100 text-red-700",
-  verified: "bg-emerald-100 text-emerald-700",
 }
 
 const TAG_ICONS: Record<string, React.ReactNode> = {
@@ -79,8 +73,6 @@ const TAG_ICONS: Record<string, React.ReactNode> = {
   service_provider: <Wrench className="h-3 w-3" />,
   frequent: <Star className="h-3 w-3" />,
   vip: <Star className="h-3 w-3" />,
-  blocked: <Ban className="h-3 w-3" />,
-  verified: <BadgeCheck className="h-3 w-3" />,
 }
 
 const TagBadge = ({ tag }: { tag: string }) => (
@@ -91,65 +83,195 @@ const TagBadge = ({ tag }: { tag: string }) => (
 )
 
 // ============================================
-// Page Component
+// Column Definitions
 // ============================================
 
-export default function PeoplePage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [people, setPeople] = useState<Person[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filterTag, setFilterTag] = useState<string>("")
-  const [filterStatus, setFilterStatus] = useState<string>("")
+const columns: Column<Person>[] = [
+  {
+    key: "name",
+    header: "Person",
+    width: "primary",
+    sortable: true,
+    render: (person) => (
+      <div className="flex items-center gap-3">
+        <Avatar
+          name={person.name}
+          src={person.photo_url}
+          size="sm"
+          className={person.is_blocked ? "opacity-50" : ""}
+        />
+        <div className="min-w-0">
+          <div className="font-medium flex items-center gap-2">
+            {person.name}
+            {person.is_verified && (
+              <BadgeCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+            )}
+            {person.is_blocked && (
+              <Ban className="h-4 w-4 text-red-600 shrink-0" />
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1">
+            {person.phone && (
+              <>
+                <Phone className="h-3 w-3" />
+                {person.phone}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: "email",
+    header: "Contact",
+    width: "secondary",
+    hideOnMobile: true,
+    render: (person) => (
+      <div className="text-sm min-w-0">
+        {person.email ? (
+          <div className="flex items-center gap-1 text-muted-foreground truncate">
+            <Mail className="h-3 w-3 shrink-0" />
+            <span className="truncate">{person.email}</span>
+          </div>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
+        {person.company_name && (
+          <div className="flex items-center gap-1 text-muted-foreground text-xs mt-0.5">
+            <Building2 className="h-3 w-3 shrink-0" />
+            <span className="truncate">{person.company_name}</span>
+          </div>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: "tags",
+    header: "Roles",
+    width: "secondary",
+    render: (person) => (
+      <div className="flex flex-wrap gap-1">
+        {person.tags && person.tags.length > 0 ? (
+          person.tags.slice(0, 3).map((tag) => (
+            <TagBadge key={tag} tag={tag} />
+          ))
+        ) : (
+          <span className="text-sm text-muted-foreground">No roles</span>
+        )}
+        {person.tags && person.tags.length > 3 && (
+          <TableBadge variant="muted">+{person.tags.length - 3}</TableBadge>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: "status",
+    header: "Status",
+    width: "status",
+    sortable: true,
+    sortKey: "is_blocked",
+    render: (person) => (
+      <StatusDot
+        status={person.is_blocked ? "error" : person.is_verified ? "success" : "muted"}
+        label={person.is_blocked ? "Blocked" : person.is_verified ? "Verified" : "Active"}
+      />
+    ),
+  },
+]
+
+// ============================================
+// Filter Configurations
+// ============================================
+
+const filters: FilterConfig[] = [
+  {
+    id: "tags",
+    label: "Role",
+    type: "select",
+    placeholder: "All Roles",
+    options: [
+      { value: "tenant", label: "Tenants" },
+      { value: "staff", label: "Staff" },
+      { value: "visitor", label: "Visitors" },
+      { value: "service_provider", label: "Service Providers" },
+      { value: "vip", label: "VIP" },
+    ],
+  },
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    placeholder: "All Status",
+    options: [
+      { value: "verified", label: "Verified" },
+      { value: "blocked", label: "Blocked" },
+    ],
+  },
+]
+
+// ============================================
+// Group By Options
+// ============================================
+
+const groupByOptions: GroupByOption[] = [
+  { value: "primary_role", label: "Role" },
+  { value: "status_label", label: "Status" },
+  { value: "created_month", label: "Added Month" },
+  { value: "created_year", label: "Added Year" },
+]
+
+// ============================================
+// Metrics Configuration
+// ============================================
+
+const metrics: MetricConfig<Person>[] = [
+  {
+    id: "total",
+    label: "Total",
+    icon: Users,
+    compute: (items) => items.length,
+  },
+  {
+    id: "tenants",
+    label: "Tenants",
+    icon: Home,
+    compute: (items) => items.filter((p) => p.tags?.includes("tenant")).length,
+  },
+  {
+    id: "staff",
+    label: "Staff",
+    icon: Briefcase,
+    compute: (items) => items.filter((p) => p.tags?.includes("staff")).length,
+  },
+  {
+    id: "visitors",
+    label: "Visitors",
+    icon: UserCircle,
+    compute: (items) => items.filter((p) => p.tags?.includes("visitor")).length,
+  },
+  {
+    id: "verified",
+    label: "Verified",
+    icon: BadgeCheck,
+    compute: (items) => items.filter((p) => p.is_verified).length,
+  },
+  {
+    id: "blocked",
+    label: "Blocked",
+    icon: Ban,
+    compute: (items) => items.filter((p) => p.is_blocked).length,
+    highlight: (value) => (value as number) > 0,
+  },
+]
+
+// ============================================
+// Duplicate Count Hook
+// ============================================
+
+function useDuplicateCount() {
   const [duplicateCount, setDuplicateCount] = useState(0)
 
-  const fetchPeople = useCallback(async () => {
-    const supabase = createClient()
-
-    let query = supabase
-      .from("people")
-      .select("*")
-      .eq("is_active", true)
-      .order("name", { ascending: true })
-
-    if (filterTag) {
-      query = query.contains("tags", [filterTag])
-    }
-
-    if (filterStatus === "verified") {
-      query = query.eq("is_verified", true)
-    } else if (filterStatus === "blocked") {
-      query = query.eq("is_blocked", true)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error("Error fetching people:", error)
-      toast.error("Failed to load people directory")
-      setLoading(false)
-      return
-    }
-
-    // Filter by search query client-side
-    let filteredData: Person[] = data || []
-    if (searchQuery) {
-      const search = searchQuery.toLowerCase()
-      filteredData = filteredData.filter(
-        (p: Person) =>
-          p.name.toLowerCase().includes(search) ||
-          p.phone?.toLowerCase().includes(search) ||
-          p.email?.toLowerCase().includes(search) ||
-          p.aadhaar_number?.toLowerCase().includes(search) ||
-          p.company_name?.toLowerCase().includes(search)
-      )
-    }
-
-    setPeople(filteredData)
-    setLoading(false)
-  }, [searchQuery, filterTag, filterStatus])
-
-  // Fetch duplicate count
   const fetchDuplicateCount = useCallback(async () => {
     const supabase = createClient()
     const { count, error } = await supabase
@@ -162,265 +284,61 @@ export default function PeoplePage() {
   }, [])
 
   useEffect(() => {
-    fetchPeople()
     fetchDuplicateCount()
-  }, [fetchPeople, fetchDuplicateCount])
+  }, [fetchDuplicateCount])
 
-  const metrics = {
-    total: people.length,
-    tenants: people.filter((p) => p.tags?.includes("tenant")).length,
-    staff: people.filter((p) => p.tags?.includes("staff")).length,
-    visitors: people.filter((p) => p.tags?.includes("visitor")).length,
-    verified: people.filter((p) => p.is_verified).length,
-    blocked: people.filter((p) => p.is_blocked).length,
-  }
+  return duplicateCount
+}
 
-  if (loading) {
-    return <PageLoader />
-  }
+// ============================================
+// Page Component
+// ============================================
+
+export default function PeoplePage() {
+  const duplicateCount = useDuplicateCount()
 
   return (
-    <PermissionGuard permission="tenants.view">
-      <div className="space-y-6">
-        {/* Header */}
-        <PageHeader
-          title="People Directory"
-          description="Central registry for all persons - tenants, staff, visitors"
-          icon={Users}
-          actions={
-            <div className="flex gap-2">
-              {duplicateCount > 0 && (
-                <Link href="/people/duplicates">
-                  <Button variant="outline" className="border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700">
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    {duplicateCount} Duplicate{duplicateCount > 1 ? "s" : ""} Found
-                  </Button>
-                </Link>
-              )}
-              <Link href="/people/merge">
-                <Button variant="outline">
-                  <Merge className="mr-2 h-4 w-4" />
-                  Merge People
-                </Button>
-              </Link>
-              <Link href="/people/new">
-                <Button>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Add Person
-                </Button>
-              </Link>
-            </div>
-          }
-        />
-
-        {/* Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <InfoCard
-            label="Total"
-            value={metrics.total}
-            icon={Users}
-            variant="default"
-          />
-          <InfoCard
-            label="Tenants"
-            value={metrics.tenants}
-            icon={Home}
-            variant="default"
-          />
-          <InfoCard
-            label="Staff"
-            value={metrics.staff}
-            icon={Briefcase}
-            variant="default"
-          />
-          <InfoCard
-            label="Visitors"
-            value={metrics.visitors}
-            icon={UserCircle}
-            variant="default"
-          />
-          <InfoCard
-            label="Verified"
-            value={metrics.verified}
-            icon={BadgeCheck}
-            variant="success"
-          />
-          <InfoCard
-            label="Blocked"
-            value={metrics.blocked}
-            icon={Ban}
-            variant="error"
-          />
+    <ListPageTemplate
+      // Page info
+      title="People Directory"
+      description="Central registry for all persons - tenants, staff, visitors"
+      icon={Users}
+      permission="tenants.view"
+      // Data config
+      config={PEOPLE_LIST_CONFIG}
+      // UI config
+      filters={filters}
+      groupByOptions={groupByOptions}
+      metrics={metrics}
+      columns={columns}
+      searchPlaceholder="Search by name, phone, email, Aadhaar..."
+      // Actions
+      createHref="/people/new"
+      createLabel="Add Person"
+      createPermission="tenants.create"
+      headerActions={
+        <div className="flex gap-2">
+          {duplicateCount > 0 && (
+            <Link href="/people/duplicates">
+              <Button variant="outline" className="border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700">
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                {duplicateCount} Duplicate{duplicateCount > 1 ? "s" : ""}
+              </Button>
+            </Link>
+          )}
+          <Link href="/people/merge">
+            <Button variant="outline">
+              <Merge className="mr-2 h-4 w-4" />
+              Merge People
+            </Button>
+          </Link>
         </div>
-
-        {/* Filters */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, phone, email, Aadhaar..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select
-                value={filterTag}
-                onChange={(e) => setFilterTag(e.target.value)}
-                options={[
-                  { value: "", label: "All Roles" },
-                  { value: "tenant", label: "Tenants" },
-                  { value: "staff", label: "Staff" },
-                  { value: "visitor", label: "Visitors" },
-                  { value: "service_provider", label: "Service Providers" },
-                  { value: "vip", label: "VIP" },
-                ]}
-              />
-              <Select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                options={[
-                  { value: "", label: "All Status" },
-                  { value: "verified", label: "Verified" },
-                  { value: "blocked", label: "Blocked" },
-                ]}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* People List */}
-        {people.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No people found"
-            description={searchQuery || filterTag || filterStatus
-              ? "Try adjusting your search or filters"
-              : "People will appear here as you add tenants, staff, and visitors"}
-            action={{ label: "Add Person", href: "/people/new" }}
-          />
-        ) : (
-          <div className="grid gap-4">
-            {people.map((person) => (
-              <Card
-                key={person.id}
-                className={`cursor-pointer hover:shadow-md transition-shadow ${
-                  person.is_blocked
-                    ? "border-red-200 bg-red-50/30"
-                    : person.is_verified
-                    ? "border-emerald-200 bg-emerald-50/30"
-                    : ""
-                }`}
-                onClick={() => router.push(`/people/${person.id}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <Avatar name={person.name} src={person.photo_url} size="lg" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-semibold truncate">{person.name}</h3>
-                          {person.is_verified && (
-                            <BadgeCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                          )}
-                          {person.is_blocked && (
-                            <Ban className="h-4 w-4 text-red-600 flex-shrink-0" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                          {person.phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {person.phone}
-                            </span>
-                          )}
-                          {person.email && (
-                            <span className="flex items-center gap-1 truncate">
-                              <Mail className="h-3 w-3" />
-                              {person.email}
-                            </span>
-                          )}
-                          {person.company_name && (
-                            <span className="flex items-center gap-1 hidden sm:flex">
-                              <Building2 className="h-3 w-3" />
-                              {person.company_name}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          {person.tags?.slice(0, 4).map((tag) => (
-                            <TagBadge key={tag} tag={tag} />
-                          ))}
-                          {person.tags && person.tags.length > 4 && (
-                            <span className="text-xs text-muted-foreground">
-                              +{person.tags.length - 4} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="text-right hidden sm:block text-sm text-muted-foreground">
-                        <p>Added {formatDate(person.created_at)}</p>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            router.push(`/people/${person.id}`)
-                          }}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            router.push(`/people/${person.id}/edit`)
-                          }}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            router.push(`/people/merge?id=${person.id}`)
-                          }}>
-                            <Merge className="mr-2 h-4 w-4" />
-                            Merge with Another
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {person.tags?.includes("tenant") || (
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation()
-                              router.push(`/tenants/new?person_id=${person.id}`)
-                            }}>
-                              <Home className="mr-2 h-4 w-4" />
-                              Add as Tenant
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation()
-                            router.push(`/visitors/new?person_id=${person.id}`)
-                          }}>
-                            <UserCircle className="mr-2 h-4 w-4" />
-                            Check In as Visitor
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </PermissionGuard>
+      }
+      // Navigation
+      detailHref={(person) => `/people/${person.id}`}
+      // Empty state
+      emptyTitle="No people found"
+      emptyDescription="People will appear here as you add tenants, staff, and visitors"
+    />
   )
 }
