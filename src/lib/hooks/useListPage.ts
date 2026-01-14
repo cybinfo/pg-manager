@@ -579,7 +579,7 @@ export const VISITOR_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "visitors",
   select: `
     *,
-    tenant:tenants(id, name),
+    tenant:tenants!tenant_id(id, name),
     property:properties(id, name),
     visitor_contact:visitor_contacts(id, name, visit_count, is_frequent, is_blocked)
   `,

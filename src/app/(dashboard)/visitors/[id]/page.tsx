@@ -180,7 +180,7 @@ export default function VisitorDetailPage() {
         .from("visitors")
         .select(`
           *,
-          tenant:tenants(id, name, phone, photo_url, profile_photo, room:rooms(room_number)),
+          tenant:tenants!tenant_id(id, name, phone, photo_url, profile_photo, room:rooms(room_number)),
           property:properties(id, name, address),
           visitor_contact:visitor_contacts(*)
         `)

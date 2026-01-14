@@ -155,6 +155,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ============================================
 -- 7. Migrate existing visitor data to contacts
 -- ============================================
+
+-- Temporarily disable user triggers (audit) for data migration
+-- Note: Using USER instead of ALL to avoid permission issues with system triggers
+ALTER TABLE visitor_contacts DISABLE TRIGGER USER;
+ALTER TABLE visitors DISABLE TRIGGER USER;
+
 -- Create contacts from existing unique visitors (by phone or name+type)
 INSERT INTO visitor_contacts (
   owner_id,
@@ -204,6 +210,10 @@ WHERE v.owner_id = vc.owner_id
     (v.visitor_phone IS NOT NULL AND v.visitor_phone = vc.phone)
     OR (v.visitor_phone IS NULL AND v.visitor_name = vc.name AND v.visitor_type = vc.visitor_type)
   );
+
+-- Re-enable user triggers
+ALTER TABLE visitors ENABLE TRIGGER USER;
+ALTER TABLE visitor_contacts ENABLE TRIGGER USER;
 
 -- ============================================
 -- 8. Add comments for documentation
