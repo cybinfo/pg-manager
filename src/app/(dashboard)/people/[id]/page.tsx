@@ -42,6 +42,7 @@ import {
   Clock,
   Wrench,
   Star,
+  Merge,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatDateTime, formatCurrency } from "@/lib/format"
@@ -430,6 +431,14 @@ export default function PersonDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <PermissionGate permission="tenants.update" hide>
+              <Link href={`/people/merge?id=${person.id}`}>
+                <Button variant="outline">
+                  <Merge className="mr-2 h-4 w-4" />
+                  Merge
+                </Button>
+              </Link>
+            </PermissionGate>
             <PermissionGate permission="tenants.update" hide>
               <Link href={`/people/${person.id}/edit`}>
                 <Button variant="outline">

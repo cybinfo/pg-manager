@@ -34,6 +34,7 @@ import {
   Eye,
   Edit,
   Star,
+  Merge,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate } from "@/lib/format"
@@ -171,12 +172,20 @@ export default function PeoplePage() {
           description="Central registry for all persons - tenants, staff, visitors"
           icon={Users}
           actions={
-            <Link href="/people/new">
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add Person
-              </Button>
-            </Link>
+            <div className="flex gap-2">
+              <Link href="/people/merge">
+                <Button variant="outline">
+                  <Merge className="mr-2 h-4 w-4" />
+                  Merge Duplicates
+                </Button>
+              </Link>
+              <Link href="/people/new">
+                <Button>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add Person
+                </Button>
+              </Link>
+            </div>
           }
         />
 
@@ -395,6 +404,13 @@ export default function PeoplePage() {
                           }}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/people/merge?id=${person.id}`)
+                          }}>
+                            <Merge className="mr-2 h-4 w-4" />
+                            Merge with Another
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {person.tags?.includes("tenant") || (
