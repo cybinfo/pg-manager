@@ -34,6 +34,7 @@ import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { FeatureFlagKey } from "@/lib/features"
 import { PageLoader } from "@/components/ui/page-loader"
+import { Pagination } from "@/components/ui/pagination"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   useListPage,
@@ -158,6 +159,9 @@ export function ListPageTemplate({
     metricsData,
     searchQuery,
     setSearchQuery,
+    pagination,
+    setPage,
+    setPageSize,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useListPage<any>({
     config,
@@ -377,6 +381,17 @@ export function ListPageTemplate({
           </div>
         }
       />
+
+      {/* Pagination */}
+      {pagination.total > pagination.pageSize && (
+        <Pagination
+          pagination={pagination}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          showTotal
+          showPageSize
+        />
+      )}
     </div>
   )
 

@@ -415,3 +415,38 @@ export function ExitClearanceLink({
     </Link>
   )
 }
+
+// =============================================================================
+// Meter Link
+// =============================================================================
+interface MeterLinkProps extends BaseEntityLinkProps {
+  id: string
+  meterNumber: string
+}
+
+export function MeterLink({
+  id,
+  meterNumber,
+  className,
+  size = "default",
+  showIcon = true,
+  stopPropagation = true
+}: MeterLinkProps) {
+  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
+  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
+
+  return (
+    <Link
+      href={`/meters/${id}`}
+      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
+      className={cn(
+        "inline-flex items-center gap-1 hover:text-primary transition-colors",
+        sizeClasses,
+        className
+      )}
+    >
+      {showIcon && <Gauge className={cn(iconSize, "text-muted-foreground")} />}
+      <span>{meterNumber}</span>
+    </Link>
+  )
+}

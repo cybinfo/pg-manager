@@ -37,6 +37,8 @@ import {
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
+import { MeterLink } from "@/components/ui/entity-link"
+import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
 
 interface Room {
   id: string
@@ -110,6 +112,19 @@ interface Complaint {
   tenant: { id: string; name: string } | null
 }
 
+interface AssignedMeter {
+  id: string
+  meter_id: string
+  start_date: string
+  start_reading: number
+  meter: {
+    id: string
+    meter_number: string
+    meter_type: MeterType
+    status: MeterStatus
+  } | null
+}
+
 const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string }> = {
   electricity: { icon: Zap, color: "text-yellow-700", bgColor: "bg-yellow-100" },
   water: { icon: Droplets, color: "text-blue-700", bgColor: "bg-blue-100" },
@@ -130,6 +145,7 @@ export default function RoomDetailPage() {
   const [room, setRoom] = useState<Room | null>(null)
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [meterReadings, setMeterReadings] = useState<MeterReading[]>([])
+  const [assignedMeters, setAssignedMeters] = useState<AssignedMeter[]>([])
   const [bills, setBills] = useState<Bill[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
   const [complaints, setComplaints] = useState<Complaint[]>([])
@@ -181,6 +197,23 @@ export default function RoomDetailPage() {
         charge_type: Array.isArray(r.charge_type) ? r.charge_type[0] : r.charge_type,
       }))
       setMeterReadings(transformedReadings)
+
+      // Fetch assigned meters
+      const { data: metersData } = await supabase
+        .from("meter_assignments")
+        .select(`
+          id, meter_id, start_date, start_reading,
+          meter:meters(id, meter_number, meter_type, status)
+        `)
+        .eq("room_id", params.id)
+        .is("end_date", null)
+        .order("start_date", { ascending: false })
+
+      const transformedMeters = (metersData || []).map((m: any) => ({
+        ...m,
+        meter: Array.isArray(m.meter) ? m.meter[0] : m.meter,
+      }))
+      setAssignedMeters(transformedMeters)
 
       const { data: billsData } = await supabase
         .from("bills")
@@ -488,6 +521,67 @@ export default function RoomDetailPage() {
                   </div>
                 </Link>
               ))}
+            </div>
+          )}
+        </DetailSection>
+
+        {/* Assigned Meters */}
+        <DetailSection
+          title="Assigned Meters"
+          description={`${assignedMeters.length} meter(s) assigned to this room`}
+          icon={Gauge}
+          className="md:col-span-2"
+          actions={
+            <div className="flex gap-2">
+              <Link href="/meters">
+                <Button variant="outline" size="sm">View All Meters</Button>
+              </Link>
+              <Link href={`/meters/new?property_id=${room.property?.id}&room_id=${room.id}`}>
+                <Button size="sm">
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add Meter
+                </Button>
+              </Link>
+            </div>
+          }
+        >
+          {assignedMeters.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Gauge className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No meters assigned to this room</p>
+              <Link href={`/meters/new?property_id=${room.property?.id}&room_id=${room.id}`}>
+                <Button variant="outline" size="sm" className="mt-3">
+                  Add First Meter
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {assignedMeters.map((assignment) => {
+                if (!assignment.meter) return null
+                const typeConfig = METER_TYPE_CONFIG[assignment.meter.meter_type] || METER_TYPE_CONFIG.electricity
+                const statusConfig = METER_STATUS_CONFIG[assignment.meter.status] || METER_STATUS_CONFIG.active
+                const TypeIcon = meterTypeConfig[assignment.meter.meter_type]?.icon || Gauge
+                return (
+                  <Link key={assignment.id} href={`/meters/${assignment.meter.id}`}>
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${typeConfig.bgColor}`}>
+                          <TypeIcon className={`h-4 w-4 ${typeConfig.color}`} />
+                        </div>
+                        <div>
+                          <p className="font-medium">{assignment.meter.meter_number}</p>
+                          <p className="text-sm text-muted-foreground">{typeConfig.label}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <StatusBadge variant={statusConfig.variant} label={statusConfig.label} />
+                        <p className="text-xs text-muted-foreground mt-1">Since {formatDate(assignment.start_date)}</p>
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </DetailSection>

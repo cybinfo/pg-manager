@@ -722,18 +722,20 @@ export const METER_READING_LIST_CONFIG: ListPageConfig<Record<string, unknown>> 
     *,
     property:properties(id, name),
     room:rooms(id, room_number),
-    charge_type:charge_types(id, name)
+    charge_type:charge_types(id, name),
+    meter:meters(id, meter_number, meter_type)
   `,
   defaultOrderBy: "reading_date",
   defaultOrderDirection: "desc",
-  searchFields: ["property.name", "room.room_number"],
-  joinFields: ["property", "room", "charge_type"],
+  searchFields: ["property.name", "room.room_number", "meter.meter_number"],
+  joinFields: ["property", "room", "charge_type", "meter"],
   computedFields: (item) => {
     const date = item.reading_date ? new Date(item.reading_date as string) : new Date()
+    const meter = item.meter as Record<string, unknown> | null
     return {
       reading_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       reading_year: date.getFullYear().toString(),
-      meter_type: ((item.charge_type as Record<string, unknown>)?.name as string)?.toLowerCase() || "electricity",
+      meter_type: meter?.meter_type as string || ((item.charge_type as Record<string, unknown>)?.name as string)?.toLowerCase() || "electricity",
     }
   },
 }
@@ -804,6 +806,38 @@ export const PEOPLE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
       is_staff: tags.includes("staff"),
       is_visitor: tags.includes("visitor"),
       primary_role: tags.includes("tenant") ? "Tenant" : tags.includes("staff") ? "Staff" : tags.includes("visitor") ? "Visitor" : "Other",
+    }
+  },
+}
+
+export const METER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "meters",
+  select: `
+    *,
+    property:properties(id, name)
+  `,
+  defaultOrderBy: "meter_number",
+  defaultOrderDirection: "asc",
+  searchFields: ["meter_number", "property.name", "make", "model"],
+  joinFields: ["property"],
+  computedFields: (item) => {
+    const date = item.created_at ? new Date(item.created_at as string) : new Date()
+    const statusLabels: Record<string, string> = {
+      active: "Active",
+      faulty: "Faulty",
+      replaced: "Replaced",
+      retired: "Retired",
+    }
+    const typeLabels: Record<string, string> = {
+      electricity: "Electricity",
+      water: "Water",
+      gas: "Gas",
+    }
+    return {
+      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_year: date.getFullYear().toString(),
+      status_label: statusLabels[item.status as string] || (item.status as string),
+      type_label: typeLabels[item.meter_type as string] || (item.meter_type as string),
     }
   },
 }

@@ -160,6 +160,13 @@ export const PERMISSIONS = {
   METER_READINGS_CREATE: 'meter_readings.create',
   METER_READINGS_EDIT: 'meter_readings.edit',
 
+  // Meters
+  METERS_VIEW: 'meters.view',
+  METERS_CREATE: 'meters.create',
+  METERS_EDIT: 'meters.edit',
+  METERS_DELETE: 'meters.delete',
+  METERS_ASSIGN: 'meters.assign',
+
   // Complaints
   COMPLAINTS_VIEW: 'complaints.view',
   COMPLAINTS_CREATE: 'complaints.create',

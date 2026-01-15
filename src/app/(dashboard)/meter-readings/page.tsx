@@ -38,6 +38,7 @@ interface MeterReading {
   property: { id: string; name: string } | null
   room: { id: string; room_number: string } | null
   charge_type: { id: string; name: string } | null
+  meter: { id: string; meter_number: string; meter_type: string } | null
   // Computed fields
   reading_month?: string
   reading_year?: string
@@ -60,11 +61,11 @@ const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: 
 
 const columns: Column<MeterReading>[] = [
   {
-    key: "type",
-    header: "Type",
+    key: "meter",
+    header: "Meter",
     width: "primary",
     render: (reading) => {
-      const meterType = reading.charge_type?.name?.toLowerCase() || "electricity"
+      const meterType = reading.meter?.meter_type || reading.charge_type?.name?.toLowerCase() || "electricity"
       const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
       const Icon = config.icon
       return (
@@ -73,14 +74,20 @@ const columns: Column<MeterReading>[] = [
             <Icon className={`h-4 w-4 ${config.color}`} />
           </div>
           <div>
-            <div className="font-medium">{config.label}</div>
-            {reading.property && (
-              <PropertyLink id={reading.property.id} name={reading.property.name} size="sm" />
-            )}
+            <div className="font-medium">{reading.meter?.meter_number || config.label}</div>
+            <div className="text-xs text-muted-foreground capitalize">{config.label}</div>
           </div>
         </div>
       )
     },
+  },
+  {
+    key: "property",
+    header: "Property",
+    width: "secondary",
+    render: (reading) => reading.property ? (
+      <PropertyLink id={reading.property.id} name={reading.property.name} size="sm" />
+    ) : null,
   },
   {
     key: "room",
@@ -91,6 +98,19 @@ const columns: Column<MeterReading>[] = [
     render: (reading) => reading.room ? (
       <RoomLink id={reading.room.id} roomNumber={reading.room.room_number} size="sm" />
     ) : null,
+  },
+  {
+    key: "reading_date",
+    header: "Date",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    render: (reading) => (
+      <div className="flex items-center gap-1 text-sm">
+        <Calendar className="h-3 w-3 text-muted-foreground" />
+        {formatDate(reading.reading_date)}
+      </div>
+    ),
   },
   {
     key: "reading_value",
@@ -106,6 +126,7 @@ const columns: Column<MeterReading>[] = [
     header: "Consumed",
     width: "tertiary",
     sortable: true,
+    hideOnMobile: true,
     render: (reading) => {
       if (reading.units_consumed === null) return <span className="text-muted-foreground">-</span>
       const hasIncrease = reading.units_consumed > 0
@@ -116,20 +137,6 @@ const columns: Column<MeterReading>[] = [
         </div>
       )
     },
-  },
-  {
-    key: "reading_date",
-    header: "Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    hideOnMobile: true,
-    render: (reading) => (
-      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-        <Calendar className="h-3 w-3" />
-        {formatDate(reading.reading_date)}
-      </div>
-    ),
   },
 ]
 
