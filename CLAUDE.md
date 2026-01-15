@@ -12,7 +12,7 @@
 | **Production URL** | https://managekar.com |
 | **Stack** | Next.js 16 + TypeScript + Supabase + Tailwind + shadcn/ui |
 | **Database** | PostgreSQL with Row Level Security (RLS) |
-| **Migrations** | 43 total (001-043) |
+| **Migrations** | 53 total (001-053) |
 
 ```bash
 npm run dev          # Development server at localhost:3000
@@ -73,7 +73,7 @@ src/
     └── hooks/               # Reusable hooks
 ```
 
-### Dashboard Modules (19)
+### Dashboard Modules (20)
 
 | Module | URL | Description |
 |--------|-----|-------------|
@@ -86,7 +86,8 @@ src/
 | Payments | `/payments` | Payment tracking |
 | Refunds | `/refunds` | Refund processing |
 | Expenses | `/expenses` | Expense tracking |
-| Meter Readings | `/meter-readings` | Utility meters |
+| Meters | `/meters` | Physical meter management |
+| Meter Readings | `/meter-readings` | Utility consumption tracking |
 | Staff | `/staff` | Staff + RBAC roles |
 | Notices | `/notices` | Announcements |
 | Complaints | `/complaints` | Issue tracking |
@@ -226,11 +227,12 @@ const columns: Column<T>[] = [
 ### 4.4 Entity Links
 
 ```typescript
-import { PropertyLink, TenantLink, RoomLink } from "@/components/ui/entity-link"
+import { PropertyLink, TenantLink, RoomLink, MeterLink } from "@/components/ui/entity-link"
 
 <PropertyLink id={property.id} name={property.name} size="sm" />
 <TenantLink id={tenant.id} name={tenant.name} />
 <RoomLink id={room.id} roomNumber={room.room_number} />
+<MeterLink id={meter.id} meterNumber={meter.meter_number} meterType={meter.meter_type} />
 ```
 
 ### 4.5 Avatar Component
@@ -279,6 +281,9 @@ import { Avatar } from "@/components/ui/avatar"
 | `payments` | Payment records |
 | `refunds` | Refund tracking |
 | `exit_clearance` | Checkout process |
+| `meters` | Physical utility meters (electricity, water, gas) |
+| `meter_assignments` | Meter-to-room assignments with date ranges |
+| `meter_readings` | Consumption readings linked to meters |
 | `tenant_risk_alerts` | AI-generated risk alerts |
 | `communications` | Message tracking |
 | `audit_events` | Comprehensive audit trail |
@@ -319,6 +324,8 @@ const id = crypto.randomUUID()
 | 041 | tenant_journey_analytics.sql | Risk alerts |
 | 042 | schema_reconciliation.sql | FK indexes, atomic RPCs |
 | 043 | security_fixes.sql | Audit policy, CHECK constraints |
+| 052 | meter_management.sql | Meters table, meter_assignments, RLS |
+| 053 | cleanup_old_meter_readings.sql | Remove legacy readings, make meter_id required |
 
 ### 5.5 CHECK Constraints (Migration 043)
 
@@ -430,7 +437,7 @@ Platform Admin > Owner > Staff > Tenant
 // All permissions from src/lib/auth/types.ts
 DASHBOARD_VIEW, PROPERTIES_*, ROOMS_*, TENANTS_*,
 BILLS_*, PAYMENTS_*, EXPENSES_*, REFUNDS_*,
-METER_READINGS_*, STAFF_*, NOTICES_*, COMPLAINTS_*,
+METERS_*, METER_READINGS_*, STAFF_*, NOTICES_*, COMPLAINTS_*,
 VISITORS_*, EXIT_CLEARANCE_*, REPORTS_*, APPROVALS_*,
 SETTINGS_*, ARCHITECTURE_VIEW, ACTIVITY_VIEW
 ```
@@ -678,4 +685,4 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-*Last Updated: 2026-01-13*
+*Last Updated: 2026-01-15*
