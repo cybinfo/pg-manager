@@ -654,6 +654,23 @@ CRON_SECRET=<cron_secret>
 
 ## 14. Deployment
 
+### Git Account Requirement (IMPORTANT)
+
+**ALWAYS use the personal GitHub account (`cybinfo`) for this repository.**
+
+The developer has two GitHub accounts:
+- **Personal**: `cybinfo` - USE THIS for pg-manager
+- **Enterprise**: `rajat-seth_sndt` - DO NOT use for this repo
+
+Before pushing, ensure correct authentication:
+```bash
+# Verify you're using the cybinfo account
+gh auth status
+
+# If wrong account, switch to personal:
+gh auth setup-git
+```
+
 ### Quick Deploy
 ```bash
 git add . && git commit -m "description" && git push && vercel --prod

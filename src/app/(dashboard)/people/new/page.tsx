@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import {
   DetailHero,
   DetailSection,
@@ -31,6 +32,7 @@ import {
   Trash2,
   Heart,
   Loader2,
+  Camera,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PermissionGuard } from "@/components/auth"
@@ -45,6 +47,7 @@ import {
   RELATIONS,
 } from "@/types/people.types"
 import { validateIndianMobile, validateAadhaar, validatePAN } from "@/lib/validators"
+import { IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT } from "@/components/forms"
 
 export default function NewPersonPage() {
   const router = useRouter()
@@ -53,10 +56,14 @@ export default function NewPersonPage() {
     name: "",
     phone: "",
     email: "",
+    photo_url: "",
     tags: [],
     emergency_contacts: [],
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // ID Documents with file uploads
+  const [idDocuments, setIdDocuments] = useState<IdDocumentData[]>([{ ...DEFAULT_ID_DOCUMENT }])
 
   const updateField = (field: keyof PersonFormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -94,6 +101,32 @@ export default function NewPersonPage() {
     }))
   }
 
+  // ID Document handlers
+  const updateIdDocument = (index: number, field: keyof IdDocumentData, value: string | string[]) => {
+    const updated = [...idDocuments]
+    updated[index] = { ...updated[index], [field]: value }
+    setIdDocuments(updated)
+  }
+
+  const addIdDocument = () => {
+    setIdDocuments([...idDocuments, { ...DEFAULT_ID_DOCUMENT, type: "PAN Card" }])
+  }
+
+  const removeIdDocument = (index: number) => {
+    if (idDocuments.length > 1) {
+      setIdDocuments(idDocuments.filter((_, i) => i !== index))
+    }
+  }
+
+  const removeDocumentFile = (docIndex: number, fileIndex: number) => {
+    const updated = [...idDocuments]
+    updated[docIndex] = {
+      ...updated[docIndex],
+      file_urls: updated[docIndex].file_urls.filter((_, i) => i !== fileIndex)
+    }
+    setIdDocuments(updated)
+  }
+
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {}
 
@@ -105,13 +138,17 @@ export default function NewPersonPage() {
       newErrors.phone = "Enter a valid 10-digit mobile number"
     }
 
-    if (formData.aadhaar_number && !validateAadhaar(formData.aadhaar_number)) {
-      newErrors.aadhaar_number = "Enter a valid 12-digit Aadhaar number"
-    }
-
-    if (formData.pan_number && !validatePAN(formData.pan_number)) {
-      newErrors.pan_number = "Enter a valid PAN (e.g., ABCDE1234F)"
-    }
+    // Validate ID documents
+    idDocuments.forEach((doc, index) => {
+      if (doc.number.trim()) {
+        if (doc.type === "Aadhaar Card" && !validateAadhaar(doc.number)) {
+          newErrors[`id_doc_${index}`] = "Enter a valid 12-digit Aadhaar number"
+        }
+        if (doc.type === "PAN Card" && !validatePAN(doc.number)) {
+          newErrors[`id_doc_${index}`] = "Enter a valid PAN (e.g., ABCDE1234F)"
+        }
+      }
+    })
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -143,16 +180,34 @@ export default function NewPersonPage() {
       }
     }
 
+    // Extract Aadhaar and PAN from ID documents for quick lookup
+    const aadhaarDoc = idDocuments.find(d => d.type === "Aadhaar Card" && d.number.trim())
+    const panDoc = idDocuments.find(d => d.type === "PAN Card" && d.number.trim())
+
+    // Build ID documents array for JSONB storage
+    const validIdDocuments = idDocuments
+      .filter(d => d.number.trim() || d.file_urls.length > 0)
+      .map(d => ({
+        type: d.type.toLowerCase().replace(/ /g, "_"),
+        number: d.number,
+        file_url: d.file_urls[0] || null,
+        verified: false,
+      }))
+
     const { data, error } = await supabase
       .from("people")
       .insert({
         name: formData.name,
         phone: formData.phone || null,
         email: formData.email || null,
+        photo_url: formData.photo_url || null,
         date_of_birth: formData.date_of_birth || null,
         gender: formData.gender || null,
-        aadhaar_number: formData.aadhaar_number || null,
-        pan_number: formData.pan_number || null,
+        // Quick lookup fields from ID documents
+        aadhaar_number: aadhaarDoc?.number || null,
+        pan_number: panDoc?.number || null,
+        // Full ID documents with file uploads
+        id_documents: validIdDocuments.length > 0 ? validIdDocuments : [],
         permanent_address: formData.permanent_address || null,
         permanent_city: formData.permanent_city || null,
         permanent_state: formData.permanent_state || null,
@@ -197,6 +252,23 @@ export default function NewPersonPage() {
             </div>
           }
         />
+
+        {/* Profile Photo */}
+        <DetailSection
+          title="Profile Photo"
+          description="Upload a photo for this person"
+          icon={Camera}
+        >
+          <div className="flex justify-center">
+            <ProfilePhotoUpload
+              bucket="person-photos"
+              folder="profiles"
+              value={formData.photo_url || ""}
+              onChange={(url) => updateField("photo_url", url)}
+              size="lg"
+            />
+          </div>
+        </DetailSection>
 
         {/* Basic Information */}
         <DetailSection
@@ -290,37 +362,31 @@ export default function NewPersonPage() {
         {/* ID Documents */}
         <DetailSection
           title="ID Documents"
-          description="Identity verification documents"
+          description="Identity verification documents with file uploads"
           icon={CreditCard}
+          actions={
+            <Button type="button" variant="outline" size="sm" onClick={addIdDocument}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Document
+            </Button>
+          }
         >
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="aadhaar">Aadhaar Number</Label>
-              <Input
-                id="aadhaar"
-                value={formData.aadhaar_number}
-                onChange={(e) => updateField("aadhaar_number", e.target.value)}
-                placeholder="12-digit Aadhaar number"
-                className={errors.aadhaar_number ? "border-red-500" : ""}
-              />
-              {errors.aadhaar_number && (
-                <p className="text-sm text-red-500">{errors.aadhaar_number}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="pan">PAN Number</Label>
-              <Input
-                id="pan"
-                value={formData.pan_number}
-                onChange={(e) => updateField("pan_number", e.target.value.toUpperCase())}
-                placeholder="ABCDE1234F"
-                className={errors.pan_number ? "border-red-500" : ""}
-              />
-              {errors.pan_number && (
-                <p className="text-sm text-red-500">{errors.pan_number}</p>
-              )}
-            </div>
+            {idDocuments.map((doc, index) => (
+              <div key={index}>
+                <IdDocumentEntry
+                  value={doc}
+                  onChange={(field, value) => updateIdDocument(index, field, value)}
+                  onRemove={idDocuments.length > 1 ? () => removeIdDocument(index) : undefined}
+                  onRemoveFile={(fileIdx) => removeDocumentFile(index, fileIdx)}
+                  showRemove={idDocuments.length > 1}
+                  disabled={loading}
+                />
+                {errors[`id_doc_${index}`] && (
+                  <p className="text-sm text-red-500 mt-1">{errors[`id_doc_${index}`]}</p>
+                )}
+              </div>
+            ))}
           </div>
         </DetailSection>
 
