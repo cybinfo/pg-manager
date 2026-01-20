@@ -483,6 +483,36 @@ export default function NewPersonPage() {
           </div>
         </DetailSection>
 
+        {/* Current Address */}
+        <DetailSection
+          title="Current Address"
+          description="Present living address (if different)"
+          icon={MapPin}
+        >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="current_address">Address</Label>
+              <Textarea
+                id="current_address"
+                value={formData.current_address}
+                onChange={(e) => updateField("current_address", e.target.value)}
+                placeholder="Street address, landmark"
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="current_city">City</Label>
+              <Input
+                id="current_city"
+                value={formData.current_city}
+                onChange={(e) => updateField("current_city", e.target.value)}
+                placeholder="City"
+              />
+            </div>
+          </div>
+        </DetailSection>
+
         {/* Emergency Contacts */}
         <DetailSection
           title="Emergency Contacts"
