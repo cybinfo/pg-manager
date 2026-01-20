@@ -74,6 +74,15 @@ export interface PaginationState {
   hasPrevPage: boolean
 }
 
+// View config type for saved views
+export interface TableViewConfig {
+  sort?: { key: string; direction: "asc" | "desc" }
+  filters?: Record<string, string>
+  groupBy?: string[]
+  pageSize?: number
+  hiddenColumns?: string[]
+}
+
 export interface UseListPageOptions<T> {
   config: ListPageConfig<T>
   filters?: FilterConfig[]
@@ -81,6 +90,8 @@ export interface UseListPageOptions<T> {
   metrics?: MetricConfig<T>[]
   initialFilters?: Record<string, string>
   initialGroups?: string[]
+  initialPageSize?: number
+  initialViewConfig?: TableViewConfig // Apply a saved view configuration
   enabled?: boolean
 }
 
@@ -117,6 +128,10 @@ export interface UseListPageReturn<T> {
   setPageSize: (size: number) => void
   nextPage: () => void
   prevPage: () => void
+
+  // View config (for saved views)
+  getViewConfig: () => TableViewConfig
+  applyViewConfig: (config: TableViewConfig | null) => void
 }
 
 // ============================================
@@ -133,19 +148,25 @@ export function useListPage<T extends object>(
     metrics = [],
     initialFilters = {},
     initialGroups = [],
+    initialPageSize,
+    initialViewConfig,
     enabled = true,
   } = options
 
   // Pagination defaults
-  const defaultPageSize = config.defaultPageSize || 25
+  const defaultPageSize = initialViewConfig?.pageSize || initialPageSize || config.defaultPageSize || 25
   const enableServerPagination = config.enableServerPagination !== false
+
+  // Compute initial values from view config
+  const computedInitialFilters = initialViewConfig?.filters || initialFilters
+  const computedInitialGroups = initialViewConfig?.groupBy || initialGroups
 
   // State
   const [data, setData] = useState<T[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
-  const [filters, setFiltersState] = useState<Record<string, string>>(initialFilters)
-  const [selectedGroups, setSelectedGroups] = useState<string[]>(initialGroups)
+  const [filters, setFiltersState] = useState<Record<string, string>>(computedInitialFilters)
+  const [selectedGroups, setSelectedGroups] = useState<string[]>(computedInitialGroups)
   const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({})
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -426,6 +447,63 @@ export function useListPage<T extends object>(
     })
   }, [data, metrics])
 
+  // Get current view configuration (for saving views)
+  const getViewConfig = useCallback((): TableViewConfig => {
+    const viewConfig: TableViewConfig = {}
+
+    // Only include non-empty filters
+    const activeFilters = Object.entries(filters).reduce((acc, [key, value]) => {
+      if (value && value !== "all") {
+        acc[key] = value
+      }
+      return acc
+    }, {} as Record<string, string>)
+
+    if (Object.keys(activeFilters).length > 0) {
+      viewConfig.filters = activeFilters
+    }
+
+    if (selectedGroups.length > 0) {
+      viewConfig.groupBy = selectedGroups
+    }
+
+    if (pageSize !== (config.defaultPageSize || 25)) {
+      viewConfig.pageSize = pageSize
+    }
+
+    return viewConfig
+  }, [filters, selectedGroups, pageSize, config.defaultPageSize])
+
+  // Apply a view configuration (or reset to default if null)
+  const applyViewConfig = useCallback((viewConfig: TableViewConfig | null) => {
+    if (viewConfig === null) {
+      // Reset to defaults
+      setFiltersState(config.defaultFilters || {})
+      setSelectedGroups([])
+      setPageSizeState(config.defaultPageSize || 25)
+      setPageState(1)
+    } else {
+      // Apply view config
+      if (viewConfig.filters) {
+        setFiltersState(viewConfig.filters)
+      } else {
+        setFiltersState(config.defaultFilters || {})
+      }
+
+      if (viewConfig.groupBy) {
+        setSelectedGroups(viewConfig.groupBy)
+      } else {
+        setSelectedGroups([])
+      }
+
+      if (viewConfig.pageSize) {
+        setPageSizeState(viewConfig.pageSize)
+      }
+
+      setPageState(1) // Always reset to page 1 when applying a view
+    }
+  }, [config.defaultFilters, config.defaultPageSize])
+
   return {
     data,
     filteredData,
@@ -449,6 +527,9 @@ export function useListPage<T extends object>(
     setPageSize,
     nextPage,
     prevPage,
+    // View config (for saved views)
+    getViewConfig,
+    applyViewConfig,
   }
 }
 

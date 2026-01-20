@@ -173,6 +173,7 @@ const metrics: MetricConfig<Property>[] = [
 export default function PropertiesPage() {
   return (
     <ListPageTemplate
+      tableKey="properties"
       title="Properties"
       description="Manage your PG properties and buildings"
       icon={Building2}

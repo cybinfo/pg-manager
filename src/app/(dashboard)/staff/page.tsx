@@ -217,6 +217,7 @@ const metrics: MetricConfig<StaffMember>[] = [
 export default function StaffPage() {
   return (
     <ListPageTemplate
+      tableKey="staff"
       title="Staff Management"
       description="Manage staff members and their access"
       icon={UserCog}

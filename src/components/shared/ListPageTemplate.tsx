@@ -23,7 +23,7 @@
 
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import { LucideIcon, Plus, Layers, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -42,7 +42,10 @@ import {
   FilterConfig as HookFilterConfig,
   GroupByOption,
   MetricConfig,
+  TableViewConfig,
 } from "@/lib/hooks/useListPage"
+import { useTableViews } from "@/lib/hooks/useTableViews"
+import { SavedViewSelector } from "@/components/ui/saved-view-selector"
 
 // ============================================
 // Types
@@ -57,6 +60,10 @@ export interface ListPageTemplateProps {
   permission: string
   feature?: FeatureFlagKey // Optional feature flag
   breadcrumbs?: { label: string; href?: string }[]
+
+  // Saved Views
+  tableKey?: string // Unique key for this table (e.g., "tenants", "payments")
+  enableSavedViews?: boolean // Default: true when tableKey is provided
 
   // Data config - accepts any config type
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,6 +118,10 @@ export function ListPageTemplate({
   feature,
   breadcrumbs,
 
+  // Saved Views
+  tableKey,
+  enableSavedViews = true,
+
   // Data config
   config,
 
@@ -145,6 +156,16 @@ export function ListPageTemplate({
   // Callbacks
   onRowClick,
 }: ListPageTemplateProps) {
+  // Saved views state
+  const [viewConfig, setViewConfig] = useState<TableViewConfig | null>(null)
+  const showSavedViews = enableSavedViews && !!tableKey
+
+  // Use saved views hook (only if tableKey is provided)
+  const tableViews = useTableViews({
+    tableKey: tableKey || "",
+    onViewApplied: (config) => setViewConfig(config),
+  })
+
   // Use centralized hook
   const {
     data,
@@ -162,6 +183,8 @@ export function ListPageTemplate({
     pagination,
     setPage,
     setPageSize,
+    getViewConfig,
+    applyViewConfig,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useListPage<any>({
     config,
@@ -173,7 +196,15 @@ export function ListPageTemplate({
     })),
     groupByOptions,
     metrics,
+    initialViewConfig: tableViews.activeView?.config,
   })
+
+  // Apply view config when it changes from saved views
+  useEffect(() => {
+    if (viewConfig !== null) {
+      applyViewConfig(viewConfig)
+    }
+  }, [viewConfig, applyViewConfig])
 
   // Group dropdown state
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false)
@@ -221,6 +252,25 @@ export function ListPageTemplate({
         breadcrumbs={breadcrumbs || [{ label: title }]}
         actions={
           <div className="flex items-center gap-2">
+            {/* Saved Views Selector */}
+            {showSavedViews && (
+              <SavedViewSelector
+                views={tableViews.views}
+                activeViewId={tableViews.activeViewId}
+                loading={tableViews.loading}
+                currentConfig={getViewConfig()}
+                onApplyView={tableViews.applyView}
+                onResetToDefault={() => {
+                  tableViews.resetToSystemDefault()
+                  applyViewConfig(null)
+                }}
+                onCreateView={tableViews.createView}
+                onUpdateView={tableViews.updateView}
+                onDeleteView={tableViews.deleteView}
+                onSetDefault={tableViews.setDefaultView}
+                onClearDefault={tableViews.clearDefaultView}
+              />
+            )}
             {headerActions}
             {createHref && (
               createPermission ? (

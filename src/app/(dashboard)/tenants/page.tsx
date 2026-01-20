@@ -218,6 +218,7 @@ const metrics: MetricConfig<Tenant>[] = [
 export default function TenantsPage() {
   return (
     <ListPageTemplate
+      tableKey="tenants"
       // Page info
       title="Tenants"
       description="Manage all your tenants across properties"

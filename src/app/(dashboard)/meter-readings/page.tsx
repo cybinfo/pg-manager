@@ -231,6 +231,7 @@ const metrics: MetricConfig<MeterReading>[] = [
 export default function MeterReadingsPage() {
   return (
     <ListPageTemplate
+      tableKey="meter-readings"
       title="Meter Readings"
       description="Track electricity, water, and gas consumption"
       icon={Gauge}

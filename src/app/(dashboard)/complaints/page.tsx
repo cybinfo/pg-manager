@@ -257,6 +257,7 @@ const metrics: MetricConfig<Complaint>[] = [
 export default function ComplaintsPage() {
   return (
     <ListPageTemplate
+      tableKey="complaints"
       title="Complaints"
       description="Manage tenant complaints and issues"
       icon={MessageSquare}

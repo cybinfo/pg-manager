@@ -299,6 +299,7 @@ export default function PeoplePage() {
 
   return (
     <ListPageTemplate
+      tableKey="people"
       // Page info
       title="People Directory"
       description="Central registry for all persons - tenants, staff, visitors"

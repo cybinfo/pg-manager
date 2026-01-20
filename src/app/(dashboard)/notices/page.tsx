@@ -241,6 +241,7 @@ const metrics: MetricConfig<Notice>[] = [
 export default function NoticesPage() {
   return (
     <ListPageTemplate
+      tableKey="notices"
       title="Notices"
       description="Announcements and notifications for tenants"
       icon={Bell}

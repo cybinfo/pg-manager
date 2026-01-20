@@ -219,6 +219,7 @@ const metrics: MetricConfig<Payment>[] = [
 export default function PaymentsPage() {
   return (
     <ListPageTemplate
+      tableKey="payments"
       title="Payments"
       description="Track and manage all tenant payments"
       icon={CreditCard}

@@ -306,6 +306,7 @@ const metrics: MetricConfig<Visitor>[] = [
 export default function VisitorsPage() {
   return (
     <ListPageTemplate
+      tableKey="visitors"
       title="Visitors"
       description="Manage all visitor entries - tenants, enquiries, service providers"
       icon={Users}

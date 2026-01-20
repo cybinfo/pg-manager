@@ -287,6 +287,7 @@ function ExportButton({ expenses }: { expenses: Expense[] }) {
 export default function ExpensesPage() {
   return (
     <ListPageTemplate
+      tableKey="expenses"
       title="Expenses"
       description="Track and manage property expenses"
       icon={Receipt}

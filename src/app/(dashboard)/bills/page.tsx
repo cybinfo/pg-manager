@@ -215,6 +215,7 @@ const metrics: MetricConfig<Bill>[] = [
 export default function BillsPage() {
   return (
     <ListPageTemplate
+      tableKey="bills"
       title="Bills"
       description="Generate and manage monthly bills for tenants"
       icon={FileText}

@@ -273,6 +273,7 @@ const metrics: MetricConfig<Refund>[] = [
 export default function RefundsPage() {
   return (
     <ListPageTemplate
+      tableKey="refunds"
       title="Refunds"
       description="Track and manage tenant refunds"
       icon={Wallet}

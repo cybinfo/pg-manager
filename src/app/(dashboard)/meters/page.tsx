@@ -224,6 +224,7 @@ const metrics: MetricConfig<Meter>[] = [
 export default function MetersPage() {
   return (
     <ListPageTemplate
+      tableKey="meters"
       title="Meters"
       description="Manage electricity, water, and gas meters"
       icon={Gauge}

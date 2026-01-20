@@ -221,6 +221,7 @@ const metrics: MetricConfig<Room>[] = [
 export default function RoomsPage() {
   return (
     <ListPageTemplate
+      tableKey="rooms"
       title="Rooms"
       description="Manage rooms across all your properties"
       icon={Home}

@@ -329,6 +329,7 @@ export default function ExitClearancePage() {
     <>
       <TenantsOnNoticeAlert />
       <ListPageTemplate
+        tableKey="exit-clearance"
         title="Exit Clearance"
         description="Manage tenant checkouts and settlements"
         icon={LogOut}
