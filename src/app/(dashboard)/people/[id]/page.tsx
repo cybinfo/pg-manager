@@ -438,7 +438,7 @@ export default function PersonDetailPage() {
           backLabel="People"
           status={getStatus()}
           statusLabel={getStatusLabel()}
-          avatar={<Avatar name={person.name} src={person.photo_url} size="xl" />}
+          avatar={<Avatar name={person.name} src={person.photo_url} size="xl" clickable />}
           actions={
             <div className="flex items-center gap-2">
               <PermissionGate permission="tenants.update" hide>

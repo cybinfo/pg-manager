@@ -563,6 +563,7 @@ export default function TenantDetailPage() {
             src={tenant.person?.photo_url || tenant.profile_photo || tenant.photo_url}
             size="xl"
             className="h-16 w-16 text-2xl shadow-lg shadow-teal-500/20"
+            clickable
           />
         }
         actions={

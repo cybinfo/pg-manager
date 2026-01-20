@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { ImageLightbox } from "./image-lightbox"
 
 // ============================================
 // UI-008: Centralized Avatar Photo Resolution
@@ -52,6 +53,8 @@ interface AvatarProps {
   src?: string | null
   /** Additional className */
   className?: string
+  /** Enable click to view full size (only works if src is provided) */
+  clickable?: boolean
 }
 
 export function Avatar({
@@ -59,20 +62,40 @@ export function Avatar({
   size = "md",
   src,
   className,
+  clickable = false,
 }: AvatarProps) {
+  const [lightboxOpen, setLightboxOpen] = React.useState(false)
   const initials = getInitials(name)
+
+  const handleClick = () => {
+    if (clickable && src) {
+      setLightboxOpen(true)
+    }
+  }
 
   if (src) {
     return (
-      <img
-        src={src}
-        alt={name}
-        className={cn(
-          "rounded-full object-cover",
-          sizeClasses[size],
-          className
+      <>
+        <img
+          src={src}
+          alt={name}
+          onClick={handleClick}
+          className={cn(
+            "rounded-full object-cover",
+            sizeClasses[size],
+            clickable && "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all",
+            className
+          )}
+        />
+        {clickable && (
+          <ImageLightbox
+            src={src}
+            alt={name}
+            isOpen={lightboxOpen}
+            onClose={() => setLightboxOpen(false)}
+          />
         )}
-      />
+      </>
     )
   }
 

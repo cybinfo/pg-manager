@@ -338,6 +338,7 @@ export default function EditPersonPage() {
               src={formData.photo_url}
               size="lg"
               className="h-14 w-14 text-xl"
+              clickable
             />
           }
         />
