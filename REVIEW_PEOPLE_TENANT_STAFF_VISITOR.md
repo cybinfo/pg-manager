@@ -21,6 +21,7 @@ This review covers four interconnected modules that should form a **unified pers
 ### The Core Problem
 
 **The People module is comprehensive but underutilized.** Personal data that should be stored ONLY in the `people` table is being duplicated in:
+
 - `tenants` table (name, email, phone, addresses, guardian_contacts, id_documents)
 - `visitors` table (visitor_name, visitor_phone, id_type, id_number, company_name)
 - `visitor_contacts` table (name, phone, id_type, id_number, company_name, service_type)
@@ -31,7 +32,7 @@ This review covers four interconnected modules that should form a **unified pers
 
 ### 1.1 What Should Be the Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                     PEOPLE TABLE (Source of Truth)              │
 │  - name, phone, email, photo_url                                │
@@ -63,7 +64,7 @@ This review covers four interconnected modules that should form a **unified pers
 
 ### 1.2 What Actually Exists (PROBLEM)
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                     PEOPLE TABLE (Underutilized)                │
 │  ✓ Has all fields defined correctly                             │
@@ -97,17 +98,18 @@ This review covers four interconnected modules that should form a **unified pers
 
 ### 2.1 Fields in Tenant Form That Should NOT Exist
 
-| Field in Tenant Form | Already In People | Impact |
-|---------------------|-------------------|--------|
-| ID Documents upload (Aadhaar, PAN, etc.) | `people.id_documents[]` | **CRITICAL** - User asked about this |
-| Emergency contacts | `people.emergency_contacts[]` | Data divergence risk |
-| Addresses (permanent/current) | `people.permanent_address`, etc. | Sync issues |
-| Secondary phone numbers | `people.phone_numbers[]` | Duplicate storage |
-| Secondary emails | `people.emails[]` | Duplicate storage |
+| Field in Tenant Form               | Already In People              | Impact                                 |
+|------------------------------------|--------------------------------|----------------------------------------|
+| ID Documents upload (Aadhaar, etc) | `people.id_documents[]`        | **CRITICAL** - User asked about this   |
+| Emergency contacts                 | `people.emergency_contacts[]`  | Data divergence risk                   |
+| Addresses (permanent/current)      | `people.permanent_address`     | Sync issues                            |
+| Secondary phone numbers            | `people.phone_numbers[]`       | Duplicate storage                      |
+| Secondary emails                   | `people.emails[]`              | Duplicate storage                      |
 
 ### 2.2 Code Evidence - Tenant Workflow (tenant.workflow.ts)
 
 Lines 299-324 show duplication:
+
 ```typescript
 const tenantData = {
   name: input.name,                    // ❌ DUPLICATE - exists in people.name
@@ -126,6 +128,7 @@ const tenantData = {
 ### 2.3 Database Schema Issue (Migration 011)
 
 The `tenants` table has JSONB columns that duplicate People module:
+
 - `phone_numbers` JSONB - Should use `people.phone_numbers`
 - `emails` JSONB - Should use `people.emails`
 - `addresses` JSONB - Should use `people.permanent_address` + `current_address`
@@ -135,16 +138,16 @@ The `tenants` table has JSONB columns that duplicate People module:
 
 Only tenancy-specific data:
 
-| Field | Why It's Tenant-Specific |
-|-------|--------------------------|
-| `property_id` | Which property |
-| `room_id` | Which room |
-| `monthly_rent` | Rent for THIS tenancy |
-| `security_deposit` | Deposit for THIS tenancy |
-| `check_in_date` | When THIS tenancy starts |
-| `police_verification_status` | Status for THIS property |
-| `agreement_signed` | Agreement for THIS tenancy |
-| `notes` | Notes for THIS tenancy |
+| Field                        | Why It's Tenant-Specific        |
+|------------------------------|---------------------------------|
+| `property_id`                | Which property                  |
+| `room_id`                    | Which room                      |
+| `monthly_rent`               | Rent for THIS tenancy           |
+| `security_deposit`           | Deposit for THIS tenancy        |
+| `check_in_date`              | When THIS tenancy starts        |
+| `police_verification_status` | Status for THIS property        |
+| `agreement_signed`           | Agreement for THIS tenancy      |
+| `notes`                      | Notes for THIS tenancy          |
 
 ---
 
@@ -154,7 +157,8 @@ Only tenancy-specific data:
 
 Personal data is stored in THREE places:
 
-**Location 1: Form State → visitors table**
+#### Location 1: Form State to visitors table
+
 ```typescript
 const visitorData = {
   visitor_name: formData.visitor_name,      // ❌ Should be people.name
@@ -166,7 +170,8 @@ const visitorData = {
 }
 ```
 
-**Location 2: Form State → visitor_contacts table**
+#### Location 2: Form State to visitor_contacts table
+
 ```typescript
 .insert({
   name: formData.visitor_name,              // ❌ DUPLICATE
@@ -178,7 +183,8 @@ const visitorData = {
 })
 ```
 
-**Location 3: Should be in people table only**
+#### Location 3: Should be in people table only
+
 - All the above fields already exist in `people` table
 - PersonSelector already links to `people.id`
 - But form doesn't READ from people, it collects fresh data
@@ -186,6 +192,7 @@ const visitorData = {
 ### 3.2 PersonSelector Integration Gap
 
 PersonSelector only populates 2 fields from People:
+
 ```typescript
 const handlePersonSelect = (person: PersonSearchResult | null) => {
   setFormData((prev) => ({
@@ -201,20 +208,20 @@ const handlePersonSelect = (person: PersonSearchResult | null) => {
 
 Only visit-specific data:
 
-| Field | Why It's Visit-Specific |
-|-------|-------------------------|
-| `property_id` | Where the visit occurs |
-| `tenant_id` | Who they're visiting (if tenant_visitor) |
-| `check_in_time` | When THIS visit started |
-| `check_out_time` | When THIS visit ended |
-| `purpose` | Reason for THIS visit |
-| `visitor_type` | Context of THIS visit |
-| `vehicle_number` | Vehicle for THIS visit |
-| `is_overnight` | THIS visit overnight? |
-| `num_nights` | Duration of THIS stay |
-| `charge_per_night` | Rate for THIS stay |
-| `rooms_interested` | Rooms viewed in THIS enquiry |
-| `follow_up_date` | Follow-up for THIS enquiry |
+| Field             | Why It's Visit-Specific           |
+|-------------------|-----------------------------------|
+| `property_id`     | Where the visit occurs            |
+| `tenant_id`       | Who they're visiting (if tenant)  |
+| `check_in_time`   | When THIS visit started           |
+| `check_out_time`  | When THIS visit ended             |
+| `purpose`         | Reason for THIS visit             |
+| `visitor_type`    | Context of THIS visit             |
+| `vehicle_number`  | Vehicle for THIS visit            |
+| `is_overnight`    | THIS visit overnight?             |
+| `num_nights`      | Duration of THIS stay             |
+| `charge_per_night`| Rate for THIS stay                |
+| `rooms_interested`| Rooms viewed in THIS enquiry      |
+| `follow_up_date`  | Follow-up for THIS enquiry        |
 
 ---
 
@@ -232,11 +239,11 @@ The Staff module is the **best implemented** of the three role modules:
 
 ### 4.2 Minor Issues
 
-| Issue | Location | Impact |
-|-------|----------|--------|
-| Email used from formData instead of selectedPerson | `new/page.tsx:303,341` | Wrong invitation email |
-| Phone validation missing | `new/page.tsx:472-486` | Invalid phones accepted |
-| Fallback creates person without enforcing PersonSelector | `new/page.tsx:209-220` | Bypass person-centric flow |
+| Issue                                                    | Location                | Impact                    |
+|----------------------------------------------------------|-------------------------|---------------------------|
+| Email used from formData instead of selectedPerson       | `new/page.tsx:303,341`  | Wrong invitation email    |
+| Phone validation missing                                 | `new/page.tsx:472-486`  | Invalid phones accepted   |
+| Fallback creates person without enforcing PersonSelector | `new/page.tsx:209-220`  | Bypass person-centric flow|
 
 ---
 
@@ -246,19 +253,20 @@ The Staff module is the **best implemented** of the three role modules:
 
 The People form (`new/page.tsx` and `[id]/edit/page.tsx`) is comprehensive:
 
-| Category | Fields | Status |
-|----------|--------|--------|
-| **Identity** | Name, phone, email, photo | ✓ Complete |
-| **Demographics** | DOB, gender, blood group | ✓ Complete |
-| **ID Documents** | Aadhaar, PAN, License, Passport, Voter ID, Employee ID + file uploads | ✓ Complete |
-| **Addresses** | Permanent + current with city, state, pincode | ✓ Complete |
-| **Professional** | Occupation, company, designation | ✓ Complete |
-| **Emergency Contacts** | Name, phone, relation (12+ relation types) | ✓ Complete |
-| **Classification** | Tags, verification status, blocked status | ✓ Complete |
+| Category              | Fields                                                                | Status     |
+|-----------------------|-----------------------------------------------------------------------|------------|
+| **Identity**          | Name, phone, email, photo                                             | ✓ Complete |
+| **Demographics**      | DOB, gender, blood group                                              | ✓ Complete |
+| **ID Documents**      | Aadhaar, PAN, License, Passport, Voter ID, Employee ID + file uploads | ✓ Complete |
+| **Addresses**         | Permanent + current with city, state, pincode                         | ✓ Complete |
+| **Professional**      | Occupation, company, designation                                      | ✓ Complete |
+| **Emergency Contacts**| Name, phone, relation (12+ relation types)                            | ✓ Complete |
+| **Classification**    | Tags, verification status, blocked status                             | ✓ Complete |
 
 ### 5.2 PersonSelector Quick-Create Limitations
 
 Quick-create mode only captures 3 fields:
+
 ```typescript
 interface QuickCreateForm {
   name: string    // Required
@@ -268,6 +276,7 @@ interface QuickCreateForm {
 ```
 
 This is intentional for speed, but creates a gap:
+
 - User creates person with minimal data
 - Tenant/Visitor form then collects ID documents separately
 - Data ends up in BOTH places
@@ -275,6 +284,7 @@ This is intentional for speed, but creates a gap:
 ### 5.3 The Integration Gap
 
 PersonSelector returns:
+
 ```typescript
 interface PersonSearchResult {
   id: string
@@ -289,6 +299,7 @@ interface PersonSearchResult {
 ```
 
 **Missing from PersonSearchResult:**
+
 - `id_documents[]` - Could show "ID verified" status
 - `company_name` - For service providers
 - `emergency_contacts[]` - For emergency situations
@@ -300,12 +311,14 @@ interface PersonSearchResult {
 ### 6.1 Phase 1: Stop Collecting Duplicate Data
 
 **Tenant Form Changes:**
+
 1. Remove ID Documents section entirely (lines 769-802)
 2. Remove emergency contacts input
 3. Remove addresses input
 4. Show read-only personal info from People with "Edit in People" link
 
 **Visitor Form Changes:**
+
 1. Remove manual visitor_name, visitor_phone fields
 2. Remove ID type/number fields
 3. Remove company_name, service_type fields (for service providers)
@@ -335,16 +348,19 @@ interface PersonSearchResult {
 ### 6.3 Phase 3: Clean Up Database Schema
 
 **Remove from tenants table:**
+
 - `name`, `email`, `phone`, `photo_url` (fetch via JOIN to people)
 - `phone_numbers`, `emails`, `addresses`, `guardian_contacts` (JSONB columns)
 - `id_documents` (use people.id_documents)
 
 **Remove from visitors table:**
+
 - `visitor_name`, `visitor_phone` (use person_id → people.name/phone)
 - `id_type`, `id_number` (use person_id → people.id_documents)
 - `company_name`, `service_type` (use person_id → people)
 
 **Deprecate visitor_contacts table:**
+
 - Merge into people table
 - Use people.tags for "visitor", "frequent", "blocked"
 - Move visit_count, last_visit_at to a separate tracking table or use views
@@ -352,6 +368,7 @@ interface PersonSearchResult {
 ### 6.4 Phase 4: Update Workflows
 
 **Tenant Workflow:**
+
 ```typescript
 // BEFORE (current)
 const tenantData = {
@@ -376,7 +393,7 @@ const tenantData = {
 
 ### 7.1 Current Flow (Problematic)
 
-```
+```text
 User opens /tenants/new
         ↓
 PersonSelector finds person (minimal fields)
@@ -390,7 +407,7 @@ Result: Two sources of truth, sync nightmares
 
 ### 7.2 Recommended Flow
 
-```
+```text
 User opens /tenants/new
         ↓
 PersonSelector finds person (comprehensive view)
@@ -414,21 +431,21 @@ Result: Single source of truth in People module
 
 ### 8.1 Critical (Fix This Week)
 
-| ID | Issue | Module | Action |
-|----|-------|--------|--------|
-| ARCH-001 | ID Documents in Tenant Form | Tenants | Remove, link to People |
-| ARCH-002 | Triple duplication in Visitors | Visitors | Remove all personal fields |
-| ARCH-003 | PersonSelector doesn't pull ID docs | People | Enhance PersonSearchResult |
-| ARCH-004 | Tenant workflow stores duplicates | Tenants | Remove duplicate fields |
+| ID       | Issue                               | Module   | Action                      |
+|----------|-------------------------------------|----------|-----------------------------|
+| ARCH-001 | ID Documents in Tenant Form         | Tenants  | Remove, link to People      |
+| ARCH-002 | Triple duplication in Visitors      | Visitors | Remove all personal fields  |
+| ARCH-003 | PersonSelector doesn't pull ID docs | People   | Enhance PersonSearchResult  |
+| ARCH-004 | Tenant workflow stores duplicates   | Tenants  | Remove duplicate fields     |
 
 ### 8.2 High Priority (This Sprint)
 
-| ID | Issue | Module | Action |
-|----|-------|--------|--------|
-| ARCH-005 | visitor_contacts duplicates people | Visitors | Plan deprecation |
-| ARCH-006 | Addresses in tenant form | Tenants | Remove, use people addresses |
-| ARCH-007 | Emergency contacts in tenant form | Tenants | Remove, use people.emergency_contacts |
-| ARCH-008 | Form doesn't show "Edit in People" link | All | Add prominent edit link |
+| ID       | Issue                                   | Module   | Action                           |
+|----------|-----------------------------------------|----------|----------------------------------|
+| ARCH-005 | visitor_contacts duplicates people      | Visitors | Plan deprecation                 |
+| ARCH-006 | Addresses in tenant form                | Tenants  | Remove, use people addresses     |
+| ARCH-007 | Emergency contacts in tenant form       | Tenants  | Remove, use people.emergency     |
+| ARCH-008 | Form doesn't show "Edit in People" link | All      | Add prominent edit link          |
 
 ### 8.3 Database Migration Required
 
@@ -467,7 +484,7 @@ WHERE NOT EXISTS (
 
 ### 9.1 Tenant Form Redesign
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │ Add New Tenant                                                  │
 ├─────────────────────────────────────────────────────────────────┤
@@ -501,7 +518,7 @@ WHERE NOT EXISTS (
 
 ### 9.2 Visitor Form Redesign
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │ Check In Visitor                                                │
 ├─────────────────────────────────────────────────────────────────┤
@@ -539,6 +556,7 @@ WHERE NOT EXISTS (
 ### The Problem
 
 The person-centric architecture was **designed correctly** but **implemented with duplication**:
+
 - People module has comprehensive fields ✓
 - PersonSelector links modules to people ✓
 - BUT forms collect duplicate data ✗

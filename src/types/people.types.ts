@@ -158,7 +158,7 @@ export interface PersonRole {
 }
 
 // ============================================
-// Person Search Result
+// Person Search Result (Enhanced for person-centric architecture)
 // ============================================
 
 export interface PersonSearchResult {
@@ -171,6 +171,14 @@ export interface PersonSearchResult {
   is_verified: boolean
   is_blocked: boolean
   created_at: string
+  // Enhanced fields for person-centric architecture
+  id_documents?: IDDocument[]
+  company_name?: string | null
+  occupation?: string | null
+  emergency_contacts?: EmergencyContact[]
+  permanent_address?: string | null
+  permanent_city?: string | null
+  current_address?: string | null
 }
 
 // ============================================

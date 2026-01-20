@@ -27,37 +27,42 @@ import { formatCurrency } from "@/lib/format"
 // ============================================
 
 export interface TenantCreateInput {
-  // Person-centric: Either provide person_id OR identity fields
-  // If person_id provided, identity is fetched from People table
+  // Person-centric: ALWAYS provide person_id - personal data comes from People table
+  // This is the key link to the person-centric architecture
   person_id?: string
 
-  // Basic info (used only if person_id not provided)
+  // Basic identity (kept for backward compatibility and display purposes)
+  // These are stored in tenant record but should match person record
   name: string
   email?: string
   phone: string
   photo_url?: string
   profile_photo?: string
 
-  // Assignment
+  // Tenancy-specific assignment
   property_id: string
   room_id: string
   bed_id?: string
 
-  // Dates
+  // Tenancy dates
   check_in_date: string
   agreement_start_date?: string
   agreement_end_date?: string
 
-  // Financial
+  // Tenancy financial terms
   monthly_rent: number
   security_deposit?: number
   advance_amount?: number
   maintenance_charge?: number
 
-  // Additional info
+  // Legacy fields (DEPRECATED - now stored in People table)
+  // @deprecated Use People module for emergency contacts
   emergency_contact?: string
+  // @deprecated Use People module for ID documents
   id_proof_type?: string
+  // @deprecated Use People module for ID documents
   id_proof_number?: string
+  // @deprecated Use People module for addresses
   address?: string
 
   // Options
@@ -65,11 +70,17 @@ export interface TenantCreateInput {
   send_welcome_notification?: boolean
   send_invitation?: boolean
 
-  // Complex fields (JSONB)
+  // DEPRECATED: These fields should NOT be passed - use People module instead
+  // Complex fields are now stored in People table only
+  // @deprecated Use People module for multiple phone numbers
   phones?: Array<{ number: string; type: string; is_primary: boolean }>
+  // @deprecated Use People module for multiple emails
   emails?: Array<{ email: string; type: string; is_primary: boolean }>
+  // @deprecated Use People module for addresses
   addresses?: Array<Record<string, unknown>>
+  // @deprecated Use People module for emergency contacts
   guardians?: Array<Record<string, unknown>>
+  // @deprecated Use People module for ID documents
   id_documents?: Array<Record<string, unknown>>
 }
 
@@ -290,18 +301,25 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
     },
 
     // Step 3: Create tenant record
+    // NOTE: Person-centric architecture - personal data is stored in People table only
+    // Tenant table only stores tenancy-specific data + person_id link
     {
       name: "create_tenant",
       execute: async (context, input, previousResults) => {
         const supabase = createClient()
         const personResult = previousResults.upsert_person as Record<string, unknown> | undefined
 
+        // Person-centric: Only store tenancy-specific data + person_id link
+        // Personal data (phone_numbers, emails, addresses, guardian_contacts, id_documents)
+        // is stored in People table and accessed via person_id JOIN
         const tenantData = {
+          // Basic identity - kept for backward compatibility and display
           name: input.name,
           email: input.email || null,
           phone: input.phone,
           photo_url: input.photo_url || null,
           profile_photo: input.profile_photo || null,
+          // Tenancy-specific data
           property_id: input.property_id,
           room_id: input.room_id,
           bed_id: input.bed_id || null,
@@ -312,14 +330,12 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           security_deposit: input.security_deposit || 0,
           advance_amount: input.advance_amount || 0,
           advance_balance: input.advance_amount || 0,
-          phone_numbers: input.phones || null,
-          emails: input.emails || null,
-          addresses: input.addresses || null,
-          guardian_contacts: input.guardians || null,
+          // REMOVED: phone_numbers, emails, addresses, guardian_contacts
+          // These are now stored in People table only (accessed via person_id JOIN)
           status: "active",
           owner_id: context.actor_id,
           created_at: new Date().toISOString(),
-          // Link to person record if available
+          // Link to person record - this is the key for person-centric architecture
           person_id: personResult?.person_id as string || null,
         }
 

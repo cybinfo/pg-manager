@@ -26,6 +26,7 @@ import { sendInvitationEmail } from "@/lib/email"
 import { PageLoader } from "@/components/ui/page-loader"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
+import { validateIndianMobile } from "@/lib/validators"
 
 interface Role {
   id: string
@@ -178,6 +179,12 @@ export default function NewStaffPage() {
       return
     }
 
+    // Validate phone if provided
+    if (staffPhone && !validateIndianMobile(staffPhone)) {
+      toast.error("Please enter a valid Indian mobile number (10 digits)")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -295,14 +302,15 @@ export default function NewStaffPage() {
         }
       } else if (workspace) {
         // User doesn't exist - create invitation
+        // Person-centric: Use staffEmail (from selectedPerson or formData)
         const { data: invitation, error: inviteError } = await supabase
           .from("invitations")
           .insert({
             workspace_id: workspace.id,
             invited_by: user.id,
-            email: formData.email,
-            phone: formData.phone || null,
-            name: formData.name,
+            email: staffEmail,
+            phone: staffPhone || null,
+            name: staffName,
             context_type: "staff",
             role_id: primaryRoleId,
             entity_id: staffData.id,
@@ -329,11 +337,11 @@ export default function NewStaffPage() {
 
           const inviterName = inviterProfile?.name || "Property Owner"
 
-          // Send invitation email
-          const signupUrl = `${window.location.origin}/register?invite=${invitation.token}&email=${encodeURIComponent(formData.email)}`
+          // Send invitation email - use staffEmail which comes from selectedPerson or formData
+          const signupUrl = `${window.location.origin}/register?invite=${invitation.token}&email=${encodeURIComponent(staffEmail)}`
           const emailResult = await sendInvitationEmail({
-            to: formData.email,
-            inviteeName: formData.name,
+            to: staffEmail,
+            inviteeName: staffName,
             inviterName: inviterName,
             workspaceName: workspace.name,
             contextType: "staff",
@@ -408,6 +416,8 @@ export default function NewStaffPage() {
                 placeholder="Search by name, phone, or email..."
                 disabled={loading}
                 required
+                showEditLink={true}
+                showDetailedInfo={false}
               />
             ) : (
               <div className="h-10 flex items-center text-sm text-muted-foreground">
@@ -416,19 +426,7 @@ export default function NewStaffPage() {
               </div>
             )}
 
-            {/* Show selected person info */}
-            {selectedPerson && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-emerald-700">
-                  <UserCheck className="h-4 w-4" />
-                  <span>
-                    <strong>{selectedPerson.name}</strong> selected
-                    {selectedPerson.tags?.includes("staff") && " (existing staff)"}
-                    {selectedPerson.is_verified && " • Verified"}
-                  </span>
-                </div>
-              </div>
-            )}
+            {/* Person info is now shown in PersonSelector */}
           </CardContent>
         </Card>
 

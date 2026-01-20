@@ -35,7 +35,12 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
+  FileText,
+  MapPin,
+  Briefcase,
 } from "lucide-react"
+import Link from "next/link"
 import { Person, PersonSearchResult } from "@/types/people.types"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -55,6 +60,10 @@ interface PersonSelectorProps {
   allowQuickCreate?: boolean
   /** Pre-fill search with this value */
   initialSearch?: string
+  /** Show "Edit in People" link when person is selected */
+  showEditLink?: boolean
+  /** Show detailed person info (ID docs, address, etc) when selected */
+  showDetailedInfo?: boolean
 }
 
 interface QuickCreateForm {
@@ -62,6 +71,13 @@ interface QuickCreateForm {
   phone: string
   email: string
 }
+
+// Enhanced query to fetch more person details
+const PERSON_SELECT_FIELDS = `
+  id, name, phone, email, photo_url, tags, is_verified, is_blocked, created_at,
+  id_documents, company_name, occupation, emergency_contacts,
+  permanent_address, permanent_city, current_address
+`
 
 export function PersonSelector({
   ownerId,
@@ -76,6 +92,8 @@ export function PersonSelector({
   error,
   allowQuickCreate = true,
   initialSearch = "",
+  showEditLink = true,
+  showDetailedInfo = false,
 }: PersonSelectorProps) {
   const [search, setSearch] = useState(initialSearch)
   const [results, setResults] = useState<PersonSearchResult[]>([])
@@ -97,7 +115,7 @@ export function PersonSelector({
         const supabase = createClient()
         const { data } = await supabase
           .from("people")
-          .select("id, name, phone, email, photo_url, tags, is_verified, is_blocked, created_at")
+          .select(PERSON_SELECT_FIELDS)
           .eq("id", selectedPersonId)
           .single()
 
@@ -121,7 +139,7 @@ export function PersonSelector({
 
     let queryBuilder = supabase
       .from("people")
-      .select("id, name, phone, email, photo_url, tags, is_verified, is_blocked, created_at")
+      .select(PERSON_SELECT_FIELDS)
       .eq("owner_id", ownerId)
       .eq("is_active", true)
       .or(`name.ilike.%${query}%,phone.ilike.%${query}%,email.ilike.%${query}%`)
@@ -189,7 +207,7 @@ export function PersonSelector({
     // Check for existing person with same phone/email
     let existingQuery = supabase
       .from("people")
-      .select("id, name, phone, email, photo_url, tags, is_verified, is_blocked, created_at")
+      .select(PERSON_SELECT_FIELDS)
       .eq("owner_id", ownerId)
 
     if (quickCreateForm.phone) {
@@ -219,7 +237,7 @@ export function PersonSelector({
         tags: [],
         source: "manual",
       })
-      .select("id, name, phone, email, photo_url, tags, is_verified, is_blocked, created_at")
+      .select(PERSON_SELECT_FIELDS)
       .single()
 
     if (createError) {
@@ -243,6 +261,10 @@ export function PersonSelector({
     setSearch("")
     onSelect(null as unknown as PersonSearchResult)
   }
+
+  // Helper to check if person has ID documents
+  const hasIdDocuments = selectedPerson?.id_documents && selectedPerson.id_documents.length > 0
+  const hasAddress = selectedPerson?.permanent_address || selectedPerson?.current_address
 
   // If person is selected, show selection card
   if (selectedPerson) {
@@ -279,18 +301,90 @@ export function PersonSelector({
                   </div>
                 </div>
               </div>
-              {!disabled && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleClear}
-                  className="flex-shrink-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
+              <div className="flex items-center gap-1">
+                {showEditLink && (
+                  <Link href={`/people/${selectedPerson.id}/edit`} target="_blank">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-muted-foreground hover:text-primary"
+                    >
+                      Edit in People
+                      <ExternalLink className="h-3 w-3 ml-1" />
+                    </Button>
+                  </Link>
+                )}
+                {!disabled && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleClear}
+                    className="flex-shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
+
+            {/* Detailed info section (shown when showDetailedInfo is true) */}
+            {showDetailedInfo && (
+              <div className="mt-3 pt-3 border-t border-primary/10 space-y-2">
+                {/* ID Documents */}
+                {hasIdDocuments && (
+                  <div className="flex items-start gap-2 text-sm">
+                    <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <span className="text-muted-foreground">ID Documents: </span>
+                      {selectedPerson.id_documents?.map((doc, i) => (
+                        <span key={i} className="inline-flex items-center gap-1">
+                          {i > 0 && ", "}
+                          {doc.type}
+                          {doc.verified && <BadgeCheck className="h-3 w-3 text-emerald-500" />}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Company/Occupation */}
+                {(selectedPerson.company_name || selectedPerson.occupation) && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      {selectedPerson.occupation}
+                      {selectedPerson.company_name && ` at ${selectedPerson.company_name}`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Address */}
+                {hasAddress && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground truncate">
+                      {selectedPerson.current_address || selectedPerson.permanent_address}
+                      {selectedPerson.permanent_city && `, ${selectedPerson.permanent_city}`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Missing info warning */}
+                {!hasIdDocuments && (
+                  <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-2 rounded">
+                    <FileText className="h-4 w-4" />
+                    <span>No ID documents on file.</span>
+                    {showEditLink && (
+                      <Link href={`/people/${selectedPerson.id}/edit`} target="_blank" className="underline">
+                        Add in People
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
         {error && <p className="text-sm text-red-500">{error}</p>}

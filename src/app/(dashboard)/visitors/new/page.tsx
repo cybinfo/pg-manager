@@ -387,8 +387,14 @@ export default function NewVisitorPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.property_id || !formData.visitor_name) {
-      toast.error("Please fill in all required fields")
+    // Person-centric: Require person selection
+    if (!selectedPerson) {
+      toast.error("Please select a visitor from the People directory")
+      return
+    }
+
+    if (!formData.property_id) {
+      toast.error("Please select a property")
       return
     }
 
@@ -398,9 +404,10 @@ export default function NewVisitorPage() {
       return
     }
 
-    // Validate service_provider requires service_type
-    if (formData.visitor_type === "service_provider" && !formData.service_type) {
-      toast.error("Please select a service type")
+    // Validate service_provider requires service_type (now from selectedPerson or formData)
+    const serviceType = selectedPerson.occupation || formData.service_type
+    if (formData.visitor_type === "service_provider" && !serviceType) {
+      toast.error("Please select a service type or add occupation in People module")
       return
     }
 
@@ -416,22 +423,24 @@ export default function NewVisitorPage() {
         return
       }
 
-      // Create or update visitor contact
+      // Person-centric: Link visitor_contacts to person record
+      // visitor_contacts is being deprecated in favor of People module
       let visitorContactId = formData.visitor_contact_id
 
       if (!visitorContactId) {
-        // Create new contact
+        // Create new contact linked to person
         const { data: contactData, error: contactError } = await supabase
           .from("visitor_contacts")
           .insert({
             owner_id: user.id,
-            name: formData.visitor_name,
-            phone: formData.visitor_phone || null,
+            person_id: selectedPerson.id, // Link to person record
+            name: selectedPerson.name,
+            phone: selectedPerson.phone || null,
             visitor_type: formData.visitor_type,
-            company_name: formData.company_name || null,
-            service_type: formData.service_type || null,
-            id_type: formData.id_type || null,
-            id_number: formData.id_number || null,
+            company_name: selectedPerson.company_name || null,
+            service_type: selectedPerson.occupation || null,
+            id_type: selectedPerson.id_documents?.[0]?.type || null,
+            id_number: selectedPerson.id_documents?.[0]?.number || null,
             notes: formData.notes || null,
           })
           .select("id")
@@ -444,16 +453,17 @@ export default function NewVisitorPage() {
           visitorContactId = contactData.id
         }
       } else {
-        // Update existing contact with any new info
+        // Update existing contact - link to person if not already linked
         await supabase
           .from("visitor_contacts")
           .update({
-            name: formData.visitor_name,
-            phone: formData.visitor_phone || null,
-            company_name: formData.company_name || null,
-            service_type: formData.service_type || null,
-            id_type: formData.id_type || null,
-            id_number: formData.id_number || null,
+            person_id: selectedPerson.id,
+            name: selectedPerson.name,
+            phone: selectedPerson.phone || null,
+            company_name: selectedPerson.company_name || null,
+            service_type: selectedPerson.occupation || null,
+            id_type: selectedPerson.id_documents?.[0]?.type || null,
+            id_number: selectedPerson.id_documents?.[0]?.number || null,
             updated_at: new Date().toISOString(),
           })
           .eq("id", visitorContactId)
@@ -514,13 +524,19 @@ export default function NewVisitorPage() {
         }
       }
 
+      // Person-centric: Use data from selectedPerson, not form data
       const visitorData: Record<string, unknown> = {
         owner_id: user.id,
         property_id: formData.property_id,
         visitor_contact_id: visitorContactId || null,
         visitor_type: formData.visitor_type,
-        visitor_name: formData.visitor_name,
-        visitor_phone: formData.visitor_phone || null,
+        // Person-centric: Get name and phone from selectedPerson
+        visitor_name: selectedPerson.name,
+        visitor_phone: selectedPerson.phone || null,
+        // Get ID info from person's id_documents if available
+        id_type: selectedPerson.id_documents?.[0]?.type || null,
+        id_number: selectedPerson.id_documents?.[0]?.number || null,
+        // Visit-specific data
         purpose: formData.purpose || null,
         check_in_time: new Date().toISOString(),
         is_overnight: formData.is_overnight,
@@ -529,9 +545,9 @@ export default function NewVisitorPage() {
         overnight_charge: overnightCharge,
         expected_checkout_date: expectedCheckout,
         notes: formData.notes || null,
-        id_type: formData.id_type || null,
-        id_number: formData.id_number || null,
         vehicle_number: formData.vehicle_number || null,
+        // Link to person record
+        person_id: selectedPerson.id,
       }
 
       // Add type-specific fields
@@ -540,8 +556,9 @@ export default function NewVisitorPage() {
         visitorData.relation = formData.relation || null
         visitorData.bill_id = billId
       } else if (formData.visitor_type === "service_provider") {
-        visitorData.company_name = formData.company_name || null
-        visitorData.service_type = formData.service_type || null
+        // Person-centric: Get company and service type from selectedPerson or form
+        visitorData.company_name = selectedPerson.company_name || formData.company_name || null
+        visitorData.service_type = selectedPerson.occupation || formData.service_type || null
       } else if (formData.visitor_type === "enquiry") {
         visitorData.enquiry_status = "pending"
         visitorData.enquiry_source = formData.enquiry_source || null
@@ -650,6 +667,8 @@ export default function NewVisitorPage() {
                 excludeTags={["blocked"]}
                 placeholder="Search by name, phone, or email..."
                 disabled={loading}
+                showEditLink={true}
+                showDetailedInfo={true}
               />
             ) : (
               <div className="h-10 flex items-center text-sm text-muted-foreground">
@@ -658,20 +677,7 @@ export default function NewVisitorPage() {
               </div>
             )}
 
-            {/* Show selected person info */}
-            {selectedPerson && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-emerald-700">
-                  <UserCheck className="h-4 w-4" />
-                  <span>
-                    <strong>{selectedPerson.name}</strong> selected
-                    {selectedPerson.tags?.includes("visitor") && " (returning visitor)"}
-                    {selectedPerson.tags?.includes("service_provider") && " (service provider)"}
-                    {selectedPerson.is_verified && " • Verified"}
-                  </span>
-                </div>
-              </div>
-            )}
+            {/* Person info is now shown in PersonSelector with showDetailedInfo */}
 
             {/* Legacy contact display (if selected via old method) */}
             {selectedContact && !selectedPerson && (
@@ -781,7 +787,7 @@ export default function NewVisitorPage() {
           </CardContent>
         </Card>
 
-        {/* Visitor Info */}
+        {/* Visit Details - Only visit-specific info, personal data comes from People module */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -789,90 +795,27 @@ export default function NewVisitorPage() {
                 <UserPlus className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>Visitor Information</CardTitle>
+                <CardTitle>Visit Details</CardTitle>
                 <CardDescription>
-                  {selectedContact ? "Review and update if needed" : "Details about the visitor"}
+                  Information about this visit (personal details are managed in People module)
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="visitor_name">Visitor Name *</Label>
+              <Label htmlFor="vehicle_number">
+                <Car className="h-4 w-4 inline mr-1" />
+                Vehicle Number
+              </Label>
               <Input
-                id="visitor_name"
-                name="visitor_name"
-                placeholder="e.g., Amit Kumar"
-                value={formData.visitor_name}
+                id="vehicle_number"
+                name="vehicle_number"
+                placeholder="e.g., MH12AB1234"
+                value={formData.vehicle_number}
                 onChange={handleChange}
-                required
                 disabled={loading}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="visitor_phone">
-                  <Phone className="h-4 w-4 inline mr-1" />
-                  Phone Number
-                </Label>
-                <Input
-                  id="visitor_phone"
-                  name="visitor_phone"
-                  type="tel"
-                  placeholder="e.g., 9876543210"
-                  value={formData.visitor_phone}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vehicle_number">
-                  <Car className="h-4 w-4 inline mr-1" />
-                  Vehicle Number
-                </Label>
-                <Input
-                  id="vehicle_number"
-                  name="vehicle_number"
-                  placeholder="e.g., MH12AB1234"
-                  value={formData.vehicle_number}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="id_type">
-                  <CreditCard className="h-4 w-4 inline mr-1" />
-                  ID Type
-                </Label>
-                <select
-                  id="id_type"
-                  name="id_type"
-                  value={formData.id_type}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  disabled={loading}
-                >
-                  <option value="">Select ID type</option>
-                  {ID_TYPES.map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="id_number">ID Number</Label>
-                <Input
-                  id="id_number"
-                  name="id_number"
-                  placeholder="ID document number"
-                  value={formData.id_number}
-                  onChange={handleChange}
-                  disabled={loading}
-                />
-              </div>
             </div>
 
             <div className="space-y-2">
@@ -887,6 +830,14 @@ export default function NewVisitorPage() {
                 className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
               />
             </div>
+
+            {/* Note about ID documents */}
+            {selectedPerson && !selectedPerson.id_documents?.length && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                <strong>Note:</strong> This visitor has no ID documents on file.
+                ID information is managed in the People module.
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -958,28 +909,49 @@ export default function NewVisitorPage() {
                 </div>
                 <div>
                   <CardTitle>Service Details</CardTitle>
-                  <CardDescription>Information about the service provider</CardDescription>
+                  <CardDescription>
+                    Service info from People module (or enter manually if needed)
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Show service info from person if available */}
+              {selectedPerson && (selectedPerson.occupation || selectedPerson.company_name) && (
+                <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="text-sm text-orange-700">
+                    <strong>From People:</strong>{" "}
+                    {selectedPerson.occupation && <span>{selectedPerson.occupation}</span>}
+                    {selectedPerson.company_name && <span> at {selectedPerson.company_name}</span>}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="service_type">Service Type *</Label>
+                  <Label htmlFor="service_type">
+                    Service Type {!selectedPerson?.occupation && "*"}
+                  </Label>
                   <select
                     id="service_type"
                     name="service_type"
                     value={formData.service_type}
                     onChange={handleChange}
                     className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    required
-                    disabled={loading}
+                    disabled={loading || !!selectedPerson?.occupation}
                   >
-                    <option value="">Select service type</option>
-                    {SERVICE_TYPES.map((type) => (
+                    <option value="">
+                      {selectedPerson?.occupation || "Select service type"}
+                    </option>
+                    {!selectedPerson?.occupation && SERVICE_TYPES.map((type) => (
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </select>
+                  {selectedPerson?.occupation && (
+                    <p className="text-xs text-muted-foreground">
+                      Using occupation from People module
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company_name">
@@ -989,11 +961,16 @@ export default function NewVisitorPage() {
                   <Input
                     id="company_name"
                     name="company_name"
-                    placeholder="e.g., XYZ Services"
-                    value={formData.company_name}
+                    placeholder={selectedPerson?.company_name || "e.g., XYZ Services"}
+                    value={selectedPerson?.company_name || formData.company_name}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={loading || !!selectedPerson?.company_name}
                   />
+                  {selectedPerson?.company_name && (
+                    <p className="text-xs text-muted-foreground">
+                      Using company from People module
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>

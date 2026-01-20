@@ -11,8 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  ArrowLeft, Users, Loader2, Building2, Home, UserCheck, RefreshCw,
-  Plus, Trash2, FileText, Shield, ChevronRight
+  ArrowLeft, Users, Loader2, Building2, Home, RefreshCw,
+  Shield, ChevronRight, FileText
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
@@ -23,10 +23,6 @@ import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/w
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
 
-// Shared form components
-import {
-  IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT,
-} from "@/components/forms"
 
 interface Property {
   id: string
@@ -71,8 +67,6 @@ export default function NewTenantPage() {
     notes: "",
   })
 
-  // ID Documents (tenant-specific for police verification)
-  const [idDocuments, setIdDocuments] = useState<IdDocumentData[]>([{ ...DEFAULT_ID_DOCUMENT }])
 
   // Refresh rooms data from database
   const refreshRooms = async () => {
@@ -208,31 +202,6 @@ export default function NewTenantPage() {
     }
   }
 
-  // ID Document handlers
-  const updateIdDocument = (index: number, field: keyof IdDocumentData, value: string | string[]) => {
-    const updated = [...idDocuments]
-    updated[index] = { ...updated[index], [field]: value }
-    setIdDocuments(updated)
-  }
-
-  const addIdDocument = () => {
-    setIdDocuments([...idDocuments, { ...DEFAULT_ID_DOCUMENT, type: "PAN Card" }])
-  }
-
-  const removeIdDocument = (index: number) => {
-    if (idDocuments.length > 1) {
-      setIdDocuments(idDocuments.filter((_, i) => i !== index))
-    }
-  }
-
-  const removeDocumentFile = (docIndex: number, fileIndex: number) => {
-    const updated = [...idDocuments]
-    updated[docIndex] = {
-      ...updated[docIndex],
-      file_urls: updated[docIndex].file_urls.filter((_, i) => i !== fileIndex)
-    }
-    setIdDocuments(updated)
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -337,6 +306,7 @@ export default function NewTenantPage() {
       debugLog("Room verified", roomCheck)
 
       // Build workflow input - person-centric (personal data comes from person record)
+      // ID documents, addresses, emergency contacts are stored in People module only
       const workflowInput: TenantCreateInput = {
         // Person-centric: Link to person record
         person_id: selectedPerson.id,
@@ -346,20 +316,13 @@ export default function NewTenantPage() {
         phone: selectedPerson.phone || "",
         photo_url: selectedPerson.photo_url || undefined,
         profile_photo: selectedPerson.photo_url || undefined,
-        // Tenancy-specific data
+        // Tenancy-specific data ONLY - no personal data duplication
         property_id: formData.property_id,
         room_id: formData.room_id,
         check_in_date: formData.check_in_date,
         monthly_rent: parseFloat(formData.monthly_rent),
         security_deposit: parseFloat(formData.security_deposit) || 0,
-        // ID documents for police verification (tenancy-specific)
-        id_documents: idDocuments
-          .filter(d => d.number.trim() || d.file_urls.length > 0)
-          .map(d => ({
-            type: d.type,
-            number: d.number,
-            file_urls: d.file_urls,
-          })),
+        // ID documents are now stored in People module, not duplicated here
         generate_initial_bill: false, // Let owner manually create first bill
         send_welcome_notification: !!selectedPerson.email,
         send_invitation: false, // We handle invitation separately below
@@ -617,6 +580,8 @@ export default function NewTenantPage() {
                 placeholder="Search by name, phone, or email..."
                 disabled={loading}
                 required
+                showEditLink={true}
+                showDetailedInfo={true}
               />
             ) : (
               <div className="h-10 flex items-center text-sm text-muted-foreground">
@@ -625,21 +590,12 @@ export default function NewTenantPage() {
               </div>
             )}
 
-            {/* Show selected person info */}
-            {selectedPerson && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-emerald-700">
-                  <UserCheck className="h-4 w-4" />
-                  <span>
-                    <strong>{selectedPerson.name}</strong> selected
-                    {selectedPerson.phone && ` • ${selectedPerson.phone}`}
-                    {selectedPerson.email && ` • ${selectedPerson.email}`}
-                    {selectedPerson.tags?.includes("tenant") && " (existing tenant)"}
-                    {selectedPerson.is_verified && " • Verified"}
-                  </span>
-                </div>
-                <p className="text-xs text-emerald-600 mt-1">
-                  Contact info and personal details are managed in the People directory
+            {/* Person info is now shown in PersonSelector with showDetailedInfo */}
+            {selectedPerson && !selectedPerson.id_documents?.length && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-700">
+                  <strong>Note:</strong> This person has no ID documents on file.
+                  For police verification, please add ID documents in the People module.
                 </p>
               </div>
             )}
@@ -766,40 +722,7 @@ export default function NewTenantPage() {
           </CardContent>
         </Card>
 
-        {/* ID Documents */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>ID Documents</CardTitle>
-                <CardDescription>Identity proofs for police verification</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between mb-2">
-              <Label>Documents</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={addIdDocument}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Document
-              </Button>
-            </div>
-            {idDocuments.map((doc, index) => (
-              <IdDocumentEntry
-                key={index}
-                value={doc}
-                onChange={(field, value) => updateIdDocument(index, field, value)}
-                onRemove={idDocuments.length > 1 ? () => removeIdDocument(index) : undefined}
-                onRemoveFile={(fileIdx) => removeDocumentFile(index, fileIdx)}
-                showRemove={idDocuments.length > 1}
-                disabled={loading}
-              />
-            ))}
-          </CardContent>
-        </Card>
+        {/* ID Documents are now managed in People module - removed from here to avoid duplication */}
 
         {/* Status & Verification */}
         <Card>
