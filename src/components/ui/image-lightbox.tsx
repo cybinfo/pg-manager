@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { X } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 interface ImageLightboxProps {
   src: string
@@ -12,6 +12,13 @@ interface ImageLightboxProps {
 }
 
 export function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightboxProps) {
+  const [mounted, setMounted] = React.useState(false)
+
+  // Only render portal on client side
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   // Close on escape key
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -28,36 +35,40 @@ export function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightboxProps)
     }
   }, [isOpen, onClose])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
-  return (
+  // Use portal to render at document body level (above all other content)
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      style={{ zIndex: 99999 }}
       onClick={onClose}
     >
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+        className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
         aria-label="Close"
       >
-        <X className="h-6 w-6" />
+        <X className="h-8 w-8" />
       </button>
 
-      {/* Image container */}
+      {/* Image container - centered */}
       <div
-        className="relative max-w-[90vw] max-h-[90vh] p-4"
+        className="relative flex flex-col items-center justify-center p-8"
         onClick={(e) => e.stopPropagation()}
       >
         <img
           src={src}
           alt={alt}
-          className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+          className="max-w-[85vw] max-h-[80vh] object-contain rounded-lg shadow-2xl bg-white/5"
         />
         {/* Caption */}
-        <p className="text-white text-center mt-3 text-sm opacity-75">{alt}</p>
+        <p className="text-white text-center mt-4 text-base font-medium">{alt}</p>
+        <p className="text-white/60 text-center mt-1 text-sm">Click outside or press ESC to close</p>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import React, { useState, useRef, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "./button"
 import { Upload, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react"
@@ -302,7 +302,7 @@ export function FileUpload({
   )
 }
 
-// Simplified single image upload with circular preview (for profile photos)
+// Simplified single image upload with circular preview and cropping (for profile photos)
 interface ProfilePhotoUploadProps {
   bucket: string
   folder?: string
@@ -323,6 +323,8 @@ export function ProfilePhotoUpload({
   placeholder,
 }: ProfilePhotoUploadProps) {
   const [uploading, setUploading] = useState(false)
+  const [cropperOpen, setCropperOpen] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const sizeClasses = {
@@ -331,28 +333,41 @@ export function ProfilePhotoUpload({
     lg: "h-32 w-32",
   }
 
-  const handleFileSelect = async (files: FileList | null) => {
+  const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return
 
     const file = files[0]
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File too large. Maximum size is 5MB")
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large. Maximum size is 10MB")
       return
     }
 
+    // Create object URL for the cropper
+    const imageUrl = URL.createObjectURL(file)
+    setSelectedImage(imageUrl)
+    setCropperOpen(true)
+
+    // Reset input
+    if (inputRef.current) inputRef.current.value = ""
+  }
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
     setUploading(true)
 
     try {
       const supabase = createClient()
       const timestamp = Date.now()
       const randomId = Math.random().toString(36).substring(2, 8)
-      const ext = file.name.split(".").pop()
-      const filename = `${timestamp}-${randomId}.${ext}`
+      const filename = `${timestamp}-${randomId}.jpg`
       const path = folder ? `${folder}/${filename}` : filename
 
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(path, file, { cacheControl: "3600", upsert: false })
+        .upload(path, croppedBlob, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: "image/jpeg"
+        })
 
       if (error) throw error
 
@@ -369,9 +384,26 @@ export function ProfilePhotoUpload({
       toast.error("Failed to upload photo")
     } finally {
       setUploading(false)
-      if (inputRef.current) inputRef.current.value = ""
+      // Clean up object URL
+      if (selectedImage) {
+        URL.revokeObjectURL(selectedImage)
+        setSelectedImage(null)
+      }
     }
   }
+
+  const handleCropperClose = () => {
+    setCropperOpen(false)
+    if (selectedImage) {
+      URL.revokeObjectURL(selectedImage)
+      setSelectedImage(null)
+    }
+  }
+
+  // Dynamically import ImageCropper to avoid SSR issues
+  const ImageCropper = React.lazy(() =>
+    import("./image-cropper").then(mod => ({ default: mod.ImageCropper }))
+  )
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -425,6 +457,20 @@ export function ProfilePhotoUpload({
         >
           Remove
         </Button>
+      )}
+
+      {/* Image Cropper Modal */}
+      {selectedImage && (
+        <React.Suspense fallback={null}>
+          <ImageCropper
+            image={selectedImage}
+            isOpen={cropperOpen}
+            onClose={handleCropperClose}
+            onCropComplete={handleCropComplete}
+            aspectRatio={1}
+            cropShape="round"
+          />
+        </React.Suspense>
       )}
     </div>
   )
