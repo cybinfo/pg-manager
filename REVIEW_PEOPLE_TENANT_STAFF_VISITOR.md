@@ -611,47 +611,119 @@ supabase/migrations/056_deprecate_visitor_contacts.sql - Merge into people
 
 ## 11. Resolution Status (2026-01-22)
 
-### ✅ Implemented: List Page Name Sync
+### ✅ All Critical Architecture Issues Resolved
 
-The immediate issue of list pages showing stale names has been resolved:
+The person-centric architecture has been fully implemented across all modules.
 
-**Problem**: Tenant, Staff, and Visitor list pages displayed denormalized `name` fields from entity tables instead of live data from the `people` table. When a person's name was updated in People, list views showed the old name.
+---
 
-**Solution Implemented**:
+### ✅ 1. List Page Name Sync
 
-1. **Updated list configs** to include `name` in person select:
-   ```typescript
-   person:people(id, name, photo_url)  // Added 'name' to select
-   ```
+**Problem**: List pages displayed denormalized `name` fields from entity tables instead of live data from the `people` table.
 
-2. **Updated list page columns** to use live data with fallback:
-   ```typescript
-   const displayName = tenant.person?.name || tenant.name
-   ```
+**Solution**:
+- Updated list configs to include `name` in person select
+- Updated list page columns to use `person?.name || name` fallback chain
+- Files: `useListPage.ts`, `tenants/page.tsx`, `staff/page.tsx`, `visitors/page.tsx`
 
-3. **Files Modified**:
-   - `src/lib/hooks/useListPage.ts` - TENANT/STAFF/VISITOR_LIST_CONFIG
-   - `src/app/(dashboard)/tenants/page.tsx`
-   - `src/app/(dashboard)/staff/page.tsx`
-   - `src/app/(dashboard)/visitors/page.tsx`
+---
 
-**Result**: Names now sync immediately between People module and all list views.
+### ✅ 2. ID Documents Removed from Tenant Form
 
-### Remaining Architecture Issues (Phase 2)
+**Problem**: ID documents were being collected in both Tenant form AND People module.
 
-The broader data duplication issues documented in this review remain for future implementation:
+**Solution**:
+- Removed ID Documents section from tenant form (`tenants/new/page.tsx`)
+- Added comment at line 725: "ID Documents are now managed in People module"
+- PersonSelector shows ID document status with "Add in People" link
+- Tenant workflow no longer stores `id_documents`, `phone_numbers`, `emails`, `addresses`, `guardian_contacts`
 
-| Issue | Status | Priority |
-|-------|--------|----------|
-| List page name sync | ✅ Resolved | - |
-| ID documents in tenant form | ⏳ Pending | High |
-| Triple duplication in visitors | ⏳ Pending | High |
-| visitor_contacts deprecation | ⏳ Pending | Medium |
-| Database schema cleanup | ⏳ Pending | Low |
+---
+
+### ✅ 3. Triple Duplication in Visitors Resolved
+
+**Problem**: Personal data was stored in visitors, visitor_contacts, AND people tables.
+
+**Solution**:
+- Visitor form now uses PersonSelector exclusively for personal data
+- Data saved to visitors table comes from `selectedPerson.*` (lines 527-551)
+- visitor_contacts is linked to person_id when created (line 436)
+- Detail page uses fallback chain: `visitor.person → visitor_contact.person → legacy`
+- List page uses `visitor_contact.person.name` for display
+
+---
+
+### ✅ 4. PersonSelector Enhanced
+
+**Problem**: PersonSelector didn't show enough person details.
+
+**Solution**:
+- Added `showDetailedInfo` prop showing ID documents, company, occupation, address
+- Added `showEditLink` prop with "Edit in People" button
+- Shows warning when person has no ID documents with link to add them
+- Fetches extended fields: `id_documents, company_name, occupation, emergency_contacts, addresses`
+
+---
+
+### ✅ 5. Tenant Workflow Updated
+
+**Problem**: Tenant workflow stored duplicate JSONB personal data.
+
+**Solution**:
+- Removed storage of: `phone_numbers`, `emails`, `addresses`, `guardian_contacts`, `id_documents`
+- Only stores basic denormalized fields (name, phone, email, photo_url) for display performance
+- Stores `person_id` link for person-centric data access
+
+---
+
+### Remaining Items (Low Priority)
+
+| Issue | Status | Notes |
+|-------|--------|-------|
+| visitor_contacts deprecation | ⏳ Future | Keep for backward compatibility |
+| Database schema cleanup | ⏳ Future | Remove unused columns after data migration |
+| Legacy data migration | ⏳ Optional | Backfill person_id for old records |
+
+These are optional cleanup items that don't affect functionality. The architecture is now correctly person-centric.
+
+---
+
+## Architecture Summary
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     PEOPLE TABLE (Source of Truth)              │
+│  - name, phone, email, photo_url                                │
+│  - id_documents[] (Aadhaar, PAN, License, Passport, etc.)       │
+│  - permanent_address, current_address, city, state, pincode     │
+│  - emergency_contacts[] (name, phone, relation)                 │
+│  - occupation, company_name, designation                        │
+│  - tags[], is_verified, is_blocked                              │
+└─────────────────────────────────────────────────────────────────┘
+                              │ person_id FK
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+          ▼                   ▼                   ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│ TENANTS TABLE   │  │ STAFF TABLE     │  │ VISITORS TABLE  │
+│ (Tenancy Data)  │  │ (Role Data)     │  │ (Visit Data)    │
+│                 │  │                 │  │                 │
+│ ✓ person_id FK  │  │ ✓ person_id FK  │  │ ✓ person_id FK  │
+│ + denormalized  │  │ + denormalized  │  │ + denormalized  │
+│   name, phone   │  │   name, email   │  │   name, phone   │
+│   for display   │  │   for display   │  │   for display   │
+│                 │  │                 │  │                 │
+│ Tenancy-only:   │  │ Role-only:      │  │ Visit-only:     │
+│ - property_id   │  │ - user_id       │  │ - check_in_time │
+│ - room_id       │  │ - is_active     │  │ - check_out_time│
+│ - monthly_rent  │  │ - roles via     │  │ - purpose       │
+│ - deposit       │  │   user_roles    │  │ - is_overnight  │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+**Display Logic**: All pages use fallback chain `entity.person?.field || entity.field` to show live data with graceful fallback for legacy records.
 
 ---
 
 Generated by Claude Code (CPE-AI) - 2026-01-20
-Updated: 2026-01-22 - List page name sync implemented
-
-**This review addresses the user's concern about ID documents appearing in the Tenant form when they should be in the People module.**
+Updated: 2026-01-22 - All critical architecture issues resolved
