@@ -19,6 +19,7 @@ export type EnquirySource = 'walk_in' | 'referral' | 'online' | 'social_media' |
 export interface VisitorContact {
   id: string
   owner_id: string
+  person_id: string | null
   name: string
   phone: string | null
   email: string | null

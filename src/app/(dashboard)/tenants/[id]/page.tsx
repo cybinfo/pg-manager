@@ -568,6 +568,14 @@ export default function TenantDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            {tenant.person_id && (
+              <Link href={`/people/${tenant.person_id}`}>
+                <Button variant="outline" size="sm">
+                  <User className="mr-2 h-4 w-4" />
+                  View Person
+                </Button>
+              </Link>
+            )}
             <Link href={`/tenants/${tenant.id}/edit`}>
               <Button variant="outline" size="sm">
                 <Pencil className="mr-2 h-4 w-4" />

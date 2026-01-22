@@ -39,6 +39,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 
 interface StaffMember {
   id: string
+  person_id: string | null
   name: string
   email: string
   phone: string | null
@@ -340,6 +341,14 @@ export default function StaffDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2">
+            {staff.person_id && (
+              <Link href={`/people/${staff.person_id}`}>
+                <Button variant="outline" size="sm">
+                  <User className="mr-2 h-4 w-4" />
+                  View Person
+                </Button>
+              </Link>
+            )}
             <Button
               variant="outline"
               size="sm"
