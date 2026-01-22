@@ -14,6 +14,7 @@ import Link from "next/link"
 import { Users, UserCheck, Clock, CalendarDays, Search, Wrench, User, Star, Ban, BookUser } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { Button } from "@/components/ui/button"
+import { Avatar } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { VISITOR_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
@@ -47,7 +48,15 @@ interface Visitor {
   enquiry_status: EnquiryStatus | null
   tenant: { id: string; name: string } | null
   property: { id: string; name: string } | null
-  visitor_contact: { id: string; name: string; visit_count: number; is_frequent: boolean; is_blocked: boolean } | null
+  visitor_contact: {
+    id: string
+    name: string
+    visit_count: number
+    is_frequent: boolean
+    is_blocked: boolean
+    person_id: string | null
+    person: { id: string; photo_url: string | null } | null
+  } | null
   // Computed fields from config
   total_visits: number
   is_frequent_visitor: boolean
@@ -119,30 +128,42 @@ const columns: Column<Visitor>[] = [
     header: "Visitor",
     width: "primary",
     sortable: true,
-    render: (visitor) => (
-      <div className="flex items-center gap-3">
-        <div className={`h-8 w-8 rounded-full flex items-center justify-center ${VISITOR_TYPE_BADGE_COLORS[visitor.visitor_type]}`}>
-          {VISITOR_TYPE_ICONS[visitor.visitor_type]}
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium truncate">{visitor.visitor_name}</span>
-            {visitor.is_frequent_visitor && (
-              <Star className="h-3 w-3 text-yellow-500 flex-shrink-0" />
-            )}
-            {visitor.is_blocked_visitor && (
-              <Ban className="h-3 w-3 text-red-500 flex-shrink-0" />
-            )}
+    render: (visitor) => {
+      const photoUrl = visitor.visitor_contact?.person?.photo_url
+      return (
+        <div className="flex items-center gap-3">
+          {photoUrl ? (
+            <Avatar
+              name={visitor.visitor_name}
+              src={photoUrl}
+              size="sm"
+              className="shrink-0"
+            />
+          ) : (
+            <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${VISITOR_TYPE_BADGE_COLORS[visitor.visitor_type]}`}>
+              {VISITOR_TYPE_ICONS[visitor.visitor_type]}
+            </div>
+          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-medium truncate">{visitor.visitor_name}</span>
+              {visitor.is_frequent_visitor && (
+                <Star className="h-3 w-3 text-yellow-500 flex-shrink-0" />
+              )}
+              {visitor.is_blocked_visitor && (
+                <Ban className="h-3 w-3 text-red-500 flex-shrink-0" />
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              {visitor.visitor_phone && <span>{visitor.visitor_phone}</span>}
+              {visitor.total_visits > 1 && (
+                <span className="text-blue-600">({visitor.total_visits} visits)</span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {visitor.visitor_phone && <span>{visitor.visitor_phone}</span>}
-            {visitor.total_visits > 1 && (
-              <span className="text-blue-600">({visitor.total_visits} visits)</span>
-            )}
-          </div>
         </div>
-      </div>
-    ),
+      )
+    },
   },
   {
     key: "visitor_type",

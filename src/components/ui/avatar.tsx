@@ -13,25 +13,27 @@ import { ImageLightbox } from "./image-lightbox"
  *
  * Handles the common pattern where entities may have photos stored in
  * different fields depending on whether they came from:
+ * - `person.photo_url` (from people table - single source of truth)
  * - `profile_photo` (from user_profiles table)
- * - `photo_url` (from tenants table)
+ * - `photo_url` (legacy field on entity)
  *
  * This utility ensures consistent fallback behavior across the app.
  *
  * @example
- * // In a component with tenant data:
+ * // In a component with tenant data (with person join):
  * <Avatar name={tenant.name} src={getAvatarUrl(tenant)} />
  *
  * // Or with explicit fields:
- * <Avatar name={name} src={getAvatarUrl({ profile_photo, photo_url })} />
+ * <Avatar name={name} src={getAvatarUrl({ person: { photo_url }, photo_url })} />
  */
 export function getAvatarUrl(entity: {
+  person?: { photo_url?: string | null } | null
   profile_photo?: string | null
   photo_url?: string | null
 } | null | undefined): string | undefined {
   if (!entity) return undefined
-  // Prefer profile_photo (more specific/user-uploaded) over photo_url
-  return entity.profile_photo || entity.photo_url || undefined
+  // Priority: person.photo_url (single source of truth) > profile_photo > photo_url (legacy)
+  return entity.person?.photo_url || entity.profile_photo || entity.photo_url || undefined
 }
 
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl"

@@ -992,12 +992,13 @@ export const TENANT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   select: `
     *,
     property:properties(id, name),
-    room:rooms(id, room_number)
+    room:rooms(id, room_number),
+    person:people(id, photo_url)
   `,
   defaultOrderBy: "created_at",
   defaultOrderDirection: "desc",
   searchFields: ["name", "phone", "email"],
-  joinFields: ["property", "room"],
+  joinFields: ["property", "room", "person"],
   computedFields: (item) => {
     const date = item.check_in_date ? new Date(item.check_in_date as string) : new Date()
     return {
@@ -1096,7 +1097,7 @@ export const VISITOR_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     *,
     tenant:tenants!tenant_id(id, name),
     property:properties(id, name),
-    visitor_contact:visitor_contacts(id, name, visit_count, is_frequent, is_blocked)
+    visitor_contact:visitor_contacts(id, name, visit_count, is_frequent, is_blocked, person_id, person:people(id, photo_url))
   `,
   defaultOrderBy: "check_in_time",
   defaultOrderDirection: "desc",
@@ -1125,12 +1126,13 @@ export const STAFF_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
       id,
       role:roles(id, name, description),
       property:properties(id, name)
-    )
+    ),
+    person:people(id, photo_url)
   `,
   defaultOrderBy: "name",
   defaultOrderDirection: "asc",
   searchFields: ["name", "email", "phone"],
-  joinFields: [],
+  joinFields: ["person"],
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
     const roles = (item.roles as { role: { name: string } | null }[] | null) || []

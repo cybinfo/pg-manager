@@ -42,6 +42,7 @@ interface StaffMember {
     role: { id: string; name: string; description: string | null } | null
     property: { id: string; name: string } | null
   }[]
+  person: { id: string; photo_url: string | null } | null
   // Computed fields
   status_label?: string
   primary_role?: string
@@ -72,6 +73,7 @@ const columns: Column<StaffMember>[] = [
         <div className="flex items-center gap-3">
           <Avatar
             name={staff.name}
+            src={staff.person?.photo_url}
             size="md"
             className={staff.is_active ? "" : "bg-gray-100 text-gray-500"}
           />

@@ -36,6 +36,7 @@ interface Tenant {
   status: string
   property: { id: string; name: string } | null
   room: { id: string; room_number: string } | null
+  person: { id: string; photo_url: string | null } | null
   checkin_month?: string
   checkin_year?: string
 }
