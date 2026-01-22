@@ -42,7 +42,7 @@ interface StaffMember {
     role: { id: string; name: string; description: string | null } | null
     property: { id: string; name: string } | null
   }[]
-  person: { id: string; photo_url: string | null } | null
+  person: { id: string; name: string; photo_url: string | null } | null
   // Computed fields
   status_label?: string
   primary_role?: string
@@ -68,18 +68,20 @@ const columns: Column<StaffMember>[] = [
         role: Array.isArray(r.role) ? transformJoin(r.role) : r.role,
         property: Array.isArray(r.property) ? transformJoin(r.property) : r.property,
       }))
+      // Use person.name (live data) with fallback to staff.name (denormalized)
+      const displayName = staff.person?.name || staff.name
 
       return (
         <div className="flex items-center gap-3">
           <Avatar
-            name={staff.name}
+            name={displayName}
             src={staff.person?.photo_url}
             size="md"
             className={staff.is_active ? "" : "bg-gray-100 text-gray-500"}
           />
           <div className={!staff.is_active ? "opacity-60" : ""}>
             <div className="font-medium flex items-center gap-2">
-              {staff.name}
+              {displayName}
               {!staff.is_active && (
                 <TableBadge variant="muted">Inactive</TableBadge>
               )}

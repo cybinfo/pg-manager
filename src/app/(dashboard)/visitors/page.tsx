@@ -55,7 +55,7 @@ interface Visitor {
     is_frequent: boolean
     is_blocked: boolean
     person_id: string | null
-    person: { id: string; photo_url: string | null } | null
+    person: { id: string; name: string; photo_url: string | null } | null
   } | null
   // Computed fields from config
   total_visits: number
@@ -130,11 +130,13 @@ const columns: Column<Visitor>[] = [
     sortable: true,
     render: (visitor) => {
       const photoUrl = visitor.visitor_contact?.person?.photo_url
+      // Use person.name (live data) with fallback to visitor_contact.name then visitor_name
+      const displayName = visitor.visitor_contact?.person?.name || visitor.visitor_contact?.name || visitor.visitor_name
       return (
         <div className="flex items-center gap-3">
           {photoUrl ? (
             <Avatar
-              name={visitor.visitor_name}
+              name={displayName}
               src={photoUrl}
               size="sm"
               className="shrink-0"
@@ -146,7 +148,7 @@ const columns: Column<Visitor>[] = [
           )}
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-medium truncate">{visitor.visitor_name}</span>
+              <span className="font-medium truncate">{displayName}</span>
               {visitor.is_frequent_visitor && (
                 <Star className="h-3 w-3 text-yellow-500 flex-shrink-0" />
               )}

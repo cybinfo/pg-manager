@@ -36,7 +36,7 @@ interface Tenant {
   status: string
   property: { id: string; name: string } | null
   room: { id: string; room_number: string } | null
-  person: { id: string; photo_url: string | null } | null
+  person: { id: string; name: string; photo_url: string | null } | null
   checkin_month?: string
   checkin_year?: string
 }
@@ -68,21 +68,25 @@ const columns: Column<Tenant>[] = [
     header: "Tenant",
     width: "primary",
     sortable: true,
-    render: (tenant) => (
-      <div className="flex items-center gap-3">
-        {/* UI-008: Use centralized avatar URL resolution */}
-        <Avatar
-          name={tenant.name}
-          src={getAvatarUrl(tenant)}
-          size="sm"
-          className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
-        />
-        <div className="min-w-0">
-          <div className="font-medium truncate">{tenant.name}</div>
-          <div className="text-xs text-muted-foreground">{tenant.phone}</div>
+    render: (tenant) => {
+      // Use person.name (live data) with fallback to tenant.name (denormalized)
+      const displayName = tenant.person?.name || tenant.name
+      return (
+        <div className="flex items-center gap-3">
+          {/* UI-008: Use centralized avatar URL resolution */}
+          <Avatar
+            name={displayName}
+            src={getAvatarUrl(tenant)}
+            size="sm"
+            className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
+          />
+          <div className="min-w-0">
+            <div className="font-medium truncate">{displayName}</div>
+            <div className="text-xs text-muted-foreground">{tenant.phone}</div>
+          </div>
         </div>
-      </div>
-    ),
+      )
+    },
   },
   {
     key: "property",
