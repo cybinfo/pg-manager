@@ -916,12 +916,20 @@ export function useListPage<T extends object>(
 
   // Apply a view configuration (or reset to default if null)
   const applyViewConfig = useCallback((viewConfig: TableViewConfig | null) => {
+    let newFilters: Record<string, string>
+    let newGroups: string[]
+    let newPageSize: number
+
     if (viewConfig === null) {
       // Reset to defaults
       setSortConfig([])
-      setFiltersState(config.defaultFilters || {})
-      setSelectedGroups([])
-      setPageSizeState(config.defaultPageSize || 25)
+      newFilters = config.defaultFilters || {}
+      setFiltersState(newFilters)
+      newGroups = []
+      setSelectedGroups(newGroups)
+      selectedGroupsRef.current = newGroups
+      newPageSize = config.defaultPageSize || 25
+      setPageSizeState(newPageSize)
       setPageState(1)
     } else {
       // Apply view config
@@ -932,24 +940,34 @@ export function useListPage<T extends object>(
       }
 
       if (viewConfig.filters) {
-        setFiltersState(viewConfig.filters)
+        newFilters = viewConfig.filters
+        setFiltersState(newFilters)
       } else {
-        setFiltersState(config.defaultFilters || {})
+        newFilters = config.defaultFilters || {}
+        setFiltersState(newFilters)
       }
 
       if (viewConfig.groupBy) {
-        setSelectedGroups(viewConfig.groupBy)
+        newGroups = viewConfig.groupBy
+        setSelectedGroups(newGroups)
+        selectedGroupsRef.current = newGroups
       } else {
-        setSelectedGroups([])
+        newGroups = []
+        setSelectedGroups(newGroups)
+        selectedGroupsRef.current = newGroups
       }
 
-      if (viewConfig.pageSize) {
-        setPageSizeState(viewConfig.pageSize)
-      }
+      newPageSize = viewConfig.pageSize || config.defaultPageSize || 25
+      setPageSizeState(newPageSize)
 
       setPageState(1) // Always reset to page 1 when applying a view
     }
-  }, [config.defaultFilters, config.defaultPageSize])
+
+    // Trigger refetch with new values
+    fetchData(1, newPageSize, newFilters, searchQuery)
+    fetchServerCounts(newFilters, searchQuery)
+    fetchServerSums(newFilters, searchQuery)
+  }, [config.defaultFilters, config.defaultPageSize, searchQuery, fetchData, fetchServerCounts, fetchServerSums])
 
   return {
     data,
