@@ -453,7 +453,7 @@ export const VISITOR_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     property:properties(id, name),
-    tenant:tenants(id, name, phone),
+    tenant:tenants!visitors_tenant_id_fkey(id, name, phone),
     visitor_contact:visitor_contacts(
       id, name, phone, email, visitor_type, company_name, service_type,
       id_type, id_number, notes, photo_url, is_frequent, is_blocked,
