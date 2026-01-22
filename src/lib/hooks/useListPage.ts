@@ -240,6 +240,14 @@ export function useListPage<T extends object>(
   const selectedGroupsRef = useRef(selectedGroups)
   const initialFetchDone = useRef(false)
 
+  // Refs for fetch functions - used by applyViewConfig to avoid dependency loops
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fetchDataRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fetchServerCountsRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fetchServerSumsRef = useRef<any>(null)
+
   // Update refs when props change (but don't trigger re-renders)
   useEffect(() => {
     configRef.current = config
@@ -701,6 +709,13 @@ export function useListPage<T extends object>(
     }
   }, [filters, searchQuery])
 
+  // Keep fetch function refs updated (for use in applyViewConfig without dependency issues)
+  useEffect(() => {
+    fetchDataRef.current = fetchData
+    fetchServerCountsRef.current = fetchServerCounts
+    fetchServerSumsRef.current = fetchServerSums
+  }, [fetchData, fetchServerCounts, fetchServerSums])
+
   // Initial fetch - only run once
   useEffect(() => {
     if (initialFetchDone.current) return
@@ -963,11 +978,17 @@ export function useListPage<T extends object>(
       setPageState(1) // Always reset to page 1 when applying a view
     }
 
-    // Trigger refetch with new values
-    fetchData(1, newPageSize, newFilters, searchQuery)
-    fetchServerCounts(newFilters, searchQuery)
-    fetchServerSums(newFilters, searchQuery)
-  }, [config.defaultFilters, config.defaultPageSize, searchQuery, fetchData, fetchServerCounts, fetchServerSums])
+    // Trigger refetch with new values using refs (to avoid dependency loop)
+    if (fetchDataRef.current) {
+      fetchDataRef.current(1, newPageSize, newFilters, searchQuery)
+    }
+    if (fetchServerCountsRef.current) {
+      fetchServerCountsRef.current(newFilters, searchQuery)
+    }
+    if (fetchServerSumsRef.current) {
+      fetchServerSumsRef.current(newFilters, searchQuery)
+    }
+  }, [config.defaultFilters, config.defaultPageSize, searchQuery])
 
   return {
     data,
