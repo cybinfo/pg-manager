@@ -171,15 +171,17 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           }
 
           // Add tenant tag to person
-          await supabase.rpc("upsert_person", {
-            p_owner_id: context.actor_id,
-            p_name: existingPerson.name,
-            p_phone: existingPerson.phone,
-            p_email: existingPerson.email,
-            p_tags: ["tenant"],
-          }).catch(() => {
+          try {
+            await supabase.rpc("upsert_person", {
+              p_owner_id: context.actor_id,
+              p_name: existingPerson.name,
+              p_phone: existingPerson.phone,
+              p_email: existingPerson.email,
+              p_tags: ["tenant"],
+            })
+          } catch {
             // RPC might not exist yet, that's OK
-          })
+          }
 
           return createSuccessResult({
             person_id: existingPerson.id,
