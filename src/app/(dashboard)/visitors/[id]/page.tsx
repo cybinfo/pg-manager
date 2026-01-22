@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { useDetailPage, VISITOR_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -45,62 +46,13 @@ import { formatDateTime, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
 import {
+  Visitor,
   VisitorType,
   VISITOR_TYPE_LABELS,
   EnquiryStatus,
   ENQUIRY_STATUS_LABELS,
   ENQUIRY_SOURCE_LABELS,
-  EnquirySource,
-  VisitorContact,
 } from "@/types/visitors.types"
-
-interface Visitor {
-  id: string
-  visitor_name: string
-  visitor_phone: string | null
-  visitor_type: VisitorType
-  visitor_contact_id: string | null
-  relation: string | null
-  purpose: string | null
-  check_in_time: string
-  check_out_time: string | null
-  is_overnight: boolean
-  overnight_charge: number | null
-  num_nights: number | null
-  charge_per_night: number | null
-  expected_checkout_date: string | null
-  company_name: string | null
-  service_type: string | null
-  enquiry_status: EnquiryStatus | null
-  enquiry_source: EnquirySource | null
-  rooms_interested: string[] | null
-  follow_up_date: string | null
-  converted_tenant_id: string | null
-  notes: string | null
-  id_type: string | null
-  id_number: string | null
-  vehicle_number: string | null
-  host_name: string | null
-  department: string | null
-  created_at: string
-  tenant: {
-    id: string
-    name: string
-    phone: string
-    photo_url: string | null
-    profile_photo: string | null
-    room?: { room_number: string } | null
-  } | null
-  property: {
-    id: string
-    name: string
-    address: string | null
-  } | null
-  room: {
-    room_number: string
-  } | null
-  visitor_contact?: VisitorContact | null
-}
 
 interface VisitHistoryEntry {
   id: string
@@ -109,22 +61,6 @@ interface VisitHistoryEntry {
   visitor_type: VisitorType
   purpose: string | null
   property: { name: string } | null
-}
-
-interface RawVisitor extends Omit<Visitor, 'tenant' | 'property' | 'room'> {
-  tenant: {
-    id: string
-    name: string
-    phone: string
-    photo_url: string | null
-    profile_photo: string | null
-    room?: { room_number: string }[] | null
-  }[] | null
-  property: {
-    id: string
-    name: string
-    address: string | null
-  }[] | null
 }
 
 const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
@@ -151,87 +87,63 @@ const VisitorTypeBadge = ({ type }: { type: VisitorType }) => (
 export default function VisitorDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [visitor, setVisitor] = useState<Visitor | null>(null)
+
+  // Use the centralized hook for main data fetching
+  const {
+    data: visitor,
+    loading,
+    updateField,
+    deleteRecord,
+    isDeleting,
+    isSaving,
+  } = useDetailPage<Visitor>({
+    config: VISITOR_DETAIL_CONFIG,
+    id: params.id as string,
+  })
+
+  // Visit history state (conditional fetch)
   const [visitHistory, setVisitHistory] = useState<VisitHistoryEntry[]>([])
   const [actionLoading, setActionLoading] = useState(false)
 
+  // Fetch visit history when visitor has a contact
   useEffect(() => {
-    const fetchVisitor = async () => {
-      const supabase = createClient()
+    const fetchVisitHistory = async () => {
+      if (!visitor?.visitor_contact_id) return
 
-      const { data, error } = await supabase
+      const supabase = createClient()
+      const { data: historyData } = await supabase
         .from("visitors")
         .select(`
-          *,
-          tenant:tenants!tenant_id(id, name, phone, photo_url, profile_photo, room:rooms(room_number)),
-          property:properties(id, name, address),
-          visitor_contact:visitor_contacts(*, person:people(id, photo_url))
+          id,
+          check_in_time,
+          check_out_time,
+          visitor_type,
+          purpose,
+          property:properties(name)
         `)
-        .eq("id", params.id)
-        .single()
+        .eq("visitor_contact_id", visitor.visitor_contact_id)
+        .neq("id", params.id)
+        .order("check_in_time", { ascending: false })
+        .limit(10)
 
-      if (error || !data) {
-        console.error("Error fetching visitor:", error)
-        toast.error("Visitor not found")
-        router.push("/visitors")
-        return
+      if (historyData) {
+        const transformedHistory = historyData.map((h: {
+          id: string
+          check_in_time: string
+          check_out_time: string | null
+          visitor_type: VisitorType
+          purpose: string | null
+          property: { name: string }[] | null
+        }) => ({
+          ...h,
+          property: transformJoin(h.property),
+        }))
+        setVisitHistory(transformedHistory)
       }
-
-      const rawData = data as RawVisitor & { visitor_contact: VisitorContact[] | null }
-      const tenant = transformJoin(rawData.tenant)
-      const property = transformJoin(rawData.property)
-      const visitorContact = transformJoin(rawData.visitor_contact)
-
-      const visitorData: Visitor = {
-        ...rawData,
-        tenant: tenant ? {
-          ...tenant,
-          room: transformJoin(tenant.room),
-        } : null,
-        property,
-        room: tenant ? transformJoin(tenant.room) : null,
-        visitor_contact: visitorContact,
-      }
-      setVisitor(visitorData)
-
-      if (visitorData.visitor_contact_id) {
-        const { data: historyData } = await supabase
-          .from("visitors")
-          .select(`
-            id,
-            check_in_time,
-            check_out_time,
-            visitor_type,
-            purpose,
-            property:properties(name)
-          `)
-          .eq("visitor_contact_id", visitorData.visitor_contact_id)
-          .neq("id", params.id)
-          .order("check_in_time", { ascending: false })
-          .limit(10)
-
-        if (historyData) {
-          const transformedHistory = historyData.map((h: {
-            id: string
-            check_in_time: string
-            check_out_time: string | null
-            visitor_type: VisitorType
-            purpose: string | null
-            property: { name: string }[] | null
-          }) => ({
-            ...h,
-            property: transformJoin(h.property),
-          }))
-          setVisitHistory(transformedHistory)
-        }
-      }
-
-      setLoading(false)
     }
 
-    fetchVisitor()
-  }, [params.id, router])
+    fetchVisitHistory()
+  }, [visitor?.visitor_contact_id, params.id])
 
   const getDuration = (checkIn: string, checkOut: string | null) => {
     const start = new Date(checkIn)
@@ -253,66 +165,26 @@ export default function VisitorDetailPage() {
 
   const handleCheckOut = async () => {
     if (!visitor) return
-
     setActionLoading(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("visitors")
-      .update({ check_out_time: new Date().toISOString() })
-      .eq("id", visitor.id)
-
-    if (error) {
-      toast.error("Failed to check out visitor")
-    } else {
+    const success = await updateField("check_out_time", new Date().toISOString())
+    if (success) {
       toast.success("Visitor checked out successfully")
-      setVisitor({ ...visitor, check_out_time: new Date().toISOString() })
     }
     setActionLoading(false)
   }
 
   const handleUpdateEnquiryStatus = async (newStatus: EnquiryStatus) => {
     if (!visitor) return
-
     setActionLoading(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("visitors")
-      .update({ enquiry_status: newStatus })
-      .eq("id", visitor.id)
-
-    if (error) {
-      toast.error("Failed to update enquiry status")
-    } else {
+    const success = await updateField("enquiry_status", newStatus)
+    if (success) {
       toast.success(`Enquiry marked as ${ENQUIRY_STATUS_LABELS[newStatus]}`)
-      setVisitor({ ...visitor, enquiry_status: newStatus })
     }
     setActionLoading(false)
   }
 
   const handleDelete = async () => {
-    if (!visitor) return
-
-    if (!confirm("Are you sure you want to delete this visitor record?")) {
-      return
-    }
-
-    setActionLoading(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("visitors")
-      .delete()
-      .eq("id", visitor.id)
-
-    if (error) {
-      toast.error("Failed to delete visitor")
-      setActionLoading(false)
-    } else {
-      toast.success("Visitor record deleted")
-      router.push("/visitors")
-    }
+    await deleteRecord({ confirm: true })
   }
 
   if (loading) {
@@ -324,6 +196,7 @@ export default function VisitorDetailPage() {
   }
 
   const isCheckedIn = !visitor.check_out_time
+  const saving = isSaving || actionLoading
 
   return (
     <div className="space-y-6">
@@ -377,7 +250,7 @@ export default function VisitorDetailPage() {
               </Link>
             )}
             {isCheckedIn && (
-              <Button onClick={handleCheckOut} disabled={actionLoading}>
+              <Button onClick={handleCheckOut} disabled={saving}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Check Out
               </Button>
@@ -386,7 +259,7 @@ export default function VisitorDetailPage() {
               <Button
                 variant="outline"
                 onClick={() => router.push(`/tenants/new?from_enquiry=${visitor.id}&name=${encodeURIComponent(visitor.visitor_name)}&phone=${encodeURIComponent(visitor.visitor_phone || "")}`)}
-                disabled={actionLoading}
+                disabled={saving}
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 Convert to Tenant
@@ -396,7 +269,7 @@ export default function VisitorDetailPage() {
               <Button
                 variant="destructive"
                 onClick={handleDelete}
-                disabled={actionLoading}
+                disabled={saving || isDeleting}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
@@ -468,7 +341,7 @@ export default function VisitorDetailPage() {
                     size="sm"
                     variant="outline"
                     onClick={() => handleUpdateEnquiryStatus("follow_up")}
-                    disabled={actionLoading}
+                    disabled={saving}
                   >
                     <CalendarCheck className="mr-1 h-4 w-4" />
                     Mark Follow Up
@@ -479,7 +352,7 @@ export default function VisitorDetailPage() {
                   variant="outline"
                   className="text-green-600 border-green-300 hover:bg-green-50"
                   onClick={() => handleUpdateEnquiryStatus("converted")}
-                  disabled={actionLoading}
+                  disabled={saving}
                 >
                   <UserPlus className="mr-1 h-4 w-4" />
                   Mark Converted
@@ -489,7 +362,7 @@ export default function VisitorDetailPage() {
                   variant="outline"
                   className="text-red-600 border-red-300 hover:bg-red-50"
                   onClick={() => handleUpdateEnquiryStatus("lost")}
-                  disabled={actionLoading}
+                  disabled={saving}
                 >
                   <X className="mr-1 h-4 w-4" />
                   Mark Lost
@@ -626,7 +499,7 @@ export default function VisitorDetailPage() {
             {visitor.visitor_type === "tenant_visitor" && visitor.tenant && (
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center gap-3 mb-3">
-                  <Avatar name={visitor.tenant.name} src={visitor.tenant.profile_photo || visitor.tenant.photo_url} size="md" />
+                  <Avatar name={visitor.tenant.name} size="md" />
                   <div>
                     <p className="font-semibold">{visitor.tenant.name}</p>
                     <p className="text-sm text-muted-foreground">Tenant</p>
@@ -639,12 +512,6 @@ export default function VisitorDetailPage() {
                       {visitor.tenant.phone}
                     </a>
                   </div>
-                  {visitor.room && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Home className="h-4 w-4" />
-                      Room {visitor.room.room_number}
-                    </div>
-                  )}
                 </div>
                 <Link href={`/tenants/${visitor.tenant.id}`}>
                   <Button variant="outline" size="sm" className="w-full mt-3">
@@ -665,11 +532,6 @@ export default function VisitorDetailPage() {
                     <p className="text-sm text-muted-foreground">Property</p>
                   </div>
                 </div>
-                {visitor.property.address && (
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {visitor.property.address}
-                  </p>
-                )}
                 <Link href={`/properties/${visitor.property.id}`}>
                   <Button variant="outline" size="sm" className="w-full">
                     View Property

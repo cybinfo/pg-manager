@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useDetailPage, NOTICE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +20,6 @@ import {
   AlertTriangle,
   Wrench,
   CreditCard,
-  Users,
   Calendar,
   Eye,
   EyeOff,
@@ -33,24 +33,7 @@ import { toast } from "sonner"
 import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
-
-interface Notice {
-  id: string
-  title: string
-  content: string
-  type: string
-  target_audience: string
-  target_rooms: string[] | null
-  is_active: boolean
-  expires_at: string | null
-  created_at: string
-  updated_at: string
-  property_id: string | null
-  property: {
-    id: string
-    name: string
-  } | null
-}
+import { Notice, NOTICE_TYPE_CONFIG, NoticeType } from "@/types/notices.types"
 
 interface Property {
   id: string
@@ -70,26 +53,19 @@ const noticeTypes = [
   { value: "emergency", label: "Emergency", icon: AlertTriangle, color: "text-red-600", bgColor: "bg-red-100" },
 ]
 
-const audienceLabels: Record<string, string> = {
-  all: "All Residents",
-  tenants_only: "Tenants Only",
-  specific_rooms: "Specific Rooms",
-}
-
 export default function NoticeDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [notice, setNotice] = useState<Notice | null>(null)
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [selectedRooms, setSelectedRooms] = useState<string[]>([])
+  const [formInitialized, setFormInitialized] = useState(false)
 
   const [formData, setFormData] = useState({
     property_id: "",
-    type: "general",
+    type: "general" as NoticeType,
     target_audience: "all",
     title: "",
     content: "",
@@ -97,48 +73,50 @@ export default function NoticeDetailPage() {
     is_active: true,
   })
 
+  const {
+    data: notice,
+    loading,
+    deleteRecord,
+    updateField,
+    isDeleting,
+  } = useDetailPage<Notice>({
+    config: NOTICE_DETAIL_CONFIG,
+    id: params.id as string,
+  })
+
+  // Initialize form data when notice loads
   useEffect(() => {
-    const fetchData = async () => {
+    if (notice && !formInitialized) {
+      setFormData({
+        property_id: notice.property_id || "",
+        type: notice.type,
+        target_audience: notice.target_audience,
+        title: notice.title,
+        content: notice.content,
+        expires_at: notice.expires_at ? notice.expires_at.split("T")[0] : "",
+        is_active: notice.is_active,
+      })
+      setSelectedRooms(notice.target_rooms || [])
+      setFormInitialized(true)
+    }
+  }, [notice, formInitialized])
+
+  // Fetch properties and rooms for form
+  useEffect(() => {
+    const fetchFormData = async () => {
       const supabase = createClient()
 
-      const [noticeRes, propertiesRes, roomsRes] = await Promise.all([
-        supabase
-          .from("notices")
-          .select(`*, property:properties(id, name)`)
-          .eq("id", params.id)
-          .single(),
+      const [propertiesRes, roomsRes] = await Promise.all([
         supabase.from("properties").select("id, name").order("name"),
         supabase.from("rooms").select("id, room_number, property_id").order("room_number"),
       ])
 
-      if (noticeRes.error || !noticeRes.data) {
-        console.error("Error fetching notice:", noticeRes.error)
-        toast.error("Notice not found")
-        router.push("/notices")
-        return
-      }
-
-      const noticeData = noticeRes.data as Notice
-      setNotice(noticeData)
-      setFormData({
-        property_id: noticeData.property_id || "",
-        type: noticeData.type,
-        target_audience: noticeData.target_audience,
-        title: noticeData.title,
-        content: noticeData.content,
-        expires_at: noticeData.expires_at ? noticeData.expires_at.split("T")[0] : "",
-        is_active: noticeData.is_active,
-      })
-      setSelectedRooms(noticeData.target_rooms || [])
-
       if (propertiesRes.data) setProperties(propertiesRes.data)
       if (roomsRes.data) setRooms(roomsRes.data)
-
-      setLoading(false)
     }
 
-    fetchData()
-  }, [params.id, router])
+    fetchFormData()
+  }, [])
 
   // Filter rooms when property changes
   useEffect(() => {
@@ -211,7 +189,7 @@ export default function NoticeDetailPage() {
 
       toast.success("Notice updated successfully")
       router.push("/notices")
-    } catch (error) {
+    } catch {
       toast.error("Failed to update notice")
     } finally {
       setSaving(false)
@@ -220,56 +198,15 @@ export default function NoticeDetailPage() {
 
   const toggleActive = async () => {
     setSaving(true)
-
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase
-        .from("notices")
-        .update({ is_active: !formData.is_active })
-        .eq("id", params.id)
-
-      if (error) {
-        toast.error("Failed to update notice")
-        return
-      }
-
+    const success = await updateField("is_active", !formData.is_active)
+    if (success) {
       setFormData((prev) => ({ ...prev, is_active: !prev.is_active }))
-      toast.success(formData.is_active ? "Notice deactivated" : "Notice activated")
-    } catch (error) {
-      toast.error("Failed to update notice")
-    } finally {
-      setSaving(false)
     }
+    setSaving(false)
   }
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this notice? This action cannot be undone.")) {
-      return
-    }
-
-    setSaving(true)
-
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase
-        .from("notices")
-        .delete()
-        .eq("id", params.id)
-
-      if (error) {
-        toast.error("Failed to delete notice")
-        return
-      }
-
-      toast.success("Notice deleted")
-      router.push("/notices")
-    } catch (error) {
-      toast.error("Failed to delete notice")
-    } finally {
-      setSaving(false)
-    }
+    await deleteRecord({ confirm: true })
   }
 
   const isExpired = () => {
@@ -339,7 +276,7 @@ export default function NoticeDetailPage() {
                 variant="destructive"
                 size="sm"
                 onClick={handleDelete}
-                disabled={saving}
+                disabled={saving || isDeleting}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
@@ -385,7 +322,7 @@ export default function NoticeDetailPage() {
               <button
                 key={type.value}
                 type="button"
-                onClick={() => setFormData((prev) => ({ ...prev, type: type.value }))}
+                onClick={() => setFormData((prev) => ({ ...prev, type: type.value as NoticeType }))}
                 className={`p-3 rounded-lg border text-left transition-all ${
                   isSelected
                     ? "border-primary bg-primary/5 ring-1 ring-primary"

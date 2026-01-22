@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
+import { useDetailPage, EXIT_CLEARANCE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +19,6 @@ import { PageLoading } from "@/components/ui/loading"
 import {
   Loader2,
   User,
-  Building2,
   DoorOpen,
   Calendar,
   Phone,
@@ -39,95 +38,20 @@ import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
-
-interface Deduction {
-  reason: string
-  amount: number
-}
-
-interface ExitClearance {
-  id: string
-  notice_given_date: string | null
-  expected_exit_date: string
-  actual_exit_date: string | null
-  total_dues: number
-  total_refundable: number
-  deductions: Deduction[]
-  final_amount: number
-  settlement_status: string
-  room_inspection_done: boolean
-  room_condition_notes: string | null
-  key_returned: boolean
-  created_at: string
-  completed_at: string | null
-  tenant: {
-    id: string
-    name: string
-    phone: string
-    monthly_rent: number
-    check_in_date: string
-  } | null
-  property: {
-    id: string
-    name: string
-    address: string | null
-    city: string
-  } | null
-  room: {
-    id: string
-    room_number: string
-    deposit_amount: number
-  } | null
-}
-
-interface RawExitClearance {
-  id: string
-  notice_given_date: string | null
-  expected_exit_date: string
-  actual_exit_date: string | null
-  total_dues: number
-  total_refundable: number
-  deductions: Deduction[]
-  final_amount: number
-  settlement_status: string
-  room_inspection_done: boolean
-  room_condition_notes: string | null
-  key_returned: boolean
-  created_at: string
-  completed_at: string | null
-  tenant: {
-    id: string
-    name: string
-    phone: string
-    monthly_rent: number
-    check_in_date: string
-  }[] | null
-  property: {
-    id: string
-    name: string
-    address: string | null
-    city: string
-  }[] | null
-  room: {
-    id: string
-    room_number: string
-    deposit_amount: number
-  }[] | null
-}
-
-// Exit clearance status mapping for StatusBadge
-const exitStatusMap: Record<string, { variant: "info" | "warning" | "success"; label: string }> = {
-  initiated: { variant: "info", label: "Initiated" },
-  pending_payment: { variant: "warning", label: "Pending Payment" },
-  cleared: { variant: "success", label: "Cleared" },
-}
+import {
+  ExitClearance,
+  Deduction,
+  EXIT_CLEARANCE_STATUS_CONFIG,
+  calculateFinalAmount,
+  isRefundDue,
+  getDaysStayed,
+} from "@/types/exit-clearance.types"
 
 export default function ExitClearanceDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [clearance, setClearance] = useState<ExitClearance | null>(null)
+  const [formInitialized, setFormInitialized] = useState(false)
 
   const [formData, setFormData] = useState({
     actual_exit_date: "",
@@ -139,48 +63,28 @@ export default function ExitClearanceDetailPage() {
   const [deductions, setDeductions] = useState<Deduction[]>([])
   const [newDeduction, setNewDeduction] = useState({ reason: "", amount: "" })
 
+  const {
+    data: clearance,
+    loading,
+    updateFields,
+  } = useDetailPage<ExitClearance>({
+    config: EXIT_CLEARANCE_DETAIL_CONFIG,
+    id: params.id as string,
+  })
+
+  // Initialize form when data loads
   useEffect(() => {
-    const fetchClearance = async () => {
-      const supabase = createClient()
-
-      const { data, error } = await supabase
-        .from("exit_clearance")
-        .select(`
-          *,
-          tenant:tenants(id, name, phone, monthly_rent, check_in_date),
-          property:properties(id, name, address, city),
-          room:rooms(id, room_number, deposit_amount)
-        `)
-        .eq("id", params.id)
-        .single()
-
-      if (error || !data) {
-        toast.error("Clearance not found")
-        router.push("/exit-clearance")
-        return
-      }
-
-      // Transform the data from arrays to single objects
-      const rawData = data as RawExitClearance
-      const transformedData: ExitClearance = {
-        ...rawData,
-        tenant: transformJoin(rawData.tenant),
-        property: transformJoin(rawData.property),
-        room: transformJoin(rawData.room),
-      }
-      setClearance(transformedData)
+    if (clearance && !formInitialized) {
       setFormData({
-        actual_exit_date: data.actual_exit_date || "",
-        room_inspection_done: data.room_inspection_done || false,
-        key_returned: data.key_returned || false,
-        room_condition_notes: data.room_condition_notes || "",
+        actual_exit_date: clearance.actual_exit_date || "",
+        room_inspection_done: clearance.room_inspection_done || false,
+        key_returned: clearance.key_returned || false,
+        room_condition_notes: clearance.room_condition_notes || "",
       })
-      setDeductions(data.deductions || [])
-      setLoading(false)
+      setDeductions(clearance.deductions || [])
+      setFormInitialized(true)
     }
-
-    fetchClearance()
-  }, [params.id, router])
+  }, [clearance, formInitialized])
 
   const addDeduction = () => {
     if (!newDeduction.reason || !newDeduction.amount) {
@@ -202,69 +106,44 @@ export default function ExitClearanceDetailPage() {
     setDeductions(deductions.filter((_, i) => i !== index))
   }
 
-  const calculateFinalAmount = () => {
+  const computeFinalAmount = () => {
     if (!clearance) return 0
-    const totalDeductions = deductions.reduce((sum, d) => sum + d.amount, 0)
-    return clearance.total_dues - clearance.total_refundable + totalDeductions
+    return calculateFinalAmount(clearance.total_dues, clearance.total_refundable, deductions)
+  }
+
+  const computeDaysStayed = () => {
+    if (!clearance || !clearance.tenant) return 0
+    return getDaysStayed(
+      clearance.tenant.check_in_date,
+      formData.actual_exit_date || clearance.expected_exit_date
+    )
   }
 
   const handleSave = async () => {
     if (!clearance) return
 
     setSaving(true)
-    try {
-      const supabase = createClient()
-      const finalAmount = calculateFinalAmount()
+    const finalAmount = computeFinalAmount()
 
-      const { error } = await supabase
-        .from("exit_clearance")
-        .update({
-          actual_exit_date: formData.actual_exit_date || null,
-          room_inspection_done: formData.room_inspection_done,
-          key_returned: formData.key_returned,
-          room_condition_notes: formData.room_condition_notes || null,
-          deductions,
-          final_amount: finalAmount,
-        })
-        .eq("id", clearance.id)
+    const success = await updateFields({
+      actual_exit_date: formData.actual_exit_date || null,
+      room_inspection_done: formData.room_inspection_done,
+      key_returned: formData.key_returned,
+      room_condition_notes: formData.room_condition_notes || null,
+      deductions,
+      final_amount: finalAmount,
+    })
 
-      if (error) throw error
-
-      setClearance({
-        ...clearance,
-        ...formData,
-        deductions,
-        final_amount: finalAmount,
-      })
-      toast.success("Changes saved")
-    } catch (error: any) {
-      toast.error(error.message || "Failed to save changes")
-    } finally {
-      setSaving(false)
-    }
+    setSaving(false)
+    return success
   }
 
   const handleMarkPending = async () => {
     if (!clearance) return
 
     setSaving(true)
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase
-        .from("exit_clearance")
-        .update({ settlement_status: "pending_payment" })
-        .eq("id", clearance.id)
-
-      if (error) throw error
-
-      setClearance({ ...clearance, settlement_status: "pending_payment" })
-      toast.success("Marked as pending payment")
-    } catch (error) {
-      toast.error("Failed to update status")
-    } finally {
-      setSaving(false)
-    }
+    await updateFields({ settlement_status: "pending_payment" })
+    setSaving(false)
   }
 
   const handleComplete = async () => {
@@ -283,13 +162,14 @@ export default function ExitClearanceDetailPage() {
     setSaving(true)
     try {
       const supabase = createClient()
+      const exitDate = formData.actual_exit_date || new Date().toISOString().split("T")[0]
 
       // Update clearance status
       const { error: clearanceError } = await supabase
         .from("exit_clearance")
         .update({
           settlement_status: "cleared",
-          actual_exit_date: formData.actual_exit_date || new Date().toISOString().split("T")[0],
+          actual_exit_date: exitDate,
           completed_at: new Date().toISOString(),
         })
         .eq("id", clearance.id)
@@ -299,13 +179,15 @@ export default function ExitClearanceDetailPage() {
       // Update tenant status
       if (!clearance.tenant) {
         toast.error("Tenant data not found")
+        setSaving(false)
         return
       }
+
       const { error: tenantError } = await supabase
         .from("tenants")
         .update({
           status: "checked_out",
-          check_out_date: formData.actual_exit_date || new Date().toISOString().split("T")[0],
+          check_out_date: exitDate,
         })
         .eq("id", clearance.tenant.id)
 
@@ -314,8 +196,10 @@ export default function ExitClearanceDetailPage() {
       // Update room status
       if (!clearance.room) {
         toast.error("Room data not found")
+        setSaving(false)
         return
       }
+
       const { error: roomError } = await supabase
         .from("rooms")
         .update({ status: "available" })
@@ -325,18 +209,12 @@ export default function ExitClearanceDetailPage() {
 
       toast.success("Exit clearance completed! Room is now available.")
       router.push("/exit-clearance")
-    } catch (error: any) {
-      toast.error(error.message || "Failed to complete clearance")
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to complete clearance"
+      toast.error(errorMessage)
     } finally {
       setSaving(false)
     }
-  }
-
-  const getDaysStayed = () => {
-    if (!clearance || !clearance.tenant) return 0
-    const checkIn = new Date(clearance.tenant.check_in_date)
-    const checkOut = new Date(formData.actual_exit_date || clearance.expected_exit_date)
-    return Math.floor((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
   }
 
   if (loading) {
@@ -345,9 +223,10 @@ export default function ExitClearanceDetailPage() {
 
   if (!clearance) return null
 
-  const finalAmount = calculateFinalAmount()
-  const isRefund = finalAmount < 0
+  const finalAmount = computeFinalAmount()
+  const isRefund = isRefundDue(finalAmount)
   const isCleared = clearance.settlement_status === "cleared"
+  const statusConfig = EXIT_CLEARANCE_STATUS_CONFIG[clearance.settlement_status] || EXIT_CLEARANCE_STATUS_CONFIG.initiated
 
   return (
     <div className="space-y-6">
@@ -362,12 +241,7 @@ export default function ExitClearanceDetailPage() {
             <DoorOpen className="h-8 w-8 text-orange-600" />
           </div>
         }
-        status={
-          <StatusBadge
-            variant={exitStatusMap[clearance.settlement_status]?.variant || "muted"}
-            label={exitStatusMap[clearance.settlement_status]?.label || clearance.settlement_status}
-          />
-        }
+        status={<StatusBadge variant={statusConfig.variant} label={statusConfig.label} />}
         actions={
           !isCleared && (
             <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
@@ -446,7 +320,7 @@ export default function ExitClearanceDetailPage() {
             />
             <InfoRow
               label="Days Stayed"
-              value={`${getDaysStayed()} days`}
+              value={`${computeDaysStayed()} days`}
               icon={Clock}
             />
           </DetailSection>
@@ -692,7 +566,7 @@ export default function ExitClearanceDetailPage() {
             </div>
           )}
 
-          {/* Record Refund Button - show when clearance is complete and refund is due */}
+          {/* Record Refund Button */}
           {isCleared && isRefund && clearance.tenant && (
             <Link href={`/refunds/new?tenant=${clearance.tenant.id}&clearance=${clearance.id}`}>
               <Button className="w-full" variant="outline">

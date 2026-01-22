@@ -101,7 +101,7 @@ export interface Visitor {
 
   // Joined fields
   property?: { id: string; name: string }
-  tenant?: { id: string; name: string } | null
+  tenant?: { id: string; name: string; phone?: string } | null
   visitor_contact?: VisitorContact | null
 }
 

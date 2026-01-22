@@ -1,10 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
+import { useDetailPage, PROPERTY_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import {
+  Property,
+  PropertyRoom,
+  PropertyTenant,
+  PropertyBill,
+  PropertyPayment,
+  PropertyExpense,
+  PropertyComplaint,
+  PropertyVisitor,
+} from "@/types/properties.types"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -37,108 +45,8 @@ import {
   Clock,
   AlertCircle,
 } from "lucide-react"
-import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
-
-interface Property {
-  id: string
-  name: string
-  address: string | null
-  city: string
-  state: string | null
-  pincode: string | null
-  manager_name: string | null
-  manager_phone: string | null
-  is_active: boolean
-  created_at: string
-  website_slug: string | null
-  website_enabled: boolean
-}
-
-interface Room {
-  id: string
-  room_number: string
-  room_type: string
-  floor: number
-  rent_amount: number
-  total_beds: number
-  occupied_beds: number
-  status: string
-  has_ac: boolean
-  has_attached_bathroom: boolean
-}
-
-interface TenantRaw {
-  id: string
-  name: string
-  phone: string
-  photo_url: string | null
-  profile_photo: string | null
-  monthly_rent: number
-  status: string
-  room: { room_number: string }[] | null
-}
-
-interface Tenant {
-  id: string
-  name: string
-  phone: string
-  photo_url: string | null
-  profile_photo: string | null
-  monthly_rent: number
-  status: string
-  room: {
-    room_number: string
-  } | null
-}
-
-interface Bill {
-  id: string
-  bill_number: string
-  bill_date: string
-  total_amount: number
-  balance_due: number
-  status: string
-  tenant: { id: string; name: string } | null
-}
-
-interface Payment {
-  id: string
-  amount: number
-  payment_date: string
-  payment_method: string
-  tenant: { id: string; name: string } | null
-}
-
-interface Expense {
-  id: string
-  amount: number
-  expense_date: string
-  description: string | null
-  expense_type: { name: string } | null
-}
-
-interface Complaint {
-  id: string
-  title: string
-  description: string | null
-  status: string
-  priority: string
-  created_at: string
-  tenant: { id: string; name: string } | null
-  room: { id: string; room_number: string } | null
-}
-
-interface Visitor {
-  id: string
-  visitor_name: string
-  purpose: string | null
-  check_in_time: string
-  check_out_time: string | null
-  is_overnight: boolean
-  tenant: { id: string; name: string } | null
-}
 
 const statusColors: Record<string, string> = {
   available: "bg-green-100 text-green-700",
@@ -149,162 +57,15 @@ const statusColors: Record<string, string> = {
 
 export default function PropertyDetailPage() {
   const params = useParams()
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [property, setProperty] = useState<Property | null>(null)
-  const [rooms, setRooms] = useState<Room[]>([])
-  const [tenants, setTenants] = useState<Tenant[]>([])
-  const [bills, setBills] = useState<Bill[]>([])
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [expenses, setExpenses] = useState<Expense[]>([])
-  const [complaints, setComplaints] = useState<Complaint[]>([])
-  const [visitors, setVisitors] = useState<Visitor[]>([])
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient()
-
-      // Fetch property
-      const { data: propertyData, error: propertyError } = await supabase
-        .from("properties")
-        .select("*")
-        .eq("id", params.id)
-        .single()
-
-      if (propertyError || !propertyData) {
-        console.error("Error fetching property:", propertyError)
-        toast.error("Property not found")
-        router.push("/properties")
-        return
-      }
-
-      setProperty(propertyData)
-
-      // Fetch rooms for this property
-      const { data: roomsData } = await supabase
-        .from("rooms")
-        .select("*")
-        .eq("property_id", params.id)
-        .order("room_number")
-
-      setRooms(roomsData || [])
-
-      // Fetch tenants for this property
-      const { data: tenantsData } = await supabase
-        .from("tenants")
-        .select(`
-          id,
-          name,
-          phone,
-          photo_url,
-          profile_photo,
-          monthly_rent,
-          status,
-          room:rooms(room_number)
-        `)
-        .eq("property_id", params.id)
-        .neq("status", "checked_out")
-        .order("name")
-
-      // Transform tenant data
-      const transformedTenants: Tenant[] = ((tenantsData as TenantRaw[]) || []).map((t) => ({
-        ...t,
-        room: transformJoin(t.room),
-      }))
-      setTenants(transformedTenants)
-
-      // Fetch recent bills for this property
-      const { data: billsData } = await supabase
-        .from("bills")
-        .select(`
-          id, bill_number, bill_date, total_amount, balance_due, status,
-          tenant:tenants(id, name)
-        `)
-        .eq("property_id", params.id)
-        .order("bill_date", { ascending: false })
-        .limit(5)
-
-      const transformedBills = (billsData || []).map((b: any) => ({
-        ...b,
-        tenant: transformJoin(b.tenant),
-      }))
-      setBills(transformedBills)
-
-      // Fetch recent payments for this property
-      const { data: paymentsData } = await supabase
-        .from("payments")
-        .select(`
-          id, amount, payment_date, payment_method,
-          tenant:tenants(id, name)
-        `)
-        .eq("property_id", params.id)
-        .order("payment_date", { ascending: false })
-        .limit(5)
-
-      const transformedPayments = (paymentsData || []).map((p: any) => ({
-        ...p,
-        tenant: transformJoin(p.tenant),
-      }))
-      setPayments(transformedPayments)
-
-      // Fetch recent expenses for this property
-      const { data: expensesData } = await supabase
-        .from("expenses")
-        .select(`
-          id, amount, expense_date, description,
-          expense_type:expense_types(name)
-        `)
-        .eq("property_id", params.id)
-        .order("expense_date", { ascending: false })
-        .limit(5)
-
-      const transformedExpenses = (expensesData || []).map((e: any) => ({
-        ...e,
-        expense_type: transformJoin(e.expense_type),
-      }))
-      setExpenses(transformedExpenses)
-
-      // Fetch recent complaints for this property
-      const { data: complaintsData } = await supabase
-        .from("complaints")
-        .select(`
-          id, title, description, status, priority, created_at,
-          tenant:tenants(id, name),
-          room:rooms(id, room_number)
-        `)
-        .eq("property_id", params.id)
-        .order("created_at", { ascending: false })
-        .limit(5)
-
-      const transformedComplaints = (complaintsData || []).map((c: any) => ({
-        ...c,
-        tenant: transformJoin(c.tenant),
-        room: transformJoin(c.room),
-      }))
-      setComplaints(transformedComplaints)
-
-      // Fetch recent visitors to this property
-      const { data: visitorsData } = await supabase
-        .from("visitors")
-        .select(`
-          id, visitor_name, purpose, check_in_time, check_out_time, is_overnight,
-          tenant:tenants(id, name)
-        `)
-        .eq("property_id", params.id)
-        .order("check_in_time", { ascending: false })
-        .limit(5)
-
-      const transformedVisitors = (visitorsData || []).map((v: any) => ({
-        ...v,
-        tenant: transformJoin(v.tenant),
-      }))
-      setVisitors(transformedVisitors)
-
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [params.id, router])
+  const {
+    data: property,
+    related,
+    loading,
+  } = useDetailPage<Property>({
+    config: PROPERTY_DETAIL_CONFIG,
+    id: params.id as string,
+  })
 
   if (loading) {
     return <PageLoading message="Loading property details..." />
@@ -313,6 +74,14 @@ export default function PropertyDetailPage() {
   if (!property) {
     return null
   }
+
+  const rooms = (related.rooms || []) as PropertyRoom[]
+  const tenants = (related.tenants || []) as PropertyTenant[]
+  const bills = (related.bills || []) as PropertyBill[]
+  const payments = (related.payments || []) as PropertyPayment[]
+  const expenses = (related.expenses || []) as PropertyExpense[]
+  const complaints = (related.complaints || []) as PropertyComplaint[]
+  const visitors = (related.visitors || []) as PropertyVisitor[]
 
   // Calculate stats
   const totalBeds = rooms.reduce((sum, r) => sum + r.total_beds, 0)
@@ -552,7 +321,7 @@ export default function PropertyDetailPage() {
                 <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
                   <div className="p-3 border rounded-lg hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3">
-                      <Avatar name={tenant.name} src={tenant.profile_photo || tenant.photo_url} size="md" />
+                      <Avatar name={tenant.name} src={tenant.person?.photo_url || tenant.profile_photo || tenant.photo_url} size="md" />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{tenant.name}</p>
                         <p className="text-sm text-muted-foreground">

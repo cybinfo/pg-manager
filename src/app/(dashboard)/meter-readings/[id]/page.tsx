@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useDetailPage, METER_READING_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -12,7 +13,6 @@ import {
   InfoRow,
 } from "@/components/ui/detail-components"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import {
   Gauge,
@@ -41,21 +41,6 @@ import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
-interface MeterReadingRaw {
-  id: string
-  reading_date: string
-  reading_value: number
-  previous_reading: number | null
-  units_consumed: number | null
-  image_url: string | null
-  notes: string | null
-  created_at: string
-  created_by: string | null
-  property: { id: string; name: string; address: string }[] | null
-  room: { id: string; room_number: string }[] | null
-  charge_type: { id: string; name: string; calculation_config: Record<string, unknown> | null }[] | null
-}
-
 interface MeterReading {
   id: string
   reading_date: string
@@ -66,31 +51,9 @@ interface MeterReading {
   notes: string | null
   created_at: string
   created_by: string | null
-  property: {
-    id: string
-    name: string
-    address: string
-  } | null
-  room: {
-    id: string
-    room_number: string
-  } | null
-  charge_type: {
-    id: string
-    name: string
-    calculation_config: Record<string, unknown> | null
-  } | null
-}
-
-interface ChargeRaw {
-  id: string
-  amount: number
-  due_date: string
-  status: string
-  for_period: string | null
-  paid_amount: number
-  calculation_details: Record<string, unknown> | null
-  tenant: { id: string; name: string }[] | null
+  property: { id: string; name: string; address: string } | null
+  room: { id: string; room_number: string } | null
+  charge_type: { id: string; name: string; calculation_config: Record<string, unknown> | null } | null
 }
 
 interface Charge {
@@ -113,44 +76,26 @@ const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: 
 export default function MeterReadingDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState(false)
   const [generating, setGenerating] = useState(false)
-  const [reading, setReading] = useState<MeterReading | null>(null)
   const [charges, setCharges] = useState<Charge[]>([])
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
+  const {
+    data: reading,
+    loading,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<MeterReading>({
+    config: METER_READING_DETAIL_CONFIG,
+    id: params.id as string,
+  })
+
+  // Fetch charges linked to this reading
   useEffect(() => {
-    const fetchReading = async () => {
+    const fetchCharges = async () => {
+      if (!reading) return
+
       const supabase = createClient()
-
-      const { data, error } = await supabase
-        .from("meter_readings")
-        .select(`
-          *,
-          property:properties(id, name, address),
-          room:rooms(id, room_number),
-          charge_type:charge_types(id, name, calculation_config)
-        `)
-        .eq("id", params.id)
-        .single()
-
-      if (error || !data) {
-        console.error("Error fetching meter reading:", error)
-        toast.error("Meter reading not found")
-        router.push("/meter-readings")
-        return
-      }
-
-      const rawReading = data as MeterReadingRaw
-      const transformedReading: MeterReading = {
-        ...rawReading,
-        property: Array.isArray(rawReading.property) ? rawReading.property[0] : rawReading.property,
-        room: Array.isArray(rawReading.room) ? rawReading.room[0] : rawReading.room,
-        charge_type: Array.isArray(rawReading.charge_type) ? rawReading.charge_type[0] : rawReading.charge_type,
-      }
-      setReading(transformedReading)
-
       const { data: chargesData } = await supabase
         .from("charges")
         .select(`
@@ -163,43 +108,32 @@ export default function MeterReadingDetailPage() {
           calculation_details,
           tenant:tenants(id, name)
         `)
-        .contains("calculation_details", { meter_reading_id: params.id })
+        .contains("calculation_details", { meter_reading_id: reading.id })
         .order("created_at", { ascending: false })
 
       if (chargesData) {
-        const transformedCharges: Charge[] = (chargesData as ChargeRaw[]).map((charge) => ({
+        const transformedCharges: Charge[] = chargesData.map((charge: {
+          id: string
+          amount: number
+          due_date: string
+          status: string
+          for_period: string | null
+          paid_amount: number
+          calculation_details: Record<string, unknown> | null
+          tenant: { id: string; name: string }[] | null
+        }) => ({
           ...charge,
           tenant: Array.isArray(charge.tenant) ? charge.tenant[0] : charge.tenant,
         }))
         setCharges(transformedCharges)
       }
-
-      setLoading(false)
     }
 
-    fetchReading()
-  }, [params.id, router])
+    fetchCharges()
+  }, [reading])
 
   const handleDelete = async () => {
-    if (!reading) return
-
-    setDeleting(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("meter_readings")
-      .delete()
-      .eq("id", reading.id)
-
-    if (error) {
-      console.error("Error deleting reading:", error)
-      toast.error("Failed to delete meter reading")
-      setDeleting(false)
-      return
-    }
-
-    toast.success("Meter reading deleted successfully")
-    router.push("/meter-readings")
+    await deleteRecord({ confirm: false })
   }
 
   const handleGenerateCharges = async () => {
@@ -288,13 +222,21 @@ export default function MeterReadingDetailPage() {
         `)
 
       if (chargeError) {
-        console.error("Error creating charges:", chargeError)
         toast.error("Failed to generate charges")
         return
       }
 
       if (newCharges) {
-        const transformedCharges: Charge[] = (newCharges as ChargeRaw[]).map((charge) => ({
+        const transformedCharges: Charge[] = newCharges.map((charge: {
+          id: string
+          amount: number
+          due_date: string
+          status: string
+          for_period: string | null
+          paid_amount: number
+          calculation_details: Record<string, unknown> | null
+          tenant: { id: string; name: string }[] | null
+        }) => ({
           ...charge,
           tenant: Array.isArray(charge.tenant) ? charge.tenant[0] : charge.tenant,
         }))
@@ -302,8 +244,7 @@ export default function MeterReadingDetailPage() {
       }
 
       toast.success(`${tenants.length} charge${tenants.length > 1 ? "s" : ""} generated successfully!`)
-    } catch (error) {
-      console.error("Error:", error)
+    } catch {
       toast.error("Failed to generate charges")
     } finally {
       setGenerating(false)
@@ -365,7 +306,7 @@ export default function MeterReadingDetailPage() {
               <Button
                 variant="destructive"
                 size="sm"
-                disabled={deleting}
+                disabled={isDeleting}
                 onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -382,13 +323,11 @@ export default function MeterReadingDetailPage() {
           label="Current Reading"
           value={reading.reading_value.toLocaleString()}
           icon={Gauge}
-          variant="default"
         />
         <InfoCard
           label="Previous Reading"
           value={reading.previous_reading !== null ? reading.previous_reading.toLocaleString() : "N/A"}
           icon={Gauge}
-          variant="default"
         />
         <InfoCard
           label="Units Consumed"
@@ -400,17 +339,12 @@ export default function MeterReadingDetailPage() {
           label="Reading Date"
           value={formatDate(reading.reading_date)}
           icon={Calendar}
-          variant="default"
         />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Location Details */}
-        <DetailSection
-          title="Location"
-          description="Property and room details"
-          icon={Home}
-        >
+        <DetailSection title="Location" description="Property and room details" icon={Home}>
           {reading.property && (
             <InfoRow
               label="Property"
@@ -422,9 +356,7 @@ export default function MeterReadingDetailPage() {
               icon={Building2}
             />
           )}
-          {reading.property?.address && (
-            <InfoRow label="Address" value={reading.property.address} />
-          )}
+          {reading.property?.address && <InfoRow label="Address" value={reading.property.address} />}
           {reading.room && (
             <InfoRow
               label="Room"
@@ -439,11 +371,7 @@ export default function MeterReadingDetailPage() {
         </DetailSection>
 
         {/* Meter Details */}
-        <DetailSection
-          title="Meter Details"
-          description="Type and calculation info"
-          icon={Icon}
-        >
+        <DetailSection title="Meter Details" description="Type and calculation info" icon={Icon}>
           <InfoRow
             label="Meter Type"
             value={
@@ -453,9 +381,7 @@ export default function MeterReadingDetailPage() {
             }
           />
           <InfoRow label="Unit of Measurement" value={config.unit} />
-          {ratePerUnit && (
-            <InfoRow label="Rate per Unit" value={formatCurrency(ratePerUnit)} />
-          )}
+          {ratePerUnit && <InfoRow label="Rate per Unit" value={formatCurrency(ratePerUnit)} />}
           {ratePerUnit && reading.units_consumed !== null && (
             <InfoRow
               label="Estimated Cost"
@@ -466,40 +392,23 @@ export default function MeterReadingDetailPage() {
         </DetailSection>
 
         {/* Record Info */}
-        <DetailSection
-          title="Record Info"
-          description="When this reading was recorded"
-          icon={Clock}
-        >
+        <DetailSection title="Record Info" description="When this reading was recorded" icon={Clock}>
           <InfoRow label="Reading Date" value={formatDate(reading.reading_date)} icon={Calendar} />
           <InfoRow label="Recorded At" value={formatDateTime(reading.created_at)} icon={Clock} />
         </DetailSection>
 
         {/* Meter Image */}
         {reading.image_url && (
-          <DetailSection
-            title="Meter Photo"
-            description="Captured meter image"
-            icon={ImageIcon}
-          >
+          <DetailSection title="Meter Photo" description="Captured meter image" icon={ImageIcon}>
             <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-              <img
-                src={reading.image_url}
-                alt="Meter reading"
-                className="object-cover w-full h-full"
-              />
+              <img src={reading.image_url} alt="Meter reading" className="object-cover w-full h-full" />
             </div>
           </DetailSection>
         )}
 
         {/* Notes */}
         {reading.notes && (
-          <DetailSection
-            title="Notes"
-            description="Additional information"
-            icon={FileText}
-            className="md:col-span-2"
-          >
+          <DetailSection title="Notes" description="Additional information" icon={FileText} className="md:col-span-2">
             <p className="text-muted-foreground whitespace-pre-wrap">{reading.notes}</p>
           </DetailSection>
         )}
@@ -563,18 +472,14 @@ export default function MeterReadingDetailPage() {
                       ) : (
                         <p className="font-medium">Unknown Tenant</p>
                       )}
-                      <p className="text-sm text-muted-foreground">
-                        {charge.for_period || "No period specified"}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{charge.for_period || "No period specified"}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="font-bold">{formatCurrency(charge.amount)}</p>
                       {charge.paid_amount > 0 && (
-                        <p className="text-sm text-green-600">
-                          Paid: {formatCurrency(charge.paid_amount)}
-                        </p>
+                        <p className="text-sm text-green-600">Paid: {formatCurrency(charge.paid_amount)}</p>
                       )}
                     </div>
                     <StatusBadge
@@ -625,7 +530,7 @@ export default function MeterReadingDetailPage() {
         description="Are you sure you want to delete this meter reading? This action cannot be undone."
         confirmText="Delete"
         variant="destructive"
-        loading={deleting}
+        loading={isDeleting}
         onConfirm={handleDelete}
       />
     </div>

@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
+import { useDetailPage, PAYMENT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { Payment } from "@/types/payments.types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -29,71 +30,16 @@ import { toast } from "sonner"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
-import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
-interface Payment {
-  id: string
-  amount: number
-  payment_method: string
-  payment_date: string
-  for_period: string | null
-  reference_number: string | null
-  receipt_number: string | null
-  notes: string | null
-  created_at: string
-  tenant: {
-    id: string
-    name: string
-    phone: string
-    room: {
-      room_number: string
-    } | null
-  } | null
-  property: {
-    id: string
-    name: string
-    address: string | null
-    city: string
-  } | null
-  charge_type: {
-    id: string
-    name: string
-  } | null
-  owner: {
+// Extended Payment type with owner info
+interface PaymentWithOwner extends Payment {
+  owner?: {
     business_name: string | null
     name: string
     phone: string | null
   }
-}
-
-interface RawPayment {
-  id: string
-  amount: number
-  payment_method: string
-  payment_date: string
-  for_period: string | null
-  reference_number: string | null
-  receipt_number: string | null
-  notes: string | null
-  created_at: string
-  tenant: {
-    id: string
-    name: string
-    phone: string
-    room: { room_number: string }[] | null
-  }[] | null
-  property: {
-    id: string
-    name: string
-    address: string | null
-    city: string
-  }[] | null
-  charge_type: {
-    id: string
-    name: string
-  }[] | null
 }
 
 const paymentMethodLabels: Record<string, string> = {
@@ -107,91 +53,49 @@ const paymentMethodLabels: Record<string, string> = {
 export default function PaymentReceiptPage() {
   const params = useParams()
   const router = useRouter()
-  const { hasPermission } = useAuth()
   const receiptRef = useRef<HTMLDivElement>(null)
-  const [payment, setPayment] = useState<Payment | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState(false)
+
+  // Use centralized hook for data fetching
+  const {
+    data: payment,
+    loading,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<PaymentWithOwner>({
+    config: PAYMENT_DETAIL_CONFIG,
+    id: params.id as string,
+  })
+
+  const [ownerInfo, setOwnerInfo] = useState<{ business_name: string | null; name: string; phone: string | null } | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
+  // Fetch owner info separately (not part of main entity)
   useEffect(() => {
-    const fetchPayment = async () => {
+    const fetchOwnerInfo = async () => {
       const supabase = createClient()
-
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push("/login")
-        return
-      }
+      if (!user) return
 
-      // Get owner info
       const { data: ownerData } = await supabase
         .from("owners")
         .select("business_name, name, phone")
         .eq("id", user.id)
         .single()
 
-      const { data, error } = await supabase
-        .from("payments")
-        .select(`
-          *,
-          tenant:tenants(id, name, phone, room:rooms(room_number)),
-          property:properties(id, name, address, city),
-          charge_type:charge_types(id, name)
-        `)
-        .eq("id", params.id)
-        .single()
-
-      if (error || !data) {
-        console.error("Error fetching payment:", error)
-        toast.error("Payment not found")
-        router.push("/payments")
-        return
+      if (ownerData) {
+        setOwnerInfo(ownerData)
       }
-
-      // Transform the data from arrays to single objects
-      const rawData = data as RawPayment
-      const tenant = transformJoin(rawData.tenant)
-      const transformedPayment: Payment = {
-        ...rawData,
-        tenant: tenant ? {
-          ...tenant,
-          room: transformJoin(tenant.room),
-        } : null,
-        property: transformJoin(rawData.property),
-        charge_type: transformJoin(rawData.charge_type),
-        owner: ownerData || { business_name: null, name: "PG Manager", phone: null },
-      }
-      setPayment(transformedPayment)
-      setLoading(false)
     }
 
-    fetchPayment()
-  }, [params.id, router])
+    fetchOwnerInfo()
+  }, [])
 
   const handlePrint = () => {
     window.print()
   }
 
   const handleDelete = async () => {
-    if (!payment) return
-
-    setDeleting(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("payments")
-      .delete()
-      .eq("id", payment.id)
-
-    if (error) {
-      console.error("Delete error:", error)
-      toast.error("Failed to delete payment: " + error.message)
-      setDeleting(false)
-    } else {
-      toast.success("Payment deleted successfully")
-      router.push("/payments")
-    }
+    await deleteRecord({ confirm: false })
   }
 
   const handleDownloadPDF = async () => {
@@ -256,6 +160,8 @@ export default function PaymentReceiptPage() {
     return null
   }
 
+  const owner = ownerInfo || { business_name: null, name: "PG Manager", phone: null }
+
   return (
     <div className="space-y-6">
       {/* Header - Hidden in print */}
@@ -280,14 +186,12 @@ export default function PaymentReceiptPage() {
                     amount: Number(payment.amount),
                     receiptNumber: payment.receipt_number || payment.id.slice(0, 8).toUpperCase(),
                     propertyName: payment.property?.name || "Property",
-                    propertyAddress: payment.property?.address
-                      ? `${payment.property.address}, ${payment.property.city}`
-                      : payment.property?.city || undefined,
-                    roomNumber: payment.tenant?.room?.room_number || undefined,
+                    propertyAddress: undefined,
+                    roomNumber: undefined,
                     paymentDate: payment.payment_date,
                     paymentMethod: payment.payment_method,
-                    ownerName: payment.owner.business_name || payment.owner.name,
-                    ownerPhone: payment.owner.phone || undefined,
+                    ownerName: owner.business_name || owner.name,
+                    ownerPhone: owner.phone || undefined,
                     forPeriod: payment.for_period || undefined,
                     description: payment.charge_type?.name || undefined,
                   })}
@@ -308,7 +212,7 @@ export default function PaymentReceiptPage() {
                   variant="destructive"
                   size="sm"
                   onClick={() => setShowDeleteDialog(true)}
-                  disabled={deleting}
+                  disabled={isDeleting}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete
@@ -339,15 +243,16 @@ export default function PaymentReceiptPage() {
               <Building2 className="h-10 w-10 text-primary" />
             </div>
             <h2 className="text-2xl font-bold">
-              {payment.owner.business_name || payment.owner.name}
+              {owner.business_name || owner.name}
             </h2>
-            <p className="text-muted-foreground">
-              {payment.property?.address && `${payment.property.address}, `}
-              {payment.property?.city}
-            </p>
-            {payment.owner.phone && (
+            {payment.property && (
+              <p className="text-muted-foreground">
+                {payment.property.name}
+              </p>
+            )}
+            {owner.phone && (
               <p className="text-sm text-muted-foreground">
-                Phone: {payment.owner.phone}
+                Phone: {owner.phone}
               </p>
             )}
           </div>
@@ -374,27 +279,29 @@ export default function PaymentReceiptPage() {
           </div>
 
           {/* Tenant Details */}
-          <div className="bg-muted/50 rounded-lg p-4 mb-6">
-            <h4 className="font-semibold mb-2">Received From:</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span>{payment.tenant?.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>{payment.tenant?.phone}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span>{payment.property?.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Home className="h-4 w-4 text-muted-foreground" />
-                <span>Room {payment.tenant?.room?.room_number}</span>
+          {payment.tenant && (
+            <div className="bg-muted/50 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold mb-2">Received From:</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span>{payment.tenant.name}</span>
+                </div>
+                {payment.tenant.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span>{payment.tenant.phone}</span>
+                  </div>
+                )}
+                {payment.property && (
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <span>{payment.property.name}</span>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
 
           {/* Payment Details Table */}
           <table className="w-full mb-6 text-sm">
@@ -447,10 +354,10 @@ export default function PaymentReceiptPage() {
                 {paymentMethodLabels[payment.payment_method] || payment.payment_method}
               </span>
             </div>
-            {payment.reference_number && (
+            {payment.transaction_reference && (
               <div>
                 <span className="text-muted-foreground">Reference:</span>
-                <span className="ml-2 font-medium">{payment.reference_number}</span>
+                <span className="ml-2 font-medium">{payment.transaction_reference}</span>
               </div>
             )}
           </div>
@@ -507,7 +414,7 @@ export default function PaymentReceiptPage() {
         description={`Are you sure you want to delete this payment of ${formatCurrency(payment?.amount || 0)}? Receipt: ${payment?.receipt_number || payment?.id.slice(0, 8).toUpperCase()}. This will permanently remove the payment record and may affect associated bill status. This action cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
-        loading={deleting}
+        loading={isDeleting}
         onConfirm={handleDelete}
       />
     </div>

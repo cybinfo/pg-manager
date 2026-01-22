@@ -1,9 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useDetailPage, BILL_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { Bill, BillLineItem, BILL_STATUS_CONFIG } from "@/types/bills.types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -33,60 +35,31 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-
-interface LineItem {
-  type: string
-  description: string
-  amount: number
-}
-
-interface Bill {
-  id: string
-  bill_number: string
-  bill_date: string
-  due_date: string
-  period_start: string
-  period_end: string
-  for_month: string
-  subtotal: number
-  discount_amount: number
-  late_fee: number
-  previous_balance: number
-  total_amount: number
-  paid_amount: number
-  balance_due: number
-  status: string
-  line_items: LineItem[]
-  notes: string | null
-  tenant: {
-    id: string
-    name: string
-    phone: string
-    email: string | null
-  } | null
-  property: {
-    id: string
-    name: string
-    address: string
-  } | null
-  room: {
-    room_number: string
-  } | null
-}
 
 interface Payment {
   id: string
   amount: number
   payment_date: string
   payment_method: string
-  reference_number: string | null
+  receipt_number: string | null
   notes: string | null
 }
 
+// Extended Bill type with additional fields for display
+interface BillWithDetails extends Bill {
+  period_start?: string
+  period_end?: string
+  subtotal?: number
+  discount_amount?: number
+  late_fee?: number
+  previous_balance?: number
+  room?: { room_number: string } | null
+}
+
 const statusLabels: Record<string, string> = {
+  unpaid: "Unpaid",
   pending: "Pending",
   partial: "Partial Payment",
   paid: "Paid",
@@ -95,6 +68,7 @@ const statusLabels: Record<string, string> = {
 }
 
 const statusConfig: Record<string, "warning" | "info" | "success" | "error" | "muted"> = {
+  unpaid: "warning",
   pending: "warning",
   partial: "info",
   paid: "success",
@@ -106,11 +80,20 @@ export default function BillDetailPage() {
   const router = useRouter()
   const params = useParams()
   const billId = params.id as string
-  const { hasPermission } = useAuth()
 
-  const [bill, setBill] = useState<Bill | null>(null)
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [loading, setLoading] = useState(true)
+  // Use centralized hook for data fetching
+  const {
+    data: bill,
+    related,
+    loading,
+    refetch,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<BillWithDetails>({
+    config: BILL_DETAIL_CONFIG,
+    id: billId,
+  })
+
   const [showPaymentForm, setShowPaymentForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -123,72 +106,8 @@ export default function BillDetailPage() {
     notes: "",
   })
 
-  useEffect(() => {
-    const fetchBill = async () => {
-      const supabase = createClient()
-
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push("/login")
-        return
-      }
-
-      const { data: billData, error: billError } = await supabase
-        .from("bills")
-        .select(`
-          *,
-          tenant:tenants(id, name, phone, email),
-          property:properties(id, name, address)
-        `)
-        .eq("id", billId)
-        .eq("owner_id", user.id)
-        .single()
-
-      if (billError || !billData) {
-        console.error("Error fetching bill:", billError)
-        toast.error("Bill not found")
-        router.push("/bills")
-        return
-      }
-
-      const bill = billData as unknown as Bill & { tenant: Bill["tenant"] | Bill["tenant"][]; property: Bill["property"] | Bill["property"][] }
-      const transformedBill: Bill = {
-        ...bill,
-        tenant: Array.isArray(bill.tenant) ? bill.tenant[0] : bill.tenant,
-        property: Array.isArray(bill.property) ? bill.property[0] : bill.property,
-        room: null,
-      }
-
-      if (transformedBill.tenant?.id) {
-        const { data: tenantData } = await supabase
-          .from("tenants")
-          .select("room:rooms(room_number)")
-          .eq("id", transformedBill.tenant.id)
-          .single()
-
-        const tenant = tenantData as unknown as { room: Bill["room"] | Bill["room"][] } | null
-        if (tenant?.room) {
-          transformedBill.room = Array.isArray(tenant.room) ? tenant.room[0] : tenant.room
-        }
-      }
-
-      setBill(transformedBill)
-
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from("payments")
-        .select("*")
-        .eq("bill_id", billId)
-        .order("payment_date", { ascending: false })
-
-      if (!paymentsError && paymentsData) {
-        setPayments(paymentsData as unknown as Payment[])
-      }
-
-      setLoading(false)
-    }
-
-    fetchBill()
-  }, [router, billId])
+  // Get payments from related data
+  const payments = (related.payments || []) as Payment[]
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -231,7 +150,15 @@ export default function BillDetailPage() {
       }
 
       toast.success("Payment recorded successfully")
-      window.location.reload()
+      setShowPaymentForm(false)
+      setPaymentData({
+        amount: "",
+        payment_date: new Date().toISOString().split("T")[0],
+        payment_method: "cash",
+        reference_number: "",
+        notes: "",
+      })
+      refetch()
     } catch {
       toast.error("Something went wrong")
     } finally {
@@ -247,6 +174,7 @@ export default function BillDetailPage() {
 
     const phone = bill.tenant.phone.replace(/\D/g, "")
     const phoneWithCountry = phone.startsWith("91") ? phone : `91${phone}`
+    const lineItems = bill.line_items || []
 
     const message = `*Bill: ${bill.bill_number}*
 
@@ -260,10 +188,10 @@ Bill Date: ${formatDate(bill.bill_date)}
 Due Date: ${formatDate(bill.due_date)}
 
 *Amount Breakdown:*
-${bill.line_items.map((item) => `${item.type}: ${formatCurrency(item.amount)}`).join("\n")}
-${bill.discount_amount > 0 ? `Discount: -${formatCurrency(bill.discount_amount)}` : ""}
-${bill.late_fee > 0 ? `Late Fee: +${formatCurrency(bill.late_fee)}` : ""}
-${bill.previous_balance > 0 ? `Previous Balance: ${formatCurrency(bill.previous_balance)}` : ""}
+${lineItems.map((item: BillLineItem) => `${item.description}: ${formatCurrency(item.amount)}`).join("\n")}
+${(bill.discount_amount || 0) > 0 ? `Discount: -${formatCurrency(bill.discount_amount || 0)}` : ""}
+${(bill.late_fee || 0) > 0 ? `Late Fee: +${formatCurrency(bill.late_fee || 0)}` : ""}
+${(bill.previous_balance || 0) > 0 ? `Previous Balance: ${formatCurrency(bill.previous_balance || 0)}` : ""}
 
 *Total Amount: ${formatCurrency(bill.total_amount)}*
 *Paid: ${formatCurrency(bill.paid_amount)}*
@@ -279,24 +207,7 @@ ManageKar`
   }
 
   const handleDelete = async () => {
-    if (!bill) return
-
-    setSubmitting(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("bills")
-      .delete()
-      .eq("id", bill.id)
-
-    if (error) {
-      console.error("Delete error:", error)
-      toast.error("Failed to delete bill: " + error.message)
-      setSubmitting(false)
-    } else {
-      toast.success("Bill deleted successfully")
-      router.push("/bills")
-    }
+    await deleteRecord({ confirm: false })
   }
 
   if (loading) {
@@ -315,6 +226,8 @@ ManageKar`
   }
 
   const isOverdue = new Date(bill.due_date) < new Date() && bill.balance_due > 0
+  const lineItems = bill.line_items || []
+  const subtotal = bill.subtotal || lineItems.reduce((sum: number, item: BillLineItem) => sum + item.amount, 0)
 
   return (
     <div className="space-y-6">
@@ -347,7 +260,7 @@ ManageKar`
                 variant="destructive"
                 size="sm"
                 onClick={() => setShowDeleteDialog(true)}
-                disabled={submitting}
+                disabled={submitting || isDeleting}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
@@ -468,11 +381,10 @@ ManageKar`
             icon={FileText}
           >
             <div className="space-y-3">
-              {bill.line_items.map((item, index) => (
+              {lineItems.map((item: BillLineItem, index: number) => (
                 <div key={index} className="flex justify-between items-center py-2 border-b last:border-0">
                   <div>
-                    <p className="font-medium">{item.type}</p>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                    <p className="font-medium">{item.description}</p>
                   </div>
                   <p className="font-semibold">{formatCurrency(item.amount)}</p>
                 </div>
@@ -481,24 +393,24 @@ ManageKar`
               <div className="pt-3 border-t space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span>{formatCurrency(bill.subtotal)}</span>
+                  <span>{formatCurrency(subtotal)}</span>
                 </div>
-                {bill.discount_amount > 0 && (
+                {(bill.discount_amount || 0) > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Discount</span>
-                    <span>-{formatCurrency(bill.discount_amount)}</span>
+                    <span>-{formatCurrency(bill.discount_amount || 0)}</span>
                   </div>
                 )}
-                {bill.late_fee > 0 && (
+                {(bill.late_fee || 0) > 0 && (
                   <div className="flex justify-between text-sm text-red-600">
                     <span>Late Fee</span>
-                    <span>+{formatCurrency(bill.late_fee)}</span>
+                    <span>+{formatCurrency(bill.late_fee || 0)}</span>
                   </div>
                 )}
-                {bill.previous_balance > 0 && (
+                {(bill.previous_balance || 0) > 0 && (
                   <div className="flex justify-between text-sm">
                     <span>Previous Balance</span>
-                    <span>{formatCurrency(bill.previous_balance)}</span>
+                    <span>{formatCurrency(bill.previous_balance || 0)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg pt-2 border-t">
@@ -529,8 +441,8 @@ ManageKar`
                       <p className="text-sm text-muted-foreground">
                         {formatDate(payment.payment_date)} via {payment.payment_method}
                       </p>
-                      {payment.reference_number && (
-                        <p className="text-xs text-muted-foreground">Ref: {payment.reference_number}</p>
+                      {payment.receipt_number && (
+                        <p className="text-xs text-muted-foreground">Ref: {payment.receipt_number}</p>
                       )}
                     </div>
                     <Link href={`/payments/${payment.id}`}>
@@ -583,10 +495,12 @@ ManageKar`
               }
               icon={Calendar}
             />
-            <InfoRow
-              label="Billing Period"
-              value={`${formatDate(bill.period_start)} - ${formatDate(bill.period_end)}`}
-            />
+            {bill.period_start && bill.period_end && (
+              <InfoRow
+                label="Billing Period"
+                value={`${formatDate(bill.period_start)} - ${formatDate(bill.period_end)}`}
+              />
+            )}
           </DetailSection>
 
           {/* Tenant Info */}
@@ -659,7 +573,7 @@ ManageKar`
         description={`Are you sure you want to delete bill "${bill.bill_number}"? This will permanently remove the bill and unlink any associated payments. This action cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
-        loading={submitting}
+        loading={submitting || isDeleting}
         onConfirm={handleDelete}
       />
     </div>

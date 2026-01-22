@@ -7,10 +7,11 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useState } from "react"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useDetailPage, METER_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -43,74 +44,27 @@ import {
   Pencil,
   Trash2,
   AlertTriangle,
-  Archive,
-  RotateCcw,
   Plus,
   History,
   FileText,
-  CheckCircle,
   XCircle,
   Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
-import { formatDate, formatDateTime } from "@/lib/format"
+import { formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import {
   MeterType,
   MeterStatus,
+  MeterWithRelations,
+  MeterAssignmentWithRelations,
+  MeterDetailReading,
+  MeterDetailRoom,
   METER_TYPE_CONFIG,
   METER_STATUS_CONFIG,
   ASSIGNMENT_REASONS,
   AssignmentReason,
 } from "@/types/meters.types"
-
-// ============================================
-// Types
-// ============================================
-
-interface Meter {
-  id: string
-  owner_id: string
-  property_id: string
-  meter_number: string
-  meter_type: MeterType
-  status: MeterStatus
-  initial_reading: number
-  make: string | null
-  model: string | null
-  installation_date: string | null
-  notes: string | null
-  created_at: string
-  updated_at: string
-  property: { id: string; name: string } | null
-}
-
-interface MeterAssignment {
-  id: string
-  meter_id: string
-  room_id: string
-  start_date: string
-  end_date: string | null
-  start_reading: number
-  end_reading: number | null
-  reason: AssignmentReason | null
-  notes: string | null
-  created_at: string
-  room: { id: string; room_number: string } | null
-}
-
-interface Room {
-  id: string
-  room_number: string
-  property_id: string
-}
-
-interface MeterReading {
-  id: string
-  reading_date: string
-  reading_value: number
-  units_consumed: number | null
-}
 
 // ============================================
 // Icon mapping
@@ -128,12 +82,6 @@ const meterTypeIcons: Record<MeterType, typeof Zap> = {
 
 export default function MeterDetailPage() {
   const params = useParams()
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [meter, setMeter] = useState<Meter | null>(null)
-  const [assignments, setAssignments] = useState<MeterAssignment[]>([])
-  const [readings, setReadings] = useState<MeterReading[]>([])
-  const [rooms, setRooms] = useState<Room[]>([])
 
   // Dialogs
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -157,124 +105,41 @@ export default function MeterDetailPage() {
   })
 
   const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
 
-  // Get current assignment
+  const {
+    data: meter,
+    related,
+    loading,
+    deleteRecord,
+    updateField,
+    isDeleting,
+    refetch,
+  } = useDetailPage<MeterWithRelations>({
+    config: METER_DETAIL_CONFIG,
+    id: params.id as string,
+  })
+
+  // Get related data
+  const assignments = (related.assignments || []) as MeterAssignmentWithRelations[]
+  const readings = (related.readings || []) as MeterDetailReading[]
+  const rooms = (related.rooms || []) as MeterDetailRoom[]
+
+  // Get current assignment (no end_date)
   const currentAssignment = assignments.find((a) => !a.end_date)
 
-  useEffect(() => {
-    fetchData()
-  }, [params.id])
-
-  const fetchData = async () => {
-    const supabase = createClient()
-
-    // Fetch meter with property
-    const { data: meterData, error: meterError } = await supabase
-      .from("meters")
-      .select(`
-        *,
-        property:properties(id, name)
-      `)
-      .eq("id", params.id)
-      .single()
-
-    if (meterError || !meterData) {
-      console.error("Error fetching meter:", meterError)
-      toast.error("Meter not found")
-      router.push("/meters")
-      return
-    }
-
-    // Transform joins
-    const transformedMeter: Meter = {
-      ...meterData,
-      property: Array.isArray(meterData.property) ? meterData.property[0] : meterData.property,
-    }
-    setMeter(transformedMeter)
-
-    // Fetch assignments
-    const { data: assignmentsData } = await supabase
-      .from("meter_assignments")
-      .select(`
-        *,
-        room:rooms(id, room_number)
-      `)
-      .eq("meter_id", params.id)
-      .order("start_date", { ascending: false })
-
-    if (assignmentsData) {
-      const transformedAssignments = assignmentsData.map((a: Record<string, unknown>) => ({
-        ...a,
-        room: Array.isArray(a.room) ? a.room[0] : a.room,
-      })) as MeterAssignment[]
-      setAssignments(transformedAssignments)
-    }
-
-    // Fetch recent readings for this meter
-    const { data: readingsData } = await supabase
-      .from("meter_readings")
-      .select("id, reading_date, reading_value, units_consumed")
-      .eq("meter_id", params.id)
-      .order("reading_date", { ascending: false })
-      .limit(10)
-
-    if (readingsData) {
-      setReadings(readingsData)
-    }
-
-    // Fetch rooms for assignment (only rooms from same property)
-    if (transformedMeter.property_id) {
-      const { data: roomsData } = await supabase
-        .from("rooms")
-        .select("id, room_number, property_id")
-        .eq("property_id", transformedMeter.property_id)
-        .order("room_number")
-
-      if (roomsData) {
-        setRooms(roomsData)
-      }
-    }
-
-    setLoading(false)
-  }
-
   const handleDelete = async () => {
-    if (!meter) return
-    setDeleting(true)
-
-    const supabase = createClient()
-    const { error } = await supabase.from("meters").delete().eq("id", meter.id)
-
-    if (error) {
-      toast.error("Failed to delete meter")
-      setDeleting(false)
-      return
-    }
-
-    toast.success("Meter deleted")
-    router.push("/meters")
+    await deleteRecord({ confirm: false })
   }
 
   const handleStatusChange = async () => {
     if (!meter) return
     setSaving(true)
 
-    const supabase = createClient()
-    const { error } = await supabase
-      .from("meters")
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq("id", meter.id)
-
-    if (error) {
-      toast.error("Failed to update status")
-      setSaving(false)
-      return
+    const success = await updateField("status", newStatus)
+    if (success) {
+      setShowStatusDialog(false)
+      toast.success(`Meter marked as ${METER_STATUS_CONFIG[newStatus].label}`)
     }
-
-    setMeter({ ...meter, status: newStatus })
-    setShowStatusDialog(false)
-    toast.success(`Meter marked as ${METER_STATUS_CONFIG[newStatus].label}`)
     setSaving(false)
   }
 
@@ -307,7 +172,7 @@ export default function MeterDetailPage() {
 
     toast.success("Meter assigned to room")
     setShowAssignDialog(false)
-    fetchData()
+    refetch()
     setSaving(false)
   }
 
@@ -345,7 +210,7 @@ export default function MeterDetailPage() {
 
     toast.success("Assignment ended")
     setShowEndAssignDialog(false)
-    fetchData()
+    refetch()
     setSaving(false)
   }
 
@@ -573,7 +438,7 @@ export default function MeterDetailPage() {
                       <span className="text-muted-foreground">Start:</span>{" "}
                       <span className="font-mono">{assignment.start_reading.toLocaleString()}</span>
                     </div>
-                    {assignment.end_reading !== null && (
+                    {assignment.end_reading != null && (
                       <div className="text-sm">
                         <span className="text-muted-foreground">End:</span>{" "}
                         <span className="font-mono">{assignment.end_reading.toLocaleString()}</span>
@@ -652,7 +517,7 @@ export default function MeterDetailPage() {
         description={`Are you sure you want to delete meter ${meter.meter_number}? This action cannot be undone. All assignment history will be deleted.`}
         confirmText="Delete"
         onConfirm={handleDelete}
-        loading={deleting}
+        loading={isDeleting}
         variant="destructive"
       />
 

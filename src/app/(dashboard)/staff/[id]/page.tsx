@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
+import { useDetailPage, STAFF_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { StaffMember, UserRole, Role } from "@/types/staff.types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,7 +29,6 @@ import {
   Plus,
   X,
   Save,
-  UserCog,
   Edit,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -36,39 +36,6 @@ import { PermissionGate } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/ui/status-badge"
-
-interface StaffMember {
-  id: string
-  person_id: string | null
-  name: string
-  email: string
-  phone: string | null
-  is_active: boolean
-  created_at: string
-  user_id: string | null
-  person: { id: string; photo_url: string | null } | null
-}
-
-interface UserRole {
-  id: string
-  role_id: string
-  property_id: string | null
-  role: {
-    id: string
-    name: string
-    description: string | null
-  } | null
-  property: {
-    id: string
-    name: string
-  } | null
-}
-
-interface Role {
-  id: string
-  name: string
-  description: string | null
-}
 
 interface Property {
   id: string
@@ -78,13 +45,27 @@ interface Property {
 export default function StaffDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [staff, setStaff] = useState<StaffMember | null>(null)
-  const [userRoles, setUserRoles] = useState<UserRole[]>([])
+
+  // Use the centralized hook for main data fetching
+  const {
+    data: staff,
+    related,
+    loading,
+    refetch,
+    updateFields,
+    deleteRecord,
+    isDeleting,
+    isSaving,
+  } = useDetailPage<StaffMember>({
+    config: STAFF_DETAIL_CONFIG,
+    id: params.id as string,
+  })
+
+  // Additional state for role management and form editing
   const [allRoles, setAllRoles] = useState<Role[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [isEditing, setIsEditing] = useState(false)
+  const [roleLoading, setRoleLoading] = useState(false)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -97,78 +78,51 @@ export default function StaffDetailPage() {
     property_id: "",
   })
 
+  // Get user roles from related data
+  const userRoles = (related.userRoles || []) as UserRole[]
+
+  // Fetch roles and properties (needed for role assignment)
   useEffect(() => {
-    fetchData()
-  }, [params.id])
+    const fetchRolesAndProperties = async () => {
+      const supabase = createClient()
 
-  const fetchData = async () => {
-    const supabase = createClient()
+      const [allRolesRes, propertiesRes] = await Promise.all([
+        supabase
+          .from("roles")
+          .select("id, name, description, is_system_role")
+          .order("is_system_role", { ascending: false })
+          .order("name"),
+        supabase.from("properties").select("id, name").order("name"),
+      ])
 
-    const [staffRes, rolesRes, allRolesRes, propertiesRes] = await Promise.all([
-      supabase
-        .from("staff_members")
-        .select("*, person:people(id, photo_url)")
-        .eq("id", params.id)
-        .single(),
-      supabase
-        .from("user_roles")
-        .select(`
-          id,
-          role_id,
-          property_id,
-          role:roles(id, name, description),
-          property:properties(id, name)
-        `)
-        .eq("staff_member_id", params.id),
-      supabase
-        .from("roles")
-        .select("id, name, description, is_system_role")
-        .order("is_system_role", { ascending: false }) // System roles first
-        .order("name"),
-      supabase.from("properties").select("id, name").order("name"),
-    ])
+      if (!allRolesRes.error) {
+        setAllRoles(allRolesRes.data || [])
+        if (allRolesRes.data && allRolesRes.data.length > 0) {
+          setNewRoleAssignment((prev) => ({ ...prev, role_id: allRolesRes.data[0].id }))
+        }
+      }
 
-    if (staffRes.error || !staffRes.data) {
-      console.error("Error fetching staff:", staffRes.error)
-      toast.error("Staff member not found")
-      router.push("/staff")
-      return
-    }
-
-    setStaff(staffRes.data)
-    setFormData({
-      name: staffRes.data.name,
-      email: staffRes.data.email,
-      phone: staffRes.data.phone || "",
-    })
-
-    if (!rolesRes.error && rolesRes.data) {
-      // Transform user roles - handle both array and object responses from Supabase joins
-      const transformedRoles: UserRole[] = rolesRes.data.map((r: any) => ({
-        ...r,
-        role: transformJoin(r.role),
-        property: transformJoin(r.property),
-      }))
-      setUserRoles(transformedRoles)
-    }
-
-    if (!allRolesRes.error) {
-      setAllRoles(allRolesRes.data || [])
-      if (allRolesRes.data && allRolesRes.data.length > 0) {
-        setNewRoleAssignment((prev) => ({ ...prev, role_id: allRolesRes.data[0].id }))
+      if (!propertiesRes.error) {
+        setProperties(propertiesRes.data || [])
+        if (propertiesRes.data && propertiesRes.data.length === 1) {
+          setNewRoleAssignment((prev) => ({ ...prev, property_id: propertiesRes.data[0].id }))
+        }
       }
     }
 
-    if (!propertiesRes.error) {
-      setProperties(propertiesRes.data || [])
-      // If there's only one property, pre-select it for convenience
-      if (propertiesRes.data && propertiesRes.data.length === 1) {
-        setNewRoleAssignment((prev) => ({ ...prev, property_id: propertiesRes.data[0].id }))
-      }
-    }
+    fetchRolesAndProperties()
+  }, [])
 
-    setLoading(false)
-  }
+  // Sync form data when staff data loads
+  useEffect(() => {
+    if (staff) {
+      setFormData({
+        name: staff.name,
+        email: staff.email,
+        phone: staff.phone || "",
+      })
+    }
+  }, [staff])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -185,64 +139,35 @@ export default function StaffDetailPage() {
       return
     }
 
-    setSaving(true)
-    const supabase = createClient()
+    const success = await updateFields({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || null,
+    })
 
-    const { error } = await supabase
-      .from("staff_members")
-      .update({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone || null,
-      })
-      .eq("id", staff.id)
-
-    if (error) {
-      toast.error("Failed to update staff member")
-    } else {
-      toast.success("Staff member updated")
-      setStaff({ ...staff, ...formData, phone: formData.phone || null })
+    if (success) {
       setIsEditing(false)
     }
-
-    setSaving(false)
   }
 
   const handleToggleStatus = async () => {
     if (!staff) return
-
-    setSaving(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("staff_members")
-      .update({ is_active: !staff.is_active })
-      .eq("id", staff.id)
-
-    if (error) {
-      toast.error("Failed to update status")
-    } else {
-      toast.success(`Staff member ${staff.is_active ? "deactivated" : "activated"}`)
-      setStaff({ ...staff, is_active: !staff.is_active })
-    }
-
-    setSaving(false)
+    await updateFields({ is_active: !staff.is_active })
   }
 
   const handleAddRole = async () => {
     if (!staff || !newRoleAssignment.role_id) return
 
-    setSaving(true)
+    setRoleLoading(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       toast.error("Session expired")
-      setSaving(false)
+      setRoleLoading(false)
       return
     }
 
-    // Use the property_id directly - empty string should become null
     const propertyId = newRoleAssignment.property_id === "" ? null : newRoleAssignment.property_id
 
     const { error } = await supabase.from("user_roles").insert({
@@ -256,16 +181,16 @@ export default function StaffDetailPage() {
       toast.error("Failed to add role")
     } else {
       toast.success("Role assigned")
-      fetchData()
+      refetch()
     }
 
-    setSaving(false)
+    setRoleLoading(false)
   }
 
   const handleRemoveRole = async (roleId: string) => {
     if (!confirm("Remove this role assignment?")) return
 
-    setSaving(true)
+    setRoleLoading(true)
     const supabase = createClient()
 
     const { error } = await supabase
@@ -277,38 +202,17 @@ export default function StaffDetailPage() {
       toast.error("Failed to remove role")
     } else {
       toast.success("Role removed")
-      setUserRoles(userRoles.filter((r) => r.id !== roleId))
+      refetch()
     }
 
-    setSaving(false)
+    setRoleLoading(false)
   }
 
   const handleDelete = async () => {
-    if (!staff) return
-
-    if (!confirm("Are you sure you want to delete this staff member? This action cannot be undone.")) {
-      return
-    }
-
-    setSaving(true)
-    const supabase = createClient()
-
-    // Delete user roles first
-    await supabase.from("user_roles").delete().eq("staff_member_id", staff.id)
-
-    // Delete staff member
-    const { error } = await supabase
-      .from("staff_members")
-      .delete()
-      .eq("id", staff.id)
-
-    if (error) {
-      toast.error("Failed to delete staff member")
-      setSaving(false)
-    } else {
-      toast.success("Staff member deleted")
-      router.push("/staff")
-    }
+    await deleteRecord({
+      confirm: true,
+      cascadeDeletes: [{ table: "user_roles", foreignKey: "staff_member_id" }],
+    })
   }
 
   if (loading) {
@@ -318,6 +222,8 @@ export default function StaffDetailPage() {
   if (!staff) {
     return null
   }
+
+  const saving = isSaving || roleLoading
 
   return (
     <div className="space-y-6">
@@ -375,7 +281,7 @@ export default function StaffDetailPage() {
                 variant="destructive"
                 size="sm"
                 onClick={handleDelete}
-                disabled={saving}
+                disabled={saving || isDeleting}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete

@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
+import { useDetailPage, ROOM_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { Room, RoomTenant, RoomMeterAssignment, RoomComplaint } from "@/types/rooms.types"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -30,98 +30,21 @@ import {
   Zap,
   Droplets,
   Calendar,
-  FileText,
-  CreditCard,
   MessageSquare,
 } from "lucide-react"
-import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
-import { MeterLink } from "@/components/ui/entity-link"
-import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
-
-interface Room {
-  id: string
-  room_number: string
-  room_type: string
-  floor: number
-  rent_amount: number
-  deposit_amount: number
-  total_beds: number
-  occupied_beds: number
-  status: string
-  has_ac: boolean
-  has_attached_bathroom: boolean
-  amenities: string[] | null
-  created_at: string
-  property: {
-    id: string
-    name: string
-    address: string | null
-  }
-}
-
-interface Tenant {
-  id: string
-  name: string
-  phone: string
-  email: string | null
-  photo_url: string | null
-  profile_photo: string | null
-  monthly_rent: number
-  status: string
-  check_in_date: string
-}
+import { METER_TYPE_CONFIG, METER_STATUS_CONFIG } from "@/types/meters.types"
 
 interface MeterReading {
   id: string
   reading_date: string
   reading_value: number
   units_consumed: number | null
-  charge_type: {
-    id: string
-    name: string
-  } | null
-}
-
-interface Bill {
-  id: string
-  bill_number: string
-  bill_date: string
-  total_amount: number
-  balance_due: number
-  status: string
-  tenant: { id: string; name: string } | null
-}
-
-interface Payment {
-  id: string
-  amount: number
-  payment_date: string
-  payment_method: string
-  tenant: { id: string; name: string } | null
-}
-
-interface Complaint {
-  id: string
-  title: string
-  description: string | null
-  status: string
-  priority: string
-  created_at: string
-  tenant: { id: string; name: string } | null
-}
-
-interface AssignedMeter {
-  id: string
-  meter_id: string
-  start_date: string
-  start_reading: number
   meter: {
     id: string
     meter_number: string
-    meter_type: MeterType
-    status: MeterStatus
+    meter_type: string
   } | null
 }
 
@@ -140,153 +63,20 @@ const statusConfig: Record<string, { status: "success" | "error" | "warning" | "
 
 export default function RoomDetailPage() {
   const params = useParams()
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [room, setRoom] = useState<Room | null>(null)
-  const [tenants, setTenants] = useState<Tenant[]>([])
-  const [meterReadings, setMeterReadings] = useState<MeterReading[]>([])
-  const [assignedMeters, setAssignedMeters] = useState<AssignedMeter[]>([])
-  const [bills, setBills] = useState<Bill[]>([])
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [complaints, setComplaints] = useState<Complaint[]>([])
-  const [updatingStatus, setUpdatingStatus] = useState(false)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient()
-
-      const { data: roomData, error: roomError } = await supabase
-        .from("rooms")
-        .select(`
-          *,
-          property:properties(id, name, address)
-        `)
-        .eq("id", params.id)
-        .single()
-
-      if (roomError || !roomData) {
-        console.error("Error fetching room:", roomError)
-        toast.error("Room not found")
-        router.push("/rooms")
-        return
-      }
-
-      setRoom(roomData)
-
-      const { data: tenantsData } = await supabase
-        .from("tenants")
-        .select("id, name, phone, email, photo_url, profile_photo, monthly_rent, status, check_in_date")
-        .eq("room_id", params.id)
-        .neq("status", "checked_out")
-        .order("name")
-
-      setTenants(tenantsData || [])
-
-      const { data: readingsData } = await supabase
-        .from("meter_readings")
-        .select(`
-          id, reading_date, reading_value, units_consumed,
-          charge_type:charge_types(id, name)
-        `)
-        .eq("room_id", params.id)
-        .order("reading_date", { ascending: false })
-        .limit(5)
-
-      const transformedReadings = (readingsData || []).map((r: { id: string; reading_date: string; reading_value: number; units_consumed: number | null; charge_type: { id: string; name: string }[] | { id: string; name: string } | null }) => ({
-        ...r,
-        charge_type: Array.isArray(r.charge_type) ? r.charge_type[0] : r.charge_type,
-      }))
-      setMeterReadings(transformedReadings)
-
-      // Fetch assigned meters
-      const { data: metersData } = await supabase
-        .from("meter_assignments")
-        .select(`
-          id, meter_id, start_date, start_reading,
-          meter:meters(id, meter_number, meter_type, status)
-        `)
-        .eq("room_id", params.id)
-        .is("end_date", null)
-        .order("start_date", { ascending: false })
-
-      const transformedMeters = (metersData || []).map((m: any) => ({
-        ...m,
-        meter: Array.isArray(m.meter) ? m.meter[0] : m.meter,
-      }))
-      setAssignedMeters(transformedMeters)
-
-      const { data: billsData } = await supabase
-        .from("bills")
-        .select(`
-          id, bill_number, bill_date, total_amount, balance_due, status,
-          tenant:tenants!inner(id, name, room_id)
-        `)
-        .eq("tenant.room_id", params.id)
-        .order("bill_date", { ascending: false })
-        .limit(5)
-
-      const transformedBills = (billsData || []).map((b: any) => ({
-        ...b,
-        tenant: Array.isArray(b.tenant) ? b.tenant[0] : b.tenant,
-      }))
-      setBills(transformedBills)
-
-      const { data: paymentsData } = await supabase
-        .from("payments")
-        .select(`
-          id, amount, payment_date, payment_method,
-          tenant:tenants!inner(id, name, room_id)
-        `)
-        .eq("tenant.room_id", params.id)
-        .order("payment_date", { ascending: false })
-        .limit(5)
-
-      const transformedPayments = (paymentsData || []).map((p: any) => ({
-        ...p,
-        tenant: Array.isArray(p.tenant) ? p.tenant[0] : p.tenant,
-      }))
-      setPayments(transformedPayments)
-
-      const { data: complaintsData } = await supabase
-        .from("complaints")
-        .select(`
-          id, title, description, status, priority, created_at,
-          tenant:tenants(id, name)
-        `)
-        .eq("room_id", params.id)
-        .order("created_at", { ascending: false })
-        .limit(5)
-
-      const transformedComplaints = (complaintsData || []).map((c: any) => ({
-        ...c,
-        tenant: Array.isArray(c.tenant) ? c.tenant[0] : c.tenant,
-      }))
-      setComplaints(transformedComplaints)
-
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [params.id, router])
+  const {
+    data: room,
+    related,
+    loading,
+    updateField,
+    isSaving,
+  } = useDetailPage<Room>({
+    config: ROOM_DETAIL_CONFIG,
+    id: params.id as string,
+  })
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!room) return
-
-    setUpdatingStatus(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("rooms")
-      .update({ status: newStatus })
-      .eq("id", room.id)
-
-    if (error) {
-      toast.error("Failed to update room status")
-    } else {
-      toast.success("Room status updated")
-      setRoom({ ...room, status: newStatus })
-    }
-    setUpdatingStatus(false)
+    await updateField("status", newStatus)
   }
 
   if (loading) {
@@ -296,6 +86,11 @@ export default function RoomDetailPage() {
   if (!room) {
     return null
   }
+
+  const tenants = (related.tenants || []) as RoomTenant[]
+  const meterAssignments = (related.meterAssignments || []) as RoomMeterAssignment[]
+  const meterReadings = (related.meterReadings || []) as MeterReading[]
+  const complaints = (related.complaints || []) as RoomComplaint[]
 
   const status = statusConfig[room.status] || statusConfig.available
   const availableBeds = room.total_beds - room.occupied_beds
@@ -424,7 +219,7 @@ export default function RoomDetailPage() {
               variant={room.status === "available" ? "default" : "outline"}
               className="justify-start"
               onClick={() => handleStatusChange("available")}
-              disabled={updatingStatus}
+              disabled={isSaving}
             >
               <div className="h-2 w-2 rounded-full bg-green-500 mr-2" />
               Available
@@ -433,7 +228,7 @@ export default function RoomDetailPage() {
               variant={room.status === "occupied" ? "default" : "outline"}
               className="justify-start"
               onClick={() => handleStatusChange("occupied")}
-              disabled={updatingStatus}
+              disabled={isSaving}
             >
               <div className="h-2 w-2 rounded-full bg-red-500 mr-2" />
               Occupied
@@ -442,7 +237,7 @@ export default function RoomDetailPage() {
               variant={room.status === "partially_occupied" ? "default" : "outline"}
               className="justify-start"
               onClick={() => handleStatusChange("partially_occupied")}
-              disabled={updatingStatus}
+              disabled={isSaving}
             >
               <div className="h-2 w-2 rounded-full bg-yellow-500 mr-2" />
               Partial
@@ -451,7 +246,7 @@ export default function RoomDetailPage() {
               variant={room.status === "maintenance" ? "default" : "outline"}
               className="justify-start"
               onClick={() => handleStatusChange("maintenance")}
-              disabled={updatingStatus}
+              disabled={isSaving}
             >
               <div className="h-2 w-2 rounded-full bg-gray-500 mr-2" />
               Maintenance
@@ -502,7 +297,7 @@ export default function RoomDetailPage() {
                 <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
                   <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3">
-                      <Avatar name={tenant.name} src={tenant.profile_photo || tenant.photo_url} size="md" />
+                      <Avatar name={tenant.name} src={tenant.person?.photo_url || tenant.profile_photo || tenant.photo_url} size="md" />
                       <div>
                         <p className="font-medium">{tenant.name}</p>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -528,7 +323,7 @@ export default function RoomDetailPage() {
         {/* Assigned Meters */}
         <DetailSection
           title="Assigned Meters"
-          description={`${assignedMeters.length} meter(s) assigned to this room`}
+          description={`${meterAssignments.length} meter(s) assigned to this room`}
           icon={Gauge}
           className="md:col-span-2"
           actions={
@@ -545,7 +340,7 @@ export default function RoomDetailPage() {
             </div>
           }
         >
-          {assignedMeters.length === 0 ? (
+          {meterAssignments.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Gauge className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No meters assigned to this room</p>
@@ -557,10 +352,10 @@ export default function RoomDetailPage() {
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 gap-3">
-              {assignedMeters.map((assignment) => {
+              {meterAssignments.map((assignment) => {
                 if (!assignment.meter) return null
-                const typeConfig = METER_TYPE_CONFIG[assignment.meter.meter_type] || METER_TYPE_CONFIG.electricity
-                const statusConfig = METER_STATUS_CONFIG[assignment.meter.status] || METER_STATUS_CONFIG.active
+                const typeConfig = METER_TYPE_CONFIG[assignment.meter.meter_type as keyof typeof METER_TYPE_CONFIG] || METER_TYPE_CONFIG.electricity
+                const meterStatusConfig = METER_STATUS_CONFIG[assignment.meter.status as keyof typeof METER_STATUS_CONFIG] || METER_STATUS_CONFIG.active
                 const TypeIcon = meterTypeConfig[assignment.meter.meter_type]?.icon || Gauge
                 return (
                   <Link key={assignment.id} href={`/meters/${assignment.meter.id}`}>
@@ -575,7 +370,7 @@ export default function RoomDetailPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <StatusBadge variant={statusConfig.variant} label={statusConfig.label} />
+                        <StatusBadge variant={meterStatusConfig.variant} label={meterStatusConfig.label} />
                         <p className="text-xs text-muted-foreground mt-1">Since {formatDate(assignment.start_date)}</p>
                       </div>
                     </div>
@@ -619,7 +414,7 @@ export default function RoomDetailPage() {
           ) : (
             <div className="space-y-3">
               {meterReadings.map((reading) => {
-                const meterType = reading.charge_type?.name?.toLowerCase() || "electricity"
+                const meterType = reading.meter?.meter_type || "electricity"
                 const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
                 const Icon = config.icon
                 return (
@@ -647,85 +442,6 @@ export default function RoomDetailPage() {
                   </Link>
                 )
               })}
-            </div>
-          )}
-        </DetailSection>
-
-        {/* Recent Bills */}
-        <DetailSection
-          title="Recent Bills"
-          description="Bills for tenants in this room"
-          icon={FileText}
-          actions={
-            <Link href={`/bills`}>
-              <Button variant="outline" size="sm">View All</Button>
-            </Link>
-          }
-        >
-          {bills.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No bills for this room</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {bills.map((bill) => (
-                <Link key={bill.id} href={`/bills/${bill.id}`}>
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{bill.bill_number}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {bill.tenant?.name} • {formatDate(bill.bill_date)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm">{formatCurrency(bill.total_amount)}</p>
-                      {bill.balance_due > 0 && (
-                        <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </DetailSection>
-
-        {/* Recent Payments */}
-        <DetailSection
-          title="Recent Payments"
-          description="Payments from tenants in this room"
-          icon={CreditCard}
-          actions={
-            <Link href={`/payments`}>
-              <Button variant="outline" size="sm">View All</Button>
-            </Link>
-          }
-        >
-          {payments.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No payments from this room</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {payments.map((payment) => (
-                <Link key={payment.id} href={`/payments/${payment.id}`}>
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{payment.tenant?.name}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(payment.payment_date)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm text-green-600">+{formatCurrency(payment.amount)}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{payment.payment_method.replace("_", " ")}</p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
             </div>
           )}
         </DetailSection>

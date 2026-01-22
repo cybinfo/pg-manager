@@ -1,8 +1,26 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useState } from "react"
+import { useParams } from "next/navigation"
 import Link from "next/link"
+import { useDetailPage, REFUND_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
+import {
+  DetailHero,
+  InfoCard,
+  DetailSection,
+  InfoRow,
+} from "@/components/ui/detail-components"
+import { Currency } from "@/components/ui/currency"
+import { PageLoading } from "@/components/ui/loading"
+import { Avatar } from "@/components/ui/avatar"
+import { TableBadge } from "@/components/ui/data-table"
+import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
+import { PermissionGuard } from "@/components/auth"
 import {
   Wallet,
   User,
@@ -22,26 +40,6 @@ import {
   Hash,
   FileText,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
-import {
-  DetailHero,
-  InfoCard,
-  DetailSection,
-  InfoRow,
-} from "@/components/ui/detail-components"
-import { Currency } from "@/components/ui/currency"
-import { PageLoading } from "@/components/ui/loading"
-import { Avatar } from "@/components/ui/avatar"
-import { TableBadge } from "@/components/ui/data-table"
-import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
-import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
-import { PermissionGuard } from "@/components/auth"
 
 interface Refund {
   id: string
@@ -57,9 +55,16 @@ interface Refund {
   created_at: string
   updated_at: string
   processed_at: string | null
-  tenant: { id: string; name: string; phone: string; photo_url: string | null } | null
+  tenant: {
+    id: string
+    name: string
+    phone: string
+    photo_url: string | null
+    profile_photo: string | null
+    person: { id: string; photo_url: string | null } | null
+  } | null
   property: { id: string; name: string } | null
-  exit_clearance: { id: string; expected_exit_date: string; settlement_status: string } | null
+  exit_clearance: { id: string; expected_exit_date: string; actual_exit_date: string | null; settlement_status: string } | null
 }
 
 const refundTypeLabels: Record<string, string> = {
@@ -77,12 +82,8 @@ const paymentModeLabels: Record<string, string> = {
 }
 
 export default function RefundDetailPage() {
-  const router = useRouter()
   const params = useParams()
-  const [loading, setLoading] = useState(true)
-  const [refund, setRefund] = useState<Refund | null>(null)
   const [editing, setEditing] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
     status: "",
@@ -91,120 +92,56 @@ export default function RefundDetailPage() {
     notes: "",
   })
 
-  useEffect(() => {
-    fetchRefund()
-  }, [params.id])
+  const {
+    data: refund,
+    loading,
+    deleteRecord,
+    updateFields,
+    isSaving,
+    isDeleting,
+    refetch,
+  } = useDetailPage<Refund>({
+    config: REFUND_DETAIL_CONFIG,
+    id: params.id as string,
+  })
 
-  const fetchRefund = async () => {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("refunds")
-      .select(`
-        *,
-        tenant:tenants(id, name, phone, photo_url),
-        property:properties(id, name),
-        exit_clearance:exit_clearance(id, expected_exit_date, settlement_status)
-      `)
-      .eq("id", params.id)
-      .single()
-
-    if (error || !data) {
-      console.error("Error fetching refund:", error)
-      toast.error("Refund not found")
-      router.push("/refunds")
-      return
-    }
-
-    const transformed = {
-      ...data,
-      tenant: transformJoin(data.tenant),
-      property: transformJoin(data.property),
-      exit_clearance: transformJoin(data.exit_clearance),
-    } as Refund
-
-    setRefund(transformed)
+  // Initialize edit data when refund loads
+  if (refund && !formData.status) {
     setFormData({
-      status: transformed.status,
-      refund_date: transformed.refund_date || "",
-      reference_number: transformed.reference_number || "",
-      notes: transformed.notes || "",
+      status: refund.status,
+      refund_date: refund.refund_date || "",
+      reference_number: refund.reference_number || "",
+      notes: refund.notes || "",
     })
-    setLoading(false)
   }
 
   const handleUpdate = async () => {
     if (!refund) return
 
-    setSubmitting(true)
+    const updates: Record<string, unknown> = {
+      status: formData.status,
+      reference_number: formData.reference_number || null,
+      notes: formData.notes || null,
+    }
 
-    try {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
+    // If marking as completed, set processed info
+    if (formData.status === "completed" && refund.status !== "completed") {
+      updates.refund_date = formData.refund_date || new Date().toISOString().split("T")[0]
+      updates.processed_at = new Date().toISOString()
+    } else if (formData.refund_date) {
+      updates.refund_date = formData.refund_date
+    }
 
-      const updates: Record<string, unknown> = {
-        status: formData.status,
-        reference_number: formData.reference_number || null,
-        notes: formData.notes || null,
-      }
-
-      // If marking as completed, set processed info
-      if (formData.status === "completed" && refund.status !== "completed") {
-        updates.refund_date = formData.refund_date || new Date().toISOString().split("T")[0]
-        updates.processed_by = session?.user?.id
-        updates.processed_at = new Date().toISOString()
-      } else if (formData.refund_date) {
-        updates.refund_date = formData.refund_date
-      }
-
-      const { error } = await supabase
-        .from("refunds")
-        .update(updates)
-        .eq("id", refund.id)
-
-      if (error) {
-        toast.error(`Failed to update: ${error.message}`)
-      } else {
-        toast.success("Refund updated successfully")
-        setEditing(false)
-        fetchRefund()
-      }
-    } catch (err) {
-      toast.error("An error occurred")
-    } finally {
-      setSubmitting(false)
+    const success = await updateFields(updates)
+    if (success) {
+      setEditing(false)
+      refetch()
     }
   }
 
   const handleDelete = async () => {
-    if (!refund) return
     if (!confirm("Are you sure you want to delete this refund record?")) return
-
-    const supabase = createClient()
-    const { error } = await supabase
-      .from("refunds")
-      .delete()
-      .eq("id", refund.id)
-
-    if (error) {
-      toast.error(`Failed to delete: ${error.message}`)
-    } else {
-      toast.success("Refund deleted")
-      router.push("/refunds")
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle className="h-5 w-5 text-green-500" />
-      case "pending":
-        return <Clock className="h-5 w-5 text-yellow-500" />
-      case "failed":
-      case "cancelled":
-        return <XCircle className="h-5 w-5 text-red-500" />
-      default:
-        return <Clock className="h-5 w-5 text-muted-foreground" />
-    }
+    await deleteRecord({ confirm: false })
   }
 
   const getPaymentModeIcon = (mode: string) => {
@@ -224,6 +161,8 @@ export default function RefundDetailPage() {
 
   if (loading) return <PageLoading message="Loading refund details..." />
   if (!refund) return null
+
+  const tenantPhoto = refund.tenant?.person?.photo_url || refund.tenant?.profile_photo || refund.tenant?.photo_url
 
   return (
     <PermissionGuard permission="payments.view">
@@ -259,19 +198,19 @@ export default function RefundDetailPage() {
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </Button>
-                <Button variant="outline" size="sm" className="text-red-600" onClick={handleDelete}>
-                  <Trash2 className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" className="text-red-600" onClick={handleDelete} disabled={isDeleting}>
+                  {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                   Delete
                 </Button>
               </div>
             ) : (
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setEditing(false)} disabled={submitting}>
+                <Button variant="outline" size="sm" onClick={() => setEditing(false)} disabled={isSaving}>
                   <X className="mr-2 h-4 w-4" />
                   Cancel
                 </Button>
-                <Button size="sm" onClick={handleUpdate} disabled={submitting}>
-                  {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                <Button size="sm" onClick={handleUpdate} disabled={isSaving}>
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Save
                 </Button>
               </div>
@@ -301,7 +240,7 @@ export default function RefundDetailPage() {
                 <div className="flex items-center gap-4">
                   <Avatar
                     name={refund.tenant.name}
-                    src={refund.tenant.photo_url}
+                    src={tenantPhoto}
                     size="lg"
                     className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white"
                   />

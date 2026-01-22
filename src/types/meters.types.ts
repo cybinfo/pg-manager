@@ -182,3 +182,19 @@ export interface MeterListItem extends Meter {
     reading_value: number
   } | null
 }
+
+// ============================================================================
+// DETAIL PAGE TYPES
+// ============================================================================
+
+export interface MeterDetailReading {
+  id: string
+  reading_date: string
+  reading_value: number
+  units_consumed: number | null
+}
+
+export interface MeterDetailRoom {
+  id: string
+  room_number: string
+}

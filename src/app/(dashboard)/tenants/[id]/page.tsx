@@ -1,9 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useDetailPage, TENANT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { Tenant, TenantStay, RoomTransfer } from "@/types/tenants.types"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,12 +15,10 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-  QuickActions,
 } from "@/components/ui/detail-components"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { Currency, PaymentAmount } from "@/components/ui/currency"
-import { PageLoading, Skeleton } from "@/components/ui/loading"
-import { EmptyState } from "@/components/ui/empty-state"
+import { Currency } from "@/components/ui/currency"
+import { PageLoading } from "@/components/ui/loading"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Select, FormField } from "@/components/ui/form-components"
 import {
@@ -46,8 +46,6 @@ import {
   Plus,
   Trash2,
   Gauge,
-  Zap,
-  Droplets,
   ExternalLink,
   Briefcase,
   Heart,
@@ -58,55 +56,7 @@ import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
 
-// Types
-interface Person {
-  id: string
-  name: string
-  phone: string | null
-  email: string | null
-  photo_url: string | null
-  date_of_birth: string | null
-  gender: string | null
-  aadhaar_number: string | null
-  pan_number: string | null
-  permanent_address: string | null
-  permanent_city: string | null
-  permanent_state: string | null
-  permanent_pincode: string | null
-  current_address: string | null
-  occupation: string | null
-  company_name: string | null
-  emergency_contacts: { name: string; relation: string; phone: string }[] | null
-  blood_group: string | null
-  is_verified: boolean
-  is_blocked: boolean
-}
-
-interface Tenant {
-  id: string
-  person_id: string
-  name: string
-  email: string | null
-  phone: string
-  photo_url: string | null
-  profile_photo: string | null
-  check_in_date: string
-  check_out_date: string | null
-  expected_exit_date: string | null
-  monthly_rent: number
-  security_deposit: number
-  status: string
-  police_verification_status: string
-  agreement_signed: boolean
-  notes: string | null
-  custom_fields: Record<string, string>
-  guardian_contacts: { name: string; relation: string; phone: string; email?: string }[] | null
-  created_at: string
-  property: { id: string; name: string; address: string } | null
-  room: { id: string; room_number: string; room_type: string } | null
-  person?: Person | null
-}
-
+// Types for related data
 interface Payment {
   id: string
   amount: number
@@ -123,37 +73,6 @@ interface Charge {
   status: string
   for_period: string
   charge_type: { name: string } | null
-}
-
-interface TenantStay {
-  id: string
-  join_date: string
-  exit_date: string | null
-  monthly_rent: number
-  status: string
-  stay_number: number
-  property: { name: string } | null
-  room: { room_number: string } | null
-}
-
-interface RoomTransfer {
-  id: string
-  transfer_date: string
-  reason: string | null
-  old_rent: number
-  new_rent: number
-  from_property: { name: string } | null
-  from_room: { room_number: string } | null
-  to_property: { name: string } | null
-  to_room: { room_number: string } | null
-}
-
-interface MeterReading {
-  id: string
-  reading_date: string
-  reading_value: number
-  units_consumed: number | null
-  charge_type: { id: string; name: string } | null
 }
 
 interface Bill {
@@ -174,24 +93,26 @@ interface Room {
   occupied_beds: number
 }
 
-const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string }> = {
-  electricity: { icon: Zap, color: "text-yellow-700", bgColor: "bg-yellow-100" },
-  water: { icon: Droplets, color: "text-blue-700", bgColor: "bg-blue-100" },
-  gas: { icon: Gauge, color: "text-orange-700", bgColor: "bg-orange-100" },
-}
-
 export default function TenantDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { hasPermission } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const [tenant, setTenant] = useState<Tenant | null>(null)
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [charges, setCharges] = useState<Charge[]>([])
-  const [stays, setStays] = useState<TenantStay[]>([])
-  const [transfers, setTransfers] = useState<RoomTransfer[]>([])
-  const [meterReadings, setMeterReadings] = useState<MeterReading[]>([])
-  const [bills, setBills] = useState<Bill[]>([])
+
+  // Use centralized hook for data fetching
+  const {
+    data: tenant,
+    related,
+    loading,
+    refetch,
+    updateFields,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<Tenant>({
+    config: TENANT_DETAIL_CONFIG,
+    id: params.id as string,
+  })
+
+  // Action state
   const [actionLoading, setActionLoading] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
   const [availableRooms, setAvailableRooms] = useState<Room[]>([])
@@ -209,149 +130,18 @@ export default function TenantDetailPage() {
     notice_notes: "",
   })
 
-  useEffect(() => {
-    const fetchTenant = async () => {
-      const supabase = createClient()
+  // Get related data from hook
+  const payments = (related.payments || []) as Payment[]
+  const charges = (related.charges || []) as Charge[]
+  const stays = (related.stays || []) as TenantStay[]
+  const transfers = (related.transfers || []) as RoomTransfer[]
+  const bills = (related.bills || []) as Bill[]
 
-      // Fetch tenant details with person data
-      const { data: tenantData, error: tenantError } = await supabase
-        .from("tenants")
-        .select(`
-          *,
-          property:properties(id, name, address),
-          room:rooms(id, room_number, room_type),
-          person:people(
-            id, name, phone, email, photo_url, date_of_birth, gender,
-            aadhaar_number, pan_number, permanent_address, permanent_city,
-            permanent_state, permanent_pincode, current_address, occupation,
-            company_name, emergency_contacts, blood_group, is_verified, is_blocked
-          )
-        `)
-        .eq("id", params.id)
-        .single()
-
-      if (tenantError || !tenantData) {
-        toast.error("Tenant not found")
-        router.push("/tenants")
-        return
-      }
-
-      // Transform tenant data
-      const transformedTenant: Tenant = {
-        ...tenantData,
-        property: Array.isArray(tenantData.property) ? tenantData.property[0] : tenantData.property,
-        room: Array.isArray(tenantData.room) ? tenantData.room[0] : tenantData.room,
-        person: Array.isArray(tenantData.person) ? tenantData.person[0] : tenantData.person,
-      }
-      setTenant(transformedTenant)
-
-      // Fetch recent payments
-      const { data: paymentsData } = await supabase
-        .from("payments")
-        .select(`id, amount, payment_date, payment_method, for_period, charge_type:charge_types(name)`)
-        .eq("tenant_id", params.id)
-        .order("payment_date", { ascending: false })
-        .limit(5)
-
-      const transformedPayments: Payment[] = (paymentsData || []).map((p: any) => ({
-        ...p,
-        charge_type: Array.isArray(p.charge_type) ? p.charge_type[0] : p.charge_type,
-      }))
-      setPayments(transformedPayments)
-
-      // Fetch pending charges
-      const { data: chargesData } = await supabase
-        .from("charges")
-        .select(`id, amount, due_date, status, for_period, charge_type:charge_types(name)`)
-        .eq("tenant_id", params.id)
-        .in("status", ["pending", "partial", "overdue"])
-        .order("due_date", { ascending: true })
-
-      const transformedCharges: Charge[] = (chargesData || []).map((c: any) => ({
-        ...c,
-        charge_type: Array.isArray(c.charge_type) ? c.charge_type[0] : c.charge_type,
-      }))
-      setCharges(transformedCharges)
-
-      // Fetch tenant stays history
-      const { data: staysData } = await supabase
-        .from("tenant_stays")
-        .select(`id, join_date, exit_date, monthly_rent, status, stay_number, property:properties(name), room:rooms(room_number)`)
-        .eq("tenant_id", params.id)
-        .order("stay_number", { ascending: false })
-
-      if (staysData) {
-        const transformedStays: TenantStay[] = staysData.map((s: any) => ({
-          ...s,
-          property: Array.isArray(s.property) ? s.property[0] : s.property,
-          room: Array.isArray(s.room) ? s.room[0] : s.room,
-        }))
-        setStays(transformedStays)
-      }
-
-      // Fetch room transfers
-      const { data: transfersData } = await supabase
-        .from("room_transfers")
-        .select(`
-          id, transfer_date, reason, old_rent, new_rent,
-          from_property:properties!room_transfers_from_property_id_fkey(name),
-          from_room:rooms!room_transfers_from_room_id_fkey(room_number),
-          to_property:properties!room_transfers_to_property_id_fkey(name),
-          to_room:rooms!room_transfers_to_room_id_fkey(room_number)
-        `)
-        .eq("tenant_id", params.id)
-        .order("transfer_date", { ascending: false })
-
-      if (transfersData) {
-        const transformedTransfers: RoomTransfer[] = transfersData.map((t: any) => ({
-          ...t,
-          from_property: Array.isArray(t.from_property) ? t.from_property[0] : t.from_property,
-          from_room: Array.isArray(t.from_room) ? t.from_room[0] : t.from_room,
-          to_property: Array.isArray(t.to_property) ? t.to_property[0] : t.to_property,
-          to_room: Array.isArray(t.to_room) ? t.to_room[0] : t.to_room,
-        }))
-        setTransfers(transformedTransfers)
-      }
-
-      // Fetch meter readings for tenant's room (if they have a room)
-      if (transformedTenant.room?.id) {
-        const { data: readingsData } = await supabase
-          .from("meter_readings")
-          .select(`
-            id, reading_date, reading_value, units_consumed,
-            charge_type:charge_types(id, name)
-          `)
-          .eq("room_id", transformedTenant.room.id)
-          .order("reading_date", { ascending: false })
-          .limit(5)
-
-        const transformedReadings = (readingsData || []).map((r: any) => ({
-          ...r,
-          charge_type: Array.isArray(r.charge_type) ? r.charge_type[0] : r.charge_type,
-        }))
-        setMeterReadings(transformedReadings)
-      }
-
-      // Fetch recent bills for this tenant
-      const { data: billsData } = await supabase
-        .from("bills")
-        .select(`id, bill_number, bill_date, total_amount, balance_due, status`)
-        .eq("tenant_id", params.id)
-        .order("bill_date", { ascending: false })
-        .limit(5)
-
-      setBills(billsData || [])
-
-      setLoading(false)
-    }
-
-    fetchTenant()
-  }, [params.id, router])
+  // Computed values
+  const totalDues = useMemo(() => charges.reduce((sum, c) => sum + c.amount, 0), [charges])
 
   const openNoticeDialog = () => {
-    // Set default notice date as today
     const today = new Date().toISOString().split("T")[0]
-    // Set default exit date to 30 days from notice date
     const defaultExitDate = new Date()
     defaultExitDate.setDate(defaultExitDate.getDate() + 30)
     setNoticeData({
@@ -369,33 +159,22 @@ export default function TenantDetailPage() {
     }
 
     setActionLoading(true)
-    const supabase = createClient()
-
     const noticeDate = new Date(noticeData.notice_date)
     const noteDateStr = noticeDate.toLocaleDateString("en-IN")
 
-    const { error } = await supabase
-      .from("tenants")
-      .update({
-        status: "notice_period",
-        notice_date: noticeData.notice_date,
-        expected_exit_date: noticeData.expected_exit_date,
-        notes: tenant.notes
-          ? `${tenant.notes}\n\n[Notice Period - ${noteDateStr}]: ${noticeData.notice_notes || "Put on notice"}`
-          : `[Notice Period - ${noteDateStr}]: ${noticeData.notice_notes || "Put on notice"}`
-      })
-      .eq("id", tenant.id)
+    const success = await updateFields({
+      status: "notice_period",
+      notice_date: noticeData.notice_date,
+      expected_exit_date: noticeData.expected_exit_date,
+      notes: tenant.notes
+        ? `${tenant.notes}\n\n[Notice Period - ${noteDateStr}]: ${noticeData.notice_notes || "Put on notice"}`
+        : `[Notice Period - ${noteDateStr}]: ${noticeData.notice_notes || "Put on notice"}`
+    })
 
-    if (error) {
-      toast.error("Failed to update tenant status")
-    } else {
+    if (success) {
       toast.success("Tenant put on notice period")
-      setTenant({
-        ...tenant,
-        status: "notice_period",
-        expected_exit_date: noticeData.expected_exit_date
-      })
       setShowNoticeDialog(false)
+      refetch()
     }
     setActionLoading(false)
   }
@@ -405,24 +184,7 @@ export default function TenantDetailPage() {
   }
 
   const handleDelete = async () => {
-    if (!tenant) return
-
-    setActionLoading(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("tenants")
-      .delete()
-      .eq("id", tenant.id)
-
-    if (error) {
-      console.error("Delete error:", error)
-      toast.error("Failed to delete tenant: " + error.message)
-      setActionLoading(false)
-    } else {
-      toast.success("Tenant deleted successfully")
-      router.push("/tenants")
-    }
+    await deleteRecord({ confirm: false })
   }
 
   const openTransferModal = async () => {
@@ -513,8 +275,6 @@ export default function TenantDetailPage() {
       setActionLoading(false)
     }
   }
-
-  const totalDues = charges.reduce((sum, c) => sum + c.amount, 0)
 
   if (loading) {
     return <PageLoading message="Loading tenant details..." />
@@ -680,7 +440,7 @@ export default function TenantDetailPage() {
             label="Room"
             value={
               tenant.room
-                ? `Room ${tenant.room.room_number} (${tenant.room.room_type})`
+                ? `Room ${tenant.room.room_number}${tenant.room.room_type ? ` (${tenant.room.room_type})` : ""}`
                 : "N/A"
             }
             icon={Home}
@@ -974,67 +734,6 @@ export default function TenantDetailPage() {
             </div>
           )}
         </DetailSection>
-
-        {/* Meter Readings */}
-        {tenant.room && (
-          <DetailSection
-            title="Meter Readings"
-            description="Recent utility readings for your room"
-            icon={Gauge}
-            actions={
-              <div className="flex gap-2">
-                <Link href={`/rooms/${tenant.room.id}/meter-readings`}>
-                  <Button variant="outline" size="sm">View All</Button>
-                </Link>
-                <Link href={`/meter-readings/new?room=${tenant.room.id}`}>
-                  <Button size="sm" variant="gradient">
-                    <Plus className="mr-1 h-3 w-3" />
-                    Record
-                  </Button>
-                </Link>
-              </div>
-            }
-          >
-            {meterReadings.length === 0 ? (
-              <div className="text-center py-4">
-                <Gauge className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
-                <p className="text-muted-foreground">No meter readings recorded</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {meterReadings.map((reading) => {
-                  const meterType = reading.charge_type?.name?.toLowerCase() || "electricity"
-                  const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
-                  const Icon = config.icon
-                  return (
-                    <Link key={reading.id} href={`/meter-readings/${reading.id}`}>
-                      <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${config.bgColor}`}>
-                            <Icon className={`h-4 w-4 ${config.color}`} />
-                          </div>
-                          <div>
-                            <p className="font-medium capitalize">{meterType}</p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {formatDate(reading.reading_date)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</p>
-                          {reading.units_consumed !== null && (
-                            <p className="text-xs text-orange-600">+{reading.units_consumed} units</p>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-          </DetailSection>
-        )}
       </div>
 
       {/* Notes */}
@@ -1207,7 +906,7 @@ export default function TenantDetailPage() {
         description={`Are you sure you want to delete "${tenant?.name}"? This will permanently remove the tenant and all associated data including payment history, charges, stay history, and room transfers. This action cannot be undone.`}
         confirmText="Delete"
         variant="destructive"
-        loading={actionLoading}
+        loading={actionLoading || isDeleting}
         onConfirm={handleDelete}
       />
 
@@ -1241,7 +940,6 @@ export default function TenantDetailPage() {
                     value={noticeData.notice_date}
                     onChange={(e) => {
                       const newNoticeDate = e.target.value
-                      // Auto-update exit date to 30 days after notice date
                       const exitDate = new Date(newNoticeDate)
                       exitDate.setDate(exitDate.getDate() + 30)
                       setNoticeData({

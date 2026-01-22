@@ -11,13 +11,14 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useDetailPage, PEOPLE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageLoading } from "@/components/ui/loading"
 import { DetailHero, InfoCard, DetailSection, InfoRow } from "@/components/ui/detail-components"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
@@ -56,7 +57,7 @@ import {
   GENDER_LABELS,
 } from "@/types/people.types"
 
-// Staff history type
+// Types for related data
 interface PersonStaffHistory {
   id: string
   is_active: boolean
@@ -64,14 +65,29 @@ interface PersonStaffHistory {
   user_id: string | null
 }
 
-// Timeline event type
+interface TenantData {
+  id: string
+  check_in_date: string
+  check_out_date: string | null
+  status: string
+  monthly_rent: number
+  property: { name: string } | null
+  room: { room_number: string } | null
+}
+
+interface VisitorContact {
+  id: string
+  visit_count: number
+  is_frequent: boolean
+  is_blocked: boolean
+}
+
 interface TimelineEvent {
   id: string
-  type: "tenant_join" | "tenant_leave" | "staff_join" | "staff_leave" | "visit" | "verified" | "blocked"
+  type: "tenant_join" | "tenant_leave" | "staff_join" | "verified" | "blocked"
   date: string
   title: string
   subtitle?: string
-  metadata?: Record<string, unknown>
 }
 
 // ============================================
@@ -111,225 +127,157 @@ const TagBadge = ({ tag }: { tag: string }) => (
 export default function PersonDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [person, setPerson] = useState<Person | null>(null)
-  const [tenantHistory, setTenantHistory] = useState<PersonTenantHistory[]>([])
-  const [staffHistory, setStaffHistory] = useState<PersonStaffHistory[]>([])
   const [visitHistory, setVisitHistory] = useState<PersonVisitHistory[]>([])
-  const [timeline, setTimeline] = useState<TimelineEvent[]>([])
-  const [summary, setSummary] = useState({
-    total_stays: 0,
-    total_visits: 0,
-    is_current_tenant: false,
-    is_staff: false,
+
+  const {
+    data: person,
+    related,
+    loading,
+    refetch,
+  } = useDetailPage<Person>({
+    config: PEOPLE_DETAIL_CONFIG,
+    id: params.id as string,
   })
 
-  useEffect(() => {
-    const fetchPerson = async () => {
-      const supabase = createClient()
+  // Cast related data
+  const rawTenants = (related.tenants || []) as TenantData[]
+  const staffHistory = (related.staffMembers || []) as PersonStaffHistory[]
+  const visitorContacts = (related.visitorContacts || []) as VisitorContact[]
 
-      // Fetch person details
-      const { data: personData, error: personError } = await supabase
-        .from("people")
-        .select("*")
-        .eq("id", params.id)
-        .single()
+  // Transform tenant data
+  const tenantHistory: PersonTenantHistory[] = useMemo(() =>
+    rawTenants.map((t) => ({
+      id: t.id,
+      property_name: t.property?.name || "Unknown",
+      room_number: t.room?.room_number || "Unknown",
+      check_in_date: t.check_in_date,
+      check_out_date: t.check_out_date,
+      status: t.status,
+      monthly_rent: t.monthly_rent,
+    })),
+    [rawTenants]
+  )
 
-      if (personError || !personData) {
-        console.error("Error fetching person:", personError)
-        toast.error("Person not found")
-        router.push("/people")
-        return
-      }
+  // Calculate summary
+  const summary = useMemo(() => {
+    const isCurrentTenant = rawTenants.some((t) => t.status === "active")
+    const isStaff = staffHistory.some((s) => s.is_active)
+    const visitCount = visitorContacts[0]?.visit_count || 0
 
-      setPerson(personData)
+    return {
+      total_stays: rawTenants.length,
+      total_visits: visitCount,
+      is_current_tenant: isCurrentTenant,
+      is_staff: isStaff,
+    }
+  }, [rawTenants, staffHistory, visitorContacts])
 
-      // Fetch tenant history
-      const { data: tenants } = await supabase
-        .from("tenants")
-        .select(`
-          id,
-          check_in_date,
-          check_out_date,
-          status,
-          monthly_rent,
-          property:properties(name),
-          room:rooms(room_number)
-        `)
-        .eq("person_id", params.id)
-        .order("check_in_date", { ascending: false })
+  // Build unified timeline
+  const timeline = useMemo(() => {
+    if (!person) return []
 
-      if (tenants) {
-        const transformedTenants = tenants.map((t: {
-          id: string
-          check_in_date: string
-          check_out_date: string | null
-          status: string
-          monthly_rent: number
-          property: { name: string }[] | null
-          room: { room_number: string }[] | null
-        }) => ({
-          id: t.id,
-          property_name: Array.isArray(t.property) ? t.property[0]?.name : (t.property as { name: string } | null)?.name || "Unknown",
-          room_number: Array.isArray(t.room) ? t.room[0]?.room_number : (t.room as { room_number: string } | null)?.room_number || "Unknown",
-          check_in_date: t.check_in_date,
-          check_out_date: t.check_out_date,
-          status: t.status,
-          monthly_rent: t.monthly_rent,
-        }))
-        setTenantHistory(transformedTenants)
-      }
+    const events: TimelineEvent[] = []
 
-      // Fetch visit history via visitor_contacts
-      const { data: visitorContact } = await supabase
-        .from("visitor_contacts")
-        .select("id")
-        .eq("person_id", params.id)
-        .single()
-
-      if (visitorContact) {
-        const { data: visits } = await supabase
-          .from("visitors")
-          .select(`
-            id,
-            check_in_time,
-            check_out_time,
-            visitor_type,
-            purpose,
-            property:properties(name)
-          `)
-          .eq("visitor_contact_id", visitorContact.id)
-          .order("check_in_time", { ascending: false })
-          .limit(10)
-
-        if (visits) {
-          const transformedVisits = visits.map((v: {
-            id: string
-            check_in_time: string
-            check_out_time: string | null
-            visitor_type: string
-            purpose: string | null
-            property: { name: string }[] | null
-          }) => ({
-            id: v.id,
-            check_in_time: v.check_in_time,
-            check_out_time: v.check_out_time,
-            visitor_type: v.visitor_type,
-            purpose: v.purpose,
-            property_name: Array.isArray(v.property) ? v.property[0]?.name : (v.property as { name: string } | null)?.name || "Unknown",
-          }))
-          setVisitHistory(transformedVisits)
-        }
-      }
-
-      // Fetch staff history
-      const { data: staffRecords } = await supabase
-        .from("staff_members")
-        .select("id, is_active, created_at, user_id")
-        .eq("person_id", params.id)
-        .order("created_at", { ascending: false })
-
-      if (staffRecords) {
-        setStaffHistory(staffRecords)
-      }
-
-      // Calculate summary
-      const currentTenant = tenants?.some((t: { status: string }) => t.status === "active")
-      const activeStaff = staffRecords?.some((s: { is_active: boolean }) => s.is_active)
-
-      const { data: visitCount } = await supabase
-        .from("visitor_contacts")
-        .select("visit_count")
-        .eq("person_id", params.id)
-        .single()
-
-      setSummary({
-        total_stays: tenants?.length || 0,
-        total_visits: visitCount?.visit_count || 0,
-        is_current_tenant: currentTenant || false,
-        is_staff: activeStaff || false,
+    // Add tenant events
+    rawTenants.forEach((t) => {
+      events.push({
+        id: `tenant_join_${t.id}`,
+        type: "tenant_join",
+        date: t.check_in_date,
+        title: "Joined as Tenant",
+        subtitle: `${t.property?.name || "Unknown"} - Room ${t.room?.room_number || "Unknown"}`,
       })
 
-      // Build unified timeline
-      const timelineEvents: TimelineEvent[] = []
-
-      // Add tenant events
-      if (tenants) {
-        tenants.forEach((t: {
-          id: string
-          check_in_date: string
-          check_out_date: string | null
-          status: string
-          property: { name: string }[] | null
-          room: { room_number: string }[] | null
-        }) => {
-          const propertyName = Array.isArray(t.property) ? t.property[0]?.name : (t.property as { name: string } | null)?.name || "Unknown"
-          const roomNumber = Array.isArray(t.room) ? t.room[0]?.room_number : (t.room as { room_number: string } | null)?.room_number || "Unknown"
-
-          timelineEvents.push({
-            id: `tenant_join_${t.id}`,
-            type: "tenant_join",
-            date: t.check_in_date,
-            title: "Joined as Tenant",
-            subtitle: `${propertyName} - Room ${roomNumber}`,
-          })
-
-          if (t.check_out_date) {
-            timelineEvents.push({
-              id: `tenant_leave_${t.id}`,
-              type: "tenant_leave",
-              date: t.check_out_date,
-              title: "Checked Out",
-              subtitle: `${propertyName} - Room ${roomNumber}`,
-            })
-          }
+      if (t.check_out_date) {
+        events.push({
+          id: `tenant_leave_${t.id}`,
+          type: "tenant_leave",
+          date: t.check_out_date,
+          title: "Checked Out",
+          subtitle: `${t.property?.name || "Unknown"} - Room ${t.room?.room_number || "Unknown"}`,
         })
       }
+    })
 
-      // Add staff events
-      if (staffRecords) {
-        staffRecords.forEach((s: { id: string; created_at: string; is_active: boolean }) => {
-          timelineEvents.push({
-            id: `staff_join_${s.id}`,
-            type: "staff_join",
-            date: s.created_at,
-            title: "Added as Staff",
-            subtitle: s.is_active ? "Currently Active" : "No longer active",
-          })
-        })
-      }
+    // Add staff events
+    staffHistory.forEach((s) => {
+      events.push({
+        id: `staff_join_${s.id}`,
+        type: "staff_join",
+        date: s.created_at,
+        title: "Added as Staff",
+        subtitle: s.is_active ? "Currently Active" : "No longer active",
+      })
+    })
 
-      // Add verification event
-      if (personData.verified_at) {
-        timelineEvents.push({
-          id: "verified",
-          type: "verified",
-          date: personData.verified_at,
-          title: "Identity Verified",
-          subtitle: "Documents verified successfully",
-        })
-      }
-
-      // Add blocked event
-      if (personData.is_blocked && personData.blocked_at) {
-        timelineEvents.push({
-          id: "blocked",
-          type: "blocked",
-          date: personData.blocked_at,
-          title: "Account Blocked",
-          subtitle: personData.blocked_reason || "No reason provided",
-        })
-      }
-
-      // Sort timeline by date (newest first)
-      timelineEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      setTimeline(timelineEvents)
-
-      setLoading(false)
+    // Add verification event
+    if (person.verified_at) {
+      events.push({
+        id: "verified",
+        type: "verified",
+        date: person.verified_at,
+        title: "Identity Verified",
+        subtitle: "Documents verified successfully",
+      })
     }
 
-    fetchPerson()
-  }, [params.id, router])
+    // Add blocked event
+    if (person.is_blocked && person.blocked_at) {
+      events.push({
+        id: "blocked",
+        type: "blocked",
+        date: person.blocked_at,
+        title: "Account Blocked",
+        subtitle: person.blocked_reason || "No reason provided",
+      })
+    }
+
+    // Sort by date (newest first)
+    return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [person, rawTenants, staffHistory])
+
+  // Fetch visit history (requires intermediate lookup)
+  useEffect(() => {
+    const fetchVisitHistory = async () => {
+      if (!visitorContacts[0]?.id) return
+
+      const supabase = createClient()
+      const { data: visits } = await supabase
+        .from("visitors")
+        .select(`
+          id,
+          check_in_time,
+          check_out_time,
+          visitor_type,
+          purpose,
+          property:properties(name)
+        `)
+        .eq("visitor_contact_id", visitorContacts[0].id)
+        .order("check_in_time", { ascending: false })
+        .limit(10)
+
+      if (visits) {
+        const transformed = visits.map((v: {
+          id: string
+          check_in_time: string
+          check_out_time: string | null
+          visitor_type: string
+          purpose: string | null
+          property: { name: string }[] | null
+        }) => ({
+          id: v.id,
+          check_in_time: v.check_in_time,
+          check_out_time: v.check_out_time,
+          visitor_type: v.visitor_type,
+          purpose: v.purpose,
+          property_name: Array.isArray(v.property) ? v.property[0]?.name : (v.property as { name: string } | null)?.name || "Unknown",
+        }))
+        setVisitHistory(transformed)
+      }
+    }
+
+    fetchVisitHistory()
+  }, [visitorContacts])
 
   // Handle verify person
   const handleVerify = async () => {
@@ -339,13 +287,12 @@ export default function PersonDetailPage() {
     const { error } = await supabase.rpc("verify_person", { p_person_id: person.id })
 
     if (error) {
-      console.error("Error verifying person:", error)
       toast.error("Failed to verify person")
       return
     }
 
     toast.success("Person verified successfully")
-    setPerson({ ...person, is_verified: true, verified_at: new Date().toISOString() })
+    refetch()
   }
 
   // Handle block person
@@ -353,7 +300,7 @@ export default function PersonDetailPage() {
     if (!person) return
 
     const reason = window.prompt("Enter reason for blocking this person:")
-    if (reason === null) return // User cancelled
+    if (reason === null) return
 
     const supabase = createClient()
     const { error } = await supabase.rpc("block_person", {
@@ -362,18 +309,12 @@ export default function PersonDetailPage() {
     })
 
     if (error) {
-      console.error("Error blocking person:", error)
       toast.error("Failed to block person")
       return
     }
 
     toast.success("Person blocked successfully")
-    setPerson({
-      ...person,
-      is_blocked: true,
-      blocked_at: new Date().toISOString(),
-      blocked_reason: reason || "No reason provided",
-    })
+    refetch()
   }
 
   // Handle unblock person
@@ -384,20 +325,18 @@ export default function PersonDetailPage() {
     const { error } = await supabase.rpc("unblock_person", { p_person_id: person.id })
 
     if (error) {
-      console.error("Error unblocking person:", error)
       toast.error("Failed to unblock person")
       return
     }
 
     toast.success("Person unblocked successfully")
-    setPerson({ ...person, is_blocked: false, blocked_at: null, blocked_reason: null })
+    refetch()
   }
 
   // Handle delete person
   const handleDelete = async () => {
     if (!person) return
 
-    // Check if person is linked to any active records
     if (summary.is_current_tenant) {
       toast.error("Cannot delete: This person is currently an active tenant")
       return
@@ -408,26 +347,17 @@ export default function PersonDetailPage() {
       return
     }
 
-    // Build details about what will be deleted
     const deleteDetails: string[] = []
-    if (tenantHistory.length > 0) {
-      deleteDetails.push(`${tenantHistory.length} tenant record(s)`)
-    }
-    if (staffHistory.length > 0) {
-      deleteDetails.push(`${staffHistory.length} staff record(s)`)
-    }
-    if (visitHistory.length > 0) {
-      deleteDetails.push("visitor contact record")
-    }
+    if (tenantHistory.length > 0) deleteDetails.push(`${tenantHistory.length} tenant record(s)`)
+    if (staffHistory.length > 0) deleteDetails.push(`${staffHistory.length} staff record(s)`)
+    if (visitHistory.length > 0) deleteDetails.push("visitor contact record")
 
-    // Show confirmation with details
     const detailsText = deleteDetails.length > 0
       ? `\n\nThe following related records will also be deleted:\n- ${deleteDetails.join("\n- ")}`
       : ""
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${person.name}"?\n\n` +
-      `This action cannot be undone.${detailsText}`
+      `Are you sure you want to delete "${person.name}"?\n\nThis action cannot be undone.${detailsText}`
     )
 
     if (!confirmed) return
@@ -435,75 +365,39 @@ export default function PersonDetailPage() {
     const supabase = createClient()
 
     try {
-      // Delete visitor_contacts first (they reference person_id with NOT NULL)
-      const { error: visitorError } = await supabase
-        .from("visitor_contacts")
-        .delete()
-        .eq("person_id", person.id)
-
-      if (visitorError) {
-        console.error("Error deleting visitor contacts:", visitorError)
-      }
-
-      // Delete inactive staff_members (person_id is NOT NULL)
+      // Delete related records first
+      await supabase.from("visitor_contacts").delete().eq("person_id", person.id)
       if (staffHistory.length > 0) {
-        const { error: staffError } = await supabase
-          .from("staff_members")
-          .delete()
-          .eq("person_id", person.id)
-
-        if (staffError) {
-          console.error("Error deleting staff members:", staffError)
-        }
+        await supabase.from("staff_members").delete().eq("person_id", person.id)
       }
-
-      // Delete inactive tenants (person_id is NOT NULL)
       if (tenantHistory.length > 0) {
-        const { error: tenantError } = await supabase
-          .from("tenants")
-          .delete()
-          .eq("person_id", person.id)
-
-        if (tenantError) {
-          console.error("Error deleting tenants:", tenantError)
-        }
+        await supabase.from("tenants").delete().eq("person_id", person.id)
       }
+      await supabase.from("person_roles").delete().eq("person_id", person.id)
 
-      // Delete person_roles
-      await supabase
-        .from("person_roles")
-        .delete()
-        .eq("person_id", person.id)
-
-      // Finally, delete the person
-      const { error } = await supabase
-        .from("people")
-        .delete()
-        .eq("id", person.id)
+      // Delete the person
+      const { error } = await supabase.from("people").delete().eq("id", person.id)
 
       if (error) {
-        console.error("Error deleting person:", error)
         toast.error("Failed to delete person")
         return
       }
 
       toast.success("Person deleted successfully")
       router.push("/people")
-    } catch (err) {
-      console.error("Error during delete:", err)
+    } catch {
       toast.error("Failed to delete person")
     }
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageLoading message="Loading person details..." />
   }
 
   if (!person) {
     return null
   }
 
-  // Determine status for hero
   const getStatus = () => {
     if (person.is_blocked) return "blocked"
     if (summary.is_current_tenant) return "active"
@@ -526,9 +420,7 @@ export default function PersonDetailPage() {
           title={person.name}
           subtitle={
             <div className="flex items-center gap-2 flex-wrap mt-1">
-              {person.tags?.map((tag) => (
-                <TagBadge key={tag} tag={tag} />
-              ))}
+              {person.tags?.map((tag) => <TagBadge key={tag} tag={tag} />)}
               {person.is_verified && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                   <BadgeCheck className="h-3 w-3" />
@@ -597,12 +489,7 @@ export default function PersonDetailPage() {
             icon={Home}
             variant={summary.is_current_tenant ? "success" : "default"}
           />
-          <InfoCard
-            label="Total Visits"
-            value={summary.total_visits}
-            icon={UserCircle}
-            variant="default"
-          />
+          <InfoCard label="Total Visits" value={summary.total_visits} icon={UserCircle} />
           <InfoCard
             label="Staff Status"
             value={summary.is_staff ? "Active Staff" : "Not Staff"}
@@ -620,90 +507,35 @@ export default function PersonDetailPage() {
         {/* Main Content Grid */}
         <div className="grid md:grid-cols-2 gap-6">
           {/* Personal Information */}
-          <DetailSection
-            title="Personal Information"
-            description="Basic identity details"
-            icon={User}
-          >
+          <DetailSection title="Personal Information" description="Basic identity details" icon={User}>
             <div className="space-y-1">
               {person.phone && (
                 <InfoRow
                   label="Phone"
                   icon={Phone}
-                  value={
-                    <a href={`tel:${person.phone}`} className="text-primary hover:underline">
-                      {person.phone}
-                    </a>
-                  }
+                  value={<a href={`tel:${person.phone}`} className="text-primary hover:underline">{person.phone}</a>}
                 />
               )}
               {person.email && (
                 <InfoRow
                   label="Email"
                   icon={Mail}
-                  value={
-                    <a href={`mailto:${person.email}`} className="text-primary hover:underline truncate max-w-[200px] inline-block">
-                      {person.email}
-                    </a>
-                  }
+                  value={<a href={`mailto:${person.email}`} className="text-primary hover:underline truncate max-w-[200px] inline-block">{person.email}</a>}
                 />
               )}
-              {person.date_of_birth && (
-                <InfoRow
-                  label="Date of Birth"
-                  icon={Calendar}
-                  value={formatDate(person.date_of_birth)}
-                />
-              )}
-              {person.gender && (
-                <InfoRow
-                  label="Gender"
-                  value={GENDER_LABELS[person.gender]}
-                />
-              )}
-              {person.blood_group && (
-                <InfoRow
-                  label="Blood Group"
-                  icon={Heart}
-                  value={person.blood_group}
-                />
-              )}
-              {person.occupation && (
-                <InfoRow
-                  label="Occupation"
-                  icon={Briefcase}
-                  value={person.occupation}
-                />
-              )}
-              {person.company_name && (
-                <InfoRow
-                  label="Company"
-                  icon={Building2}
-                  value={person.company_name}
-                />
-              )}
+              {person.date_of_birth && <InfoRow label="Date of Birth" icon={Calendar} value={formatDate(person.date_of_birth)} />}
+              {person.gender && <InfoRow label="Gender" value={GENDER_LABELS[person.gender]} />}
+              {person.blood_group && <InfoRow label="Blood Group" icon={Heart} value={person.blood_group} />}
+              {person.occupation && <InfoRow label="Occupation" icon={Briefcase} value={person.occupation} />}
+              {person.company_name && <InfoRow label="Company" icon={Building2} value={person.company_name} />}
             </div>
           </DetailSection>
 
           {/* ID Documents */}
-          <DetailSection
-            title="ID Documents"
-            description="Identity verification documents"
-            icon={CreditCard}
-          >
+          <DetailSection title="ID Documents" description="Identity verification documents" icon={CreditCard}>
             <div className="space-y-1">
-              {person.aadhaar_number && (
-                <InfoRow
-                  label="Aadhaar"
-                  value={<span className="font-mono">{person.aadhaar_number}</span>}
-                />
-              )}
-              {person.pan_number && (
-                <InfoRow
-                  label="PAN"
-                  value={<span className="font-mono">{person.pan_number}</span>}
-                />
-              )}
+              {person.aadhaar_number && <InfoRow label="Aadhaar" value={<span className="font-mono">{person.aadhaar_number}</span>} />}
+              {person.pan_number && <InfoRow label="PAN" value={<span className="font-mono">{person.pan_number}</span>} />}
               {person.id_documents && person.id_documents.length > 0 ? (
                 person.id_documents.map((doc, index) => (
                   <InfoRow
@@ -718,20 +550,14 @@ export default function PersonDetailPage() {
                   />
                 ))
               ) : !person.aadhaar_number && !person.pan_number ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">
-                  No ID documents added
-                </p>
+                <p className="text-sm text-muted-foreground py-4 text-center">No ID documents added</p>
               ) : null}
             </div>
           </DetailSection>
 
           {/* Address */}
           {(person.permanent_address || person.current_address) && (
-            <DetailSection
-              title="Address"
-              description="Location information"
-              icon={MapPin}
-            >
+            <DetailSection title="Address" description="Location information" icon={MapPin}>
               <div className="space-y-4">
                 {person.permanent_address && (
                   <div>
@@ -739,9 +565,7 @@ export default function PersonDetailPage() {
                     <p className="font-medium">{person.permanent_address}</p>
                     {(person.permanent_city || person.permanent_state) && (
                       <p className="text-sm text-muted-foreground">
-                        {[person.permanent_city, person.permanent_state, person.permanent_pincode]
-                          .filter(Boolean)
-                          .join(", ")}
+                        {[person.permanent_city, person.permanent_state, person.permanent_pincode].filter(Boolean).join(", ")}
                       </p>
                     )}
                   </div>
@@ -750,9 +574,7 @@ export default function PersonDetailPage() {
                   <div>
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Current Address</p>
                     <p className="font-medium">{person.current_address}</p>
-                    {person.current_city && (
-                      <p className="text-sm text-muted-foreground">{person.current_city}</p>
-                    )}
+                    {person.current_city && <p className="text-sm text-muted-foreground">{person.current_city}</p>}
                   </div>
                 )}
               </div>
@@ -761,11 +583,7 @@ export default function PersonDetailPage() {
 
           {/* Emergency Contacts */}
           {person.emergency_contacts && person.emergency_contacts.length > 0 && (
-            <DetailSection
-              title="Emergency Contacts"
-              description="People to contact in emergencies"
-              icon={Phone}
-            >
+            <DetailSection title="Emergency Contacts" description="People to contact in emergencies" icon={Phone}>
               <div className="space-y-3">
                 {person.emergency_contacts.map((contact, index) => (
                   <div key={index} className="p-3 border rounded-lg bg-slate-50/50">
@@ -774,12 +592,7 @@ export default function PersonDetailPage() {
                         <p className="font-medium">{contact.name}</p>
                         <p className="text-sm text-muted-foreground">{contact.relation}</p>
                       </div>
-                      <a
-                        href={`tel:${contact.phone}`}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        {contact.phone}
-                      </a>
+                      <a href={`tel:${contact.phone}`} className="text-primary hover:underline font-medium">{contact.phone}</a>
                     </div>
                   </div>
                 ))}
@@ -804,20 +617,14 @@ export default function PersonDetailPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                        stay.status === "active" ? "bg-blue-100" : "bg-slate-100"
-                      }`}>
-                        <Home className={`h-5 w-5 ${
-                          stay.status === "active" ? "text-blue-600" : "text-slate-600"
-                        }`} />
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${stay.status === "active" ? "bg-blue-100" : "bg-slate-100"}`}>
+                        <Home className={`h-5 w-5 ${stay.status === "active" ? "text-blue-600" : "text-slate-600"}`} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{stay.property_name}</span>
                           <span className="text-muted-foreground">Room {stay.room_number}</span>
-                          {stay.status === "active" && (
-                            <StatusBadge status="active" label="Current" />
-                          )}
+                          {stay.status === "active" && <StatusBadge status="active" label="Current" />}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {formatDate(stay.check_in_date)} - {stay.check_out_date ? formatDate(stay.check_out_date) : "Present"}
@@ -853,29 +660,18 @@ export default function PersonDetailPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                        staff.is_active ? "bg-green-100" : "bg-slate-100"
-                      }`}>
-                        <Briefcase className={`h-5 w-5 ${
-                          staff.is_active ? "text-green-600" : "text-slate-600"
-                        }`} />
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${staff.is_active ? "bg-green-100" : "bg-slate-100"}`}>
+                        <Briefcase className={`h-5 w-5 ${staff.is_active ? "text-green-600" : "text-slate-600"}`} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">Staff Member</span>
-                          <StatusBadge
-                            status={staff.is_active ? "active" : "inactive"}
-                            label={staff.is_active ? "Active" : "Inactive"}
-                          />
+                          <StatusBadge status={staff.is_active ? "active" : "inactive"} label={staff.is_active ? "Active" : "Inactive"} />
                           {staff.user_id && (
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                              Can Login
-                            </span>
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Can Login</span>
                           )}
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          Added {formatDate(staff.created_at)}
-                        </div>
+                        <div className="text-sm text-muted-foreground">Added {formatDate(staff.created_at)}</div>
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -888,11 +684,7 @@ export default function PersonDetailPage() {
 
         {/* Visit History */}
         {visitHistory.length > 0 && (
-          <DetailSection
-            title="Visit History"
-            description="Recent visits to properties"
-            icon={History}
-          >
+          <DetailSection title="Visit History" description="Recent visits to properties" icon={History}>
             <div className="space-y-3">
               {visitHistory.map((visit) => (
                 <Link
@@ -912,17 +704,13 @@ export default function PersonDetailPage() {
                             {visit.visitor_type.replace("_", " ")}
                           </span>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {visit.purpose || "No purpose specified"}
-                        </div>
+                        <div className="text-sm text-muted-foreground">{visit.purpose || "No purpose specified"}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right text-sm">
                         <p className="font-medium">{formatDate(visit.check_in_time)}</p>
-                        <p className="text-muted-foreground">
-                          {visit.check_out_time ? "Checked out" : "Still here"}
-                        </p>
+                        <p className="text-muted-foreground">{visit.check_out_time ? "Checked out" : "Still here"}</p>
                       </div>
                       <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
@@ -935,11 +723,7 @@ export default function PersonDetailPage() {
 
         {/* Notes */}
         {person.notes && (
-          <DetailSection
-            title="Notes"
-            description="Additional information"
-            icon={FileText}
-          >
+          <DetailSection title="Notes" description="Additional information" icon={FileText}>
             <p className="whitespace-pre-wrap text-sm">{person.notes}</p>
           </DetailSection>
         )}
@@ -954,50 +738,28 @@ export default function PersonDetailPage() {
             defaultOpen={false}
           >
             <div className="relative">
-              {/* Vertical line */}
               <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-border" />
-
               <div className="space-y-4">
                 {timeline.map((event) => {
                   const getEventIcon = () => {
                     switch (event.type) {
-                      case "tenant_join":
-                        return <Home className="h-4 w-4 text-blue-600" />
-                      case "tenant_leave":
-                        return <Home className="h-4 w-4 text-slate-500" />
-                      case "staff_join":
-                        return <Briefcase className="h-4 w-4 text-green-600" />
-                      case "staff_leave":
-                        return <Briefcase className="h-4 w-4 text-slate-500" />
-                      case "visit":
-                        return <UserCircle className="h-4 w-4 text-purple-600" />
-                      case "verified":
-                        return <BadgeCheck className="h-4 w-4 text-emerald-600" />
-                      case "blocked":
-                        return <Ban className="h-4 w-4 text-red-600" />
-                      default:
-                        return <Clock className="h-4 w-4 text-slate-500" />
+                      case "tenant_join": return <Home className="h-4 w-4 text-blue-600" />
+                      case "tenant_leave": return <Home className="h-4 w-4 text-slate-500" />
+                      case "staff_join": return <Briefcase className="h-4 w-4 text-green-600" />
+                      case "verified": return <BadgeCheck className="h-4 w-4 text-emerald-600" />
+                      case "blocked": return <Ban className="h-4 w-4 text-red-600" />
+                      default: return <Clock className="h-4 w-4 text-slate-500" />
                     }
                   }
 
                   const getEventBg = () => {
                     switch (event.type) {
-                      case "tenant_join":
-                        return "bg-blue-100"
-                      case "tenant_leave":
-                        return "bg-slate-100"
-                      case "staff_join":
-                        return "bg-green-100"
-                      case "staff_leave":
-                        return "bg-slate-100"
-                      case "visit":
-                        return "bg-purple-100"
-                      case "verified":
-                        return "bg-emerald-100"
-                      case "blocked":
-                        return "bg-red-100"
-                      default:
-                        return "bg-slate-100"
+                      case "tenant_join": return "bg-blue-100"
+                      case "tenant_leave": return "bg-slate-100"
+                      case "staff_join": return "bg-green-100"
+                      case "verified": return "bg-emerald-100"
+                      case "blocked": return "bg-red-100"
+                      default: return "bg-slate-100"
                     }
                   }
 
@@ -1011,9 +773,7 @@ export default function PersonDetailPage() {
                           <p className="font-medium">{event.title}</p>
                           <p className="text-sm text-muted-foreground">{formatDate(event.date)}</p>
                         </div>
-                        {event.subtitle && (
-                          <p className="text-sm text-muted-foreground">{event.subtitle}</p>
-                        )}
+                        {event.subtitle && <p className="text-sm text-muted-foreground">{event.subtitle}</p>}
                       </div>
                     </div>
                   )
@@ -1024,72 +784,53 @@ export default function PersonDetailPage() {
         )}
 
         {/* Quick Actions */}
-        <DetailSection
-          title="Quick Actions"
-          icon={Star}
-        >
+        <DetailSection title="Quick Actions" icon={Star}>
           <div className="space-y-6">
-            {/* Role Actions */}
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Add to Role</p>
               <div className="flex flex-wrap gap-3">
                 {!person.tags?.includes("tenant") && !person.is_blocked && (
                   <Link href={`/tenants/new?person_id=${person.id}`}>
-                    <Button variant="outline" size="sm">
-                      <Home className="mr-2 h-4 w-4" />
-                      Add as Tenant
-                    </Button>
+                    <Button variant="outline" size="sm"><Home className="mr-2 h-4 w-4" />Add as Tenant</Button>
                   </Link>
                 )}
                 {!person.is_blocked && (
                   <Link href={`/visitors/new?person_id=${person.id}`}>
-                    <Button variant="outline" size="sm">
-                      <UserCircle className="mr-2 h-4 w-4" />
-                      Check In as Visitor
-                    </Button>
+                    <Button variant="outline" size="sm"><UserCircle className="mr-2 h-4 w-4" />Check In as Visitor</Button>
                   </Link>
                 )}
                 {!person.tags?.includes("staff") && !person.is_blocked && (
                   <Link href={`/staff/new?person_id=${person.id}`}>
-                    <Button variant="outline" size="sm">
-                      <Briefcase className="mr-2 h-4 w-4" />
-                      Add as Staff
-                    </Button>
+                    <Button variant="outline" size="sm"><Briefcase className="mr-2 h-4 w-4" />Add as Staff</Button>
                   </Link>
                 )}
               </div>
             </div>
 
-            {/* Verification & Status Actions */}
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Verification & Status</p>
               <div className="flex flex-wrap gap-3">
-                {!person.is_verified && (
+                {!person.is_verified ? (
                   <PermissionGate permission="tenants.update" hide>
                     <Button variant="outline" size="sm" onClick={handleVerify}>
-                      <BadgeCheck className="mr-2 h-4 w-4 text-emerald-600" />
-                      Verify Identity
+                      <BadgeCheck className="mr-2 h-4 w-4 text-emerald-600" />Verify Identity
                     </Button>
                   </PermissionGate>
-                )}
-                {person.is_verified && (
+                ) : (
                   <Button variant="outline" size="sm" disabled>
-                    <BadgeCheck className="mr-2 h-4 w-4 text-emerald-600" />
-                    Identity Verified
+                    <BadgeCheck className="mr-2 h-4 w-4 text-emerald-600" />Identity Verified
                   </Button>
                 )}
                 {!person.is_blocked ? (
                   <PermissionGate permission="tenants.update" hide>
                     <Button variant="outline" size="sm" onClick={handleBlock} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                      <Ban className="mr-2 h-4 w-4" />
-                      Block Person
+                      <Ban className="mr-2 h-4 w-4" />Block Person
                     </Button>
                   </PermissionGate>
                 ) : (
                   <PermissionGate permission="tenants.update" hide>
                     <Button variant="outline" size="sm" onClick={handleUnblock} className="text-green-600 hover:text-green-700 hover:bg-green-50">
-                      <Shield className="mr-2 h-4 w-4" />
-                      Unblock Person
+                      <Shield className="mr-2 h-4 w-4" />Unblock Person
                     </Button>
                   </PermissionGate>
                 )}
