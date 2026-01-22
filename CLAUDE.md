@@ -1,7 +1,7 @@
 # ManageKar - AI Development Guide
 
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-01-13
+> **Last Updated**: 2026-01-22
 
 ---
 
@@ -168,6 +168,81 @@ OR is_platform_admin(auth.uid())
 // In TypeScript:
 const isPlatformAdmin = await checkPlatformAdmin(userId)
 ```
+
+### 3.5 Live Person Data Pattern (IMPORTANT)
+
+Entities with a `person_id` FK should display **live data from the `people` table**, not denormalized copies. This ensures name/phone/photo updates in People are immediately reflected everywhere.
+
+```typescript
+// In list page configs - ALWAYS include person.name in select
+export const TENANT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "tenants",
+  select: `
+    *,
+    property:properties(id, name),
+    room:rooms(id, room_number),
+    person:people(id, name, photo_url)  // Include name for live data
+  `,
+  // ...
+}
+
+// In list page column render - use person.name with fallback
+render: (tenant) => {
+  // Live data from people table, fallback to denormalized copy
+  const displayName = tenant.person?.name || tenant.name
+  return (
+    <Avatar name={displayName} src={getAvatarUrl(tenant)} />
+    <span>{displayName}</span>
+  )
+}
+
+// For visitors (deeper hierarchy)
+const displayName = visitor.visitor_contact?.person?.name
+  || visitor.visitor_contact?.name
+  || visitor.visitor_name
+```
+
+**Why this matters:**
+- People module is the single source of truth for personal data
+- When a person's name is updated in People, all lists show the updated name
+- Denormalized fields (`tenant.name`) are kept for performance but may be stale
+- Always prefer `person.name` → `entity.name` fallback pattern
+
+### 3.6 List Page Architecture
+
+All list pages use the centralized `ListPageTemplate` + `useListPage` hook pattern:
+
+```typescript
+// 1. Define config in useListPage.ts
+export const ENTITY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "entity_table",
+  select: `*, related:table(id, name)`,
+  joinFields: ["related"],
+  searchFields: ["name", "phone"],
+  defaultSort: { column: "created_at", ascending: false },
+  defaultPageSize: 25,
+}
+
+// 2. Use in page component
+export default function EntityPage() {
+  return (
+    <ListPageTemplate
+      tableKey="entities"
+      config={ENTITY_LIST_CONFIG}
+      columns={columns}
+      filters={filters}
+      metrics={metrics}
+      // ...
+    />
+  )
+}
+```
+
+**Key features:**
+- Server-side pagination (skipped when grouping is active)
+- Saved views support
+- Search with debounce (preserves input focus)
+- Server-side metric counts
 
 ---
 
@@ -702,4 +777,4 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-*Last Updated: 2026-01-15*
+*Last Updated: 2026-01-22*

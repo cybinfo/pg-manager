@@ -36,7 +36,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 
 ## Features
 
-### Core Modules (19 Dashboard Pages)
+### Core Modules (20 Dashboard Pages)
 
 | Module | Description | Key Features |
 |--------|-------------|--------------|
@@ -45,6 +45,7 @@ ManageKar is a comprehensive SaaS platform designed specifically for Indian PG (
 | **Rooms** | Room & bed management | Capacity tracking, occupancy status |
 | **Tenants** | Complete lifecycle | Documents, history, returning tenant detection |
 | **Tenant Journey** | AI-powered insights | Timeline, risk scores, PDF export |
+| **People** | Central identity hub | Single source of truth for person data |
 | **Bills** | Billing system | Auto-generation, itemized line items |
 | **Payments** | Payment tracking | WhatsApp receipts, partial payments |
 | **Refunds** | Refund processing | Deposit refunds, adjustments |
@@ -151,7 +152,7 @@ The flagship feature providing a 360-degree view of each tenant:
 
 4. **Run database migrations**
 
-   Execute migrations 001-043 in order via Supabase Dashboard > SQL Editor
+   Execute migrations 001-053 in order via Supabase Dashboard > SQL Editor
 
 5. **Start development server**
    ```bash
@@ -202,7 +203,7 @@ pg-manager/
 │   ├── types/                  # TypeScript type definitions
 │   └── __tests__/              # Jest test suites (154 tests)
 ├── supabase/
-│   └── migrations/             # Database migrations (001-043)
+│   └── migrations/             # Database migrations (001-053)
 ├── public/                     # Static assets
 ├── CLAUDE.md                   # AI Development Guide
 └── REVIEW.md                   # Code Review Document
@@ -218,6 +219,7 @@ pg-manager/
 |-------|---------|
 | `workspaces` | One per owner (auto-created on registration) |
 | `user_profiles` | Central identity for all users |
+| `people` | Single source of truth for person data (name, phone, ID docs) |
 | `user_contexts` | Links users to workspaces with roles |
 | `platform_admins` | Superuser access table |
 | `properties` | Building/property records |
@@ -232,7 +234,7 @@ pg-manager/
 
 ### Migrations
 
-43 migrations covering:
+53 migrations covering:
 - Core schema (001-010)
 - Unified identity system (012)
 - RBAC and permissions (013-014)
@@ -242,6 +244,8 @@ pg-manager/
 - Tenant journey (041)
 - Schema reconciliation (042)
 - Security fixes (043)
+- People module (044-051)
+- Meter management (052-053)
 
 ---
 
