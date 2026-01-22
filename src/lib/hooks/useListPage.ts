@@ -237,6 +237,7 @@ export function useListPage<T extends object>(
   const configRef = useRef(config)
   const metricsRef = useRef(metrics)
   const filterConfigsRef = useRef(filterConfigs)
+  const selectedGroupsRef = useRef(selectedGroups)
   const initialFetchDone = useRef(false)
 
   // Update refs when props change (but don't trigger re-renders)
@@ -245,6 +246,11 @@ export function useListPage<T extends object>(
     filterConfigsRef.current = filterConfigs
     metricsRef.current = metrics
   }, [config, filterConfigs, metrics])
+
+  // Keep selectedGroups ref in sync with state
+  useEffect(() => {
+    selectedGroupsRef.current = selectedGroups
+  }, [selectedGroups])
 
   // Fetch filter options - uses ref to avoid dependency issues
   const fetchFilterOptions = useCallback(async () => {
@@ -394,7 +400,9 @@ export function useListPage<T extends object>(
       }
 
       // Apply server-side pagination if enabled
-      if (enableServerPagination) {
+      // Skip pagination when grouping is active (need all data for proper grouping)
+      const isGroupingActive = selectedGroupsRef.current.length > 0
+      if (enableServerPagination && !isGroupingActive) {
         const from = (currentPage - 1) * currentPageSize
         const to = from + currentPageSize - 1
         query = query.range(from, to)
@@ -761,6 +769,16 @@ export function useListPage<T extends object>(
     setSortConfig([])
   }, [])
 
+  // Group by setter - triggers refetch because grouping affects pagination
+  // When grouping is active, we fetch all data (no pagination)
+  const handleSetSelectedGroups = useCallback((groups: string[]) => {
+    setSelectedGroups(groups)
+    selectedGroupsRef.current = groups // Update ref immediately
+    setPageState(1)
+    // Refetch data - fetchData will skip pagination if groups.length > 0
+    fetchData(1, pageSize, filters, searchQuery)
+  }, [fetchData, pageSize, filters, searchQuery])
+
   // Pagination setters - pass current filters and search
   const setPage = useCallback((newPage: number) => {
     setPageState(newPage)
@@ -945,7 +963,7 @@ export function useListPage<T extends object>(
     clearFilters,
     filterOptions,
     selectedGroups,
-    setSelectedGroups,
+    setSelectedGroups: handleSetSelectedGroups,
     groupConfig,
     metricsData,
     searchQuery,
