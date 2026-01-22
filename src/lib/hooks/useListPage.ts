@@ -277,16 +277,44 @@ export function useListPage<T extends object>(
 
         // Handle different filter types
         if (filterConfig.type === "select") {
-          // Handle nested properties like "property" which maps to "property_id"
-          // Check if the filter ID ends with a table name that has a _id column
+          // Handle FK relationships (property -> property_id)
           if (filterId === "property") {
             query = query.eq("property_id", filterValue)
           } else if (filterId === "tenant") {
             query = query.eq("tenant_id", filterValue)
           } else if (filterId === "room") {
             query = query.eq("room_id", filterValue)
-          } else {
-            // Direct column filter (e.g., status, type)
+          }
+          // Handle array columns (tags contains value)
+          else if (filterId === "tags") {
+            query = query.contains("tags", [filterValue])
+          }
+          // Handle virtual "status" filter for People (maps to is_verified/is_blocked)
+          else if (filterId === "status" && currentConfig.table === "people") {
+            if (filterValue === "verified") {
+              query = query.eq("is_verified", true)
+            } else if (filterValue === "blocked") {
+              query = query.eq("is_blocked", true)
+            }
+          }
+          // Handle visitor_type filter
+          else if (filterId === "visitor_type") {
+            query = query.eq("visitor_type", filterValue)
+          }
+          // Handle settlement_status for exit_clearance
+          else if (filterId === "settlement_status") {
+            query = query.eq("settlement_status", filterValue)
+          }
+          // Handle refund_type
+          else if (filterId === "refund_type") {
+            query = query.eq("refund_type", filterValue)
+          }
+          // Handle meter_type
+          else if (filterId === "meter_type") {
+            query = query.eq("meter_type", filterValue)
+          }
+          // Default: direct column filter (status, type, etc.)
+          else {
             query = query.eq(filterId, filterValue)
           }
         } else if (filterConfig.type === "date") {
