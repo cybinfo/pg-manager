@@ -408,58 +408,91 @@ export default function PersonDetailPage() {
       return
     }
 
-    // Show confirmation
+    // Build details about what will be deleted
+    const deleteDetails: string[] = []
+    if (tenantHistory.length > 0) {
+      deleteDetails.push(`${tenantHistory.length} tenant record(s)`)
+    }
+    if (staffHistory.length > 0) {
+      deleteDetails.push(`${staffHistory.length} staff record(s)`)
+    }
+    if (visitHistory.length > 0) {
+      deleteDetails.push("visitor contact record")
+    }
+
+    // Show confirmation with details
+    const detailsText = deleteDetails.length > 0
+      ? `\n\nThe following related records will also be deleted:\n- ${deleteDetails.join("\n- ")}`
+      : ""
+
     const confirmed = window.confirm(
       `Are you sure you want to delete "${person.name}"?\n\n` +
-      `This action cannot be undone. All associated records will be unlinked.`
+      `This action cannot be undone.${detailsText}`
     )
 
     if (!confirmed) return
 
     const supabase = createClient()
 
-    // First, unlink from tenants (set person_id to null)
-    if (tenantHistory.length > 0) {
-      await supabase
-        .from("tenants")
-        .update({ person_id: null })
+    try {
+      // Delete visitor_contacts first (they reference person_id with NOT NULL)
+      const { error: visitorError } = await supabase
+        .from("visitor_contacts")
+        .delete()
         .eq("person_id", person.id)
-    }
 
-    // Unlink from staff_members
-    if (staffHistory.length > 0) {
+      if (visitorError) {
+        console.error("Error deleting visitor contacts:", visitorError)
+      }
+
+      // Delete inactive staff_members (person_id is NOT NULL)
+      if (staffHistory.length > 0) {
+        const { error: staffError } = await supabase
+          .from("staff_members")
+          .delete()
+          .eq("person_id", person.id)
+
+        if (staffError) {
+          console.error("Error deleting staff members:", staffError)
+        }
+      }
+
+      // Delete inactive tenants (person_id is NOT NULL)
+      if (tenantHistory.length > 0) {
+        const { error: tenantError } = await supabase
+          .from("tenants")
+          .delete()
+          .eq("person_id", person.id)
+
+        if (tenantError) {
+          console.error("Error deleting tenants:", tenantError)
+        }
+      }
+
+      // Delete person_roles
       await supabase
-        .from("staff_members")
-        .update({ person_id: null })
+        .from("person_roles")
+        .delete()
         .eq("person_id", person.id)
-    }
 
-    // Unlink from visitor_contacts
-    await supabase
-      .from("visitor_contacts")
-      .update({ person_id: null })
-      .eq("person_id", person.id)
+      // Finally, delete the person
+      const { error } = await supabase
+        .from("people")
+        .delete()
+        .eq("id", person.id)
 
-    // Delete person_roles
-    await supabase
-      .from("person_roles")
-      .delete()
-      .eq("person_id", person.id)
+      if (error) {
+        console.error("Error deleting person:", error)
+        toast.error("Failed to delete person")
+        return
+      }
 
-    // Finally, delete the person
-    const { error } = await supabase
-      .from("people")
-      .delete()
-      .eq("id", person.id)
-
-    if (error) {
-      console.error("Error deleting person:", error)
+      toast.success("Person deleted successfully")
+      router.push("/people")
+    } catch (err) {
+      console.error("Error during delete:", err)
       toast.error("Failed to delete person")
-      return
     }
-
-    toast.success("Person deleted successfully")
-    router.push("/people")
   }
 
   if (loading) {
