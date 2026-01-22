@@ -236,25 +236,47 @@ const metrics: MetricConfig<Person>[] = [
     id: "tenants",
     label: "Tenants",
     icon: Home,
+    // Fallback compute (not used when serverFilter is defined)
     compute: (items) => items.filter((p) => p.tags?.includes("tenant")).length,
+    // Server-side count for accurate cross-page totals
+    serverFilter: {
+      column: "tags",
+      operator: "contains",
+      value: ["tenant"],
+    },
   },
   {
     id: "staff",
     label: "Staff",
     icon: Briefcase,
     compute: (items) => items.filter((p) => p.tags?.includes("staff")).length,
+    serverFilter: {
+      column: "tags",
+      operator: "contains",
+      value: ["staff"],
+    },
   },
   {
     id: "visitors",
     label: "Visitors",
     icon: UserCircle,
     compute: (items) => items.filter((p) => p.tags?.includes("visitor")).length,
+    serverFilter: {
+      column: "tags",
+      operator: "contains",
+      value: ["visitor"],
+    },
   },
   {
     id: "verified",
     label: "Verified",
     icon: BadgeCheck,
     compute: (items) => items.filter((p) => p.is_verified).length,
+    serverFilter: {
+      column: "is_verified",
+      operator: "eq",
+      value: true,
+    },
   },
   {
     id: "blocked",
@@ -262,6 +284,11 @@ const metrics: MetricConfig<Person>[] = [
     icon: Ban,
     compute: (items) => items.filter((p) => p.is_blocked).length,
     highlight: (value) => (value as number) > 0,
+    serverFilter: {
+      column: "is_blocked",
+      operator: "eq",
+      value: true,
+    },
   },
 ]
 

@@ -60,9 +60,17 @@ export interface MetricConfig<T> {
   id: string
   label: string
   icon?: React.ComponentType<{ className?: string }>
-  compute: (items: T[], total: number) => number | string  // total = pagination.total for accurate counts
+  // compute receives: items (current page), total (server total), serverCounts (keyed by metric id)
+  compute: (items: T[], total: number, serverCounts?: Record<string, number>) => number | string
   format?: "number" | "currency" | "percentage"
   highlight?: (value: number | string, items: T[]) => boolean
+  // Optional: specify a server-side filter to get accurate count across all pages
+  // This runs a separate count query with this filter condition
+  serverFilter?: {
+    column: string
+    operator: "eq" | "contains" | "gt" | "gte" | "lt" | "lte"
+    value: unknown
+  }
 }
 
 export interface PaginationState {
@@ -192,8 +200,15 @@ export function useListPage<T extends object>(
   const [pageSize, setPageSizeState] = useState(defaultPageSize)
   const [total, setTotal] = useState(0)
 
+  // Server-side metric counts (for accurate counts across all pages)
+  const [serverCounts, setServerCounts] = useState<Record<string, number>>({})
+
+  // Track if server counts are loading
+  const [serverCountsLoading, setServerCountsLoading] = useState(false)
+
   // Use refs to store stable references - prevents infinite loops
   const configRef = useRef(config)
+  const metricsRef = useRef(metrics)
   const filterConfigsRef = useRef(filterConfigs)
   const initialFetchDone = useRef(false)
 
@@ -201,7 +216,8 @@ export function useListPage<T extends object>(
   useEffect(() => {
     configRef.current = config
     filterConfigsRef.current = filterConfigs
-  }, [config, filterConfigs])
+    metricsRef.current = metrics
+  }, [config, filterConfigs, metrics])
 
   // Fetch filter options - uses ref to avoid dependency issues
   const fetchFilterOptions = useCallback(async () => {
@@ -392,6 +408,127 @@ export function useListPage<T extends object>(
     }
   }, [enabled, enableServerPagination, page, pageSize, filters, searchQuery]) // Dependencies for pagination and filtering
 
+  // Fetch server-side counts for metrics with serverFilter
+  const fetchServerCounts = useCallback(async (
+    fetchFilters?: Record<string, string>,
+    fetchSearchQuery?: string
+  ) => {
+    const currentConfig = configRef.current
+    const currentFilterConfigs = filterConfigsRef.current
+    const currentMetrics = metricsRef.current
+    const currentFilters = fetchFilters ?? filters
+    const currentSearchQuery = fetchSearchQuery ?? searchQuery
+
+    // Find metrics that have serverFilter defined
+    const metricsWithServerFilter = currentMetrics.filter((m) => m.serverFilter)
+    if (metricsWithServerFilter.length === 0) return
+
+    setServerCountsLoading(true)
+
+    try {
+      const supabase = createClient()
+      const counts: Record<string, number> = {}
+
+      // Query each metric separately
+      for (const metric of metricsWithServerFilter) {
+        if (!metric.serverFilter) continue
+
+        // Build base query with all current filters applied
+        let query = supabase
+          .from(currentConfig.table)
+          .select("*", { count: "exact", head: true })
+
+        // Apply active filters (same logic as fetchData)
+        for (const [filterId, filterValue] of Object.entries(currentFilters)) {
+          if (!filterValue || filterValue === "all") continue
+
+          const filterConfig = currentFilterConfigs.find((f) => f.id === filterId)
+          if (!filterConfig) continue
+
+          if (filterConfig.type === "select") {
+            if (filterId === "property") {
+              query = query.eq("property_id", filterValue)
+            } else if (filterId === "tenant") {
+              query = query.eq("tenant_id", filterValue)
+            } else if (filterId === "room") {
+              query = query.eq("room_id", filterValue)
+            } else if (filterId === "tags") {
+              query = query.contains("tags", [filterValue])
+            } else if (filterId === "status" && currentConfig.table === "people") {
+              if (filterValue === "verified") {
+                query = query.eq("is_verified", true)
+              } else if (filterValue === "blocked") {
+                query = query.eq("is_blocked", true)
+              }
+            } else if (filterId === "visitor_type") {
+              query = query.eq("visitor_type", filterValue)
+            } else if (filterId === "settlement_status") {
+              query = query.eq("settlement_status", filterValue)
+            } else if (filterId === "refund_type") {
+              query = query.eq("refund_type", filterValue)
+            } else if (filterId === "meter_type") {
+              query = query.eq("meter_type", filterValue)
+            } else {
+              query = query.eq(filterId, filterValue)
+            }
+          } else if (filterConfig.type === "date") {
+            query = query.eq(filterId, filterValue)
+          }
+        }
+
+        // Apply date range filters
+        if (currentFilters.date_from) {
+          const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
+          query = query.gte(dateField, currentFilters.date_from)
+        }
+        if (currentFilters.date_to) {
+          const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
+          query = query.lte(dateField, currentFilters.date_to)
+        }
+
+        // Apply search filter
+        if (currentSearchQuery && currentConfig.searchFields.length > 0) {
+          const searchConditions = currentConfig.searchFields
+            .filter((field) => !String(field).includes("."))
+            .map((field) => `${String(field)}.ilike.%${currentSearchQuery}%`)
+            .join(",")
+
+          if (searchConditions) {
+            query = query.or(searchConditions)
+          }
+        }
+
+        // Apply the metric's specific serverFilter
+        const { column, operator, value } = metric.serverFilter
+        if (operator === "eq") {
+          query = query.eq(column, value)
+        } else if (operator === "contains") {
+          query = query.contains(column, value as unknown[])
+        } else if (operator === "gt") {
+          query = query.gt(column, value as number)
+        } else if (operator === "gte") {
+          query = query.gte(column, value as number)
+        } else if (operator === "lt") {
+          query = query.lt(column, value as number)
+        } else if (operator === "lte") {
+          query = query.lte(column, value as number)
+        }
+
+        const { count, error } = await query
+
+        if (!error && count !== null) {
+          counts[metric.id] = count
+        }
+      }
+
+      setServerCounts(counts)
+    } catch (err) {
+      console.error("[useListPage] Error fetching server counts:", err)
+    } finally {
+      setServerCountsLoading(false)
+    }
+  }, [filters, searchQuery])
+
   // Initial fetch - only run once
   useEffect(() => {
     if (initialFetchDone.current) return
@@ -399,7 +536,8 @@ export function useListPage<T extends object>(
 
     fetchData()
     fetchFilterOptions()
-  }, [fetchData, fetchFilterOptions])
+    fetchServerCounts()
+  }, [fetchData, fetchFilterOptions, fetchServerCounts])
 
   // Filter setters - now trigger server-side refetch
   const setFilter = useCallback((id: string, value: string) => {
@@ -408,14 +546,16 @@ export function useListPage<T extends object>(
     setPageState(1)
     // Refetch with new filters
     fetchData(1, pageSize, newFilters, searchQuery)
-  }, [filters, pageSize, searchQuery, fetchData])
+    fetchServerCounts(newFilters, searchQuery)
+  }, [filters, pageSize, searchQuery, fetchData, fetchServerCounts])
 
   const setFilters = useCallback((newFilters: Record<string, string>) => {
     setFiltersState(newFilters)
     setPageState(1)
     // Refetch with new filters
     fetchData(1, pageSize, newFilters, searchQuery)
-  }, [pageSize, searchQuery, fetchData])
+    fetchServerCounts(newFilters, searchQuery)
+  }, [pageSize, searchQuery, fetchData, fetchServerCounts])
 
   const clearFilters = useCallback(() => {
     const defaultFilters = configRef.current.defaultFilters || {}
@@ -423,7 +563,8 @@ export function useListPage<T extends object>(
     setPageState(1)
     // Refetch with cleared filters
     fetchData(1, pageSize, defaultFilters, searchQuery)
-  }, [pageSize, searchQuery, fetchData])
+    fetchServerCounts(defaultFilters, searchQuery)
+  }, [pageSize, searchQuery, fetchData, fetchServerCounts])
 
   // Search setter with debounce for server-side search
   const setSearchQuery = useCallback((query: string) => {
@@ -438,8 +579,9 @@ export function useListPage<T extends object>(
     searchTimerRef.current = setTimeout(() => {
       setPageState(1)
       fetchData(1, pageSize, filters, query)
+      fetchServerCounts(filters, query)
     }, 300) // 300ms debounce
-  }, [pageSize, filters, fetchData])
+  }, [pageSize, filters, fetchData, fetchServerCounts])
 
   // Sort setters - now receives array from DataTable for multi-column sorting
   const handleSortChange = useCallback((configs: SortConfig[]) => {
@@ -524,10 +666,21 @@ export function useListPage<T extends object>(
     }))
   }, [selectedGroups, groupByOptions])
 
-  // Compute metrics - pass pagination.total for accurate total counts
+  // Compute metrics - pass pagination.total and serverCounts for accurate counts
   const metricsData = useMemo(() => {
     return metrics.map((metric) => {
-      const value = metric.compute(data, total) // Pass total for accurate counts
+      // If metric has serverFilter and we have a server count for it, use that
+      // Otherwise fall back to the compute function
+      let value: number | string
+
+      if (metric.serverFilter && serverCounts[metric.id] !== undefined) {
+        // Use server count for metrics with serverFilter
+        value = serverCounts[metric.id]
+      } else {
+        // Fall back to compute function (which may still use total for "total" metric)
+        value = metric.compute(data, total, serverCounts)
+      }
+
       return {
         id: metric.id,
         label: metric.label,
@@ -536,7 +689,7 @@ export function useListPage<T extends object>(
         highlight: metric.highlight ? metric.highlight(value, data) : false,
       }
     })
-  }, [data, total, metrics])
+  }, [data, total, metrics, serverCounts])
 
   // Get current view configuration (for saving views)
   const getViewConfig = useCallback((): TableViewConfig => {
