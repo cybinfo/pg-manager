@@ -610,14 +610,16 @@ export function DataTable<T extends object>({
 
   // Ref to maintain search input focus after re-renders
   const searchInputRef = React.useRef<HTMLInputElement>(null)
-  // Track if user is actively typing (not just focused)
-  const isTypingRef = React.useRef(false)
+  // Track last time user typed (timestamp)
+  const lastTypedRef = React.useRef(0)
   // Track cursor position before re-render
   const cursorPosRef = React.useRef(0)
 
   // Use layoutEffect to restore focus synchronously before paint
+  // If user typed recently (within 1 second), restore focus
   React.useLayoutEffect(() => {
-    if (isTypingRef.current && searchInputRef.current && document.activeElement !== searchInputRef.current) {
+    const timeSinceTyped = Date.now() - lastTypedRef.current
+    if (timeSinceTyped < 1000 && searchInputRef.current && document.activeElement !== searchInputRef.current) {
       searchInputRef.current.focus()
       // Restore cursor position
       const pos = Math.min(cursorPosRef.current, searchInputRef.current.value.length)
@@ -635,19 +637,13 @@ export function DataTable<T extends object>({
             placeholder={searchPlaceholder}
             value={search}
             onChange={(e) => {
-              // Track that user is actively typing
-              isTypingRef.current = true
+              // Track when user last typed (for focus restoration)
+              lastTypedRef.current = Date.now()
               // Save cursor position before state update triggers re-render
               cursorPosRef.current = e.target.selectionStart || e.target.value.length
               setSearch(e.target.value)
             }}
             className="pl-9 bg-white"
-            onBlur={(e) => {
-              // Only stop tracking typing if user clicked on something else
-              if (e.relatedTarget) {
-                isTypingRef.current = false
-              }
-            }}
           />
         </div>
       )}
