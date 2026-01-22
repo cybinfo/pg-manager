@@ -225,10 +225,10 @@ export default function VisitorDetailPage() {
         backLabel="All Visitors"
         status={isCheckedIn ? "active" : "muted"}
         avatar={
-          visitor.visitor_contact?.photo_url ? (
+          visitor.visitor_contact?.person?.photo_url ? (
             <Avatar
               name={visitor.visitor_name}
-              src={visitor.visitor_contact.photo_url}
+              src={visitor.visitor_contact.person.photo_url}
               size="xl"
               className="h-16 w-16"
               clickable
