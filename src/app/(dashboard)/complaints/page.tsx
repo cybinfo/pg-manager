@@ -235,7 +235,11 @@ const metrics: MetricConfig<Complaint>[] = [
     icon: Wrench,
     compute: (items) =>
       items.filter((c) => c.status === "in_progress" || c.status === "acknowledged").length,
-    // Note: OR conditions not supported by serverFilter yet - showing page totals
+    serverFilter: {
+      column: "status",
+      operator: "in",
+      value: ["in_progress", "acknowledged"],
+    },
   },
   {
     id: "resolved",
@@ -243,7 +247,11 @@ const metrics: MetricConfig<Complaint>[] = [
     icon: CheckCircle,
     compute: (items) =>
       items.filter((c) => c.status === "resolved" || c.status === "closed").length,
-    // Note: OR conditions not supported by serverFilter yet - showing page totals
+    serverFilter: {
+      column: "status",
+      operator: "in",
+      value: ["resolved", "closed"],
+    },
   },
   {
     id: "urgent",
@@ -254,7 +262,8 @@ const metrics: MetricConfig<Complaint>[] = [
         (c) => c.priority === "urgent" && c.status !== "resolved" && c.status !== "closed"
       ).length,
     highlight: (value) => (value as number) > 0,
-    // Note: Complex AND/NOT conditions not supported - showing page totals
+    // Note: Complex AND + NOT IN conditions require multiple filters - showing page totals
+    // Could be implemented with serverFilter array in future
   },
 ]
 

@@ -184,12 +184,21 @@ const metrics: MetricConfig<Payment>[] = [
       const thisMonthPayments = items.filter((p) => new Date(p.payment_date) >= firstOfMonth)
       return formatCurrency(thisMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0))
     },
+    // Note: Dynamic date filtering requires runtime filter values - page totals only
   },
   {
     id: "all_time",
     label: "All Time",
     icon: Wallet,
-    compute: (items) => formatCurrency(items.reduce((sum, p) => sum + Number(p.amount), 0)),
+    compute: (items, _total, serverData) => {
+      if (serverData?.all_time !== undefined) {
+        return formatCurrency(serverData.all_time)
+      }
+      return formatCurrency(items.reduce((sum, p) => sum + Number(p.amount), 0))
+    },
+    serverSum: {
+      column: "amount",
+    },
   },
   {
     id: "transactions",
@@ -209,6 +218,7 @@ const metrics: MetricConfig<Payment>[] = [
       const topMethod = Object.entries(methodCounts).sort((a, b) => b[1] - a[1])[0]
       return topMethod ? paymentMethodLabels[topMethod[0]] || topMethod[0] : "—"
     },
+    // Note: Requires counting by group - page totals only
   },
 ]
 

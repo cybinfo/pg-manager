@@ -219,11 +219,23 @@ const metrics: MetricConfig<Tenant>[] = [
   {
     id: "rent",
     label: "Monthly Rent",
-    compute: (items) =>
-      formatCurrency(
+    compute: (items, _total, serverData) => {
+      // If server sum is available, use it; otherwise fall back to page data
+      if (serverData?.rent !== undefined) {
+        return formatCurrency(serverData.rent)
+      }
+      return formatCurrency(
         items.filter((t) => t.status === "active").reduce((sum, t) => sum + t.monthly_rent, 0)
-      ),
-    // Note: This is a sum metric showing page totals. Server aggregation would need separate implementation.
+      )
+    },
+    serverSum: {
+      column: "monthly_rent",
+      filter: {
+        column: "status",
+        operator: "eq",
+        value: "active",
+      },
+    },
   },
 ]
 

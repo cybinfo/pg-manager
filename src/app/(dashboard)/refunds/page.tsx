@@ -261,20 +261,44 @@ const metrics: MetricConfig<Refund>[] = [
     id: "pendingAmount",
     label: "Pending Amount",
     icon: AlertCircle,
-    compute: (items) => formatCurrency(
-      items.filter((r) => r.status === "pending").reduce((sum, r) => sum + r.amount, 0)
-    ),
+    compute: (items, _total, serverData) => {
+      if (serverData?.pendingAmount !== undefined) {
+        return formatCurrency(serverData.pendingAmount)
+      }
+      return formatCurrency(
+        items.filter((r) => r.status === "pending").reduce((sum, r) => sum + r.amount, 0)
+      )
+    },
     highlight: (value) => value !== "₹0",
-    // Note: Sum metric showing page totals
+    serverSum: {
+      column: "amount",
+      filter: {
+        column: "status",
+        operator: "eq",
+        value: "pending",
+      },
+    },
   },
   {
     id: "paidOut",
     label: "Paid Out",
     icon: Banknote,
-    compute: (items) => formatCurrency(
-      items.filter((r) => r.status === "completed").reduce((sum, r) => sum + r.amount, 0)
-    ),
-    // Note: Sum metric showing page totals
+    compute: (items, _total, serverData) => {
+      if (serverData?.paidOut !== undefined) {
+        return formatCurrency(serverData.paidOut)
+      }
+      return formatCurrency(
+        items.filter((r) => r.status === "completed").reduce((sum, r) => sum + r.amount, 0)
+      )
+    },
+    serverSum: {
+      column: "amount",
+      filter: {
+        column: "status",
+        operator: "eq",
+        value: "completed",
+      },
+    },
   },
 ]
 

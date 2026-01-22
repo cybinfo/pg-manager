@@ -281,12 +281,18 @@ const metrics: MetricConfig<Visitor>[] = [
     icon: UserCheck,
     compute: (items) => items.filter((v) => v.status === "checked_in").length,
     highlight: (value) => (value as number) > 0,
+    // "checked_in" status means check_out_time is NULL
+    serverFilter: {
+      column: "check_out_time",
+      operator: "is_null",
+    },
   },
   {
     id: "frequent",
     label: "Frequent Visitors",
     icon: Star,
     compute: (items) => items.filter((v) => v.is_frequent_visitor).length,
+    // Note: is_frequent_visitor comes from joined visitor_contact table - page totals only
   },
   {
     id: "today",
@@ -296,6 +302,7 @@ const metrics: MetricConfig<Visitor>[] = [
       const today = new Date().toDateString()
       return items.filter((v) => new Date(v.check_in_date).toDateString() === today).length
     },
+    // Note: Date comparison with "today" is dynamic - page totals only
   },
 ]
 

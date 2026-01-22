@@ -56,21 +56,45 @@ export interface GroupByOption {
   label: string
 }
 
+// Server filter operators for count-based metrics
+export type ServerFilterOperator =
+  | "eq"       // Equal: column = value
+  | "neq"      // Not equal: column != value
+  | "in"       // IN array: column IN (values)
+  | "not_in"   // NOT IN array: column NOT IN (values)
+  | "contains" // Array contains: column @> value
+  | "gt"       // Greater than: column > value
+  | "gte"      // Greater or equal: column >= value
+  | "lt"       // Less than: column < value
+  | "lte"      // Less or equal: column <= value
+  | "is_null"  // IS NULL: column IS NULL
+  | "is_not_null" // IS NOT NULL: column IS NOT NULL
+
+// Server filter configuration
+export interface ServerFilter {
+  column: string
+  operator: ServerFilterOperator
+  value?: unknown // Optional for is_null/is_not_null
+}
+
+// Server sum configuration for aggregation metrics
+export interface ServerSum {
+  column: string
+  filter?: ServerFilter // Optional filter before summing
+}
+
 export interface MetricConfig<T> {
   id: string
   label: string
   icon?: React.ComponentType<{ className?: string }>
-  // compute receives: items (current page), total (server total), serverCounts (keyed by metric id)
-  compute: (items: T[], total: number, serverCounts?: Record<string, number>) => number | string
+  // compute receives: items (current page), total (server total), serverCounts/serverSums (keyed by metric id)
+  compute: (items: T[], total: number, serverData?: Record<string, number>) => number | string
   format?: "number" | "currency" | "percentage"
   highlight?: (value: number | string, items: T[]) => boolean
-  // Optional: specify a server-side filter to get accurate count across all pages
-  // This runs a separate count query with this filter condition
-  serverFilter?: {
-    column: string
-    operator: "eq" | "contains" | "gt" | "gte" | "lt" | "lte"
-    value: unknown
-  }
+  // For count-based metrics: specify a server-side filter to get accurate count across all pages
+  serverFilter?: ServerFilter
+  // For sum/aggregation metrics: specify column to sum with optional filter
+  serverSum?: ServerSum
 }
 
 export interface PaginationState {
@@ -203,7 +227,10 @@ export function useListPage<T extends object>(
   // Server-side metric counts (for accurate counts across all pages)
   const [serverCounts, setServerCounts] = useState<Record<string, number>>({})
 
-  // Track if server counts are loading
+  // Server-side metric sums (for accurate aggregations across all pages)
+  const [serverSums, setServerSums] = useState<Record<string, number>>({})
+
+  // Track if server counts/sums are loading
   const [serverCountsLoading, setServerCountsLoading] = useState(false)
 
   // Use refs to store stable references - prevents infinite loops
@@ -408,6 +435,41 @@ export function useListPage<T extends object>(
     }
   }, [enabled, enableServerPagination, page, pageSize, filters, searchQuery]) // Dependencies for pagination and filtering
 
+  // Helper function to apply serverFilter to a query (centralized operator handling)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const applyServerFilter = (query: any, filter: ServerFilter) => {
+    const { column, operator, value } = filter
+
+    switch (operator) {
+      case "eq":
+        return query.eq(column, value)
+      case "neq":
+        return query.neq(column, value)
+      case "in":
+        // Supabase uses .in() for IN queries
+        return query.in(column, value as unknown[])
+      case "not_in":
+        // For NOT IN, we need to use .not with .in
+        return query.not(column, "in", `(${(value as unknown[]).join(",")})`)
+      case "contains":
+        return query.contains(column, value as unknown[])
+      case "gt":
+        return query.gt(column, value)
+      case "gte":
+        return query.gte(column, value)
+      case "lt":
+        return query.lt(column, value)
+      case "lte":
+        return query.lte(column, value)
+      case "is_null":
+        return query.is(column, null)
+      case "is_not_null":
+        return query.not(column, "is", null)
+      default:
+        return query
+    }
+  }
+
   // Fetch server-side counts for metrics with serverFilter
   const fetchServerCounts = useCallback(async (
     fetchFilters?: Record<string, string>,
@@ -498,21 +560,8 @@ export function useListPage<T extends object>(
           }
         }
 
-        // Apply the metric's specific serverFilter
-        const { column, operator, value } = metric.serverFilter
-        if (operator === "eq") {
-          query = query.eq(column, value)
-        } else if (operator === "contains") {
-          query = query.contains(column, value as unknown[])
-        } else if (operator === "gt") {
-          query = query.gt(column, value as number)
-        } else if (operator === "gte") {
-          query = query.gte(column, value as number)
-        } else if (operator === "lt") {
-          query = query.lt(column, value as number)
-        } else if (operator === "lte") {
-          query = query.lte(column, value as number)
-        }
+        // Apply the metric's specific serverFilter using centralized helper
+        query = applyServerFilter(query, metric.serverFilter)
 
         const { count, error } = await query
 
@@ -529,6 +578,121 @@ export function useListPage<T extends object>(
     }
   }, [filters, searchQuery])
 
+  // Fetch server-side sums for metrics with serverSum
+  const fetchServerSums = useCallback(async (
+    fetchFilters?: Record<string, string>,
+    fetchSearchQuery?: string
+  ) => {
+    const currentConfig = configRef.current
+    const currentFilterConfigs = filterConfigsRef.current
+    const currentMetrics = metricsRef.current
+    const currentFilters = fetchFilters ?? filters
+    const currentSearchQuery = fetchSearchQuery ?? searchQuery
+
+    // Find metrics that have serverSum defined
+    const metricsWithServerSum = currentMetrics.filter((m) => m.serverSum)
+    if (metricsWithServerSum.length === 0) return
+
+    try {
+      const supabase = createClient()
+      const sums: Record<string, number> = {}
+
+      // Query each metric separately
+      for (const metric of metricsWithServerSum) {
+        if (!metric.serverSum) continue
+
+        const { column, filter: sumFilter } = metric.serverSum
+
+        // Build query to get sum - use RPC or raw select with aggregation
+        // Supabase doesn't have direct .sum() on client, so we select the column and sum client-side
+        // For large datasets, consider using a database function
+        let query = supabase
+          .from(currentConfig.table)
+          .select(column)
+
+        // Apply active filters (same logic as fetchData)
+        for (const [filterId, filterValue] of Object.entries(currentFilters)) {
+          if (!filterValue || filterValue === "all") continue
+
+          const filterConfig = currentFilterConfigs.find((f) => f.id === filterId)
+          if (!filterConfig) continue
+
+          if (filterConfig.type === "select") {
+            if (filterId === "property") {
+              query = query.eq("property_id", filterValue)
+            } else if (filterId === "tenant") {
+              query = query.eq("tenant_id", filterValue)
+            } else if (filterId === "room") {
+              query = query.eq("room_id", filterValue)
+            } else if (filterId === "tags") {
+              query = query.contains("tags", [filterValue])
+            } else if (filterId === "status" && currentConfig.table === "people") {
+              if (filterValue === "verified") {
+                query = query.eq("is_verified", true)
+              } else if (filterValue === "blocked") {
+                query = query.eq("is_blocked", true)
+              }
+            } else if (filterId === "visitor_type") {
+              query = query.eq("visitor_type", filterValue)
+            } else if (filterId === "settlement_status") {
+              query = query.eq("settlement_status", filterValue)
+            } else if (filterId === "refund_type") {
+              query = query.eq("refund_type", filterValue)
+            } else if (filterId === "meter_type") {
+              query = query.eq("meter_type", filterValue)
+            } else {
+              query = query.eq(filterId, filterValue)
+            }
+          } else if (filterConfig.type === "date") {
+            query = query.eq(filterId, filterValue)
+          }
+        }
+
+        // Apply date range filters
+        if (currentFilters.date_from) {
+          const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
+          query = query.gte(dateField, currentFilters.date_from)
+        }
+        if (currentFilters.date_to) {
+          const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
+          query = query.lte(dateField, currentFilters.date_to)
+        }
+
+        // Apply search filter
+        if (currentSearchQuery && currentConfig.searchFields.length > 0) {
+          const searchConditions = currentConfig.searchFields
+            .filter((field) => !String(field).includes("."))
+            .map((field) => `${String(field)}.ilike.%${currentSearchQuery}%`)
+            .join(",")
+
+          if (searchConditions) {
+            query = query.or(searchConditions)
+          }
+        }
+
+        // Apply the metric's specific filter if defined
+        if (sumFilter) {
+          query = applyServerFilter(query, sumFilter)
+        }
+
+        const { data, error } = await query
+
+        if (!error && data) {
+          // Sum up the column values
+          const sum = (data as Record<string, unknown>[]).reduce((acc, row) => {
+            const val = row[column]
+            return acc + (typeof val === "number" ? val : Number(val) || 0)
+          }, 0)
+          sums[metric.id] = sum
+        }
+      }
+
+      setServerSums(sums)
+    } catch (err) {
+      console.error("[useListPage] Error fetching server sums:", err)
+    }
+  }, [filters, searchQuery])
+
   // Initial fetch - only run once
   useEffect(() => {
     if (initialFetchDone.current) return
@@ -537,7 +701,8 @@ export function useListPage<T extends object>(
     fetchData()
     fetchFilterOptions()
     fetchServerCounts()
-  }, [fetchData, fetchFilterOptions, fetchServerCounts])
+    fetchServerSums()
+  }, [fetchData, fetchFilterOptions, fetchServerCounts, fetchServerSums])
 
   // Filter setters - now trigger server-side refetch
   const setFilter = useCallback((id: string, value: string) => {
@@ -547,7 +712,8 @@ export function useListPage<T extends object>(
     // Refetch with new filters
     fetchData(1, pageSize, newFilters, searchQuery)
     fetchServerCounts(newFilters, searchQuery)
-  }, [filters, pageSize, searchQuery, fetchData, fetchServerCounts])
+    fetchServerSums(newFilters, searchQuery)
+  }, [filters, pageSize, searchQuery, fetchData, fetchServerCounts, fetchServerSums])
 
   const setFilters = useCallback((newFilters: Record<string, string>) => {
     setFiltersState(newFilters)
@@ -555,7 +721,8 @@ export function useListPage<T extends object>(
     // Refetch with new filters
     fetchData(1, pageSize, newFilters, searchQuery)
     fetchServerCounts(newFilters, searchQuery)
-  }, [pageSize, searchQuery, fetchData, fetchServerCounts])
+    fetchServerSums(newFilters, searchQuery)
+  }, [pageSize, searchQuery, fetchData, fetchServerCounts, fetchServerSums])
 
   const clearFilters = useCallback(() => {
     const defaultFilters = configRef.current.defaultFilters || {}
@@ -564,7 +731,8 @@ export function useListPage<T extends object>(
     // Refetch with cleared filters
     fetchData(1, pageSize, defaultFilters, searchQuery)
     fetchServerCounts(defaultFilters, searchQuery)
-  }, [pageSize, searchQuery, fetchData, fetchServerCounts])
+    fetchServerSums(defaultFilters, searchQuery)
+  }, [pageSize, searchQuery, fetchData, fetchServerCounts, fetchServerSums])
 
   // Search setter with debounce for server-side search
   const setSearchQuery = useCallback((query: string) => {
@@ -580,8 +748,9 @@ export function useListPage<T extends object>(
       setPageState(1)
       fetchData(1, pageSize, filters, query)
       fetchServerCounts(filters, query)
+      fetchServerSums(filters, query)
     }, 300) // 300ms debounce
-  }, [pageSize, filters, fetchData, fetchServerCounts])
+  }, [pageSize, filters, fetchData, fetchServerCounts, fetchServerSums])
 
   // Sort setters - now receives array from DataTable for multi-column sorting
   const handleSortChange = useCallback((configs: SortConfig[]) => {
@@ -666,19 +835,23 @@ export function useListPage<T extends object>(
     }))
   }, [selectedGroups, groupByOptions])
 
-  // Compute metrics - pass pagination.total and serverCounts for accurate counts
+  // Compute metrics - pass pagination.total, serverCounts, and serverSums for accurate values
   const metricsData = useMemo(() => {
+    // Merge serverCounts and serverSums for passing to compute function
+    const serverData = { ...serverCounts, ...serverSums }
+
     return metrics.map((metric) => {
-      // If metric has serverFilter and we have a server count for it, use that
-      // Otherwise fall back to the compute function
       let value: number | string
 
+      // For serverFilter metrics (count-based), use server count directly
       if (metric.serverFilter && serverCounts[metric.id] !== undefined) {
-        // Use server count for metrics with serverFilter
         value = serverCounts[metric.id]
-      } else {
-        // Fall back to compute function (which may still use total for "total" metric)
-        value = metric.compute(data, total, serverCounts)
+      }
+      // For serverSum metrics, always call compute to allow formatting (e.g., currency)
+      // The compute function receives serverData and can access the sum via serverData[metric.id]
+      else {
+        // Compute function handles both regular calculation and serverSum formatting
+        value = metric.compute(data, total, serverData)
       }
 
       return {
@@ -689,7 +862,7 @@ export function useListPage<T extends object>(
         highlight: metric.highlight ? metric.highlight(value, data) : false,
       }
     })
-  }, [data, total, metrics, serverCounts])
+  }, [data, total, metrics, serverCounts, serverSums])
 
   // Get current view configuration (for saving views)
   const getViewConfig = useCallback((): TableViewConfig => {

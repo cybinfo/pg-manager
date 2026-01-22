@@ -217,7 +217,10 @@ const metrics: MetricConfig<StaffMember>[] = [
     label: "With Login",
     icon: Shield,
     compute: (items) => items.filter((s) => s.user_id).length,
-    // Note: NULL check requires different operator - showing page totals
+    serverFilter: {
+      column: "user_id",
+      operator: "is_not_null",
+    },
   },
 ]
 

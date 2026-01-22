@@ -176,35 +176,75 @@ const metrics: MetricConfig<Bill>[] = [
     id: "total",
     label: "Total Billed",
     icon: FileText,
-    compute: (items) => formatCurrency(items.reduce((sum, b) => sum + Number(b.total_amount), 0)),
+    compute: (items, _total, serverData) => {
+      if (serverData?.total !== undefined) {
+        return formatCurrency(serverData.total)
+      }
+      return formatCurrency(items.reduce((sum, b) => sum + Number(b.total_amount), 0))
+    },
+    serverSum: {
+      column: "total_amount",
+    },
   },
   {
     id: "collected",
     label: "Collected",
     icon: CheckCircle,
-    compute: (items) => formatCurrency(items.reduce((sum, b) => sum + Number(b.paid_amount), 0)),
+    compute: (items, _total, serverData) => {
+      if (serverData?.collected !== undefined) {
+        return formatCurrency(serverData.collected)
+      }
+      return formatCurrency(items.reduce((sum, b) => sum + Number(b.paid_amount), 0))
+    },
+    serverSum: {
+      column: "paid_amount",
+    },
   },
   {
     id: "pending",
     label: "Pending",
     icon: Clock,
-    compute: (items) =>
-      formatCurrency(
+    compute: (items, _total, serverData) => {
+      if (serverData?.pending !== undefined) {
+        return formatCurrency(serverData.pending)
+      }
+      return formatCurrency(
         items
           .filter((b) => b.status === "pending" || b.status === "partial")
           .reduce((sum, b) => sum + Number(b.balance_due), 0)
-      ),
+      )
+    },
     highlight: (value) => value !== "₹0",
+    serverSum: {
+      column: "balance_due",
+      filter: {
+        column: "status",
+        operator: "in",
+        value: ["pending", "partial"],
+      },
+    },
   },
   {
     id: "overdue",
     label: "Overdue",
     icon: AlertCircle,
-    compute: (items) =>
-      formatCurrency(
+    compute: (items, _total, serverData) => {
+      if (serverData?.overdue !== undefined) {
+        return formatCurrency(serverData.overdue)
+      }
+      return formatCurrency(
         items.filter((b) => b.status === "overdue").reduce((sum, b) => sum + Number(b.balance_due), 0)
-      ),
+      )
+    },
     highlight: (value) => value !== "₹0",
+    serverSum: {
+      column: "balance_due",
+      filter: {
+        column: "status",
+        operator: "eq",
+        value: "overdue",
+      },
+    },
   },
 ]
 

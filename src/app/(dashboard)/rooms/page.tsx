@@ -204,20 +204,30 @@ const metrics: MetricConfig<Room>[] = [
     id: "total_beds",
     label: "Total Beds",
     icon: Bed,
-    compute: (items) => items.reduce((sum, r) => sum + r.total_beds, 0),
-    // Note: Sum metric showing page totals
+    compute: (items, _total, serverData) => {
+      if (serverData?.total_beds !== undefined) {
+        return serverData.total_beds
+      }
+      return items.reduce((sum, r) => sum + r.total_beds, 0)
+    },
+    serverSum: {
+      column: "total_beds",
+    },
   },
   {
-    id: "occupancy",
+    id: "occupied_beds",
     label: "Occupied Beds",
     icon: AlertCircle,
-    compute: (items) => {
-      const totalBeds = items.reduce((sum, r) => sum + r.total_beds, 0)
-      const occupiedBeds = items.reduce((sum, r) => sum + r.occupied_beds, 0)
+    compute: (items, _total, serverData) => {
+      // Use server sums if available for accurate totals
+      const totalBeds = serverData?.total_beds ?? items.reduce((sum, r) => sum + r.total_beds, 0)
+      const occupiedBeds = serverData?.occupied_beds ?? items.reduce((sum, r) => sum + r.occupied_beds, 0)
       const rate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
       return `${occupiedBeds} (${rate}%)`
     },
-    // Note: Aggregation metric showing page totals
+    serverSum: {
+      column: "occupied_beds",
+    },
   },
 ]
 
