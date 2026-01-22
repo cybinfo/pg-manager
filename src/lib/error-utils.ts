@@ -1,11 +1,16 @@
 /**
  * Detailed Error Handling Utility
- * For development phase - provides verbose error messages
- * TODO: Reduce verbosity for production after app stabilizes
+ * Provides user-friendly error messages with appropriate verbosity by environment.
+ * Production: Minimal console output, user-friendly toasts
+ * Development: Verbose logging for debugging
  */
 
 import { toast } from "sonner"
 import { TOAST_DURATION_DEFAULT_MS, TOAST_DURATION_ERROR_MS, TOAST_MAX_WIDTH_PX } from "@/lib/constants"
+
+// Environment-based logging control
+const IS_PRODUCTION = process.env.NODE_ENV === "production"
+const VERBOSE_LOGGING = !IS_PRODUCTION
 
 interface SupabaseError {
   message: string
@@ -82,7 +87,7 @@ export function showDetailedError(
 ): void {
   const errorObj = error as SupabaseError
 
-  // Build detailed error message
+  // Build error message (verbose in development, user-friendly in production)
   let title = `Failed: ${context.operation}`
   let description = ""
 
@@ -95,34 +100,51 @@ export function showDetailedError(
     description += "An unknown error occurred"
   }
 
-  // Add error code explanation
-  if (errorObj?.code) {
-    description += `\n\nError Code: ${errorObj.code}\n${getErrorCodeMessage(errorObj.code)}`
+  // In development, add technical details for debugging
+  if (VERBOSE_LOGGING) {
+    // Add error code explanation
+    if (errorObj?.code) {
+      description += `\n\nError Code: ${errorObj.code}\n${getErrorCodeMessage(errorObj.code)}`
+    }
+
+    // Add hint if available
+    if (errorObj?.hint) {
+      description += `\n\nHint: ${errorObj.hint}`
+    }
+
+    // Add details if available
+    if (errorObj?.details) {
+      description += `\n\nDetails: ${errorObj.details}`
+    }
+
+    // Add table context
+    if (context.table) {
+      description += `\n\nTable: ${context.table}`
+    }
+  } else {
+    // Production: Add user-friendly help text
+    if (errorObj?.code === "42501") {
+      description = "You don't have permission to perform this action."
+    } else if (errorObj?.code === "23505") {
+      description = "This record already exists."
+    } else if (errorObj?.code === "23503") {
+      description = "A required related record was not found."
+    }
   }
 
-  // Add hint if available
-  if (errorObj?.hint) {
-    description += `\n\nHint: ${errorObj.hint}`
+  // Log full error to console with data (verbose in development only)
+  if (VERBOSE_LOGGING) {
+    console.error("=".repeat(60))
+    console.error(`ERROR: ${context.operation}`)
+    console.error("=".repeat(60))
+    console.error("Error object:", error)
+    if (context.table) console.error("Table:", context.table)
+    if (context.data) console.error("Data sent:", sanitizeData(context.data))
+    console.error("=".repeat(60))
+  } else {
+    // Production: minimal logging
+    console.error(`[Error] ${context.operation}:`, errorObj?.code || "unknown")
   }
-
-  // Add details if available
-  if (errorObj?.details) {
-    description += `\n\nDetails: ${errorObj.details}`
-  }
-
-  // Add table context
-  if (context.table) {
-    description += `\n\nTable: ${context.table}`
-  }
-
-  // Log full error to console with data
-  console.error("=".repeat(60))
-  console.error(`ERROR: ${context.operation}`)
-  console.error("=".repeat(60))
-  console.error("Error object:", error)
-  if (context.table) console.error("Table:", context.table)
-  if (context.data) console.error("Data sent:", sanitizeData(context.data))
-  console.error("=".repeat(60))
 
   // CQ-010: Show toast with full details using named constants
   toast.error(title, {
@@ -171,8 +193,11 @@ export async function withDetailedErrors<T>(
 }
 
 /**
- * Log debug info during development
+ * Log debug info during development only
+ * In production, this is a no-op for performance
  */
 export function debugLog(label: string, data: unknown): void {
-  console.log(`[DEBUG] ${label}:`, data)
+  if (VERBOSE_LOGGING) {
+    console.log(`[DEBUG] ${label}:`, data)
+  }
 }

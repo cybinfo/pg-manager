@@ -103,6 +103,9 @@ export function Avatar({
 
   return (
     <div
+      role="img"
+      aria-label={`Avatar for ${name}`}
+      title={name}
       className={cn(
         "rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium",
         sizeClasses[size],
@@ -159,6 +162,9 @@ export function AvatarGroup({
       ))}
       {remaining > 0 && (
         <div
+          role="img"
+          aria-label={`And ${remaining} more`}
+          title={`${remaining} more: ${names.slice(max).join(", ")}`}
           className={cn(
             "rounded-full bg-muted flex items-center justify-center text-muted-foreground font-medium ring-2 ring-background",
             sizeClasses[size]

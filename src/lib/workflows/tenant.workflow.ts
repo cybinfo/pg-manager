@@ -343,7 +343,14 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           )
         }
 
-        return createSuccessResult(tenant)
+        // Track invitation status for buildOutput
+        // Invitation is sent when send_welcome_notification is true AND email is provided
+        const willSendInvitation = !!(input.send_welcome_notification && input.email)
+
+        return createSuccessResult({
+          ...tenant,
+          _invitation_will_be_sent: willSendInvitation,
+        })
       },
       rollback: async (context, input, stepResult) => {
         const supabase = createClient()
@@ -719,7 +726,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
       tenant_id: tenant?.id as string,
       tenant_stay_id: stay?.id as string || null,
       initial_bill_id: billResult?.bill_id as string || null,
-      invitation_sent: false, // TODO: Implement invitation logic
+      invitation_sent: !!(tenant?._invitation_will_be_sent),
       person_id: personResult?.person_id as string || null,
     }
   },
