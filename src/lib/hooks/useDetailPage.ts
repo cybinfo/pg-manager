@@ -453,15 +453,16 @@ export const VISITOR_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     property:properties(id, name),
-    tenant:tenants!visitors_tenant_id_fkey(id, name, phone),
+    tenant:tenants!visitors_tenant_id_fkey(id, name, phone, person:people(id, photo_url)),
+    person:people(id, name, phone, email, photo_url, company_name, occupation),
     visitor_contact:visitor_contacts(
       id, name, phone, email, visitor_type, company_name, service_type,
       id_type, id_number, notes, photo_url, is_frequent, is_blocked,
-      blocked_reason, visit_count, last_visit_at, person_id,
-      person:people(id, photo_url)
+      blocked_reason, visit_count, last_visit_at, person_id, created_at,
+      person:people(id, name, phone, email, photo_url)
     )
   `,
-  joinFields: ["property", "tenant", "visitor_contact"],
+  joinFields: ["property", "tenant", "person", "visitor_contact"],
   redirectOnNotFound: "/visitors",
   notFoundMessage: "Visitor not found",
 }

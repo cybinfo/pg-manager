@@ -198,11 +198,31 @@ export default function VisitorDetailPage() {
   const isCheckedIn = !visitor.check_out_time
   const saving = isSaving || actionLoading
 
+  // Person-centric: Get display values from person (single source of truth)
+  // Fallback chain: visitor.person → visitor_contact.person → denormalized fields
+  const displayName = visitor.person?.name
+    || visitor.visitor_contact?.person?.name
+    || visitor.visitor_contact?.name
+    || visitor.visitor_name
+  const displayPhone = visitor.person?.phone
+    || visitor.visitor_contact?.person?.phone
+    || visitor.visitor_contact?.phone
+    || visitor.visitor_phone
+  const displayEmail = visitor.person?.email
+    || visitor.visitor_contact?.person?.email
+    || visitor.visitor_contact?.email
+  const displayPhoto = visitor.person?.photo_url
+    || visitor.visitor_contact?.person?.photo_url
+    || visitor.visitor_contact?.photo_url
+  const displayCompany = visitor.person?.company_name || visitor.company_name
+  const displayServiceType = visitor.person?.occupation || visitor.service_type
+  const personId = visitor.person_id || visitor.visitor_contact?.person_id
+
   return (
     <div className="space-y-6">
       {/* Hero Header */}
       <DetailHero
-        title={visitor.visitor_name}
+        title={displayName}
         subtitle={
           <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
             <VisitorTypeBadge type={visitor.visitor_type} />
@@ -212,8 +232,8 @@ export default function VisitorDetailPage() {
             <span>
               {visitor.visitor_type === "tenant_visitor" && visitor.tenant
                 ? `Visiting ${visitor.tenant.name}`
-                : visitor.visitor_type === "service_provider" && visitor.service_type
-                ? `${visitor.service_type}${visitor.company_name ? ` - ${visitor.company_name}` : ""}`
+                : visitor.visitor_type === "service_provider" && displayServiceType
+                ? `${displayServiceType}${displayCompany ? ` - ${displayCompany}` : ""}`
                 : visitor.visitor_type === "enquiry"
                 ? "Prospective Tenant"
                 : visitor.property?.name || "Visitor"
@@ -225,10 +245,10 @@ export default function VisitorDetailPage() {
         backLabel="All Visitors"
         status={isCheckedIn ? "active" : "muted"}
         avatar={
-          visitor.visitor_contact?.person?.photo_url ? (
+          displayPhoto ? (
             <Avatar
-              name={visitor.visitor_name}
-              src={visitor.visitor_contact.person.photo_url}
+              name={displayName}
+              src={displayPhoto}
               size="xl"
               className="h-16 w-16"
               clickable
@@ -241,8 +261,8 @@ export default function VisitorDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
-            {visitor.visitor_contact?.person_id && (
-              <Link href={`/people/${visitor.visitor_contact.person_id}`}>
+            {personId && (
+              <Link href={`/people/${personId}`}>
                 <Button variant="outline" size="sm">
                   <User className="mr-2 h-4 w-4" />
                   View Person
@@ -258,7 +278,7 @@ export default function VisitorDetailPage() {
             {visitor.visitor_type === "enquiry" && visitor.enquiry_status !== "converted" && (
               <Button
                 variant="outline"
-                onClick={() => router.push(`/tenants/new?from_enquiry=${visitor.id}&name=${encodeURIComponent(visitor.visitor_name)}&phone=${encodeURIComponent(visitor.visitor_phone || "")}`)}
+                onClick={() => router.push(`/tenants/new?from_enquiry=${visitor.id}&name=${encodeURIComponent(displayName)}&phone=${encodeURIComponent(displayPhone || "")}&person_id=${personId || ""}`)}
                 disabled={saving}
               >
                 <UserPlus className="mr-2 h-4 w-4" />
@@ -386,16 +406,26 @@ export default function VisitorDetailPage() {
           description="Information about the visitor"
           icon={User}
         >
-          <InfoRow label="Name" value={visitor.visitor_name} />
-          {visitor.visitor_phone && (
+          <InfoRow label="Name" value={displayName} />
+          {displayPhone && (
             <InfoRow
               label="Phone"
               value={
-                <a href={`tel:${visitor.visitor_phone}`} className="text-teal-600 hover:underline">
-                  {visitor.visitor_phone}
+                <a href={`tel:${displayPhone}`} className="text-teal-600 hover:underline">
+                  {displayPhone}
                 </a>
               }
               icon={Phone}
+            />
+          )}
+          {displayEmail && (
+            <InfoRow
+              label="Email"
+              value={
+                <a href={`mailto:${displayEmail}`} className="text-teal-600 hover:underline">
+                  {displayEmail}
+                </a>
+              }
             />
           )}
           {visitor.visitor_type === "tenant_visitor" && visitor.relation && (
@@ -459,11 +489,11 @@ export default function VisitorDetailPage() {
             description="Information about the service provider"
             icon={Wrench}
           >
-            {visitor.service_type && (
-              <InfoRow label="Service Type" value={visitor.service_type} />
+            {displayServiceType && (
+              <InfoRow label="Service Type" value={displayServiceType} />
             )}
-            {visitor.company_name && (
-              <InfoRow label="Company" value={visitor.company_name} icon={Briefcase} />
+            {displayCompany && (
+              <InfoRow label="Company" value={displayCompany} icon={Briefcase} />
             )}
           </DetailSection>
         )}

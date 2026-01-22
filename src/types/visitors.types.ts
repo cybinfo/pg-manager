@@ -20,7 +20,15 @@ export interface VisitorContact {
   id: string
   owner_id: string
   person_id: string | null
-  person?: { id: string; photo_url: string | null } | null
+  // Person data (single source of truth for identity)
+  person?: {
+    id: string
+    name: string
+    phone: string | null
+    email: string | null
+    photo_url: string | null
+  } | null
+  // Legacy denormalized fields (being deprecated - use person.* instead)
   name: string
   phone: string | null
   email: string | null
@@ -37,7 +45,7 @@ export interface VisitorContact {
   visit_count: number
   last_visit_at: string | null
   created_at: string
-  updated_at: string
+  updated_at?: string
 }
 
 export interface VisitorContactSearchResult {
@@ -62,7 +70,9 @@ export interface Visitor {
   property_id: string
   tenant_id: string | null
   visitor_contact_id: string | null
+  person_id: string | null
   visitor_type: VisitorType
+  // Legacy denormalized fields (being deprecated - use person.* instead)
   visitor_name: string
   visitor_phone: string | null
   relation: string | null
@@ -76,7 +86,7 @@ export interface Visitor {
   expected_checkout_date: string | null
   bill_id: string | null
 
-  // Service provider fields
+  // Service provider fields (being deprecated - use person.company_name, person.occupation)
   company_name: string | null
   service_type: string | null
 
@@ -101,7 +111,17 @@ export interface Visitor {
 
   // Joined fields
   property?: { id: string; name: string }
-  tenant?: { id: string; name: string; phone?: string } | null
+  tenant?: { id: string; name: string; phone?: string; person?: { id: string; photo_url: string | null } | null } | null
+  // Person data (single source of truth for identity)
+  person?: {
+    id: string
+    name: string
+    phone: string | null
+    email: string | null
+    photo_url: string | null
+    company_name: string | null
+    occupation: string | null
+  } | null
   visitor_contact?: VisitorContact | null
 }
 
