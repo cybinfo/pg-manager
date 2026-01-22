@@ -166,7 +166,7 @@ export default function VisitorDetailPage() {
           *,
           tenant:tenants!tenant_id(id, name, phone, photo_url, profile_photo, room:rooms(room_number)),
           property:properties(id, name, address),
-          visitor_contact:visitor_contacts(*)
+          visitor_contact:visitor_contacts(*, person:people(id, photo_url))
         `)
         .eq("id", params.id)
         .single()
@@ -352,9 +352,19 @@ export default function VisitorDetailPage() {
         backLabel="All Visitors"
         status={isCheckedIn ? "active" : "muted"}
         avatar={
-          <div className={`h-16 w-16 rounded-full flex items-center justify-center ${VISITOR_TYPE_BADGE_COLORS[visitor.visitor_type]}`}>
-            {VISITOR_TYPE_ICONS[visitor.visitor_type]}
-          </div>
+          visitor.visitor_contact?.person?.photo_url ? (
+            <Avatar
+              name={visitor.visitor_name}
+              src={visitor.visitor_contact.person.photo_url}
+              size="xl"
+              className="h-16 w-16"
+              clickable
+            />
+          ) : (
+            <div className={`h-16 w-16 rounded-full flex items-center justify-center ${VISITOR_TYPE_BADGE_COLORS[visitor.visitor_type]}`}>
+              {VISITOR_TYPE_ICONS[visitor.visitor_type]}
+            </div>
+          )
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">

@@ -46,6 +46,7 @@ interface StaffMember {
   is_active: boolean
   created_at: string
   user_id: string | null
+  person: { id: string; photo_url: string | null } | null
 }
 
 interface UserRole {
@@ -106,7 +107,7 @@ export default function StaffDetailPage() {
     const [staffRes, rolesRes, allRolesRes, propertiesRes] = await Promise.all([
       supabase
         .from("staff_members")
-        .select("*")
+        .select("*, person:people(id, photo_url)")
         .eq("id", params.id)
         .single(),
       supabase
@@ -329,8 +330,10 @@ export default function StaffDetailPage() {
         avatar={
           <Avatar
             name={staff.name}
+            src={staff.person?.photo_url}
             size="lg"
             className={`h-14 w-14 text-2xl ${staff.is_active ? "" : "bg-gray-100 text-gray-500"}`}
+            clickable
           />
         }
         status={

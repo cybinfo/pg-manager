@@ -20,6 +20,7 @@ export interface VisitorContact {
   id: string
   owner_id: string
   person_id: string | null
+  person?: { id: string; photo_url: string | null } | null
   name: string
   phone: string | null
   email: string | null
