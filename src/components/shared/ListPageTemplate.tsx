@@ -410,6 +410,8 @@ export function ListPageTemplate({
         searchable
         searchPlaceholder={searchPlaceholder || `Search ${title.toLowerCase()}...`}
         searchFields={config.searchFields as string[]}
+        externalSearch={searchQuery}
+        onExternalSearchChange={setSearchQuery}
         groupBy={groupConfig}
         defaultSort={sortConfig}
         onSortChange={handleSortChange}

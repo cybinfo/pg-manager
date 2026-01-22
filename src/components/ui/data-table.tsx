@@ -86,6 +86,10 @@ interface DataTableProps<T> {
   searchable?: boolean
   searchPlaceholder?: string
   searchFields?: (keyof T)[]
+  // External search control - use this for server-side search
+  // When provided, search is controlled externally (no client-side filtering)
+  externalSearch?: string
+  onExternalSearchChange?: (query: string) => void
   className?: string
   // Sorting options - supports single or multi-column sorting
   // Single: { key: string; direction: "asc" | "desc" }
@@ -338,6 +342,8 @@ export function DataTable<T extends object>({
   searchable,
   searchPlaceholder = "Search...",
   searchFields,
+  externalSearch,
+  onExternalSearchChange,
   className,
   defaultSort,
   onSortChange,
@@ -346,7 +352,12 @@ export function DataTable<T extends object>({
   defaultCollapsed = false,
 }: DataTableProps<T>) {
   const router = useRouter()
-  const [search, setSearch] = React.useState("")
+  const [internalSearch, setInternalSearch] = React.useState("")
+
+  // Use external search if provided, otherwise use internal state
+  const isExternalSearch = externalSearch !== undefined && onExternalSearchChange !== undefined
+  const search = isExternalSearch ? externalSearch : internalSearch
+  const setSearch = isExternalSearch ? onExternalSearchChange : setInternalSearch
 
   // Multi-column sort state - normalize defaultSort to array
   const initialSortConfigs = React.useMemo(() => {
@@ -438,8 +449,9 @@ export function DataTable<T extends object>({
   const processedData = React.useMemo(() => {
     let result = [...data]
 
-    // Apply search filter
-    if (search && searchFields) {
+    // Apply search filter ONLY if using internal search (client-side filtering)
+    // Skip if using external search because server already filtered the data
+    if (!isExternalSearch && search && searchFields) {
       const lowerSearch = search.toLowerCase()
       result = result.filter((row) =>
         searchFields.some((field) => {
@@ -488,7 +500,7 @@ export function DataTable<T extends object>({
     }
 
     return result
-  }, [data, search, searchFields, sortConfigs, columns])
+  }, [data, search, searchFields, sortConfigs, columns, isExternalSearch])
 
   // Build nested group structure recursively
   const buildNestedGroups = React.useCallback(
