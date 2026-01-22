@@ -156,6 +156,9 @@ export function ListPageTemplate({
   // Callbacks
   onRowClick,
 }: ListPageTemplateProps) {
+  // Track if initial load is complete (to avoid unmounting DataTable during search)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
+
   // Saved views state
   const [viewConfig, setViewConfig] = useState<TableViewConfig | null>(null)
   const showSavedViews = enableSavedViews && !!tableKey
@@ -238,8 +241,16 @@ export function ListPageTemplate({
     }))
   }, [filterConfigs, filterOptions])
 
-  // Loading state
-  if (loading) {
+  // Mark initial load as complete once data has loaded
+  useEffect(() => {
+    if (!loading && !initialLoadComplete) {
+      setInitialLoadComplete(true)
+    }
+  }, [loading, initialLoadComplete])
+
+  // Only show full-page loader for initial load
+  // After that, keep DataTable mounted to preserve search focus
+  if (loading && !initialLoadComplete) {
     return <PageLoader />
   }
 
