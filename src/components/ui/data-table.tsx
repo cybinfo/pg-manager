@@ -608,16 +608,39 @@ export function DataTable<T extends object>({
     .map(c => `${getColumnFr(c.width)}fr`)
     .join(" ") + (isClickable ? ` ${columnWidths.menu}fr` : "")
 
+  // Ref and state to maintain search input focus after re-renders
+  const searchInputRef = React.useRef<HTMLInputElement>(null)
+  const [isSearchFocused, setIsSearchFocused] = React.useState(false)
+
+  // Restore focus after external search triggers re-render
+  // This runs after data changes when using external search control
+  React.useEffect(() => {
+    if (isSearchFocused && searchInputRef.current && document.activeElement !== searchInputRef.current) {
+      // Restore focus with cursor at end of input
+      searchInputRef.current.focus()
+      const len = searchInputRef.current.value.length
+      searchInputRef.current.setSelectionRange(len, len)
+    }
+  }, [data, isSearchFocused])
+
   return (
     <div className={cn("space-y-4", className)}>
       {searchable && (
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            ref={searchInputRef}
             placeholder={searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 bg-white"
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={(e) => {
+              // Only mark as unfocused if user clicked elsewhere (not a re-render blur)
+              if (e.relatedTarget) {
+                setIsSearchFocused(false)
+              }
+            }}
           />
         </div>
       )}

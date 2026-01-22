@@ -198,7 +198,7 @@ export default function RefundDetailPage() {
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </Button>
-                <Button variant="outline" size="sm" className="text-red-600" onClick={handleDelete} disabled={isDeleting}>
+                <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
                   {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                   Delete
                 </Button>
