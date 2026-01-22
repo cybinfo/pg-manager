@@ -24,8 +24,14 @@ import { toast } from "sonner"
 // Types
 // ============================================
 
+// Sort configuration for multi-column sorting
+export interface SortConfig {
+  key: string
+  direction: "asc" | "desc"
+}
+
 export interface TableViewConfig {
-  sort?: { key: string; direction: "asc" | "desc" }
+  sort?: SortConfig[]  // Array for multi-column sorting
   filters?: Record<string, string>
   groupBy?: string[]
   pageSize?: number

@@ -165,6 +165,14 @@ export default function NewPersonPage() {
     setLoading(true)
     const supabase = createClient()
 
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      toast.error("You must be logged in to add a person")
+      setLoading(false)
+      return
+    }
+
     // Check for duplicate phone
     if (formData.phone) {
       const { data: existing } = await supabase
@@ -197,6 +205,7 @@ export default function NewPersonPage() {
     const { data, error } = await supabase
       .from("people")
       .insert({
+        owner_id: user.id,
         name: formData.name,
         phone: formData.phone || null,
         email: formData.email || null,

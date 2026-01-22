@@ -180,6 +180,8 @@ export function ListPageTemplate({
     metricsData,
     searchQuery,
     setSearchQuery,
+    sortConfig,
+    handleSortChange,
     pagination,
     setPage,
     setPageSize,
@@ -409,6 +411,8 @@ export function ListPageTemplate({
         searchPlaceholder={searchPlaceholder || `Search ${title.toLowerCase()}...`}
         searchFields={config.searchFields as string[]}
         groupBy={groupConfig}
+        defaultSort={sortConfig}
+        onSortChange={handleSortChange}
         emptyState={
           <div className="flex flex-col items-center py-8">
             {EmptyIcon ? (

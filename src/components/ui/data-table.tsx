@@ -53,6 +53,12 @@ export interface Column<T> {
 
 export type SortDirection = "asc" | "desc" | null
 
+// Multi-column sort configuration
+export interface SortConfig {
+  key: string
+  direction: "asc" | "desc"
+}
+
 export interface GroupConfig {
   key: string              // Field to group by (supports dot notation like "property.name")
   label?: string           // Display label for the group (e.g., "Property")
@@ -81,9 +87,11 @@ interface DataTableProps<T> {
   searchPlaceholder?: string
   searchFields?: (keyof T)[]
   className?: string
-  // Sorting options
-  defaultSort?: { key: string; direction: "asc" | "desc" }
-  onSortChange?: (key: string | null, direction: SortDirection) => void
+  // Sorting options - supports single or multi-column sorting
+  // Single: { key: string; direction: "asc" | "desc" }
+  // Multi: [{ key: string; direction: "asc" | "desc" }, ...]
+  defaultSort?: SortConfig | SortConfig[]
+  onSortChange?: (sortConfigs: SortConfig[]) => void
   // Grouping options - supports single or nested grouping
   groupBy?: GroupConfig | GroupConfig[] | string | string[]
   collapsibleGroups?: boolean     // Allow groups to be collapsed
@@ -339,8 +347,26 @@ export function DataTable<T extends object>({
 }: DataTableProps<T>) {
   const router = useRouter()
   const [search, setSearch] = React.useState("")
-  const [sortColumn, setSortColumn] = React.useState<string | null>(defaultSort?.key ?? null)
-  const [sortDirection, setSortDirection] = React.useState<SortDirection>(defaultSort?.direction ?? null)
+
+  // Multi-column sort state - normalize defaultSort to array
+  const initialSortConfigs = React.useMemo(() => {
+    if (!defaultSort) return []
+    if (Array.isArray(defaultSort)) return defaultSort
+    return [defaultSort]
+  }, [])
+  const [sortConfigs, setSortConfigs] = React.useState<SortConfig[]>(initialSortConfigs)
+
+  // Update sort configs when defaultSort prop changes
+  React.useEffect(() => {
+    if (!defaultSort) {
+      setSortConfigs([])
+    } else if (Array.isArray(defaultSort)) {
+      setSortConfigs(defaultSort)
+    } else {
+      setSortConfigs([defaultSort])
+    }
+  }, [defaultSort])
+
   const [collapsedGroups, setCollapsedGroups] = React.useState<Set<string>>(new Set())
 
   // Parse groupBy config - now supports arrays for nested grouping
@@ -360,23 +386,52 @@ export function DataTable<T extends object>({
   }, [groupBy])
 
   // Handle column header click for sorting
-  const handleSort = (column: Column<T>) => {
+  // Normal click: Set as primary sort (single column)
+  // Shift+click: Add/toggle secondary sort (multi-column)
+  const handleSort = (column: Column<T>, event: React.MouseEvent) => {
     if (!column.sortable) return
 
     const sortKey = column.sortKey || column.key
-    let newDirection: SortDirection
+    const isShiftClick = event.shiftKey
+    const existingIndex = sortConfigs.findIndex((s) => s.key === sortKey)
+    const existingConfig = existingIndex >= 0 ? sortConfigs[existingIndex] : null
 
-    if (sortColumn !== sortKey) {
-      // New column: start with ascending
-      newDirection = "asc"
+    let newConfigs: SortConfig[]
+
+    if (isShiftClick) {
+      // Shift+click: Multi-column sorting
+      if (existingConfig) {
+        // Column already in sort - cycle direction or remove
+        if (existingConfig.direction === "asc") {
+          // asc → desc
+          newConfigs = [...sortConfigs]
+          newConfigs[existingIndex] = { key: sortKey, direction: "desc" }
+        } else {
+          // desc → remove from multi-sort
+          newConfigs = sortConfigs.filter((_, i) => i !== existingIndex)
+        }
+      } else {
+        // Add as new secondary sort
+        newConfigs = [...sortConfigs, { key: sortKey, direction: "asc" }]
+      }
     } else {
-      // Same column: cycle through asc → desc → null
-      newDirection = sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc"
+      // Normal click: Single column sort (replaces all)
+      if (existingConfig && sortConfigs.length === 1) {
+        // Same column, single sort - cycle direction
+        if (existingConfig.direction === "asc") {
+          newConfigs = [{ key: sortKey, direction: "desc" }]
+        } else {
+          // Clear sort
+          newConfigs = []
+        }
+      } else {
+        // New column or replacing multi-sort - start with asc
+        newConfigs = [{ key: sortKey, direction: "asc" }]
+      }
     }
 
-    setSortColumn(newDirection ? sortKey : null)
-    setSortDirection(newDirection)
-    onSortChange?.(newDirection ? sortKey : null, newDirection)
+    setSortConfigs(newConfigs)
+    onSortChange?.(newConfigs)
   }
 
   // Filter and sort data
@@ -394,37 +449,46 @@ export function DataTable<T extends object>({
       )
     }
 
-    // Apply sorting
-    if (sortColumn && sortDirection) {
-      const column = columns.find((c) => (c.sortKey || c.key) === sortColumn)
-      const sortType = column?.sortType || "string"
-
+    // Apply multi-column sorting
+    if (sortConfigs.length > 0) {
       result.sort((a, b) => {
-        const aVal = getNestedValue(a, sortColumn)
-        const bVal = getNestedValue(b, sortColumn)
+        // Iterate through sort columns in order
+        for (const sortConfig of sortConfigs) {
+          const column = columns.find((c) => (c.sortKey || c.key) === sortConfig.key)
+          const sortType = column?.sortType || "string"
 
-        // Handle null/undefined values
-        if (aVal == null && bVal == null) return 0
-        if (aVal == null) return sortDirection === "asc" ? 1 : -1
-        if (bVal == null) return sortDirection === "asc" ? -1 : 1
+          const aVal = getNestedValue(a, sortConfig.key)
+          const bVal = getNestedValue(b, sortConfig.key)
 
-        let comparison = 0
+          // Handle null/undefined values
+          if (aVal == null && bVal == null) continue
+          if (aVal == null) return sortConfig.direction === "asc" ? 1 : -1
+          if (bVal == null) return sortConfig.direction === "asc" ? -1 : 1
 
-        if (sortType === "number") {
-          comparison = Number(aVal) - Number(bVal)
-        } else if (sortType === "date") {
-          comparison = new Date(String(aVal)).getTime() - new Date(String(bVal)).getTime()
-        } else {
-          // String comparison (case-insensitive)
-          comparison = String(aVal).toLowerCase().localeCompare(String(bVal).toLowerCase())
+          let comparison = 0
+
+          if (sortType === "number") {
+            comparison = Number(aVal) - Number(bVal)
+          } else if (sortType === "date") {
+            comparison = new Date(String(aVal)).getTime() - new Date(String(bVal)).getTime()
+          } else {
+            // String comparison (case-insensitive)
+            comparison = String(aVal).toLowerCase().localeCompare(String(bVal).toLowerCase())
+          }
+
+          // Apply direction
+          comparison = sortConfig.direction === "asc" ? comparison : -comparison
+
+          // If not equal, return this comparison result
+          if (comparison !== 0) return comparison
+          // If equal, continue to next sort column
         }
-
-        return sortDirection === "asc" ? comparison : -comparison
+        return 0
       })
     }
 
     return result
-  }, [data, search, searchFields, sortColumn, sortDirection, columns])
+  }, [data, search, searchFields, sortConfigs, columns])
 
   // Build nested group structure recursively
   const buildNestedGroups = React.useCallback(
@@ -554,9 +618,12 @@ export function DataTable<T extends object>({
         >
           {visibleColumns.map((column) => {
             const sortKey = column.sortKey || column.key
-            const isSorted = sortColumn === sortKey
+            const sortIndex = sortConfigs.findIndex((s) => s.key === sortKey)
+            const isSorted = sortIndex >= 0
+            const sortConfig = isSorted ? sortConfigs[sortIndex] : null
+            const isMultiSort = sortConfigs.length > 1
             const SortIcon = isSorted
-              ? sortDirection === "asc" ? ChevronUp : ChevronDown
+              ? sortConfig?.direction === "asc" ? ChevronUp : ChevronDown
               : ChevronsUpDown
 
             return (
@@ -567,16 +634,25 @@ export function DataTable<T extends object>({
                   column.sortable && "cursor-pointer hover:text-foreground select-none",
                   column.className
                 )}
-                onClick={() => handleSort(column)}
+                onClick={(e) => handleSort(column, e)}
+                title={column.sortable ? "Click to sort. Shift+click to add secondary sort." : undefined}
               >
                 <span>{column.header}</span>
                 {column.sortable && (
-                  <SortIcon
-                    className={cn(
-                      "h-3.5 w-3.5 shrink-0 transition-colors",
-                      isSorted ? "text-primary" : "text-muted-foreground/50"
+                  <span className="inline-flex items-center gap-0.5">
+                    {/* Show sort order number when multi-sorting */}
+                    {isSorted && isMultiSort && (
+                      <span className="text-[10px] font-bold text-primary bg-primary/10 rounded px-1 min-w-[14px] text-center">
+                        {sortIndex + 1}
+                      </span>
                     )}
-                  />
+                    <SortIcon
+                      className={cn(
+                        "h-3.5 w-3.5 shrink-0 transition-colors",
+                        isSorted ? "text-primary" : "text-muted-foreground/50"
+                      )}
+                    />
+                  </span>
                 )}
               </div>
             )

@@ -44,6 +44,7 @@ import {
   Star,
   Merge,
   ExternalLink,
+  Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatCurrency } from "@/lib/format"
@@ -392,6 +393,75 @@ export default function PersonDetailPage() {
     setPerson({ ...person, is_blocked: false, blocked_at: null, blocked_reason: null })
   }
 
+  // Handle delete person
+  const handleDelete = async () => {
+    if (!person) return
+
+    // Check if person is linked to any active records
+    if (summary.is_current_tenant) {
+      toast.error("Cannot delete: This person is currently an active tenant")
+      return
+    }
+
+    if (summary.is_staff) {
+      toast.error("Cannot delete: This person is currently an active staff member")
+      return
+    }
+
+    // Show confirmation
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${person.name}"?\n\n` +
+      `This action cannot be undone. All associated records will be unlinked.`
+    )
+
+    if (!confirmed) return
+
+    const supabase = createClient()
+
+    // First, unlink from tenants (set person_id to null)
+    if (tenantHistory.length > 0) {
+      await supabase
+        .from("tenants")
+        .update({ person_id: null })
+        .eq("person_id", person.id)
+    }
+
+    // Unlink from staff_members
+    if (staffHistory.length > 0) {
+      await supabase
+        .from("staff_members")
+        .update({ person_id: null })
+        .eq("person_id", person.id)
+    }
+
+    // Unlink from visitor_contacts
+    await supabase
+      .from("visitor_contacts")
+      .update({ person_id: null })
+      .eq("person_id", person.id)
+
+    // Delete person_roles
+    await supabase
+      .from("person_roles")
+      .delete()
+      .eq("person_id", person.id)
+
+    // Finally, delete the person
+    const { error } = await supabase
+      .from("people")
+      .delete()
+      .eq("id", person.id)
+
+    if (error) {
+      console.error("Error deleting person:", error)
+      toast.error("Failed to delete person")
+      return
+    }
+
+    toast.success("Person deleted successfully")
+    router.push("/people")
+  }
+
   if (loading) {
     return <PageLoader />
   }
@@ -456,6 +526,17 @@ export default function PersonDetailPage() {
                     Edit
                   </Button>
                 </Link>
+              </PermissionGate>
+              <PermissionGate permission="tenants.delete" hide>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
               </PermissionGate>
             </div>
           }

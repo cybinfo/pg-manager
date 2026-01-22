@@ -195,7 +195,7 @@ const metrics: MetricConfig<Payment>[] = [
     id: "transactions",
     label: "Transactions",
     icon: Receipt,
-    compute: (items) => items.length,
+    compute: (_items, total) => total,  // Use server total for accurate count
   },
   {
     id: "top_method",

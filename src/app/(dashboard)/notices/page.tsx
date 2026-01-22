@@ -203,7 +203,7 @@ const metrics: MetricConfig<Notice>[] = [
     id: "total",
     label: "Total Notices",
     icon: Bell,
-    compute: (items) => items.length,
+    compute: (_items, total) => total,  // Use server total for accurate count
   },
   {
     id: "active",

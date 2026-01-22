@@ -77,11 +77,14 @@ export function SaveViewDialog({
   const getConfigSummary = () => {
     const items: { icon: typeof Filter; label: string; value: string }[] = []
 
-    if (currentConfig.sort) {
+    if (currentConfig.sort && currentConfig.sort.length > 0) {
+      const sortDesc = currentConfig.sort
+        .map((s) => `${s.key} (${s.direction})`)
+        .join(", ")
       items.push({
         icon: ArrowUpDown,
         label: "Sort",
-        value: `${currentConfig.sort.key} (${currentConfig.sort.direction})`,
+        value: currentConfig.sort.length === 1 ? sortDesc : `${currentConfig.sort.length} columns`,
       })
     }
 

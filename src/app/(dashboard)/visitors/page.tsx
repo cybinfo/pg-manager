@@ -273,7 +273,7 @@ const metrics: MetricConfig<Visitor>[] = [
     id: "total",
     label: "Total Entries",
     icon: Users,
-    compute: (items) => items.length,
+    compute: (_items, total) => total,  // Use server total for accurate count
   },
   {
     id: "inside",

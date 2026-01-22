@@ -194,7 +194,7 @@ const metrics: MetricConfig<Meter>[] = [
     id: "total",
     label: "Total Meters",
     icon: Gauge,
-    compute: (items) => items.length,
+    compute: (_items, total) => total,  // Use server total for accurate count
   },
   {
     id: "active",

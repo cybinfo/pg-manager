@@ -188,7 +188,7 @@ const metrics: MetricConfig<StaffMember>[] = [
     id: "total",
     label: "Total Staff",
     icon: Users,
-    compute: (items) => items.length,
+    compute: (_items, total) => total,  // Use server total for accurate count
   },
   {
     id: "active",

@@ -60,7 +60,7 @@ export interface MetricConfig<T> {
   id: string
   label: string
   icon?: React.ComponentType<{ className?: string }>
-  compute: (items: T[]) => number | string
+  compute: (items: T[], total: number) => number | string  // total = pagination.total for accurate counts
   format?: "number" | "currency" | "percentage"
   highlight?: (value: number | string, items: T[]) => boolean
 }
@@ -74,9 +74,15 @@ export interface PaginationState {
   hasPrevPage: boolean
 }
 
+// Sort configuration - supports multi-column sorting
+export interface SortConfig {
+  key: string
+  direction: "asc" | "desc"
+}
+
 // View config type for saved views
 export interface TableViewConfig {
-  sort?: { key: string; direction: "asc" | "desc" }
+  sort?: SortConfig[]  // Array for multi-column sorting
   filters?: Record<string, string>
   groupBy?: string[]
   pageSize?: number
@@ -122,6 +128,12 @@ export interface UseListPageReturn<T> {
   searchQuery: string
   setSearchQuery: (query: string) => void
 
+  // Sorting
+  sortConfig: SortConfig[]
+  setSortConfig: (config: SortConfig[]) => void
+  handleSortChange: (configs: SortConfig[]) => void
+  clearSort: () => void
+
   // Pagination
   pagination: PaginationState
   setPage: (page: number) => void
@@ -160,6 +172,7 @@ export function useListPage<T extends object>(
   // Compute initial values from view config
   const computedInitialFilters = initialViewConfig?.filters || initialFilters
   const computedInitialGroups = initialViewConfig?.groupBy || initialGroups
+  const computedInitialSort = initialViewConfig?.sort || []
 
   // State
   const [data, setData] = useState<T[]>([])
@@ -168,7 +181,11 @@ export function useListPage<T extends object>(
   const [filters, setFiltersState] = useState<Record<string, string>>(computedInitialFilters)
   const [selectedGroups, setSelectedGroups] = useState<string[]>(computedInitialGroups)
   const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({})
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQueryState] = useState("")
+  const [sortConfig, setSortConfig] = useState<SortConfig[]>(computedInitialSort)
+
+  // Debounce timer for search
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Pagination state
   const [page, setPageState] = useState(1)
@@ -224,12 +241,21 @@ export function useListPage<T extends object>(
   }, []) // No dependencies - uses ref
 
   // Fetch main data - uses ref to avoid dependency issues
-  const fetchData = useCallback(async (fetchPage?: number, fetchPageSize?: number) => {
+  // Now applies server-side filters for proper pagination
+  const fetchData = useCallback(async (
+    fetchPage?: number,
+    fetchPageSize?: number,
+    fetchFilters?: Record<string, string>,
+    fetchSearchQuery?: string
+  ) => {
     if (!enabled) return
 
     const currentConfig = configRef.current
+    const currentFilterConfigs = filterConfigsRef.current
     const currentPage = fetchPage ?? page
     const currentPageSize = fetchPageSize ?? pageSize
+    const currentFilters = fetchFilters ?? filters
+    const currentSearchQuery = fetchSearchQuery ?? searchQuery
     setLoading(true)
     setError(null)
 
@@ -241,6 +267,60 @@ export function useListPage<T extends object>(
         .from(currentConfig.table)
         .select(currentConfig.select, { count: "exact" })
         .order(currentConfig.defaultOrderBy, { ascending: currentConfig.defaultOrderDirection === "asc" })
+
+      // Apply server-side filters
+      for (const [filterId, filterValue] of Object.entries(currentFilters)) {
+        if (!filterValue || filterValue === "all") continue
+
+        const filterConfig = currentFilterConfigs.find((f) => f.id === filterId)
+        if (!filterConfig) continue
+
+        // Handle different filter types
+        if (filterConfig.type === "select") {
+          // Handle nested properties like "property" which maps to "property_id"
+          // Check if the filter ID ends with a table name that has a _id column
+          if (filterId === "property") {
+            query = query.eq("property_id", filterValue)
+          } else if (filterId === "tenant") {
+            query = query.eq("tenant_id", filterValue)
+          } else if (filterId === "room") {
+            query = query.eq("room_id", filterValue)
+          } else {
+            // Direct column filter (e.g., status, type)
+            query = query.eq(filterId, filterValue)
+          }
+        } else if (filterConfig.type === "date") {
+          query = query.eq(filterId, filterValue)
+        }
+      }
+
+      // Apply date range filters
+      if (currentFilters.date_from) {
+        const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
+        query = query.gte(dateField, currentFilters.date_from)
+      }
+      if (currentFilters.date_to) {
+        const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
+        query = query.lte(dateField, currentFilters.date_to)
+      }
+
+      // Apply server-side search using ilike for text fields
+      if (currentSearchQuery && currentConfig.searchFields.length > 0) {
+        // Build OR conditions for search across multiple fields
+        // Supabase doesn't support OR directly, so we use .or() with column filters
+        const searchConditions = currentConfig.searchFields
+          .filter((field) => {
+            // Only search on direct columns, not nested (those need client-side filtering)
+            const fieldStr = String(field)
+            return !fieldStr.includes(".")
+          })
+          .map((field) => `${String(field)}.ilike.%${currentSearchQuery}%`)
+          .join(",")
+
+        if (searchConditions) {
+          query = query.or(searchConditions)
+        }
+      }
 
       // Apply server-side pagination if enabled
       if (enableServerPagination) {
@@ -255,7 +335,7 @@ export function useListPage<T extends object>(
         throw fetchError
       }
 
-      // Update total count
+      // Update total count (now reflects filtered count)
       if (count !== null) {
         setTotal(count)
       }
@@ -282,7 +362,7 @@ export function useListPage<T extends object>(
     } finally {
       setLoading(false)
     }
-  }, [enabled, enableServerPagination, page, pageSize]) // Dependencies for pagination
+  }, [enabled, enableServerPagination, page, pageSize, filters, searchQuery]) // Dependencies for pagination and filtering
 
   // Initial fetch - only run once
   useEffect(() => {
@@ -293,35 +373,66 @@ export function useListPage<T extends object>(
     fetchFilterOptions()
   }, [fetchData, fetchFilterOptions])
 
-  // Filter setters
+  // Filter setters - now trigger server-side refetch
   const setFilter = useCallback((id: string, value: string) => {
-    setFiltersState((prev) => ({ ...prev, [id]: value }))
-    // Reset to page 1 when filter changes
+    const newFilters = { ...filters, [id]: value }
+    setFiltersState(newFilters)
     setPageState(1)
-  }, [])
+    // Refetch with new filters
+    fetchData(1, pageSize, newFilters, searchQuery)
+  }, [filters, pageSize, searchQuery, fetchData])
 
   const setFilters = useCallback((newFilters: Record<string, string>) => {
     setFiltersState(newFilters)
-    // Reset to page 1 when filters change
     setPageState(1)
-  }, [])
+    // Refetch with new filters
+    fetchData(1, pageSize, newFilters, searchQuery)
+  }, [pageSize, searchQuery, fetchData])
 
   const clearFilters = useCallback(() => {
-    setFiltersState(configRef.current.defaultFilters || {})
+    const defaultFilters = configRef.current.defaultFilters || {}
+    setFiltersState(defaultFilters)
     setPageState(1)
-  }, []) // Uses ref
+    // Refetch with cleared filters
+    fetchData(1, pageSize, defaultFilters, searchQuery)
+  }, [pageSize, searchQuery, fetchData])
 
-  // Pagination setters
+  // Search setter with debounce for server-side search
+  const setSearchQuery = useCallback((query: string) => {
+    setSearchQueryState(query)
+
+    // Clear existing timer
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current)
+    }
+
+    // Debounce the search to avoid too many requests
+    searchTimerRef.current = setTimeout(() => {
+      setPageState(1)
+      fetchData(1, pageSize, filters, query)
+    }, 300) // 300ms debounce
+  }, [pageSize, filters, fetchData])
+
+  // Sort setters - now receives array from DataTable for multi-column sorting
+  const handleSortChange = useCallback((configs: SortConfig[]) => {
+    setSortConfig(configs)
+  }, [])
+
+  const clearSort = useCallback(() => {
+    setSortConfig([])
+  }, [])
+
+  // Pagination setters - pass current filters and search
   const setPage = useCallback((newPage: number) => {
     setPageState(newPage)
-    fetchData(newPage, pageSize)
-  }, [fetchData, pageSize])
+    fetchData(newPage, pageSize, filters, searchQuery)
+  }, [fetchData, pageSize, filters, searchQuery])
 
   const setPageSize = useCallback((newSize: number) => {
     setPageSizeState(newSize)
     setPageState(1) // Reset to page 1 when page size changes
-    fetchData(1, newSize)
-  }, [fetchData])
+    fetchData(1, newSize, filters, searchQuery)
+  }, [fetchData, filters, searchQuery])
 
   const nextPage = useCallback(() => {
     const totalPages = Math.ceil(total / pageSize)
@@ -349,81 +460,33 @@ export function useListPage<T extends object>(
     }
   }, [page, pageSize, total])
 
-  // Filter data - uses refs for stable config references
+  // Filter data - now mostly server-side, this only handles nested property searches
+  // that the server can't easily handle (like searching "tenant.name" across JOINed data)
   const filteredData = useMemo(() => {
     const currentConfig = configRef.current
-    const currentFilterConfigs = filterConfigsRef.current
     let result = [...data]
 
-    // Apply filters
-    for (const [filterId, filterValue] of Object.entries(filters)) {
-      if (!filterValue || filterValue === "all") continue
+    // Only apply client-side search for nested fields (fields with dots)
+    // Server already handles direct field searches
+    if (searchQuery && currentConfig.searchFields.length > 0) {
+      const nestedSearchFields = currentConfig.searchFields.filter((field) =>
+        String(field).includes(".")
+      )
 
-      const filterConfig = currentFilterConfigs.find((f) => f.id === filterId)
-      if (!filterConfig) continue
-
-      switch (filterConfig.type) {
-        case "select":
-          result = result.filter((item) => {
-            // Handle nested properties like "property.id"
-            const value = getNestedValue(item as unknown as Record<string, unknown>, filterId)
-            return value === filterValue
+      // Only filter client-side if there are nested fields to search
+      if (nestedSearchFields.length > 0) {
+        const query = searchQuery.toLowerCase()
+        result = result.filter((item) =>
+          nestedSearchFields.some((field) => {
+            const value = getNestedValue(item as unknown as Record<string, unknown>, field as string)
+            return value && String(value).toLowerCase().includes(query)
           })
-          break
-
-        case "date":
-          result = result.filter((item) => {
-            const value = getNestedValue(item as unknown as Record<string, unknown>, filterId)
-            if (!value) return false
-            return new Date(value as string).toDateString() === new Date(filterValue).toDateString()
-          })
-          break
-
-        case "date-range":
-          // Handled by date_from and date_to filters
-          break
-
-        case "text":
-          result = result.filter((item) => {
-            const value = getNestedValue(item as unknown as Record<string, unknown>, filterId)
-            return String(value).toLowerCase().includes(filterValue.toLowerCase())
-          })
-          break
+        )
       }
     }
 
-    // Handle date range filters
-    if (filters.date_from) {
-      const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
-      result = result.filter((item) => {
-        const value = getNestedValue(item as unknown as Record<string, unknown>, dateField)
-        if (!value) return false
-        return new Date(value as string) >= new Date(filters.date_from)
-      })
-    }
-
-    if (filters.date_to) {
-      const dateField = currentFilterConfigs.find((f) => f.type === "date-range")?.id || "created_at"
-      result = result.filter((item) => {
-        const value = getNestedValue(item as unknown as Record<string, unknown>, dateField)
-        if (!value) return false
-        return new Date(value as string) <= new Date(filters.date_to)
-      })
-    }
-
-    // Apply search
-    if (searchQuery && currentConfig.searchFields.length > 0) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter((item) =>
-        currentConfig.searchFields.some((field) => {
-          const value = getNestedValue(item as unknown as Record<string, unknown>, field as string)
-          return value && String(value).toLowerCase().includes(query)
-        })
-      )
-    }
-
     return result
-  }, [data, filters, searchQuery]) // Removed unstable dependencies, uses refs
+  }, [data, searchQuery])
 
   // Group config for DataTable
   const groupConfig = useMemo(() => {
@@ -433,10 +496,10 @@ export function useListPage<T extends object>(
     }))
   }, [selectedGroups, groupByOptions])
 
-  // Compute metrics
+  // Compute metrics - pass pagination.total for accurate total counts
   const metricsData = useMemo(() => {
     return metrics.map((metric) => {
-      const value = metric.compute(data) // Use all data, not filtered
+      const value = metric.compute(data, total) // Pass total for accurate counts
       return {
         id: metric.id,
         label: metric.label,
@@ -445,11 +508,16 @@ export function useListPage<T extends object>(
         highlight: metric.highlight ? metric.highlight(value, data) : false,
       }
     })
-  }, [data, metrics])
+  }, [data, total, metrics])
 
   // Get current view configuration (for saving views)
   const getViewConfig = useCallback((): TableViewConfig => {
     const viewConfig: TableViewConfig = {}
+
+    // Include sort configuration
+    if (sortConfig.length > 0) {
+      viewConfig.sort = sortConfig
+    }
 
     // Only include non-empty filters
     const activeFilters = Object.entries(filters).reduce((acc, [key, value]) => {
@@ -472,18 +540,25 @@ export function useListPage<T extends object>(
     }
 
     return viewConfig
-  }, [filters, selectedGroups, pageSize, config.defaultPageSize])
+  }, [sortConfig, filters, selectedGroups, pageSize, config.defaultPageSize])
 
   // Apply a view configuration (or reset to default if null)
   const applyViewConfig = useCallback((viewConfig: TableViewConfig | null) => {
     if (viewConfig === null) {
       // Reset to defaults
+      setSortConfig([])
       setFiltersState(config.defaultFilters || {})
       setSelectedGroups([])
       setPageSizeState(config.defaultPageSize || 25)
       setPageState(1)
     } else {
       // Apply view config
+      if (viewConfig.sort && viewConfig.sort.length > 0) {
+        setSortConfig(viewConfig.sort)
+      } else {
+        setSortConfig([])
+      }
+
       if (viewConfig.filters) {
         setFiltersState(viewConfig.filters)
       } else {
@@ -509,7 +584,7 @@ export function useListPage<T extends object>(
     filteredData,
     loading,
     error,
-    refetch: () => fetchData(),
+    refetch: () => fetchData(page, pageSize, filters, searchQuery),
     filters,
     setFilter,
     setFilters,
@@ -520,7 +595,12 @@ export function useListPage<T extends object>(
     groupConfig,
     metricsData,
     searchQuery,
-    setSearchQuery,
+    setSearchQuery,  // Now triggers server-side search with debounce
+    // Sorting
+    sortConfig,
+    setSortConfig,
+    handleSortChange,
+    clearSort,
     // Pagination
     pagination,
     setPage,

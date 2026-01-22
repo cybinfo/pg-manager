@@ -220,7 +220,7 @@ const metrics: MetricConfig<ExitClearance>[] = [
     id: "total",
     label: "Total",
     icon: LogOut,
-    compute: (items) => items.length,
+    compute: (_items, total) => total,  // Use server total for accurate count
   },
   {
     id: "initiated",

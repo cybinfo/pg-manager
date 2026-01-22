@@ -144,7 +144,7 @@ const metrics: MetricConfig<Property>[] = [
     id: "total",
     label: "Properties",
     icon: Building2,
-    compute: (items) => items.length,
+    compute: (_items, total) => total,  // Use server total for accurate count
   },
   {
     id: "active",
