@@ -209,7 +209,7 @@ export function useDetailPage<T extends object>(
             const { data: relatedData, error: relatedError } = await query
 
             if (relatedError) {
-              console.error(`[useDetailPage] Error fetching ${relatedConfig.key}:`, relatedError)
+              console.error(`[useDetailPage] Error fetching ${relatedConfig.key}:`, JSON.stringify(relatedError, null, 2))
               relatedResults[relatedConfig.key] = []
               return
             }
@@ -230,7 +230,12 @@ export function useDetailPage<T extends object>(
 
             relatedResults[relatedConfig.key] = transformedRelated
           } catch (err) {
-            console.error(`[useDetailPage] Error fetching ${relatedConfig.key}:`, err)
+            const errorDetails = err instanceof Error
+              ? { message: err.message, name: err.name }
+              : typeof err === "object" && err !== null
+                ? JSON.stringify(err, null, 2)
+                : String(err)
+            console.error(`[useDetailPage] Error fetching ${relatedConfig.key}:`, errorDetails)
             relatedResults[relatedConfig.key] = []
           }
         })
@@ -239,7 +244,12 @@ export function useDetailPage<T extends object>(
         setRelated(relatedResults)
       }
     } catch (err) {
-      console.error(`[useDetailPage] Error fetching ${currentConfig.table}:`, err)
+      const errorDetails = err instanceof Error
+        ? { message: err.message, name: err.name }
+        : typeof err === "object" && err !== null
+          ? JSON.stringify(err, null, 2)
+          : String(err)
+      console.error(`[useDetailPage] Error fetching ${currentConfig.table}:`, errorDetails)
       setError(err as Error)
       toast.error(`Failed to load data`)
     } finally {
