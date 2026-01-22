@@ -608,20 +608,22 @@ export function DataTable<T extends object>({
     .map(c => `${getColumnFr(c.width)}fr`)
     .join(" ") + (isClickable ? ` ${columnWidths.menu}fr` : "")
 
-  // Ref and state to maintain search input focus after re-renders
+  // Ref to maintain search input focus after re-renders
   const searchInputRef = React.useRef<HTMLInputElement>(null)
-  const [isSearchFocused, setIsSearchFocused] = React.useState(false)
+  // Track if user is actively typing (not just focused)
+  const isTypingRef = React.useRef(false)
+  // Track cursor position before re-render
+  const cursorPosRef = React.useRef(0)
 
-  // Restore focus after external search triggers re-render
-  // This runs after data changes when using external search control
-  React.useEffect(() => {
-    if (isSearchFocused && searchInputRef.current && document.activeElement !== searchInputRef.current) {
-      // Restore focus with cursor at end of input
+  // Use layoutEffect to restore focus synchronously before paint
+  React.useLayoutEffect(() => {
+    if (isTypingRef.current && searchInputRef.current && document.activeElement !== searchInputRef.current) {
       searchInputRef.current.focus()
-      const len = searchInputRef.current.value.length
-      searchInputRef.current.setSelectionRange(len, len)
+      // Restore cursor position
+      const pos = Math.min(cursorPosRef.current, searchInputRef.current.value.length)
+      searchInputRef.current.setSelectionRange(pos, pos)
     }
-  }, [data, isSearchFocused])
+  })
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -632,13 +634,18 @@ export function DataTable<T extends object>({
             ref={searchInputRef}
             placeholder={searchPlaceholder}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              // Track that user is actively typing
+              isTypingRef.current = true
+              // Save cursor position before state update triggers re-render
+              cursorPosRef.current = e.target.selectionStart || e.target.value.length
+              setSearch(e.target.value)
+            }}
             className="pl-9 bg-white"
-            onFocus={() => setIsSearchFocused(true)}
             onBlur={(e) => {
-              // Only mark as unfocused if user clicked elsewhere (not a re-render blur)
+              // Only stop tracking typing if user clicked on something else
               if (e.relatedTarget) {
-                setIsSearchFocused(false)
+                isTypingRef.current = false
               }
             }}
           />
