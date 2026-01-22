@@ -187,6 +187,11 @@ const metrics: MetricConfig<Tenant>[] = [
     label: "Active",
     icon: UserCheck,
     compute: (items) => items.filter((t) => t.status === "active").length,
+    serverFilter: {
+      column: "status",
+      operator: "eq",
+      value: "active",
+    },
   },
   {
     id: "notice",
@@ -194,12 +199,22 @@ const metrics: MetricConfig<Tenant>[] = [
     icon: Clock,
     compute: (items) => items.filter((t) => t.status === "notice_period").length,
     highlight: (value) => (value as number) > 0,
+    serverFilter: {
+      column: "status",
+      operator: "eq",
+      value: "notice_period",
+    },
   },
   {
     id: "moved_out",
     label: "Moved Out",
     icon: UserMinus,
     compute: (items) => items.filter((t) => t.status === "checked_out").length,
+    serverFilter: {
+      column: "status",
+      operator: "eq",
+      value: "checked_out",
+    },
   },
   {
     id: "rent",
@@ -208,6 +223,7 @@ const metrics: MetricConfig<Tenant>[] = [
       formatCurrency(
         items.filter((t) => t.status === "active").reduce((sum, t) => sum + t.monthly_rent, 0)
       ),
+    // Note: This is a sum metric showing page totals. Server aggregation would need separate implementation.
   },
 ]
 

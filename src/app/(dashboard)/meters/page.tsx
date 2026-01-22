@@ -202,18 +202,33 @@ const metrics: MetricConfig<Meter>[] = [
     icon: CheckCircle2,
     compute: (items) => items.filter((m) => m.status === "active").length,
     highlight: () => true,
+    serverFilter: {
+      column: "status",
+      operator: "eq",
+      value: "active",
+    },
   },
   {
     id: "electricity",
     label: "Electricity",
     icon: Zap,
     compute: (items) => items.filter((m) => m.meter_type === "electricity").length,
+    serverFilter: {
+      column: "meter_type",
+      operator: "eq",
+      value: "electricity",
+    },
   },
   {
     id: "water",
     label: "Water",
     icon: Droplets,
     compute: (items) => items.filter((m) => m.meter_type === "water").length,
+    serverFilter: {
+      column: "meter_type",
+      operator: "eq",
+      value: "water",
+    },
   },
 ]
 

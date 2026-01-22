@@ -195,18 +195,29 @@ const metrics: MetricConfig<StaffMember>[] = [
     label: "Active",
     icon: CheckCircle,
     compute: (items) => items.filter((s) => s.is_active).length,
+    serverFilter: {
+      column: "is_active",
+      operator: "eq",
+      value: true,
+    },
   },
   {
     id: "inactive",
     label: "Inactive",
     icon: XCircle,
     compute: (items) => items.filter((s) => !s.is_active).length,
+    serverFilter: {
+      column: "is_active",
+      operator: "eq",
+      value: false,
+    },
   },
   {
     id: "withLogin",
     label: "With Login",
     icon: Shield,
     compute: (items) => items.filter((s) => s.user_id).length,
+    // Note: NULL check requires different operator - showing page totals
   },
 ]
 

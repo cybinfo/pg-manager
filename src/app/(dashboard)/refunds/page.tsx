@@ -240,12 +240,22 @@ const metrics: MetricConfig<Refund>[] = [
     icon: Clock,
     compute: (items) => items.filter((r) => r.status === "pending").length,
     highlight: (value) => (value as number) > 0,
+    serverFilter: {
+      column: "status",
+      operator: "eq",
+      value: "pending",
+    },
   },
   {
     id: "completed",
     label: "Completed",
     icon: CheckCircle,
     compute: (items) => items.filter((r) => r.status === "completed").length,
+    serverFilter: {
+      column: "status",
+      operator: "eq",
+      value: "completed",
+    },
   },
   {
     id: "pendingAmount",
@@ -255,6 +265,7 @@ const metrics: MetricConfig<Refund>[] = [
       items.filter((r) => r.status === "pending").reduce((sum, r) => sum + r.amount, 0)
     ),
     highlight: (value) => value !== "₹0",
+    // Note: Sum metric showing page totals
   },
   {
     id: "paidOut",
@@ -263,6 +274,7 @@ const metrics: MetricConfig<Refund>[] = [
     compute: (items) => formatCurrency(
       items.filter((r) => r.status === "completed").reduce((sum, r) => sum + r.amount, 0)
     ),
+    // Note: Sum metric showing page totals
   },
 ]
 

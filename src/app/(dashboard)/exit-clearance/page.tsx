@@ -227,6 +227,11 @@ const metrics: MetricConfig<ExitClearance>[] = [
     label: "Initiated",
     icon: Clock,
     compute: (items) => items.filter((c) => c.settlement_status === "initiated").length,
+    serverFilter: {
+      column: "settlement_status",
+      operator: "eq",
+      value: "initiated",
+    },
   },
   {
     id: "pending",
@@ -234,12 +239,22 @@ const metrics: MetricConfig<ExitClearance>[] = [
     icon: AlertCircle,
     compute: (items) => items.filter((c) => c.settlement_status === "pending_payment").length,
     highlight: (value) => (value as number) > 0,
+    serverFilter: {
+      column: "settlement_status",
+      operator: "eq",
+      value: "pending_payment",
+    },
   },
   {
     id: "cleared",
     label: "Cleared",
     icon: CheckCircle,
     compute: (items) => items.filter((c) => c.settlement_status === "cleared").length,
+    serverFilter: {
+      column: "settlement_status",
+      operator: "eq",
+      value: "cleared",
+    },
   },
 ]
 

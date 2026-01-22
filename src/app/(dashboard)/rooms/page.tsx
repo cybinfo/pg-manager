@@ -194,12 +194,18 @@ const metrics: MetricConfig<Room>[] = [
     label: "Available Rooms",
     icon: CheckCircle,
     compute: (items) => items.filter((r) => r.status === "available").length,
+    serverFilter: {
+      column: "status",
+      operator: "eq",
+      value: "available",
+    },
   },
   {
     id: "total_beds",
     label: "Total Beds",
     icon: Bed,
     compute: (items) => items.reduce((sum, r) => sum + r.total_beds, 0),
+    // Note: Sum metric showing page totals
   },
   {
     id: "occupancy",
@@ -211,6 +217,7 @@ const metrics: MetricConfig<Room>[] = [
       const rate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
       return `${occupiedBeds} (${rate}%)`
     },
+    // Note: Aggregation metric showing page totals
   },
 ]
 
