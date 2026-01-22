@@ -122,7 +122,7 @@ describe("Workflow Engine", () => {
       const step = context.steps[0]
       expect(step.started_at).toBeDefined()
       expect(step.completed_at).toBeDefined()
-      expect(step.completed_at!.getTime()).toBeGreaterThanOrEqual(step.started_at.getTime())
+      expect(step.completed_at!.getTime()).toBeGreaterThanOrEqual(step.started_at!.getTime())
     })
 
     it("assigns incremental step IDs", async () => {
@@ -196,11 +196,11 @@ describe("Workflow Engine", () => {
     describe("createServiceError", () => {
       it("creates an error with code and message", () => {
         const error = createServiceError(
-          ERROR_CODES.UNAUTHORIZED,
+          ERROR_CODES.PERMISSION_DENIED,
           "Access denied"
         )
 
-        expect(error.code).toBe(ERROR_CODES.UNAUTHORIZED)
+        expect(error.code).toBe(ERROR_CODES.PERMISSION_DENIED)
         expect(error.message).toBe("Access denied")
       })
 

@@ -199,7 +199,7 @@ describe("Rate Limiting", () => {
         reset: 1700000000,
       }
 
-      const headers = rateLimitHeaders(result)
+      const headers = rateLimitHeaders(result) as Record<string, string>
 
       expect(headers["X-RateLimit-Limit"]).toBe("100")
       expect(headers["X-RateLimit-Remaining"]).toBe("99")
@@ -215,7 +215,7 @@ describe("Rate Limiting", () => {
         retryAfter: 30,
       }
 
-      const headers = rateLimitHeaders(result)
+      const headers = rateLimitHeaders(result) as Record<string, string | undefined>
 
       expect(headers["Retry-After"]).toBe("30")
     })
@@ -228,7 +228,7 @@ describe("Rate Limiting", () => {
         reset: 1700000000,
       }
 
-      const headers = rateLimitHeaders(result)
+      const headers = rateLimitHeaders(result) as Record<string, string | undefined>
 
       expect(headers["Retry-After"]).toBeUndefined()
     })

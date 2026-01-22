@@ -16,9 +16,31 @@ import {
   csrfError,
 } from '@/lib/api-response'
 
+// Response body types for testing
+interface SuccessBody {
+  success: true
+  data: unknown
+  message?: string
+  meta?: unknown
+}
+
+interface ErrorBody {
+  success: false
+  error: {
+    code: string
+    message: string
+    details?: unknown
+  }
+}
+
 // Helper to extract JSON body from NextResponse
-async function getResponseBody<T>(response: Response): Promise<T> {
-  return response.json()
+async function getResponseBody(response: Response): Promise<SuccessBody | ErrorBody> {
+  return response.json() as Promise<SuccessBody | ErrorBody>
+}
+
+// Type-safe helper for error responses
+async function getErrorBody(response: Response): Promise<ErrorBody> {
+  return response.json() as Promise<ErrorBody>
 }
 
 describe('API Response Utilities', () => {
@@ -134,7 +156,7 @@ describe('API Response Utilities', () => {
 
       it('allows custom message', async () => {
         const response = unauthorized('Session expired')
-        const body = await getResponseBody(response)
+        const body = await getErrorBody(response)
 
         expect(body.error.message).toBe('Session expired')
       })
@@ -143,7 +165,7 @@ describe('API Response Utilities', () => {
     describe('forbidden', () => {
       it('returns 403 with default message', async () => {
         const response = forbidden()
-        const body = await getResponseBody(response)
+        const body = await getErrorBody(response)
 
         expect(response.status).toBe(403)
         expect(body.error.code).toBe('FORBIDDEN')
@@ -154,7 +176,7 @@ describe('API Response Utilities', () => {
     describe('notFound', () => {
       it('returns 404 with default message', async () => {
         const response = notFound()
-        const body = await getResponseBody(response)
+        const body = await getErrorBody(response)
 
         expect(response.status).toBe(404)
         expect(body.error.code).toBe('NOT_FOUND')
@@ -163,7 +185,7 @@ describe('API Response Utilities', () => {
 
       it('allows custom message for specific resources', async () => {
         const response = notFound('Tenant not found')
-        const body = await getResponseBody(response)
+        const body = await getErrorBody(response)
 
         expect(body.error.message).toBe('Tenant not found')
       })
@@ -172,7 +194,7 @@ describe('API Response Utilities', () => {
     describe('badRequest', () => {
       it('returns 400 with message and details', async () => {
         const response = badRequest('Invalid parameters', { field: 'amount' })
-        const body = await getResponseBody(response)
+        const body = await getErrorBody(response)
 
         expect(response.status).toBe(400)
         expect(body.error.code).toBe('BAD_REQUEST')
@@ -185,7 +207,7 @@ describe('API Response Utilities', () => {
         const response = validationError('Validation failed', {
           errors: [{ field: 'email', message: 'Invalid email' }],
         })
-        const body = await getResponseBody(response)
+        const body = await getErrorBody(response)
 
         expect(response.status).toBe(400)
         expect(body.error.code).toBe('VALIDATION_ERROR')
@@ -195,7 +217,7 @@ describe('API Response Utilities', () => {
     describe('rateLimited', () => {
       it('returns 429 with default message', async () => {
         const response = rateLimited()
-        const body = await getResponseBody(response)
+        const body = await getErrorBody(response)
 
         expect(response.status).toBe(429)
         expect(body.error.code).toBe('TOO_MANY_REQUESTS')
@@ -211,7 +233,7 @@ describe('API Response Utilities', () => {
     describe('internalError', () => {
       it('returns 500 with default message', async () => {
         const response = internalError()
-        const body = await getResponseBody(response)
+        const body = await getErrorBody(response)
 
         expect(response.status).toBe(500)
         expect(body.error.code).toBe('INTERNAL_ERROR')
@@ -222,7 +244,7 @@ describe('API Response Utilities', () => {
     describe('csrfError', () => {
       it('returns 403 for CSRF failures', async () => {
         const response = csrfError()
-        const body = await getResponseBody(response)
+        const body = await getErrorBody(response)
 
         expect(response.status).toBe(403)
         expect(body.error.code).toBe('CSRF_VALIDATION_FAILED')
