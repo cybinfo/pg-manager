@@ -167,7 +167,7 @@ The flagship feature providing a 360-degree view of each tenant:
 npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
-npm test             # Run test suite (154 tests)
+npm test             # Run test suite (280 tests)
 npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Generate coverage report
 npx tsc --noEmit     # Type check
@@ -201,7 +201,7 @@ pg-manager/
 │   │   ├── hooks/              # Custom hooks
 │   │   └── features/           # Feature flags
 │   ├── types/                  # TypeScript type definitions
-│   └── __tests__/              # Jest test suites (154 tests)
+│   └── __tests__/              # Jest test suites (280 tests)
 ├── supabase/
 │   └── migrations/             # Database migrations (001-053)
 ├── public/                     # Static assets
@@ -311,12 +311,15 @@ The codebase follows:
 
 ### Testing
 
-The project includes a Jest test suite with 154 tests covering:
+The project includes a Jest test suite with 280 tests across 10 test suites:
 - Format utilities (currency, dates, text)
-- Indian validators (mobile, PAN, Aadhaar, GST)
-- API response helpers
+- Indian validators (mobile, PAN, Aadhaar, GST, extended rules)
+- API response helpers and error codes
+- Workflow engine operations
 - Service layer types
 - Currency display components
+- Rate limiting utilities
+- CSRF protection
 
 Run `npm test` to execute all tests.
 

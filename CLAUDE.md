@@ -1,7 +1,7 @@
 # ManageKar - AI Development Guide
 
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-01-22
+> **Last Updated**: 2026-01-23
 
 ---
 
@@ -17,7 +17,7 @@
 ```bash
 npm run dev          # Development server at localhost:3000
 npm run build        # Production build
-npm test             # Run test suite (154 tests)
+npm test             # Run test suite (280 tests)
 npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Run tests with coverage
 npx tsc --noEmit     # Type check
@@ -559,11 +559,16 @@ import { sanitizeFilename } from "@/lib/format"
 const safe = sanitizeFilename(tenantName)
 ```
 
-### 8.4 Edge Runtime Compatibility
+### 8.4 Proxy (formerly Middleware)
 
-The middleware runs in Vercel's Edge Runtime which has limited Node.js API support.
+Next.js 16 renamed `middleware.ts` to `proxy.ts`. The proxy handles:
+- Supabase session refresh
+- Route protection (redirects unauthenticated users)
+- CSRF cookie setting for authenticated users
 
-**Do NOT use in middleware or CSRF module:**
+**File**: `src/proxy.ts` (exports `proxy` function)
+
+**Runtime Notes** (Node.js runtime in proxy):
 - `import crypto from "crypto"` - Use `crypto.getRandomValues()` (Web Crypto API)
 - `Buffer.from()` / `Buffer.toString()` - Use `btoa()` / `atob()`
 - `crypto.timingSafeEqual()` - Use manual constant-time comparison
@@ -574,15 +579,19 @@ The middleware runs in Vercel's Edge Runtime which has limited Node.js API suppo
 
 ### 9.1 Test Suite Overview
 
-The project uses Jest with React Testing Library. **154 tests** across 5 test suites:
+The project uses Jest with React Testing Library. **280 tests** across 10 test suites:
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
 | `format.test.ts` | 45 | Currency, number, text formatting |
 | `validators.test.ts` | 42 | Indian mobile, PAN, Aadhaar, GST validators |
+| `validators-extended.test.ts` | 40 | Extended validation rules |
 | `api-response.test.ts` | 32 | API response helpers, error codes |
+| `workflow-engine.test.ts` | 35 | Workflow engine operations |
 | `services/types.test.ts` | 26 | Service layer error codes |
 | `currency.test.tsx` | 21 | Currency display components |
+| `rate-limit.test.ts` | 20 | Rate limiting utilities |
+| `csrf.test.ts` | 19 | CSRF protection |
 
 ### 9.2 Running Tests
 
@@ -777,4 +786,4 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-*Last Updated: 2026-01-22*
+*Last Updated: 2026-01-23*
