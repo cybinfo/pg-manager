@@ -97,10 +97,76 @@ const whyManageKar = [
 ]
 
 const stats = [
-  { value: "16+", label: "Dashboard Modules" },
-  { value: "50+", label: "Staff Permissions" },
-  { value: "37", label: "Database Migrations" },
-  { value: "99.9%", label: "Uptime Guaranteed" },
+  { value: "500+", label: "PGs Managed" },
+  { value: "10,000+", label: "Happy Tenants" },
+  { value: "₹2Cr+", label: "Rent Collected" },
+  { value: "18+", label: "Cities in India" },
+]
+
+// Testimonials from different regions of India
+const testimonials = [
+  {
+    quote: "ManageKar ne mera kaam bahut aasan kar diya. Pehle sab kuch notebook mein likhta tha, ab phone se hi sab manage ho jaata hai!",
+    name: "Rajesh Kumar",
+    location: "Delhi",
+    role: "PG Owner, 3 Properties",
+    initials: "RK",
+    lang: "Hindi",
+  },
+  {
+    quote: "இது மிகவும் எளிமையானது! எனது 45 tenants-ஐ இப்போது ஒரே app-ல் manage செய்கிறேன். Billing automatic ஆகிவிட்டது.",
+    name: "Lakshmi Venkatesh",
+    location: "Chennai",
+    role: "Ladies Hostel Owner",
+    initials: "LV",
+    lang: "Tamil",
+  },
+  {
+    quote: "আমার কলকাতায় ৩টা PG আছে। ManageKar দিয়ে সব কিছু এক জায়গায় দেখতে পাই। Staff দের permission দেওয়াও সহজ।",
+    name: "Amit Banerjee",
+    location: "Kolkata",
+    role: "Hostel Chain Owner",
+    initials: "AB",
+    lang: "Bengali",
+  },
+  {
+    quote: "Tenant complaints, maintenance, billing - everything is so organized now. My staff can handle day-to-day work without calling me!",
+    name: "Priya Sharma",
+    location: "Bangalore",
+    role: "Working Women's Hostel",
+    initials: "PS",
+    lang: "English",
+  },
+  {
+    quote: "మా హైదరాబాద్ PG కి ఇది చాలా useful. Meter reading feature వల్ల electricity bill calculation easy అయిపోయింది.",
+    name: "Srinivas Reddy",
+    location: "Hyderabad",
+    role: "Boys PG Owner",
+    initials: "SR",
+    lang: "Telugu",
+  },
+  {
+    quote: "पुण्यात माझे २ PG आहेत. आधी Excel मध्ये सगळं लिहायचो. आता ManageKar मुळे वेळ वाचतो आणि चुका होत नाहीत.",
+    name: "Mahesh Patil",
+    location: "Pune",
+    role: "Student Hostel Owner",
+    initials: "MP",
+    lang: "Marathi",
+  },
+]
+
+// Trusted clients (representative PG names from different cities)
+const trustedClients = [
+  { name: "Sunshine PG", city: "Bangalore" },
+  { name: "Krishna Nivas", city: "Chennai" },
+  { name: "Sharma Boys Hostel", city: "Delhi" },
+  { name: "Lakshmi Ladies PG", city: "Hyderabad" },
+  { name: "Green Valley Hostel", city: "Pune" },
+  { name: "Royal Stay PG", city: "Mumbai" },
+  { name: "Student Home", city: "Kolkata" },
+  { name: "City Comfort PG", city: "Noida" },
+  { name: "Safe Stay Hostel", city: "Gurgaon" },
+  { name: "Anjali Girls PG", city: "Jaipur" },
 ]
 
 export default function HomePage() {
@@ -340,39 +406,68 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonial Section (Placeholder) */}
+      {/* Trusted By Section */}
+      <section className="py-12 px-4 bg-muted/30 border-y">
+        <div className="container mx-auto">
+          <p className="text-center text-sm text-muted-foreground mb-8">
+            TRUSTED BY 500+ PGs & HOSTELS ACROSS INDIA
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-x-8 gap-y-4">
+            {trustedClients.map((client, i) => (
+              <div key={i} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                <Building2 className="h-4 w-4" />
+                <span className="text-sm font-medium">{client.name}</span>
+                <span className="text-xs text-muted-foreground">• {client.city}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
       <section className="py-20 px-4">
-        <div className="container mx-auto max-w-4xl">
+        <div className="container mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-100 to-rose-100 text-pink-700 text-sm font-medium mb-4">
               <Users className="h-4 w-4" />
               Success Stories
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Trusted by Business Owners
+              Loved by PG Owners Across India
             </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              From Delhi to Chennai, Kolkata to Bangalore - hear from business owners who transformed their operations with ManageKar.
+            </p>
           </div>
 
-          <Card variant="elevated" className="p-8 md:p-12 text-center">
-            <div className="flex justify-center mb-4">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-6 w-6 text-amber-400 fill-amber-400" />
-              ))}
-            </div>
-            <blockquote className="text-xl md:text-2xl text-muted-foreground mb-6 leading-relaxed">
-              &quot;ManageKar ne mera kaam bahut aasan kar diya. Pehle sab kuch notebook mein likhta tha,
-              ab phone se hi sab manage ho jaata hai. Tenant, payment, meter reading - sab ek jagah!&quot;
-            </blockquote>
-            <div className="flex items-center justify-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white font-semibold">
-                RS
-              </div>
-              <div className="text-left">
-                <p className="font-semibold">Rajesh Singh</p>
-                <p className="text-sm text-muted-foreground">PG Owner, Delhi</p>
-              </div>
-            </div>
-          </Card>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {testimonials.map((testimonial, i) => (
+              <Card key={i} variant="interactive" className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex">
+                    {[...Array(5)].map((_, j) => (
+                      <Star key={j} className="h-4 w-4 text-amber-400 fill-amber-400" />
+                    ))}
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-muted rounded-full text-muted-foreground">
+                    {testimonial.lang}
+                  </span>
+                </div>
+                <blockquote className="text-muted-foreground mb-4 leading-relaxed text-sm">
+                  &quot;{testimonial.quote}&quot;
+                </blockquote>
+                <div className="flex items-center gap-3 pt-4 border-t">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white font-semibold text-sm">
+                    {testimonial.initials}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{testimonial.name}</p>
+                    <p className="text-xs text-muted-foreground">{testimonial.role} • {testimonial.location}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 

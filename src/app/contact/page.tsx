@@ -54,16 +54,16 @@ export default function ContactPage() {
       icon: Phone,
       title: "Call Us",
       description: "Mon-Sat, 10am-6pm IST",
-      value: "+91 98765 43210",
-      href: "tel:+919876543210",
+      value: "+91 78274 74789",
+      href: "tel:+917827474789",
       color: "text-emerald-600 bg-emerald-50",
     },
     {
       icon: MessageSquare,
       title: "WhatsApp",
       description: "Quick responses on chat",
-      value: "+91 98765 43210",
-      href: "https://wa.me/919876543210?text=Hi%20ManageKar%20Team!",
+      value: "+91 78274 74789",
+      href: "https://wa.me/917827474789?text=Hi%20ManageKar%20Team!",
       color: "text-green-600 bg-green-50",
     },
   ]
@@ -242,7 +242,8 @@ export default function ContactPage() {
                 <CardContent className="space-y-4">
                   <p className="text-muted-foreground">
                     ManageKar Technologies<br />
-                    India
+                    Sector 62, Noida<br />
+                    Uttar Pradesh, India - 201301
                   </p>
                   <div className="pt-4 border-t border-teal-200">
                     <p className="text-sm text-muted-foreground mb-2">Business Hours</p>
