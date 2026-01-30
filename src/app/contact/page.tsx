@@ -162,7 +162,7 @@ export default function ContactPage() {
                       <Label htmlFor="name">Your Name *</Label>
                       <Input
                         id="name"
-                        placeholder="Rajat Seth"
+                        placeholder="Your name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required

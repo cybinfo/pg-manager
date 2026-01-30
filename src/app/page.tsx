@@ -587,7 +587,7 @@ export default function HomePage() {
               © {new Date().getFullYear()} ManageKar. Made with ❤️ in India.
             </p>
             <p className="text-sm text-muted-foreground">
-              Built by <a href="https://github.com/cybinfo" className="hover:text-background underline">Rajat Seth</a>
+              Made with ❤️ for Indian Businesses
             </p>
           </div>
         </div>
