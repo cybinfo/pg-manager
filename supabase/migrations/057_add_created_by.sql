@@ -6,24 +6,25 @@
 -- ============================================
 
 -- ============================================
--- 0. Disable audit triggers during migration
+-- 0. Disable user-defined audit triggers during migration
 -- ============================================
 -- This prevents the audit trigger from firing during backfill updates
+-- Using USER instead of ALL to avoid permission issues with system triggers
 
-ALTER TABLE tenants DISABLE TRIGGER ALL;
-ALTER TABLE bills DISABLE TRIGGER ALL;
-ALTER TABLE payments DISABLE TRIGGER ALL;
-ALTER TABLE expenses DISABLE TRIGGER ALL;
-ALTER TABLE refunds DISABLE TRIGGER ALL;
-ALTER TABLE complaints DISABLE TRIGGER ALL;
-ALTER TABLE notices DISABLE TRIGGER ALL;
-ALTER TABLE visitors DISABLE TRIGGER ALL;
-ALTER TABLE meter_readings DISABLE TRIGGER ALL;
-ALTER TABLE exit_clearance DISABLE TRIGGER ALL;
-ALTER TABLE properties DISABLE TRIGGER ALL;
-ALTER TABLE rooms DISABLE TRIGGER ALL;
-ALTER TABLE people DISABLE TRIGGER ALL;
-ALTER TABLE meters DISABLE TRIGGER ALL;
+ALTER TABLE tenants DISABLE TRIGGER USER;
+ALTER TABLE bills DISABLE TRIGGER USER;
+ALTER TABLE payments DISABLE TRIGGER USER;
+ALTER TABLE expenses DISABLE TRIGGER USER;
+ALTER TABLE refunds DISABLE TRIGGER USER;
+ALTER TABLE complaints DISABLE TRIGGER USER;
+ALTER TABLE notices DISABLE TRIGGER USER;
+ALTER TABLE visitors DISABLE TRIGGER USER;
+ALTER TABLE meter_readings DISABLE TRIGGER USER;
+ALTER TABLE exit_clearance DISABLE TRIGGER USER;
+ALTER TABLE properties DISABLE TRIGGER USER;
+ALTER TABLE rooms DISABLE TRIGGER USER;
+ALTER TABLE people DISABLE TRIGGER USER;
+ALTER TABLE meters DISABLE TRIGGER USER;
 
 -- ============================================
 -- 1. Add created_by column to core tables
@@ -275,20 +276,20 @@ COMMENT ON COLUMN payments.created_by IS 'User ID who created this record';
 COMMENT ON COLUMN expenses.created_by IS 'User ID who created this record';
 
 -- ============================================
--- 6. Re-enable audit triggers
+-- 6. Re-enable user-defined audit triggers
 -- ============================================
 
-ALTER TABLE tenants ENABLE TRIGGER ALL;
-ALTER TABLE bills ENABLE TRIGGER ALL;
-ALTER TABLE payments ENABLE TRIGGER ALL;
-ALTER TABLE expenses ENABLE TRIGGER ALL;
-ALTER TABLE refunds ENABLE TRIGGER ALL;
-ALTER TABLE complaints ENABLE TRIGGER ALL;
-ALTER TABLE notices ENABLE TRIGGER ALL;
-ALTER TABLE visitors ENABLE TRIGGER ALL;
-ALTER TABLE meter_readings ENABLE TRIGGER ALL;
-ALTER TABLE exit_clearance ENABLE TRIGGER ALL;
-ALTER TABLE properties ENABLE TRIGGER ALL;
-ALTER TABLE rooms ENABLE TRIGGER ALL;
-ALTER TABLE people ENABLE TRIGGER ALL;
-ALTER TABLE meters ENABLE TRIGGER ALL;
+ALTER TABLE tenants ENABLE TRIGGER USER;
+ALTER TABLE bills ENABLE TRIGGER USER;
+ALTER TABLE payments ENABLE TRIGGER USER;
+ALTER TABLE expenses ENABLE TRIGGER USER;
+ALTER TABLE refunds ENABLE TRIGGER USER;
+ALTER TABLE complaints ENABLE TRIGGER USER;
+ALTER TABLE notices ENABLE TRIGGER USER;
+ALTER TABLE visitors ENABLE TRIGGER USER;
+ALTER TABLE meter_readings ENABLE TRIGGER USER;
+ALTER TABLE exit_clearance ENABLE TRIGGER USER;
+ALTER TABLE properties ENABLE TRIGGER USER;
+ALTER TABLE rooms ENABLE TRIGGER USER;
+ALTER TABLE people ENABLE TRIGGER USER;
+ALTER TABLE meters ENABLE TRIGGER USER;
