@@ -1416,3 +1416,35 @@ export const METER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     }
   },
 }
+
+export const INQUIRY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "website_inquiries",
+  select: `
+    *,
+    property:properties(id, name)
+  `,
+  defaultOrderBy: "created_at",
+  defaultOrderDirection: "desc",
+  searchFields: ["name", "phone", "email", "message", "property.name"],
+  joinFields: ["property"],
+  computedFields: (item) => {
+    const date = item.created_at ? new Date(item.created_at as string) : new Date()
+    const statusLabels: Record<string, string> = {
+      new: "New",
+      contacted: "Contacted",
+      converted: "Converted",
+      closed: "Closed",
+    }
+    const sourceLabels: Record<string, string> = {
+      website: "Website",
+      whatsapp: "WhatsApp",
+      phone: "Phone",
+    }
+    return {
+      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_year: date.getFullYear().toString(),
+      status_label: statusLabels[item.status as string] || (item.status as string),
+      source_label: sourceLabels[item.source as string] || (item.source as string),
+    }
+  },
+}

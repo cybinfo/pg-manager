@@ -882,3 +882,15 @@ export const PEOPLE_DETAIL_CONFIG: DetailPageConfig = {
     },
   ],
 }
+
+// Inquiry Detail Config
+export const INQUIRY_DETAIL_CONFIG: DetailPageConfig = {
+  table: "website_inquiries",
+  select: `
+    *,
+    property:properties(id, name, city)
+  `,
+  joinFields: ["property"],
+  redirectOnNotFound: "/inquiries",
+  notFoundMessage: "Inquiry not found",
+}

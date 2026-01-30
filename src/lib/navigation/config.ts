@@ -36,6 +36,7 @@ import {
   MoreHorizontal,
   User,
   FolderOpen,
+  Inbox,
   type LucideIcon,
 } from "lucide-react"
 import type { FeatureFlagKey } from "@/lib/features"
@@ -85,6 +86,7 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", feature: null },
   { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
   { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
+  { name: "Inquiries", href: "/inquiries", icon: Inbox, permission: "tenants.view", feature: null },
   { name: "Complaints", href: "/complaints", icon: MessageSquare, permission: "complaints.view", feature: "complaints" },
   { name: "Notices", href: "/notices", icon: Bell, permission: "notices.view", feature: "notices" },
   { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", feature: "reports" },
@@ -214,6 +216,7 @@ export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   "/architecture": { path: "/architecture", permission: "properties.view", feature: "architectureView", title: "Architecture", icon: Grid3X3 },
   "/approvals": { path: "/approvals", permission: "tenants.view", feature: "approvals", title: "Approvals", icon: ClipboardCheck },
   "/staff": { path: "/staff", permission: "staff.view", feature: null, title: "Staff", icon: UserCog },
+  "/inquiries": { path: "/inquiries", permission: "tenants.view", feature: null, title: "Inquiries", icon: Inbox },
 }
 
 /**
