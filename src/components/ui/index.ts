@@ -109,3 +109,7 @@ export {
   iconSizes,
   zIndex,
 } from "@/lib/design-tokens"
+
+// Audit & Activity Components
+export { RecordMetadata, RecordMetadataInline } from "./record-metadata"
+export { ActivityHistory, ActivityHistoryCompact } from "./activity-history"

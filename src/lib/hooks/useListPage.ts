@@ -35,6 +35,8 @@ export interface ListPageConfig<T> {
   // Pagination settings
   defaultPageSize?: number // defaults to 25
   enableServerPagination?: boolean // defaults to true
+  // Soft delete settings
+  includeSoftDeleted?: boolean // defaults to false - set to true to include deleted records
 }
 
 export interface FilterConfig {
@@ -326,6 +328,11 @@ export function useListPage<T extends object>(
         .select(currentConfig.select, { count: "exact" })
         .order(currentConfig.defaultOrderBy, { ascending: currentConfig.defaultOrderDirection === "asc" })
 
+      // Filter out soft-deleted records by default
+      if (!currentConfig.includeSoftDeleted) {
+        query = query.is("deleted_at", null)
+      }
+
       // Apply server-side filters
       for (const [filterId, filterValue] of Object.entries(currentFilters)) {
         if (!filterValue || filterValue === "all") continue
@@ -517,6 +524,11 @@ export function useListPage<T extends object>(
           .from(currentConfig.table)
           .select("*", { count: "exact", head: true })
 
+        // Filter out soft-deleted records by default
+        if (!currentConfig.includeSoftDeleted) {
+          query = query.is("deleted_at", null)
+        }
+
         // Apply active filters (same logic as fetchData)
         for (const [filterId, filterValue] of Object.entries(currentFilters)) {
           if (!filterValue || filterValue === "all") continue
@@ -626,6 +638,11 @@ export function useListPage<T extends object>(
         let query = supabase
           .from(currentConfig.table)
           .select(column)
+
+        // Filter out soft-deleted records by default
+        if (!currentConfig.includeSoftDeleted) {
+          query = query.is("deleted_at", null)
+        }
 
         // Apply active filters (same logic as fetchData)
         for (const [filterId, filterValue] of Object.entries(currentFilters)) {
