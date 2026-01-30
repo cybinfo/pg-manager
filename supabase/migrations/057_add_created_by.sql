@@ -6,6 +6,26 @@
 -- ============================================
 
 -- ============================================
+-- 0. Disable audit triggers during migration
+-- ============================================
+-- This prevents the audit trigger from firing during backfill updates
+
+ALTER TABLE tenants DISABLE TRIGGER ALL;
+ALTER TABLE bills DISABLE TRIGGER ALL;
+ALTER TABLE payments DISABLE TRIGGER ALL;
+ALTER TABLE expenses DISABLE TRIGGER ALL;
+ALTER TABLE refunds DISABLE TRIGGER ALL;
+ALTER TABLE complaints DISABLE TRIGGER ALL;
+ALTER TABLE notices DISABLE TRIGGER ALL;
+ALTER TABLE visitors DISABLE TRIGGER ALL;
+ALTER TABLE meter_readings DISABLE TRIGGER ALL;
+ALTER TABLE exit_clearance DISABLE TRIGGER ALL;
+ALTER TABLE properties DISABLE TRIGGER ALL;
+ALTER TABLE rooms DISABLE TRIGGER ALL;
+ALTER TABLE people DISABLE TRIGGER ALL;
+ALTER TABLE meters DISABLE TRIGGER ALL;
+
+-- ============================================
 -- 1. Add created_by column to core tables
 -- ============================================
 
@@ -253,3 +273,22 @@ COMMENT ON COLUMN tenants.created_by IS 'User ID who created this record';
 COMMENT ON COLUMN bills.created_by IS 'User ID who created this record';
 COMMENT ON COLUMN payments.created_by IS 'User ID who created this record';
 COMMENT ON COLUMN expenses.created_by IS 'User ID who created this record';
+
+-- ============================================
+-- 6. Re-enable audit triggers
+-- ============================================
+
+ALTER TABLE tenants ENABLE TRIGGER ALL;
+ALTER TABLE bills ENABLE TRIGGER ALL;
+ALTER TABLE payments ENABLE TRIGGER ALL;
+ALTER TABLE expenses ENABLE TRIGGER ALL;
+ALTER TABLE refunds ENABLE TRIGGER ALL;
+ALTER TABLE complaints ENABLE TRIGGER ALL;
+ALTER TABLE notices ENABLE TRIGGER ALL;
+ALTER TABLE visitors ENABLE TRIGGER ALL;
+ALTER TABLE meter_readings ENABLE TRIGGER ALL;
+ALTER TABLE exit_clearance ENABLE TRIGGER ALL;
+ALTER TABLE properties ENABLE TRIGGER ALL;
+ALTER TABLE rooms ENABLE TRIGGER ALL;
+ALTER TABLE people ENABLE TRIGGER ALL;
+ALTER TABLE meters ENABLE TRIGGER ALL;
