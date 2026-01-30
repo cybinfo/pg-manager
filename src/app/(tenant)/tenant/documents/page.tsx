@@ -32,6 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { TenantWithContext } from "@/types/tenants.types"
 
 interface TenantDocument {
   id: string
@@ -45,12 +46,6 @@ interface TenantDocument {
   review_notes: string | null
   uploaded_at: string
   reviewed_at: string | null
-}
-
-interface TenantInfo {
-  id: string
-  workspace_id: string
-  owner_id: string
 }
 
 const docStatusMap: Record<string, { variant: "warning" | "success" | "error"; label: string }> = {
@@ -71,7 +66,7 @@ const documentTypeLabels: Record<string, string> = {
 export default function TenantDocumentsPage() {
   const [loading, setLoading] = useState(true)
   const [documents, setDocuments] = useState<TenantDocument[]>([])
-  const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
+  const [tenantInfo, setTenantInfo] = useState<TenantWithContext | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [documentToDelete, setDocumentToDelete] = useState<TenantDocument | null>(null)

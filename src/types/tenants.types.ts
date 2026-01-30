@@ -166,3 +166,48 @@ export interface TenantListItem extends Omit<Tenant, "person"> {
   checkin_month?: string
   checkin_year?: string
 }
+
+// ============================================================================
+// TENANT PORTAL TYPES
+// ============================================================================
+
+/**
+ * Basic tenant info for tenant portal header/context
+ * Used in tenant layout and portal pages
+ */
+export interface TenantPortalInfo {
+  id: string
+  name: string
+  email: string
+  phone: string
+  property: {
+    name: string
+  } | null
+  room: {
+    room_number: string
+  } | null
+}
+
+/**
+ * Raw tenant info before transformation from Supabase JOIN
+ * Note: email is added separately from user profile, not in this query
+ */
+export interface RawTenantPortalInfo {
+  id: string
+  name: string
+  phone: string
+  property: { name: string }[] | null
+  room: { room_number: string }[] | null
+}
+
+/**
+ * Tenant info with workspace/owner context
+ * Used for data fetching in tenant portal pages (bills, payments, documents)
+ */
+export interface TenantWithContext {
+  id: string
+  workspace_id: string
+  owner_id: string
+  property_id?: string
+  room_id?: string
+}

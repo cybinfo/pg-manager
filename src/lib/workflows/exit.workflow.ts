@@ -31,6 +31,7 @@ import {
 } from "@/lib/services/notification.service"
 import { createAuditEvent } from "@/lib/services/audit.service"
 import { workflowLogger } from "@/lib/logger"
+import { API_TIMEOUT_MS } from "@/lib/constants"
 
 // ============================================
 // Types
@@ -99,7 +100,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
 
         // WF-006: Add timeout to prevent indefinite hanging
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
 
         workflowLogger.debug("[Exit] validate_tenant starting", { tenantId: input.tenant_id, hasAccessToken: !!context.metadata?.accessToken })
 
@@ -279,7 +280,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
 
         // WF-006: Add timeout to prevent indefinite hanging
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+        const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
 
         // Map to actual table columns
         const clearanceData = {

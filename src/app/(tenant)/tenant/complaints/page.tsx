@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 import { PageLoader } from "@/components/ui/page-loader"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { TenantWithContext } from "@/types/tenants.types"
 
 interface Complaint {
   id: string
@@ -33,12 +34,6 @@ interface Complaint {
   resolution_notes: string | null
   created_at: string
   resolved_at: string | null
-}
-
-interface TenantInfo {
-  id: string
-  property_id: string
-  room_id: string
 }
 
 const categories = [
@@ -60,7 +55,7 @@ export default function TenantComplaintsPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [complaints, setComplaints] = useState<Complaint[]>([])
-  const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
+  const [tenantInfo, setTenantInfo] = useState<TenantWithContext | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     category: "other",
@@ -81,7 +76,7 @@ export default function TenantComplaintsPage() {
     // Get tenant info
     const { data: tenant } = await supabase
       .from("tenants")
-      .select("id, property_id, room_id")
+      .select("id, owner_id, property_id, room_id, property:properties(owner_id)")
       .eq("user_id", user.id)
       .eq("status", "active")
       .single()
@@ -91,7 +86,24 @@ export default function TenantComplaintsPage() {
       return
     }
 
-    setTenantInfo(tenant)
+    // Handle Supabase array join
+    const property = Array.isArray(tenant.property) ? tenant.property[0] : tenant.property
+    const ownerId = property?.owner_id || tenant.owner_id
+
+    // Get workspace_id from workspaces table via owner
+    const { data: workspace } = await supabase
+      .from("workspaces")
+      .select("id")
+      .eq("owner_user_id", ownerId)
+      .single()
+
+    setTenantInfo({
+      id: tenant.id,
+      workspace_id: workspace?.id || "",
+      owner_id: ownerId,
+      property_id: tenant.property_id,
+      room_id: tenant.room_id,
+    })
 
     // Fetch complaints
     const { data: complaintsData } = await supabase

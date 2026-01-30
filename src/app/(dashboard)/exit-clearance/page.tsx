@@ -23,6 +23,7 @@ import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
+import { EXIT_CLEARANCE_STATUS } from "@/lib/status-config"
 
 // ============================================
 // Types
@@ -137,12 +138,7 @@ const columns: Column<ExitClearance>[] = [
     width: "status",
     sortable: true,
     render: (clearance) => {
-      const statusMap: Record<string, { variant: "success" | "warning" | "error" | "muted"; label: string }> = {
-        initiated: { variant: "muted", label: "Initiated" },
-        pending_payment: { variant: "warning", label: "Pending" },
-        cleared: { variant: "success", label: "Cleared" },
-      }
-      const status = statusMap[clearance.settlement_status] || {
+      const status = EXIT_CLEARANCE_STATUS[clearance.settlement_status] || {
         variant: "muted" as const,
         label: clearance.settlement_status,
       }

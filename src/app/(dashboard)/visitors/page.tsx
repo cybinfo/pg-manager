@@ -28,6 +28,7 @@ import {
   ENQUIRY_STATUS_COLORS,
   EnquiryStatus,
 } from "@/types/visitors.types"
+import { VISITOR_STATUS, getStatusInfo as getVisitorStatusInfo } from "@/lib/status-config"
 
 // ============================================
 // Types
@@ -64,20 +65,7 @@ interface Visitor {
   created_at: string
 }
 
-// ============================================
-// Status Helper
-// ============================================
-
-const getStatusInfo = (status: string): { status: "success" | "warning" | "muted"; label: string } => {
-  switch (status) {
-    case "checked_in":
-      return { status: "success", label: "Inside" }
-    case "checked_out":
-      return { status: "muted", label: "Left" }
-    default:
-      return { status: "warning", label: status }
-  }
-}
+// Status helper uses centralized VISITOR_STATUS from status-config
 
 // ============================================
 // Visitor Type Badge
@@ -229,7 +217,7 @@ const columns: Column<Visitor>[] = [
     width: "status",
     sortable: true,
     render: (visitor) => {
-      const info = getStatusInfo(visitor.status)
+      const info = getVisitorStatusInfo("visitor", visitor.status)
       return <StatusDot status={info.status} label={info.label} />
     },
   },

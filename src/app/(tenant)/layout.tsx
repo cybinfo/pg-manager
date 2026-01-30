@@ -21,31 +21,7 @@ import {
   FolderOpen
 } from "lucide-react"
 import { toast } from "sonner"
-
-interface TenantInfo {
-  id: string
-  name: string
-  email: string
-  phone: string
-  property: {
-    name: string
-  } | null
-  room: {
-    room_number: string
-  } | null
-}
-
-interface RawTenantInfo {
-  id: string
-  name: string
-  phone: string
-  property: {
-    name: string
-  }[] | null
-  room: {
-    room_number: string
-  }[] | null
-}
+import { TenantPortalInfo, RawTenantPortalInfo } from "@/types/tenants.types"
 
 const navigation = [
   { name: "Home", href: "/tenant", icon: Home },
@@ -66,7 +42,7 @@ export default function TenantLayout({
   const pathname = usePathname()
   const [loading, setLoading] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [tenant, setTenant] = useState<TenantInfo | null>(null)
+  const [tenant, setTenant] = useState<TenantPortalInfo | null>(null)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -108,7 +84,7 @@ export default function TenantLayout({
       if (!mountedRef.current) return
 
       // Transform the data from arrays to single objects
-      const rawData = tenantData as RawTenantInfo
+      const rawData = tenantData as RawTenantPortalInfo
       setTenant({
         id: rawData.id,
         name: rawData.name,

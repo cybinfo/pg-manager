@@ -20,6 +20,7 @@ import {
 import { PageLoader } from "@/components/ui/page-loader"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 import { formatDate, formatCurrency } from "@/lib/format"
+import { TenantWithContext } from "@/types/tenants.types"
 
 interface Payment {
   id: string
@@ -58,12 +59,6 @@ interface PaymentStats {
   monthlyRent: number
 }
 
-interface TenantInfo {
-  id: string
-  workspace_id: string
-  owner_id: string
-}
-
 const paymentMethodLabels: Record<string, string> = {
   cash: "Cash",
   upi: "UPI",
@@ -75,7 +70,7 @@ const paymentMethodLabels: Record<string, string> = {
 export default function TenantPaymentsPage() {
   const [loading, setLoading] = useState(true)
   const [payments, setPayments] = useState<Payment[]>([])
-  const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
+  const [tenantInfo, setTenantInfo] = useState<TenantWithContext | null>(null)
   const [stats, setStats] = useState<PaymentStats>({
     totalPaid: 0,
     totalPaidThisYear: 0,

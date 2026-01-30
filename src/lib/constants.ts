@@ -79,6 +79,13 @@ export const PDF_GENERATION_TIMEOUT_MS = 30000
 export const FEATURE_FLAGS_CACHE_TTL_MS = 5 * 60 * 1000
 
 // ============================================
+// Search & Filter Constants
+// ============================================
+
+/** Search input debounce delay (ms) */
+export const SEARCH_DEBOUNCE_MS = 300
+
+// ============================================
 // Pagination Constants
 // ============================================
 
@@ -122,3 +129,6 @@ export const NEW_TENANT_PAYMENT_SCORE = 60
 
 /** Perfect payment bonus points */
 export const PERFECT_PAYMENT_BONUS = 10
+
+/** High overdue threshold for alerts (rupees) */
+export const OVERDUE_THRESHOLD_HIGH = 5000

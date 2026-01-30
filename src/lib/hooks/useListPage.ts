@@ -17,6 +17,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin, transformArrayJoins } from "@/lib/supabase/transforms"
 import { toast } from "sonner"
+import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
 
 // ============================================
 // Types
@@ -772,7 +773,7 @@ export function useListPage<T extends object>(
       fetchData(1, pageSize, filters, query)
       fetchServerCounts(filters, query)
       fetchServerSums(filters, query)
-    }, 300) // 300ms debounce
+    }, SEARCH_DEBOUNCE_MS)
   }, [pageSize, filters, fetchData, fetchServerCounts, fetchServerSums])
 
   // Sort setters - now receives array from DataTable for multi-column sorting

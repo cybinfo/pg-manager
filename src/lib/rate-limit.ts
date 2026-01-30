@@ -19,7 +19,7 @@ interface RateLimitConfig {
   prefix?: string
 }
 
-interface RateLimitResult {
+export interface RateLimitResult {
   success: boolean
   limit: number
   remaining: number

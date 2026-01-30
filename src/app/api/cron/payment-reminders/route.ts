@@ -1,10 +1,8 @@
-import { createClient } from "@supabase/supabase-js"
 import { sendPaymentReminder, sendOverdueAlert } from "@/lib/email"
-import { cronLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
-import { timingSafeEqual } from "@/lib/csrf"
+import { validateCronRequest } from "@/lib/api-middleware"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
-import { apiSuccess, apiError, unauthorized, internalError, ErrorCodes } from "@/lib/api-response"
+import { apiSuccess, apiError, internalError, ErrorCodes } from "@/lib/api-response"
 
 interface NotificationSettings {
   email_reminders_enabled: boolean
@@ -43,42 +41,9 @@ interface Tenant {
 }
 
 export async function GET(request: Request) {
-  // SECURITY: Rate limiting - 2 requests per minute for cron jobs
-  const clientId = getClientIdentifier(request)
-  const rateLimitResult = await cronLimiter.check(clientId)
-
-  if (!rateLimitResult.success) {
-    return apiError(
-      ErrorCodes.TOO_MANY_REQUESTS,
-      "Rate limit exceeded for cron endpoint",
-      {
-        status: 429,
-        details: { retryAfter: rateLimitResult.retryAfter },
-        headers: rateLimitHeaders(rateLimitResult),
-      }
-    )
-  }
-
-  // SECURITY: Always verify cron secret - no dev bypass
-  // SEC-001: Use constant-time comparison to prevent timing attacks
-  const authHeader = request.headers.get("authorization")
-  const expectedSecret = `Bearer ${process.env.CRON_SECRET}`
-  if (!timingSafeEqual(authHeader, expectedSecret)) {
-    return unauthorized("Invalid cron secret")
-  }
-
-  // SECURITY: Require service role key - fail loudly if missing
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!serviceRoleKey) {
-    cronLogger.error("SUPABASE_SERVICE_ROLE_KEY is required for cron jobs")
-    return internalError("Server configuration error")
-  }
-
-  // Create admin Supabase client for cron job
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceRoleKey
-  )
+  // SECURITY: Rate limiting + cron secret validation
+  const { success, response, supabase } = await validateCronRequest(request)
+  if (!success || !supabase) return response!
 
   const results = {
     processed: 0,

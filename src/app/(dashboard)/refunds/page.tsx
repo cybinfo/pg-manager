@@ -24,6 +24,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { REFUND_STATUS } from "@/lib/status-config"
 
 // ============================================
 // Types
@@ -159,14 +160,7 @@ const columns: Column<Refund>[] = [
     width: "status",
     sortable: true,
     render: (refund) => {
-      const statusMap: Record<string, { variant: "success" | "warning" | "error" | "muted"; label: string }> = {
-        pending: { variant: "warning", label: "Pending" },
-        processing: { variant: "muted", label: "Processing" },
-        completed: { variant: "success", label: "Completed" },
-        failed: { variant: "error", label: "Failed" },
-        cancelled: { variant: "error", label: "Cancelled" },
-      }
-      const status = statusMap[refund.status] || { variant: "muted" as const, label: refund.status }
+      const status = REFUND_STATUS[refund.status] || { variant: "muted" as const, label: refund.status }
       return <TableBadge variant={status.variant}>{status.label}</TableBadge>
     },
   },

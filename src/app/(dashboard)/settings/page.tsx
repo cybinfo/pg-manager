@@ -44,156 +44,26 @@ import { OwnerGuard, EmailVerificationCard } from "@/components/auth"
 import { toast } from "sonner"
 import { sendTestEmail } from "@/lib/email"
 import { useAuth } from "@/lib/auth"
+import {
+  Owner,
+  ChargeType,
+  UtilityRate,
+  ExpenseType,
+  OwnerConfig,
+  NotificationSettings,
+  RoomTypePricing,
+  PropertyTypePricing,
+  ConfigurableRoomType,
+  BillingCycleMode,
+  AutoBillingSettings,
+  FoodSettings,
+  DEFAULT_ROOM_TYPE_PRICING,
+  DEFAULT_PROPERTY_TYPE_PRICING,
+  DEFAULT_AUTO_BILLING_SETTINGS,
+  PROPERTY_TYPE_LABELS,
+} from "@/types/settings.types"
 
-interface Owner {
-  id: string
-  name: string
-  email: string
-  phone: string | null
-  business_name: string | null
-}
-
-interface ChargeType {
-  id: string
-  name: string
-  code: string
-  category: string
-  is_enabled: boolean
-  is_refundable: boolean
-  apply_late_fee: boolean
-  display_order: number
-  calculation_config?: {
-    rate_per_unit?: number
-    default_amount?: number
-    split_by?: 'occupants' | 'room'
-  } | null
-}
-
-interface UtilityRate {
-  id: string
-  name: string
-  code: string
-  billing_type: 'per_unit' | 'flat_rate'
-  rate_per_unit: number
-  flat_amount: number
-  split_by: 'occupants' | 'room'
-  unit_label: string
-}
-
-interface ExpenseType {
-  id: string
-  name: string
-  code: string
-  description: string | null
-  is_enabled: boolean
-  display_order: number
-}
-
-interface OwnerConfig {
-  id: string
-  default_notice_period: number
-  default_rent_due_day: number
-  default_grace_period: number
-  currency: string
-  notification_settings?: NotificationSettings
-}
-
-interface NotificationSettings {
-  email_reminders_enabled: boolean
-  reminder_days_before: number
-  send_on_due_date: boolean
-  send_overdue_alerts: boolean
-  overdue_alert_frequency: "daily" | "weekly"
-}
-
-interface RoomTypePricing {
-  single: { rent: number; deposit: number }
-  double: { rent: number; deposit: number }
-  triple: { rent: number; deposit: number }
-  dormitory: { rent: number; deposit: number }
-}
-
-interface PropertyTypePricing {
-  pg: RoomTypePricing
-  hostel: RoomTypePricing
-  coliving: RoomTypePricing
-}
-
-// Configurable room type (new)
-interface ConfigurableRoomType {
-  code: string
-  name: string
-  default_rent: number
-  default_deposit: number
-  is_enabled: boolean
-  display_order: number
-}
-
-type BillingCycleMode = 'calendar_month' | 'checkin_anniversary'
-
-const defaultRoomTypePricing: RoomTypePricing = {
-  single: { rent: 8000, deposit: 16000 },
-  double: { rent: 6000, deposit: 12000 },
-  triple: { rent: 5000, deposit: 10000 },
-  dormitory: { rent: 4000, deposit: 8000 },
-}
-
-const defaultPropertyTypePricing: PropertyTypePricing = {
-  pg: {
-    single: { rent: 8000, deposit: 16000 },
-    double: { rent: 6000, deposit: 12000 },
-    triple: { rent: 5000, deposit: 10000 },
-    dormitory: { rent: 4000, deposit: 8000 },
-  },
-  hostel: {
-    single: { rent: 6000, deposit: 12000 },
-    double: { rent: 4500, deposit: 9000 },
-    triple: { rent: 3500, deposit: 7000 },
-    dormitory: { rent: 2500, deposit: 5000 },
-  },
-  coliving: {
-    single: { rent: 12000, deposit: 24000 },
-    double: { rent: 9000, deposit: 18000 },
-    triple: { rent: 7000, deposit: 14000 },
-    dormitory: { rent: 5000, deposit: 10000 },
-  },
-}
-
-const propertyTypeLabels = {
-  pg: "PG (Paying Guest)",
-  hostel: "Hostel",
-  coliving: "Co-Living Space",
-}
-
-interface AutoBillingSettings {
-  enabled: boolean
-  billing_day: number
-  due_day_offset: number
-  include_pending_charges: boolean
-  auto_send_notification: boolean
-  last_generated_month: string | null
-}
-
-const defaultAutoBillingSettings: AutoBillingSettings = {
-  enabled: false,
-  billing_day: 1,
-  due_day_offset: 10,
-  include_pending_charges: true,
-  auto_send_notification: true,
-  last_generated_month: null,
-}
-
-interface FoodSettings {
-  enabled: boolean
-  meals: {
-    breakfast: { enabled: boolean; default_rate: number }
-    lunch: { enabled: boolean; default_rate: number }
-    dinner: { enabled: boolean; default_rate: number }
-    snacks: { enabled: boolean; default_rate: number }
-  }
-  billing_frequency: "daily" | "weekly" | "monthly"
-}
-
+// Page-specific defaults that differ from type defaults
 const defaultFoodSettings: FoodSettings = {
   enabled: false,
   meals: {
@@ -257,13 +127,13 @@ export default function SettingsPage() {
   const [sendingTestEmail, setSendingTestEmail] = useState(false)
 
   // Auto Billing Settings
-  const [autoBillingSettings, setAutoBillingSettings] = useState<AutoBillingSettings>(defaultAutoBillingSettings)
+  const [autoBillingSettings, setAutoBillingSettings] = useState<AutoBillingSettings>(DEFAULT_AUTO_BILLING_SETTINGS)
 
   // Room Type Pricing (legacy flat pricing)
-  const [roomTypePricing, setRoomTypePricing] = useState<RoomTypePricing>(defaultRoomTypePricing)
+  const [roomTypePricing, setRoomTypePricing] = useState<RoomTypePricing>(DEFAULT_ROOM_TYPE_PRICING)
 
   // Property Type Pricing (new - pricing by property type)
-  const [propertyTypePricing, setPropertyTypePricing] = useState<PropertyTypePricing>(defaultPropertyTypePricing)
+  const [propertyTypePricing, setPropertyTypePricing] = useState<PropertyTypePricing>(DEFAULT_PROPERTY_TYPE_PRICING)
   const [selectedPropertyType, setSelectedPropertyType] = useState<keyof PropertyTypePricing>("pg")
 
   // Food Settings
@@ -358,21 +228,21 @@ export default function SettingsPage() {
         // Load auto billing settings if available
         if (configRes.data.auto_billing_settings) {
           setAutoBillingSettings({
-            ...defaultAutoBillingSettings,
+            ...DEFAULT_AUTO_BILLING_SETTINGS,
             ...configRes.data.auto_billing_settings,
           })
         }
         // Load room type pricing if available (legacy flat pricing)
         if (configRes.data.room_type_pricing) {
           setRoomTypePricing({
-            ...defaultRoomTypePricing,
+            ...DEFAULT_ROOM_TYPE_PRICING,
             ...configRes.data.room_type_pricing,
           })
         }
         // Load property type pricing if available
         if (configRes.data.property_type_pricing) {
           setPropertyTypePricing({
-            ...defaultPropertyTypePricing,
+            ...DEFAULT_PROPERTY_TYPE_PRICING,
             ...configRes.data.property_type_pricing,
           })
         }

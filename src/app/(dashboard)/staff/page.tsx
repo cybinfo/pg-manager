@@ -52,6 +52,22 @@ interface StaffMember {
 }
 
 // ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * Transform staff roles from Supabase JOIN format
+ * Handles both array (from JOIN) and object formats
+ */
+const transformStaffRoles = (staff: StaffMember) => {
+  return (staff.roles || []).map((r) => ({
+    ...r,
+    role: Array.isArray(r.role) ? transformJoin(r.role) : r.role,
+    property: Array.isArray(r.property) ? transformJoin(r.property) : r.property,
+  }))
+}
+
+// ============================================
 // Column Definitions
 // ============================================
 
@@ -62,12 +78,7 @@ const columns: Column<StaffMember>[] = [
     width: "primary",
     sortable: true,
     render: (staff) => {
-      // Transform roles if they're arrays (from Supabase JOIN)
-      const roles = (staff.roles || []).map((r) => ({
-        ...r,
-        role: Array.isArray(r.role) ? transformJoin(r.role) : r.role,
-        property: Array.isArray(r.property) ? transformJoin(r.property) : r.property,
-      }))
+      const roles = transformStaffRoles(staff)
       // Use person.name (live data) with fallback to staff.name (denormalized)
       const displayName = staff.person?.name || staff.name
 
@@ -114,12 +125,7 @@ const columns: Column<StaffMember>[] = [
     header: "Roles",
     width: "secondary",
     render: (staff) => {
-      // Transform roles if they're arrays (from Supabase JOIN)
-      const roles = (staff.roles || []).map((r) => ({
-        ...r,
-        role: Array.isArray(r.role) ? transformJoin(r.role) : r.role,
-        property: Array.isArray(r.property) ? transformJoin(r.property) : r.property,
-      }))
+      const roles = transformStaffRoles(staff)
 
       return (
         <div className="flex flex-wrap gap-1">

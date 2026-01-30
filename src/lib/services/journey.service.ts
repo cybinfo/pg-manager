@@ -42,7 +42,8 @@ import {
   MAX_OVERDUE_PENALTY,
   OVERDUE_PENALTY_DIVISOR,
   NEW_TENANT_PAYMENT_SCORE,
-  PERFECT_PAYMENT_BONUS
+  PERFECT_PAYMENT_BONUS,
+  OVERDUE_THRESHOLD_HIGH,
 } from "@/lib/constants"
 
 // ============================================
@@ -1199,7 +1200,7 @@ function calculatePredictiveInsights(
     activeAlerts.push({
       id: "overdue_amount",
       type: "overdue",
-      severity: financial.total_overdue > 5000 ? "high" : "medium",
+      severity: financial.total_overdue > OVERDUE_THRESHOLD_HIGH ? "high" : "medium",
       title: "Overdue Amount",
       description: `${formatCurrency(financial.total_overdue)} is overdue`,
       created_at: new Date().toISOString(),
@@ -1222,7 +1223,7 @@ function calculatePredictiveInsights(
   if (financial.total_overdue > 0) {
     recommendations.push({
       type: "collection",
-      priority: financial.total_overdue > 5000 ? "high" : "medium",
+      priority: financial.total_overdue > OVERDUE_THRESHOLD_HIGH ? "high" : "medium",
       message: `Outstanding overdue: ${formatCurrency(financial.total_overdue)}. Send payment reminder.`,
       action_url: `/payments/new?tenant=${tenant.id}`,
     })

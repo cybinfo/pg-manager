@@ -19,6 +19,7 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { TENANT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
 
 // ============================================
 // Types
@@ -41,22 +42,7 @@ interface Tenant {
   checkin_year?: string
 }
 
-// ============================================
-// Status Helper
-// ============================================
-
-const getStatusInfo = (status: string): { status: "success" | "warning" | "muted"; label: string } => {
-  switch (status) {
-    case "active":
-      return { status: "success", label: "Active" }
-    case "notice_period":
-      return { status: "warning", label: "Notice" }
-    case "checked_out":
-      return { status: "muted", label: "Moved Out" }
-    default:
-      return { status: "muted", label: status }
-  }
-}
+// Status helper uses centralized TENANT_STATUS from status-config
 
 // ============================================
 // Column Definitions
@@ -128,7 +114,7 @@ const columns: Column<Tenant>[] = [
     width: "status",
     sortable: true,
     render: (tenant) => {
-      const info = getStatusInfo(tenant.status)
+      const info = getTenantStatusInfo("tenant", tenant.status)
       return <StatusDot status={info.status} label={info.label} />
     },
   },

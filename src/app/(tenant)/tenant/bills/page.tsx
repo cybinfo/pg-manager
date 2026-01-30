@@ -21,12 +21,7 @@ import { PageLoader } from "@/components/ui/page-loader"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 import { formatDate, formatCurrency, formatMonthYear } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
-
-interface TenantInfo {
-  id: string
-  workspace_id: string
-  owner_id: string
-}
+import { TenantWithContext } from "@/types/tenants.types"
 
 interface Bill {
   id: string
@@ -65,7 +60,7 @@ const statusIconConfig: Record<string, { icon: typeof CheckCircle; className: st
 export default function TenantBillsPage() {
   const [loading, setLoading] = useState(true)
   const [bills, setBills] = useState<Bill[]>([])
-  const [tenantInfo, setTenantInfo] = useState<TenantInfo | null>(null)
+  const [tenantInfo, setTenantInfo] = useState<TenantWithContext | null>(null)
   const [stats, setStats] = useState<BillStats>({
     totalBilled: 0,
     totalPaid: 0,

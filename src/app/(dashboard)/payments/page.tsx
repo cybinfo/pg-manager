@@ -18,6 +18,7 @@ import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { PAYMENT_METHODS } from "@/lib/status-config"
 
 // ============================================
 // Types
@@ -38,14 +39,6 @@ interface Payment {
   charge_type: { id: string; name: string } | null
   payment_month?: string
   payment_year?: string
-}
-
-const paymentMethodLabels: Record<string, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  bank_transfer: "Bank",
-  cheque: "Cheque",
-  card: "Card",
 }
 
 // ============================================
@@ -93,7 +86,7 @@ const columns: Column<Payment>[] = [
     sortable: true,
     render: (payment) => (
       <TableBadge variant="default">
-        {paymentMethodLabels[payment.payment_method] || payment.payment_method}
+        {PAYMENT_METHODS[payment.payment_method] || payment.payment_method}
       </TableBadge>
     ),
   },
@@ -216,7 +209,7 @@ const metrics: MetricConfig<Payment>[] = [
         return acc
       }, {} as Record<string, number>)
       const topMethod = Object.entries(methodCounts).sort((a, b) => b[1] - a[1])[0]
-      return topMethod ? paymentMethodLabels[topMethod[0]] || topMethod[0] : "—"
+      return topMethod ? PAYMENT_METHODS[topMethod[0]] || topMethod[0] : "—"
     },
     // Note: Requires counting by group - page totals only
   },

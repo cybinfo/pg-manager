@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 // ARCH-001: Use centralized useListPage hook for data fetching
 import { useListPage, ListPageConfig, GroupByOption, MetricConfig } from "@/lib/hooks/useListPage"
+import { APPROVAL_STATUS, APPROVAL_PRIORITY, getStatusInfo as getApprovalStatusInfo } from "@/lib/status-config"
 
 interface AttachedDocument {
   id: string
@@ -81,12 +82,7 @@ const TYPE_LABELS: Record<string, string> = {
   room_issue: "Room Issue",
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-  low: "bg-slate-100 text-slate-700",
-  normal: "bg-blue-100 text-blue-700",
-  high: "bg-amber-100 text-amber-700",
-  urgent: "bg-rose-100 text-rose-700",
-}
+// Uses APPROVAL_PRIORITY from status-config for priority colors
 
 // ARCH-001: Group by options for approvals (using useListPage pattern)
 const approvalGroupByOptions: GroupByOption[] = [
@@ -332,15 +328,7 @@ export default function ApprovalsPage() {
     }))
   }, [metricsData])
 
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case "pending": return { status: "warning" as const, label: "Pending" }
-      case "approved": return { status: "success" as const, label: "Approved" }
-      case "rejected": return { status: "error" as const, label: "Rejected" }
-      case "cancelled": return { status: "muted" as const, label: "Cancelled" }
-      default: return { status: "muted" as const, label: status }
-    }
-  }
+  // Uses centralized getStatusInfo from status-config
 
   const columns: Column<Approval>[] = [
     {
@@ -382,7 +370,7 @@ export default function ApprovalsPage() {
       width: "badge",
       hideOnMobile: true,
       render: (approval) => (
-        <Badge className={cn("text-xs", PRIORITY_COLORS[approval.priority])}>
+        <Badge className={cn("text-xs", APPROVAL_PRIORITY[approval.priority] || "bg-slate-100 text-slate-700")}>
           {approval.priority}
         </Badge>
       ),
@@ -403,7 +391,7 @@ export default function ApprovalsPage() {
       header: "Status",
       width: "status",
       render: (approval) => {
-        const info = getStatusInfo(approval.status)
+        const info = getApprovalStatusInfo("approval", approval.status)
         return <StatusDot status={info.status} label={info.label} />
       },
     },

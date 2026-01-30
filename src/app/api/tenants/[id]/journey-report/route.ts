@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
 import { getTenantJourney } from "@/lib/services/journey.service"
 import { createContentDisposition, sanitizeFilename } from "@/lib/format"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { TenantJourneyReportPDF, JourneyReportData } from "@/lib/pdf-journey-report"
-import { apiLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { validateTenantRequest } from "@/lib/api-middleware"
 import {
   apiError,
-  unauthorized,
-  forbidden,
-  notFound,
   internalError,
   ErrorCodes,
 } from "@/lib/api-response"
@@ -29,71 +25,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // SECURITY: Rate limiting - 100 requests per minute for API
-    const clientId = getClientIdentifier(request)
-    const rateLimitResult = await apiLimiter.check(clientId)
-
-    if (!rateLimitResult.success) {
-      return apiError(
-        ErrorCodes.TOO_MANY_REQUESTS,
-        "Rate limit exceeded. Please try again later.",
-        {
-          status: 429,
-          details: { retryAfter: rateLimitResult.retryAfter },
-          headers: rateLimitHeaders(rateLimitResult),
-        }
-      )
-    }
-
     const { id: tenantId } = await params
-    const supabase = await createClient()
 
-    // Verify authentication
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return unauthorized("Please log in to access this resource")
-    }
-
-    // SECURITY: Verify user has access to this tenant's workspace
-    const { data: tenant, error: tenantError } = await supabase
-      .from("tenants")
-      .select("id, owner_id")
-      .eq("id", tenantId)
-      .single()
-
-    if (tenantError || !tenant) {
-      return notFound("Tenant not found")
-    }
-
-    // Check access: user must be owner, platform admin, or have staff context for this workspace
-    const isOwner = tenant.owner_id === user.id
-
-    if (!isOwner) {
-      // Check if platform admin
-      const { data: platformAdmin } = await supabase
-        .from("platform_admins")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .single()
-
-      if (!platformAdmin) {
-        // Check if staff with access to this workspace
-        const { data: staffContext } = await supabase
-          .from("user_contexts")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("workspace_id", tenant.owner_id)
-          .eq("is_active", true)
-          .single()
-
-        if (!staffContext) {
-          return forbidden("You do not have access to this tenant's data")
-        }
-      }
-    }
+    // SECURITY: Rate limiting + tenant access validation
+    const { success, response, tenant, user } = await validateTenantRequest(request, tenantId)
+    if (!success || !tenant || !user) return response!
 
     // Fetch complete journey data for PDF (use tenant's owner_id as workspace_id)
     const result = await getTenantJourney({

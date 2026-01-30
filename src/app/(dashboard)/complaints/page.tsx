@@ -9,10 +9,12 @@
 
 import { MessageSquare, AlertCircle, Clock, CheckCircle, Wrench } from "lucide-react"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { formatTimeAgo } from "@/lib/format"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { COMPLAINT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
+import { COMPLAINT_STATUS, COMPLAINT_PRIORITY, COMPLAINT_CATEGORIES, getStatusInfo as getComplaintStatusInfo } from "@/lib/status-config"
 
 // ============================================
 // Types
@@ -35,49 +37,7 @@ interface Complaint {
   created_year?: string
 }
 
-const statusConfig: Record<string, { label: string; variant: "success" | "warning" | "error" | "muted" }> = {
-  open: { label: "Open", variant: "error" },
-  acknowledged: { label: "Acknowledged", variant: "warning" },
-  in_progress: { label: "In Progress", variant: "warning" },
-  resolved: { label: "Resolved", variant: "success" },
-  closed: { label: "Closed", variant: "muted" },
-}
-
-const priorityConfig: Record<string, { label: string; variant: "default" | "success" | "warning" | "error" | "muted" }> = {
-  low: { label: "Low", variant: "muted" },
-  medium: { label: "Medium", variant: "default" },
-  high: { label: "High", variant: "warning" },
-  urgent: { label: "Urgent", variant: "error" },
-}
-
-const categoryLabels: Record<string, string> = {
-  electrical: "Electrical",
-  plumbing: "Plumbing",
-  furniture: "Furniture",
-  cleanliness: "Cleanliness",
-  appliances: "Appliances",
-  security: "Security",
-  noise: "Noise",
-  other: "Other",
-}
-
-// ============================================
-// Helper Functions
-// ============================================
-
-const getTimeAgo = (dateString: string) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffMins = Math.floor(diffMs / (1000 * 60))
-
-  if (diffDays > 0) return `${diffDays}d ago`
-  if (diffHours > 0) return `${diffHours}h ago`
-  if (diffMins > 0) return `${diffMins}m ago`
-  return "Just now"
-}
+// Uses COMPLAINT_STATUS, COMPLAINT_PRIORITY, and COMPLAINT_CATEGORIES from status-config
 
 // ============================================
 // Column Definitions
@@ -92,11 +52,11 @@ const columns: Column<Complaint>[] = [
     render: (row) => (
       <div className="min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <TableBadge variant={priorityConfig[row.priority]?.variant || "default"}>
-            {priorityConfig[row.priority]?.label || row.priority}
+          <TableBadge variant={COMPLAINT_PRIORITY[row.priority]?.variant || "default"}>
+            {COMPLAINT_PRIORITY[row.priority]?.label || row.priority}
           </TableBadge>
           <span className="text-xs text-muted-foreground">
-            {categoryLabels[row.category] || row.category}
+            {COMPLAINT_CATEGORIES[row.category] || row.category}
           </span>
         </div>
         <div className="font-medium truncate">{row.title}</div>
@@ -131,12 +91,10 @@ const columns: Column<Complaint>[] = [
     header: "Status",
     width: "status",
     sortable: true,
-    render: (row) => (
-      <StatusDot
-        status={statusConfig[row.status]?.variant || "muted"}
-        label={statusConfig[row.status]?.label || row.status}
-      />
-    ),
+    render: (row) => {
+      const info = getComplaintStatusInfo("complaint", row.status)
+      return <StatusDot status={info.status} label={info.label} />
+    },
   },
   {
     key: "created_at",
@@ -146,7 +104,7 @@ const columns: Column<Complaint>[] = [
     sortable: true,
     sortType: "date",
     render: (row) => (
-      <span className="text-sm text-muted-foreground">{getTimeAgo(row.created_at)}</span>
+      <span className="text-sm text-muted-foreground">{formatTimeAgo(row.created_at)}</span>
     ),
   },
 ]
@@ -192,7 +150,7 @@ const filters: FilterConfig[] = [
     label: "Category",
     type: "select",
     placeholder: "All Categories",
-    options: Object.entries(categoryLabels).map(([value, label]) => ({ value, label })),
+    options: Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label })),
   },
 ]
 

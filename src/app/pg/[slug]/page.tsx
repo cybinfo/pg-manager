@@ -25,16 +25,13 @@ import {
   Dumbbell,
   Loader2,
   CheckCircle,
-  Star,
   Users,
-  Home,
-  Calendar,
-  ArrowRight,
   ExternalLink,
-  Clock,
   Send
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/format"
+import { generateWhatsAppLink } from "@/lib/notifications"
 
 interface PropertyWebsite {
   id: string
@@ -196,21 +193,7 @@ export default function PGWebsitePage() {
     }
   }
 
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const getWhatsAppLink = (phone: string, message: string) => {
-    const formattedPhone = phone.replace(/\D/g, "")
-    const finalPhone = formattedPhone.startsWith("91") ? formattedPhone : `91${formattedPhone}`
-    return `https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`
-  }
-
-  if (loading) {
+if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-emerald-50">
         <div className="text-center">
@@ -312,7 +295,7 @@ export default function PGWebsitePage() {
           <div className="flex flex-wrap gap-3">
             {(config.contact_whatsapp || property?.manager_phone) && (
               <a
-                href={getWhatsAppLink(config.contact_whatsapp || property?.manager_phone || "", whatsappMessage)}
+                href={generateWhatsAppLink(config.contact_whatsapp || property?.manager_phone || "", whatsappMessage)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -388,11 +371,11 @@ export default function PGWebsitePage() {
                           {config.show_pricing !== false ? (
                             <div>
                               <span className="text-2xl font-bold text-teal-600">
-                                {formatPrice(data.minPrice)}
+                                {formatCurrency(data.minPrice)}
                               </span>
                               {data.maxPrice > data.minPrice && (
                                 <span className="text-muted-foreground">
-                                  {" "}- {formatPrice(data.maxPrice)}
+                                  {" "}- {formatCurrency(data.maxPrice)}
                                 </span>
                               )}
                               <span className="text-muted-foreground text-sm">/month</span>
