@@ -285,29 +285,31 @@ const result = await cascadeSoftDelete(propertyId, user.id, [
 
 #### 3.7.3 Detail Page Audit Display
 
-**ALWAYS** add `DetailPageAudit` to detail pages:
+**Use `DetailPageTemplate`** - audit sections are added automatically:
 
 ```typescript
-import { DetailPageAudit, AUDIT_ENTITY_TYPES } from "@/components/ui"
+import { DetailPageTemplate } from "@/components/ui"
 
-// At the bottom of every detail page
-<DetailPageAudit
+// DetailPageTemplate automatically adds Record Information & Activity History
+<DetailPageTemplate
+  layoutKey="tenant-detail"
+  entityType="tenant"
   record={tenant}
-  entityType={AUDIT_ENTITY_TYPES.tenant}
-/>
-
-// Compact layout for smaller views
-<DetailPageAudit
-  record={payment}
-  entityType="payment"
-  layout="compact"
-/>
+>
+  <DetailSection title="Room Details">...</DetailSection>
+  <DetailSection title="Pending Dues">...</DetailSection>
+</DetailPageTemplate>
 ```
 
-**Layout options:**
-- `"grid"` (default) - Side by side: metadata | activity
-- `"stack"` - Stacked: metadata above activity
-- `"compact"` - Metadata only, no activity history
+**DO NOT manually add `DetailPageAudit`** - it's included in the template.
+
+For standalone audit display (rare cases outside templates):
+
+```typescript
+import { DetailPageAudit } from "@/components/ui"
+
+<DetailPageAudit record={payment} entityType="payment" layout="compact" />
+```
 
 #### 3.7.4 Type Safety with AuditableEntity
 
@@ -415,37 +417,55 @@ import { Avatar } from "@/components/ui/avatar"
 | `EmptyState` | `@/components/ui/empty-state` | No data placeholder |
 | `Currency` | `@/components/ui/currency` | INR formatting |
 | `Pagination` | `@/components/ui/pagination` | Page navigation |
-| `DetailPageAudit` | `@/components/ui` | Audit display for detail pages |
+| `DetailPageTemplate` | `@/components/ui` | **Centralized detail page wrapper** |
+| `DetailPageAudit` | `@/components/ui` | Audit display (auto-included in template) |
 | `RecordMetadata` | `@/components/ui` | Created/deleted info display |
 | `ActivityHistory` | `@/components/ui` | Entity activity timeline |
 | `DetailListSection` | `@/components/ui` | Limited list with "View All" |
-| `DetailPageContent` | `@/components/ui` | Masonry/grid layout wrapper |
-| `MasonryGrid` | `@/components/ui` | Auto-balancing CSS columns |
+| `DetailPageContent` | `@/components/ui` | Layout wrapper (use Template instead) |
+| `SortableMasonry` | `@/components/ui` | Drag-and-drop masonry layout |
 
 ### 4.7 Detail Page Components (IMPORTANT)
 
-Detail pages use specialized components for consistent UX:
+Detail pages use the centralized `DetailPageTemplate` for consistent UX:
 
-#### DetailPageContent - Layout Wrapper
+#### DetailPageTemplate - Centralized Template (ALWAYS USE)
 
 ```typescript
-import { DetailPageContent } from "@/components/ui"
+import { DetailPageTemplate, DetailSection } from "@/components/ui"
 
-// Traditional grid layout (default, backwards compatible)
-<DetailPageContent>
-  <DetailSection>...</DetailSection>
-</DetailPageContent>
-
-// Auto-balancing masonry layout (RECOMMENDED)
-<DetailPageContent layout="masonry">
-  <DetailSection>...</DetailSection>
-</DetailPageContent>
+<DetailPageTemplate
+  layoutKey="tenant-detail"
+  entityType="tenant"
+  record={tenant}
+>
+  <DetailSection title="Room Details" icon={Home}>
+    <InfoRow label="Property" value={tenant.property?.name} />
+    <InfoRow label="Room" value={tenant.room?.room_number} />
+  </DetailSection>
+  <DetailSection title="Pending Dues" icon={AlertCircle}>
+    ...
+  </DetailSection>
+</DetailPageTemplate>
 ```
 
 **Props:**
-- `layout`: `"grid"` | `"masonry"` (default: `"grid"`)
-- `columns`: `1` | `2` | `3` (default: `2`)
-- `gap`: `"sm"` | `"md"` | `"lg"` (default: `"md"`)
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `layoutKey` | `string` | Yes | Unique key for layout preferences (e.g., "tenant-detail") |
+| `entityType` | `string` | Yes | Entity type for audit (e.g., "tenant", "bill") |
+| `record` | `AuditableEntity` | Yes | The entity record with id, created_at, etc. |
+| `columns` | `1 \| 2 \| 3` | No | Number of columns (default: 2) |
+| `gap` | `"sm" \| "md" \| "lg"` | No | Gap between sections (default: "md") |
+| `editable` | `boolean` | No | Show customize button (default: true) |
+| `showActivityHistory` | `boolean` | No | Show activity section (default: true) |
+
+**What it provides automatically:**
+- Sortable masonry layout (gap-free, auto-balancing)
+- "Customize Layout" button for drag-and-drop reordering
+- Layout preferences persist in localStorage per section type
+- Record Information section (created, created by, updated)
+- Activity History section (audit trail)
 
 #### DetailListSection - Limited Lists with View All
 
@@ -853,10 +873,19 @@ describe('myFunction', () => {
 1. Create `src/app/(dashboard)/[module]/[id]/page.tsx`
 2. Wrap with `<PermissionGuard permission="module.view">`
 3. Use `useDetailPage` hook for data fetching
-4. Use `<DetailPageContent layout="masonry">` for auto-balancing layout
+4. **Use `<DetailPageTemplate>` for consistent layout** (REQUIRED):
+   ```typescript
+   <DetailPageTemplate
+     layoutKey="module-detail"
+     entityType="module"
+     record={entity}
+   >
+     <DetailSection>...</DetailSection>
+   </DetailPageTemplate>
+   ```
 5. Use `<DetailListSection>` for all lists (shows 3-5 items with "View All")
-6. Add `<DetailPageAudit record={entity} entityType="..." />` at bottom
-7. Use `DetailHero`, `InfoCard`, `DetailSection`, `InfoRow` patterns
+6. Use `DetailHero`, `InfoCard`, `DetailSection`, `InfoRow` patterns
+7. **DO NOT manually add `<DetailPageAudit>`** - it's included in the template
 
 ### 11.2 Adding a New Database Table
 
@@ -974,7 +1003,8 @@ git add . && git commit -m "description" && git push && vercel --prod
 | UI | `src/components/ui/index.ts` | Single import point |
 | Auth | `src/lib/auth/` | `useAuth()`, `hasPermission()` |
 | Supabase | `src/lib/supabase/` | Client, transforms, helpers |
-| Config | `src/lib/hooks/useListPage.ts` | All list page configs |
+| List Pages | `src/lib/hooks/useListPage.ts` | All list page configs |
+| Detail Pages | `DetailPageTemplate` | Sortable masonry + audit |
 | Design Tokens | `src/lib/design-tokens.ts` | Colors, spacing, typography |
 
 **Anti-patterns to avoid:**
@@ -1019,7 +1049,7 @@ When adding any feature, verify:
 - [ ] Types defined in centralized `src/types/`
 - [ ] Uses existing UI components from `@/components/ui`
 - [ ] Audit tracking via `withCreatedBy()` and `softDelete()`
-- [ ] Detail pages include `<DetailPageAudit />`
+- [ ] Detail pages use `<DetailPageTemplate>` (includes audit automatically)
 - [ ] List pages use `ListPageTemplate` + config
 - [ ] Permissions defined in `src/lib/auth/types.ts`
 - [ ] No inline magic values (use `src/lib/constants.ts`)
