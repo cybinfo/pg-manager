@@ -138,15 +138,33 @@ export function SortableMasonry({
   const [mounted, setMounted] = React.useState(false)
   const { getStoredOrder, saveOrder, clearOrder } = useLayoutStorage(layoutKey)
 
-  // Get valid children with IDs
+  // Get valid children with stable IDs based on title prop or key
   const childrenWithIds = React.useMemo(() => {
     const items: { id: string; element: React.ReactElement }[] = []
+    const usedIds = new Set<string>()
+
     React.Children.forEach(children, (child, index) => {
       if (React.isValidElement(child)) {
-        items.push({
-          id: `section-${index}`,
-          element: child,
-        })
+        // Try to get a stable ID from: key > title prop > index fallback
+        let id: string
+
+        if (child.key && typeof child.key === 'string') {
+          id = `section-${child.key}`
+        } else if (child.props && typeof child.props === 'object' && 'title' in child.props) {
+          // Use title prop for stable ID (kebab-case)
+          const title = String(child.props.title || '')
+          id = `section-${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`
+        } else {
+          id = `section-${index}`
+        }
+
+        // Handle duplicate IDs by appending index
+        if (usedIds.has(id)) {
+          id = `${id}-${index}`
+        }
+        usedIds.add(id)
+
+        items.push({ id, element: child })
       }
     })
     return items
@@ -161,14 +179,25 @@ export function SortableMasonry({
   // Current order
   const [order, setOrder] = React.useState<string[]>(defaultOrder)
 
-  // Load stored order on mount
+  // Load stored order on mount - flexible matching for varying section counts
   React.useEffect(() => {
     setMounted(true)
     const stored = getStoredOrder()
-    if (stored && stored.length === defaultOrder.length) {
-      const valid = defaultOrder.every(id => stored.includes(id))
-      if (valid) {
-        setOrder(stored)
+    if (stored && stored.length > 0) {
+      // Build new order: start with stored items that exist, then add any new items
+      const currentIds = new Set(defaultOrder)
+      const storedIds = new Set(stored)
+
+      // Items from stored order that still exist
+      const orderedExisting = stored.filter(id => currentIds.has(id))
+      // New items not in stored order (append at end)
+      const newItems = defaultOrder.filter(id => !storedIds.has(id))
+
+      const mergedOrder = [...orderedExisting, ...newItems]
+
+      // Only apply if we have at least some matching items
+      if (orderedExisting.length > 0) {
+        setOrder(mergedOrder)
       }
     }
   }, [getStoredOrder, defaultOrder])
