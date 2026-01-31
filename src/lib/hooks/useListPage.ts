@@ -441,6 +441,11 @@ export function useListPage<T extends object>(
         const from = (currentPage - 1) * currentPageSize
         const to = from + currentPageSize - 1
         query = query.range(from, to)
+      } else if (isGroupingActive) {
+        // When grouping is active, we need ALL data for proper client-side grouping
+        // Supabase has a default limit of 1000, so we must explicitly set a higher limit
+        // Note: For very large datasets (>10k rows), consider server-side aggregation instead
+        query = query.limit(50000)
       }
 
       const { data: rawData, error: fetchError, count } = await query
