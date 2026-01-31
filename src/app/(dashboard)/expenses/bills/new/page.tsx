@@ -239,7 +239,7 @@ export default function NewBillPaymentPage() {
   return (
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.create">
-        <div className="container max-w-2xl py-6">
+        <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
             href="/expenses/bills"

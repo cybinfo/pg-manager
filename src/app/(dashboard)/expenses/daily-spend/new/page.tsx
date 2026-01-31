@@ -248,7 +248,7 @@ export default function NewDailySpendPage() {
   return (
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.create">
-        <div className="container max-w-4xl py-6">
+        <div className="max-w-4xl mx-auto py-6">
           {/* Back Link */}
           <Link
             href="/expenses/daily-spend"
