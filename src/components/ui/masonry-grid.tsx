@@ -16,17 +16,18 @@ const gapStyles = {
   lg: "gap-8",
 }
 
+const gridStyles = {
+  1: "grid-cols-1",
+  2: "grid-cols-1 md:grid-cols-2",
+  3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+}
+
 /**
- * MasonryGrid - Auto-balancing layout using CSS columns
+ * MasonryGrid - Responsive grid layout with natural section sizing
  *
- * Uses CSS multi-column layout for automatic height balancing.
- * Items are distributed across columns to minimize empty space.
- *
- * Benefits:
- * - Best browser support
- * - Auto-balances without JavaScript
- * - Simple implementation
- * - `break-inside: avoid` keeps sections intact
+ * Uses CSS Grid with `items-start` alignment so sections naturally size
+ * to their content while maintaining consistent left-to-right ordering.
+ * This creates a clean 2-column layout without vertical imbalance.
  *
  * @example
  * ```tsx
@@ -43,23 +44,14 @@ export function MasonryGrid({
   gap = "md",
   className,
 }: MasonryGridProps) {
-  const columnStyles = {
-    1: "columns-1",
-    2: "columns-1 md:columns-2",
-    3: "columns-1 md:columns-2 lg:columns-3",
-  }
-
   return (
     <div
       className={cn(
-        columnStyles[columns],
+        "grid",
+        gridStyles[columns],
         gapStyles[gap],
-        // Each child gets break-inside: avoid to stay intact
-        "[&>*]:break-inside-avoid",
-        "[&>*]:mb-6",
-        // Inline-block ensures proper column flow
-        "[&>*]:inline-block",
-        "[&>*]:w-full",
+        // items-start: each section sizes to its content, no stretch
+        "items-start",
         className
       )}
     >

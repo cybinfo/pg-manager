@@ -90,16 +90,18 @@ export function DetailListSection<T>({
     }
   }
 
-  // Build the View All button
-  const viewAllButton = hasMoreItems && (
+  // Build the View All button - always show if viewAllHref is provided for unified UX
+  const showViewAllButton = hasMoreItems || (viewAllHref && totalItems > 0)
+
+  const viewAllButton = showViewAllButton && (
     effectiveViewAllMode === "link" && viewAllHref ? (
       <Link href={viewAllHref}>
         <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700 hover:bg-teal-50">
-          {viewAllButtonLabel}
+          {hasMoreItems ? viewAllButtonLabel : `View All (${totalItems})`}
           <ExternalLink className="ml-1 h-3 w-3" />
         </Button>
       </Link>
-    ) : (
+    ) : hasMoreItems ? (
       <Button
         variant="ghost"
         size="sm"
@@ -113,7 +115,14 @@ export function DetailListSection<T>({
           <ChevronDown className="ml-1 h-4 w-4" />
         )}
       </Button>
-    )
+    ) : viewAllHref ? (
+      <Link href={viewAllHref}>
+        <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700 hover:bg-teal-50">
+          View All ({totalItems})
+          <ExternalLink className="ml-1 h-3 w-3" />
+        </Button>
+      </Link>
+    ) : null
   )
 
   return (
