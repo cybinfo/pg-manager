@@ -2,6 +2,7 @@
  * Daily Spend Detail Page
  *
  * Shows details of a single daily spend entry.
+ * Uses centralized UI components for consistency.
  */
 
 "use client"
@@ -11,13 +12,12 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   ShoppingBag,
-  ArrowLeft,
   Edit,
   Trash2,
-  Calendar,
   Store,
   CreditCard,
   Package,
+  IndianRupee,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -30,6 +30,8 @@ import { toast } from "sonner"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
+  DetailHero,
+  InfoCard,
   DetailPageTemplate,
   DetailSection,
   InfoRow,
@@ -138,71 +140,67 @@ export default function DailySpendDetailPage({
   return (
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.view">
-        <div className="container py-6">
-          {/* Back Link */}
-          <Link
-            href="/expenses/daily-spend"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Daily Spend
-          </Link>
-
-          {/* Hero Section */}
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-lg bg-orange-100 flex items-center justify-center">
-                <ShoppingBag className="h-6 w-6 text-orange-600" />
+        <div className="container py-6 space-y-6">
+          {/* Hero Section - Using centralized DetailHero */}
+          <DetailHero
+            title={entry.product?.name || entry.product_name}
+            subtitle={entry.product?.name_hi}
+            backHref="/expenses/daily-spend"
+            backLabel="Back to Daily Spend"
+            avatar={
+              <div className="p-3 bg-orange-100 rounded-lg">
+                <ShoppingBag className="h-8 w-8 text-orange-600" />
               </div>
+            }
+            status={
+              <div className="flex gap-2">
+                <TableBadge variant="muted">
+                  {formatDate(entry.spend_date)}
+                </TableBadge>
+                <TableBadge
+                  variant={
+                    entry.payment_mode === "cash"
+                      ? "warning"
+                      : entry.payment_mode === "upi"
+                        ? "success"
+                        : "muted"
+                  }
+                >
+                  {paymentModeLabel}
+                </TableBadge>
+              </div>
+            }
+            actions={
+              <div className="flex gap-2">
+                <Button variant="outline" asChild>
+                  <Link href={`/expenses/daily-spend/${id}/edit`}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Link>
+                </Button>
+                <Button variant="destructive" onClick={handleDelete}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            }
+          />
+
+          {/* Amount Card - Using centralized InfoCard */}
+          <InfoCard
+            label="Total Amount"
+            value={
               <div>
-                <h1 className="text-2xl font-bold">
-                  {entry.product?.name || entry.product_name}
-                </h1>
-                {entry.product?.name_hi && (
-                  <p className="text-muted-foreground">{entry.product.name_hi}</p>
-                )}
-                <div className="flex gap-2 mt-1">
-                  <TableBadge variant="muted">
-                    {formatDate(entry.spend_date)}
-                  </TableBadge>
-                  <TableBadge
-                    variant={
-                      entry.payment_mode === "cash"
-                        ? "warning"
-                        : entry.payment_mode === "upi"
-                          ? "success"
-                          : "muted"
-                    }
-                  >
-                    {paymentModeLabel}
-                  </TableBadge>
+                <div className="text-2xl">{formatCurrency(entry.total)}</div>
+                <div className="text-sm font-normal text-muted-foreground mt-1">
+                  {entry.quantity} {entry.unit} × {formatCurrency(entry.rate)}/{entry.unit}
                 </div>
               </div>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" asChild>
-                <Link href={`/expenses/daily-spend/${id}/edit`}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Link>
-              </Button>
-              <Button variant="destructive" onClick={handleDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </div>
-          </div>
-
-          {/* Amount Card */}
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl p-6 mb-6">
-            <div className="text-sm opacity-90">Total Amount</div>
-            <div className="text-3xl font-bold mt-1">
-              {formatCurrency(entry.total)}
-            </div>
-            <div className="text-sm opacity-90 mt-2">
-              {entry.quantity} {entry.unit} × {formatCurrency(entry.rate)}/{entry.unit}
-            </div>
-          </div>
+            }
+            icon={IndianRupee}
+            variant="warning"
+            className="max-w-sm"
+          />
 
           {/* Content */}
           <DetailPageTemplate
