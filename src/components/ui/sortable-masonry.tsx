@@ -291,7 +291,7 @@ export function SortableMasonry({
             <div className={cn(
               columnStyles[columns],
               gapStyles[gap],
-              "[&>*]:break-inside-avoid",
+              "[&>*]:break-inside-avoid [&>*]:mb-6",
               className
             )}>
               {orderedChildren.map(({ id, element }) => (
