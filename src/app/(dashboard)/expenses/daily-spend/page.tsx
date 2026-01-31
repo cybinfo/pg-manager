@@ -12,6 +12,7 @@ import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { DAILY_SPEND_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 
 // ============================================
@@ -178,6 +179,44 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "product_name",
+    header: "Product",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "total",
+    header: "Amount",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "spend_date",
+    header: "Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "payment_mode",
+    header: "Payment Mode",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "cash", label: "Cash" },
+      { value: "upi", label: "UPI" },
+      { value: "card", label: "Card" },
+      { value: "bank_transfer", label: "Bank Transfer" },
+      { value: "credit", label: "Credit" },
+    ],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -240,6 +279,9 @@ export default function DailySpendPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search item, vendor..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/expenses/daily-spend/new"
       createLabel="Add Entry"
       createPermission="expenses.create"

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PAYMENT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
@@ -163,6 +164,44 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "amount",
+    header: "Amount",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "payment_method",
+    header: "Payment Method",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in", "not_in"],
+    filterOptions: [
+      { value: "cash", label: "Cash" },
+      { value: "upi", label: "UPI" },
+      { value: "bank_transfer", label: "Bank Transfer" },
+      { value: "cheque", label: "Cheque" },
+      { value: "card", label: "Card" },
+    ],
+  },
+  {
+    key: "payment_date",
+    header: "Payment Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "reference_number",
+    header: "Reference Number",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -233,6 +272,9 @@ export default function PaymentsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by tenant, receipt #..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/payments/new"
       createLabel="Record Payment"
       createPermission="payments.create"

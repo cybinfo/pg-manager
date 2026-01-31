@@ -21,6 +21,7 @@ import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { MISC_TRANSACTION_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 
@@ -203,6 +204,41 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "transaction_type",
+    header: "Type",
+    filterType: "select",
+    filterOperators: ["eq", "neq"],
+    filterOptions: [
+      { value: "in", label: "Money In" },
+      { value: "out", label: "Money Out" },
+    ],
+  },
+  {
+    key: "amount",
+    header: "Amount",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "transaction_date",
+    header: "Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "person_name",
+    header: "Person",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -285,6 +321,9 @@ export default function MiscTransactionsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search person, description..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/expenses/misc/new"
       createLabel="New Transaction"
       createPermission="expenses.create"

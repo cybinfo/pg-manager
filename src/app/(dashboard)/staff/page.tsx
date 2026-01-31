@@ -22,6 +22,7 @@ import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { STAFF_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { Avatar } from "@/components/ui/avatar"
 import { transformJoin } from "@/lib/supabase/transforms"
 
@@ -190,6 +191,41 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "name",
+    header: "Name",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "neq", "starts", "ends"],
+  },
+  {
+    key: "email",
+    header: "Email",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "is_active",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq"],
+    filterOptions: [
+      { value: "true", label: "Active" },
+      { value: "false", label: "Inactive" },
+    ],
+  },
+  {
+    key: "created_at",
+    header: "Joined Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -252,6 +288,9 @@ export default function StaffPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by name, email, or phone..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/staff/new"
       createLabel="Add Staff"
       createPermission="staff.create"

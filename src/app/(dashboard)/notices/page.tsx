@@ -23,6 +23,7 @@ import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { NOTICE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatTimeAgo } from "@/lib/format"
 
@@ -195,6 +196,58 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "title",
+    header: "Title",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "type",
+    header: "Type",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "general", label: "General" },
+      { value: "maintenance", label: "Maintenance" },
+      { value: "payment_reminder", label: "Payment Reminder" },
+      { value: "emergency", label: "Emergency" },
+    ],
+  },
+  {
+    key: "is_active",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq"],
+    filterOptions: [
+      { value: "true", label: "Active" },
+      { value: "false", label: "Inactive" },
+    ],
+  },
+  {
+    key: "target_audience",
+    header: "Audience",
+    filterType: "select",
+    filterOperators: ["eq", "neq"],
+    filterOptions: [
+      { value: "all", label: "All Residents" },
+      { value: "tenants_only", label: "Tenants Only" },
+      { value: "specific_rooms", label: "Specific Rooms" },
+    ],
+  },
+  {
+    key: "created_at",
+    header: "Created Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -253,6 +306,9 @@ export default function NoticesPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search notices..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/notices/new"
       createLabel="New Notice"
       createPermission="notices.create"

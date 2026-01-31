@@ -12,6 +12,7 @@ import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { INQUIRY_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDate, formatPhone } from "@/lib/format"
 
@@ -203,6 +204,48 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "name",
+    header: "Name",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "status",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "new", label: "New" },
+      { value: "contacted", label: "Contacted" },
+      { value: "converted", label: "Converted" },
+      { value: "closed", label: "Closed" },
+    ],
+  },
+  {
+    key: "source",
+    header: "Source",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "website", label: "Website" },
+      { value: "whatsapp", label: "WhatsApp" },
+      { value: "phone", label: "Phone" },
+    ],
+  },
+  {
+    key: "created_at",
+    header: "Received Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -267,6 +310,9 @@ export default function InquiriesPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by name, phone, email..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       detailHref={(inquiry) => `/inquiries/${inquiry.id}`}
       emptyTitle="No inquiries yet"
       emptyDescription="Inquiries from your public PG websites will appear here"

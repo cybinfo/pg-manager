@@ -28,6 +28,7 @@ import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PEOPLE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { Avatar } from "@/components/ui/avatar"
 import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
@@ -222,6 +223,51 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "name",
+    header: "Name",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "neq", "starts", "ends"],
+  },
+  {
+    key: "phone",
+    header: "Phone",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "email",
+    header: "Email",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "is_verified",
+    header: "Verified",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+  },
+  {
+    key: "is_blocked",
+    header: "Blocked",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -340,6 +386,9 @@ export default function PeoplePage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by name, phone, email, Aadhaar..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       // Actions
       createHref="/people/new"
       createLabel="Add Person"

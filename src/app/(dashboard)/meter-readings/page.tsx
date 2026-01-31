@@ -19,6 +19,7 @@ import { Column } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { METER_READING_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { formatDate } from "@/lib/format"
 
@@ -182,6 +183,31 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "reading_value",
+    header: "Reading Value",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "units_consumed",
+    header: "Units Consumed",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "reading_date",
+    header: "Reading Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -243,6 +269,9 @@ export default function MeterReadingsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by property or room..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/meter-readings/new"
       createLabel="Record Reading"
       createPermission="meter_readings.create"

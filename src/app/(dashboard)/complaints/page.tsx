@@ -13,6 +13,7 @@ import { formatTimeAgo } from "@/lib/format"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { COMPLAINT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { COMPLAINT_STATUS, COMPLAINT_PRIORITY, COMPLAINT_CATEGORIES, getStatusInfo as getComplaintStatusInfo } from "@/lib/status-config"
 
@@ -171,6 +172,57 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "title",
+    header: "Title",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "status",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in", "not_in"],
+    filterOptions: [
+      { value: "open", label: "Open" },
+      { value: "acknowledged", label: "Acknowledged" },
+      { value: "in_progress", label: "In Progress" },
+      { value: "resolved", label: "Resolved" },
+      { value: "closed", label: "Closed" },
+    ],
+  },
+  {
+    key: "priority",
+    header: "Priority",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in", "not_in"],
+    filterOptions: [
+      { value: "urgent", label: "Urgent" },
+      { value: "high", label: "High" },
+      { value: "medium", label: "Medium" },
+      { value: "low", label: "Low" },
+    ],
+  },
+  {
+    key: "category",
+    header: "Category",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label })),
+  },
+  {
+    key: "created_at",
+    header: "Created Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -244,6 +296,9 @@ export default function ComplaintsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by title, tenant, or property..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/complaints/new"
       createLabel="New Complaint"
       createPermission="complaints.create"

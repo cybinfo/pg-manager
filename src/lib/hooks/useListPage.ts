@@ -18,6 +18,9 @@ import { createClient } from "@/lib/supabase/client"
 import { transformJoin, transformArrayJoins } from "@/lib/supabase/transforms"
 import { toast } from "sonner"
 import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
+import { applyAdvancedFilters } from "@/lib/filters/apply-advanced-filters"
+import type { FilterGroup } from "@/types/table-features.types"
+import { hasActiveAdvancedFilters } from "@/types/table-features.types"
 
 // ============================================
 // Types
@@ -119,6 +122,7 @@ export interface SortConfig {
 export interface TableViewConfig {
   sort?: SortConfig[]  // Array for multi-column sorting
   filters?: Record<string, string>
+  advancedFilters?: import("@/types/table-features.types").FilterGroup // Advanced filters
   groupBy?: string[]
   pageSize?: number
   hiddenColumns?: string[]
@@ -151,6 +155,11 @@ export interface UseListPageReturn<T> {
   clearFilters: () => void
   filterOptions: Record<string, { value: string; label: string }[]>
 
+  // Advanced Filters
+  advancedFilters: import("@/types/table-features.types").FilterGroup
+  setAdvancedFilters: (group: import("@/types/table-features.types").FilterGroup) => void
+  clearAdvancedFilters: () => void
+
   // Grouping
   selectedGroups: string[]
   setSelectedGroups: (groups: string[]) => void
@@ -175,6 +184,12 @@ export interface UseListPageReturn<T> {
   setPageSize: (size: number) => void
   nextPage: () => void
   prevPage: () => void
+
+  // Column Visibility
+  hiddenColumns: string[]
+  setHiddenColumns: (columns: string[]) => void
+  toggleColumn: (key: string) => void
+  resetColumnVisibility: () => void
 
   // View config (for saved views)
   getViewConfig: () => TableViewConfig
@@ -208,6 +223,8 @@ export function useListPage<T extends object>(
   const computedInitialFilters = initialViewConfig?.filters || initialFilters
   const computedInitialGroups = initialViewConfig?.groupBy || initialGroups
   const computedInitialSort = initialViewConfig?.sort || []
+  const computedInitialHiddenColumns = initialViewConfig?.hiddenColumns || []
+  const computedInitialAdvancedFilters = initialViewConfig?.advancedFilters || { filters: [], combineMode: "and" as const }
 
   // State
   const [data, setData] = useState<T[]>([])
@@ -218,6 +235,12 @@ export function useListPage<T extends object>(
   const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({})
   const [searchQuery, setSearchQueryState] = useState("")
   const [sortConfig, setSortConfig] = useState<SortConfig[]>(computedInitialSort)
+
+  // Advanced filters state
+  const [advancedFilters, setAdvancedFiltersState] = useState<import("@/types/table-features.types").FilterGroup>(computedInitialAdvancedFilters)
+
+  // Column visibility state
+  const [hiddenColumns, setHiddenColumnsState] = useState<string[]>(computedInitialHiddenColumns)
 
   // Debounce timer for search
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -306,6 +329,12 @@ export function useListPage<T extends object>(
     setFilterOptions(optionsMap)
   }, []) // No dependencies - uses ref
 
+  // Ref for advanced filters
+  const advancedFiltersRef = useRef(advancedFilters)
+  useEffect(() => {
+    advancedFiltersRef.current = advancedFilters
+  }, [advancedFilters])
+
   // Fetch main data - uses ref to avoid dependency issues
   // Now applies server-side filters and sorting for proper pagination
   const fetchData = useCallback(async (
@@ -313,7 +342,8 @@ export function useListPage<T extends object>(
     fetchPageSize?: number,
     fetchFilters?: Record<string, string>,
     fetchSearchQuery?: string,
-    fetchSort?: SortConfig[]
+    fetchSort?: SortConfig[],
+    fetchAdvancedFilters?: FilterGroup
   ) => {
     if (!enabled) return
 
@@ -324,6 +354,7 @@ export function useListPage<T extends object>(
     const currentFilters = fetchFilters ?? filters
     const currentSearchQuery = fetchSearchQuery ?? searchQuery
     const currentSort = fetchSort ?? sortConfigRef.current
+    const currentAdvancedFilters = fetchAdvancedFilters ?? advancedFiltersRef.current
     setLoading(true)
     setError(null)
 
@@ -432,6 +463,11 @@ export function useListPage<T extends object>(
         if (searchConditions) {
           query = query.or(searchConditions)
         }
+      }
+
+      // Apply advanced filters (multiple operators, AND/OR logic)
+      if (hasActiveAdvancedFilters(currentAdvancedFilters)) {
+        query = applyAdvancedFilters(query, currentAdvancedFilters)
       }
 
       // Apply server-side pagination
@@ -769,7 +805,7 @@ export function useListPage<T extends object>(
     setFiltersState(newFilters)
     setPageState(1)
     // Refetch with new filters
-    fetchData(1, pageSize, newFilters, searchQuery)
+    fetchData(1, pageSize, newFilters, searchQuery, undefined, advancedFiltersRef.current)
     fetchServerCounts(newFilters, searchQuery)
     fetchServerSums(newFilters, searchQuery)
   }, [filters, pageSize, searchQuery, fetchData, fetchServerCounts, fetchServerSums])
@@ -778,7 +814,7 @@ export function useListPage<T extends object>(
     setFiltersState(newFilters)
     setPageState(1)
     // Refetch with new filters
-    fetchData(1, pageSize, newFilters, searchQuery)
+    fetchData(1, pageSize, newFilters, searchQuery, undefined, advancedFiltersRef.current)
     fetchServerCounts(newFilters, searchQuery)
     fetchServerSums(newFilters, searchQuery)
   }, [pageSize, searchQuery, fetchData, fetchServerCounts, fetchServerSums])
@@ -788,7 +824,7 @@ export function useListPage<T extends object>(
     setFiltersState(defaultFilters)
     setPageState(1)
     // Refetch with cleared filters
-    fetchData(1, pageSize, defaultFilters, searchQuery)
+    fetchData(1, pageSize, defaultFilters, searchQuery, undefined, advancedFiltersRef.current)
     fetchServerCounts(defaultFilters, searchQuery)
     fetchServerSums(defaultFilters, searchQuery)
   }, [pageSize, searchQuery, fetchData, fetchServerCounts, fetchServerSums])
@@ -805,7 +841,7 @@ export function useListPage<T extends object>(
     // Debounce the search to avoid too many requests
     searchTimerRef.current = setTimeout(() => {
       setPageState(1)
-      fetchData(1, pageSize, filters, query)
+      fetchData(1, pageSize, filters, query, undefined, advancedFiltersRef.current)
       fetchServerCounts(filters, query)
       fetchServerSums(filters, query)
     }, SEARCH_DEBOUNCE_MS)
@@ -818,7 +854,7 @@ export function useListPage<T extends object>(
     sortConfigRef.current = configs // Update ref immediately
     setPageState(1) // Reset to page 1 when sort changes
     // Refetch data with new sort
-    fetchData(1, pageSize, filters, searchQuery, configs)
+    fetchData(1, pageSize, filters, searchQuery, configs, advancedFiltersRef.current)
   }, [fetchData, pageSize, filters, searchQuery])
 
   const clearSort = useCallback(() => {
@@ -832,19 +868,19 @@ export function useListPage<T extends object>(
     selectedGroupsRef.current = groups // Update ref immediately
     setPageState(1)
     // Reset to page 1 when grouping changes
-    fetchData(1, pageSize, filters, searchQuery)
+    fetchData(1, pageSize, filters, searchQuery, undefined, advancedFiltersRef.current)
   }, [fetchData, pageSize, filters, searchQuery])
 
   // Pagination setters - pass current filters and search
   const setPage = useCallback((newPage: number) => {
     setPageState(newPage)
-    fetchData(newPage, pageSize, filters, searchQuery)
+    fetchData(newPage, pageSize, filters, searchQuery, undefined, advancedFiltersRef.current)
   }, [fetchData, pageSize, filters, searchQuery])
 
   const setPageSize = useCallback((newSize: number) => {
     setPageSizeState(newSize)
     setPageState(1) // Reset to page 1 when page size changes
-    fetchData(1, newSize, filters, searchQuery)
+    fetchData(1, newSize, filters, searchQuery, undefined, advancedFiltersRef.current)
   }, [fetchData, filters, searchQuery])
 
   const nextPage = useCallback(() => {
@@ -959,6 +995,11 @@ export function useListPage<T extends object>(
       viewConfig.filters = activeFilters
     }
 
+    // Include advanced filters if any are active
+    if (advancedFilters.filters.length > 0) {
+      viewConfig.advancedFilters = advancedFilters
+    }
+
     if (selectedGroups.length > 0) {
       viewConfig.groupBy = selectedGroups
     }
@@ -967,26 +1008,36 @@ export function useListPage<T extends object>(
       viewConfig.pageSize = pageSize
     }
 
+    // Include hidden columns
+    if (hiddenColumns.length > 0) {
+      viewConfig.hiddenColumns = hiddenColumns
+    }
+
     return viewConfig
-  }, [sortConfig, filters, selectedGroups, pageSize, config.defaultPageSize])
+  }, [sortConfig, filters, advancedFilters, selectedGroups, pageSize, config.defaultPageSize, hiddenColumns])
 
   // Apply a view configuration (or reset to default if null)
   const applyViewConfig = useCallback((viewConfig: TableViewConfig | null) => {
     let newFilters: Record<string, string>
     let newGroups: string[]
     let newPageSize: number
+    let newAdvancedFilters: FilterGroup
 
     if (viewConfig === null) {
       // Reset to defaults
       setSortConfig([])
       newFilters = config.defaultFilters || {}
       setFiltersState(newFilters)
+      newAdvancedFilters = { filters: [], combineMode: "and" }
+      setAdvancedFiltersState(newAdvancedFilters)
+      advancedFiltersRef.current = newAdvancedFilters
       newGroups = []
       setSelectedGroups(newGroups)
       selectedGroupsRef.current = newGroups
       newPageSize = config.defaultPageSize || 25
       setPageSizeState(newPageSize)
       setPageState(1)
+      setHiddenColumnsState([])
     } else {
       // Apply view config
       if (viewConfig.sort && viewConfig.sort.length > 0) {
@@ -1003,6 +1054,17 @@ export function useListPage<T extends object>(
         setFiltersState(newFilters)
       }
 
+      // Apply advanced filters
+      if (viewConfig.advancedFilters) {
+        newAdvancedFilters = viewConfig.advancedFilters
+        setAdvancedFiltersState(newAdvancedFilters)
+        advancedFiltersRef.current = newAdvancedFilters
+      } else {
+        newAdvancedFilters = { filters: [], combineMode: "and" }
+        setAdvancedFiltersState(newAdvancedFilters)
+        advancedFiltersRef.current = newAdvancedFilters
+      }
+
       if (viewConfig.groupBy) {
         newGroups = viewConfig.groupBy
         setSelectedGroups(newGroups)
@@ -1016,12 +1078,19 @@ export function useListPage<T extends object>(
       newPageSize = viewConfig.pageSize || config.defaultPageSize || 25
       setPageSizeState(newPageSize)
 
+      // Apply hidden columns
+      if (viewConfig.hiddenColumns) {
+        setHiddenColumnsState(viewConfig.hiddenColumns)
+      } else {
+        setHiddenColumnsState([])
+      }
+
       setPageState(1) // Always reset to page 1 when applying a view
     }
 
     // Trigger refetch with new values using refs (to avoid dependency loop)
     if (fetchDataRef.current) {
-      fetchDataRef.current(1, newPageSize, newFilters, searchQuery)
+      fetchDataRef.current(1, newPageSize, newFilters, searchQuery, undefined, newAdvancedFilters)
     }
     if (fetchServerCountsRef.current) {
       fetchServerCountsRef.current(newFilters, searchQuery)
@@ -1031,17 +1100,56 @@ export function useListPage<T extends object>(
     }
   }, [config.defaultFilters, config.defaultPageSize, searchQuery])
 
+  // Advanced filters methods
+  const setAdvancedFilters = useCallback((group: FilterGroup) => {
+    setAdvancedFiltersState(group)
+    advancedFiltersRef.current = group // Update ref immediately
+    setPageState(1)
+    // Refetch with the new advanced filters
+    fetchData(1, pageSize, filters, searchQuery, undefined, group)
+  }, [pageSize, filters, searchQuery, fetchData])
+
+  const clearAdvancedFilters = useCallback(() => {
+    const emptyGroup: FilterGroup = { filters: [], combineMode: "and" }
+    setAdvancedFiltersState(emptyGroup)
+    advancedFiltersRef.current = emptyGroup // Update ref immediately
+    setPageState(1)
+    fetchData(1, pageSize, filters, searchQuery, undefined, emptyGroup)
+  }, [pageSize, filters, searchQuery, fetchData])
+
+  // Column visibility methods
+  const setHiddenColumns = useCallback((columns: string[]) => {
+    setHiddenColumnsState(columns)
+  }, [])
+
+  const toggleColumn = useCallback((key: string) => {
+    setHiddenColumnsState(prev => {
+      if (prev.includes(key)) {
+        return prev.filter(k => k !== key)
+      }
+      return [...prev, key]
+    })
+  }, [])
+
+  const resetColumnVisibility = useCallback(() => {
+    setHiddenColumnsState([])
+  }, [])
+
   return {
     data,
     filteredData,
     loading,
     error,
-    refetch: () => fetchData(page, pageSize, filters, searchQuery),
+    refetch: () => fetchData(page, pageSize, filters, searchQuery, undefined, advancedFiltersRef.current),
     filters,
     setFilter,
     setFilters,
     clearFilters,
     filterOptions,
+    // Advanced filters
+    advancedFilters,
+    setAdvancedFilters,
+    clearAdvancedFilters,
     selectedGroups,
     setSelectedGroups: handleSetSelectedGroups,
     groupConfig,
@@ -1059,6 +1167,11 @@ export function useListPage<T extends object>(
     setPageSize,
     nextPage,
     prevPage,
+    // Column visibility
+    hiddenColumns,
+    setHiddenColumns,
+    toggleColumn,
+    resetColumnVisibility,
     // View config (for saved views)
     getViewConfig,
     applyViewConfig,

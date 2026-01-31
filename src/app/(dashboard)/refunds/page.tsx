@@ -21,6 +21,7 @@ import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { REFUND_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -218,6 +219,62 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "amount",
+    header: "Amount",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "status",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in", "not_in"],
+    filterOptions: [
+      { value: "pending", label: "Pending" },
+      { value: "processing", label: "Processing" },
+      { value: "completed", label: "Completed" },
+      { value: "failed", label: "Failed" },
+      { value: "cancelled", label: "Cancelled" },
+    ],
+  },
+  {
+    key: "refund_type",
+    header: "Type",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "deposit_refund", label: "Deposit Refund" },
+      { value: "overpayment", label: "Overpayment" },
+      { value: "adjustment", label: "Adjustment" },
+      { value: "other", label: "Other" },
+    ],
+  },
+  {
+    key: "payment_mode",
+    header: "Payment Mode",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "cash", label: "Cash" },
+      { value: "upi", label: "UPI" },
+      { value: "bank_transfer", label: "Bank Transfer" },
+      { value: "cheque", label: "Cheque" },
+    ],
+  },
+  {
+    key: "refund_date",
+    header: "Refund Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -314,6 +371,9 @@ export default function RefundsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by tenant, property, or reference..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/refunds/new"
       createLabel="New Refund"
       createPermission="refunds.create"

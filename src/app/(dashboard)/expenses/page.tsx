@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { EXPENSE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { toast } from "sonner"
@@ -170,6 +171,44 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "amount",
+    header: "Amount",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "payment_method",
+    header: "Payment Method",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "cash", label: "Cash" },
+      { value: "upi", label: "UPI" },
+      { value: "bank_transfer", label: "Bank Transfer" },
+      { value: "card", label: "Card" },
+      { value: "cheque", label: "Cheque" },
+    ],
+  },
+  {
+    key: "expense_date",
+    header: "Expense Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "vendor_name",
+    header: "Vendor",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -299,6 +338,9 @@ export default function ExpensesPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search vendor, description, reference..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/expenses/new"
       createLabel="Add Expense"
       createPermission="expenses.create"

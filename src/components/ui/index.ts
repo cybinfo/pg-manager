@@ -128,3 +128,24 @@ export { RecordMetadata, RecordMetadataInline, RecordMetadataContent } from "./r
 export { ActivityHistory, ActivityHistoryCompact, ActivityHistoryContent } from "./activity-history"
 export { DetailPageAudit, AUDIT_ENTITY_TYPES } from "./detail-page-audit"
 export type { AuditEntityType } from "./detail-page-audit"
+
+// Table Advanced Features
+export {
+  ColumnManager,
+  ColumnManagerCompact,
+  useColumnVisibility,
+} from "./column-manager"
+export type { ColumnVisibilityConfig, ColumnManagerProps } from "./column-manager"
+
+export {
+  AdvancedFilterBuilder,
+  AdvancedFilterBuilderInline,
+} from "./advanced-filter-builder"
+export type { FilterableColumn, AdvancedFilterBuilderProps } from "./advanced-filter-builder"
+
+export {
+  TableToolbar,
+  TableToolbarCompact,
+  ActiveFiltersSummary,
+} from "./table-toolbar"
+export type { TableToolbarProps, GroupByOption } from "./table-toolbar"

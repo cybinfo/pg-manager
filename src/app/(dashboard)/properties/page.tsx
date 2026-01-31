@@ -12,6 +12,7 @@ import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PROPERTY_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 
 // ============================================
 // Types
@@ -136,6 +137,35 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "name",
+    header: "Property Name",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "neq", "starts", "ends"],
+  },
+  {
+    key: "city",
+    header: "City",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "neq", "starts"],
+  },
+  {
+    key: "is_active",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq"],
+    filterOptions: [
+      { value: "true", label: "Active" },
+      { value: "false", label: "Inactive" },
+    ],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -184,6 +214,9 @@ export default function PropertiesPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by property name, city..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/properties/new"
       createLabel="Add Property"
       createPermission="properties.create"

@@ -12,6 +12,7 @@ import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { SERVICE_PROVIDER_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 
 // ============================================
 // Types
@@ -176,6 +177,51 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "name",
+    header: "Provider Name",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "is_active",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Active" },
+      { value: "false", label: "Inactive" },
+    ],
+  },
+  {
+    key: "tds_applicable",
+    header: "TDS Applicable",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+  },
+  {
+    key: "rating",
+    header: "Rating",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte"],
+  },
+  {
+    key: "total_jobs",
+    header: "Total Jobs",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -234,6 +280,9 @@ export default function ServiceProvidersPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search provider name, phone..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/expenses/services/providers/new"
       createLabel="Add Provider"
       createPermission="expenses.create"

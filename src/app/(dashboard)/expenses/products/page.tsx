@@ -12,6 +12,7 @@ import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PRODUCT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency } from "@/lib/format"
 
 // ============================================
@@ -154,6 +155,41 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "name",
+    header: "Name",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "is_active",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Active" },
+      { value: "false", label: "Inactive" },
+    ],
+  },
+  {
+    key: "default_rate",
+    header: "Default Rate",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "default_unit",
+    header: "Unit",
+    filterType: "text",
+    filterOperators: ["contains", "eq"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -222,6 +258,9 @@ export default function ProductsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search product name, Hindi name..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/expenses/products/new"
       createLabel="Add Product"
       createPermission="expenses.create"

@@ -18,6 +18,7 @@ import { Avatar, getAvatarUrl } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { TENANT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
 
@@ -48,12 +49,23 @@ interface Tenant {
 // Column Definitions
 // ============================================
 
-const columns: Column<Tenant>[] = [
+// Extended column type with metadata for advanced features
+interface ExtendedColumn<T> extends Column<T> {
+  canHide?: boolean
+  defaultVisible?: boolean
+  groupable?: boolean
+  groupKey?: string
+  groupLabel?: string
+}
+
+const columns: ExtendedColumn<Tenant>[] = [
   {
     key: "name",
     header: "Tenant",
     width: "primary",
     sortable: true,
+    canHide: false, // Always visible - primary identifier
+    defaultVisible: true,
     render: (tenant) => {
       // Use person.name (live data) with fallback to tenant.name (denormalized)
       const displayName = tenant.person?.name || tenant.name
@@ -80,6 +92,11 @@ const columns: Column<Tenant>[] = [
     width: "secondary",
     sortable: true,
     sortKey: "property.name",
+    canHide: true,
+    defaultVisible: true,
+    groupable: true,
+    groupKey: "property.name",
+    groupLabel: "Property",
     render: (tenant) => (
       <div className="text-sm min-w-0">
         <div className="truncate">{tenant.property?.name || "—"}</div>
@@ -95,6 +112,8 @@ const columns: Column<Tenant>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (tenant) => (
       <span className="font-medium tabular-nums">{formatCurrency(tenant.monthly_rent)}</span>
     ),
@@ -106,6 +125,8 @@ const columns: Column<Tenant>[] = [
     hideOnMobile: true,
     sortable: true,
     sortType: "date",
+    canHide: true,
+    defaultVisible: true,
     render: (tenant) => formatDate(tenant.check_in_date),
   },
   {
@@ -113,6 +134,11 @@ const columns: Column<Tenant>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
+    groupable: true,
+    groupKey: "status",
+    groupLabel: "Status",
     render: (tenant) => {
       const info = getTenantStatusInfo("tenant", tenant.status)
       return <StatusDot status={info.status} label={info.label} />
@@ -160,6 +186,42 @@ const groupByOptions: GroupByOption[] = [
   { value: "status", label: "Status" },
   { value: "checkin_month", label: "Check-in Month" },
   { value: "checkin_year", label: "Check-in Year" },
+]
+
+// ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "name",
+    header: "Tenant Name",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "neq", "starts", "ends"],
+  },
+  {
+    key: "status",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in", "not_in"],
+    filterOptions: [
+      { value: "active", label: "Active" },
+      { value: "notice_period", label: "Notice Period" },
+      { value: "checked_out", label: "Moved Out" },
+    ],
+  },
+  {
+    key: "monthly_rent",
+    header: "Monthly Rent",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "check_in_date",
+    header: "Check-in Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
 ]
 
 // ============================================
@@ -251,6 +313,10 @@ export default function TenantsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by name, phone, property..."
+      // Advanced Table Features
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       // Actions
       createHref="/tenants/new"
       createLabel="Add Tenant"

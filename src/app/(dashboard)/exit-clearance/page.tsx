@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { EXIT_CLEARANCE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -208,6 +209,56 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "settlement_status",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "initiated", label: "Initiated" },
+      { value: "pending_payment", label: "Pending Payment" },
+      { value: "cleared", label: "Cleared" },
+    ],
+  },
+  {
+    key: "final_amount",
+    header: "Final Amount",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "expected_exit_date",
+    header: "Exit Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "room_inspection_done",
+    header: "Room Inspection",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Done" },
+      { value: "false", label: "Pending" },
+    ],
+  },
+  {
+    key: "key_returned",
+    header: "Key Returned",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -352,6 +403,9 @@ export default function ExitClearancePage() {
         metrics={metrics}
         columns={columns}
         searchPlaceholder="Search by tenant or property..."
+        enableColumnManager={true}
+        enableAdvancedFilters={true}
+        advancedFilterColumns={advancedFilterColumns}
         createHref="/exit-clearance/new"
         createLabel="Initiate Checkout"
         createPermission="exit_clearance.initiate"

@@ -12,6 +12,7 @@ import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { SERVICE_PAYMENT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 
 // ============================================
@@ -176,6 +177,47 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "description",
+    header: "Description",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "net_amount",
+    header: "Net Amount",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "service_date",
+    header: "Service Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "tds_applicable",
+    header: "TDS Applicable",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+  },
+  {
+    key: "warranty_months",
+    header: "Warranty (Months)",
+    filterType: "number",
+    filterOperators: ["eq", "gt", "gte", "lt", "lte"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -236,6 +278,9 @@ export default function ServicePaymentsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search service, provider..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/expenses/services/new"
       createLabel="Add Service"
       createPermission="expenses.create"

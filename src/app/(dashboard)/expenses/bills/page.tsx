@@ -12,6 +12,7 @@ import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { BILL_PAYMENT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 
 // ============================================
@@ -189,6 +190,49 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "vendor_name",
+    header: "Vendor",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "bill_amount",
+    header: "Bill Amount",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "status",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "pending", label: "Pending" },
+      { value: "partial", label: "Partial" },
+      { value: "paid", label: "Paid" },
+      { value: "overdue", label: "Overdue" },
+    ],
+  },
+  {
+    key: "due_date",
+    header: "Due Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "payment_date",
+    header: "Payment Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between", "is_null", "is_not_null"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -253,6 +297,9 @@ export default function BillPaymentsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search vendor, bill number..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/expenses/bills/new"
       createLabel="Add Bill"
       createPermission="expenses.create"

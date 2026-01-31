@@ -18,6 +18,7 @@ import { Avatar } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { VISITOR_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatDate } from "@/lib/format"
 import {
@@ -276,6 +277,53 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "visitor_name",
+    header: "Visitor Name",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "neq", "starts"],
+  },
+  {
+    key: "visitor_type",
+    header: "Visitor Type",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in", "not_in"],
+    filterOptions: [
+      { value: "tenant_visitor", label: "Tenant Visitor" },
+      { value: "enquiry", label: "Enquiry" },
+      { value: "service_provider", label: "Service Provider" },
+      { value: "general", label: "General" },
+    ],
+  },
+  {
+    key: "status",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq"],
+    filterOptions: [
+      { value: "checked_in", label: "Inside" },
+      { value: "checked_out", label: "Left" },
+    ],
+  },
+  {
+    key: "check_in_date",
+    header: "Check In Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "purpose",
+    header: "Purpose",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -336,6 +384,9 @@ export default function VisitorsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by visitor name, phone, company..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/visitors/new"
       createLabel="Check In Visitor"
       createPermission="visitors.create"

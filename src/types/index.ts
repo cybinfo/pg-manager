@@ -55,3 +55,6 @@ export type { RoomType } from "./settings.types"
 // Expense types (includes ExpenseType from expenses.types.ts)
 export * from "./expenses.types"
 export * from "./expense-enhanced.types"
+
+// Table Features types
+export * from "./table-features.types"

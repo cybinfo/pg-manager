@@ -36,6 +36,8 @@ import { FeatureFlagKey } from "@/lib/features"
 import { PageLoader } from "@/components/ui/page-loader"
 import { Pagination } from "@/components/ui/pagination"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ColumnManager, type ColumnVisibilityConfig } from "@/components/ui/column-manager"
+import { AdvancedFilterBuilder, type FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import {
   useListPage,
   ListPageConfig,
@@ -46,6 +48,8 @@ import {
 } from "@/lib/hooks/useListPage"
 import { useTableViews } from "@/lib/hooks/useTableViews"
 import { SavedViewSelector } from "@/components/ui/saved-view-selector"
+import type { FilterGroup } from "@/types/table-features.types"
+import { createEmptyFilterGroup, hasActiveAdvancedFilters } from "@/types/table-features.types"
 
 // ============================================
 // Types
@@ -73,6 +77,10 @@ export interface ListPageTemplateProps {
   filters?: FilterConfig[]
   filterConfigs?: HookFilterConfig[]
 
+  // Advanced Filters
+  advancedFilterColumns?: FilterableColumn[]
+  enableAdvancedFilters?: boolean // Default: false
+
   // Grouping
   groupByOptions?: GroupByOption[]
 
@@ -84,6 +92,9 @@ export interface ListPageTemplateProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: Column<any>[]
   searchPlaceholder?: string
+
+  // Column Management
+  enableColumnManager?: boolean // Default: false
 
   // Actions
   createHref?: string
@@ -129,6 +140,10 @@ export function ListPageTemplate({
   filters: filterConfigs = [],
   filterConfigs: hookFilterConfigs,
 
+  // Advanced Filters
+  advancedFilterColumns = [],
+  enableAdvancedFilters = false,
+
   // Grouping
   groupByOptions = [],
 
@@ -138,6 +153,9 @@ export function ListPageTemplate({
   // Table
   columns,
   searchPlaceholder,
+
+  // Column Management
+  enableColumnManager = false,
 
   // Actions
   createHref,
@@ -178,6 +196,10 @@ export function ListPageTemplate({
     setFilter,
     clearFilters,
     filterOptions,
+    // Advanced filters
+    advancedFilters,
+    setAdvancedFilters,
+    clearAdvancedFilters,
     selectedGroups,
     setSelectedGroups,
     metricsData,
@@ -188,6 +210,10 @@ export function ListPageTemplate({
     pagination,
     setPage,
     setPageSize,
+    // Column visibility
+    hiddenColumns,
+    toggleColumn,
+    resetColumnVisibility,
     getViewConfig,
     applyViewConfig,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -240,6 +266,33 @@ export function ListPageTemplate({
       options: f.options || filterOptions[f.id] || [],
     }))
   }, [filterConfigs, filterOptions])
+
+  // Build column visibility config from columns
+  const columnVisibilityConfig: ColumnVisibilityConfig[] = useMemo(() => {
+    return columns.map((col) => ({
+      key: col.key,
+      header: col.header,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      canHide: (col as any).canHide !== false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      defaultVisible: (col as any).defaultVisible !== false,
+    }))
+  }, [columns])
+
+  // Derive groupable columns from columns if no explicit groupByOptions provided
+  const finalGroupByOptions = useMemo(() => {
+    if (groupByOptions.length > 0) return groupByOptions
+    // Auto-derive from columns with groupable: true
+    return columns
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((col) => (col as any).groupable === true)
+      .map((col) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        value: (col as any).groupKey || col.key,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        label: (col as any).groupLabel || col.header,
+      }))
+  }, [groupByOptions, columns])
 
   // Mark initial load as complete once data has loaded
   useEffect(() => {
@@ -313,9 +366,9 @@ export function ListPageTemplate({
         <MetricsBar items={metricsItems} />
       )}
 
-      {/* Filters & Grouping */}
+      {/* Filters & Grouping & Tools */}
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Filters */}
+        {/* Simple Filters */}
         {mergedFilterConfigs.length > 0 && (
           <div className="flex-1">
             <ListPageFilters
@@ -327,88 +380,110 @@ export function ListPageTemplate({
           </div>
         )}
 
-        {/* Group By Multi-Select */}
-        {groupByOptions.length > 0 && (
-          <div className="relative">
-            <button
-              onClick={() => setGroupDropdownOpen(!groupDropdownOpen)}
-              className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-slate-50"
-            >
-              <Layers className="h-4 w-4 text-muted-foreground" />
-              <span>
-                {selectedGroups.length === 0
-                  ? "Group by..."
-                  : selectedGroups.length === 1
-                    ? groupByOptions.find((o) => o.value === selectedGroups[0])?.label
-                    : `${selectedGroups.length} levels`}
-              </span>
-              <ChevronDown
-                className={`h-4 w-4 text-muted-foreground transition-transform ${
-                  groupDropdownOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+        {/* Right-side tools: Advanced Filters, Grouping, Column Manager */}
+        <div className="flex items-center gap-2">
+          {/* Advanced Filter Builder */}
+          {enableAdvancedFilters && advancedFilterColumns.length > 0 && (
+            <AdvancedFilterBuilder
+              columns={advancedFilterColumns}
+              value={advancedFilters}
+              onChange={setAdvancedFilters}
+            />
+          )}
 
-            {groupDropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setGroupDropdownOpen(false)}
+          {/* Group By Multi-Select */}
+          {finalGroupByOptions.length > 0 && (
+            <div className="relative">
+              <button
+                onClick={() => setGroupDropdownOpen(!groupDropdownOpen)}
+                className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-slate-50"
+              >
+                <Layers className="h-4 w-4 text-muted-foreground" />
+                <span className="hidden sm:inline">
+                  {selectedGroups.length === 0
+                    ? "Group by..."
+                    : selectedGroups.length === 1
+                      ? finalGroupByOptions.find((o) => o.value === selectedGroups[0])?.label
+                      : `${selectedGroups.length} levels`}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${
+                    groupDropdownOpen ? "rotate-180" : ""
+                  }`}
                 />
-                <div className="absolute right-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-20 py-1">
-                  <div className="px-3 py-2 border-b">
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                      Group by (select order)
-                    </p>
-                  </div>
-                  {groupByOptions.map((opt) => {
-                    const isSelected = selectedGroups.includes(opt.value)
-                    const orderIndex = selectedGroups.indexOf(opt.value)
+              </button>
 
-                    return (
-                      <label
-                        key={opt.value}
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedGroups([...selectedGroups, opt.value])
-                            } else {
-                              setSelectedGroups(
-                                selectedGroups.filter((v) => v !== opt.value)
-                              )
-                            }
-                          }}
-                        />
-                        <span className="text-sm flex-1">{opt.label}</span>
-                        {isSelected && (
-                          <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
-                            {orderIndex + 1}
-                          </span>
-                        )}
-                      </label>
-                    )
-                  })}
-                  {selectedGroups.length > 0 && (
-                    <div className="border-t mt-1 pt-1 px-3 py-2">
-                      <button
-                        onClick={() => {
-                          setSelectedGroups([])
-                          setGroupDropdownOpen(false)
-                        }}
-                        className="text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        Clear grouping
-                      </button>
+              {groupDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setGroupDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-20 py-1">
+                    <div className="px-3 py-2 border-b">
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                        Group by (select order)
+                      </p>
                     </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
+                    {finalGroupByOptions.map((opt) => {
+                      const isSelected = selectedGroups.includes(opt.value)
+                      const orderIndex = selectedGroups.indexOf(opt.value)
+
+                      return (
+                        <label
+                          key={opt.value}
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedGroups([...selectedGroups, opt.value])
+                              } else {
+                                setSelectedGroups(
+                                  selectedGroups.filter((v) => v !== opt.value)
+                                )
+                              }
+                            }}
+                          />
+                          <span className="text-sm flex-1">{opt.label}</span>
+                          {isSelected && (
+                            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                              {orderIndex + 1}
+                            </span>
+                          )}
+                        </label>
+                      )
+                    })}
+                    {selectedGroups.length > 0 && (
+                      <div className="border-t mt-1 pt-1 px-3 py-2">
+                        <button
+                          onClick={() => {
+                            setSelectedGroups([])
+                            setGroupDropdownOpen(false)
+                          }}
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          Clear grouping
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Column Manager */}
+          {enableColumnManager && (
+            <ColumnManager
+              columns={columnVisibilityConfig}
+              hiddenColumns={hiddenColumns}
+              onToggleColumn={toggleColumn}
+              onResetColumns={resetColumnVisibility}
+            />
+          )}
+        </div>
       </div>
 
       {/* DataTable */}
@@ -426,6 +501,7 @@ export function ListPageTemplate({
         groupBy={groupConfig}
         defaultSort={sortConfig}
         onSortChange={handleSortChange}
+        hiddenColumns={hiddenColumns}
         emptyState={
           <div className="flex flex-col items-center py-8">
             {EmptyIcon ? (

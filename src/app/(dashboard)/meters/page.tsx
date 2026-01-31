@@ -21,6 +21,7 @@ import { Column } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { METER_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
@@ -186,6 +187,48 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "meter_number",
+    header: "Meter Number",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "meter_type",
+    header: "Type",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "electricity", label: "Electricity" },
+      { value: "water", label: "Water" },
+      { value: "gas", label: "Gas" },
+    ],
+  },
+  {
+    key: "status",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "active", label: "Active" },
+      { value: "faulty", label: "Faulty" },
+      { value: "replaced", label: "Replaced" },
+      { value: "retired", label: "Retired" },
+    ],
+  },
+  {
+    key: "initial_reading",
+    header: "Initial Reading",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -250,6 +293,9 @@ export default function MetersPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by meter number, property, make..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/meters/new"
       createLabel="Add Meter"
       createPermission="meters.create"

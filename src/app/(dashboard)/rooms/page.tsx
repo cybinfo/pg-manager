@@ -12,6 +12,7 @@ import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { ROOM_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency } from "@/lib/format"
 
@@ -179,6 +180,61 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "room_number",
+    header: "Room Number",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "room_type",
+    header: "Room Type",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in", "not_in"],
+    filterOptions: [
+      { value: "single", label: "Single" },
+      { value: "double", label: "Double" },
+      { value: "triple", label: "Triple" },
+      { value: "dormitory", label: "Dormitory" },
+    ],
+  },
+  {
+    key: "status",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in", "not_in"],
+    filterOptions: [
+      { value: "available", label: "Available" },
+      { value: "occupied", label: "Occupied" },
+      { value: "partially_occupied", label: "Partially Occupied" },
+      { value: "maintenance", label: "Maintenance" },
+    ],
+  },
+  {
+    key: "rent_amount",
+    header: "Rent Amount",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "total_beds",
+    header: "Total Beds",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte"],
+  },
+  {
+    key: "floor",
+    header: "Floor",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -249,6 +305,9 @@ export default function RoomsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by room number, property..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/rooms/new"
       createLabel="Add Room"
       createPermission="rooms.create"

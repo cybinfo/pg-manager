@@ -12,6 +12,7 @@ import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { VENDOR_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency } from "@/lib/format"
 
 // ============================================
@@ -174,6 +175,35 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "name",
+    header: "Name",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "is_active",
+    header: "Status",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Active" },
+      { value: "false", label: "Inactive" },
+    ],
+  },
+  {
+    key: "phone",
+    header: "Phone",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -232,6 +262,9 @@ export default function VendorsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search vendor name, contact, phone..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
       createHref="/expenses/vendors/new"
       createLabel="Add Vendor"
       createPermission="expenses.create"
