@@ -19,9 +19,10 @@ import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
+import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PageLoading } from "@/components/ui/loading"
 
-import type { Product, ProductCategory } from "@/types/expense-enhanced.types"
+import type { Product, ProductCategory, Vendor } from "@/types/expense-enhanced.types"
 
 // Common units for kitchen items
 const UNIT_OPTIONS = [
@@ -63,9 +64,11 @@ export default function NewDailySpendPage() {
   const [loadingData, setLoadingData] = useState(true)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<ProductCategory[]>([])
+  const [vendors, setVendors] = useState<Vendor[]>([])
 
   // Form state
   const [spendDate, setSpendDate] = useState(new Date().toISOString().split("T")[0])
+  const [vendorId, setVendorId] = useState("")
   const [vendorName, setVendorName] = useState("")
   const [paymentMode, setPaymentMode] = useState("cash")
   const [upiRefNumber, setUpiRefNumber] = useState("")
@@ -110,11 +113,43 @@ export default function NewDailySpendPage() {
 
       setCategories(categoriesData || [])
 
+      // Load vendors
+      const { data: vendorsData } = await supabase
+        .from("vendors")
+        .select("*")
+        .eq("workspace_id", workspaceId)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("name")
+
+      setVendors(vendorsData || [])
+
       setLoadingData(false)
     }
 
     loadData()
   }, [workspaceId])
+
+  // Handle vendor selection
+  const handleVendorSelect = (selectedVendorId: string) => {
+    setVendorId(selectedVendorId)
+    const vendor = vendors.find((v) => v.id === selectedVendorId)
+    setVendorName(vendor?.name || "")
+  }
+
+  // Prepare vendor options for combobox
+  const vendorOptions: ComboboxOption[] = vendors.map((v) => ({
+    value: v.id,
+    label: v.name,
+    description: v.phone || undefined,
+  }))
+
+  // Prepare product options for combobox
+  const productOptions: ComboboxOption[] = products.map((p) => ({
+    value: p.id,
+    label: p.name_hi ? `${p.name} (${p.name_hi})` : p.name,
+    description: p.category?.name || undefined,
+  }))
 
   // Handle product selection
   const handleProductSelect = (index: number, productId: string) => {
@@ -286,10 +321,14 @@ export default function NewDailySpendPage() {
                   </FormField>
 
                   <FormField label="Vendor/Shop Name">
-                    <Input
-                      value={vendorName}
-                      onChange={(e) => setVendorName(e.target.value)}
-                      placeholder="e.g., Local Grocery Store"
+                    <Combobox
+                      options={vendorOptions}
+                      value={vendorId}
+                      onValueChange={handleVendorSelect}
+                      placeholder="Select vendor..."
+                      searchPlaceholder="Search vendors..."
+                      emptyText="No vendors found. Add vendors in Expenses → Vendors."
+                      clearable
                     />
                   </FormField>
 
@@ -334,55 +373,20 @@ export default function NewDailySpendPage() {
                         key={item.id}
                         className="grid grid-cols-12 gap-2 items-end p-3 bg-muted/50 rounded-lg"
                       >
-                        {/* Product Select or Name */}
+                        {/* Product Select */}
                         <div className="col-span-12 md:col-span-4">
                           <label className="text-xs text-muted-foreground">
                             Item
                           </label>
-                          {products.length > 0 ? (
-                            <Select
-                              value={item.product_id}
-                              onChange={(e) =>
-                                handleProductSelect(index, e.target.value)
-                              }
-                              options={[
-                                { value: "", label: "Select or type below" },
-                                ...products.map((p) => ({
-                                  value: p.id,
-                                  label: p.name_hi
-                                    ? `${p.name} (${p.name_hi})`
-                                    : p.name,
-                                })),
-                              ]}
-                            />
-                          ) : (
-                            <Input
-                              value={item.product_name}
-                              onChange={(e) =>
-                                handleLineItemChange(
-                                  index,
-                                  "product_name",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Item name"
-                            />
-                          )}
-                          {/* Allow custom name if product selected doesn't match */}
-                          {products.length > 0 && !item.product_id && (
-                            <Input
-                              value={item.product_name}
-                              onChange={(e) =>
-                                handleLineItemChange(
-                                  index,
-                                  "product_name",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Or type custom name"
-                              className="mt-1"
-                            />
-                          )}
+                          <Combobox
+                            options={productOptions}
+                            value={item.product_id}
+                            onValueChange={(value) => handleProductSelect(index, value)}
+                            placeholder="Select item..."
+                            searchPlaceholder="Search items..."
+                            emptyText="No items found. Add products in Products Master."
+                            clearable
+                          />
                         </div>
 
                         {/* Quantity */}

@@ -642,9 +642,9 @@ export function DataTable<T extends object>({
   }
 
   const isClickable = Boolean(href || onRowClick)
-  // Filter by both hideOnMobile and hiddenColumns
+  // Filter by hiddenColumns only (hideOnMobile is handled separately in mobile rendering)
   const visibleColumns = React.useMemo(() =>
-    columns.filter(c => !c.hideOnMobile && !hiddenColumns.includes(c.key)),
+    columns.filter(c => !hiddenColumns.includes(c.key)),
     [columns, hiddenColumns]
   )
 

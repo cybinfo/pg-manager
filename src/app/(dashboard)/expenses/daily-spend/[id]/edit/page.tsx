@@ -17,10 +17,11 @@ import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
+import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 
-import type { Product, DailySpend } from "@/types/expense-enhanced.types"
+import type { Product, DailySpend, Vendor } from "@/types/expense-enhanced.types"
 
 // Common units for kitchen items
 const UNIT_OPTIONS = [
@@ -51,6 +52,7 @@ interface FormData {
   quantity: number
   unit: string
   rate: number
+  vendor_id: string
   vendor_name: string
   payment_mode: string
   upi_ref_number: string
@@ -69,6 +71,7 @@ export default function EditDailySpendPage({
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [products, setProducts] = useState<Product[]>([])
+  const [vendors, setVendors] = useState<Vendor[]>([])
   const [entry, setEntry] = useState<DailySpend | null>(null)
 
   const [formData, setFormData] = useState<FormData>({
@@ -78,6 +81,7 @@ export default function EditDailySpendPage({
     quantity: 1,
     unit: "Kg",
     rate: 0,
+    vendor_id: "",
     vendor_name: "",
     payment_mode: "cash",
     upi_ref_number: "",
@@ -101,6 +105,17 @@ export default function EditDailySpendPage({
         .order("name")
 
       setProducts(productsData || [])
+
+      // Load vendors
+      const { data: vendorsData } = await supabase
+        .from("vendors")
+        .select("*")
+        .eq("workspace_id", workspaceId)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("name")
+
+      setVendors(vendorsData || [])
 
       // Load entry
       const { data: entryData, error } = await supabase
@@ -126,6 +141,12 @@ export default function EditDailySpendPage({
       } as DailySpend
 
       setEntry(transformed)
+
+      // Try to match vendor by name
+      const matchedVendor = vendorsData?.find(
+        (v: Vendor) => v.name.toLowerCase() === transformed.vendor_name?.toLowerCase()
+      )
+
       setFormData({
         spend_date: transformed.spend_date,
         product_id: transformed.product_id || "",
@@ -133,6 +154,7 @@ export default function EditDailySpendPage({
         quantity: transformed.quantity,
         unit: transformed.unit,
         rate: transformed.rate,
+        vendor_id: matchedVendor?.id || "",
         vendor_name: transformed.vendor_name || "",
         payment_mode: transformed.payment_mode,
         upi_ref_number: transformed.upi_ref_number || "",
@@ -144,6 +166,29 @@ export default function EditDailySpendPage({
 
     loadData()
   }, [workspaceId, id, router])
+
+  // Prepare combobox options
+  const vendorOptions: ComboboxOption[] = vendors.map((v) => ({
+    value: v.id,
+    label: v.name,
+    description: v.phone || undefined,
+  }))
+
+  const productOptions: ComboboxOption[] = products.map((p) => ({
+    value: p.id,
+    label: p.name_hi ? `${p.name} (${p.name_hi})` : p.name,
+    description: p.category?.name || undefined,
+  }))
+
+  // Handle vendor selection
+  const handleVendorSelect = (vendorId: string) => {
+    const vendor = vendors.find((v) => v.id === vendorId)
+    setFormData((prev) => ({
+      ...prev,
+      vendor_id: vendorId,
+      vendor_name: vendor?.name || "",
+    }))
+  }
 
   // Handle product selection
   const handleProductSelect = (productId: string) => {
@@ -160,6 +205,7 @@ export default function EditDailySpendPage({
       setFormData((prev) => ({
         ...prev,
         product_id: "",
+        product_name: "",
       }))
     }
   }
@@ -283,45 +329,15 @@ export default function EditDailySpendPage({
 
                 {/* Product */}
                 <FormField label="Item" required>
-                  {products.length > 0 ? (
-                    <>
-                      <Select
-                        value={formData.product_id}
-                        onChange={(e) => handleProductSelect(e.target.value)}
-                        options={[
-                          { value: "", label: "Select product or type custom" },
-                          ...products.map((p) => ({
-                            value: p.id,
-                            label: p.name_hi ? `${p.name} (${p.name_hi})` : p.name,
-                          })),
-                        ]}
-                      />
-                      {!formData.product_id && (
-                        <Input
-                          value={formData.product_name}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              product_name: e.target.value,
-                            }))
-                          }
-                          placeholder="Or type custom item name"
-                          className="mt-2"
-                        />
-                      )}
-                    </>
-                  ) : (
-                    <Input
-                      value={formData.product_name}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          product_name: e.target.value,
-                        }))
-                      }
-                      placeholder="Item name"
-                    />
-                  )}
+                  <Combobox
+                    options={productOptions}
+                    value={formData.product_id}
+                    onValueChange={handleProductSelect}
+                    placeholder="Select item..."
+                    searchPlaceholder="Search items..."
+                    emptyText="No items found. Add products in Products Master."
+                    clearable
+                  />
                 </FormField>
 
                 <div className="grid grid-cols-3 gap-4">
@@ -379,15 +395,14 @@ export default function EditDailySpendPage({
 
                 {/* Vendor */}
                 <FormField label="Vendor/Shop Name">
-                  <Input
-                    value={formData.vendor_name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        vendor_name: e.target.value,
-                      }))
-                    }
-                    placeholder="e.g., Local Grocery Store"
+                  <Combobox
+                    options={vendorOptions}
+                    value={formData.vendor_id}
+                    onValueChange={handleVendorSelect}
+                    placeholder="Select vendor..."
+                    searchPlaceholder="Search vendors..."
+                    emptyText="No vendors found. Add vendors in Expenses → Vendors."
+                    clearable
                   />
                 </FormField>
 
