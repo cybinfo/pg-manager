@@ -846,7 +846,7 @@ BEGIN
       EXECUTE format('
         CREATE TRIGGER audit_trigger_%I
         AFTER INSERT OR UPDATE OR DELETE ON %I
-        FOR EACH ROW EXECUTE FUNCTION log_audit_event()
+        FOR EACH ROW EXECUTE FUNCTION audit_trigger_function()
       ', t, t);
     END IF;
   END LOOP;
