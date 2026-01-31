@@ -257,6 +257,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           .from("people")
           .insert({
             owner_id: context.actor_id,
+            created_by: context.actor_id,
             name: input.name,
             phone: input.phone || null,
             email: input.email || null,
@@ -326,6 +327,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           // These are now stored in People table only (accessed via person_id JOIN)
           status: "active",
           owner_id: context.actor_id,
+          created_by: context.actor_id,
           created_at: new Date().toISOString(),
           // Link to person record - this is the key for person-centric architecture
           person_id: personResult?.person_id as string || null,
@@ -610,6 +612,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
             status: "pending",
             line_items: lineItems,
             owner_id: context.actor_id,
+            created_by: context.actor_id,
             created_at: new Date().toISOString(),
           })
           .select()

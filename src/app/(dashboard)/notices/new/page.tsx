@@ -145,6 +145,7 @@ export default function NewNoticePage() {
 
       const { error } = await supabase.from("notices").insert({
         owner_id: user.id,
+        created_by: user.id,
         property_id: formData.property_id || null,
         type: formData.type,
         target_audience: formData.target_audience,

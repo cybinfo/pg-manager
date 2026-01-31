@@ -527,6 +527,7 @@ export default function NewVisitorPage() {
       // Person-centric: Use data from selectedPerson, not form data
       const visitorData: Record<string, unknown> = {
         owner_id: user.id,
+        created_by: user.id,
         property_id: formData.property_id,
         visitor_contact_id: visitorContactId || null,
         visitor_type: formData.visitor_type,

@@ -206,6 +206,7 @@ export default function NewPersonPage() {
       .from("people")
       .insert({
         owner_id: user.id,
+        created_by: user.id,
         name: formData.name,
         phone: formData.phone || null,
         email: formData.email || null,

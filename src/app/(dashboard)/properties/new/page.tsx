@@ -66,6 +66,7 @@ export default function NewPropertyPage() {
 
       const { error } = await supabase.from("properties").insert({
         owner_id: user.id,
+        created_by: user.id,
         name: formData.name,
         address: fullAddress || null,
         city: formData.city,

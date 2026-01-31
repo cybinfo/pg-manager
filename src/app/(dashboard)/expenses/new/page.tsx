@@ -146,6 +146,7 @@ export default function NewExpensePage() {
 
       const { error } = await supabase.from("expenses").insert({
         owner_id: user.id,
+        created_by: user.id,
         expense_type_id: formData.expense_type_id,
         property_id: formData.property_id || null,
         amount: Number(formData.amount),

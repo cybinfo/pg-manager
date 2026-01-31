@@ -14,11 +14,11 @@ interface UserInfo {
 
 interface RecordMetadataProps {
   record: {
-    created_at?: string
-    updated_at?: string
-    created_by?: string
-    deleted_at?: string
-    deleted_by?: string
+    created_at?: string | null
+    updated_at?: string | null
+    created_by?: string | null
+    deleted_at?: string | null
+    deleted_by?: string | null
   }
   className?: string
   showDeleted?: boolean

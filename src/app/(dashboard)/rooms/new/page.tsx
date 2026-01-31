@@ -198,6 +198,7 @@ export default function NewRoomPage() {
 
       const { error } = await supabase.from("rooms").insert({
         owner_id: user.id,
+        created_by: user.id,
         property_id: formData.property_id,
         room_number: formData.room_number,
         room_type: formData.room_type,

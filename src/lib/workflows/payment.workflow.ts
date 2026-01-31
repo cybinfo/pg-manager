@@ -176,6 +176,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
           is_advance: input.is_advance || false,
           status: "completed",
           owner_id: context.actor_id,
+          created_by: context.actor_id,
           created_at: new Date().toISOString(),
         }
 

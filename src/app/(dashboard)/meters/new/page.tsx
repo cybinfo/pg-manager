@@ -190,6 +190,7 @@ export default function NewMeterPage() {
       .from("meters")
       .insert({
         owner_id: user.id,
+        created_by: user.id,
         property_id: formData.property_id,
         meter_number: formData.meter_number.trim(),
         meter_type: formData.meter_type,

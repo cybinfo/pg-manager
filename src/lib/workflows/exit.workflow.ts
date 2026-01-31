@@ -285,6 +285,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
         // Map to actual table columns
         const clearanceData = {
           owner_id: tenant.owner_id,
+          created_by: context.actor_id,
           tenant_id: input.tenant_id,
           property_id: input.property_id,
           room_id: input.room_id,

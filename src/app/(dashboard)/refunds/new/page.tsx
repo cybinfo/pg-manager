@@ -155,6 +155,7 @@ export default function NewRefundPage() {
 
       const refundData = {
         owner_id: session.user.id,
+        created_by: session.user.id,
         tenant_id: formData.tenant_id,
         property_id: selectedTenant?.property_id || null,
         exit_clearance_id: exitClearanceId || null,
