@@ -1,7 +1,7 @@
 # ManageKar - AI Development Guide
 
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-01-23
+> **Last Updated**: 2026-01-31
 
 ---
 
@@ -12,7 +12,7 @@
 | **Production URL** | https://managekar.com |
 | **Stack** | Next.js 16 + TypeScript + Supabase + Tailwind + shadcn/ui |
 | **Database** | PostgreSQL with Row Level Security (RLS) |
-| **Migrations** | 53 total (001-053) |
+| **Migrations** | 58 total (001-058) |
 
 ```bash
 npm run dev          # Development server at localhost:3000
@@ -67,6 +67,7 @@ src/
 └── lib/
     ├── supabase/            # Clients + transforms
     ├── auth/                # Auth context + hooks
+    ├── audit/               # Audit utilities (withCreatedBy, softDelete)
     ├── features/            # Feature flags
     ├── services/            # Service layer (workflow engine, audit)
     ├── workflows/           # Business workflows
@@ -243,6 +244,85 @@ export default function EntityPage() {
 - Saved views support
 - Search with debounce (preserves input focus)
 - Server-side metric counts
+- Automatic soft-delete filtering (`deleted_at IS NULL`)
+
+### 3.7 Audit System (MANDATORY)
+
+All entities must track accountability using the centralized audit utilities.
+
+#### 3.7.1 Created By Tracking
+
+**ALWAYS** use `withCreatedBy()` when inserting records:
+
+```typescript
+import { withCreatedBy } from "@/lib/audit"
+
+// Insert with created_by tracking
+const { data, error } = await supabase
+  .from("tenants")
+  .insert(withCreatedBy(tenantData, user.id))
+```
+
+#### 3.7.2 Soft Delete (NEVER Hard Delete)
+
+**NEVER** use `.delete()` on auditable tables. Use `softDelete()` instead:
+
+```typescript
+import { softDelete, cascadeSoftDelete } from "@/lib/audit"
+
+// Single record soft delete
+const result = await softDelete("tenants", tenantId, user.id)
+
+// Cascade soft delete (parent + children)
+const result = await cascadeSoftDelete(propertyId, user.id, [
+  { table: "rooms", foreignKey: "property_id" },
+  { table: "meters", foreignKey: "property_id" },
+])
+```
+
+**Soft-deletable tables** (16 total):
+`tenants`, `bills`, `payments`, `expenses`, `refunds`, `complaints`, `notices`, `visitors`, `meter_readings`, `exit_clearance`, `properties`, `rooms`, `people`, `meters`, `staff_members`, `visitor_contacts`
+
+#### 3.7.3 Detail Page Audit Display
+
+**ALWAYS** add `DetailPageAudit` to detail pages:
+
+```typescript
+import { DetailPageAudit, AUDIT_ENTITY_TYPES } from "@/components/ui"
+
+// At the bottom of every detail page
+<DetailPageAudit
+  record={tenant}
+  entityType={AUDIT_ENTITY_TYPES.tenant}
+/>
+
+// Compact layout for smaller views
+<DetailPageAudit
+  record={payment}
+  entityType="payment"
+  layout="compact"
+/>
+```
+
+**Layout options:**
+- `"grid"` (default) - Side by side: metadata | activity
+- `"stack"` - Stacked: metadata above activity
+- `"compact"` - Metadata only, no activity history
+
+#### 3.7.4 Type Safety with AuditableEntity
+
+All entity types must extend `AuditableEntity`:
+
+```typescript
+import type { AuditableEntity } from "@/types/audit.types"
+
+export interface Tenant extends AuditableEntity {
+  id: string
+  name: string
+  // ... other fields
+  // Audit fields inherited: created_at, updated_at, created_by?, deleted_at?, deleted_by?
+}
+```
 
 ---
 
@@ -335,6 +415,9 @@ import { Avatar } from "@/components/ui/avatar"
 | `EmptyState` | `@/components/ui/empty-state` | No data placeholder |
 | `Currency` | `@/components/ui/currency` | INR formatting |
 | `Pagination` | `@/components/ui/pagination` | Page navigation |
+| `DetailPageAudit` | `@/components/ui` | Audit display for detail pages |
+| `RecordMetadata` | `@/components/ui` | Created/deleted info display |
+| `ActivityHistory` | `@/components/ui` | Entity activity timeline |
 
 ---
 
@@ -401,6 +484,8 @@ const id = crypto.randomUUID()
 | 043 | security_fixes.sql | Audit policy, CHECK constraints |
 | 052 | meter_management.sql | Meters table, meter_assignments, RLS |
 | 053 | cleanup_old_meter_readings.sql | Remove legacy readings, make meter_id required |
+| 057 | add_created_by.sql | created_by column on 14 tables, backfill from audit_events |
+| 058 | add_soft_delete.sql | deleted_at/deleted_by columns, partial indexes, helper functions |
 
 ### 5.5 CHECK Constraints (Migration 043)
 
@@ -663,10 +748,19 @@ describe('myFunction', () => {
 
 ### 11.1 Adding a New Dashboard Page
 
+**List Page:**
 1. Create `src/app/(dashboard)/[module]/page.tsx`
 2. Wrap with `<PermissionGuard permission="module.view">`
-3. Add to navigation in layout
-4. Use `PageHeader`, `MetricsBar`, `DataTable` patterns
+3. Add config to `src/lib/hooks/useListPage.ts`
+4. Use `ListPageTemplate` with centralized config
+5. Add to navigation in layout
+
+**Detail Page:**
+1. Create `src/app/(dashboard)/[module]/[id]/page.tsx`
+2. Wrap with `<PermissionGuard permission="module.view">`
+3. Use `useDetailPage` hook for data fetching
+4. Add `<DetailPageAudit record={entity} entityType="..." />` at bottom
+5. Use `PageHeader`, `InfoCard`, `DetailSection` patterns
 
 ### 11.2 Adding a New Database Table
 
@@ -675,6 +769,8 @@ describe('myFunction', () => {
 3. Use `is_platform_admin()` for admin bypass
 4. Create indexes for common queries
 5. Add to audit triggers if needed
+6. **Add audit columns**: `created_by`, `deleted_at`, `deleted_by` (see migrations 057-058)
+7. Update `SoftDeletableTable` type in `src/types/audit.types.ts`
 
 ### 11.3 Adding a New Permission
 
@@ -767,14 +863,80 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-## 15. Design Principles
+## 15. Development Philosophy
 
-1. **Standardized** - Consistent patterns everywhere
+> **Core Principle**: Build a **unified web application experience** through aggressive centralization and modularization. Every pattern should be implemented once and reused everywhere.
+
+### 15.1 Centralization First
+
+**Every cross-cutting concern must have a single source of truth:**
+
+| Concern | Centralized Location | Usage |
+|---------|---------------------|-------|
+| Types | `src/types/*.types.ts` | Import types, never inline |
+| Audit | `src/lib/audit/` | `withCreatedBy()`, `softDelete()` |
+| UI | `src/components/ui/index.ts` | Single import point |
+| Auth | `src/lib/auth/` | `useAuth()`, `hasPermission()` |
+| Supabase | `src/lib/supabase/` | Client, transforms, helpers |
+| Config | `src/lib/hooks/useListPage.ts` | All list page configs |
+| Design Tokens | `src/lib/design-tokens.ts` | Colors, spacing, typography |
+
+**Anti-patterns to avoid:**
+- ❌ Inline type definitions
+- ❌ Duplicated utility functions
+- ❌ Module-specific audit implementations
+- ❌ Scattered configuration files
+
+### 15.2 Modular Architecture
+
+**Components and utilities should be:**
+
+1. **Single Responsibility** - Each module does one thing well
+2. **Composable** - Small pieces that combine into larger features
+3. **Configurable** - Behavior driven by configuration, not code duplication
+4. **Self-Documenting** - Types and interfaces as documentation
+
+```typescript
+// GOOD: Centralized, configurable pattern
+export const TENANT_LIST_CONFIG: ListPageConfig = {
+  table: "tenants",
+  select: `*, property:properties(id, name)`,
+  // ... configuration drives behavior
+}
+
+// BAD: Duplicated logic in each page
+const tenants = await supabase.from("tenants").select(...)
+const bills = await supabase.from("bills").select(...)  // same pattern, duplicated
+```
+
+### 15.3 Unified Experience Principles
+
+1. **Consistency** - Same patterns across all 20 modules
+2. **Predictability** - Users learn once, apply everywhere
+3. **Maintainability** - Change in one place, reflected everywhere
+4. **Scalability** - Adding new modules follows established patterns
+
+### 15.4 Implementation Checklist
+
+When adding any feature, verify:
+
+- [ ] Types defined in centralized `src/types/`
+- [ ] Uses existing UI components from `@/components/ui`
+- [ ] Audit tracking via `withCreatedBy()` and `softDelete()`
+- [ ] Detail pages include `<DetailPageAudit />`
+- [ ] List pages use `ListPageTemplate` + config
+- [ ] Permissions defined in `src/lib/auth/types.ts`
+- [ ] No inline magic values (use `src/lib/constants.ts`)
+
+### 15.5 Design Principles Summary
+
+1. **Centralized** - Single source of truth for every concern
 2. **Modular** - Reusable, composable components
-3. **Secure** - RLS, validation, audit logging
-4. **Simplified** - Easy to understand and modify
-5. **Customer-Centric** - Built for Indian business needs
-6. **AI-Ready** - Predictive analytics and insights
+3. **Unified** - Consistent experience across all modules
+4. **Secure** - RLS, validation, audit logging baked in
+5. **Accountable** - Every action tracked (created_by, deleted_by)
+6. **Customer-Centric** - Built for Indian business needs
+7. **AI-Ready** - Predictive analytics and insights
 
 ---
 
@@ -786,4 +948,4 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-*Last Updated: 2026-01-23*
+*Last Updated: 2026-01-31*
