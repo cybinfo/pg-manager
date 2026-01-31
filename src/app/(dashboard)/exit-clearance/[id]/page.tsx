@@ -13,7 +13,9 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -262,322 +264,314 @@ export default function ExitClearanceDetailPage() {
         className="max-w-sm"
       />
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Tenant Info */}
-          <DetailSection
-            title="Tenant Information"
-            description="Tenant and location details"
-            icon={User}
-          >
-            <InfoRow
-              label="Tenant"
-              value={
-                clearance.tenant ? (
-                  <TenantLink id={clearance.tenant.id} name={clearance.tenant.name} />
-                ) : (
-                  "Unknown Tenant"
-                )
-              }
-            />
-            <InfoRow
-              label="Phone"
-              value={
-                clearance.tenant?.phone ? (
-                  <a href={`tel:${clearance.tenant.phone}`} className="text-primary hover:underline flex items-center gap-1">
-                    <Phone className="h-4 w-4" />
-                    {clearance.tenant.phone}
-                  </a>
-                ) : (
-                  "N/A"
-                )
-              }
-            />
-            <InfoRow
-              label="Property"
-              value={
-                clearance.property ? (
-                  <PropertyLink id={clearance.property.id} name={clearance.property.name} />
-                ) : (
-                  "N/A"
-                )
-              }
-            />
-            <InfoRow
-              label="Room"
-              value={
-                clearance.room ? (
-                  <RoomLink id={clearance.room.id} roomNumber={clearance.room.room_number} />
-                ) : (
-                  "N/A"
-                )
-              }
-            />
-            <InfoRow
-              label="Check-in Date"
-              value={clearance.tenant?.check_in_date ? formatDate(clearance.tenant.check_in_date) : "N/A"}
-              icon={Calendar}
-            />
-            <InfoRow
-              label="Days Stayed"
-              value={`${computeDaysStayed()} days`}
-              icon={Clock}
-            />
-          </DetailSection>
+      <DetailPageContent layout="masonry">
+        {/* Tenant Info */}
+        <DetailSection
+          title="Tenant Information"
+          description="Tenant and location details"
+          icon={User}
+        >
+          <InfoRow
+            label="Tenant"
+            value={
+              clearance.tenant ? (
+                <TenantLink id={clearance.tenant.id} name={clearance.tenant.name} />
+              ) : (
+                "Unknown Tenant"
+              )
+            }
+          />
+          <InfoRow
+            label="Phone"
+            value={
+              clearance.tenant?.phone ? (
+                <a href={`tel:${clearance.tenant.phone}`} className="text-primary hover:underline flex items-center gap-1">
+                  <Phone className="h-4 w-4" />
+                  {clearance.tenant.phone}
+                </a>
+              ) : (
+                "N/A"
+              )
+            }
+          />
+          <InfoRow
+            label="Property"
+            value={
+              clearance.property ? (
+                <PropertyLink id={clearance.property.id} name={clearance.property.name} />
+              ) : (
+                "N/A"
+              )
+            }
+          />
+          <InfoRow
+            label="Room"
+            value={
+              clearance.room ? (
+                <RoomLink id={clearance.room.id} roomNumber={clearance.room.room_number} />
+              ) : (
+                "N/A"
+              )
+            }
+          />
+          <InfoRow
+            label="Check-in Date"
+            value={clearance.tenant?.check_in_date ? formatDate(clearance.tenant.check_in_date) : "N/A"}
+            icon={Calendar}
+          />
+          <InfoRow
+            label="Days Stayed"
+            value={`${computeDaysStayed()} days`}
+            icon={Clock}
+          />
+        </DetailSection>
 
-          {/* Checkout Checklist */}
-          <DetailSection
-            title="Checkout Checklist"
-            description="Complete all items before finalizing"
-            icon={ClipboardCheck}
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <ClipboardCheck className={`h-5 w-5 ${formData.room_inspection_done ? "text-green-600" : "text-muted-foreground"}`} />
-                  <div>
-                    <p className="font-medium">Room Inspection</p>
-                    <p className="text-sm text-muted-foreground">Check room condition and inventory</p>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={formData.room_inspection_done}
-                  onChange={(e) => setFormData({ ...formData, room_inspection_done: e.target.checked })}
-                  disabled={isCleared}
-                  className="h-5 w-5"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Key className={`h-5 w-5 ${formData.key_returned ? "text-green-600" : "text-muted-foreground"}`} />
-                  <div>
-                    <p className="font-medium">Key Returned</p>
-                    <p className="text-sm text-muted-foreground">Collect all room keys</p>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={formData.key_returned}
-                  onChange={(e) => setFormData({ ...formData, key_returned: e.target.checked })}
-                  disabled={isCleared}
-                  className="h-5 w-5"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Actual Exit Date</Label>
-                <Input
-                  type="date"
-                  value={formData.actual_exit_date}
-                  onChange={(e) => setFormData({ ...formData, actual_exit_date: e.target.value })}
-                  disabled={isCleared}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Room Condition Notes</Label>
-                <textarea
-                  value={formData.room_condition_notes}
-                  onChange={(e) => setFormData({ ...formData, room_condition_notes: e.target.value })}
-                  placeholder="Any damages or issues..."
-                  rows={3}
-                  disabled={isCleared}
-                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
-                />
-              </div>
+        {/* Settlement Summary */}
+        <DetailSection
+          title="Settlement"
+          description="Financial summary"
+          icon={Wallet}
+        >
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Pending Dues</span>
+              <span>{formatCurrency(clearance.total_dues)}</span>
             </div>
-          </DetailSection>
+            <div className="flex justify-between text-sm text-green-600">
+              <span>Security Deposit</span>
+              <span>- {formatCurrency(clearance.total_refundable)}</span>
+            </div>
+            {deductions.length > 0 && (
+              <div className="flex justify-between text-sm text-red-600">
+                <span>Deductions</span>
+                <span>+ {formatCurrency(deductions.reduce((sum, d) => sum + d.amount, 0))}</span>
+              </div>
+            )}
+            <div className="flex justify-between pt-3 border-t font-bold text-lg">
+              <span>{isRefund ? "Refund" : "Due"}</span>
+              <span className={isRefund ? "text-green-600" : "text-red-600"}>
+                {formatCurrency(Math.abs(finalAmount))}
+              </span>
+            </div>
+          </div>
+        </DetailSection>
 
-          {/* Deductions */}
-          <DetailSection
-            title="Deductions"
-            description="Damages, cleaning, or other charges"
-            icon={Receipt}
-          >
-            <div className="space-y-4">
-              {deductions.length > 0 && (
-                <div className="space-y-2">
-                  {deductions.map((deduction, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-red-50 rounded-lg"
-                    >
-                      <span>{deduction.reason}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-red-600">
-                          {formatCurrency(deduction.amount)}
-                        </span>
-                        {!isCleared && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => removeDeduction(index)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        )}
-                      </div>
+        {/* Timeline */}
+        <DetailSection
+          title="Timeline"
+          description="Key dates"
+          icon={Calendar}
+        >
+          <div className="space-y-3 text-sm">
+            {clearance.notice_given_date && (
+              <InfoRow
+                label="Notice Given"
+                value={formatDate(clearance.notice_given_date)}
+              />
+            )}
+            <InfoRow
+              label="Expected Exit"
+              value={formatDate(clearance.expected_exit_date)}
+            />
+            {(formData.actual_exit_date || clearance.actual_exit_date) && (
+              <InfoRow
+                label="Actual Exit"
+                value={formatDate(formData.actual_exit_date || clearance.actual_exit_date!)}
+              />
+            )}
+            {clearance.completed_at && (
+              <InfoRow
+                label="Completed"
+                value={<span className="text-green-600">{formatDate(clearance.completed_at)}</span>}
+              />
+            )}
+          </div>
+        </DetailSection>
+
+        {/* Checkout Checklist */}
+        <DetailSection
+          title="Checkout Checklist"
+          description="Complete all items before finalizing"
+          icon={ClipboardCheck}
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <ClipboardCheck className={`h-5 w-5 ${formData.room_inspection_done ? "text-green-600" : "text-muted-foreground"}`} />
+                <div>
+                  <p className="font-medium">Room Inspection</p>
+                  <p className="text-sm text-muted-foreground">Check room condition and inventory</p>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.room_inspection_done}
+                onChange={(e) => setFormData({ ...formData, room_inspection_done: e.target.checked })}
+                disabled={isCleared}
+                className="h-5 w-5"
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <Key className={`h-5 w-5 ${formData.key_returned ? "text-green-600" : "text-muted-foreground"}`} />
+                <div>
+                  <p className="font-medium">Key Returned</p>
+                  <p className="text-sm text-muted-foreground">Collect all room keys</p>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.key_returned}
+                onChange={(e) => setFormData({ ...formData, key_returned: e.target.checked })}
+                disabled={isCleared}
+                className="h-5 w-5"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Actual Exit Date</Label>
+              <Input
+                type="date"
+                value={formData.actual_exit_date}
+                onChange={(e) => setFormData({ ...formData, actual_exit_date: e.target.value })}
+                disabled={isCleared}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Room Condition Notes</Label>
+              <textarea
+                value={formData.room_condition_notes}
+                onChange={(e) => setFormData({ ...formData, room_condition_notes: e.target.value })}
+                placeholder="Any damages or issues..."
+                rows={3}
+                disabled={isCleared}
+                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+              />
+            </div>
+          </div>
+        </DetailSection>
+
+        {/* Deductions */}
+        <DetailSection
+          title="Deductions"
+          description="Damages, cleaning, or other charges"
+          icon={Receipt}
+        >
+          <div className="space-y-4">
+            {deductions.length > 0 ? (
+              <div className="space-y-2">
+                {deductions.map((deduction, index) => (
+                  <div
+                    key={`deduction-${index}-${deduction.reason}`}
+                    className="flex items-center justify-between p-3 bg-red-50 rounded-lg"
+                  >
+                    <span>{deduction.reason}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-red-600">
+                        {formatCurrency(deduction.amount)}
+                      </span>
+                      {!isCleared && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => removeDeduction(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">No deductions</p>
+            )}
 
-              {!isCleared && (
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Reason"
-                    value={newDeduction.reason}
-                    onChange={(e) => setNewDeduction({ ...newDeduction, reason: e.target.value })}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Amount"
-                    value={newDeduction.amount}
-                    onChange={(e) => setNewDeduction({ ...newDeduction, amount: e.target.value })}
-                    className="w-32"
-                  />
-                  <Button variant="outline" onClick={addDeduction}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+            {!isCleared && (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Reason"
+                  value={newDeduction.reason}
+                  onChange={(e) => setNewDeduction({ ...newDeduction, reason: e.target.value })}
+                  className="flex-1"
+                />
+                <Input
+                  type="number"
+                  placeholder="Amount"
+                  value={newDeduction.amount}
+                  onChange={(e) => setNewDeduction({ ...newDeduction, amount: e.target.value })}
+                  className="w-32"
+                />
+                <Button variant="outline" onClick={addDeduction}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </DetailSection>
 
-              {deductions.length === 0 && isCleared && (
-                <p className="text-muted-foreground text-center py-4">No deductions</p>
-              )}
-            </div>
-          </DetailSection>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Settlement Summary */}
+        {/* Actions */}
+        {!isCleared && (
           <DetailSection
-            title="Settlement"
-            description="Financial summary"
-            icon={Wallet}
+            title="Actions"
+            description="Complete the clearance"
+            icon={CheckCircle}
           >
             <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Pending Dues</span>
-                <span>{formatCurrency(clearance.total_dues)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-green-600">
-                <span>Security Deposit</span>
-                <span>- {formatCurrency(clearance.total_refundable)}</span>
-              </div>
-              {deductions.length > 0 && (
-                <div className="flex justify-between text-sm text-red-600">
-                  <span>Deductions</span>
-                  <span>+ {formatCurrency(deductions.reduce((sum, d) => sum + d.amount, 0))}</span>
-                </div>
-              )}
-              <div className="flex justify-between pt-3 border-t font-bold text-lg">
-                <span>{isRefund ? "Refund" : "Due"}</span>
-                <span className={isRefund ? "text-green-600" : "text-red-600"}>
-                  {formatCurrency(Math.abs(finalAmount))}
-                </span>
-              </div>
-            </div>
-          </DetailSection>
-
-          {/* Timeline */}
-          <DetailSection
-            title="Timeline"
-            description="Key dates"
-            icon={Calendar}
-          >
-            <div className="space-y-3 text-sm">
-              {clearance.notice_given_date && (
-                <InfoRow
-                  label="Notice Given"
-                  value={formatDate(clearance.notice_given_date)}
-                />
-              )}
-              <InfoRow
-                label="Expected Exit"
-                value={formatDate(clearance.expected_exit_date)}
-              />
-              {(formData.actual_exit_date || clearance.actual_exit_date) && (
-                <InfoRow
-                  label="Actual Exit"
-                  value={formatDate(formData.actual_exit_date || clearance.actual_exit_date!)}
-                />
-              )}
-              {clearance.completed_at && (
-                <InfoRow
-                  label="Completed"
-                  value={<span className="text-green-600">{formatDate(clearance.completed_at)}</span>}
-                />
-              )}
-            </div>
-          </DetailSection>
-
-          {/* Actions */}
-          {!isCleared && (
-            <DetailSection
-              title="Actions"
-              description="Complete the clearance"
-              icon={CheckCircle}
-            >
-              <div className="space-y-3">
-                {clearance.settlement_status === "initiated" && (
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    onClick={handleMarkPending}
-                    disabled={saving}
-                  >
-                    <AlertCircle className="mr-2 h-4 w-4" />
-                    Mark Pending Payment
-                  </Button>
-                )}
+              {clearance.settlement_status === "initiated" && (
                 <Button
                   className="w-full"
-                  onClick={handleComplete}
-                  disabled={saving || !formData.room_inspection_done || !formData.key_returned}
+                  variant="outline"
+                  onClick={handleMarkPending}
+                  disabled={saving}
                 >
-                  {saving ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                  )}
-                  Complete Clearance
+                  <AlertCircle className="mr-2 h-4 w-4" />
+                  Mark Pending Payment
                 </Button>
-                {(!formData.room_inspection_done || !formData.key_returned) && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    Complete checklist items to enable
-                  </p>
+              )}
+              <Button
+                className="w-full"
+                onClick={handleComplete}
+                disabled={saving || !formData.room_inspection_done || !formData.key_returned}
+              >
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle className="mr-2 h-4 w-4" />
                 )}
-              </div>
-            </DetailSection>
-          )}
-
-          {/* Cleared Badge */}
-          {isCleared && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-              <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
-              <p className="font-semibold text-green-800">Clearance Completed</p>
-              <p className="text-sm text-green-600">Room is now available</p>
-            </div>
-          )}
-
-          {/* Record Refund Button */}
-          {isCleared && isRefund && clearance.tenant && (
-            <Link href={`/refunds/new?tenant=${clearance.tenant.id}&clearance=${clearance.id}`}>
-              <Button className="w-full" variant="outline">
-                <Wallet className="mr-2 h-4 w-4" />
-                Record Refund
+                Complete Clearance
               </Button>
-            </Link>
-          )}
-        </div>
-      </div>
+              {(!formData.room_inspection_done || !formData.key_returned) && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Complete checklist items to enable
+                </p>
+              )}
+            </div>
+          </DetailSection>
+        )}
+
+        {/* Cleared Badge */}
+        {isCleared && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+            <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
+            <p className="font-semibold text-green-800">Clearance Completed</p>
+            <p className="text-sm text-green-600">Room is now available</p>
+          </div>
+        )}
+
+        {/* Record Refund Button */}
+        {isCleared && isRefund && clearance.tenant && (
+          <Link href={`/refunds/new?tenant=${clearance.tenant.id}&clearance=${clearance.id}`}>
+            <Button className="w-full" variant="outline">
+              <Wallet className="mr-2 h-4 w-4" />
+              Record Refund
+            </Button>
+          </Link>
+        )}
+      </DetailPageContent>
 
       {/* Record Audit Information */}
       <DetailPageAudit record={clearance} entityType="exit_clearance" />

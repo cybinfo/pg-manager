@@ -11,7 +11,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import {
   DetailHero,
   InfoCard,
-} from "@/components/ui/detail-components"
+  DetailSection,
+  InfoRow,
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import {

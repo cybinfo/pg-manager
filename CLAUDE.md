@@ -418,6 +418,100 @@ import { Avatar } from "@/components/ui/avatar"
 | `DetailPageAudit` | `@/components/ui` | Audit display for detail pages |
 | `RecordMetadata` | `@/components/ui` | Created/deleted info display |
 | `ActivityHistory` | `@/components/ui` | Entity activity timeline |
+| `DetailListSection` | `@/components/ui` | Limited list with "View All" |
+| `DetailPageContent` | `@/components/ui` | Masonry/grid layout wrapper |
+| `MasonryGrid` | `@/components/ui` | Auto-balancing CSS columns |
+
+### 4.7 Detail Page Components (IMPORTANT)
+
+Detail pages use specialized components for consistent UX:
+
+#### DetailPageContent - Layout Wrapper
+
+```typescript
+import { DetailPageContent } from "@/components/ui"
+
+// Traditional grid layout (default, backwards compatible)
+<DetailPageContent>
+  <DetailSection>...</DetailSection>
+</DetailPageContent>
+
+// Auto-balancing masonry layout (RECOMMENDED)
+<DetailPageContent layout="masonry">
+  <DetailSection>...</DetailSection>
+</DetailPageContent>
+```
+
+**Props:**
+- `layout`: `"grid"` | `"masonry"` (default: `"grid"`)
+- `columns`: `1` | `2` | `3` (default: `2`)
+- `gap`: `"sm"` | `"md"` | `"lg"` (default: `"md"`)
+
+#### DetailListSection - Limited Lists with View All
+
+Shows only first N items with "View All" button. **ALWAYS use for lists on detail pages:**
+
+```typescript
+import { DetailListSection } from "@/components/ui"
+
+<DetailListSection
+  title="Recent Payments"
+  description="Transaction history"
+  icon={CreditCard}
+  items={payments}
+  keyExtractor={(payment, idx) => payment.id}
+  renderItem={(payment) => (
+    <div className="flex justify-between py-2 border-b">
+      <span>{payment.description}</span>
+      <Currency amount={payment.amount} />
+    </div>
+  )}
+  initialLimit={5}
+  viewAllHref={`/payments?tenant=${tenant.id}`}
+  viewAllMode="auto"
+  emptyIcon={CreditCard}
+  emptyText="No payments recorded"
+/>
+```
+
+**Props:**
+| Prop | Type | Description |
+|------|------|-------------|
+| `items` | `T[]` | Array of items to display |
+| `renderItem` | `(item: T, index: number) => ReactNode` | Render function for each item |
+| `keyExtractor` | `(item: T, index: number) => string` | Key function for React |
+| `initialLimit` | `number` | Items to show initially (default: 3) |
+| `maxInlineExpand` | `number` | Max items for inline expand (default: 10) |
+| `viewAllMode` | `"link"` \| `"expand"` \| `"auto"` | How "View All" behaves |
+| `viewAllHref` | `string` | URL for link mode |
+| `emptyIcon` | `LucideIcon` | Icon for empty state |
+| `emptyText` | `string` | Text for empty state |
+| `emptyAction` | `{label, href}` | CTA button for empty state |
+
+**viewAllMode Behavior:**
+- `"expand"`: Expands inline with animation
+- `"link"`: Navigates to `viewAllHref`
+- `"auto"`: Expand if ≤10 items, else link
+
+#### MasonryGrid - CSS Columns Layout
+
+Auto-balancing layout using CSS multi-columns:
+
+```typescript
+import { MasonryGrid } from "@/components/ui"
+
+<MasonryGrid columns={2} gap="md">
+  <DetailSection>Short content</DetailSection>
+  <DetailSection>Longer content here</DetailSection>
+  <DetailSection>Medium content</DetailSection>
+</MasonryGrid>
+```
+
+**Benefits:**
+- Auto-balances without JavaScript
+- Best browser support
+- `break-inside: avoid` keeps sections intact
+- Responsive breakpoints built-in
 
 ---
 
@@ -759,8 +853,10 @@ describe('myFunction', () => {
 1. Create `src/app/(dashboard)/[module]/[id]/page.tsx`
 2. Wrap with `<PermissionGuard permission="module.view">`
 3. Use `useDetailPage` hook for data fetching
-4. Add `<DetailPageAudit record={entity} entityType="..." />` at bottom
-5. Use `PageHeader`, `InfoCard`, `DetailSection` patterns
+4. Use `<DetailPageContent layout="masonry">` for auto-balancing layout
+5. Use `<DetailListSection>` for all lists (shows 3-5 items with "View All")
+6. Add `<DetailPageAudit record={entity} entityType="..." />` at bottom
+7. Use `DetailHero`, `InfoCard`, `DetailSection`, `InfoRow` patterns
 
 ### 11.2 Adding a New Database Table
 

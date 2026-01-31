@@ -19,7 +19,7 @@ import { useDetailPage, PEOPLE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { PageLoading } from "@/components/ui/loading"
-import { DetailHero, InfoCard, DetailSection, InfoRow } from "@/components/ui/detail-components"
+import { DetailHero, InfoCard, DetailSection, InfoRow, DetailListSection, DetailPageContent } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   User,
@@ -524,7 +524,7 @@ export default function PersonDetailPage() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <DetailPageContent layout="masonry">
           {/* Personal Information */}
           <DetailSection title="Personal Information" description="Basic identity details" icon={User}>
             <div className="space-y-1">
@@ -602,142 +602,155 @@ export default function PersonDetailPage() {
 
           {/* Emergency Contacts */}
           {person.emergency_contacts && person.emergency_contacts.length > 0 && (
-            <DetailSection title="Emergency Contacts" description="People to contact in emergencies" icon={Phone}>
-              <div className="space-y-3">
-                {person.emergency_contacts.map((contact, index) => (
-                  <div key={index} className="p-3 border rounded-lg bg-slate-50/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{contact.name}</p>
-                        <p className="text-sm text-muted-foreground">{contact.relation}</p>
-                      </div>
-                      <a href={`tel:${contact.phone}`} className="text-primary hover:underline font-medium">{contact.phone}</a>
+            <DetailListSection
+              title="Emergency Contacts"
+              description="People to contact in emergencies"
+              icon={Phone}
+              items={person.emergency_contacts}
+              keyExtractor={(contact, index) => `contact-${index}-${contact.phone}`}
+              renderItem={(contact) => (
+                <div className="p-3 border rounded-lg bg-slate-50/50 mb-2 last:mb-0">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{contact.name}</p>
+                      <p className="text-sm text-muted-foreground">{contact.relation}</p>
                     </div>
+                    <a href={`tel:${contact.phone}`} className="text-primary hover:underline font-medium">{contact.phone}</a>
                   </div>
-                ))}
-              </div>
-            </DetailSection>
+                </div>
+              )}
+              initialLimit={3}
+              viewAllMode="expand"
+              emptyText="No emergency contacts"
+            />
           )}
-        </div>
+        </DetailPageContent>
 
         {/* Tenant History */}
         {tenantHistory.length > 0 && (
-          <DetailSection
+          <DetailListSection
             title="Tenant History"
             description={`${tenantHistory.length} stay${tenantHistory.length > 1 ? "s" : ""} across properties`}
             icon={Home}
-          >
-            <div className="space-y-3">
-              {tenantHistory.map((stay) => (
-                <Link
-                  key={stay.id}
-                  href={`/tenants/${stay.id}`}
-                  className="block p-4 border rounded-lg hover:bg-slate-50/50 transition-colors group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${stay.status === "active" ? "bg-blue-100" : "bg-slate-100"}`}>
-                        <Home className={`h-5 w-5 ${stay.status === "active" ? "text-blue-600" : "text-slate-600"}`} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{stay.property_name}</span>
-                          <span className="text-muted-foreground">Room {stay.room_number}</span>
-                          {stay.status === "active" && <StatusBadge status="active" label="Current" />}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatDate(stay.check_in_date)} - {stay.check_out_date ? formatDate(stay.check_out_date) : "Present"}
-                        </div>
-                      </div>
+            items={tenantHistory}
+            keyExtractor={(stay, _idx) => stay.id}
+            renderItem={(stay) => (
+              <Link
+                href={`/tenants/${stay.id}`}
+                className="block p-4 border rounded-lg hover:bg-slate-50/50 transition-colors group mb-2 last:mb-0"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${stay.status === "active" ? "bg-blue-100" : "bg-slate-100"}`}>
+                      <Home className={`h-5 w-5 ${stay.status === "active" ? "text-blue-600" : "text-slate-600"}`} />
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="font-medium">{formatCurrency(stay.monthly_rent)}/mo</p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{stay.property_name}</span>
+                        <span className="text-muted-foreground">Room {stay.room_number}</span>
+                        {stay.status === "active" && <StatusBadge status="active" label="Current" />}
                       </div>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="text-sm text-muted-foreground">
+                        {formatDate(stay.check_in_date)} - {stay.check_out_date ? formatDate(stay.check_out_date) : "Present"}
+                      </div>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </DetailSection>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-medium">{formatCurrency(stay.monthly_rent)}/mo</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              </Link>
+            )}
+            initialLimit={3}
+            viewAllMode="expand"
+            emptyText="No tenant history"
+          />
         )}
 
         {/* Staff History */}
         {staffHistory.length > 0 && (
-          <DetailSection
+          <DetailListSection
             title="Staff History"
             description={`${staffHistory.length} staff record${staffHistory.length > 1 ? "s" : ""}`}
             icon={Briefcase}
-          >
-            <div className="space-y-3">
-              {staffHistory.map((staff) => (
-                <Link
-                  key={staff.id}
-                  href={`/staff/${staff.id}`}
-                  className="block p-4 border rounded-lg hover:bg-slate-50/50 transition-colors group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${staff.is_active ? "bg-green-100" : "bg-slate-100"}`}>
-                        <Briefcase className={`h-5 w-5 ${staff.is_active ? "text-green-600" : "text-slate-600"}`} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">Staff Member</span>
-                          <StatusBadge status={staff.is_active ? "active" : "inactive"} label={staff.is_active ? "Active" : "Inactive"} />
-                          {staff.user_id && (
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Can Login</span>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Added {formatDate(staff.created_at)}</div>
-                      </div>
+            items={staffHistory}
+            keyExtractor={(staff, _idx) => staff.id}
+            renderItem={(staff) => (
+              <Link
+                href={`/staff/${staff.id}`}
+                className="block p-4 border rounded-lg hover:bg-slate-50/50 transition-colors group mb-2 last:mb-0"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${staff.is_active ? "bg-green-100" : "bg-slate-100"}`}>
+                      <Briefcase className={`h-5 w-5 ${staff.is_active ? "text-green-600" : "text-slate-600"}`} />
                     </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Staff Member</span>
+                        <StatusBadge status={staff.is_active ? "active" : "inactive"} label={staff.is_active ? "Active" : "Inactive"} />
+                        {staff.user_id && (
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Can Login</span>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Added {formatDate(staff.created_at)}</div>
+                    </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </DetailSection>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </Link>
+            )}
+            initialLimit={3}
+            viewAllMode="expand"
+            emptyText="No staff history"
+          />
         )}
 
         {/* Visit History */}
         {visitHistory.length > 0 && (
-          <DetailSection title="Visit History" description="Recent visits to properties" icon={History}>
-            <div className="space-y-3">
-              {visitHistory.map((visit) => (
-                <Link
-                  key={visit.id}
-                  href={`/visitors/${visit.id}`}
-                  className="block p-4 border rounded-lg hover:bg-slate-50/50 transition-colors group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                        <UserCircle className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{visit.property_name}</span>
-                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium capitalize">
-                            {visit.visitor_type.replace("_", " ")}
-                          </span>
-                        </div>
-                        <div className="text-sm text-muted-foreground">{visit.purpose || "No purpose specified"}</div>
-                      </div>
+          <DetailListSection
+            title="Visit History"
+            description="Recent visits to properties"
+            icon={History}
+            items={visitHistory}
+            keyExtractor={(visit, _idx) => visit.id}
+            renderItem={(visit) => (
+              <Link
+                href={`/visitors/${visit.id}`}
+                className="block p-4 border rounded-lg hover:bg-slate-50/50 transition-colors group mb-2 last:mb-0"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                      <UserCircle className="h-5 w-5 text-purple-600" />
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right text-sm">
-                        <p className="font-medium">{formatDate(visit.check_in_time)}</p>
-                        <p className="text-muted-foreground">{visit.check_out_time ? "Checked out" : "Still here"}</p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{visit.property_name}</span>
+                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium capitalize">
+                          {visit.visitor_type.replace("_", " ")}
+                        </span>
                       </div>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="text-sm text-muted-foreground">{visit.purpose || "No purpose specified"}</div>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </DetailSection>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right text-sm">
+                      <p className="font-medium">{formatDate(visit.check_in_time)}</p>
+                      <p className="text-muted-foreground">{visit.check_out_time ? "Checked out" : "Still here"}</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              </Link>
+            )}
+            initialLimit={5}
+            viewAllMode="expand"
+            emptyText="No visit history"
+          />
         )}
 
         {/* Notes */}

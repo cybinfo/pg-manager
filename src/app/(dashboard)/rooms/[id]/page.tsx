@@ -10,7 +10,9 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -165,7 +167,7 @@ export default function RoomDetailPage() {
         />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <DetailPageContent layout="masonry">
         {/* Room Details */}
         <DetailSection
           title="Room Details"
@@ -259,237 +261,187 @@ export default function RoomDetailPage() {
         </DetailSection>
 
         {/* Current Tenants */}
-        <DetailSection
+        <DetailListSection
           title="Current Tenants"
           description={`${tenants.length} tenant(s) in this room`}
           icon={Users}
-          className="md:col-span-2"
-          actions={
-            <div className="flex gap-2">
-              <Link href={`/rooms/${room.id}/tenants`}>
-                <Button variant="outline" size="sm">View All</Button>
-              </Link>
-              {availableBeds > 0 && (
-                <Link href={`/tenants/new?room=${room.id}`}>
-                  <Button size="sm">
-                    <Plus className="mr-1 h-3 w-3" />
-                    Add Tenant
-                  </Button>
-                </Link>
-              )}
-            </div>
-          }
-        >
-          {tenants.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No tenants in this room</p>
-              {availableBeds > 0 && (
-                <Link href={`/tenants/new?room=${room.id}`}>
-                  <Button variant="outline" size="sm" className="mt-3">
-                    Add First Tenant
-                  </Button>
-                </Link>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {tenants.map((tenant) => (
-                <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
-                  <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3">
-                      <Avatar name={tenant.name} src={tenant.person?.photo_url || tenant.profile_photo || tenant.photo_url} size="md" />
-                      <div>
-                        <p className="font-medium">{tenant.name}</p>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {tenant.phone}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatCurrency(tenant.monthly_rent)}/mo</p>
-                      <p className="text-xs text-muted-foreground">Since {formatDate(tenant.check_in_date)}</p>
-                      {tenant.status === "notice_period" && (
-                        <StatusBadge status="warning" label="On Notice" size="sm" />
-                      )}
-                    </div>
+          items={tenants}
+          keyExtractor={(tenant, _idx) => tenant.id}
+          renderItem={(tenant) => (
+            <Link href={`/tenants/${tenant.id}`}>
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
+                <div className="flex items-center gap-3">
+                  <Avatar name={tenant.name} src={tenant.person?.photo_url || tenant.profile_photo || tenant.photo_url} size="md" />
+                  <div>
+                    <p className="font-medium">{tenant.name}</p>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {tenant.phone}
+                    </p>
                   </div>
-                </Link>
-              ))}
-            </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">{formatCurrency(tenant.monthly_rent)}/mo</p>
+                  <p className="text-xs text-muted-foreground">Since {formatDate(tenant.check_in_date)}</p>
+                  {tenant.status === "notice_period" && (
+                    <StatusBadge status="warning" label="On Notice" size="sm" />
+                  )}
+                </div>
+              </div>
+            </Link>
           )}
-        </DetailSection>
+          initialLimit={5}
+          viewAllHref={`/rooms/${room.id}/tenants`}
+          viewAllMode="auto"
+          emptyIcon={Users}
+          emptyText="No tenants in this room"
+          emptyAction={availableBeds > 0 ? { label: "Add First Tenant", href: `/tenants/new?room=${room.id}` } : undefined}
+          actions={
+            availableBeds > 0 && (
+              <Link href={`/tenants/new?room=${room.id}`}>
+                <Button size="sm">
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add Tenant
+                </Button>
+              </Link>
+            )
+          }
+        />
 
         {/* Assigned Meters */}
-        <DetailSection
+        <DetailListSection
           title="Assigned Meters"
-          description={`${meterAssignments.length} meter(s) assigned to this room`}
+          description={`${meterAssignments.length} meter(s) assigned`}
           icon={Gauge}
-          className="md:col-span-2"
-          actions={
-            <div className="flex gap-2">
-              <Link href="/meters">
-                <Button variant="outline" size="sm">View All Meters</Button>
-              </Link>
-              <Link href={`/meters/new?property_id=${room.property?.id}&room_id=${room.id}`}>
-                <Button size="sm">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Add Meter
-                </Button>
-              </Link>
-            </div>
-          }
-        >
-          {meterAssignments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Gauge className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No meters assigned to this room</p>
-              <Link href={`/meters/new?property_id=${room.property?.id}&room_id=${room.id}`}>
-                <Button variant="outline" size="sm" className="mt-3">
-                  Add First Meter
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 gap-3">
-              {meterAssignments.map((assignment) => {
-                if (!assignment.meter) return null
-                const typeConfig = METER_TYPE_CONFIG[assignment.meter.meter_type as keyof typeof METER_TYPE_CONFIG] || METER_TYPE_CONFIG.electricity
-                const meterStatusConfig = METER_STATUS_CONFIG[assignment.meter.status as keyof typeof METER_STATUS_CONFIG] || METER_STATUS_CONFIG.active
-                const TypeIcon = meterTypeConfig[assignment.meter.meter_type]?.icon || Gauge
-                return (
-                  <Link key={assignment.id} href={`/meters/${assignment.meter.id}`}>
-                    <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${typeConfig.bgColor}`}>
-                          <TypeIcon className={`h-4 w-4 ${typeConfig.color}`} />
-                        </div>
-                        <div>
-                          <p className="font-medium">{assignment.meter.meter_number}</p>
-                          <p className="text-sm text-muted-foreground">{typeConfig.label}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <StatusBadge variant={meterStatusConfig.variant} label={meterStatusConfig.label} />
-                        <p className="text-xs text-muted-foreground mt-1">Since {formatDate(assignment.start_date)}</p>
-                      </div>
+          items={meterAssignments.filter(a => a.meter)}
+          keyExtractor={(assignment, _idx) => assignment.id}
+          renderItem={(assignment) => {
+            if (!assignment.meter) return null
+            const typeConfig = METER_TYPE_CONFIG[assignment.meter.meter_type as keyof typeof METER_TYPE_CONFIG] || METER_TYPE_CONFIG.electricity
+            const meterStatusConfig = METER_STATUS_CONFIG[assignment.meter.status as keyof typeof METER_STATUS_CONFIG] || METER_STATUS_CONFIG.active
+            const TypeIcon = meterTypeConfig[assignment.meter.meter_type]?.icon || Gauge
+            return (
+              <Link href={`/meters/${assignment.meter.id}`}>
+                <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${typeConfig.bgColor}`}>
+                      <TypeIcon className={`h-4 w-4 ${typeConfig.color}`} />
                     </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </DetailSection>
+                    <div>
+                      <p className="font-medium">{assignment.meter.meter_number}</p>
+                      <p className="text-sm text-muted-foreground">{typeConfig.label}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <StatusBadge variant={meterStatusConfig.variant} label={meterStatusConfig.label} />
+                    <p className="text-xs text-muted-foreground mt-1">Since {formatDate(assignment.start_date)}</p>
+                  </div>
+                </div>
+              </Link>
+            )
+          }}
+          initialLimit={4}
+          viewAllHref="/meters"
+          viewAllMode="auto"
+          emptyIcon={Gauge}
+          emptyText="No meters assigned to this room"
+          emptyAction={{ label: "Add First Meter", href: `/meters/new?property_id=${room.property?.id}&room_id=${room.id}` }}
+          actions={
+            <Link href={`/meters/new?property_id=${room.property?.id}&room_id=${room.id}`}>
+              <Button size="sm">
+                <Plus className="mr-1 h-3 w-3" />
+                Add Meter
+              </Button>
+            </Link>
+          }
+        />
 
         {/* Meter Readings */}
-        <DetailSection
+        <DetailListSection
           title="Meter Readings"
-          description="Recent electricity, water & gas readings"
+          description="Recent readings"
           icon={Gauge}
-          className="md:col-span-2"
-          actions={
-            <div className="flex gap-2">
-              <Link href={`/rooms/${room.id}/meter-readings`}>
-                <Button variant="outline" size="sm">View All</Button>
-              </Link>
-              <Link href={`/meter-readings/new?room=${room.id}`}>
-                <Button size="sm">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Record Reading
-                </Button>
-              </Link>
-            </div>
-          }
-        >
-          {meterReadings.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Gauge className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No meter readings recorded</p>
-              <Link href={`/meter-readings/new?room=${room.id}`}>
-                <Button variant="outline" size="sm" className="mt-3">
-                  Record First Reading
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {meterReadings.map((reading) => {
-                const meterType = reading.meter?.meter_type || "electricity"
-                const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
-                const Icon = config.icon
-                return (
-                  <Link key={reading.id} href={`/meter-readings/${reading.id}`}>
-                    <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${config.bgColor}`}>
-                          <Icon className={`h-4 w-4 ${config.color}`} />
-                        </div>
-                        <div>
-                          <p className="font-medium capitalize">{meterType}</p>
-                          <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(reading.reading_date)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</p>
-                        {reading.units_consumed !== null && (
-                          <p className="text-xs text-orange-600">+{reading.units_consumed} units</p>
-                        )}
-                      </div>
+          items={meterReadings}
+          keyExtractor={(reading, _idx) => reading.id}
+          renderItem={(reading) => {
+            const meterType = reading.meter?.meter_type || "electricity"
+            const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
+            const Icon = config.icon
+            return (
+              <Link href={`/meter-readings/${reading.id}`}>
+                <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${config.bgColor}`}>
+                      <Icon className={`h-4 w-4 ${config.color}`} />
                     </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </DetailSection>
+                    <div>
+                      <p className="font-medium capitalize">{meterType}</p>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDate(reading.reading_date)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</p>
+                    {reading.units_consumed !== null && (
+                      <p className="text-xs text-orange-600">+{reading.units_consumed} units</p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            )
+          }}
+          initialLimit={5}
+          viewAllHref={`/rooms/${room.id}/meter-readings`}
+          viewAllMode="auto"
+          emptyIcon={Gauge}
+          emptyText="No meter readings recorded"
+          emptyAction={{ label: "Record First Reading", href: `/meter-readings/new?room=${room.id}` }}
+          actions={
+            <Link href={`/meter-readings/new?room=${room.id}`}>
+              <Button size="sm">
+                <Plus className="mr-1 h-3 w-3" />
+                Record Reading
+              </Button>
+            </Link>
+          }
+        />
 
         {/* Recent Complaints */}
-        <DetailSection
+        <DetailListSection
           title="Recent Complaints"
           description="Issues reported for this room"
           icon={MessageSquare}
-          className="md:col-span-2"
-          actions={
-            <Link href={`/complaints?room=${room.id}`}>
-              <Button variant="outline" size="sm">View All</Button>
+          items={complaints}
+          keyExtractor={(complaint, _idx) => complaint.id}
+          renderItem={(complaint) => (
+            <Link href={`/complaints/${complaint.id}`}>
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate">{complaint.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {complaint.tenant?.name} • {formatDate(complaint.created_at)}
+                  </p>
+                </div>
+                <StatusBadge
+                  status={
+                    complaint.status === "open" ? "error" :
+                    complaint.status === "in_progress" ? "warning" : "success"
+                  }
+                  label={complaint.status.replace("_", " ")}
+                  size="sm"
+                />
+              </div>
             </Link>
-          }
-        >
-          {complaints.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No complaints for this room</p>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 gap-2">
-              {complaints.map((complaint) => (
-                <Link key={complaint.id} href={`/complaints/${complaint.id}`}>
-                  <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm truncate">{complaint.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {complaint.tenant?.name} • {formatDate(complaint.created_at)}
-                      </p>
-                    </div>
-                    <StatusBadge
-                      status={
-                        complaint.status === "open" ? "error" :
-                        complaint.status === "in_progress" ? "warning" : "success"
-                      }
-                      label={complaint.status.replace("_", " ")}
-                      size="sm"
-                    />
-                  </div>
-                </Link>
-              ))}
-            </div>
           )}
-        </DetailSection>
-      </div>
+          initialLimit={5}
+          viewAllHref={`/complaints?room=${room.id}`}
+          viewAllMode="auto"
+          emptyIcon={MessageSquare}
+          emptyText="No complaints for this room"
+        />
+      </DetailPageContent>
 
       {/* Record Audit Information */}
       <DetailPageAudit record={room} entityType="room" />

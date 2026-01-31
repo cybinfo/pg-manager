@@ -13,7 +13,9 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
@@ -228,198 +230,192 @@ export default function RefundDetailPage() {
           className="max-w-sm"
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Tenant Info */}
-            <DetailSection
-              title="Tenant"
-              description="Refund recipient"
-              icon={User}
-            >
-              {refund.tenant ? (
-                <div className="flex items-center gap-4">
-                  <Avatar
-                    name={refund.tenant.name}
-                    src={tenantPhoto}
-                    size="lg"
-                    className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white"
-                  />
-                  <div>
-                    <TenantLink id={refund.tenant.id} name={refund.tenant.name} />
-                    <p className="text-sm text-muted-foreground">{refund.tenant.phone}</p>
-                    {refund.property && (
-                      <div className="mt-1">
-                        <PropertyLink id={refund.property.id} name={refund.property.name} size="sm" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-muted-foreground">Tenant information not available</p>
-              )}
-            </DetailSection>
-
-            {/* Refund Details */}
-            <DetailSection
-              title="Refund Information"
-              description="Payment details"
-              icon={Wallet}
-            >
-              {editing ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Status</Label>
-                      <Select
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        options={[
-                          { value: "pending", label: "Pending" },
-                          { value: "processing", label: "Processing" },
-                          { value: "completed", label: "Completed" },
-                          { value: "failed", label: "Failed" },
-                          { value: "cancelled", label: "Cancelled" },
-                        ]}
-                      />
+        <DetailPageContent layout="masonry">
+          {/* Tenant Info */}
+          <DetailSection
+            title="Tenant"
+            description="Refund recipient"
+            icon={User}
+          >
+            {refund.tenant ? (
+              <div className="flex items-center gap-4">
+                <Avatar
+                  name={refund.tenant.name}
+                  src={tenantPhoto}
+                  size="lg"
+                  className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white"
+                />
+                <div>
+                  <TenantLink id={refund.tenant.id} name={refund.tenant.name} />
+                  <p className="text-sm text-muted-foreground">{refund.tenant.phone}</p>
+                  {refund.property && (
+                    <div className="mt-1">
+                      <PropertyLink id={refund.property.id} name={refund.property.name} size="sm" />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Refund Date</Label>
-                      <Input
-                        type="date"
-                        value={formData.refund_date}
-                        onChange={(e) => setFormData({ ...formData, refund_date: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Reference Number</Label>
-                    <Input
-                      value={formData.reference_number}
-                      onChange={(e) => setFormData({ ...formData, reference_number: e.target.value })}
-                      placeholder="Transaction ID / UPI Ref"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Notes</Label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <InfoRow
-                      label="Type"
-                      value={refundTypeLabels[refund.refund_type] || refund.refund_type}
-                    />
-                    <InfoRow
-                      label="Amount"
-                      value={<span className="text-xl font-bold text-green-600">{formatCurrency(refund.amount)}</span>}
-                    />
-                  </div>
-                  <InfoRow
-                    label="Payment Mode"
-                    value={
-                      <span className="flex items-center gap-2">
-                        {getPaymentModeIcon(refund.payment_mode)}
-                        {paymentModeLabels[refund.payment_mode] || refund.payment_mode}
-                      </span>
-                    }
-                  />
-                  <InfoRow
-                    label="Reference Number"
-                    value={refund.reference_number || "—"}
-                    icon={Hash}
-                  />
-                  <InfoRow
-                    label="Refund Date"
-                    value={refund.refund_date ? formatDate(refund.refund_date) : "Not processed"}
-                    icon={Calendar}
-                  />
-                  <InfoRow
-                    label="Status"
-                    value={
-                      <TableBadge
-                        variant={
-                          refund.status === "completed"
-                            ? "success"
-                            : refund.status === "pending"
-                            ? "warning"
-                            : "error"
-                        }
-                      >
-                        {refund.status}
-                      </TableBadge>
-                    }
-                  />
-                  {refund.reason && (
-                    <InfoRow label="Reason" value={refund.reason} />
                   )}
-                  {refund.notes && (
-                    <InfoRow label="Notes" value={refund.notes} />
-                  )}
-                </>
-              )}
-            </DetailSection>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Timeline */}
-            <DetailSection
-              title="Timeline"
-              description="Key dates"
-              icon={Clock}
-            >
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="h-2 w-2 rounded-full bg-blue-500 mt-2" />
-                  <div>
-                    <p className="text-sm font-medium">Created</p>
-                    <p className="text-xs text-muted-foreground">{formatDateTime(refund.created_at)}</p>
-                  </div>
                 </div>
-                {refund.processed_at && (
-                  <div className="flex items-start gap-3">
-                    <div className="h-2 w-2 rounded-full bg-green-500 mt-2" />
-                    <div>
-                      <p className="text-sm font-medium">Processed</p>
-                      <p className="text-xs text-muted-foreground">{formatDateTime(refund.processed_at)}</p>
-                    </div>
-                  </div>
-                )}
-                {refund.updated_at !== refund.created_at && (
-                  <div className="flex items-start gap-3">
-                    <div className="h-2 w-2 rounded-full bg-gray-400 mt-2" />
-                    <div>
-                      <p className="text-sm font-medium">Last Updated</p>
-                      <p className="text-xs text-muted-foreground">{formatDateTime(refund.updated_at)}</p>
-                    </div>
-                  </div>
-                )}
               </div>
-            </DetailSection>
-
-            {/* Linked Exit Clearance */}
-            {refund.exit_clearance && (
-              <DetailSection
-                title="Linked Exit Clearance"
-                description="Related checkout"
-                icon={FileText}
-              >
-                <Link href={`/exit-clearance/${refund.exit_clearance.id}`}>
-                  <Button variant="outline" className="w-full">
-                    View Exit Clearance
-                  </Button>
-                </Link>
-              </DetailSection>
+            ) : (
+              <p className="text-muted-foreground">Tenant information not available</p>
             )}
-          </div>
-        </div>
+          </DetailSection>
+
+          {/* Refund Details */}
+          <DetailSection
+            title="Refund Information"
+            description="Payment details"
+            icon={Wallet}
+          >
+            {editing ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      options={[
+                        { value: "pending", label: "Pending" },
+                        { value: "processing", label: "Processing" },
+                        { value: "completed", label: "Completed" },
+                        { value: "failed", label: "Failed" },
+                        { value: "cancelled", label: "Cancelled" },
+                      ]}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Refund Date</Label>
+                    <Input
+                      type="date"
+                      value={formData.refund_date}
+                      onChange={(e) => setFormData({ ...formData, refund_date: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Reference Number</Label>
+                  <Input
+                    value={formData.reference_number}
+                    onChange={(e) => setFormData({ ...formData, reference_number: e.target.value })}
+                    placeholder="Transaction ID / UPI Ref"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Notes</Label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <InfoRow
+                    label="Type"
+                    value={refundTypeLabels[refund.refund_type] || refund.refund_type}
+                  />
+                  <InfoRow
+                    label="Amount"
+                    value={<span className="text-xl font-bold text-green-600">{formatCurrency(refund.amount)}</span>}
+                  />
+                </div>
+                <InfoRow
+                  label="Payment Mode"
+                  value={
+                    <span className="flex items-center gap-2">
+                      {getPaymentModeIcon(refund.payment_mode)}
+                      {paymentModeLabels[refund.payment_mode] || refund.payment_mode}
+                    </span>
+                  }
+                />
+                <InfoRow
+                  label="Reference Number"
+                  value={refund.reference_number || "—"}
+                  icon={Hash}
+                />
+                <InfoRow
+                  label="Refund Date"
+                  value={refund.refund_date ? formatDate(refund.refund_date) : "Not processed"}
+                  icon={Calendar}
+                />
+                <InfoRow
+                  label="Status"
+                  value={
+                    <TableBadge
+                      variant={
+                        refund.status === "completed"
+                          ? "success"
+                          : refund.status === "pending"
+                          ? "warning"
+                          : "error"
+                      }
+                    >
+                      {refund.status}
+                    </TableBadge>
+                  }
+                />
+                {refund.reason && (
+                  <InfoRow label="Reason" value={refund.reason} />
+                )}
+                {refund.notes && (
+                  <InfoRow label="Notes" value={refund.notes} />
+                )}
+              </>
+            )}
+          </DetailSection>
+
+          {/* Timeline */}
+          <DetailSection
+            title="Timeline"
+            description="Key dates"
+            icon={Clock}
+          >
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-2 w-2 rounded-full bg-blue-500 mt-2" />
+                <div>
+                  <p className="text-sm font-medium">Created</p>
+                  <p className="text-xs text-muted-foreground">{formatDateTime(refund.created_at)}</p>
+                </div>
+              </div>
+              {refund.processed_at && (
+                <div className="flex items-start gap-3">
+                  <div className="h-2 w-2 rounded-full bg-green-500 mt-2" />
+                  <div>
+                    <p className="text-sm font-medium">Processed</p>
+                    <p className="text-xs text-muted-foreground">{formatDateTime(refund.processed_at)}</p>
+                  </div>
+                </div>
+              )}
+              {refund.updated_at !== refund.created_at && (
+                <div className="flex items-start gap-3">
+                  <div className="h-2 w-2 rounded-full bg-gray-400 mt-2" />
+                  <div>
+                    <p className="text-sm font-medium">Last Updated</p>
+                    <p className="text-xs text-muted-foreground">{formatDateTime(refund.updated_at)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DetailSection>
+
+          {/* Linked Exit Clearance */}
+          {refund.exit_clearance && (
+            <DetailSection
+              title="Linked Exit Clearance"
+              description="Related checkout"
+              icon={FileText}
+            >
+              <Link href={`/exit-clearance/${refund.exit_clearance.id}`}>
+                <Button variant="outline" className="w-full">
+                  View Exit Clearance
+                </Button>
+              </Link>
+            </DetailSection>
+          )}
+        </DetailPageContent>
 
         {/* Record Audit Information */}
         <DetailPageAudit record={refund} entityType="refund" />

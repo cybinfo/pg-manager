@@ -10,9 +10,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   DetailHero,
+  InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
   Megaphone,

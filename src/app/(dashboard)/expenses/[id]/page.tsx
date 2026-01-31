@@ -10,7 +10,9 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -115,7 +117,7 @@ export default function ExpenseDetailPage() {
         className="max-w-sm"
       />
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <DetailPageContent layout="masonry">
         {/* Expense Details */}
         <DetailSection
           title="Expense Details"
@@ -197,7 +199,7 @@ export default function ExpenseDetailPage() {
             <span>ID: {expense.id}</span>
           </div>
         </DetailSection>
-      </div>
+      </DetailPageContent>
 
       {/* Record Audit Information */}
       <DetailPageAudit record={expense} entityType="expense" />

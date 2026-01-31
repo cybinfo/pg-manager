@@ -15,7 +15,9 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -411,7 +413,7 @@ export default function TenantDetailPage() {
         />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <DetailPageContent layout="masonry">
         {/* Room Details */}
         <DetailSection
           title="Room Details"
@@ -543,10 +545,26 @@ export default function TenantDetailPage() {
 
         {/* Emergency Contacts (from People) */}
         {tenant.person?.emergency_contacts && tenant.person.emergency_contacts.length > 0 && (
-          <DetailSection
+          <DetailListSection
             title="Emergency Contacts"
             description="From People module"
             icon={Users}
+            items={tenant.person.emergency_contacts}
+            keyExtractor={(contact, idx) => `emergency-${idx}-${contact.phone}`}
+            renderItem={(contact) => (
+              <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
+                <div>
+                  <p className="font-medium">{contact.name}</p>
+                  <p className="text-xs text-muted-foreground">{contact.relation}</p>
+                </div>
+                <a href={`tel:${contact.phone}`} className="text-teal-600 hover:underline text-sm">
+                  {contact.phone}
+                </a>
+              </div>
+            )}
+            initialLimit={3}
+            viewAllMode="expand"
+            emptyText="No emergency contacts"
             actions={
               tenant.person_id && (
                 <Link href={`/people/${tenant.person_id}/edit`}>
@@ -557,26 +575,19 @@ export default function TenantDetailPage() {
                 </Link>
               )
             }
-          >
-            {tenant.person.emergency_contacts.map((contact, idx) => (
-              <div key={idx} className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
-                <div>
-                  <p className="font-medium">{contact.name}</p>
-                  <p className="text-xs text-muted-foreground">{contact.relation}</p>
-                </div>
-                <a href={`tel:${contact.phone}`} className="text-teal-600 hover:underline text-sm">
-                  {contact.phone}
-                </a>
-              </div>
-            ))}
-          </DetailSection>
+          />
         )}
 
         {/* Guardian Contacts (tenant-specific, legacy) */}
         {tenant.guardian_contacts && tenant.guardian_contacts.length > 0 && (
-          <DetailSection title="Guardian Contacts" description="Tenant-specific contacts" icon={Users}>
-            {tenant.guardian_contacts.map((guardian, idx) => (
-              <div key={idx} className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
+          <DetailListSection
+            title="Guardian Contacts"
+            description="Tenant-specific contacts"
+            icon={Users}
+            items={tenant.guardian_contacts}
+            keyExtractor={(guardian, idx) => `guardian-${idx}-${guardian.phone}`}
+            renderItem={(guardian) => (
+              <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
                 <div>
                   <p className="font-medium">{guardian.name}</p>
                   <p className="text-xs text-muted-foreground">{guardian.relation}</p>
@@ -585,8 +596,11 @@ export default function TenantDetailPage() {
                   {guardian.phone}
                 </a>
               </div>
-            ))}
-          </DetailSection>
+            )}
+            initialLimit={3}
+            viewAllMode="expand"
+            emptyText="No guardian contacts"
+          />
         )}
 
         {/* Tenancy Verification Status */}
@@ -614,10 +628,29 @@ export default function TenantDetailPage() {
         </DetailSection>
 
         {/* Pending Dues */}
-        <DetailSection
+        <DetailListSection
           title="Pending Dues"
           description="Outstanding payments"
           icon={AlertCircle}
+          items={charges}
+          keyExtractor={(charge, _idx) => charge.id}
+          renderItem={(charge) => (
+            <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
+              <div>
+                <p className="font-medium">{charge.charge_type?.name || "Charge"}</p>
+                <p className="text-xs text-muted-foreground">{charge.for_period}</p>
+              </div>
+              <div className="text-right">
+                <Currency amount={charge.amount} className="text-rose-600 font-semibold" />
+                <p className="text-xs text-muted-foreground">Due: {formatDate(charge.due_date)}</p>
+              </div>
+            </div>
+          )}
+          initialLimit={5}
+          viewAllHref={`/tenants/${tenant.id}/bills`}
+          viewAllMode="auto"
+          emptyIcon={CheckCircle}
+          emptyText="No pending dues"
           actions={
             <div className="flex gap-2">
               <Link href={`/tenants/${tenant.id}/bills`}>
@@ -634,108 +667,66 @@ export default function TenantDetailPage() {
               </Link>
             </div>
           }
-        >
-          {charges.length === 0 ? (
-            <div className="text-center py-4">
-              <CheckCircle className="h-10 w-10 mx-auto mb-2 text-emerald-500" />
-              <p className="text-muted-foreground">No pending dues</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {charges.map((charge) => (
-                <div key={charge.id} className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
-                  <div>
-                    <p className="font-medium">{charge.charge_type?.name || "Charge"}</p>
-                    <p className="text-xs text-muted-foreground">{charge.for_period}</p>
-                  </div>
-                  <div className="text-right">
-                    <Currency amount={charge.amount} className="text-rose-600 font-semibold" />
-                    <p className="text-xs text-muted-foreground">Due: {formatDate(charge.due_date)}</p>
-                  </div>
-                </div>
-              ))}
-              <div className="flex items-center justify-between pt-2 font-semibold">
-                <span>Total Dues</span>
-                <Currency amount={totalDues} className="text-rose-600" />
+        />
+
+        {/* Recent Payments */}
+        <DetailListSection
+          title="Recent Payments"
+          description="Transaction history"
+          icon={CreditCard}
+          items={payments}
+          keyExtractor={(payment, _idx) => payment.id}
+          renderItem={(payment) => (
+            <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
+              <div>
+                <p className="font-medium">{payment.charge_type?.name || "Payment"}</p>
+                <p className="text-xs text-muted-foreground">
+                  {payment.for_period || formatDate(payment.payment_date)}
+                </p>
+              </div>
+              <div className="text-right">
+                <Currency amount={payment.amount} className="text-emerald-600 font-semibold" />
+                <p className="text-xs text-muted-foreground capitalize">{payment.payment_method}</p>
               </div>
             </div>
           )}
-        </DetailSection>
-
-        {/* Recent Payments */}
-        <DetailSection
-          title="Recent Payments"
-          description="Last 5 transactions"
-          icon={CreditCard}
-          actions={
-            <Link href={`/tenants/${tenant.id}/payments`}>
-              <Button variant="outline" size="sm">View All</Button>
-            </Link>
-          }
-        >
-          {payments.length === 0 ? (
-            <div className="text-center py-4">
-              <CreditCard className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
-              <p className="text-muted-foreground">No payments recorded</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {payments.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
-                  <div>
-                    <p className="font-medium">{payment.charge_type?.name || "Payment"}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {payment.for_period || formatDate(payment.payment_date)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <Currency amount={payment.amount} className="text-emerald-600 font-semibold" />
-                    <p className="text-xs text-muted-foreground capitalize">{payment.payment_method}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </DetailSection>
+          initialLimit={5}
+          viewAllHref={`/tenants/${tenant.id}/payments`}
+          viewAllMode="auto"
+          emptyIcon={CreditCard}
+          emptyText="No payments recorded"
+        />
 
         {/* Recent Bills */}
-        <DetailSection
+        <DetailListSection
           title="Recent Bills"
           description="Latest billing activity"
           icon={FileText}
-          actions={
-            <Link href={`/tenants/${tenant.id}/bills`}>
-              <Button variant="outline" size="sm">View All</Button>
+          items={bills}
+          keyExtractor={(bill, _idx) => bill.id}
+          renderItem={(bill) => (
+            <Link href={`/bills/${bill.id}`}>
+              <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0 hover:bg-muted/50 transition-colors rounded px-1 -mx-1">
+                <div>
+                  <p className="font-medium">{bill.bill_number}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(bill.bill_date)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">{formatCurrency(bill.total_amount)}</p>
+                  {bill.balance_due > 0 && (
+                    <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
+                  )}
+                </div>
+              </div>
             </Link>
-          }
-        >
-          {bills.length === 0 ? (
-            <div className="text-center py-4">
-              <FileText className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
-              <p className="text-muted-foreground">No bills generated</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {bills.map((bill) => (
-                <Link key={bill.id} href={`/bills/${bill.id}`}>
-                  <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0 hover:bg-muted/50 transition-colors rounded px-1 -mx-1">
-                    <div>
-                      <p className="font-medium">{bill.bill_number}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(bill.bill_date)}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(bill.total_amount)}</p>
-                      {bill.balance_due > 0 && (
-                        <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
           )}
-        </DetailSection>
-      </div>
+          initialLimit={5}
+          viewAllHref={`/tenants/${tenant.id}/bills`}
+          viewAllMode="auto"
+          emptyIcon={FileText}
+          emptyText="No bills generated"
+        />
+      </DetailPageContent>
 
       {/* Notes */}
       {tenant.notes && (
@@ -746,66 +737,78 @@ export default function TenantDetailPage() {
 
       {/* Stay History */}
       {stays.length > 0 && (
-        <DetailSection title="Stay History" description="All tenures at your properties" icon={History}>
-          <div className="space-y-3">
-            {stays.map((stay) => (
-              <div key={stay.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Stay #{stay.stay_number}</span>
-                    <StatusBadge
-                      status={stay.status === "active" ? "active" : stay.status === "transferred" ? "info" : "muted"}
-                      label={stay.status === "active" ? "Current" : stay.status === "transferred" ? "Transferred" : "Completed"}
-                      size="sm"
-                      dot
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {stay.property?.name} - Room {stay.room?.room_number}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDate(stay.join_date)} {stay.exit_date && `→ ${formatDate(stay.exit_date)}`}
-                  </p>
+        <DetailListSection
+          title="Stay History"
+          description="All tenures at your properties"
+          icon={History}
+          items={stays}
+          keyExtractor={(stay, _idx) => stay.id}
+          renderItem={(stay) => (
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg mb-2 last:mb-0">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Stay #{stay.stay_number}</span>
+                  <StatusBadge
+                    status={stay.status === "active" ? "active" : stay.status === "transferred" ? "info" : "muted"}
+                    label={stay.status === "active" ? "Current" : stay.status === "transferred" ? "Transferred" : "Completed"}
+                    size="sm"
+                    dot
+                  />
                 </div>
-                <Currency amount={stay.monthly_rent} className="font-semibold" />
+                <p className="text-sm text-muted-foreground mt-1">
+                  {stay.property?.name} - Room {stay.room?.room_number}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDate(stay.join_date)} {stay.exit_date && `→ ${formatDate(stay.exit_date)}`}
+                </p>
               </div>
-            ))}
-          </div>
-        </DetailSection>
+              <Currency amount={stay.monthly_rent} className="font-semibold" />
+            </div>
+          )}
+          initialLimit={3}
+          viewAllMode="expand"
+          emptyText="No stay history"
+        />
       )}
 
       {/* Room Transfer History */}
       {transfers.length > 0 && (
-        <DetailSection title="Room Transfers" description="History of room changes" icon={ArrowRightLeft}>
-          <div className="space-y-3">
-            {transfers.map((transfer) => (
-              <div key={transfer.id} className="p-3 bg-slate-50 rounded-lg">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">
-                    {transfer.from_property?.name} Room {transfer.from_room?.room_number}
-                  </span>
-                  <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">
-                    {transfer.to_property?.name} Room {transfer.to_room?.room_number}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatDate(transfer.transfer_date)}
-                  {transfer.reason && ` • ${transfer.reason}`}
-                </p>
-                {transfer.old_rent !== transfer.new_rent && (
-                  <p className="text-xs mt-1">
-                    <span className="text-muted-foreground">Rent:</span>{" "}
-                    <span className="line-through text-muted-foreground">
-                      <Currency amount={transfer.old_rent} />
-                    </span>{" "}
-                    <Currency amount={transfer.new_rent} className="text-emerald-600" />
-                  </p>
-                )}
+        <DetailListSection
+          title="Room Transfers"
+          description="History of room changes"
+          icon={ArrowRightLeft}
+          items={transfers}
+          keyExtractor={(transfer, _idx) => transfer.id}
+          renderItem={(transfer) => (
+            <div className="p-3 bg-slate-50 rounded-lg mb-2 last:mb-0">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium">
+                  {transfer.from_property?.name} Room {transfer.from_room?.room_number}
+                </span>
+                <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">
+                  {transfer.to_property?.name} Room {transfer.to_room?.room_number}
+                </span>
               </div>
-            ))}
-          </div>
-        </DetailSection>
+              <p className="text-xs text-muted-foreground mt-1">
+                {formatDate(transfer.transfer_date)}
+                {transfer.reason && ` • ${transfer.reason}`}
+              </p>
+              {transfer.old_rent !== transfer.new_rent && (
+                <p className="text-xs mt-1">
+                  <span className="text-muted-foreground">Rent:</span>{" "}
+                  <span className="line-through text-muted-foreground">
+                    <Currency amount={transfer.old_rent} />
+                  </span>{" "}
+                  <Currency amount={transfer.new_rent} className="text-emerald-600" />
+                </p>
+              )}
+            </div>
+          )}
+          initialLimit={3}
+          viewAllMode="expand"
+          emptyText="No room transfers"
+        />
       )}
 
       {/* Record Audit Information */}

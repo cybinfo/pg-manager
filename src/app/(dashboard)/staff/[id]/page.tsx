@@ -11,9 +11,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   DetailHero,
+  InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
   Loader2,
@@ -292,7 +295,7 @@ export default function StaffDetailPage() {
         }
       />
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <DetailPageContent layout="masonry">
         {/* Basic Info */}
         <DetailSection
           title="Basic Information"
@@ -472,7 +475,7 @@ export default function StaffDetailPage() {
             </div>
           )}
         </DetailSection>
-      </div>
+      </DetailPageContent>
 
       {/* Record Audit Information */}
       <DetailPageAudit record={staff} entityType="staff" />

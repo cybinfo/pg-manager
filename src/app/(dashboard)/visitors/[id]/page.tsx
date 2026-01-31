@@ -12,7 +12,9 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -400,7 +402,7 @@ export default function VisitorDetailPage() {
         </DetailSection>
       )}
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <DetailPageContent layout="masonry">
         {/* Visitor Details */}
         <DetailSection
           title="Visitor Details"
@@ -631,54 +633,56 @@ export default function VisitorDetailPage() {
 
         {/* Visit History */}
         {visitHistory.length > 0 && (
-          <DetailSection
+          <DetailListSection
             title="Visit History"
             description={`Previous visits from this person (${visitHistory.length} total)`}
             icon={History}
-          >
-            <div className="space-y-3">
-              {visitHistory.map((visit) => (
-                <Link
-                  key={visit.id}
-                  href={`/visitors/${visit.id}`}
-                  className="block p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${VISITOR_TYPE_BADGE_COLORS[visit.visitor_type]}`}>
-                        {VISITOR_TYPE_ICONS[visit.visitor_type]}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {formatDate(visit.check_in_time)}
-                          </span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${VISITOR_TYPE_BADGE_COLORS[visit.visitor_type]}`}>
-                            {VISITOR_TYPE_LABELS[visit.visitor_type]}
-                          </span>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {visit.property?.name || "Unknown Property"}
-                          {visit.purpose && ` - ${visit.purpose}`}
-                        </div>
-                      </div>
+            items={visitHistory}
+            keyExtractor={(visit, _idx) => visit.id}
+            renderItem={(visit) => (
+              <Link
+                href={`/visitors/${visit.id}`}
+                className="block p-3 border rounded-lg hover:bg-muted/50 transition-colors mb-2 last:mb-0"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center ${VISITOR_TYPE_BADGE_COLORS[visit.visitor_type]}`}>
+                      {VISITOR_TYPE_ICONS[visit.visitor_type]}
                     </div>
-                    <div className="text-right text-sm">
-                      {visit.check_out_time ? (
-                        <span className="text-muted-foreground">
-                          {getDuration(visit.check_in_time, visit.check_out_time)}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          {formatDate(visit.check_in_time)}
                         </span>
-                      ) : (
-                        <span className="text-green-600 font-medium">Currently here</span>
-                      )}
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${VISITOR_TYPE_BADGE_COLORS[visit.visitor_type]}`}>
+                          {VISITOR_TYPE_LABELS[visit.visitor_type]}
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {visit.property?.name || "Unknown Property"}
+                        {visit.purpose && ` - ${visit.purpose}`}
+                      </div>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </DetailSection>
+                  <div className="text-right text-sm">
+                    {visit.check_out_time ? (
+                      <span className="text-muted-foreground">
+                        {getDuration(visit.check_in_time, visit.check_out_time)}
+                      </span>
+                    ) : (
+                      <span className="text-green-600 font-medium">Currently here</span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            )}
+            initialLimit={5}
+            viewAllMode="expand"
+            emptyIcon={History}
+            emptyText="No visit history"
+          />
         )}
-      </div>
+      </DetailPageContent>
 
       {/* Record Audit Information */}
       <DetailPageAudit record={visitor} entityType="visitor" />

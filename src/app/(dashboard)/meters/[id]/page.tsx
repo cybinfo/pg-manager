@@ -20,7 +20,9 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { PageLoading } from "@/components/ui/loading"
 import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
@@ -311,7 +313,7 @@ export default function MeterDetailPage() {
         />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <DetailPageContent layout="masonry">
         {/* Meter Details */}
         <DetailSection
           title="Meter Details"
@@ -401,114 +403,101 @@ export default function MeterDetailPage() {
             </p>
           )}
         </DetailSection>
-      </div>
 
-      {/* Assignment History */}
-      <DetailSection
-        title="Assignment History"
-        description={`${assignments.length} assignment(s)`}
-        icon={History}
-      >
-        {assignments.length > 0 ? (
-          <div className="space-y-3">
-            {assignments.map((assignment) => (
-              <div
-                key={assignment.id}
-                className={`p-4 border rounded-lg ${!assignment.end_date ? "border-primary bg-primary/5" : ""}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${!assignment.end_date ? "bg-primary/10" : "bg-muted"}`}>
-                      <Home className={`h-4 w-4 ${!assignment.end_date ? "text-primary" : "text-muted-foreground"}`} />
+        {/* Assignment History */}
+        <DetailListSection
+          title="Assignment History"
+          description={`${assignments.length} assignment(s)`}
+          icon={History}
+          items={assignments}
+          keyExtractor={(assignment, _idx) => assignment.id}
+          renderItem={(assignment) => (
+            <div
+              className={`p-4 border rounded-lg mb-2 last:mb-0 ${!assignment.end_date ? "border-primary bg-primary/5" : ""}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${!assignment.end_date ? "bg-primary/10" : "bg-muted"}`}>
+                    <Home className={`h-4 w-4 ${!assignment.end_date ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
+                  <div>
+                    <div className="font-medium">
+                      {assignment.room ? (
+                        <RoomLink id={assignment.room.id} roomNumber={assignment.room.room_number} />
+                      ) : (
+                        "Unknown Room"
+                      )}
                     </div>
-                    <div>
-                      <div className="font-medium">
-                        {assignment.room ? (
-                          <RoomLink id={assignment.room.id} roomNumber={assignment.room.room_number} />
-                        ) : (
-                          "Unknown Room"
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {formatDate(assignment.start_date)} — {assignment.end_date ? formatDate(assignment.end_date) : "Present"}
-                      </div>
+                    <div className="text-sm text-muted-foreground">
+                      {formatDate(assignment.start_date)} — {assignment.end_date ? formatDate(assignment.end_date) : "Present"}
                     </div>
                   </div>
-                  <div className="text-right">
+                </div>
+                <div className="text-right">
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Start:</span>{" "}
+                    <span className="font-mono">{assignment.start_reading.toLocaleString()}</span>
+                  </div>
+                  {assignment.end_reading != null && (
                     <div className="text-sm">
-                      <span className="text-muted-foreground">Start:</span>{" "}
-                      <span className="font-mono">{assignment.start_reading.toLocaleString()}</span>
+                      <span className="text-muted-foreground">End:</span>{" "}
+                      <span className="font-mono">{assignment.end_reading.toLocaleString()}</span>
                     </div>
-                    {assignment.end_reading != null && (
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">End:</span>{" "}
-                        <span className="font-mono">{assignment.end_reading.toLocaleString()}</span>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
-                {assignment.reason && (
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    Reason: {ASSIGNMENT_REASONS.find((r) => r.value === assignment.reason)?.label || assignment.reason}
-                  </div>
-                )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No assignment history found.
-          </p>
-        )}
-      </DetailSection>
-
-      {/* Recent Readings */}
-      <DetailSection
-        title="Recent Readings"
-        description={`Last ${readings.length} reading(s)`}
-        icon={FileText}
-        actions={
-          <Link href={`/meter-readings?meter_id=${meter.id}`}>
-            <Button variant="outline" size="sm">
-              View All
-            </Button>
-          </Link>
-        }
-      >
-        {readings.length > 0 ? (
-          <div className="space-y-2">
-            {readings.map((reading) => (
-              <Link key={reading.id} href={`/meter-readings/${reading.id}`}>
-                <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{formatDate(reading.reading_date)}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono">{reading.reading_value.toLocaleString()}</span>
-                    {reading.units_consumed !== null && (
-                      <span className="text-sm text-muted-foreground">
-                        (+{reading.units_consumed.toLocaleString()} {typeConfig.unit})
-                      </span>
-                    )}
-                  </div>
+              {assignment.reason && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  Reason: {ASSIGNMENT_REASONS.find((r) => r.value === assignment.reason)?.label || assignment.reason}
                 </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground text-center py-4">
-            No readings recorded for this meter.
-          </p>
-        )}
-      </DetailSection>
+              )}
+            </div>
+          )}
+          initialLimit={5}
+          viewAllMode="expand"
+          emptyIcon={History}
+          emptyText="No assignment history found"
+        />
 
-      {/* Notes */}
-      {meter.notes && (
-        <DetailSection title="Notes" icon={FileText}>
-          <p className="text-sm whitespace-pre-wrap">{meter.notes}</p>
-        </DetailSection>
-      )}
+        {/* Recent Readings */}
+        <DetailListSection
+          title="Recent Readings"
+          description={`Last ${readings.length} reading(s)`}
+          icon={FileText}
+          items={readings}
+          keyExtractor={(reading, _idx) => reading.id}
+          renderItem={(reading) => (
+            <Link href={`/meter-readings/${reading.id}`}>
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors mb-2 last:mb-0">
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span>{formatDate(reading.reading_date)}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="font-mono">{reading.reading_value.toLocaleString()}</span>
+                  {reading.units_consumed !== null && (
+                    <span className="text-sm text-muted-foreground">
+                      (+{reading.units_consumed.toLocaleString()} {typeConfig.unit})
+                    </span>
+                  )}
+                </div>
+              </div>
+            </Link>
+          )}
+          initialLimit={5}
+          viewAllHref={`/meter-readings?meter_id=${meter.id}`}
+          viewAllMode="auto"
+          emptyIcon={FileText}
+          emptyText="No readings recorded for this meter"
+        />
+
+        {/* Notes */}
+        {meter.notes && (
+          <DetailSection title="Notes" icon={FileText}>
+            <p className="text-sm whitespace-pre-wrap">{meter.notes}</p>
+          </DetailSection>
+        )}
+      </DetailPageContent>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

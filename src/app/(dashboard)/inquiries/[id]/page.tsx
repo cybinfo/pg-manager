@@ -19,7 +19,9 @@ import {
   DetailHero,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
   Loader2,
@@ -284,173 +286,167 @@ export default function InquiryDetailPage() {
         )}
       </PermissionGate>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Main Info */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Contact Information */}
-          <DetailSection title="Contact Information" icon={Phone}>
-            <div className="grid md:grid-cols-2 gap-4">
-              <InfoRow
-                label="Phone"
-                value={
-                  <a href={`tel:${inquiry.phone}`} className="text-teal-600 hover:underline">
-                    {formatPhone(inquiry.phone)}
+      <DetailPageContent layout="masonry">
+        {/* Contact Information */}
+        <DetailSection title="Contact Information" icon={Phone}>
+          <div className="grid md:grid-cols-2 gap-4">
+            <InfoRow
+              label="Phone"
+              value={
+                <a href={`tel:${inquiry.phone}`} className="text-teal-600 hover:underline">
+                  {formatPhone(inquiry.phone)}
+                </a>
+              }
+              icon={Phone}
+            />
+            <InfoRow
+              label="Email"
+              value={
+                inquiry.email ? (
+                  <a href={`mailto:${inquiry.email}`} className="text-teal-600 hover:underline">
+                    {inquiry.email}
                   </a>
-                }
-                icon={Phone}
-              />
-              <InfoRow
-                label="Email"
-                value={
-                  inquiry.email ? (
-                    <a href={`mailto:${inquiry.email}`} className="text-teal-600 hover:underline">
-                      {inquiry.email}
-                    </a>
-                  ) : (
-                    "Not provided"
-                  )
-                }
-                icon={Mail}
-              />
-            </div>
-          </DetailSection>
-
-          {/* Inquiry Details */}
-          <DetailSection title="Inquiry Details" icon={MessageSquare}>
-            <div className="grid md:grid-cols-2 gap-4">
-              <InfoRow
-                label="Preferred Room Type"
-                value={
-                  inquiry.preferred_room_type ? (
-                    <span className="capitalize">{inquiry.preferred_room_type} room</span>
-                  ) : (
-                    "Any / Not specified"
-                  )
-                }
-                icon={Home}
-              />
-              <InfoRow
-                label="Expected Move-in"
-                value={inquiry.expected_move_in ? formatDate(inquiry.expected_move_in) : "Not specified"}
-                icon={Calendar}
-              />
-            </div>
-
-            {inquiry.message && (
-              <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-                <Label className="text-sm text-muted-foreground">Message</Label>
-                <p className="mt-1 whitespace-pre-line">{inquiry.message}</p>
-              </div>
-            )}
-          </DetailSection>
-
-          {/* Notes (Editable) */}
-          <DetailSection title="Internal Notes" icon={Edit2}>
-            {editing ? (
-              <div className="space-y-2">
-                <Textarea
-                  value={editData.notes}
-                  onChange={(e) => setEditData((prev) => ({ ...prev, notes: e.target.value }))}
-                  placeholder="Add notes about this inquiry..."
-                  rows={4}
-                />
-              </div>
-            ) : (
-              <div className="p-4 bg-muted/50 rounded-lg min-h-[100px]">
-                {inquiry.notes ? (
-                  <p className="whitespace-pre-line">{inquiry.notes}</p>
                 ) : (
-                  <p className="text-muted-foreground italic">No notes yet. Click Edit to add notes.</p>
-                )}
-              </div>
-            )}
-          </DetailSection>
-        </div>
+                  "Not provided"
+                )
+              }
+              icon={Mail}
+            />
+          </div>
+        </DetailSection>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Status Card */}
-          <DetailSection title="Status" icon={Clock}>
-            {editing ? (
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  value={editData.status}
-                  onChange={(e) => setEditData((prev) => ({ ...prev, status: e.target.value }))}
-                  options={statusOptions}
-                />
+        {/* Status Card */}
+        <DetailSection title="Status" icon={Clock}>
+          {editing ? (
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={editData.status}
+                onChange={(e) => setEditData((prev) => ({ ...prev, status: e.target.value }))}
+                options={statusOptions}
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Current Status</span>
+                <StatusBadge status={inquiry.status} />
               </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Current Status</span>
-                  <StatusBadge status={inquiry.status} />
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Source</span>
-                  <span>{sourceLabels[inquiry.source]}</span>
-                </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Source</span>
+                <span>{sourceLabels[inquiry.source]}</span>
               </div>
-            )}
-          </DetailSection>
-
-          {/* Property Card */}
-          {inquiry.property && (
-            <DetailSection title="Property" icon={Building2}>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Building2 className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <PropertyLink id={inquiry.property.id} name={inquiry.property.name} />
-                    <p className="text-sm text-muted-foreground">{inquiry.property.city}</p>
-                  </div>
-                </div>
-                <Link href={`/properties/${inquiry.property.id}`}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    View Property
-                  </Button>
-                </Link>
-              </div>
-            </DetailSection>
+            </div>
           )}
+        </DetailSection>
 
-          {/* Timeline Card */}
-          <DetailSection title="Timeline" icon={Calendar}>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Received</span>
-                <span>{formatDateTime(inquiry.created_at)}</span>
-              </div>
-              {inquiry.updated_at !== inquiry.created_at && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last Updated</span>
-                  <span>{formatDateTime(inquiry.updated_at)}</span>
+        {/* Inquiry Details */}
+        <DetailSection title="Inquiry Details" icon={MessageSquare}>
+          <div className="grid md:grid-cols-2 gap-4">
+            <InfoRow
+              label="Preferred Room Type"
+              value={
+                inquiry.preferred_room_type ? (
+                  <span className="capitalize">{inquiry.preferred_room_type} room</span>
+                ) : (
+                  "Any / Not specified"
+                )
+              }
+              icon={Home}
+            />
+            <InfoRow
+              label="Expected Move-in"
+              value={inquiry.expected_move_in ? formatDate(inquiry.expected_move_in) : "Not specified"}
+              icon={Calendar}
+            />
+          </div>
+
+          {inquiry.message && (
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+              <Label className="text-sm text-muted-foreground">Message</Label>
+              <p className="mt-1 whitespace-pre-line">{inquiry.message}</p>
+            </div>
+          )}
+        </DetailSection>
+
+        {/* Property Card */}
+        {inquiry.property && (
+          <DetailSection title="Property" icon={Building2}>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-blue-600" />
                 </div>
+                <div>
+                  <PropertyLink id={inquiry.property.id} name={inquiry.property.name} />
+                  <p className="text-sm text-muted-foreground">{inquiry.property.city}</p>
+                </div>
+              </div>
+              <Link href={`/properties/${inquiry.property.id}`}>
+                <Button variant="outline" size="sm" className="w-full">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  View Property
+                </Button>
+              </Link>
+            </div>
+          </DetailSection>
+        )}
+
+        {/* Timeline Card */}
+        <DetailSection title="Timeline" icon={Calendar}>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Received</span>
+              <span>{formatDateTime(inquiry.created_at)}</span>
+            </div>
+            {inquiry.updated_at !== inquiry.created_at && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Last Updated</span>
+                <span>{formatDateTime(inquiry.updated_at)}</span>
+              </div>
+            )}
+          </div>
+        </DetailSection>
+
+        {/* Notes (Editable) */}
+        <DetailSection title="Internal Notes" icon={Edit2}>
+          {editing ? (
+            <div className="space-y-2">
+              <Textarea
+                value={editData.notes}
+                onChange={(e) => setEditData((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder="Add notes about this inquiry..."
+                rows={4}
+              />
+            </div>
+          ) : (
+            <div className="p-4 bg-muted/50 rounded-lg min-h-[100px]">
+              {inquiry.notes ? (
+                <p className="whitespace-pre-line">{inquiry.notes}</p>
+              ) : (
+                <p className="text-muted-foreground italic">No notes yet. Click Edit to add notes.</p>
               )}
             </div>
-          </DetailSection>
-
-          {/* Convert to Tenant Card */}
-          {inquiry.status === "converted" && (
-            <DetailSection title="Next Steps" icon={UserCheck}>
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  This inquiry has been marked as converted. Create a tenant record to complete the onboarding.
-                </p>
-                <Link href={`/tenants/new?name=${encodeURIComponent(inquiry.name)}&phone=${encodeURIComponent(inquiry.phone)}&email=${encodeURIComponent(inquiry.email || "")}&property_id=${inquiry.property_id}`}>
-                  <Button className="w-full">
-                    <UserCheck className="mr-2 h-4 w-4" />
-                    Create Tenant Record
-                  </Button>
-                </Link>
-              </div>
-            </DetailSection>
           )}
-        </div>
-      </div>
+        </DetailSection>
+
+        {/* Convert to Tenant Card */}
+        {inquiry.status === "converted" && (
+          <DetailSection title="Next Steps" icon={UserCheck}>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                This inquiry has been marked as converted. Create a tenant record to complete the onboarding.
+              </p>
+              <Link href={`/tenants/new?name=${encodeURIComponent(inquiry.name)}&phone=${encodeURIComponent(inquiry.phone)}&email=${encodeURIComponent(inquiry.email || "")}&property_id=${inquiry.property_id}`}>
+                <Button className="w-full">
+                  <UserCheck className="mr-2 h-4 w-4" />
+                  Create Tenant Record
+                </Button>
+              </Link>
+            </div>
+          </DetailSection>
+        )}
+      </DetailPageContent>
 
       {/* Record Audit Information */}
       <DetailPageAudit record={inquiry} entityType="inquiry" />

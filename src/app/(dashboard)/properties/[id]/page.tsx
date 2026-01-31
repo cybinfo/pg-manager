@@ -19,7 +19,9 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -173,7 +175,7 @@ export default function PropertyDetailPage() {
         />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <DetailPageContent layout="masonry">
         {/* Property Details */}
         <DetailSection
           title="Property Details"
@@ -208,348 +210,291 @@ export default function PropertyDetailPage() {
 
         {/* Tenants on Notice */}
         {noticeTenants > 0 && (
-          <DetailSection
+          <DetailListSection
             title="Tenants on Notice"
             description={`${noticeTenants} tenant(s) leaving soon`}
             icon={AlertCircle}
             className="border-yellow-200 bg-yellow-50/50"
-          >
-            <div className="space-y-2">
-              {tenants.filter(t => t.status === "notice_period").map((tenant) => (
-                <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-yellow-100 transition-colors">
-                    <div>
-                      <p className="font-medium">{tenant.name}</p>
-                      <p className="text-sm text-muted-foreground">Room {tenant.room?.room_number}</p>
-                    </div>
-                    <StatusBadge status="warning" label="Notice Period" size="sm" />
+            items={tenants.filter(t => t.status === "notice_period")}
+            keyExtractor={(tenant, _idx) => tenant.id}
+            renderItem={(tenant) => (
+              <Link href={`/tenants/${tenant.id}`}>
+                <div className="flex items-center justify-between p-2 rounded-lg hover:bg-yellow-100 transition-colors">
+                  <div>
+                    <p className="font-medium">{tenant.name}</p>
+                    <p className="text-sm text-muted-foreground">Room {tenant.room?.room_number}</p>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </DetailSection>
+                  <StatusBadge status="warning" label="Notice Period" size="sm" />
+                </div>
+              </Link>
+            )}
+            initialLimit={5}
+            viewAllMode="expand"
+            emptyText="No tenants on notice"
+          />
         )}
 
         {/* Rooms List */}
-        <DetailSection
+        <DetailListSection
           title="Rooms"
           description={`${rooms.length} rooms in this property`}
           icon={Home}
-          className={noticeTenants === 0 ? "md:col-span-2" : ""}
-          actions={
-            <div className="flex gap-2">
-              <Link href={`/properties/${property.id}/rooms`}>
-                <Button variant="outline" size="sm">View All</Button>
-              </Link>
-              <Link href={`/rooms/new?property=${property.id}`}>
-                <Button size="sm">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Add Room
-                </Button>
-              </Link>
-            </div>
-          }
-        >
-          {rooms.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Home className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No rooms added yet</p>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 gap-3">
-              {rooms.map((room) => (
-                <Link key={room.id} href={`/rooms/${room.id}`}>
-                  <div className="p-3 border rounded-lg hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold">Room {room.room_number}</span>
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[room.status] || statusColors.available}`}>
-                        {room.status.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Bed className="h-3 w-3" />
-                        {room.occupied_beds}/{room.total_beds}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <IndianRupee className="h-3 w-3" />
-                        {formatCurrency(room.rent_amount)}
-                      </span>
-                    </div>
-                    <div className="flex gap-1 mt-2">
-                      {room.has_ac && (
-                        <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">AC</span>
-                      )}
-                      {room.has_attached_bathroom && (
-                        <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Bath</span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+          items={rooms}
+          keyExtractor={(room, _idx) => room.id}
+          renderItem={(room) => (
+            <Link href={`/rooms/${room.id}`}>
+              <div className="p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold">Room {room.room_number}</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[room.status] || statusColors.available}`}>
+                    {room.status.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Bed className="h-3 w-3" />
+                    {room.occupied_beds}/{room.total_beds}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <IndianRupee className="h-3 w-3" />
+                    {formatCurrency(room.rent_amount)}
+                  </span>
+                </div>
+                <div className="flex gap-1 mt-2">
+                  {room.has_ac && (
+                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">AC</span>
+                  )}
+                  {room.has_attached_bathroom && (
+                    <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Bath</span>
+                  )}
+                </div>
+              </div>
+            </Link>
           )}
-        </DetailSection>
+          initialLimit={4}
+          viewAllHref={`/properties/${property.id}/rooms`}
+          viewAllMode="auto"
+          emptyIcon={Home}
+          emptyText="No rooms added yet"
+          actions={
+            <Link href={`/rooms/new?property=${property.id}`}>
+              <Button size="sm">
+                <Plus className="mr-1 h-3 w-3" />
+                Add Room
+              </Button>
+            </Link>
+          }
+        />
 
         {/* Active Tenants */}
-        <DetailSection
+        <DetailListSection
           title="Active Tenants"
           description={`${activeTenants} tenants currently staying`}
           icon={Users}
-          className="md:col-span-2"
-          actions={
-            <div className="flex gap-2">
-              <Link href={`/properties/${property.id}/tenants`}>
-                <Button variant="outline" size="sm">View All</Button>
-              </Link>
-              <Link href={`/tenants/new?property=${property.id}`}>
-                <Button size="sm">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Add Tenant
-                </Button>
-              </Link>
-            </div>
-          }
-        >
-          {tenants.filter(t => t.status === "active").length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No active tenants</p>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {tenants.filter(t => t.status === "active").map((tenant) => (
-                <Link key={tenant.id} href={`/tenants/${tenant.id}`}>
-                  <div className="p-3 border rounded-lg hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3">
-                      <Avatar name={tenant.name} src={tenant.person?.photo_url || tenant.profile_photo || tenant.photo_url} size="md" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{tenant.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Room {tenant.room?.room_number} • {formatCurrency(tenant.monthly_rent)}/mo
-                        </p>
-                      </div>
-                    </div>
+          items={tenants.filter(t => t.status === "active")}
+          keyExtractor={(tenant, _idx) => tenant.id}
+          renderItem={(tenant) => (
+            <Link href={`/tenants/${tenant.id}`}>
+              <div className="p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
+                <div className="flex items-center gap-3">
+                  <Avatar name={tenant.name} src={tenant.person?.photo_url || tenant.profile_photo || tenant.photo_url} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{tenant.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Room {tenant.room?.room_number} • {formatCurrency(tenant.monthly_rent)}/mo
+                    </p>
                   </div>
-                </Link>
-              ))}
-            </div>
+                </div>
+              </div>
+            </Link>
           )}
-        </DetailSection>
+          initialLimit={5}
+          viewAllHref={`/properties/${property.id}/tenants`}
+          viewAllMode="auto"
+          emptyIcon={Users}
+          emptyText="No active tenants"
+          actions={
+            <Link href={`/tenants/new?property=${property.id}`}>
+              <Button size="sm">
+                <Plus className="mr-1 h-3 w-3" />
+                Add Tenant
+              </Button>
+            </Link>
+          }
+        />
 
         {/* Recent Bills */}
-        <DetailSection
+        <DetailListSection
           title="Recent Bills"
           description="Latest billing activity"
           icon={FileText}
-          actions={
-            <Link href={`/bills?property=${property.id}`}>
-              <Button variant="outline" size="sm">View All</Button>
+          items={bills}
+          keyExtractor={(bill, _idx) => bill.id}
+          renderItem={(bill) => (
+            <Link href={`/bills/${bill.id}`}>
+              <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{bill.bill_number}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {bill.tenant?.name} • {formatDate(bill.bill_date)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-sm">{formatCurrency(bill.total_amount)}</p>
+                  {bill.balance_due > 0 && (
+                    <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
+                  )}
+                </div>
+              </div>
             </Link>
-          }
-        >
-          {bills.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No bills yet</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {bills.map((bill) => (
-                <Link key={bill.id} href={`/bills/${bill.id}`}>
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{bill.bill_number}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {bill.tenant?.name} • {formatDate(bill.bill_date)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm">{formatCurrency(bill.total_amount)}</p>
-                      {bill.balance_due > 0 && (
-                        <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
           )}
-        </DetailSection>
+          initialLimit={5}
+          viewAllHref={`/bills?property=${property.id}`}
+          viewAllMode="auto"
+          emptyIcon={FileText}
+          emptyText="No bills yet"
+        />
 
         {/* Recent Payments */}
-        <DetailSection
+        <DetailListSection
           title="Recent Payments"
           description="Latest payment activity"
           icon={CreditCard}
-          actions={
-            <Link href={`/payments?property=${property.id}`}>
-              <Button variant="outline" size="sm">View All</Button>
+          items={payments}
+          keyExtractor={(payment, _idx) => payment.id}
+          renderItem={(payment) => (
+            <Link href={`/payments/${payment.id}`}>
+              <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{payment.tenant?.name}</p>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {formatDate(payment.payment_date)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-sm text-green-600">+{formatCurrency(payment.amount)}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{payment.payment_method.replace("_", " ")}</p>
+                </div>
+              </div>
             </Link>
-          }
-        >
-          {payments.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No payments yet</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {payments.map((payment) => (
-                <Link key={payment.id} href={`/payments/${payment.id}`}>
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{payment.tenant?.name}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(payment.payment_date)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm text-green-600">+{formatCurrency(payment.amount)}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{payment.payment_method.replace("_", " ")}</p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
           )}
-        </DetailSection>
+          initialLimit={5}
+          viewAllHref={`/payments?property=${property.id}`}
+          viewAllMode="auto"
+          emptyIcon={CreditCard}
+          emptyText="No payments yet"
+        />
 
         {/* Recent Expenses */}
-        <DetailSection
+        <DetailListSection
           title="Recent Expenses"
           description="Property-specific expenses"
           icon={Receipt}
-          className="md:col-span-2"
-          actions={
-            <div className="flex gap-2">
-              <Link href={`/expenses?property=${property.id}`}>
-                <Button variant="outline" size="sm">View All</Button>
-              </Link>
-              <Link href={`/expenses/new?property=${property.id}`}>
-                <Button size="sm">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Add Expense
-                </Button>
-              </Link>
-            </div>
-          }
-        >
-          {expenses.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <Receipt className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No expenses recorded for this property</p>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 gap-2">
-              {expenses.map((expense) => (
-                <Link key={expense.id} href={`/expenses/${expense.id}`}>
-                  <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{expense.expense_type?.name || "Expense"}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {expense.description || formatDate(expense.expense_date)}
-                      </p>
-                    </div>
-                    <p className="font-semibold text-sm text-rose-600">-{formatCurrency(expense.amount)}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+          items={expenses}
+          keyExtractor={(expense, _idx) => expense.id}
+          renderItem={(expense) => (
+            <Link href={`/expenses/${expense.id}`}>
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{expense.expense_type?.name || "Expense"}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {expense.description || formatDate(expense.expense_date)}
+                  </p>
+                </div>
+                <p className="font-semibold text-sm text-rose-600">-{formatCurrency(expense.amount)}</p>
+              </div>
+            </Link>
           )}
-        </DetailSection>
+          initialLimit={4}
+          viewAllHref={`/expenses?property=${property.id}`}
+          viewAllMode="auto"
+          emptyIcon={Receipt}
+          emptyText="No expenses recorded for this property"
+          actions={
+            <Link href={`/expenses/new?property=${property.id}`}>
+              <Button size="sm">
+                <Plus className="mr-1 h-3 w-3" />
+                Add Expense
+              </Button>
+            </Link>
+          }
+        />
 
         {/* Recent Complaints */}
-        <DetailSection
+        <DetailListSection
           title="Recent Complaints"
           description="Issues reported by tenants"
           icon={MessageSquare}
-          actions={
-            <Link href={`/complaints?property=${property.id}`}>
-              <Button variant="outline" size="sm">View All</Button>
+          items={complaints}
+          keyExtractor={(complaint, _idx) => complaint.id}
+          renderItem={(complaint) => (
+            <Link href={`/complaints/${complaint.id}`}>
+              <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate">{complaint.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {complaint.tenant?.name}
+                    {complaint.room && ` • Room ${complaint.room.room_number}`}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <StatusBadge
+                    status={
+                      complaint.status === "open" ? "error" :
+                      complaint.status === "in_progress" ? "warning" : "success"
+                    }
+                    label={complaint.status.replace("_", " ")}
+                    size="sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatDate(complaint.created_at)}
+                  </p>
+                </div>
+              </div>
             </Link>
-          }
-        >
-          {complaints.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No complaints for this property</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {complaints.map((complaint) => (
-                <Link key={complaint.id} href={`/complaints/${complaint.id}`}>
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm truncate">{complaint.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {complaint.tenant?.name}
-                        {complaint.room && ` • Room ${complaint.room.room_number}`}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <StatusBadge
-                        status={
-                          complaint.status === "open" ? "error" :
-                          complaint.status === "in_progress" ? "warning" : "success"
-                        }
-                        label={complaint.status.replace("_", " ")}
-                        size="sm"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatDate(complaint.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
           )}
-        </DetailSection>
+          initialLimit={5}
+          viewAllHref={`/complaints?property=${property.id}`}
+          viewAllMode="auto"
+          emptyIcon={MessageSquare}
+          emptyText="No complaints for this property"
+        />
 
         {/* Recent Visitors */}
-        <DetailSection
+        <DetailListSection
           title="Recent Visitors"
           description="Visitor log for this property"
           icon={UserCheck}
-          actions={
-            <Link href={`/visitors?property=${property.id}`}>
-              <Button variant="outline" size="sm">View All</Button>
-            </Link>
-          }
-        >
-          {visitors.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <UserCheck className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No visitors recorded for this property</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {visitors.map((visitor) => (
-                <div key={visitor.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-sm truncate">{visitor.visitor_name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      Visiting {visitor.tenant?.name}
-                      {visitor.purpose && ` • ${visitor.purpose}`}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
-                      <Clock className="h-3 w-3" />
-                      {formatDate(visitor.check_in_time)}
-                    </p>
-                    {visitor.is_overnight && (
-                      <StatusBadge status="info" label="Overnight" size="sm" />
-                    )}
-                  </div>
-                </div>
-              ))}
+          items={visitors}
+          keyExtractor={(visitor, _idx) => visitor.id}
+          renderItem={(visitor) => (
+            <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm truncate">{visitor.visitor_name}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  Visiting {visitor.tenant?.name}
+                  {visitor.purpose && ` • ${visitor.purpose}`}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
+                  <Clock className="h-3 w-3" />
+                  {formatDate(visitor.check_in_time)}
+                </p>
+                {visitor.is_overnight && (
+                  <StatusBadge status="info" label="Overnight" size="sm" />
+                )}
+              </div>
             </div>
           )}
-        </DetailSection>
-      </div>
+          initialLimit={5}
+          viewAllHref={`/visitors?property=${property.id}`}
+          viewAllMode="auto"
+          emptyIcon={UserCheck}
+          emptyText="No visitors recorded for this property"
+        />
+      </DetailPageContent>
 
       {/* Record Audit Information */}
       <DetailPageAudit record={property} entityType="property" />

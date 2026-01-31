@@ -14,7 +14,8 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+} from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -423,37 +424,34 @@ ManageKar`
           </DetailSection>
 
           {/* Payment History */}
-          <DetailSection
+          <DetailListSection
             title="Payment History"
             description="Payments received for this bill"
             icon={CreditCard}
-          >
-            {payments.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No payments recorded yet</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {payments.map((payment) => (
-                  <div key={payment.id} className="flex justify-between items-center py-3 border-b last:border-0">
-                    <div>
-                      <p className="font-medium text-green-600">+{formatCurrency(payment.amount)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(payment.payment_date)} via {payment.payment_method}
-                      </p>
-                      {payment.receipt_number && (
-                        <p className="text-xs text-muted-foreground">Ref: {payment.receipt_number}</p>
-                      )}
-                    </div>
-                    <Link href={`/payments/${payment.id}`}>
-                      <Button variant="outline" size="sm">View</Button>
-                    </Link>
-                  </div>
-                ))}
+            items={payments}
+            keyExtractor={(payment, _idx) => payment.id}
+            renderItem={(payment) => (
+              <div className="flex justify-between items-center py-3 border-b last:border-0">
+                <div>
+                  <p className="font-medium text-green-600">+{formatCurrency(payment.amount)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatDate(payment.payment_date)} via {payment.payment_method}
+                  </p>
+                  {payment.receipt_number && (
+                    <p className="text-xs text-muted-foreground">Ref: {payment.receipt_number}</p>
+                  )}
+                </div>
+                <Link href={`/payments/${payment.id}`}>
+                  <Button variant="outline" size="sm">View</Button>
+                </Link>
               </div>
             )}
-          </DetailSection>
+            initialLimit={5}
+            viewAllHref={`/payments?bill=${billId}`}
+            viewAllMode="auto"
+            emptyIcon={CreditCard}
+            emptyText="No payments recorded yet"
+          />
 
           {/* Notes */}
           {bill.notes && (

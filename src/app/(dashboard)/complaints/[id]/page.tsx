@@ -10,9 +10,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   DetailHero,
+  InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
   Loader2,
@@ -175,9 +178,8 @@ export default function ComplaintDetailPage() {
         }
       />
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="md:col-span-2 space-y-6">
+      <DetailPageContent layout="masonry" columns={3}>
+        {/* Main Content - Status Section */}
           {/* Status Actions */}
           <DetailSection
             title="Status"
@@ -264,12 +266,9 @@ export default function ComplaintDetailPage() {
               <p className="text-muted-foreground italic">No resolution notes yet</p>
             )}
           </DetailSection>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Details */}
-          <DetailSection
+        {/* Details */}
+        <DetailSection
             title="Details"
             description="Complaint information"
             icon={Wrench}
@@ -380,8 +379,7 @@ export default function ComplaintDetailPage() {
               </Link>
             </DetailSection>
           )}
-        </div>
-      </div>
+      </DetailPageContent>
 
       {/* Record Audit Information */}
       <DetailPageAudit record={complaint} entityType="complaint" />

@@ -55,6 +55,11 @@ export {
   QuickActions,
 } from "./detail-components"
 
+// Detail Page Layout Components
+export { DetailListSection } from "./detail-list-section"
+export { MasonryGrid } from "./masonry-grid"
+export { DetailPageContent } from "./detail-page-content"
+
 // Empty States
 export {
   EmptyState,

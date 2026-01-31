@@ -11,7 +11,9 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-} from "@/components/ui/detail-components"
+  DetailListSection,
+  DetailPageContent,
+} from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -343,7 +345,7 @@ export default function MeterReadingDetailPage() {
         />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <DetailPageContent layout="masonry">
         {/* Location Details */}
         <DetailSection title="Location" description="Property and room details" icon={Home}>
           {reading.property && (
@@ -415,11 +417,58 @@ export default function MeterReadingDetailPage() {
         )}
 
         {/* Generated Charges */}
-        <DetailSection
+        <DetailListSection
           title="Generated Charges"
           description="Charges created from this meter reading"
           icon={Receipt}
-          className="md:col-span-2"
+          items={charges}
+          keyExtractor={(charge, _idx) => charge.id}
+          renderItem={(charge) => (
+            <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  {charge.tenant ? (
+                    <Link href={`/tenants/${charge.tenant.id}`} className="font-medium hover:text-primary transition-colors">
+                      {charge.tenant.name}
+                    </Link>
+                  ) : (
+                    <p className="font-medium">Unknown Tenant</p>
+                  )}
+                  <p className="text-sm text-muted-foreground">{charge.for_period || "No period specified"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="font-bold">{formatCurrency(charge.amount)}</p>
+                  {charge.paid_amount > 0 && (
+                    <p className="text-sm text-green-600">Paid: {formatCurrency(charge.paid_amount)}</p>
+                  )}
+                </div>
+                <StatusBadge
+                  status={
+                    charge.status === "paid" ? "success" :
+                    charge.status === "partial" ? "info" :
+                    charge.status === "overdue" ? "error" : "warning"
+                  }
+                  label={charge.status}
+                  size="sm"
+                />
+              </div>
+            </div>
+          )}
+          initialLimit={10}
+          viewAllMode="expand"
+          emptyIcon={Receipt}
+          emptyText={
+            reading.units_consumed && reading.units_consumed > 0
+              ? (ratePerUnit
+                  ? "No charges generated from this reading. Click \"Generate Charges\" to create charges for active tenants."
+                  : "No rate configured for this meter type. Update charge type settings first.")
+              : "No units consumed - charges cannot be generated"
+          }
           actions={
             charges.length > 0 ? (
               <div className="text-right">
@@ -440,88 +489,34 @@ export default function MeterReadingDetailPage() {
                   </>
                 )}
               </Button>
-            ) : null
+            ) : undefined
           }
-        >
-          {charges.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <Receipt className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No charges generated from this reading</p>
-              {reading.units_consumed && reading.units_consumed > 0 ? (
-                ratePerUnit ? (
-                  <p className="text-sm mt-1">Click &quot;Generate Charges&quot; to create charges for active tenants</p>
-                ) : (
-                  <p className="text-sm mt-1 text-amber-600">No rate configured for this meter type. Update charge type settings first.</p>
-                )
-              ) : (
-                <p className="text-sm mt-1">No units consumed - charges cannot be generated</p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {charges.map((charge) => (
-                <div key={charge.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <User className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      {charge.tenant ? (
-                        <Link href={`/tenants/${charge.tenant.id}`} className="font-medium hover:text-primary transition-colors">
-                          {charge.tenant.name}
-                        </Link>
-                      ) : (
-                        <p className="font-medium">Unknown Tenant</p>
-                      )}
-                      <p className="text-sm text-muted-foreground">{charge.for_period || "No period specified"}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="font-bold">{formatCurrency(charge.amount)}</p>
-                      {charge.paid_amount > 0 && (
-                        <p className="text-sm text-green-600">Paid: {formatCurrency(charge.paid_amount)}</p>
-                      )}
-                    </div>
-                    <StatusBadge
-                      status={
-                        charge.status === "paid" ? "success" :
-                        charge.status === "partial" ? "info" :
-                        charge.status === "overdue" ? "error" : "warning"
-                      }
-                      label={charge.status}
-                      size="sm"
-                    />
-                  </div>
-                </div>
-              ))}
+        />
 
-              {charges.length > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t mt-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <IndianRupee className="h-4 w-4" />
-                    <span>{charges.length} charge{charges.length > 1 ? "s" : ""} generated</span>
-                  </div>
-                  <div className="text-right">
-                    {totalPaidAmount > 0 && (
-                      <p className="text-sm text-green-600 flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4" />
-                        {formatCurrency(totalPaidAmount)} paid
-                      </p>
-                    )}
-                    {totalChargesAmount - totalPaidAmount > 0 && (
-                      <p className="text-sm text-amber-600 flex items-center gap-1">
-                        <AlertCircle className="h-4 w-4" />
-                        {formatCurrency(totalChargesAmount - totalPaidAmount)} pending
-                      </p>
-                    )}
-                  </div>
-                </div>
+        {/* Charges Summary Footer */}
+        {charges.length > 1 && (
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <IndianRupee className="h-4 w-4" />
+              <span>{charges.length} charge{charges.length > 1 ? "s" : ""} generated</span>
+            </div>
+            <div className="text-right">
+              {totalPaidAmount > 0 && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4" />
+                  {formatCurrency(totalPaidAmount)} paid
+                </p>
+              )}
+              {totalChargesAmount - totalPaidAmount > 0 && (
+                <p className="text-sm text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {formatCurrency(totalChargesAmount - totalPaidAmount)} pending
+                </p>
               )}
             </div>
-          )}
-        </DetailSection>
-      </div>
+          </div>
+        )}
+      </DetailPageContent>
 
       {/* Record Audit Information */}
       <DetailPageAudit record={reading} entityType="meter_reading" />
