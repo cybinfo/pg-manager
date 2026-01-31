@@ -114,11 +114,11 @@ function SortableItem({ id, children, isEditMode }: SortableItemProps) {
   )
 }
 
-// Use CSS Grid for row-by-row layout (unified across all pages)
-const gridStyles = {
-  1: "grid grid-cols-1",
-  2: "grid grid-cols-1 md:grid-cols-2",
-  3: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+// Use CSS Columns for masonry layout (cards auto-fill available space)
+const columnStyles = {
+  1: "columns-1",
+  2: "columns-1 md:columns-2",
+  3: "columns-1 md:columns-2 lg:columns-3",
 }
 
 const gapStyles = {
@@ -246,9 +246,9 @@ export function SortableMasonry({
   if (!mounted) {
     return (
       <div className={cn(
-        gridStyles[columns],
+        columnStyles[columns],
         gapStyles[gap],
-        "items-start",
+        "[&>*]:break-inside-avoid [&>*]:mb-6",
         className
       )}>
         {children}
@@ -289,9 +289,9 @@ export function SortableMasonry({
         >
           <SortableContext items={order} strategy={verticalListSortingStrategy}>
             <div className={cn(
-              gridStyles[columns],
+              columnStyles[columns],
               gapStyles[gap],
-              "items-start",
+              "[&>*]:break-inside-avoid",
               className
             )}>
               {orderedChildren.map(({ id, element }) => (
@@ -325,9 +325,9 @@ export function SortableMasonry({
       )}
 
       <div className={cn(
-        gridStyles[columns],
+        columnStyles[columns],
         gapStyles[gap],
-        "items-start",
+        "[&>*]:break-inside-avoid [&>*]:mb-6",
         className
       )}>
         {orderedChildren.map(({ id, element }) => (
