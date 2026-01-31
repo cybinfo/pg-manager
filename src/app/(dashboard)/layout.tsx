@@ -38,6 +38,7 @@ import {
   Store,
   Wrench,
   Hammer,
+  ChevronDown,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -84,16 +85,20 @@ const pathFeatures: Record<string, FeatureFlagKey> = {
   "/approvals": "approvals",
 }
 
-// Navigation items with required permissions and feature flags
-// null permission means always visible, string means need that permission
-// feature: null means always visible, string means feature must be enabled
-const navigation: {
+// Navigation item type with optional children for sub-menus
+type NavItem = {
   name: string
   href: string
   icon: React.ComponentType<{ className?: string }>
   permission: string | null
   feature: FeatureFlagKey | null
-}[] = [
+  children?: NavItem[]
+}
+
+// Navigation items with required permissions and feature flags
+// null permission means always visible, string means need that permission
+// feature: null means always visible, string means feature must be enabled
+const navigation: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
   { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", feature: null },
   { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", feature: null },
@@ -102,13 +107,22 @@ const navigation: {
   { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
   { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
   { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", feature: null },
-  { name: "Expenses", href: "/expenses", icon: TrendingDown, permission: "expenses.view", feature: "expenses" },
-  { name: "Daily Spend", href: "/expenses/daily-spend", icon: ShoppingCart, permission: "expenses.view", feature: "expenses" },
-  { name: "Products", href: "/expenses/products", icon: Package, permission: "expenses.view", feature: "expenses" },
-  { name: "Vendors", href: "/expenses/vendors", icon: Store, permission: "expenses.view", feature: "expenses" },
-  { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", feature: "expenses" },
-  { name: "Service Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", feature: "expenses" },
-  { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", feature: "expenses" },
+  {
+    name: "Expenses",
+    href: "/expenses",
+    icon: TrendingDown,
+    permission: "expenses.view",
+    feature: "expenses",
+    children: [
+      { name: "Overview", href: "/expenses", icon: TrendingDown, permission: "expenses.view", feature: "expenses" },
+      { name: "Daily Spend", href: "/expenses/daily-spend", icon: ShoppingCart, permission: "expenses.view", feature: "expenses" },
+      { name: "Products", href: "/expenses/products", icon: Package, permission: "expenses.view", feature: "expenses" },
+      { name: "Vendors", href: "/expenses/vendors", icon: Store, permission: "expenses.view", feature: "expenses" },
+      { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", feature: "expenses" },
+      { name: "Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", feature: "expenses" },
+      { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", feature: "expenses" },
+    ]
+  },
   { name: "Meter Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
   { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", feature: null },
   { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
@@ -136,6 +150,28 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
+
+  // Toggle expanded state for a menu
+  const toggleMenu = (menuName: string) => {
+    setExpandedMenus(prev =>
+      prev.includes(menuName)
+        ? prev.filter(name => name !== menuName)
+        : [...prev, menuName]
+    )
+  }
+
+  // Check if a menu should be expanded (either manually expanded or has active child)
+  const isMenuExpanded = (item: NavItem) => {
+    if (expandedMenus.includes(item.name)) return true
+    // Auto-expand if current path is in children
+    if (item.children) {
+      return item.children.some(child =>
+        pathname === child.href || pathname.startsWith(child.href + "/")
+      )
+    }
+    return false
+  }
 
   // Use auth context - isPlatformAdmin is centralized here
   const { user, profile, contexts, isLoading, logout, hasPermission, isPlatformAdmin } = useAuth()
@@ -145,23 +181,40 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { isEnabled: isFeatureEnabled } = useFeatures()
 
   // Filter navigation based on permissions AND feature flags
-  const filteredNavigation = navigation.filter(item => {
+  const filterNavItem = (item: NavItem): NavItem | null => {
     // Check feature flag first - if feature is disabled, hide the item
     if (item.feature !== null && !isFeatureEnabled(item.feature)) {
-      return false
+      return null
     }
 
-    // Then check permissions
-    // Always show items with no permission requirement
-    if (item.permission === null) return true
-    // Owners see everything (permission-wise)
-    if (currentContext.isOwner) return true
-    // Check staff permissions
-    return hasPermission(item.permission)
-  })
+    // Check permissions
+    const hasAccess = item.permission === null ||
+      currentContext.isOwner ||
+      hasPermission(item.permission)
+
+    if (!hasAccess) return null
+
+    // If item has children, filter them too
+    if (item.children) {
+      const filteredChildren = item.children
+        .map(child => filterNavItem(child))
+        .filter((child): child is NavItem => child !== null)
+
+      // If no children pass the filter, hide the parent
+      if (filteredChildren.length === 0) return null
+
+      return { ...item, children: filteredChildren }
+    }
+
+    return item
+  }
+
+  const filteredNavigation = navigation
+    .map(item => filterNavItem(item))
+    .filter((item): item is NavItem => item !== null)
 
   // Add admin link for platform admins
-  const finalNavigation = isPlatformAdmin
+  const finalNavigation: NavItem[] = isPlatformAdmin
     ? [...filteredNavigation, { name: "Admin", href: "/admin", icon: Shield, permission: null, feature: null }]
     : filteredNavigation
 
@@ -318,24 +371,88 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <ul className="space-y-1">
               {finalNavigation.map((item) => {
-                // Fix: Dashboard should only be active on exact match, not on all routes
-                const isActive = item.href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname === item.href || pathname.startsWith(item.href + "/")
+                const hasChildren = item.children && item.children.length > 0
+                const isExpanded = hasChildren && isMenuExpanded(item)
+
+                // For items with children, check if any child is active
+                const isParentActive = hasChildren && item.children?.some(
+                  (child: NavItem) => pathname === child.href || pathname.startsWith(child.href + "/")
+                )
+
+                // For items without children, check direct match
+                const isActive = !hasChildren && (
+                  item.href === "/dashboard"
+                    ? pathname === "/dashboard"
+                    : pathname === item.href || pathname.startsWith(item.href + "/")
+                )
+
                 return (
                   <li key={item.name}>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        isActive
-                          ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <item.icon className={`h-5 w-5 ${isActive ? "animate-scale-in" : ""}`} />
-                      {item.name}
-                    </Link>
+                    {hasChildren ? (
+                      // Parent item with children - collapsible
+                      <>
+                        <button
+                          onClick={() => toggleMenu(item.name)}
+                          className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            isParentActive
+                              ? "bg-teal-50 text-teal-700"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <item.icon className="h-5 w-5" />
+                            {item.name}
+                          </div>
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform duration-200 ${
+                              isExpanded ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                        {/* Sub-menu */}
+                        <ul
+                          className={`overflow-hidden transition-all duration-200 ${
+                            isExpanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                          }`}
+                        >
+                          {item.children?.map((child: NavItem) => {
+                            const isChildActive =
+                              pathname === child.href ||
+                              (child.href !== "/expenses" && pathname.startsWith(child.href + "/"))
+                            return (
+                              <li key={child.href}>
+                                <Link
+                                  href={child.href}
+                                  className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                                    isChildActive
+                                      ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
+                                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                  }`}
+                                  onClick={() => setSidebarOpen(false)}
+                                >
+                                  <child.icon className={`h-4 w-4 ${isChildActive ? "animate-scale-in" : ""}`} />
+                                  {child.name}
+                                </Link>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      </>
+                    ) : (
+                      // Regular item without children
+                      <Link
+                        href={item.href}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          isActive
+                            ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <item.icon className={`h-5 w-5 ${isActive ? "animate-scale-in" : ""}`} />
+                        {item.name}
+                      </Link>
+                    )}
                   </li>
                 )
               })}
