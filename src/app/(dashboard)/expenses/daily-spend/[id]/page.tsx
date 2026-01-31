@@ -202,12 +202,11 @@ export default function DailySpendDetailPage({
             className="max-w-sm"
           />
 
-          {/* Content - Using single column for simpler detail pages */}
+          {/* Content */}
           <DetailPageTemplate
             layoutKey="daily-spend-detail"
             entityType="daily_spend"
             record={entry}
-            columns={1}
           >
             {/* Purchase Details */}
             <DetailSection title="Purchase Details" icon={Package}>
