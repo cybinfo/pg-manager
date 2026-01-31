@@ -108,6 +108,12 @@ export interface Visitor {
   department: string | null
 
   created_at: string
+  updated_at?: string
+
+  // Audit fields
+  created_by?: string | null
+  deleted_at?: string | null
+  deleted_by?: string | null
 
   // Joined fields
   property?: { id: string; name: string }

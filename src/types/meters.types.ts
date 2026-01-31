@@ -95,6 +95,11 @@ export interface Meter {
   notes?: string | null
   created_at: string
   updated_at: string
+
+  // Audit fields
+  created_by?: string | null
+  deleted_at?: string | null
+  deleted_by?: string | null
 }
 
 export interface MeterWithRelations extends Meter {

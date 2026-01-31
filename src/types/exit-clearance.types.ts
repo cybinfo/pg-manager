@@ -55,6 +55,11 @@ export interface ExitClearance {
   updated_at: string
   completed_at: string | null
 
+  // Audit fields
+  created_by?: string | null
+  deleted_at?: string | null
+  deleted_by?: string | null
+
   // Joined fields
   tenant?: {
     id: string

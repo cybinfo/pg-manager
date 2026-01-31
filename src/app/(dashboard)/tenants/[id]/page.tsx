@@ -55,8 +55,7 @@ import { formatDate, formatCurrency } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
-import { RecordMetadata } from "@/components/ui/record-metadata"
-import { ActivityHistory } from "@/components/ui/activity-history"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 // Types for related data
 interface Payment {
@@ -810,24 +809,7 @@ export default function TenantDetailPage() {
       )}
 
       {/* Record Audit Information */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <RecordMetadata
-          record={{
-            created_at: tenant.created_at,
-            updated_at: tenant.updated_at,
-            created_by: tenant.created_by,
-            deleted_at: tenant.deleted_at,
-            deleted_by: tenant.deleted_by,
-          }}
-          className="p-4 border rounded-lg bg-muted/30"
-        />
-        <ActivityHistory
-          entityType="tenant"
-          entityId={tenant.id}
-          maxItems={5}
-          title="Recent Activity"
-        />
-      </div>
+      <DetailPageAudit record={tenant} entityType="tenant" />
 
       {/* Room Transfer Modal */}
       {showTransferModal && (

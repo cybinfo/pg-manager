@@ -113,3 +113,5 @@ export {
 // Audit & Activity Components
 export { RecordMetadata, RecordMetadataInline } from "./record-metadata"
 export { ActivityHistory, ActivityHistoryCompact } from "./activity-history"
+export { DetailPageAudit, AUDIT_ENTITY_TYPES } from "./detail-page-audit"
+export type { AuditEntityType } from "./detail-page-audit"

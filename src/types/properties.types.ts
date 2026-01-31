@@ -52,6 +52,11 @@ export interface Property {
   website_slug: string | null
   website_enabled: boolean
 
+  // Audit fields
+  created_by?: string | null
+  deleted_at?: string | null
+  deleted_by?: string | null
+
   // Computed fields
   room_count?: number
   tenant_count?: number

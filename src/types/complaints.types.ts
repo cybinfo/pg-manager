@@ -90,6 +90,11 @@ export interface Complaint {
   created_at: string
   updated_at: string
 
+  // Audit fields
+  created_by?: string | null
+  deleted_at?: string | null
+  deleted_by?: string | null
+
   // Joined fields
   tenant?: {
     id: string
