@@ -461,8 +461,10 @@ export function DataTable<T extends object>({
       )
     }
 
-    // Apply multi-column sorting
-    if (sortConfigs.length > 0) {
+    // Apply multi-column sorting ONLY if sorting is handled client-side
+    // Skip if onSortChange is provided (sorting handled by server)
+    const isExternalSort = !!onSortChange
+    if (!isExternalSort && sortConfigs.length > 0) {
       result.sort((a, b) => {
         // Iterate through sort columns in order
         for (const sortConfig of sortConfigs) {
@@ -500,7 +502,7 @@ export function DataTable<T extends object>({
     }
 
     return result
-  }, [data, search, searchFields, sortConfigs, columns, isExternalSearch])
+  }, [data, search, searchFields, sortConfigs, columns, isExternalSearch, onSortChange])
 
   // Build nested group structure recursively
   const buildNestedGroups = React.useCallback(

@@ -186,40 +186,37 @@ const metrics: MetricConfig<DailySpendItem>[] = [
     id: "total_spend",
     label: "Total Spend",
     icon: TrendingUp,
-    compute: (items) => items.reduce((sum, i) => sum + Number(i.total), 0),
+    compute: (_items, _total, serverData) => serverData?.total_spend ?? 0,
     format: "currency",
+    serverSum: { column: "total" },
   },
   {
     id: "total_items",
     label: "Items",
     icon: Package,
-    compute: (items, total) => total,
+    compute: (_items, total) => total,
     format: "number",
   },
   {
     id: "cash",
     label: "Cash",
     icon: ShoppingBag,
-    compute: (items) =>
-      items.filter((i) => i.payment_mode === "cash").reduce((sum, i) => sum + Number(i.total), 0),
+    compute: (_items, _total, serverData) => serverData?.cash ?? 0,
     format: "currency",
-    serverFilter: {
-      column: "payment_mode",
-      operator: "eq",
-      value: "cash",
+    serverSum: {
+      column: "total",
+      filter: { column: "payment_mode", operator: "eq", value: "cash" },
     },
   },
   {
     id: "upi",
     label: "UPI",
     icon: ShoppingBag,
-    compute: (items) =>
-      items.filter((i) => i.payment_mode === "upi").reduce((sum, i) => sum + Number(i.total), 0),
+    compute: (_items, _total, serverData) => serverData?.upi ?? 0,
     format: "currency",
-    serverFilter: {
-      column: "payment_mode",
-      operator: "eq",
-      value: "upi",
+    serverSum: {
+      column: "total",
+      filter: { column: "payment_mode", operator: "eq", value: "upi" },
     },
   },
 ]

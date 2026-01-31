@@ -241,6 +241,7 @@ export function useListPage<T extends object>(
   const metricsRef = useRef(metrics)
   const filterConfigsRef = useRef(filterConfigs)
   const selectedGroupsRef = useRef(selectedGroups)
+  const sortConfigRef = useRef(sortConfig)
   const initialFetchDone = useRef(false)
 
   // Refs for fetch functions - used by applyViewConfig to avoid dependency loops
@@ -262,6 +263,11 @@ export function useListPage<T extends object>(
   useEffect(() => {
     selectedGroupsRef.current = selectedGroups
   }, [selectedGroups])
+
+  // Keep sortConfig ref in sync with state
+  useEffect(() => {
+    sortConfigRef.current = sortConfig
+  }, [sortConfig])
 
   // Fetch filter options - uses ref to avoid dependency issues
   const fetchFilterOptions = useCallback(async () => {
@@ -301,12 +307,13 @@ export function useListPage<T extends object>(
   }, []) // No dependencies - uses ref
 
   // Fetch main data - uses ref to avoid dependency issues
-  // Now applies server-side filters for proper pagination
+  // Now applies server-side filters and sorting for proper pagination
   const fetchData = useCallback(async (
     fetchPage?: number,
     fetchPageSize?: number,
     fetchFilters?: Record<string, string>,
-    fetchSearchQuery?: string
+    fetchSearchQuery?: string,
+    fetchSort?: SortConfig[]
   ) => {
     if (!enabled) return
 
@@ -316,6 +323,7 @@ export function useListPage<T extends object>(
     const currentPageSize = fetchPageSize ?? pageSize
     const currentFilters = fetchFilters ?? filters
     const currentSearchQuery = fetchSearchQuery ?? searchQuery
+    const currentSort = fetchSort ?? sortConfigRef.current
     setLoading(true)
     setError(null)
 
@@ -326,7 +334,18 @@ export function useListPage<T extends object>(
       let query = supabase
         .from(currentConfig.table)
         .select(currentConfig.select, { count: "exact" })
-        .order(currentConfig.defaultOrderBy, { ascending: currentConfig.defaultOrderDirection === "asc" })
+
+      // Apply user sort if specified, otherwise use default
+      if (currentSort.length > 0) {
+        for (const sort of currentSort) {
+          // Handle nested sort keys (e.g., "category.name" -> just "category")
+          // For now, we only support direct column sorting server-side
+          const sortColumn = sort.key.includes(".") ? sort.key.split(".")[0] : sort.key
+          query = query.order(sortColumn, { ascending: sort.direction === "asc" })
+        }
+      } else {
+        query = query.order(currentConfig.defaultOrderBy, { ascending: currentConfig.defaultOrderDirection === "asc" })
+      }
 
       // Filter out soft-deleted records by default
       if (!currentConfig.includeSoftDeleted) {
@@ -794,9 +813,14 @@ export function useListPage<T extends object>(
   }, [pageSize, filters, fetchData, fetchServerCounts, fetchServerSums])
 
   // Sort setters - now receives array from DataTable for multi-column sorting
+  // Triggers server-side refetch with new sort applied
   const handleSortChange = useCallback((configs: SortConfig[]) => {
     setSortConfig(configs)
-  }, [])
+    sortConfigRef.current = configs // Update ref immediately
+    setPageState(1) // Reset to page 1 when sort changes
+    // Refetch data with new sort
+    fetchData(1, pageSize, filters, searchQuery, configs)
+  }, [fetchData, pageSize, filters, searchQuery])
 
   const clearSort = useCallback(() => {
     setSortConfig([])
@@ -1644,6 +1668,29 @@ export const KITCHEN_WASTAGE_LIST_CONFIG: ListPageConfig<Record<string, unknown>
       reason_label_hi: reasonLabels[item.reason as string]?.labelHi || item.reason,
       display_value: `₹${(item.estimated_value as number)?.toLocaleString("en-IN")}`,
       display_qty: `${item.quantity} ${item.unit}`,
+    }
+  },
+}
+
+export const MISC_TRANSACTION_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "misc_transactions",
+  select: `
+    *,
+    category:misc_transaction_categories(id, name, name_hi, default_type),
+    property:properties(id, name),
+    tenant:tenants(id, name)
+  `,
+  defaultOrderBy: "transaction_date",
+  defaultOrderDirection: "desc",
+  searchFields: ["person_name", "description", "notes", "category_name"],
+  joinFields: ["category", "property", "tenant"],
+  computedFields: (item) => {
+    const date = item.transaction_date ? new Date(item.transaction_date as string) : new Date()
+    return {
+      transaction_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      transaction_year: date.getFullYear().toString(),
+      type_label: item.transaction_type === "in" ? "Money In" : "Money Out",
+      display_amount: `₹${(item.amount as number)?.toLocaleString("en-IN")}`,
     }
   },
 }

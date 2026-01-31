@@ -162,14 +162,14 @@ const metrics: MetricConfig<Product>[] = [
     id: "total",
     label: "Total Products",
     icon: Package,
-    compute: (items, total) => total,
+    compute: (_items, total) => total,
     format: "number",
   },
   {
     id: "active",
     label: "Active",
     icon: Check,
-    compute: (items) => items.filter((p) => p.is_active).length,
+    compute: (_items, _total, serverData) => serverData?.active ?? 0,
     format: "number",
     serverFilter: {
       column: "is_active",
@@ -181,7 +181,7 @@ const metrics: MetricConfig<Product>[] = [
     id: "inactive",
     label: "Inactive",
     icon: X,
-    compute: (items) => items.filter((p) => !p.is_active).length,
+    compute: (_items, _total, serverData) => serverData?.inactive ?? 0,
     format: "number",
     serverFilter: {
       column: "is_active",
@@ -194,6 +194,8 @@ const metrics: MetricConfig<Product>[] = [
     label: "Categories",
     icon: Tag,
     compute: (items) => {
+      // Note: This is computed from current page data as there's no simple way
+      // to count distinct categories server-side via REST API
       const categories = new Set(items.map((p) => p.category?.id).filter(Boolean))
       return categories.size
     },

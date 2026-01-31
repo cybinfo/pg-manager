@@ -197,15 +197,14 @@ const metrics: MetricConfig<BillPaymentListItem>[] = [
     id: "total",
     label: "Total Bills",
     icon: Receipt,
-    compute: (items, total) => total,
+    compute: (_items, total) => total,
     format: "number",
   },
   {
     id: "pending",
     label: "Pending",
     icon: Clock,
-    compute: (items) =>
-      items.filter((b) => b.status === "pending" || b.status === "partial").length,
+    compute: (_items, _total, serverData) => serverData?.pending ?? 0,
     format: "number",
     serverFilter: {
       column: "status",
@@ -217,7 +216,7 @@ const metrics: MetricConfig<BillPaymentListItem>[] = [
     id: "overdue",
     label: "Overdue",
     icon: AlertCircle,
-    compute: (items) => items.filter((b) => b.status === "overdue").length,
+    compute: (_items, _total, serverData) => serverData?.overdue ?? 0,
     format: "number",
     serverFilter: {
       column: "status",
@@ -229,8 +228,9 @@ const metrics: MetricConfig<BillPaymentListItem>[] = [
     id: "total_amount",
     label: "Total Amount",
     icon: IndianRupee,
-    compute: (items) => items.reduce((sum, b) => sum + Number(b.bill_amount), 0),
+    compute: (_items, _total, serverData) => serverData?.total_amount ?? 0,
     format: "currency",
+    serverSum: { column: "bill_amount" },
   },
 ]
 
