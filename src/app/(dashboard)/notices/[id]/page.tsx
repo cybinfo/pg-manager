@@ -33,6 +33,7 @@ import { toast } from "sonner"
 import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import { Notice, NOTICE_TYPE_CONFIG, NoticeType } from "@/types/notices.types"
 
 interface Property {
@@ -482,6 +483,9 @@ export default function NoticeDetailPage() {
           </div>
         </div>
       </DetailSection>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={notice} entityType="notice" />
 
       <div className="flex justify-end gap-4">
         <Link href="/notices">

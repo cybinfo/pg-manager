@@ -15,6 +15,7 @@ import {
   Check
 } from "lucide-react"
 import { toast } from "sonner"
+import { withCreatedBy } from "@/lib/audit"
 
 // Available permissions grouped by module
 const permissionGroups: Record<string, { label: string; permissions: { key: string; label: string }[] }> = {
@@ -197,13 +198,15 @@ export default function NewRolePage() {
         return
       }
 
-      const { error } = await supabase.from("roles").insert({
-        owner_id: user.id,
-        name: formData.name,
-        description: formData.description || null,
-        is_system_role: false,
-        permissions: selectedPermissions,
-      })
+      const { error } = await supabase.from("roles").insert(
+        withCreatedBy({
+          owner_id: user.id,
+          name: formData.name,
+          description: formData.description || null,
+          is_system_role: false,
+          permissions: selectedPermissions,
+        }, user.id)
+      )
 
       if (error) {
         console.error("Error creating role:", error)

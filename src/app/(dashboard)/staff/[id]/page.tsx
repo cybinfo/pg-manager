@@ -33,6 +33,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { PermissionGate } from "@/components/auth"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -472,6 +473,9 @@ export default function StaffDetailPage() {
           )}
         </DetailSection>
       </div>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={staff} entityType="staff" />
     </div>
   )
 }

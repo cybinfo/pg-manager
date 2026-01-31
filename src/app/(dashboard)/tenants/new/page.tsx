@@ -19,6 +19,7 @@ import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-utils"
 import { PageLoader } from "@/components/ui/page-loader"
 import { sendInvitationEmail } from "@/lib/email"
+import { withCreatedBy } from "@/lib/audit"
 import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
@@ -408,17 +409,19 @@ export default function NewTenantPage() {
 
           const { error: contextError } = await supabase
             .from("user_contexts")
-            .insert({
-              user_id: existingUserId,
-              workspace_id: workspace.id,
-              context_type: "tenant",
-              entity_id: newTenant.id,
-              is_active: true,
-              is_default: false,
-              invited_by: user.id,
-              invited_at: new Date().toISOString(),
-              accepted_at: new Date().toISOString(),
-            })
+            .insert(
+              withCreatedBy({
+                user_id: existingUserId,
+                workspace_id: workspace.id,
+                context_type: "tenant",
+                entity_id: newTenant.id,
+                is_active: true,
+                is_default: false,
+                invited_by: user.id,
+                invited_at: new Date().toISOString(),
+                accepted_at: new Date().toISOString(),
+              }, user.id)
+            )
 
           if (!contextError) {
             debugLog("Tenant linked to existing user", { existingUserId })
@@ -427,17 +430,19 @@ export default function NewTenantPage() {
           // User doesn't exist - create invitation for tenant portal
           const { data: invitation, error: inviteError } = await supabase
             .from("invitations")
-            .insert({
-              workspace_id: workspace.id,
-              invited_by: user.id,
-              email: primaryEmail,
-              phone: selectedPerson.phone || null,
-              name: selectedPerson.name,
-              context_type: "tenant",
-              entity_id: newTenant.id,
-              status: "pending",
-              message: `You've been added as a tenant at ${workspace.name}. Sign up to access your tenant portal.`,
-            })
+            .insert(
+              withCreatedBy({
+                workspace_id: workspace.id,
+                invited_by: user.id,
+                email: primaryEmail,
+                phone: selectedPerson.phone || null,
+                name: selectedPerson.name,
+                context_type: "tenant",
+                entity_id: newTenant.id,
+                status: "pending",
+                message: `You've been added as a tenant at ${workspace.name}. Sign up to access your tenant portal.`,
+              }, user.id)
+            )
             .select("id, token")
             .single()
 

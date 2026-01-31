@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 const paymentMethodLabels: Record<string, string> = {
   cash: "Cash",
@@ -197,6 +198,9 @@ export default function ExpenseDetailPage() {
           </div>
         </DetailSection>
       </div>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={expense} entityType="expense" />
     </div>
   )
 }

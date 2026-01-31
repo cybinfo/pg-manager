@@ -49,7 +49,10 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatCurrency } from "@/lib/format"
+import { softDelete, cascadeSoftDelete } from "@/lib/audit"
+import { useAuth } from "@/lib/auth"
 import { PermissionGuard, PermissionGate } from "@/components/auth"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   Person,
   PersonTenantHistory,
@@ -127,6 +130,7 @@ const TagBadge = ({ tag }: { tag: string }) => (
 export default function PersonDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { user } = useAuth()
   const [visitHistory, setVisitHistory] = useState<PersonVisitHistory[]>([])
 
   const {
@@ -335,7 +339,7 @@ export default function PersonDetailPage() {
 
   // Handle delete person
   const handleDelete = async () => {
-    if (!person) return
+    if (!person || !user) return
 
     if (summary.is_current_tenant) {
       toast.error("Cannot delete: This person is currently an active tenant")
@@ -353,11 +357,11 @@ export default function PersonDetailPage() {
     if (visitHistory.length > 0) deleteDetails.push("visitor contact record")
 
     const detailsText = deleteDetails.length > 0
-      ? `\n\nThe following related records will also be deleted:\n- ${deleteDetails.join("\n- ")}`
+      ? `\n\nThe following related records will also be archived:\n- ${deleteDetails.join("\n- ")}`
       : ""
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${person.name}"?\n\nThis action cannot be undone.${detailsText}`
+      `Are you sure you want to delete "${person.name}"?\n\nThis action will archive the record.${detailsText}`
     )
 
     if (!confirmed) return
@@ -365,18 +369,34 @@ export default function PersonDetailPage() {
     const supabase = createClient()
 
     try {
-      // Delete related records first
-      await supabase.from("visitor_contacts").delete().eq("person_id", person.id)
+      // Soft delete related records first using cascade
+      const cascadeConfigs: { table: "tenants" | "staff_members" | "visitor_contacts"; foreignKey: string }[] = [
+        { table: "visitor_contacts", foreignKey: "person_id" },
+      ]
+
       if (staffHistory.length > 0) {
-        await supabase.from("staff_members").delete().eq("person_id", person.id)
+        cascadeConfigs.push({ table: "staff_members", foreignKey: "person_id" })
       }
       if (tenantHistory.length > 0) {
-        await supabase.from("tenants").delete().eq("person_id", person.id)
+        cascadeConfigs.push({ table: "tenants", foreignKey: "person_id" })
       }
+
+      // Cascade soft delete related records
+      const { errors: cascadeErrors } = await cascadeSoftDelete(
+        person.id,
+        user.id,
+        cascadeConfigs
+      )
+
+      if (cascadeErrors.length > 0) {
+        console.error("Cascade soft delete errors:", cascadeErrors)
+      }
+
+      // Hard delete person_roles (join table, not auditable per user request)
       await supabase.from("person_roles").delete().eq("person_id", person.id)
 
-      // Delete the person
-      const { error } = await supabase.from("people").delete().eq("id", person.id)
+      // Soft delete the person
+      const { error } = await softDelete("people", person.id, user.id)
 
       if (error) {
         toast.error("Failed to delete person")
@@ -837,6 +857,9 @@ export default function PersonDetailPage() {
             </div>
           </div>
         </DetailSection>
+
+        {/* Record Audit Information */}
+        <DetailPageAudit record={person} entityType="person" />
       </div>
     </PermissionGuard>
   )

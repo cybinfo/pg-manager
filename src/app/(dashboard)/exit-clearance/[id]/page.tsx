@@ -38,6 +38,7 @@ import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   ExitClearance,
   Deduction,
@@ -577,6 +578,9 @@ export default function ExitClearanceDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={clearance} entityType="exit_clearance" />
     </div>
   )
 }

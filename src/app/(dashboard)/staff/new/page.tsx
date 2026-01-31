@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { sendInvitationEmail } from "@/lib/email"
+import { withCreatedBy, withCreatedByBatch } from "@/lib/audit"
 import { PageLoader } from "@/components/ui/page-loader"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
@@ -239,15 +240,17 @@ export default function NewStaffPage() {
       // Step 3: Create staff member (with user_id and person_id if exists)
       const { data: staffData, error: staffError } = await supabase
         .from("staff_members")
-        .insert({
-          owner_id: user.id,
-          name: staffName,
-          email: staffEmail,
-          phone: staffPhone || null,
-          is_active: true,
-          user_id: existingProfile?.user_id || null, // Link if user exists
-          person_id: personId, // Link to person record
-        })
+        .insert(
+          withCreatedBy({
+            owner_id: user.id,
+            name: staffName,
+            email: staffEmail,
+            phone: staffPhone || null,
+            is_active: true,
+            user_id: existingProfile?.user_id || null, // Link if user exists
+            person_id: personId, // Link to person record
+          }, user.id)
+        )
         .select()
         .single()
 
@@ -269,7 +272,7 @@ export default function NewStaffPage() {
 
         const { error: roleError } = await supabase
           .from("user_roles")
-          .insert(roleInserts)
+          .insert(withCreatedByBatch(roleInserts, user.id))
 
         if (roleError) {
           console.error("Error assigning roles:", roleError)
@@ -282,18 +285,20 @@ export default function NewStaffPage() {
         // User exists - create user_context directly
         const { error: contextError } = await supabase
           .from("user_contexts")
-          .insert({
-            user_id: existingProfile.user_id,
-            workspace_id: workspace.id,
-            context_type: "staff",
-            role_id: primaryRoleId,
-            entity_id: staffData.id,
-            is_active: true,
-            is_default: false,
-            invited_by: user.id,
-            invited_at: new Date().toISOString(),
-            accepted_at: new Date().toISOString(), // Auto-accepted since user exists
-          })
+          .insert(
+            withCreatedBy({
+              user_id: existingProfile.user_id,
+              workspace_id: workspace.id,
+              context_type: "staff",
+              role_id: primaryRoleId,
+              entity_id: staffData.id,
+              is_active: true,
+              is_default: false,
+              invited_by: user.id,
+              invited_at: new Date().toISOString(),
+              accepted_at: new Date().toISOString(), // Auto-accepted since user exists
+            }, user.id)
+          )
 
         if (contextError) {
           console.error("Error creating context:", contextError)
@@ -305,18 +310,20 @@ export default function NewStaffPage() {
         // Person-centric: Use staffEmail (from selectedPerson or formData)
         const { data: invitation, error: inviteError } = await supabase
           .from("invitations")
-          .insert({
-            workspace_id: workspace.id,
-            invited_by: user.id,
-            email: staffEmail,
-            phone: staffPhone || null,
-            name: staffName,
-            context_type: "staff",
-            role_id: primaryRoleId,
-            entity_id: staffData.id,
-            status: "pending",
-            message: `You've been invited to join ${workspace.name} as a staff member.`,
-          })
+          .insert(
+            withCreatedBy({
+              workspace_id: workspace.id,
+              invited_by: user.id,
+              email: staffEmail,
+              phone: staffPhone || null,
+              name: staffName,
+              context_type: "staff",
+              role_id: primaryRoleId,
+              entity_id: staffData.id,
+              status: "pending",
+              message: `You've been invited to join ${workspace.name} as a staff member.`,
+            }, user.id)
+          )
           .select("id, token")
           .single()
 

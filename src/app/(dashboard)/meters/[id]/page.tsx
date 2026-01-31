@@ -53,6 +53,7 @@ import {
 import { toast } from "sonner"
 import { formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   MeterType,
   MeterStatus,
@@ -631,6 +632,9 @@ export default function MeterDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={meter} entityType="meter" />
 
       {/* End Assignment Dialog */}
       <Dialog open={showEndAssignDialog} onOpenChange={setShowEndAssignDialog}>

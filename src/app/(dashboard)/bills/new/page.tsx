@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatCurrency } from "@/lib/format"
+import { withCreatedBy } from "@/lib/audit"
 import { PageLoader } from "@/components/ui/page-loader"
 import { cn } from "@/lib/utils"
 
@@ -388,30 +389,32 @@ function NewBillContent() {
       // Create bill
       const { data: bill, error: billError } = await (supabase
         .from("bills") as ReturnType<typeof supabase.from>)
-        .insert({
-          owner_id: user.id,
-          tenant_id: selectedTenant,
-          property_id: tenant?.property_id,
-          bill_number: billNumber,
-          bill_date: formData.bill_date,
-          due_date: formData.due_date,
-          period_start: periodStart.toISOString().split("T")[0],
-          period_end: periodEnd.toISOString().split("T")[0],
-          for_month: formData.for_month,
-          subtotal,
-          discount_amount: Number(formData.discount_amount),
-          previous_balance: Number(formData.previous_balance),
-          total_amount: total,
-          balance_due: total,
-          status: "pending",
-          line_items: lineItems.map((item) => ({
-            type: item.type,
-            description: item.description,
-            amount: item.amount,
-          })),
-          notes: formData.notes || null,
-          generated_at: new Date().toISOString(),
-        } as Record<string, unknown>)
+        .insert(
+          withCreatedBy({
+            owner_id: user.id,
+            tenant_id: selectedTenant,
+            property_id: tenant?.property_id,
+            bill_number: billNumber,
+            bill_date: formData.bill_date,
+            due_date: formData.due_date,
+            period_start: periodStart.toISOString().split("T")[0],
+            period_end: periodEnd.toISOString().split("T")[0],
+            for_month: formData.for_month,
+            subtotal,
+            discount_amount: Number(formData.discount_amount),
+            previous_balance: Number(formData.previous_balance),
+            total_amount: total,
+            balance_due: total,
+            status: "pending",
+            line_items: lineItems.map((item) => ({
+              type: item.type,
+              description: item.description,
+              amount: item.amount,
+            })),
+            notes: formData.notes || null,
+            generated_at: new Date().toISOString(),
+          }, user.id)
+        )
         .select()
         .single()
 

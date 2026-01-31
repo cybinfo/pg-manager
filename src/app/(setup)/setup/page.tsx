@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { withCreatedBy } from "@/lib/audit"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -118,12 +119,14 @@ export default function SetupPage() {
       }
 
       // Step 3: Create the first property
-      const { error: propertyError } = await supabase.from("properties").insert({
-        owner_id: user.id,
-        name: propertyName,
-        address: propertyAddress || null,
-        city: propertyCity,
-      })
+      const { error: propertyError } = await supabase.from("properties").insert(
+        withCreatedBy({
+          owner_id: user.id,
+          name: propertyName,
+          address: propertyAddress || null,
+          city: propertyCity,
+        }, user.id)
+      )
 
       if (propertyError) {
         console.error("Property creation error:", propertyError)
@@ -134,11 +137,13 @@ export default function SetupPage() {
       const workspaceName = businessName || propertyName || "My PG Business"
       const { data: workspace, error: workspaceError } = await supabase
         .from("workspaces")
-        .insert({
-          owner_user_id: user.id,
-          name: workspaceName,
-          slug: workspaceName.toLowerCase().replace(/\s+/g, '-') + '-' + user.id.substring(0, 8),
-        })
+        .insert(
+          withCreatedBy({
+            owner_user_id: user.id,
+            name: workspaceName,
+            slug: workspaceName.toLowerCase().replace(/\s+/g, '-') + '-' + user.id.substring(0, 8),
+          }, user.id)
+        )
         .select()
         .single()
 
@@ -151,14 +156,16 @@ export default function SetupPage() {
       if (workspace) {
         const { error: contextError } = await supabase
           .from("user_contexts")
-          .insert({
-            user_id: user.id,
-            workspace_id: workspace.id,
-            context_type: "owner",
-            is_active: true,
-            is_default: true,
-            accepted_at: new Date().toISOString(),
-          })
+          .insert(
+            withCreatedBy({
+              user_id: user.id,
+              workspace_id: workspace.id,
+              context_type: "owner",
+              is_active: true,
+              is_default: true,
+              accepted_at: new Date().toISOString(),
+            }, user.id)
+          )
 
         if (contextError) {
           console.error("Context creation error:", contextError)

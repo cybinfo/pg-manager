@@ -21,6 +21,7 @@ import { TableBadge } from "@/components/ui/data-table"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   Wallet,
   User,
@@ -419,6 +420,9 @@ export default function RefundDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Record Audit Information */}
+        <DetailPageAudit record={refund} entityType="refund" />
       </div>
     </PermissionGuard>
   )

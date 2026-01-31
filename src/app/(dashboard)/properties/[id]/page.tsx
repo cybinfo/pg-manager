@@ -47,6 +47,7 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 const statusColors: Record<string, string> = {
   available: "bg-green-100 text-green-700",
@@ -549,6 +550,9 @@ export default function PropertyDetailPage() {
           )}
         </DetailSection>
       </div>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={property} entityType="property" />
     </div>
   )
 }

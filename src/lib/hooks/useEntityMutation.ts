@@ -31,6 +31,8 @@ import {
 } from "@/lib/services/types"
 import { logAuditEvent, createAuditEvent, diffObjects } from "@/lib/services/audit.service"
 import { sendNotification } from "@/lib/services/notification.service"
+import { softDelete, softDeleteBatch } from "@/lib/audit"
+import type { SoftDeletableTable } from "@/types/audit.types"
 
 // ============================================
 // Types
@@ -262,8 +264,16 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   )
 
   // ============================================
-  // DELETE
+  // DELETE (Soft Delete)
   // ============================================
+
+  // Tables that support soft delete
+  const softDeletableTables: SoftDeletableTable[] = [
+    'tenants', 'bills', 'payments', 'expenses', 'refunds',
+    'complaints', 'notices', 'visitors', 'meter_readings',
+    'exit_clearance', 'properties', 'rooms', 'people', 'meters',
+    'staff_members', 'visitor_contacts'
+  ]
 
   const remove = useCallback(
     async (id: string, mutationOptions?: MutationOptions): Promise<ServiceResult<void>> => {
@@ -277,11 +287,24 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         // Fetch current data for audit
         const { data: before } = await supabase.from(table).select("*").eq("id", id).single()
 
-        // Delete
-        const { error: deleteError } = await supabase.from(table).delete().eq("id", id)
+        // Use soft delete for supported tables, hard delete otherwise
+        if (softDeletableTables.includes(table as SoftDeletableTable)) {
+          const { error: deleteError } = await softDelete(
+            table as SoftDeletableTable,
+            id,
+            actorInfo.actor_id
+          )
 
-        if (deleteError) {
-          throw deleteError
+          if (deleteError) {
+            throw deleteError
+          }
+        } else {
+          // Fall back to hard delete for unsupported tables
+          const { error: deleteError } = await supabase.from(table).delete().eq("id", id)
+
+          if (deleteError) {
+            throw deleteError
+          }
         }
 
         // Audit log
@@ -457,7 +480,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   )
 
   // ============================================
-  // BULK DELETE
+  // BULK DELETE (Soft Delete)
   // ============================================
 
   const bulkDelete = useCallback(
@@ -469,10 +492,24 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         const supabase = createClient()
         const actorInfo = getActorInfo()
 
-        const { error: deleteError } = await supabase.from(table).delete().in("id", ids)
+        // Use soft delete for supported tables, hard delete otherwise
+        if (softDeletableTables.includes(table as SoftDeletableTable)) {
+          const { error: deleteError } = await softDeleteBatch(
+            table as SoftDeletableTable,
+            ids,
+            actorInfo.actor_id
+          )
 
-        if (deleteError) {
-          throw deleteError
+          if (deleteError) {
+            throw deleteError
+          }
+        } else {
+          // Fall back to hard delete for unsupported tables
+          const { error: deleteError } = await supabase.from(table).delete().in("id", ids)
+
+          if (deleteError) {
+            throw deleteError
+          }
         }
 
         // Audit log (bulk)

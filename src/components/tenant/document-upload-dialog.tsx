@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Loader2, Upload } from "lucide-react"
 import { toast } from "sonner"
+import { withCreatedBy } from "@/lib/audit"
 
 export type DocumentType = "id_proof" | "address_proof" | "income_proof" | "agreement" | "receipt" | "other"
 
@@ -67,6 +68,7 @@ export function DocumentUploadDialog({
 
     setLoading(true)
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
     // Extract filename and mime type from URL
     const fileName = fileUrl.split("/").pop() || "document"
@@ -81,18 +83,20 @@ export function DocumentUploadDialog({
     }
     const mimeType = mimeTypeMap[ext || ""] || "application/octet-stream"
 
-    const { error } = await supabase.from("tenant_documents").insert({
-      tenant_id: tenantId,
-      workspace_id: workspaceId,
-      owner_id: ownerId,
-      name: name.trim(),
-      document_type: documentType,
-      description: description.trim() || null,
-      file_url: fileUrl,
-      file_name: fileName,
-      mime_type: mimeType,
-      status: "pending",
-    })
+    const { error } = await supabase.from("tenant_documents").insert(
+      withCreatedBy({
+        tenant_id: tenantId,
+        workspace_id: workspaceId,
+        owner_id: ownerId,
+        name: name.trim(),
+        document_type: documentType,
+        description: description.trim() || null,
+        file_url: fileUrl,
+        file_name: fileName,
+        mime_type: mimeType,
+        status: "pending",
+      }, user?.id || tenantId)
+    )
 
     setLoading(false)
 

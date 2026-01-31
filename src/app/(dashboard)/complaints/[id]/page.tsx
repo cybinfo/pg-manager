@@ -35,6 +35,7 @@ import { RoomLink, TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 const statusLabels: Record<string, string> = {
   open: "Open",
@@ -381,6 +382,9 @@ export default function ComplaintDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={complaint} entityType="complaint" />
     </div>
   )
 }

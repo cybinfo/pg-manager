@@ -45,6 +45,7 @@ import { toast } from "sonner"
 import { formatDateTime, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   Visitor,
   VisitorType,
@@ -678,6 +679,9 @@ export default function VisitorDetailPage() {
           </DetailSection>
         )}
       </div>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={visitor} entityType="visitor" />
     </div>
   )
 }

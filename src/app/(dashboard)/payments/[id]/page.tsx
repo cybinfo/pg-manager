@@ -32,6 +32,7 @@ import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 // Extended Payment type with owner info
 interface PaymentWithOwner extends Payment {
@@ -405,6 +406,9 @@ export default function PaymentReceiptPage() {
           }
         }
       `}</style>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={payment} entityType="payment" />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

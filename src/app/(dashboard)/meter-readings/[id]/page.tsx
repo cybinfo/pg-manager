@@ -40,6 +40,7 @@ import { toast } from "sonner"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 interface MeterReading {
   id: string
@@ -521,6 +522,9 @@ export default function MeterReadingDetailPage() {
           )}
         </DetailSection>
       </div>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={reading} entityType="meter_reading" />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

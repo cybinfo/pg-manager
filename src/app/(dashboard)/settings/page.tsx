@@ -43,6 +43,7 @@ import { PageLoader } from "@/components/ui/page-loader"
 import { OwnerGuard, EmailVerificationCard } from "@/components/auth"
 import { toast } from "sonner"
 import { sendTestEmail } from "@/lib/email"
+import { withCreatedBy } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import {
   Owner,
@@ -354,14 +355,16 @@ export default function SettingsPage() {
 
       const { data, error } = await supabase
         .from("charge_types")
-        .insert({
-          owner_id: user?.id,
-          name: newChargeType.name,
-          code: newChargeType.code.toLowerCase().replace(/\s+/g, "_"),
-          category: "custom",
-          is_enabled: true,
-          display_order: chargeTypes.length + 1,
-        })
+        .insert(
+          withCreatedBy({
+            owner_id: user?.id,
+            name: newChargeType.name,
+            code: newChargeType.code.toLowerCase().replace(/\s+/g, "_"),
+            category: "custom",
+            is_enabled: true,
+            display_order: chargeTypes.length + 1,
+          }, user!.id)
+        )
         .select()
         .single()
 
@@ -424,10 +427,12 @@ export default function SettingsPage() {
         // Create new config if doesn't exist
         const { data, error } = await supabase
           .from("owner_config")
-          .insert({
-            owner_id: user.id,
-            auto_billing_settings: autoBillingSettings,
-          })
+          .insert(
+            withCreatedBy({
+              owner_id: user.id,
+              auto_billing_settings: autoBillingSettings,
+            }, user.id)
+          )
           .select()
           .single()
 
@@ -468,10 +473,12 @@ export default function SettingsPage() {
         // Create new config if doesn't exist
         const { data, error } = await supabase
           .from("owner_config")
-          .insert({
-            owner_id: user.id,
-            ...updateData,
-          })
+          .insert(
+            withCreatedBy({
+              owner_id: user.id,
+              ...updateData,
+            }, user.id)
+          )
           .select()
           .single()
 
@@ -507,7 +514,7 @@ export default function SettingsPage() {
       } else {
         const { data, error } = await supabase
           .from("owner_config")
-          .insert({ owner_id: user.id, ...updateData })
+          .insert(withCreatedBy({ owner_id: user.id, ...updateData }, user.id))
           .select()
           .single()
         if (error) throw error
@@ -542,7 +549,7 @@ export default function SettingsPage() {
       } else {
         const { data, error } = await supabase
           .from("owner_config")
-          .insert({ owner_id: user.id, ...updateData })
+          .insert(withCreatedBy({ owner_id: user.id, ...updateData }, user.id))
           .select()
           .single()
         if (error) throw error
@@ -716,13 +723,15 @@ export default function SettingsPage() {
 
       const { data, error } = await supabase
         .from("expense_types")
-        .insert({
-          owner_id: user?.id,
-          name: newExpenseType.name,
-          code: newExpenseType.code.toLowerCase().replace(/\s+/g, "_"),
-          is_enabled: true,
-          display_order: expenseTypes.length + 1,
-        })
+        .insert(
+          withCreatedBy({
+            owner_id: user?.id,
+            name: newExpenseType.name,
+            code: newExpenseType.code.toLowerCase().replace(/\s+/g, "_"),
+            is_enabled: true,
+            display_order: expenseTypes.length + 1,
+          }, user!.id)
+        )
         .select()
         .single()
 

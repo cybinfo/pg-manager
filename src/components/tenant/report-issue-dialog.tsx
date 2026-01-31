@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, AlertCircle, FileText, Paperclip } from "lucide-react"
 import { toast } from "sonner"
+import { withCreatedBy } from "@/lib/audit"
 
 interface TenantDocument {
   id: string
@@ -133,6 +134,7 @@ export function ReportIssueDialog({
 
     setLoading(true)
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
     // Build payload based on approval type
     const payload: Record<string, unknown> = {
@@ -155,17 +157,19 @@ export function ReportIssueDialog({
     const typeLabel = APPROVAL_TYPE_LABELS[approvalType]
     const title = `${typeLabel} Request: ${fieldLabel}`
 
-    const { error } = await supabase.from("approvals").insert({
-      requester_tenant_id: tenantId,
-      workspace_id: workspaceId,
-      owner_id: ownerId,
-      type: approvalType,
-      title,
-      description: reason.trim(),
-      payload,
-      status: "pending",
-      document_ids: selectedDocIds.length > 0 ? selectedDocIds : null,
-    })
+    const { error } = await supabase.from("approvals").insert(
+      withCreatedBy({
+        requester_tenant_id: tenantId,
+        workspace_id: workspaceId,
+        owner_id: ownerId,
+        type: approvalType,
+        title,
+        description: reason.trim(),
+        payload,
+        status: "pending",
+        document_ids: selectedDocIds.length > 0 ? selectedDocIds : null,
+      }, user?.id || tenantId)
+    )
 
     setLoading(false)
 

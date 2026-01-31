@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { toast } from "sonner"
+import { softDelete, cascadeSoftDelete } from "@/lib/audit"
+import type { SoftDeletableTable } from "@/types/audit.types"
 
 // ============================================
 // Types
@@ -343,7 +345,7 @@ export function useDetailPage<T extends object>(
     [data, id]
   )
 
-  // Delete record
+  // Delete record (soft delete)
   const deleteRecord = useCallback(
     async (options?: {
       confirm?: boolean
@@ -358,7 +360,7 @@ export function useDetailPage<T extends object>(
       // Show confirmation if needed
       if (confirm) {
         const confirmed = window.confirm(
-          "Are you sure you want to delete this item? This action cannot be undone."
+          "Are you sure you want to delete this item? This action will archive the record."
         )
         if (!confirmed) return false
       }
@@ -368,19 +370,69 @@ export function useDetailPage<T extends object>(
       try {
         const supabase = createClient()
 
-        // Delete cascade records first
-        for (const cascade of cascadeDeletes) {
+        // Get current user for audit trail
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          toast.error("Session expired. Please log in again.")
+          return false
+        }
+
+        // Tables that support soft delete
+        const softDeletableTables: SoftDeletableTable[] = [
+          'tenants', 'bills', 'payments', 'expenses', 'refunds',
+          'complaints', 'notices', 'visitors', 'meter_readings',
+          'exit_clearance', 'properties', 'rooms', 'people', 'meters',
+          'staff_members', 'visitor_contacts'
+        ]
+
+        // Soft delete cascade records first (if they support it)
+        // Note: user_roles is a join table and should be hard deleted
+        const softDeletableCascades = cascadeDeletes.filter(
+          (c) => softDeletableTables.includes(c.table as SoftDeletableTable)
+        )
+        const hardDeleteCascades = cascadeDeletes.filter(
+          (c) => !softDeletableTables.includes(c.table as SoftDeletableTable)
+        )
+
+        // Cascade soft delete for supported tables
+        if (softDeletableCascades.length > 0) {
+          const cascadeConfigs = softDeletableCascades.map((c) => ({
+            table: c.table as SoftDeletableTable,
+            foreignKey: c.foreignKey,
+          }))
+          const { errors } = await cascadeSoftDelete(entityId, user.id, cascadeConfigs)
+          if (errors.length > 0) {
+            console.error("[useDetailPage] Cascade soft delete errors:", errors)
+          }
+        }
+
+        // Hard delete for join tables that don't support soft delete
+        for (const cascade of hardDeleteCascades) {
           await supabase.from(cascade.table).delete().eq(cascade.foreignKey, entityId)
         }
 
-        // Delete main record
-        const { error: deleteError } = await supabase
-          .from(currentConfig.table)
-          .delete()
-          .eq("id", entityId)
+        // Check if main table supports soft delete
+        if (softDeletableTables.includes(currentConfig.table as SoftDeletableTable)) {
+          // Soft delete main record
+          const { error } = await softDelete(
+            currentConfig.table as SoftDeletableTable,
+            entityId,
+            user.id
+          )
 
-        if (deleteError) {
-          throw deleteError
+          if (error) {
+            throw error
+          }
+        } else {
+          // Fall back to hard delete for tables that don't support soft delete
+          const { error: deleteError } = await supabase
+            .from(currentConfig.table)
+            .delete()
+            .eq("id", entityId)
+
+          if (deleteError) {
+            throw deleteError
+          }
         }
 
         toast.success("Deleted successfully")

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Invitation, Role, CONTEXT_TYPE_CONFIG } from '@/lib/auth/types'
+import { withCreatedBy } from '@/lib/audit'
 import {
   Mail, Phone, Send, Copy, Clock, Check, X, Loader2,
   UserPlus, RefreshCw, Trash2, ExternalLink
@@ -74,17 +75,19 @@ export function InvitationForm({
         // User exists - create context directly
         const { data: context, error: contextError } = await supabase
           .from('user_contexts')
-          .insert({
-            user_id: existingUser[0].user_id,
-            workspace_id: workspaceId,
-            context_type: contextType,
-            role_id: contextType === 'staff' ? formData.role_id || null : null,
-            entity_id: entityId || null,
-            is_active: true,
-            invited_by: user.id,
-            invited_at: new Date().toISOString(),
-            accepted_at: new Date().toISOString(),
-          })
+          .insert(
+            withCreatedBy({
+              user_id: existingUser[0].user_id,
+              workspace_id: workspaceId,
+              context_type: contextType,
+              role_id: contextType === 'staff' ? formData.role_id || null : null,
+              entity_id: entityId || null,
+              is_active: true,
+              invited_by: user.id,
+              invited_at: new Date().toISOString(),
+              accepted_at: new Date().toISOString(),
+            }, user.id)
+          )
           .select()
           .single()
 
@@ -105,17 +108,19 @@ export function InvitationForm({
         // Create invitation
         const { data: invitation, error: inviteError } = await supabase
           .from('invitations')
-          .insert({
-            workspace_id: workspaceId,
-            invited_by: user.id,
-            name: formData.name || null,
-            email: formData.email || null,
-            phone: formData.phone || null,
-            context_type: contextType,
-            role_id: contextType === 'staff' ? formData.role_id || null : null,
-            entity_id: entityId || null,
-            message: formData.message || null,
-          })
+          .insert(
+            withCreatedBy({
+              workspace_id: workspaceId,
+              invited_by: user.id,
+              name: formData.name || null,
+              email: formData.email || null,
+              phone: formData.phone || null,
+              context_type: contextType,
+              role_id: contextType === 'staff' ? formData.role_id || null : null,
+              entity_id: entityId || null,
+              message: formData.message || null,
+            }, user.id)
+          )
           .select()
           .single()
 

@@ -188,6 +188,7 @@ export async function GET(request: Request) {
           })
 
           // Create bill
+          // Note: created_by is null for system-generated bills (cron job)
           const { error: billError } = await supabaseAdmin.from("bills").insert({
             owner_id: ownerId,
             tenant_id: tenant.id,
@@ -206,6 +207,7 @@ export async function GET(request: Request) {
             line_items: lineItems,
             is_auto_generated: true,
             generated_at: new Date().toISOString(),
+            created_by: null, // System-generated bill (no user context in cron)
           })
 
           if (billError) {

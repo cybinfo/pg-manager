@@ -43,6 +43,7 @@ import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime, formatDate, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
 import { PermissionGate } from "@/components/auth"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import { toast } from "sonner"
 
 // ============================================
@@ -450,6 +451,9 @@ export default function InquiryDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={inquiry} entityType="inquiry" />
     </div>
   )
 }

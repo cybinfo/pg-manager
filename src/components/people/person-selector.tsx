@@ -43,6 +43,7 @@ import {
 import Link from "next/link"
 import { Person, PersonSearchResult } from "@/types/people.types"
 import { toast } from "sonner"
+import { withCreatedBy } from "@/lib/audit"
 import { cn } from "@/lib/utils"
 
 interface PersonSelectorProps {
@@ -227,16 +228,19 @@ export function PersonSelector({
     }
 
     // Create new person
+    // Note: ownerId is the user creating this record
     const { data: newPerson, error: createError } = await supabase
       .from("people")
-      .insert({
-        owner_id: ownerId,
-        name: quickCreateForm.name.trim(),
-        phone: quickCreateForm.phone || null,
-        email: quickCreateForm.email || null,
-        tags: [],
-        source: "manual",
-      })
+      .insert(
+        withCreatedBy({
+          owner_id: ownerId,
+          name: quickCreateForm.name.trim(),
+          phone: quickCreateForm.phone || null,
+          email: quickCreateForm.email || null,
+          tags: [],
+          source: "manual",
+        }, ownerId)
+      )
       .select(PERSON_SELECT_FIELDS)
       .single()
 

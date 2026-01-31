@@ -37,6 +37,7 @@ import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 interface Payment {
   id: string
@@ -564,6 +565,9 @@ ManageKar`
           )}
         </div>
       </div>
+
+      {/* Record Audit Information */}
+      <DetailPageAudit record={bill} entityType="bill" />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

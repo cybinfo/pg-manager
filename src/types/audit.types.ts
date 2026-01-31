@@ -84,6 +84,8 @@ export type SoftDeletableTable =
   | 'rooms'
   | 'people'
   | 'meters'
+  | 'staff_members'
+  | 'visitor_contacts'
 
 /**
  * Entity types that support created_by tracking.
