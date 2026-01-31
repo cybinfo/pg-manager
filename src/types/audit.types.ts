@@ -93,6 +93,9 @@ export type SoftDeletableTable =
   | 'bill_payments'
   | 'service_providers'
   | 'service_payments'
+  // Miscellaneous transactions
+  | 'misc_transactions'
+  | 'misc_transaction_categories'
 
 /**
  * Entity types that support created_by tracking.

@@ -771,3 +771,124 @@ export interface ServicePaymentFilters {
   has_warranty?: boolean
   linked_to_complaint?: boolean
 }
+
+// ============================================================================
+// MISCELLANEOUS TRANSACTIONS TYPES
+// ============================================================================
+
+/**
+ * Transaction type for misc transactions
+ */
+export type MiscTransactionType = "in" | "out"
+
+/**
+ * Payment mode for misc transactions (includes legacy paytm)
+ */
+export type MiscPaymentMode = "cash" | "upi" | "bank_transfer" | "card" | "cheque" | "paytm" | "other"
+
+/**
+ * Misc transaction category
+ */
+export interface MiscTransactionCategory {
+  id: string
+  workspace_id: string
+  name: string
+  name_hi: string | null
+  description: string | null
+  default_type: "in" | "out" | "both"
+  icon: string | null
+  color: string | null
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  created_by: string | null
+  deleted_at: string | null
+  deleted_by: string | null
+}
+
+/**
+ * Misc transaction entry
+ */
+export interface MiscTransaction {
+  id: string
+  workspace_id: string
+  transaction_type: MiscTransactionType
+  category_id: string | null
+  category_name: string | null
+  person_name: string | null
+  description: string | null
+  amount: number
+  transaction_date: string
+  payment_mode: MiscPaymentMode
+  payment_reference: string | null
+  property_id: string | null
+  tenant_id: string | null
+  receipt_url: string | null
+  notes: string | null
+  legacy_id: string | null
+  created_at: string
+  updated_at: string
+  created_by: string | null
+  deleted_at: string | null
+  deleted_by: string | null
+
+  // Joined fields
+  category?: Pick<MiscTransactionCategory, "id" | "name" | "name_hi" | "default_type"> | null
+  property?: { id: string; name: string } | null
+  tenant?: { id: string; name: string } | null
+}
+
+/**
+ * Misc transaction form data
+ */
+export interface MiscTransactionFormData {
+  transaction_type: MiscTransactionType
+  category_id?: string
+  category_name?: string
+  person_name?: string
+  description?: string
+  amount: number
+  transaction_date: string
+  payment_mode?: MiscPaymentMode
+  payment_reference?: string
+  property_id?: string
+  tenant_id?: string
+  notes?: string
+}
+
+/**
+ * Misc category form data
+ */
+export interface MiscTransactionCategoryFormData {
+  name: string
+  name_hi?: string
+  description?: string
+  default_type?: "in" | "out" | "both"
+  icon?: string
+  color?: string
+  sort_order?: number
+  is_active?: boolean
+}
+
+/**
+ * Misc transaction filters
+ */
+export interface MiscTransactionFilters {
+  transaction_type?: MiscTransactionType
+  category_id?: string
+  date_from?: string
+  date_to?: string
+  payment_mode?: MiscPaymentMode
+  person_name?: string
+}
+
+/**
+ * Misc transaction summary
+ */
+export interface MiscTransactionSummary {
+  total_in: number
+  total_out: number
+  net_amount: number
+  transaction_count: number
+}

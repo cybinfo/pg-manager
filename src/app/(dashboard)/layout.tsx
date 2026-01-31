@@ -39,6 +39,7 @@ import {
   Wrench,
   Hammer,
   ChevronDown,
+  ArrowLeftRight,
 } from "lucide-react"
 import { toast } from "sonner"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
@@ -121,6 +122,7 @@ const navigation: NavItem[] = [
       { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", feature: "expenses" },
       { name: "Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", feature: "expenses" },
       { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", feature: "expenses" },
+      { name: "Misc Transactions", href: "/expenses/misc", icon: ArrowLeftRight, permission: "expenses.view", feature: "expenses" },
     ]
   },
   { name: "Meter Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
