@@ -140,7 +140,7 @@ export default function DailySpendDetailPage({
   return (
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.view">
-        <div className="container py-6 space-y-6">
+        <div className="space-y-6">
           {/* Hero Section - Using centralized DetailHero */}
           <DetailHero
             title={entry.product?.name || entry.product_name}
