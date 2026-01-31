@@ -2,7 +2,10 @@
 
 import * as React from "react"
 import { DetailPageContent } from "./detail-page-content"
-import { DetailPageAudit } from "./detail-page-audit"
+import { DetailSection } from "./detail-components"
+import { RecordMetadataContent } from "./record-metadata"
+import { ActivityHistoryContent } from "./activity-history"
+import { Calendar, History } from "lucide-react"
 import type { AuditableEntity } from "@/types/audit.types"
 
 interface DetailPageTemplateProps {
@@ -114,12 +117,36 @@ export function DetailPageTemplate({
       className={className}
     >
       {children}
-      <DetailPageAudit
-        record={record}
-        entityType={entityType}
-        showActivityHistory={showActivityHistory}
-        maxActivityItems={maxActivityItems}
-      />
+      {/* Record Information - rendered as separate sortable item */}
+      <DetailSection
+        title="Record Information"
+        description="Created and updated details"
+        icon={Calendar}
+      >
+        <RecordMetadataContent
+          record={{
+            created_at: record.created_at,
+            updated_at: record.updated_at,
+            created_by: record.created_by,
+            deleted_at: record.deleted_at,
+            deleted_by: record.deleted_by,
+          }}
+        />
+      </DetailSection>
+      {/* Activity History - rendered as separate sortable item */}
+      {showActivityHistory && (
+        <DetailSection
+          title="Activity History"
+          description="Recent changes to this record"
+          icon={History}
+        >
+          <ActivityHistoryContent
+            entityType={entityType}
+            entityId={record.id}
+            maxItems={maxActivityItems}
+          />
+        </DetailSection>
+      )}
     </DetailPageContent>
   )
 }
