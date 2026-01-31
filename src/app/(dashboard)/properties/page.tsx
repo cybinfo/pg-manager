@@ -7,12 +7,13 @@
 
 "use client"
 
-import { Building2, Home, Users, MapPin } from "lucide-react"
+import { Building2, Home, Users, MapPin, Phone } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PROPERTY_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { formatDate } from "@/lib/format"
 
 // ============================================
 // Types
@@ -24,6 +25,14 @@ interface Property {
   address: string | null
   city: string
   state: string | null
+  pincode: string | null
+  phone: string | null
+  email: string | null
+  property_type: string
+  total_floors: number | null
+  manager_name: string | null
+  manager_phone: string | null
+  website_enabled: boolean
   is_active: boolean
   created_at: string
   room_count?: number
@@ -40,6 +49,7 @@ const columns: Column<Property>[] = [
     header: "Property",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (property) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
@@ -62,6 +72,8 @@ const columns: Column<Property>[] = [
     width: "count",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (property) => (
       <div className="flex items-center gap-1.5">
         <Home className="h-4 w-4 text-muted-foreground" />
@@ -75,6 +87,8 @@ const columns: Column<Property>[] = [
     width: "count",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (property) => (
       <div className="flex items-center gap-1.5">
         <Users className="h-4 w-4 text-muted-foreground" />
@@ -88,12 +102,108 @@ const columns: Column<Property>[] = [
     width: "status",
     hideOnMobile: true,
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (property) => (
       <StatusDot
         status={property.is_active ? "success" : "muted"}
         label={property.is_active ? "Active" : "Inactive"}
       />
     ),
+  },
+  // Hidden by default columns
+  {
+    key: "address",
+    header: "Address",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (property) => property.address || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "pincode",
+    header: "Pincode",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (property) => property.pincode || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "property_type",
+    header: "Type",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (property) => (
+      <span className="capitalize">{property.property_type || "PG"}</span>
+    ),
+  },
+  {
+    key: "total_floors",
+    header: "Floors",
+    width: "count",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (property) => property.total_floors || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "phone",
+    header: "Phone",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (property) => property.phone || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "email",
+    header: "Email",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (property) => property.email || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "manager_name",
+    header: "Manager",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (property) => property.manager_name ? (
+      <div>
+        <div>{property.manager_name}</div>
+        {property.manager_phone && (
+          <div className="text-xs text-muted-foreground">{property.manager_phone}</div>
+        )}
+      </div>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "website_enabled",
+    header: "Website",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (property) => (
+      <StatusDot
+        status={property.website_enabled ? "success" : "muted"}
+        label={property.website_enabled ? "Enabled" : "Disabled"}
+      />
+    ),
+  },
+  {
+    key: "created_at",
+    header: "Added On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (property) => formatDate(property.created_at),
   },
 ]
 

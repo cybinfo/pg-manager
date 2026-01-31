@@ -30,8 +30,10 @@ interface Bill {
   paid_amount: number
   balance_due: number
   status: string
-  tenant: { id: string; name: string; phone: string } | null
-  property: { id: string; name: string } | null
+  notes: string | null
+  created_at: string
+  tenant: { id: string; name: string; phone: string; email?: string } | null
+  property: { id: string; name: string; address?: string } | null
   bill_month?: string
   bill_year?: string
 }
@@ -65,6 +67,7 @@ const columns: Column<Bill>[] = [
     header: "Bill",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (bill) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
@@ -75,18 +78,29 @@ const columns: Column<Bill>[] = [
           {bill.tenant && (
             <div><TenantLink id={bill.tenant.id} name={bill.tenant.name} size="sm" /></div>
           )}
-          {bill.property && (
-            <div><PropertyLink id={bill.property.id} name={bill.property.name} size="sm" /></div>
-          )}
         </div>
       </div>
     ),
+  },
+  {
+    key: "property",
+    header: "Property",
+    width: "secondary",
+    sortable: true,
+    sortKey: "property.name",
+    canHide: true,
+    defaultVisible: true,
+    render: (bill) => bill.property ? (
+      <PropertyLink id={bill.property.id} name={bill.property.name} size="sm" />
+    ) : <span className="text-muted-foreground">—</span>,
   },
   {
     key: "for_month",
     header: "Period",
     width: "tertiary",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (bill) => bill.for_month,
   },
   {
@@ -95,6 +109,8 @@ const columns: Column<Bill>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (bill) => (
       <div>
         <div className="font-medium tabular-nums">{formatCurrency(bill.total_amount)}</div>
@@ -111,6 +127,8 @@ const columns: Column<Bill>[] = [
     hideOnMobile: true,
     sortable: true,
     sortType: "date",
+    canHide: true,
+    defaultVisible: true,
     render: (bill) => formatDate(bill.due_date),
   },
   {
@@ -118,10 +136,77 @@ const columns: Column<Bill>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (bill) => {
       const info = getStatusInfo(bill.status)
       return <StatusDot status={info.status} label={info.label} />
     },
+  },
+  // Hidden by default columns
+  {
+    key: "paid_amount",
+    header: "Paid Amount",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => (
+      <span className="tabular-nums text-emerald-600">{formatCurrency(bill.paid_amount)}</span>
+    ),
+  },
+  {
+    key: "balance_due",
+    header: "Balance Due",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => (
+      <span className={`tabular-nums ${bill.balance_due > 0 ? "text-rose-600" : ""}`}>
+        {formatCurrency(bill.balance_due)}
+      </span>
+    ),
+  },
+  {
+    key: "bill_date",
+    header: "Bill Date",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => formatDate(bill.bill_date),
+  },
+  {
+    key: "tenant_phone",
+    header: "Tenant Phone",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => bill.tenant?.phone || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => bill.notes ? (
+      <span className="truncate max-w-[150px]" title={bill.notes}>{bill.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Created",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => formatDate(bill.created_at),
   },
 ]
 

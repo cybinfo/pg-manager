@@ -75,6 +75,7 @@ const columns: Column<Notice>[] = [
     header: "Notice",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (notice) => {
       const TypeIcon = typeConfig[notice.type]?.icon || Megaphone
       const isActive = notice.is_active && !notice.is_expired
@@ -95,9 +96,6 @@ const columns: Column<Notice>[] = [
               )}
             </div>
             <div className="font-medium truncate">{notice.title}</div>
-            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-              {notice.content}
-            </p>
           </div>
         </div>
       )
@@ -110,6 +108,8 @@ const columns: Column<Notice>[] = [
     hideOnMobile: true,
     sortable: true,
     sortKey: "property.name",
+    canHide: true,
+    defaultVisible: true,
     render: (notice) => notice.property ? (
       <PropertyLink id={notice.property.id} name={notice.property.name} size="sm" />
     ) : (
@@ -124,6 +124,8 @@ const columns: Column<Notice>[] = [
     header: "Audience",
     width: "tertiary",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (notice) => (
       <div className="flex items-center gap-1 text-sm text-muted-foreground">
         <Users className="h-3 w-3" />
@@ -138,12 +140,61 @@ const columns: Column<Notice>[] = [
     sortable: true,
     sortType: "date",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (notice) => (
       <div className="flex items-center gap-1 text-sm text-muted-foreground">
         <Calendar className="h-3 w-3" />
         {formatTimeAgo(notice.created_at)}
       </div>
     ),
+  },
+  // Hidden by default columns
+  {
+    key: "content",
+    header: "Content",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (notice) => (
+      <p className="text-sm text-muted-foreground line-clamp-2">{notice.content}</p>
+    ),
+  },
+  {
+    key: "type",
+    header: "Type",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (notice) => (
+      <TableBadge variant={notice.type === "emergency" ? "error" : "default"}>
+        {typeConfig[notice.type]?.label || notice.type}
+      </TableBadge>
+    ),
+  },
+  {
+    key: "is_active",
+    header: "Active",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (notice) => (
+      <TableBadge variant={notice.is_active ? "success" : "muted"}>
+        {notice.is_active ? "Active" : "Inactive"}
+      </TableBadge>
+    ),
+  },
+  {
+    key: "expires_at",
+    header: "Expires",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (notice) => notice.expires_at ? formatTimeAgo(notice.expires_at) : <span className="text-muted-foreground">Never</span>,
   },
 ]
 

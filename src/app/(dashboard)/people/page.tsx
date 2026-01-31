@@ -30,6 +30,7 @@ import { PEOPLE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/use
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { Avatar } from "@/components/ui/avatar"
+import { formatDate } from "@/lib/format"
 import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 
@@ -93,6 +94,7 @@ const columns: Column<Person>[] = [
     header: "Person",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (person) => (
       <div className="flex items-center gap-3">
         <Avatar
@@ -128,6 +130,8 @@ const columns: Column<Person>[] = [
     header: "Contact",
     width: "secondary",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (person) => (
       <div className="text-sm min-w-0">
         {person.email ? (
@@ -151,6 +155,8 @@ const columns: Column<Person>[] = [
     key: "tags",
     header: "Roles",
     width: "secondary",
+    canHide: true,
+    defaultVisible: true,
     render: (person) => (
       <div className="flex flex-wrap gap-1">
         {person.tags && person.tags.length > 0 ? (
@@ -172,12 +178,90 @@ const columns: Column<Person>[] = [
     width: "status",
     sortable: true,
     sortKey: "is_blocked",
+    canHide: true,
+    defaultVisible: true,
     render: (person) => (
       <StatusDot
         status={person.is_blocked ? "error" : person.is_verified ? "success" : "muted"}
         label={person.is_blocked ? "Blocked" : person.is_verified ? "Verified" : "Active"}
       />
     ),
+  },
+  // Hidden by default columns
+  {
+    key: "phone",
+    header: "Phone",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (person) => person.phone ? (
+      <div className="flex items-center gap-1 text-sm">
+        <Phone className="h-3 w-3 text-muted-foreground" />
+        {person.phone}
+      </div>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "email_only",
+    header: "Email",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (person) => person.email || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "company_name",
+    header: "Company",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (person) => person.company_name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "occupation",
+    header: "Occupation",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (person) => person.occupation || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "is_verified",
+    header: "Verified",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (person) => (
+      <StatusDot
+        status={person.is_verified ? "success" : "muted"}
+        label={person.is_verified ? "Yes" : "No"}
+      />
+    ),
+  },
+  {
+    key: "is_blocked",
+    header: "Blocked",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (person) => (
+      <StatusDot
+        status={person.is_blocked ? "error" : "muted"}
+        label={person.is_blocked ? "Yes" : "No"}
+      />
+    ),
+  },
+  {
+    key: "created_at",
+    header: "Added On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (person) => formatDate(person.created_at),
   },
 ]
 

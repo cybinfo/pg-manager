@@ -14,7 +14,7 @@ import { ROOM_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useLi
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 // ============================================
 // Types
@@ -30,9 +30,14 @@ interface Room {
   total_beds: number
   occupied_beds: number
   status: string
+  is_active: boolean
   has_ac: boolean
   has_attached_bathroom: boolean
-  property: { id: string; name: string }
+  has_balcony: boolean
+  amenities: string[] | null
+  notes: string | null
+  created_at: string
+  property: { id: string; name: string; address?: string }
   ac_label?: string
   bathroom_label?: string
   beds_label?: string
@@ -69,6 +74,7 @@ const columns: Column<Room>[] = [
     header: "Room",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (room) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-violet-100 flex items-center justify-center">
@@ -89,6 +95,8 @@ const columns: Column<Room>[] = [
     width: "badge",
     hideOnMobile: true,
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (room) => (
       <TableBadge variant="default">
         {room.room_type.charAt(0).toUpperCase() + room.room_type.slice(1)}
@@ -102,6 +110,8 @@ const columns: Column<Room>[] = [
     sortable: true,
     sortKey: "total_beds",
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (room) => (
       <span className="tabular-nums">{room.occupied_beds}/{room.total_beds}</span>
     ),
@@ -112,6 +122,8 @@ const columns: Column<Room>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (room) => (
       <span className="font-medium tabular-nums">{formatCurrency(room.rent_amount)}</span>
     ),
@@ -121,10 +133,108 @@ const columns: Column<Room>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (room) => {
       const info = getStatusInfo(room.status)
       return <StatusDot status={info.status} label={info.label} />
     },
+  },
+  // Hidden by default columns
+  {
+    key: "floor",
+    header: "Floor",
+    width: "count",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (room) => <span className="tabular-nums">{room.floor}</span>,
+  },
+  {
+    key: "deposit_amount",
+    header: "Deposit",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (room) => (
+      <span className="tabular-nums">{formatCurrency(room.deposit_amount)}</span>
+    ),
+  },
+  {
+    key: "has_ac",
+    header: "AC",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (room) => (
+      <TableBadge variant={room.has_ac ? "success" : "muted"}>
+        {room.has_ac ? "Yes" : "No"}
+      </TableBadge>
+    ),
+  },
+  {
+    key: "has_attached_bathroom",
+    header: "Attached Bath",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (room) => (
+      <TableBadge variant={room.has_attached_bathroom ? "success" : "muted"}>
+        {room.has_attached_bathroom ? "Yes" : "No"}
+      </TableBadge>
+    ),
+  },
+  {
+    key: "has_balcony",
+    header: "Balcony",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (room) => (
+      <TableBadge variant={room.has_balcony ? "success" : "muted"}>
+        {room.has_balcony ? "Yes" : "No"}
+      </TableBadge>
+    ),
+  },
+  {
+    key: "is_active",
+    header: "Active",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (room) => (
+      <StatusDot
+        status={room.is_active ? "success" : "muted"}
+        label={room.is_active ? "Active" : "Inactive"}
+      />
+    ),
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (room) => room.notes ? (
+      <span className="truncate max-w-[150px]" title={room.notes}>{room.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Added On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (room) => formatDate(room.created_at),
   },
 ]
 

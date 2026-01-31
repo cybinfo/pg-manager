@@ -49,6 +49,9 @@ export interface Column<T> {
   sortable?: boolean
   sortKey?: string  // Custom key for sorting (e.g., "property.name" for nested values)
   sortType?: "string" | "number" | "date"  // Type for proper comparison
+  // Column visibility options (for Column Manager)
+  canHide?: boolean  // Whether this column can be hidden (default: true, except for primary columns)
+  defaultVisible?: boolean  // Whether this column is visible by default (default: true)
 }
 
 export type SortDirection = "asc" | "desc" | null

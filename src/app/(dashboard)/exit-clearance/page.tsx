@@ -70,6 +70,7 @@ const columns: Column<ExitClearance>[] = [
     width: "primary",
     sortable: true,
     sortKey: "tenant.name",
+    canHide: false,
     render: (clearance) => (
       <div className="flex items-center gap-3">
         <Avatar
@@ -93,6 +94,8 @@ const columns: Column<ExitClearance>[] = [
     width: "secondary",
     sortable: true,
     sortKey: "property.name",
+    canHide: true,
+    defaultVisible: true,
     render: (clearance) => (
       <div className="min-w-0 space-y-0.5">
         {clearance.property && (
@@ -112,6 +115,8 @@ const columns: Column<ExitClearance>[] = [
     width: "date",
     sortable: true,
     sortType: "date",
+    canHide: true,
+    defaultVisible: true,
     render: (clearance) => formatDate(clearance.expected_exit_date),
   },
   {
@@ -120,6 +125,8 @@ const columns: Column<ExitClearance>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (clearance) => {
       const isRefund = clearance.final_amount < 0
       return (
@@ -138,6 +145,8 @@ const columns: Column<ExitClearance>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (clearance) => {
       const status = EXIT_CLEARANCE_STATUS[clearance.settlement_status] || {
         variant: "muted" as const,
@@ -161,6 +170,89 @@ const columns: Column<ExitClearance>[] = [
         </div>
       )
     },
+  },
+  // Hidden by default columns
+  {
+    key: "notice_given_date",
+    header: "Notice Date",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (clearance) => clearance.notice_given_date ? formatDate(clearance.notice_given_date) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "actual_exit_date",
+    header: "Actual Exit",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (clearance) => clearance.actual_exit_date ? formatDate(clearance.actual_exit_date) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "total_dues",
+    header: "Total Dues",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (clearance) => (
+      <span className="font-medium text-red-600">{formatCurrency(clearance.total_dues)}</span>
+    ),
+  },
+  {
+    key: "total_refundable",
+    header: "Refundable",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (clearance) => (
+      <span className="font-medium text-green-600">{formatCurrency(clearance.total_refundable)}</span>
+    ),
+  },
+  {
+    key: "room_inspection_done",
+    header: "Inspection",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (clearance) => (
+      <StatusDot
+        status={clearance.room_inspection_done ? "success" : "muted"}
+        label={clearance.room_inspection_done ? "Done" : "Pending"}
+      />
+    ),
+  },
+  {
+    key: "key_returned",
+    header: "Key",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (clearance) => (
+      <StatusDot
+        status={clearance.key_returned ? "success" : "muted"}
+        label={clearance.key_returned ? "Returned" : "Pending"}
+      />
+    ),
+  },
+  {
+    key: "created_at",
+    header: "Initiated On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (clearance) => formatDate(clearance.created_at),
   },
 ]
 

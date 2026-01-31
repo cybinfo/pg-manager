@@ -25,6 +25,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { Avatar } from "@/components/ui/avatar"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { formatDate } from "@/lib/format"
 
 // ============================================
 // Types
@@ -78,6 +79,7 @@ const columns: Column<StaffMember>[] = [
     header: "Staff Member",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (staff) => {
       const roles = transformStaffRoles(staff)
       // Use person.name (live data) with fallback to staff.name (denormalized)
@@ -112,6 +114,8 @@ const columns: Column<StaffMember>[] = [
     header: "Phone",
     width: "tertiary",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (staff) => staff.phone ? (
       <div className="flex items-center gap-1 text-sm text-muted-foreground">
         <Phone className="h-3 w-3" />
@@ -125,6 +129,8 @@ const columns: Column<StaffMember>[] = [
     key: "roles",
     header: "Roles",
     width: "secondary",
+    canHide: true,
+    defaultVisible: true,
     render: (staff) => {
       const roles = transformStaffRoles(staff)
 
@@ -152,12 +158,47 @@ const columns: Column<StaffMember>[] = [
     width: "status",
     sortable: true,
     sortKey: "is_active",
+    canHide: true,
+    defaultVisible: true,
     render: (staff) => (
       <StatusDot
         status={staff.is_active ? "success" : "muted"}
         label={staff.is_active ? "Active" : "Inactive"}
       />
     ),
+  },
+  // Hidden by default columns
+  {
+    key: "email",
+    header: "Email",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (staff) => staff.email,
+  },
+  {
+    key: "user_id",
+    header: "Has Login",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (staff) => (
+      <StatusDot
+        status={staff.user_id ? "success" : "muted"}
+        label={staff.user_id ? "Yes" : "No"}
+      />
+    ),
+  },
+  {
+    key: "created_at",
+    header: "Joined",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (staff) => formatDate(staff.created_at),
   },
 ]
 

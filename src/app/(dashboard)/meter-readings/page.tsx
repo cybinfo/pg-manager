@@ -65,6 +65,7 @@ const columns: Column<MeterReading>[] = [
     key: "meter",
     header: "Meter",
     width: "primary",
+    canHide: false,
     render: (reading) => {
       const meterType = reading.meter?.meter_type || reading.charge_type?.name?.toLowerCase() || "electricity"
       const config = meterTypeConfig[meterType] || meterTypeConfig.electricity
@@ -86,6 +87,8 @@ const columns: Column<MeterReading>[] = [
     key: "property",
     header: "Property",
     width: "secondary",
+    canHide: true,
+    defaultVisible: true,
     render: (reading) => reading.property ? (
       <PropertyLink id={reading.property.id} name={reading.property.name} size="sm" />
     ) : null,
@@ -96,6 +99,8 @@ const columns: Column<MeterReading>[] = [
     width: "tertiary",
     sortable: true,
     sortKey: "room.room_number",
+    canHide: true,
+    defaultVisible: true,
     render: (reading) => reading.room ? (
       <RoomLink id={reading.room.id} roomNumber={reading.room.room_number} size="sm" />
     ) : null,
@@ -106,6 +111,8 @@ const columns: Column<MeterReading>[] = [
     width: "date",
     sortable: true,
     sortType: "date",
+    canHide: true,
+    defaultVisible: true,
     render: (reading) => (
       <div className="flex items-center gap-1 text-sm">
         <Calendar className="h-3 w-3 text-muted-foreground" />
@@ -118,6 +125,8 @@ const columns: Column<MeterReading>[] = [
     header: "Reading",
     width: "amount",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (reading) => (
       <span className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</span>
     ),
@@ -128,6 +137,8 @@ const columns: Column<MeterReading>[] = [
     width: "tertiary",
     sortable: true,
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (reading) => {
       if (reading.units_consumed === null) return <span className="text-muted-foreground">-</span>
       const hasIncrease = reading.units_consumed > 0
@@ -138,6 +149,57 @@ const columns: Column<MeterReading>[] = [
         </div>
       )
     },
+  },
+  // Hidden by default columns
+  {
+    key: "previous_reading",
+    header: "Previous",
+    width: "count",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (reading) => reading.previous_reading !== null ? (
+      <span className="font-mono text-sm">{reading.previous_reading.toLocaleString()}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "charge_type",
+    header: "Charge Type",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (reading) => reading.charge_type?.name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "image_url",
+    header: "Image",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (reading) => reading.image_url ? (
+      <span className="text-sm text-blue-600">Has Image</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (reading) => reading.notes ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{reading.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Recorded On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (reading) => formatDate(reading.created_at),
   },
 ]
 

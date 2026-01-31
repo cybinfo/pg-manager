@@ -24,6 +24,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { formatDate } from "@/lib/format"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
 
 // ============================================
@@ -74,6 +75,7 @@ const columns: Column<Meter>[] = [
     header: "Meter",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (meter) => {
       const typeConfig = METER_TYPE_CONFIG[meter.meter_type] || METER_TYPE_CONFIG.electricity
       const Icon = meterTypeIcons[meter.meter_type] || Zap
@@ -96,6 +98,8 @@ const columns: Column<Meter>[] = [
     width: "secondary",
     sortable: true,
     sortKey: "property.name",
+    canHide: true,
+    defaultVisible: true,
     render: (meter) =>
       meter.property ? (
         <PropertyLink id={meter.property.id} name={meter.property.name} size="sm" />
@@ -108,6 +112,8 @@ const columns: Column<Meter>[] = [
     header: "Make/Model",
     width: "tertiary",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (meter) => {
       if (!meter.make && !meter.model) return <span className="text-muted-foreground">—</span>
       return (
@@ -124,6 +130,8 @@ const columns: Column<Meter>[] = [
     width: "count",
     sortable: true,
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (meter) => (
       <span className="font-mono text-sm">{meter.initial_reading.toLocaleString()}</span>
     ),
@@ -133,10 +141,63 @@ const columns: Column<Meter>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (meter) => {
       const statusConfig = METER_STATUS_CONFIG[meter.status] || METER_STATUS_CONFIG.active
       return <StatusBadge variant={statusConfig.variant} label={statusConfig.label} />
     },
+  },
+  // Hidden by default columns
+  {
+    key: "meter_type",
+    header: "Type",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (meter) => {
+      const typeConfig = METER_TYPE_CONFIG[meter.meter_type] || METER_TYPE_CONFIG.electricity
+      return <span className={`text-sm font-medium ${typeConfig.color}`}>{typeConfig.label}</span>
+    },
+  },
+  {
+    key: "model",
+    header: "Model",
+    width: "tertiary",
+    canHide: true,
+    defaultVisible: false,
+    render: (meter) => meter.model || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "installation_date",
+    header: "Installed On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (meter) => meter.installation_date ? formatDate(meter.installation_date) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (meter) => meter.notes ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{meter.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Added On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (meter) => formatDate(meter.created_at),
   },
 ]
 

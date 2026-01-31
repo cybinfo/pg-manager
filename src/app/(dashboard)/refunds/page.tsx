@@ -64,6 +64,7 @@ const columns: Column<Refund>[] = [
     width: "primary",
     sortable: true,
     sortKey: "tenant.name",
+    canHide: false,
     render: (refund) => (
       <div className="flex items-center gap-3">
         <Avatar
@@ -90,6 +91,8 @@ const columns: Column<Refund>[] = [
     sortable: true,
     sortKey: "property.name",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (refund) => (
       <div className="min-w-0">
         {refund.property ? (
@@ -106,6 +109,8 @@ const columns: Column<Refund>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (refund) => (
       <div className="text-right">
         <span className="font-semibold text-green-600">
@@ -122,6 +127,8 @@ const columns: Column<Refund>[] = [
     header: "Mode",
     width: "badge",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (refund) => {
       const modeIcons: Record<string, React.ReactNode> = {
         cash: <Banknote className="h-3.5 w-3.5" />,
@@ -144,6 +151,8 @@ const columns: Column<Refund>[] = [
     sortable: true,
     sortType: "date",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (refund) => (
       <div>
         {refund.refund_date ? formatDate(refund.refund_date) : "—"}
@@ -160,10 +169,82 @@ const columns: Column<Refund>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (refund) => {
       const status = REFUND_STATUS[refund.status] || { variant: "muted" as const, label: refund.status }
       return <TableBadge variant={status.variant}>{status.label}</TableBadge>
     },
+  },
+  // Hidden by default columns
+  {
+    key: "refund_type",
+    header: "Type",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (refund) => (
+      <span className="capitalize text-sm">{refund.refund_type.replace(/_/g, " ")}</span>
+    ),
+  },
+  {
+    key: "reference_number",
+    header: "Reference",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (refund) => refund.reference_number || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "due_date",
+    header: "Due Date",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (refund) => refund.due_date ? formatDate(refund.due_date) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "reason",
+    header: "Reason",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (refund) => refund.reason ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{refund.reason}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (refund) => refund.notes ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{refund.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "exit_clearance",
+    header: "Exit Clearance",
+    width: "tertiary",
+    canHide: true,
+    defaultVisible: false,
+    render: (refund) => refund.exit_clearance ? (
+      <span className="text-sm">Exit: {formatDate(refund.exit_clearance.expected_exit_date)}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Created On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (refund) => formatDate(refund.created_at),
   },
 ]
 

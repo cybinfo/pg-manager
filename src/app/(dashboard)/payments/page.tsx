@@ -33,10 +33,12 @@ interface Payment {
   for_period: string | null
   reference_number: string | null
   receipt_number: string | null
+  transaction_reference: string | null
   notes: string | null
   created_at: string
-  tenant: { id: string; name: string; phone: string }
+  tenant: { id: string; name: string; phone: string; email?: string }
   property: { id: string; name: string }
+  bill: { id: string; bill_number: string } | null
   charge_type: { id: string; name: string } | null
   payment_month?: string
   payment_year?: string
@@ -53,6 +55,7 @@ const columns: Column<Payment>[] = [
     width: "primary",
     sortable: true,
     sortKey: "tenant.name",
+    canHide: false,
     render: (payment) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold shrink-0">
@@ -73,6 +76,8 @@ const columns: Column<Payment>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (payment) => (
       <span className="font-semibold text-emerald-600 tabular-nums">
         {formatCurrency(Number(payment.amount))}
@@ -85,6 +90,8 @@ const columns: Column<Payment>[] = [
     width: "badge",
     hideOnMobile: true,
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (payment) => (
       <TableBadge variant="default">
         {PAYMENT_METHODS[payment.payment_method] || payment.payment_method}
@@ -97,12 +104,15 @@ const columns: Column<Payment>[] = [
     width: "date",
     sortable: true,
     sortType: "date",
+    canHide: true,
+    defaultVisible: true,
     render: (payment) => formatDate(payment.payment_date),
   },
   {
     key: "actions",
     header: "",
     width: "iconAction",
+    canHide: false,
     render: (payment) => (
       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
         <WhatsAppIconButton
@@ -115,6 +125,82 @@ const columns: Column<Payment>[] = [
         />
       </div>
     ),
+  },
+  // Hidden by default columns
+  {
+    key: "receipt_number",
+    header: "Receipt #",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.receipt_number || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "reference_number",
+    header: "Reference #",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.reference_number || payment.transaction_reference || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "for_period",
+    header: "For Period",
+    width: "tertiary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.for_period || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "bill",
+    header: "Bill",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.bill ? (
+      <span className="text-blue-600">{payment.bill.bill_number}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "charge_type",
+    header: "Charge Type",
+    width: "secondary",
+    sortable: true,
+    sortKey: "charge_type.name",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.charge_type?.name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "tenant_phone",
+    header: "Phone",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.tenant.phone,
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.notes ? (
+      <span className="truncate max-w-[150px]" title={payment.notes}>{payment.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Recorded On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => formatDate(payment.created_at),
   },
 ]
 

@@ -117,6 +117,7 @@ const columns: Column<Visitor>[] = [
     header: "Visitor",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (visitor) => {
       const photoUrl = visitor.visitor_contact?.person?.photo_url
       // Use person.name (live data) with fallback to visitor_contact.name then visitor_name
@@ -161,6 +162,8 @@ const columns: Column<Visitor>[] = [
     header: "Type",
     width: "badge",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (visitor) => (
       <div className="space-y-1">
         <VisitorTypeBadge type={visitor.visitor_type} />
@@ -176,6 +179,8 @@ const columns: Column<Visitor>[] = [
     width: "secondary",
     sortable: true,
     sortKey: "tenant.name",
+    canHide: true,
+    defaultVisible: true,
     render: (visitor) => (
       <div className="text-sm">
         {visitor.visitor_type === "tenant_visitor" && visitor.tenant && (
@@ -194,22 +199,13 @@ const columns: Column<Visitor>[] = [
     ),
   },
   {
-    key: "purpose",
-    header: "Purpose",
-    width: "tertiary",
-    hideOnMobile: true,
-    render: (visitor) => (
-      <span className="text-sm text-muted-foreground truncate">
-        {visitor.purpose || "—"}
-      </span>
-    ),
-  },
-  {
     key: "check_in_date",
     header: "Check In",
     width: "date",
     sortable: true,
     sortType: "date",
+    canHide: true,
+    defaultVisible: true,
     render: (visitor) => formatDate(visitor.check_in_date),
   },
   {
@@ -217,10 +213,71 @@ const columns: Column<Visitor>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (visitor) => {
       const info = getVisitorStatusInfo("visitor", visitor.status)
       return <StatusDot status={info.status} label={info.label} />
     },
+  },
+  // Hidden by default columns
+  {
+    key: "purpose",
+    header: "Purpose",
+    width: "tertiary",
+    canHide: true,
+    defaultVisible: false,
+    render: (visitor) => (
+      <span className="text-sm text-muted-foreground truncate">
+        {visitor.purpose || "—"}
+      </span>
+    ),
+  },
+  {
+    key: "visitor_phone",
+    header: "Phone",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (visitor) => visitor.visitor_phone || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "company_name",
+    header: "Company",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (visitor) => visitor.company_name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "check_out_date",
+    header: "Check Out",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (visitor) => visitor.check_out_date ? formatDate(visitor.check_out_date) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "total_visits",
+    header: "Total Visits",
+    width: "count",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (visitor) => <span className="tabular-nums">{visitor.total_visits}</span>,
+  },
+  {
+    key: "created_at",
+    header: "Recorded On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (visitor) => formatDate(visitor.created_at),
   },
 ]
 

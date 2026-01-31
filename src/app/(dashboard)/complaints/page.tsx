@@ -50,6 +50,7 @@ const columns: Column<Complaint>[] = [
     header: "Complaint",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (row) => (
       <div className="min-w-0">
         <div className="flex items-center gap-2 mb-1">
@@ -61,9 +62,6 @@ const columns: Column<Complaint>[] = [
           </span>
         </div>
         <div className="font-medium truncate">{row.title}</div>
-        {row.description && (
-          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{row.description}</p>
-        )}
       </div>
     ),
   },
@@ -73,6 +71,8 @@ const columns: Column<Complaint>[] = [
     width: "secondary",
     sortable: true,
     sortKey: "tenant.name",
+    canHide: true,
+    defaultVisible: true,
     render: (row) => (
       <div className="text-sm">
         {row.tenant && (
@@ -80,9 +80,6 @@ const columns: Column<Complaint>[] = [
         )}
         {row.property && (
           <div><PropertyLink id={row.property.id} name={row.property.name} size="sm" /></div>
-        )}
-        {row.room && (
-          <div><RoomLink id={row.room.id} roomNumber={row.room.room_number} size="sm" /></div>
         )}
       </div>
     ),
@@ -92,6 +89,8 @@ const columns: Column<Complaint>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (row) => {
       const info = getComplaintStatusInfo("complaint", row.status)
       return <StatusDot status={info.status} label={info.label} />
@@ -104,9 +103,75 @@ const columns: Column<Complaint>[] = [
     hideOnMobile: true,
     sortable: true,
     sortType: "date",
+    canHide: true,
+    defaultVisible: true,
     render: (row) => (
       <span className="text-sm text-muted-foreground">{formatTimeAgo(row.created_at)}</span>
     ),
+  },
+  // Hidden by default columns
+  {
+    key: "description",
+    header: "Description",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (row) => row.description ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{row.description}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "priority",
+    header: "Priority",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (row) => (
+      <TableBadge variant={COMPLAINT_PRIORITY[row.priority]?.variant || "default"}>
+        {COMPLAINT_PRIORITY[row.priority]?.label || row.priority}
+      </TableBadge>
+    ),
+  },
+  {
+    key: "category",
+    header: "Category",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (row) => (
+      <span className="text-sm">{COMPLAINT_CATEGORIES[row.category] || row.category}</span>
+    ),
+  },
+  {
+    key: "room",
+    header: "Room",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (row) => row.room ? (
+      <RoomLink id={row.room.id} roomNumber={row.room.room_number} size="sm" />
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "assigned_to",
+    header: "Assigned To",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (row) => row.assigned_to || <span className="text-muted-foreground">Unassigned</span>,
+  },
+  {
+    key: "resolved_at",
+    header: "Resolved On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (row) => row.resolved_at ? formatTimeAgo(row.resolved_at) : <span className="text-muted-foreground">—</span>,
   },
 ]
 
