@@ -192,7 +192,7 @@ export function DetailSection({
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
 
   return (
-    <div className={cn("bg-white rounded-xl border shadow-sm overflow-hidden animate-fade-in-up h-full flex flex-col", className)}>
+    <div className={cn("bg-white rounded-xl border shadow-sm overflow-hidden animate-fade-in-up", className)}>
       <div
         className={cn(
           "flex items-center justify-between px-5 py-4 border-b bg-slate-50/50",
@@ -226,7 +226,7 @@ export function DetailSection({
         </div>
       </div>
       {(!collapsible || isOpen) && (
-        <div className="p-5 flex-1">
+        <div className="p-5">
           {children}
         </div>
       )}
