@@ -21,7 +21,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { PageLoading } from "@/components/ui/loading"
@@ -55,7 +55,6 @@ import {
 import { toast } from "sonner"
 import { formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   MeterType,
   MeterStatus,
@@ -313,7 +312,7 @@ export default function MeterDetailPage() {
         />
       </div>
 
-      <DetailPageContent layout="masonry">
+      <DetailPageTemplate layoutKey="meter-detail" entityType="meter" record={meter}>
         {/* Meter Details */}
         <DetailSection
           title="Meter Details"
@@ -497,7 +496,8 @@ export default function MeterDetailPage() {
             <p className="text-sm whitespace-pre-wrap">{meter.notes}</p>
           </DetailSection>
         )}
-      </DetailPageContent>
+
+      </DetailPageTemplate>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
@@ -621,9 +621,6 @@ export default function MeterDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Record Audit Information */}
-      <DetailPageAudit record={meter} entityType="meter" />
 
       {/* End Assignment Dialog */}
       <Dialog open={showEndAssignDialog} onOpenChange={setShowEndAssignDialog}>

@@ -11,7 +11,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -29,7 +29,6 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 const paymentMethodLabels: Record<string, string> = {
   cash: "Cash",
@@ -117,7 +116,7 @@ export default function ExpenseDetailPage() {
         className="max-w-sm"
       />
 
-      <DetailPageContent layout="masonry">
+      <DetailPageTemplate layoutKey="expense-detail" entityType="expense" record={expense}>
         {/* Expense Details */}
         <DetailSection
           title="Expense Details"
@@ -199,10 +198,8 @@ export default function ExpenseDetailPage() {
             <span>ID: {expense.id}</span>
           </div>
         </DetailSection>
-      </DetailPageContent>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={expense} entityType="expense" />
+      </DetailPageTemplate>
     </div>
   )
 }

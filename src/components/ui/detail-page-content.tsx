@@ -4,16 +4,18 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { MasonryGrid } from "./masonry-grid"
 import { DraggableGrid, GridItem } from "./draggable-grid"
+import { SortableMasonry } from "./sortable-masonry"
 
 interface DetailPageContentProps {
   children: React.ReactNode
   /**
    * Layout mode:
    * - "grid": Traditional CSS grid (default, backwards compatible)
-   * - "masonry": CSS columns for auto-balancing
-   * - "draggable": Drag-and-drop grid with user customization
+   * - "masonry": CSS columns for auto-balancing (gap-free, no customization)
+   * - "draggable": Drag-and-drop grid with user customization (has gaps)
+   * - "sortable-masonry": Gap-free masonry with customizable order
    */
-  layout?: "grid" | "masonry" | "draggable"
+  layout?: "grid" | "masonry" | "draggable" | "sortable-masonry"
   /**
    * Unique key for storing layout preferences (required for draggable mode)
    * e.g., "tenant-detail", "property-detail"
@@ -75,6 +77,20 @@ export function DetailPageContent({
   editable = true,
   className,
 }: DetailPageContentProps) {
+  if (layout === "sortable-masonry" && layoutKey) {
+    return (
+      <SortableMasonry
+        layoutKey={layoutKey}
+        columns={columns}
+        gap={gap}
+        editable={editable}
+        className={className}
+      >
+        {children}
+      </SortableMasonry>
+    )
+  }
+
   if (layout === "draggable" && layoutKey) {
     return (
       <DraggableGrid

@@ -16,7 +16,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
@@ -57,7 +57,6 @@ import { formatDate, formatCurrency } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 // Types for related data
 interface Payment {
@@ -413,7 +412,7 @@ export default function TenantDetailPage() {
         />
       </div>
 
-      <DetailPageContent layout="draggable" layoutKey="tenant-detail">
+      <DetailPageTemplate layoutKey="tenant-detail" entityType="tenant" record={tenant}>
         {/* Room Details */}
         <DetailSection
           title="Room Details"
@@ -809,10 +808,8 @@ export default function TenantDetailPage() {
             emptyText="No room transfers"
           />
         )}
-      </DetailPageContent>
 
-      {/* Record Audit Information - Full width below the grid */}
-      <DetailPageAudit record={tenant} entityType="tenant" />
+      </DetailPageTemplate>
 
       {/* Room Transfer Modal */}
       {showTransferModal && (

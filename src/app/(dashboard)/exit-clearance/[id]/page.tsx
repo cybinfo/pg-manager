@@ -14,7 +14,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -40,7 +40,6 @@ import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   ExitClearance,
   Deduction,
@@ -264,7 +263,7 @@ export default function ExitClearanceDetailPage() {
         className="max-w-sm"
       />
 
-      <DetailPageContent layout="masonry">
+      <DetailPageTemplate layoutKey="exit-clearance-detail" entityType="exit_clearance" record={clearance}>
         {/* Tenant Info */}
         <DetailSection
           title="Tenant Information"
@@ -571,10 +570,8 @@ export default function ExitClearanceDetailPage() {
             </Button>
           </Link>
         )}
-      </DetailPageContent>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={clearance} entityType="exit_clearance" />
+      </DetailPageTemplate>
     </div>
   )
 }

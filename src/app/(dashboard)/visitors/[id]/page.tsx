@@ -13,7 +13,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
@@ -47,7 +47,6 @@ import { toast } from "sonner"
 import { formatDateTime, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   Visitor,
   VisitorType,
@@ -402,7 +401,7 @@ export default function VisitorDetailPage() {
         </DetailSection>
       )}
 
-      <DetailPageContent layout="masonry">
+      <DetailPageTemplate layoutKey="visitor-detail" entityType="visitor" record={visitor}>
         {/* Visitor Details */}
         <DetailSection
           title="Visitor Details"
@@ -682,10 +681,8 @@ export default function VisitorDetailPage() {
             emptyText="No visit history"
           />
         )}
-      </DetailPageContent>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={visitor} entityType="visitor" />
+      </DetailPageTemplate>
     </div>
   )
 }

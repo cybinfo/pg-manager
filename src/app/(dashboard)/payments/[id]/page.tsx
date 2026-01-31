@@ -14,7 +14,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -36,7 +36,6 @@ import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 // Extended Payment type with owner info
 interface PaymentWithOwner extends Payment {
@@ -240,7 +239,8 @@ export default function PaymentReceiptPage() {
       </div>
 
       {/* Receipt */}
-      <Card className="max-w-2xl mx-auto print:shadow-none print:border-0" ref={receiptRef}>
+      <DetailPageTemplate layoutKey="payment-detail" entityType="payment" record={payment}>
+        <Card className="max-w-2xl mx-auto print:shadow-none print:border-0" ref={receiptRef}>
         <CardContent className="p-8">
           {/* Header */}
           <div className="text-center border-b pb-6 mb-6">
@@ -411,8 +411,7 @@ export default function PaymentReceiptPage() {
         }
       `}</style>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={payment} entityType="payment" />
+      </DetailPageTemplate>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

@@ -14,7 +14,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -36,7 +36,6 @@ import { toast } from "sonner"
 import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import { Notice, NOTICE_TYPE_CONFIG, NoticeType } from "@/types/notices.types"
 
 interface Property {
@@ -290,8 +289,9 @@ export default function NoticeDetailPage() {
         }
       />
 
-      {/* Metadata */}
-      <DetailSection
+      <DetailPageTemplate layoutKey="notice-detail" entityType="notice" record={notice}>
+        {/* Metadata */}
+        <DetailSection
         title="Record Info"
         description="Creation and update timestamps"
         icon={Clock}
@@ -487,8 +487,7 @@ export default function NoticeDetailPage() {
         </div>
       </DetailSection>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={notice} entityType="notice" />
+      </DetailPageTemplate>
 
       <div className="flex justify-end gap-4">
         <Link href="/notices">

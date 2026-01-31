@@ -11,7 +11,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
@@ -36,7 +36,6 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG } from "@/types/meters.types"
 
 interface MeterReading {
@@ -167,7 +166,7 @@ export default function RoomDetailPage() {
         />
       </div>
 
-      <DetailPageContent layout="masonry">
+      <DetailPageTemplate layoutKey="room-detail" entityType="room" record={room}>
         {/* Room Details */}
         <DetailSection
           title="Room Details"
@@ -441,10 +440,8 @@ export default function RoomDetailPage() {
           emptyIcon={MessageSquare}
           emptyText="No complaints for this room"
         />
-      </DetailPageContent>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={room} entityType="room" />
+      </DetailPageTemplate>
     </div>
   )
 }

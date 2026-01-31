@@ -12,7 +12,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { PageLoading } from "@/components/ui/loading"
@@ -42,7 +42,6 @@ import { toast } from "sonner"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 interface MeterReading {
   id: string
@@ -345,7 +344,7 @@ export default function MeterReadingDetailPage() {
         />
       </div>
 
-      <DetailPageContent layout="masonry">
+      <DetailPageTemplate layoutKey="meter-reading-detail" entityType="meter_reading" record={reading}>
         {/* Location Details */}
         <DetailSection title="Location" description="Property and room details" icon={Home}>
           {reading.property && (
@@ -516,10 +515,8 @@ export default function MeterReadingDetailPage() {
             </div>
           </div>
         )}
-      </DetailPageContent>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={reading} entityType="meter_reading" />
+      </DetailPageTemplate>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

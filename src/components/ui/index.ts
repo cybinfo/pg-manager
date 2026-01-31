@@ -60,6 +60,8 @@ export { DetailListSection } from "./detail-list-section"
 export { MasonryGrid } from "./masonry-grid"
 export { DetailPageContent, GridItem } from "./detail-page-content"
 export { DraggableGrid } from "./draggable-grid"
+export { SortableMasonry } from "./sortable-masonry"
+export { DetailPageTemplate } from "./detail-page-template"
 
 // Empty States
 export {
@@ -117,7 +119,7 @@ export {
 } from "@/lib/design-tokens"
 
 // Audit & Activity Components
-export { RecordMetadata, RecordMetadataInline } from "./record-metadata"
-export { ActivityHistory, ActivityHistoryCompact } from "./activity-history"
+export { RecordMetadata, RecordMetadataInline, RecordMetadataContent } from "./record-metadata"
+export { ActivityHistory, ActivityHistoryCompact, ActivityHistoryContent } from "./activity-history"
 export { DetailPageAudit, AUDIT_ENTITY_TYPES } from "./detail-page-audit"
 export type { AuditEntityType } from "./detail-page-audit"

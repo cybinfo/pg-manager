@@ -377,3 +377,255 @@ export function ActivityHistoryCompact({
     />
   )
 }
+
+/**
+ * ActivityHistoryContent - Content-only version for use inside DetailSection
+ *
+ * This renders the activity timeline without the Card wrapper,
+ * designed to be used inside a DetailSection component for consistent UI.
+ */
+export function ActivityHistoryContent({
+  entityType,
+  entityId,
+  maxItems = 10,
+  showChanges = true,
+}: {
+  entityType: string
+  entityId: string
+  maxItems?: number
+  showChanges?: boolean
+}) {
+  const [events, setEvents] = useState<AuditEvent[]>([])
+  const [users, setUsers] = useState<Map<string, UserInfo>>(new Map())
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    async function fetchHistory() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const supabase = createClient()
+
+        const { data: auditEvents, error: fetchError } = await supabase
+          .from("audit_events")
+          .select("*")
+          .eq("entity_type", entityType)
+          .eq("entity_id", entityId)
+          .order("created_at", { ascending: false })
+          .limit(maxItems)
+
+        if (fetchError) throw fetchError
+
+        setEvents(auditEvents || [])
+
+        const allActorIds = (auditEvents || [])
+          .map((e: AuditEvent) => e.actor_id)
+          .filter((id: string | null): id is string => id !== null)
+        const actorIds = Array.from(new Set(allActorIds))
+        if (actorIds.length > 0) {
+          const { data: userData } = await supabase
+            .from("user_profiles")
+            .select("id, email, full_name")
+            .in("id", actorIds)
+
+          if (userData) {
+            setUsers(new Map(userData.map((u: UserInfo) => [u.id, u])))
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch activity history:", err)
+        setError("Failed to load activity history")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (entityId) {
+      fetchHistory()
+    }
+  }, [entityType, entityId, maxItems])
+
+  const toggleExpanded = (eventId: string) => {
+    const newExpanded = new Set(expanded)
+    if (newExpanded.has(eventId)) {
+      newExpanded.delete(eventId)
+    } else {
+      newExpanded.add(eventId)
+    }
+    setExpanded(newExpanded)
+  }
+
+  const getUserDisplayName = (actorId: string | null) => {
+    if (!actorId) return "System"
+    const user = users.get(actorId)
+    if (user?.full_name) return user.full_name
+    if (user?.email) return user.email.split("@")[0]
+    return `User ${actorId.slice(0, 8)}...`
+  }
+
+  const formatChanges = (changes: AuditEvent["changes"]) => {
+    if (!changes) return null
+
+    const changedFields: { field: string; before: unknown; after: unknown }[] = []
+
+    if (changes.before && changes.after) {
+      for (const [key, afterValue] of Object.entries(changes.after)) {
+        const beforeValue = changes.before[key]
+        if (JSON.stringify(beforeValue) !== JSON.stringify(afterValue)) {
+          changedFields.push({ field: key, before: beforeValue, after: afterValue })
+        }
+      }
+    } else if (changes.after) {
+      for (const [key, value] of Object.entries(changes.after)) {
+        if (value !== null && value !== undefined) {
+          changedFields.push({ field: key, before: null, after: value })
+        }
+      }
+    } else if (changes.before) {
+      for (const [key, value] of Object.entries(changes.before)) {
+        if (value !== null && value !== undefined) {
+          changedFields.push({ field: key, before: value, after: null })
+        }
+      }
+    }
+
+    const excludedFields = ["id", "owner_id", "workspace_id", "created_at", "updated_at", "created_by", "deleted_at", "deleted_by"]
+    return changedFields.filter((c) => !excludedFields.includes(c.field))
+  }
+
+  const formatFieldName = (field: string) => {
+    return field
+      .replace(/_/g, " ")
+      .replace(/([A-Z])/g, " $1")
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim()
+  }
+
+  const formatValue = (value: unknown): string => {
+    if (value === null || value === undefined) return "—"
+    if (typeof value === "boolean") return value ? "Yes" : "No"
+    if (typeof value === "object") return JSON.stringify(value)
+    return String(value)
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex gap-4">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (error) {
+    return <p className="text-sm text-muted-foreground">{error}</p>
+  }
+
+  if (events.length === 0) {
+    return <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
+  }
+
+  return (
+    <div className="relative space-y-4">
+      {/* Timeline line */}
+      <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+
+      {events.map((event) => {
+        const Icon = actionIcons[event.action]
+        const changes = showChanges ? formatChanges(event.changes) : null
+        const isExpanded = expanded.has(event.id)
+        const hasChanges = changes && changes.length > 0
+
+        return (
+          <div key={event.id} className="relative flex gap-4 pl-2">
+            {/* Icon */}
+            <div
+              className={cn(
+                "relative z-10 flex h-8 w-8 items-center justify-center rounded-full",
+                actionColors[event.action]
+              )}
+            >
+              <Icon className="h-4 w-4" />
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium text-sm">
+                  {actionLabels[event.action]}
+                </span>
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  {getUserDisplayName(event.actor_id)}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
+                </span>
+              </div>
+
+              {/* Show changes details */}
+              {hasChanges && (
+                <div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 mt-1"
+                    onClick={() => toggleExpanded(event.id)}
+                  >
+                    {isExpanded ? (
+                      <ChevronUp className="h-3 w-3 mr-1" />
+                    ) : (
+                      <ChevronDown className="h-3 w-3 mr-1" />
+                    )}
+                    {changes.length} field{changes.length > 1 ? "s" : ""} changed
+                  </Button>
+                  {isExpanded && (
+                    <div className="mt-2 rounded-md border bg-muted/30 p-3 text-xs space-y-2">
+                      {changes.map((change, i) => (
+                        <div key={i} className="flex flex-wrap gap-x-2">
+                          <span className="font-medium text-muted-foreground min-w-[100px]">
+                            {formatFieldName(change.field)}:
+                          </span>
+                          {event.action === "update" ? (
+                            <>
+                              <span className="line-through text-muted-foreground">
+                                {formatValue(change.before)}
+                              </span>
+                              <span>→</span>
+                              <span className="text-foreground">
+                                {formatValue(change.after)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-foreground">
+                              {formatValue(change.after || change.before)}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Timestamp tooltip */}
+              <p className="text-xs text-muted-foreground mt-1">
+                {format(new Date(event.created_at), "MMM d, yyyy 'at' h:mm a")}
+              </p>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}

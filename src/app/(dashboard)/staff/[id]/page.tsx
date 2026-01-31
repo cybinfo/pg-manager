@@ -15,7 +15,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -36,7 +36,6 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { PermissionGate } from "@/components/auth"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -295,7 +294,7 @@ export default function StaffDetailPage() {
         }
       />
 
-      <DetailPageContent layout="masonry">
+      <DetailPageTemplate layoutKey="staff-detail" entityType="staff" record={staff}>
         {/* Basic Info */}
         <DetailSection
           title="Basic Information"
@@ -475,10 +474,8 @@ export default function StaffDetailPage() {
             </div>
           )}
         </DetailSection>
-      </DetailPageContent>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={staff} entityType="staff" />
+      </DetailPageTemplate>
     </div>
   )
 }

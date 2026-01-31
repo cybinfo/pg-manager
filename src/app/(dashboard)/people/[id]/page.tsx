@@ -19,7 +19,7 @@ import { useDetailPage, PEOPLE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { PageLoading } from "@/components/ui/loading"
-import { DetailHero, InfoCard, DetailSection, InfoRow, DetailListSection, DetailPageContent } from "@/components/ui"
+import { DetailHero, InfoCard, DetailSection, InfoRow, DetailListSection, DetailPageTemplate } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   User,
@@ -52,7 +52,6 @@ import { formatDate, formatCurrency } from "@/lib/format"
 import { softDelete, cascadeSoftDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { PermissionGuard, PermissionGate } from "@/components/auth"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   Person,
   PersonTenantHistory,
@@ -524,7 +523,7 @@ export default function PersonDetailPage() {
         </div>
 
         {/* Main Content Grid */}
-        <DetailPageContent layout="masonry">
+        <DetailPageTemplate layoutKey="person-detail" entityType="person" record={person}>
           {/* Personal Information */}
           <DetailSection title="Personal Information" description="Basic identity details" icon={User}>
             <div className="space-y-1">
@@ -624,9 +623,8 @@ export default function PersonDetailPage() {
               emptyText="No emergency contacts"
             />
           )}
-        </DetailPageContent>
 
-        {/* Tenant History */}
+          {/* Tenant History */}
         {tenantHistory.length > 0 && (
           <DetailListSection
             title="Tenant History"
@@ -871,8 +869,7 @@ export default function PersonDetailPage() {
           </div>
         </DetailSection>
 
-        {/* Record Audit Information */}
-        <DetailPageAudit record={person} entityType="person" />
+        </DetailPageTemplate>
       </div>
     </PermissionGuard>
   )

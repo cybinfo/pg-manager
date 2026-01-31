@@ -14,7 +14,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -38,7 +38,6 @@ import { RoomLink, TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 const statusLabels: Record<string, string> = {
   open: "Open",
@@ -178,7 +177,7 @@ export default function ComplaintDetailPage() {
         }
       />
 
-      <DetailPageContent layout="masonry" columns={3}>
+      <DetailPageTemplate layoutKey="complaint-detail" entityType="complaint" record={complaint}>
         {/* Main Content - Status Section */}
           {/* Status Actions */}
           <DetailSection
@@ -379,10 +378,8 @@ export default function ComplaintDetailPage() {
               </Link>
             </DetailSection>
           )}
-      </DetailPageContent>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={complaint} entityType="complaint" />
+      </DetailPageTemplate>
     </div>
   )
 }

@@ -20,7 +20,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -45,7 +45,6 @@ import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime, formatDate, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
 import { PermissionGate } from "@/components/auth"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import { toast } from "sonner"
 
 // ============================================
@@ -286,7 +285,7 @@ export default function InquiryDetailPage() {
         )}
       </PermissionGate>
 
-      <DetailPageContent layout="masonry">
+      <DetailPageTemplate layoutKey="inquiry-detail" entityType="inquiry" record={inquiry}>
         {/* Contact Information */}
         <DetailSection title="Contact Information" icon={Phone}>
           <div className="grid md:grid-cols-2 gap-4">
@@ -446,10 +445,8 @@ export default function InquiryDetailPage() {
             </div>
           </DetailSection>
         )}
-      </DetailPageContent>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={inquiry} entityType="inquiry" />
+      </DetailPageTemplate>
     </div>
   )
 }

@@ -1,7 +1,9 @@
 "use client"
 
-import { RecordMetadata } from "./record-metadata"
-import { ActivityHistory } from "./activity-history"
+import { RecordMetadataContent } from "./record-metadata"
+import { ActivityHistoryContent } from "./activity-history"
+import { DetailSection } from "./detail-components"
+import { Calendar, History } from "lucide-react"
 import type { AuditableEntity } from "@/types/audit.types"
 
 interface DetailPageAuditProps {
@@ -51,6 +53,8 @@ interface DetailPageAuditProps {
  * - Record metadata (created_at, created_by, deleted status)
  * - Activity history from audit_events
  *
+ * Uses DetailSection wrapper for consistent UI with other sections.
+ *
  * @example
  * // In a detail page:
  * <DetailPageAudit
@@ -74,68 +78,61 @@ export function DetailPageAudit({
   maxActivityItems = 5,
   layout = "grid",
 }: DetailPageAuditProps) {
+  const metadataContent = (
+    <RecordMetadataContent
+      record={{
+        created_at: record.created_at,
+        updated_at: record.updated_at,
+        created_by: record.created_by,
+        deleted_at: record.deleted_at,
+        deleted_by: record.deleted_by,
+      }}
+    />
+  )
+
+  const activityContent = (
+    <ActivityHistoryContent
+      entityType={entityType}
+      entityId={record.id}
+      maxItems={maxActivityItems}
+    />
+  )
+
   if (layout === "compact") {
     return (
-      <div className={className}>
-        <RecordMetadata
-          record={{
-            created_at: record.created_at,
-            updated_at: record.updated_at,
-            created_by: record.created_by,
-            deleted_at: record.deleted_at,
-            deleted_by: record.deleted_by,
-          }}
-          compact
-        />
-      </div>
+      <DetailSection
+        title="Record Information"
+        description="Created and updated details"
+        icon={Calendar}
+        className={className}
+      >
+        {metadataContent}
+      </DetailSection>
     )
   }
 
-  if (layout === "stack" || !showActivityHistory) {
-    return (
-      <div className={`space-y-6 ${className || ""}`}>
-        <RecordMetadata
-          record={{
-            created_at: record.created_at,
-            updated_at: record.updated_at,
-            created_by: record.created_by,
-            deleted_at: record.deleted_at,
-            deleted_by: record.deleted_by,
-          }}
-          className="p-4 border rounded-lg bg-muted/30"
-        />
-        {showActivityHistory && (
-          <ActivityHistory
-            entityType={entityType}
-            entityId={record.id}
-            maxItems={maxActivityItems}
-            title="Activity History"
-          />
-        )}
-      </div>
-    )
-  }
-
-  // Default grid layout
+  // Stack and grid layouts render as separate DetailSection cards
   return (
-    <div className={`grid gap-6 lg:grid-cols-2 ${className || ""}`}>
-      <RecordMetadata
-        record={{
-          created_at: record.created_at,
-          updated_at: record.updated_at,
-          created_by: record.created_by,
-          deleted_at: record.deleted_at,
-          deleted_by: record.deleted_by,
-        }}
-        className="p-4 border rounded-lg bg-muted/30"
-      />
-      <ActivityHistory
-        entityType={entityType}
-        entityId={record.id}
-        maxItems={maxActivityItems}
-        title="Recent Activity"
-      />
-    </div>
+    <>
+      <DetailSection
+        title="Record Information"
+        description="Created and updated details"
+        icon={Calendar}
+        className={className}
+      >
+        {metadataContent}
+      </DetailSection>
+      {showActivityHistory && (
+        <DetailSection
+          title="Activity History"
+          description="Recent changes to this record"
+          icon={History}
+          className={className}
+        >
+          {activityContent}
+        </DetailSection>
+      )}
+    </>
   )
 }
 

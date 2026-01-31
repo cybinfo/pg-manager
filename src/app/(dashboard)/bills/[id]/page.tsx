@@ -15,6 +15,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
@@ -38,7 +39,6 @@ import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 interface Payment {
   id: string
@@ -373,7 +373,7 @@ ManageKar`
         />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <DetailPageTemplate layoutKey="bill-detail" entityType="bill" record={bill}>
         {/* Left Column - Bill Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Line Items */}
@@ -562,10 +562,8 @@ ManageKar`
             </DetailSection>
           )}
         </div>
-      </div>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={bill} entityType="bill" />
+      </DetailPageTemplate>
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

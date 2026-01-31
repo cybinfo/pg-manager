@@ -10,31 +10,29 @@ interface MasonryGridProps {
   className?: string
 }
 
+const columnStyles = {
+  1: "columns-1",
+  2: "columns-1 md:columns-2",
+  3: "columns-1 md:columns-2 lg:columns-3",
+}
+
 const gapStyles = {
   sm: "gap-4",
   md: "gap-6",
   lg: "gap-8",
 }
 
-const gridStyles = {
-  1: "grid-cols-1",
-  2: "grid-cols-1 md:grid-cols-2",
-  3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-}
-
 /**
- * MasonryGrid - Responsive grid layout with natural section sizing
+ * MasonryGrid - True masonry layout using CSS columns
  *
- * Uses CSS Grid with `items-start` alignment so sections naturally size
- * to their content while maintaining consistent left-to-right ordering.
- * This creates a clean 2-column layout without vertical imbalance.
+ * Uses CSS multi-column layout for automatic gap-free stacking.
+ * Sections flow top-to-bottom in each column, filling space efficiently.
  *
  * @example
  * ```tsx
  * <MasonryGrid columns={2}>
  *   <DetailSection title="Section 1">...</DetailSection>
  *   <DetailSection title="Section 2">...</DetailSection>
- *   <DetailSection title="Section 3">...</DetailSection>
  * </MasonryGrid>
  * ```
  */
@@ -47,11 +45,12 @@ export function MasonryGrid({
   return (
     <div
       className={cn(
-        "grid",
-        gridStyles[columns],
+        columnStyles[columns],
         gapStyles[gap],
-        // items-start: each section sizes to its content, no stretch
-        "items-start",
+        // Prevent sections from breaking across columns
+        "[&>*]:break-inside-avoid",
+        // Add margin between items in column
+        "[&>*]:mb-6",
         className
       )}
     >

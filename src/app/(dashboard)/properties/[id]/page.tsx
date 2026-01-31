@@ -20,7 +20,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
@@ -49,7 +49,6 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 
 const statusColors: Record<string, string> = {
   available: "bg-green-100 text-green-700",
@@ -175,7 +174,7 @@ export default function PropertyDetailPage() {
         />
       </div>
 
-      <DetailPageContent layout="masonry">
+      <DetailPageTemplate layoutKey="property-detail" entityType="property" record={property}>
         {/* Property Details */}
         <DetailSection
           title="Property Details"
@@ -494,10 +493,8 @@ export default function PropertyDetailPage() {
           emptyIcon={UserCheck}
           emptyText="No visitors recorded for this property"
         />
-      </DetailPageContent>
 
-      {/* Record Audit Information */}
-      <DetailPageAudit record={property} entityType="property" />
+      </DetailPageTemplate>
     </div>
   )
 }

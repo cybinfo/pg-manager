@@ -14,7 +14,7 @@ import {
   DetailSection,
   InfoRow,
   DetailListSection,
-  DetailPageContent,
+  DetailPageTemplate,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
@@ -23,7 +23,6 @@ import { TableBadge } from "@/components/ui/data-table"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
-import { DetailPageAudit } from "@/components/ui/detail-page-audit"
 import {
   Wallet,
   User,
@@ -230,7 +229,7 @@ export default function RefundDetailPage() {
           className="max-w-sm"
         />
 
-        <DetailPageContent layout="masonry">
+        <DetailPageTemplate layoutKey="refund-detail" entityType="refund" record={refund}>
           {/* Tenant Info */}
           <DetailSection
             title="Tenant"
@@ -415,10 +414,8 @@ export default function RefundDetailPage() {
               </Link>
             </DetailSection>
           )}
-        </DetailPageContent>
 
-        {/* Record Audit Information */}
-        <DetailPageAudit record={refund} entityType="refund" />
+        </DetailPageTemplate>
       </div>
     </PermissionGuard>
   )
