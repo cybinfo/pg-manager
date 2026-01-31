@@ -73,6 +73,7 @@ export {
   NoResultsState,
   NoDataState,
   ErrorState,
+  NotFoundState,
 } from "./empty-state"
 
 // Loading States

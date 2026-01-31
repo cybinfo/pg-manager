@@ -36,7 +36,7 @@ import {
 } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
-import { EmptyState } from "@/components/ui/empty-state"
+import { NotFoundState } from "@/components/ui/empty-state"
 
 import type { DailySpend } from "@/types/expense-enhanced.types"
 
@@ -112,16 +112,12 @@ export default function DailySpendDetailPage({
 
   if (!entry) {
     return (
-      <div className="container py-6">
-        <EmptyState
-          title="Entry not found"
-          description="The expense entry you're looking for doesn't exist or has been deleted."
-          action={{
-            label: "Back to Daily Spend",
-            href: "/expenses/daily-spend",
-          }}
-        />
-      </div>
+      <NotFoundState
+        title="Entry not found"
+        description="The expense entry you're looking for doesn't exist or has been deleted."
+        backHref="/expenses/daily-spend"
+        backLabel="Back to Daily Spend"
+      />
     )
   }
 

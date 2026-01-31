@@ -198,3 +198,38 @@ export function ErrorState({
     />
   )
 }
+
+/**
+ * NotFoundState - Centered full-page not found state for detail pages
+ * Use this when a record is not found or has been deleted.
+ */
+export function NotFoundState({
+  title = "Not found",
+  description = "The item you're looking for doesn't exist or has been deleted.",
+  backHref,
+  backLabel = "Go back",
+  className,
+}: {
+  title?: string
+  description?: string
+  backHref?: string
+  backLabel?: string
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-center min-h-[60vh]",
+        className
+      )}
+    >
+      <EmptyState
+        variant="default"
+        icon={FileX}
+        title={title}
+        description={description}
+        action={backHref ? { label: backLabel, href: backHref } : undefined}
+      />
+    </div>
+  )
+}
