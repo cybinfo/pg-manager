@@ -61,8 +61,7 @@ export default function DailySpendDetailPage({
         .from("daily_spend")
         .select(`
           *,
-          product:products(id, name, name_hi, default_unit),
-          category:product_categories(id, name, name_hi)
+          product:products(id, name, name_hi, default_unit, category:product_categories(id, name, name_hi))
         `)
         .eq("id", id)
         .is("deleted_at", null)
@@ -73,10 +72,14 @@ export default function DailySpendDetailPage({
         return
       }
 
+      // Get category from product's nested category
+      const product = transformJoin(data.product)
+      const category = product?.category ? transformJoin(product.category) : null
+
       const transformed = {
         ...data,
-        product: transformJoin(data.product),
-        category: transformJoin(data.category),
+        product,
+        category,
       } as DailySpend
 
       setEntry(transformed)
