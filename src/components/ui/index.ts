@@ -58,7 +58,8 @@ export {
 // Detail Page Layout Components
 export { DetailListSection } from "./detail-list-section"
 export { MasonryGrid } from "./masonry-grid"
-export { DetailPageContent } from "./detail-page-content"
+export { DetailPageContent, GridItem } from "./detail-page-content"
+export { DraggableGrid } from "./draggable-grid"
 
 // Empty States
 export {

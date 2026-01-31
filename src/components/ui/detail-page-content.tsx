@@ -3,6 +3,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { MasonryGrid } from "./masonry-grid"
+import { DraggableGrid, GridItem } from "./draggable-grid"
 
 interface DetailPageContentProps {
   children: React.ReactNode
@@ -10,8 +11,14 @@ interface DetailPageContentProps {
    * Layout mode:
    * - "grid": Traditional CSS grid (default, backwards compatible)
    * - "masonry": CSS columns for auto-balancing
+   * - "draggable": Drag-and-drop grid with user customization
    */
-  layout?: "grid" | "masonry"
+  layout?: "grid" | "masonry" | "draggable"
+  /**
+   * Unique key for storing layout preferences (required for draggable mode)
+   * e.g., "tenant-detail", "property-detail"
+   */
+  layoutKey?: string
   /**
    * Number of columns (1, 2, or 3)
    * Default: 2
@@ -22,6 +29,11 @@ interface DetailPageContentProps {
    * Default: "md"
    */
   gap?: "sm" | "md" | "lg"
+  /**
+   * Whether to show the customize button (draggable mode only)
+   * Default: true
+   */
+  editable?: boolean
   className?: string
 }
 
@@ -34,31 +46,48 @@ const gapStyles = {
 /**
  * DetailPageContent - Wrapper for detail page content sections
  *
- * Provides backwards-compatible layout wrapper that can use either
- * traditional CSS grid or CSS columns (masonry) layout.
+ * Provides multiple layout modes:
+ * - "grid": Traditional CSS grid (predictable, gaps possible)
+ * - "masonry": CSS columns for auto-balancing (fills gaps, vertical ordering)
+ * - "draggable": Drag-and-drop grid with user customization (most flexible)
  *
  * @example
  * ```tsx
  * // Traditional grid (default)
  * <DetailPageContent>
  *   <DetailSection>...</DetailSection>
- *   <DetailSection>...</DetailSection>
  * </DetailPageContent>
  *
- * // Auto-balancing masonry layout
- * <DetailPageContent layout="masonry">
- *   <DetailSection>...</DetailSection>
- *   <DetailSection>...</DetailSection>
+ * // Draggable layout with customization
+ * <DetailPageContent layout="draggable" layoutKey="tenant-detail">
+ *   <GridItem id="room-details" defaultHeight={3}>
+ *     <DetailSection>...</DetailSection>
+ *   </GridItem>
  * </DetailPageContent>
  * ```
  */
 export function DetailPageContent({
   children,
   layout = "grid",
+  layoutKey,
   columns = 2,
   gap = "md",
+  editable = true,
   className,
 }: DetailPageContentProps) {
+  if (layout === "draggable" && layoutKey) {
+    return (
+      <DraggableGrid
+        layoutKey={layoutKey}
+        columns={columns}
+        editable={editable}
+        className={className}
+      >
+        {children}
+      </DraggableGrid>
+    )
+  }
+
   if (layout === "masonry") {
     return (
       <MasonryGrid columns={columns} gap={gap} className={className}>
@@ -80,6 +109,7 @@ export function DetailPageContent({
         "grid",
         gridStyles[columns],
         gapStyles[gap],
+        "items-start",
         className
       )}
     >
@@ -87,3 +117,6 @@ export function DetailPageContent({
     </div>
   )
 }
+
+// Re-export GridItem for convenience
+export { GridItem }
