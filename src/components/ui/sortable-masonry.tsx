@@ -248,7 +248,6 @@ export function SortableMasonry({
       <div className={cn(
         gridStyles[columns],
         gapStyles[gap],
-        "items-start",
         className
       )}>
         {children}
@@ -291,7 +290,6 @@ export function SortableMasonry({
             <div className={cn(
               gridStyles[columns],
               gapStyles[gap],
-              "items-start",
               className
             )}>
               {orderedChildren.map(({ id, element }) => (
@@ -327,7 +325,6 @@ export function SortableMasonry({
       <div className={cn(
         gridStyles[columns],
         gapStyles[gap],
-        "items-start",
         className
       )}>
         {orderedChildren.map(({ id, element }) => (
