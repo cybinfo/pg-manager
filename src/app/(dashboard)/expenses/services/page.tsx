@@ -51,6 +51,7 @@ const columns: Column<ServicePaymentListItem>[] = [
     header: "Date",
     width: "date",
     sortable: true,
+    canHide: false,
     render: (payment) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
@@ -70,6 +71,8 @@ const columns: Column<ServicePaymentListItem>[] = [
     header: "Service",
     width: "primary",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (payment) => (
       <div>
         <div className="font-medium line-clamp-1">{payment.description}</div>
@@ -85,6 +88,8 @@ const columns: Column<ServicePaymentListItem>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (payment) => (
       <div className="text-right">
         <div className="font-medium tabular-nums">{formatCurrency(payment.net_amount)}</div>
@@ -102,6 +107,8 @@ const columns: Column<ServicePaymentListItem>[] = [
     width: "badge",
     hideOnMobile: true,
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (payment) => {
       if (!payment.warranty_months || payment.warranty_months === 0) {
         return <span className="text-muted-foreground">—</span>
@@ -125,6 +132,8 @@ const columns: Column<ServicePaymentListItem>[] = [
     header: "TDS",
     width: "badge",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (payment) =>
       payment.tds_applicable ? (
         <TableBadge variant="muted">
@@ -134,6 +143,83 @@ const columns: Column<ServicePaymentListItem>[] = [
       ) : (
         <span className="text-muted-foreground">—</span>
       ),
+  },
+  // Hidden by default columns
+  {
+    key: "provider_name",
+    header: "Provider",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.provider?.name || payment.provider_name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "category",
+    header: "Category",
+    width: "badge",
+    sortable: true,
+    sortKey: "category.name",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.category?.name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "gross_amount_full",
+    header: "Gross Amount",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    sortKey: "gross_amount",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => (
+      <span className="font-medium tabular-nums">{formatCurrency(payment.gross_amount)}</span>
+    ),
+  },
+  {
+    key: "tds_amount",
+    header: "TDS Amount",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.tds_amount > 0 ? (
+      <span className="tabular-nums">{formatCurrency(payment.tds_amount)}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "payment_mode",
+    header: "Payment Mode",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.payment_mode ? (
+      <TableBadge variant="muted">{payment.payment_mode.replace(/_/g, " ")}</TableBadge>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "warranty_months",
+    header: "Warranty (Months)",
+    width: "count",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.warranty_months > 0 ? (
+      <span className="tabular-nums">{payment.warranty_months}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Recorded On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => formatDate(payment.created_at),
   },
 ]
 

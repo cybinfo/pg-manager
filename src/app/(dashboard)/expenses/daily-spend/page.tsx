@@ -48,6 +48,7 @@ const columns: Column<DailySpendItem>[] = [
     header: "Date",
     width: "date",
     sortable: true,
+    canHide: false,
     render: (item) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center">
@@ -67,6 +68,8 @@ const columns: Column<DailySpendItem>[] = [
     header: "Item",
     width: "primary",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (item) => (
       <div>
         <div className="font-medium">{item.product?.name || item.product_name}</div>
@@ -83,6 +86,8 @@ const columns: Column<DailySpendItem>[] = [
     hideOnMobile: true,
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (item) => (
       <span className="tabular-nums">
         {item.quantity} {item.unit}
@@ -96,6 +101,8 @@ const columns: Column<DailySpendItem>[] = [
     hideOnMobile: true,
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (item) => (
       <span className="tabular-nums text-muted-foreground">
         {formatCurrency(item.rate)}/{item.unit}
@@ -108,6 +115,8 @@ const columns: Column<DailySpendItem>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (item) => (
       <span className="font-medium tabular-nums">{formatCurrency(item.total)}</span>
     ),
@@ -118,6 +127,8 @@ const columns: Column<DailySpendItem>[] = [
     width: "badge",
     hideOnMobile: true,
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (item) => (
       <TableBadge
         variant={
@@ -131,6 +142,54 @@ const columns: Column<DailySpendItem>[] = [
         {item.payment_mode.toUpperCase()}
       </TableBadge>
     ),
+  },
+  // Hidden by default columns
+  {
+    key: "vendor_name",
+    header: "Vendor",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => item.vendor_name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "category",
+    header: "Category",
+    width: "badge",
+    sortable: true,
+    sortKey: "category.name",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => item.category?.name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "unit",
+    header: "Unit",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => item.unit || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => item.notes ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{item.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Recorded On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => formatDate(item.created_at),
   },
 ]
 

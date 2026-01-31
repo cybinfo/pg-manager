@@ -51,6 +51,7 @@ const columns: Column<BillPaymentListItem>[] = [
     header: "Vendor / Bill",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (bill) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -72,6 +73,8 @@ const columns: Column<BillPaymentListItem>[] = [
     sortable: true,
     sortKey: "category.name",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (bill) => (
       <span>{bill.category?.name || bill.category_name || "Uncategorized"}</span>
     ),
@@ -82,6 +85,8 @@ const columns: Column<BillPaymentListItem>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (bill) => (
       <span className="font-medium tabular-nums">{formatCurrency(bill.bill_amount)}</span>
     ),
@@ -92,6 +97,8 @@ const columns: Column<BillPaymentListItem>[] = [
     width: "date",
     sortable: true,
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (bill) => {
       if (!bill.due_date) return <span className="text-muted-foreground">—</span>
 
@@ -121,6 +128,8 @@ const columns: Column<BillPaymentListItem>[] = [
     width: "date",
     sortable: true,
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (bill) =>
       bill.payment_date ? (
         <span className="text-green-600">{formatDate(bill.payment_date)}</span>
@@ -133,6 +142,8 @@ const columns: Column<BillPaymentListItem>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (bill) => {
       const statusConfig: Record<string, { variant: "success" | "warning" | "error" | "muted"; label: string }> = {
         paid: { variant: "success", label: "Paid" },
@@ -144,6 +155,65 @@ const columns: Column<BillPaymentListItem>[] = [
 
       return <TableBadge variant={config.variant}>{config.label}</TableBadge>
     },
+  },
+  // Hidden by default columns
+  {
+    key: "bill_number",
+    header: "Bill Number",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => bill.bill_number || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "bill_period",
+    header: "Period",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => bill.bill_period || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "bill_date",
+    header: "Bill Date",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => bill.bill_date ? formatDate(bill.bill_date) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "paid_amount",
+    header: "Paid Amount",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => bill.paid_amount ? (
+      <span className="text-green-600 font-medium tabular-nums">{formatCurrency(bill.paid_amount)}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "payment_mode",
+    header: "Payment Mode",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => bill.payment_mode ? (
+      <TableBadge variant="muted">{bill.payment_mode.replace(/_/g, " ")}</TableBadge>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Recorded On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (bill) => formatDate(bill.created_at),
   },
 ]
 

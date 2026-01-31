@@ -13,7 +13,7 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PRODUCT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 // ============================================
 // Types
@@ -43,6 +43,7 @@ const columns: Column<Product>[] = [
     header: "Product Name",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (product) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-teal-100 flex items-center justify-center">
@@ -63,6 +64,8 @@ const columns: Column<Product>[] = [
     width: "secondary",
     sortable: true,
     sortKey: "category.name",
+    canHide: true,
+    defaultVisible: true,
     render: (product) => (
       <div className="flex items-center gap-2">
         <Tag className="h-3 w-3 text-muted-foreground" />
@@ -76,6 +79,8 @@ const columns: Column<Product>[] = [
     width: "badge",
     hideOnMobile: true,
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (product) => (
       <TableBadge variant="muted">
         {product.default_unit || "—"}
@@ -89,6 +94,8 @@ const columns: Column<Product>[] = [
     hideOnMobile: true,
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (product) =>
       product.default_rate ? (
         <span className="font-medium tabular-nums">
@@ -106,6 +113,8 @@ const columns: Column<Product>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (product) =>
       product.is_active ? (
         <TableBadge variant="success">
@@ -118,6 +127,25 @@ const columns: Column<Product>[] = [
           Inactive
         </TableBadge>
       ),
+  },
+  // Hidden by default columns
+  {
+    key: "name_hi",
+    header: "Hindi Name",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (product) => product.name_hi || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Added On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (product) => formatDate(product.created_at),
   },
 ]
 

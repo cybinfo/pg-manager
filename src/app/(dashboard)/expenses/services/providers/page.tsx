@@ -13,6 +13,7 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { SERVICE_PROVIDER_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { formatDate } from "@/lib/format"
 
 // ============================================
 // Types
@@ -46,6 +47,7 @@ const columns: Column<ServiceProviderListItem>[] = [
     header: "Provider",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (provider) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -66,6 +68,8 @@ const columns: Column<ServiceProviderListItem>[] = [
     width: "secondary",
     sortable: true,
     sortKey: "category.name",
+    canHide: true,
+    defaultVisible: true,
     render: (provider) => (
       <span>{provider.category?.name || "Uncategorized"}</span>
     ),
@@ -77,6 +81,8 @@ const columns: Column<ServiceProviderListItem>[] = [
     hideOnMobile: true,
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (provider) =>
       provider.rating ? (
         <div className="flex items-center gap-1">
@@ -94,6 +100,8 @@ const columns: Column<ServiceProviderListItem>[] = [
     hideOnMobile: true,
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (provider) => (
       <span className="tabular-nums">{provider.total_jobs}</span>
     ),
@@ -103,6 +111,8 @@ const columns: Column<ServiceProviderListItem>[] = [
     header: "TDS",
     width: "badge",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (provider) =>
       provider.tds_applicable ? (
         <TableBadge variant="muted">
@@ -118,6 +128,8 @@ const columns: Column<ServiceProviderListItem>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (provider) =>
       provider.is_active ? (
         <TableBadge variant="success">
@@ -130,6 +142,51 @@ const columns: Column<ServiceProviderListItem>[] = [
           Inactive
         </TableBadge>
       ),
+  },
+  // Hidden by default columns
+  {
+    key: "phone",
+    header: "Phone",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (provider) => provider.phone || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "email",
+    header: "Email",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (provider) => provider.email || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "pan",
+    header: "PAN",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (provider) => provider.pan ? (
+      <span className="font-mono text-sm">{provider.pan}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "tds_section",
+    header: "TDS Section",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (provider) => provider.tds_section || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Added On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (provider) => formatDate(provider.created_at),
   },
 ]
 

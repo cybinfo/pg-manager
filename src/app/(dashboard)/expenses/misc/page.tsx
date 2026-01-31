@@ -63,6 +63,7 @@ const columns: Column<MiscTransactionItem>[] = [
     header: "Date",
     width: "date",
     sortable: true,
+    canHide: false,
     render: (item) => formatDate(item.transaction_date),
   },
   {
@@ -70,6 +71,8 @@ const columns: Column<MiscTransactionItem>[] = [
     header: "Type",
     width: "badge",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (item) => (
       <TableBadge variant={item.transaction_type === "in" ? "success" : "error"}>
         {item.transaction_type === "in" ? (
@@ -89,6 +92,8 @@ const columns: Column<MiscTransactionItem>[] = [
     header: "Person / Description",
     width: "primary",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (item) => (
       <div>
         <div className="font-medium">{item.person_name || "—"}</div>
@@ -106,6 +111,8 @@ const columns: Column<MiscTransactionItem>[] = [
     width: "secondary",
     sortable: true,
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (item) => (
       <TableBadge variant="muted">
         {item.category?.name || item.category_name || "Uncategorized"}
@@ -118,6 +125,8 @@ const columns: Column<MiscTransactionItem>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (item) => (
       <span className={item.transaction_type === "in" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
         {item.transaction_type === "in" ? "+" : "-"}
@@ -131,6 +140,8 @@ const columns: Column<MiscTransactionItem>[] = [
     width: "badge",
     sortable: true,
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (item) => {
       const modeLabels: Record<string, string> = {
         cash: "Cash",
@@ -143,6 +154,61 @@ const columns: Column<MiscTransactionItem>[] = [
       }
       return <TableBadge variant="muted">{modeLabels[item.payment_mode] || item.payment_mode}</TableBadge>
     },
+  },
+  // Hidden by default columns
+  {
+    key: "description",
+    header: "Description",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => item.description ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{item.description}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "property",
+    header: "Property",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => item.property?.name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "tenant",
+    header: "Tenant",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => item.tenant?.name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "payment_reference",
+    header: "Reference",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => item.payment_reference || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => item.notes ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{item.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Recorded On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (item) => formatDate(item.created_at),
   },
 ]
 

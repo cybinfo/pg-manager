@@ -13,7 +13,7 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { VENDOR_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 // ============================================
 // Types
@@ -48,6 +48,7 @@ const columns: Column<VendorListItem>[] = [
     header: "Vendor",
     width: "primary",
     sortable: true,
+    canHide: false,
     render: (vendor) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
@@ -68,6 +69,8 @@ const columns: Column<VendorListItem>[] = [
     width: "secondary",
     sortable: true,
     sortKey: "category.name",
+    canHide: true,
+    defaultVisible: true,
     render: (vendor) => (
       <span>{vendor.category?.name || "Uncategorized"}</span>
     ),
@@ -77,6 +80,8 @@ const columns: Column<VendorListItem>[] = [
     header: "Contact",
     width: "secondary",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (vendor) => (
       <div className="flex items-center gap-2">
         {vendor.phone ? (
@@ -95,6 +100,8 @@ const columns: Column<VendorListItem>[] = [
     header: "GST/PAN",
     width: "badge",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (vendor) => (
       <div className="text-xs">
         {vendor.gstin ? (
@@ -112,6 +119,8 @@ const columns: Column<VendorListItem>[] = [
     header: "UPI",
     width: "badge",
     hideOnMobile: true,
+    canHide: true,
+    defaultVisible: true,
     render: (vendor) =>
       vendor.upi_id ? (
         <TableBadge variant="success">
@@ -127,6 +136,8 @@ const columns: Column<VendorListItem>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (vendor) =>
       vendor.is_active ? (
         <TableBadge variant="success">
@@ -139,6 +150,43 @@ const columns: Column<VendorListItem>[] = [
           Inactive
         </TableBadge>
       ),
+  },
+  // Hidden by default columns
+  {
+    key: "contact_name",
+    header: "Contact Name",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (vendor) => vendor.contact_name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "email",
+    header: "Email",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (vendor) => vendor.email || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "pan",
+    header: "PAN",
+    width: "badge",
+    canHide: true,
+    defaultVisible: false,
+    render: (vendor) => vendor.pan ? (
+      <span className="font-mono text-sm">{vendor.pan}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Added On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (vendor) => formatDate(vendor.created_at),
   },
 ]
 

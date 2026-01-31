@@ -58,6 +58,7 @@ const columns: Column<Expense>[] = [
     width: "primary",
     sortable: true,
     sortKey: "expense_type.name",
+    canHide: false,
     render: (expense) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-rose-100 flex items-center justify-center">
@@ -78,6 +79,8 @@ const columns: Column<Expense>[] = [
     width: "amount",
     sortable: true,
     sortType: "number",
+    canHide: true,
+    defaultVisible: true,
     render: (expense) => (
       <span className="font-semibold text-rose-600 tabular-nums">
         -{formatCurrency(Number(expense.amount))}
@@ -90,6 +93,8 @@ const columns: Column<Expense>[] = [
     width: "badge",
     hideOnMobile: true,
     sortable: true,
+    canHide: true,
+    defaultVisible: true,
     render: (expense) => (
       <TableBadge variant="muted">
         {paymentMethodLabels[expense.payment_method] || expense.payment_method}
@@ -103,6 +108,8 @@ const columns: Column<Expense>[] = [
     hideOnMobile: true,
     sortable: true,
     sortKey: "property.name",
+    canHide: true,
+    defaultVisible: true,
     render: (expense) =>
       expense.property ? (
         <PropertyLink id={expense.property.id} name={expense.property.name} showIcon={false} />
@@ -116,7 +123,47 @@ const columns: Column<Expense>[] = [
     width: "date",
     sortable: true,
     sortType: "date",
+    canHide: true,
+    defaultVisible: true,
     render: (expense) => formatDate(expense.expense_date),
+  },
+  // Hidden by default columns
+  {
+    key: "description",
+    header: "Description",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (expense) => expense.description ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{expense.description}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "vendor_name",
+    header: "Vendor",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (expense) => expense.vendor_name || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "reference_number",
+    header: "Reference",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (expense) => expense.reference_number || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Recorded On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (expense) => formatDate(expense.created_at),
   },
 ]
 
