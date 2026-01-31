@@ -63,6 +63,10 @@ export { DraggableGrid } from "./draggable-grid"
 export { SortableMasonry } from "./sortable-masonry"
 export { DetailPageTemplate } from "./detail-page-template"
 
+// Form Page Layout Components
+export { FormPageTemplate, FormGrid } from "./form-page-template"
+export type { FormPageTemplateProps, IconColor, FormGridProps } from "./form-page-template"
+
 // Empty States
 export {
   EmptyState,

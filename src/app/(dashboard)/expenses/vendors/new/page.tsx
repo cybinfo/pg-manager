@@ -2,23 +2,28 @@
  * New Vendor Page
  *
  * Form to create a new vendor/supplier.
+ * Uses FormPageTemplate for consistent layout.
  */
 
 "use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Building2, ArrowLeft } from "lucide-react"
+import { Building2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
 import { toast } from "sonner"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Input, Select, FormField, Textarea } from "@/components/ui"
+import {
+  FormPageTemplate,
+  FormSection,
+  FormGrid,
+  FormField,
+  Input,
+  Select,
+  Textarea,
+} from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
 import type { BillCategory, VendorFormData } from "@/types/expense-enhanced.types"
@@ -65,7 +70,6 @@ export default function NewVendorPage() {
 
       if (error) {
         console.error("Failed to load categories:", error)
-        // Try seeding default categories
         await seedDefaultCategories()
       } else {
         setCategories(data || [])
@@ -88,7 +92,6 @@ export default function NewVendorPage() {
       if (error) {
         console.error("Failed to seed categories:", error)
       } else {
-        // Reload categories
         const { data } = await supabase
           .from("bill_categories")
           .select("*")
@@ -172,242 +175,201 @@ export default function NewVendorPage() {
   }
 
   return (
-    <FeatureGuard feature="expenses">
-      <PermissionGuard permission="expenses.create">
-        <div className="max-w-2xl mx-auto py-6">
-          {/* Back Link */}
-          <Link
-            href="/expenses/vendors"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Vendors
-          </Link>
+    <FormPageTemplate
+      title="New Vendor"
+      description="Add a new vendor/supplier for bill payments"
+      icon={Building2}
+      iconColor="purple"
+      backHref="/expenses/vendors"
+      backLabel="Back to Vendors"
+      onSubmit={handleSubmit}
+      onCancel={() => router.push("/expenses/vendors")}
+      submitLabel="Create Vendor"
+      loading={loading}
+      loadingLabel="Creating..."
+      permission="expenses.create"
+      feature="expenses"
+    >
+      {/* Basic Info */}
+      <FormSection title="Basic Information">
+        <FormField label="Vendor Name" required>
+          <Input
+            value={formData.name}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, name: e.target.value }))
+            }
+            placeholder="e.g., ABC Electricals"
+            autoFocus
+          />
+        </FormField>
 
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <CardTitle>New Vendor</CardTitle>
-                    <CardDescription>
-                      Add a new vendor/supplier for bill payments
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
+        <FormField label="Category">
+          <Select
+            value={formData.category_id || ""}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, category_id: e.target.value }))
+            }
+            options={[
+              { value: "", label: "Select category" },
+              ...categories.map((cat) => ({
+                value: cat.id,
+                label: cat.name_hi ? `${cat.name} (${cat.name_hi})` : cat.name,
+              })),
+            ]}
+          />
+        </FormField>
+      </FormSection>
 
-              <CardContent className="space-y-6">
-                {/* Basic Info */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
+      {/* Contact Info */}
+      <FormSection title="Contact Information">
+        <FormGrid cols={2}>
+          <FormField label="Contact Person">
+            <Input
+              value={formData.contact_name || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, contact_name: e.target.value }))
+              }
+              placeholder="Contact name"
+            />
+          </FormField>
 
-                  <FormField label="Vendor Name" required>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, name: e.target.value }))
-                      }
-                      placeholder="e.g., ABC Electricals"
-                      autoFocus
-                    />
-                  </FormField>
+          <FormField label="Phone">
+            <Input
+              value={formData.phone || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, phone: e.target.value }))
+              }
+              placeholder="10-digit mobile"
+            />
+          </FormField>
+        </FormGrid>
 
-                  <FormField label="Category">
-                    <Select
-                      value={formData.category_id || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, category_id: e.target.value }))
-                      }
-                      options={[
-                        { value: "", label: "Select category" },
-                        ...categories.map((cat) => ({
-                          value: cat.id,
-                          label: cat.name_hi ? `${cat.name} (${cat.name_hi})` : cat.name,
-                        })),
-                      ]}
-                    />
-                  </FormField>
-                </div>
+        <FormField label="Email">
+          <Input
+            type="email"
+            value={formData.email || ""}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, email: e.target.value }))
+            }
+            placeholder="email@example.com"
+          />
+        </FormField>
 
-                {/* Contact Info */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
+        <FormField label="Address">
+          <Textarea
+            value={formData.address || ""}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, address: e.target.value }))
+            }
+            placeholder="Full address"
+            rows={2}
+          />
+        </FormField>
+      </FormSection>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField label="Contact Person">
-                      <Input
-                        value={formData.contact_name || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, contact_name: e.target.value }))
-                        }
-                        placeholder="Contact name"
-                      />
-                    </FormField>
+      {/* Tax Info */}
+      <FormSection title="Tax Information">
+        <FormGrid cols={2}>
+          <FormField label="GSTIN" hint="15-character GST number">
+            <Input
+              value={formData.gstin || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, gstin: e.target.value }))
+              }
+              placeholder="22AAAAA0000A1Z5"
+              maxLength={15}
+              className="uppercase"
+            />
+          </FormField>
 
-                    <FormField label="Phone">
-                      <Input
-                        value={formData.phone || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                        }
-                        placeholder="10-digit mobile"
-                      />
-                    </FormField>
-                  </div>
+          <FormField label="PAN" hint="10-character PAN">
+            <Input
+              value={formData.pan || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, pan: e.target.value }))
+              }
+              placeholder="ABCDE1234F"
+              maxLength={10}
+              className="uppercase"
+            />
+          </FormField>
+        </FormGrid>
+      </FormSection>
 
-                  <FormField label="Email">
-                    <Input
-                      type="email"
-                      value={formData.email || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, email: e.target.value }))
-                      }
-                      placeholder="email@example.com"
-                    />
-                  </FormField>
+      {/* Payment Info */}
+      <FormSection title="Payment Details">
+        <FormField label="UPI ID" hint="For quick payments">
+          <Input
+            value={formData.upi_id || ""}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, upi_id: e.target.value }))
+            }
+            placeholder="name@bank"
+          />
+        </FormField>
 
-                  <FormField label="Address">
-                    <Textarea
-                      value={formData.address || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, address: e.target.value }))
-                      }
-                      placeholder="Full address"
-                      rows={2}
-                    />
-                  </FormField>
-                </div>
+        <FormGrid cols={3}>
+          <FormField label="Bank Name">
+            <Input
+              value={formData.bank_name || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, bank_name: e.target.value }))
+              }
+              placeholder="Bank name"
+            />
+          </FormField>
 
-                {/* Tax Info */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Tax Information</h3>
+          <FormField label="Account Number">
+            <Input
+              value={formData.bank_account || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, bank_account: e.target.value }))
+              }
+              placeholder="Account number"
+            />
+          </FormField>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField label="GSTIN" hint="15-character GST number">
-                      <Input
-                        value={formData.gstin || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, gstin: e.target.value }))
-                        }
-                        placeholder="22AAAAA0000A1Z5"
-                        maxLength={15}
-                        className="uppercase"
-                      />
-                    </FormField>
+          <FormField label="IFSC Code">
+            <Input
+              value={formData.bank_ifsc || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, bank_ifsc: e.target.value }))
+              }
+              placeholder="IFSC"
+              maxLength={11}
+              className="uppercase"
+            />
+          </FormField>
+        </FormGrid>
+      </FormSection>
 
-                    <FormField label="PAN" hint="10-character PAN">
-                      <Input
-                        value={formData.pan || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, pan: e.target.value }))
-                        }
-                        placeholder="ABCDE1234F"
-                        maxLength={10}
-                        className="uppercase"
-                      />
-                    </FormField>
-                  </div>
-                </div>
+      {/* Notes */}
+      <FormField label="Notes">
+        <Textarea
+          value={formData.notes || ""}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, notes: e.target.value }))
+          }
+          placeholder="Any additional notes..."
+          rows={2}
+        />
+      </FormField>
 
-                {/* Payment Info */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Payment Details</h3>
-
-                  <FormField label="UPI ID" hint="For quick payments">
-                    <Input
-                      value={formData.upi_id || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, upi_id: e.target.value }))
-                      }
-                      placeholder="name@bank"
-                    />
-                  </FormField>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <FormField label="Bank Name">
-                      <Input
-                        value={formData.bank_name || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, bank_name: e.target.value }))
-                        }
-                        placeholder="Bank name"
-                      />
-                    </FormField>
-
-                    <FormField label="Account Number">
-                      <Input
-                        value={formData.bank_account || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, bank_account: e.target.value }))
-                        }
-                        placeholder="Account number"
-                      />
-                    </FormField>
-
-                    <FormField label="IFSC Code">
-                      <Input
-                        value={formData.bank_ifsc || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, bank_ifsc: e.target.value }))
-                        }
-                        placeholder="IFSC"
-                        maxLength={11}
-                        className="uppercase"
-                      />
-                    </FormField>
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <FormField label="Notes">
-                  <Textarea
-                    value={formData.notes || ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, notes: e.target.value }))
-                    }
-                    placeholder="Any additional notes..."
-                    rows={2}
-                  />
-                </FormField>
-
-                {/* Active Status */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="is_active"
-                    checked={formData.is_active}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
-                    }
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <label htmlFor="is_active" className="text-sm">
-                    Active (available for selection)
-                  </label>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/expenses/vendors")}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create Vendor"}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </PermissionGuard>
-    </FeatureGuard>
+      {/* Active Status */}
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="is_active"
+          checked={formData.is_active}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+          }
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        <label htmlFor="is_active" className="text-sm">
+          Active (available for selection)
+        </label>
+      </div>
+    </FormPageTemplate>
   )
 }
