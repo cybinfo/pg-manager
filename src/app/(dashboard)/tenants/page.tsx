@@ -34,8 +34,16 @@ interface Tenant {
   photo_url: string | null
   profile_photo: string | null
   check_in_date: string
+  check_out_date: string | null
+  expected_exit_date: string | null
+  notice_date: string | null
   monthly_rent: number
+  security_deposit: number
   status: string
+  police_verification_status: string
+  agreement_signed: boolean
+  notes: string | null
+  created_at: string
   property: { id: string; name: string } | null
   room: { id: string; room_number: string } | null
   person: { id: string; name: string; photo_url: string | null } | null
@@ -144,6 +152,118 @@ const columns: ExtendedColumn<Tenant>[] = [
       return <StatusDot status={info.status} label={info.label} />
     },
   },
+  // Additional columns - hidden by default, user can toggle them on
+  {
+    key: "email",
+    header: "Email",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => tenant.email || <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "phone",
+    header: "Phone",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => tenant.phone,
+  },
+  {
+    key: "security_deposit",
+    header: "Security Deposit",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => (
+      <span className="tabular-nums">{formatCurrency(tenant.security_deposit)}</span>
+    ),
+  },
+  {
+    key: "police_verification_status",
+    header: "Police Verification",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    groupable: true,
+    render: (tenant) => {
+      const statusMap: Record<string, { label: string; className: string }> = {
+        pending: { label: "Pending", className: "text-yellow-600 bg-yellow-50" },
+        submitted: { label: "Submitted", className: "text-blue-600 bg-blue-50" },
+        verified: { label: "Verified", className: "text-green-600 bg-green-50" },
+        rejected: { label: "Rejected", className: "text-red-600 bg-red-50" },
+        not_required: { label: "Not Required", className: "text-gray-600 bg-gray-50" },
+      }
+      const status = statusMap[tenant.police_verification_status] || statusMap.pending
+      return (
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${status.className}`}>
+          {status.label}
+        </span>
+      )
+    },
+  },
+  {
+    key: "agreement_signed",
+    header: "Agreement",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => (
+      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+        tenant.agreement_signed
+          ? "text-green-600 bg-green-50"
+          : "text-yellow-600 bg-yellow-50"
+      }`}>
+        {tenant.agreement_signed ? "Signed" : "Pending"}
+      </span>
+    ),
+  },
+  {
+    key: "check_out_date",
+    header: "Check-out Date",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => tenant.check_out_date ? formatDate(tenant.check_out_date) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "expected_exit_date",
+    header: "Expected Exit",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => tenant.expected_exit_date ? formatDate(tenant.expected_exit_date) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "notice_date",
+    header: "Notice Date",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => tenant.notice_date ? formatDate(tenant.notice_date) : <span className="text-muted-foreground">—</span>,
+  },
+  {
+    key: "created_at",
+    header: "Added On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => formatDate(tenant.created_at),
+  },
 ]
 
 // ============================================
@@ -200,6 +320,18 @@ const advancedFilterColumns: FilterableColumn[] = [
     filterOperators: ["contains", "eq", "neq", "starts", "ends"],
   },
   {
+    key: "email",
+    header: "Email",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "neq", "starts", "is_null", "is_not_null"],
+  },
+  {
+    key: "phone",
+    header: "Phone",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
     key: "status",
     header: "Status",
     filterType: "select",
@@ -217,8 +349,55 @@ const advancedFilterColumns: FilterableColumn[] = [
     filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
   },
   {
+    key: "security_deposit",
+    header: "Security Deposit",
+    filterType: "number",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
     key: "check_in_date",
     header: "Check-in Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
+  },
+  {
+    key: "check_out_date",
+    header: "Check-out Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between", "is_null", "is_not_null"],
+  },
+  {
+    key: "notice_date",
+    header: "Notice Date",
+    filterType: "date",
+    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between", "is_null", "is_not_null"],
+  },
+  {
+    key: "police_verification_status",
+    header: "Police Verification",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in"],
+    filterOptions: [
+      { value: "pending", label: "Pending" },
+      { value: "submitted", label: "Submitted" },
+      { value: "verified", label: "Verified" },
+      { value: "rejected", label: "Rejected" },
+      { value: "not_required", label: "Not Required" },
+    ],
+  },
+  {
+    key: "agreement_signed",
+    header: "Agreement Signed",
+    filterType: "select",
+    filterOperators: ["eq"],
+    filterOptions: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+  },
+  {
+    key: "created_at",
+    header: "Added On",
     filterType: "date",
     filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
   },
