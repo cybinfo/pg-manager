@@ -946,3 +946,122 @@ export const INQUIRY_DETAIL_CONFIG: DetailPageConfig = {
   redirectOnNotFound: "/inquiries",
   notFoundMessage: "Inquiry not found",
 }
+
+// ============================================
+// ENHANCED EXPENSE MODULE DETAIL CONFIGS
+// ============================================
+
+// Product Detail Config
+export const PRODUCT_DETAIL_CONFIG: DetailPageConfig = {
+  table: "products",
+  select: `
+    *,
+    category:product_categories(id, name, name_hi)
+  `,
+  joinFields: ["category"],
+  redirectOnNotFound: "/expenses/products",
+  notFoundMessage: "Product not found",
+}
+
+// Daily Spend Detail Config
+export const DAILY_SPEND_DETAIL_CONFIG: DetailPageConfig = {
+  table: "daily_spend",
+  select: `
+    *,
+    property:properties(id, name),
+    product:products(id, name, name_hi, default_unit)
+  `,
+  joinFields: ["property", "product"],
+  redirectOnNotFound: "/expenses/daily-spend",
+  notFoundMessage: "Daily spend entry not found",
+}
+
+// Vendor Detail Config
+export const VENDOR_DETAIL_CONFIG: DetailPageConfig = {
+  table: "vendors",
+  select: `
+    *,
+    category:bill_categories(id, name, name_hi)
+  `,
+  joinFields: ["category"],
+  redirectOnNotFound: "/expenses/vendors",
+  notFoundMessage: "Vendor not found",
+  relatedQueries: [
+    {
+      key: "recentPayments",
+      table: "bill_payments",
+      select: "id, bill_number, bill_amount, paid_amount, payment_date, status",
+      foreignKey: "vendor_id",
+      orderBy: "payment_date",
+      orderDirection: "desc",
+      limit: 10,
+    },
+  ],
+}
+
+// Bill Payment Detail Config
+export const BILL_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
+  table: "bill_payments",
+  select: `
+    *,
+    property:properties(id, name),
+    vendor:vendors(id, name, upi_id, gstin),
+    category:bill_categories(id, name, name_hi)
+  `,
+  joinFields: ["property", "vendor", "category"],
+  redirectOnNotFound: "/expenses/bill-payments",
+  notFoundMessage: "Bill payment not found",
+}
+
+// Service Provider Detail Config
+export const SERVICE_PROVIDER_DETAIL_CONFIG: DetailPageConfig = {
+  table: "service_providers",
+  select: `
+    *,
+    category:service_categories(id, name, name_hi, default_tds_section, default_tds_rate)
+  `,
+  joinFields: ["category"],
+  redirectOnNotFound: "/expenses/service-providers",
+  notFoundMessage: "Service provider not found",
+  relatedQueries: [
+    {
+      key: "recentServices",
+      table: "service_payments",
+      select: "id, service_date, description, gross_amount, net_amount, warranty_expiry, property:properties(id, name)",
+      foreignKey: "provider_id",
+      joinFields: ["property"],
+      orderBy: "service_date",
+      orderDirection: "desc",
+      limit: 10,
+    },
+  ],
+}
+
+// Service Payment Detail Config
+export const SERVICE_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
+  table: "service_payments",
+  select: `
+    *,
+    property:properties(id, name),
+    room:rooms(id, room_number),
+    provider:service_providers(id, name, phone, rating, upi_id),
+    category:service_categories(id, name, name_hi),
+    complaint:complaints(id, title, status)
+  `,
+  joinFields: ["property", "room", "provider", "category", "complaint"],
+  redirectOnNotFound: "/expenses/service-payments",
+  notFoundMessage: "Service payment not found",
+}
+
+// Kitchen Wastage Detail Config
+export const KITCHEN_WASTAGE_DETAIL_CONFIG: DetailPageConfig = {
+  table: "kitchen_wastage",
+  select: `
+    *,
+    property:properties(id, name),
+    product:products(id, name, name_hi)
+  `,
+  joinFields: ["property", "product"],
+  redirectOnNotFound: "/expenses/kitchen/wastage",
+  notFoundMessage: "Wastage entry not found",
+}

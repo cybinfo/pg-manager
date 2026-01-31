@@ -86,6 +86,13 @@ export type SoftDeletableTable =
   | 'meters'
   | 'staff_members'
   | 'visitor_contacts'
+  // Enhanced expense module tables
+  | 'products'
+  | 'daily_spend'
+  | 'vendors'
+  | 'bill_payments'
+  | 'service_providers'
+  | 'service_payments'
 
 /**
  * Entity types that support created_by tracking.

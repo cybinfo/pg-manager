@@ -1465,3 +1465,185 @@ export const INQUIRY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     }
   },
 }
+
+// ============================================
+// ENHANCED EXPENSE MODULE CONFIGS
+// ============================================
+
+export const PRODUCT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "products",
+  select: `
+    *,
+    category:product_categories(id, name, name_hi)
+  `,
+  defaultOrderBy: "name",
+  defaultOrderDirection: "asc",
+  searchFields: ["name", "name_hi", "category.name"],
+  joinFields: ["category"],
+  computedFields: (item) => ({
+    display_name: item.name_hi ? `${item.name} (${item.name_hi})` : item.name,
+    status_label: item.is_active ? "Active" : "Inactive",
+  }),
+}
+
+export const DAILY_SPEND_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "daily_spend",
+  select: `
+    *,
+    property:properties(id, name),
+    product:products(id, name, name_hi)
+  `,
+  defaultOrderBy: "spend_date",
+  defaultOrderDirection: "desc",
+  searchFields: ["product_name", "vendor_name", "notes", "category_name"],
+  joinFields: ["property", "product"],
+  computedFields: (item) => {
+    const date = item.spend_date ? new Date(item.spend_date as string) : new Date()
+    return {
+      spend_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      spend_year: date.getFullYear().toString(),
+      display_amount: `₹${(item.total as number)?.toLocaleString("en-IN")}`,
+      display_qty: `${item.quantity} ${item.unit}`,
+    }
+  },
+}
+
+export const VENDOR_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "vendors",
+  select: `
+    *,
+    category:bill_categories(id, name, name_hi)
+  `,
+  defaultOrderBy: "name",
+  defaultOrderDirection: "asc",
+  searchFields: ["name", "contact_name", "phone", "email", "gstin", "upi_id"],
+  joinFields: ["category"],
+  computedFields: (item) => ({
+    status_label: item.is_active ? "Active" : "Inactive",
+    has_gst: !!item.gstin,
+    has_upi: !!item.upi_id,
+  }),
+}
+
+export const BILL_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "bill_payments",
+  select: `
+    *,
+    property:properties(id, name),
+    vendor:vendors(id, name, upi_id),
+    category:bill_categories(id, name, name_hi)
+  `,
+  defaultOrderBy: "payment_date",
+  defaultOrderDirection: "desc",
+  searchFields: ["vendor_name", "bill_number", "notes", "category_name"],
+  joinFields: ["property", "vendor", "category"],
+  computedFields: (item) => {
+    const paymentDate = item.payment_date ? new Date(item.payment_date as string) : null
+    const dueDate = item.due_date ? new Date(item.due_date as string) : null
+    const today = new Date()
+    const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null
+
+    const statusConfig: Record<string, { label: string; labelHi: string }> = {
+      pending: { label: "Pending", labelHi: "बाकी" },
+      partial: { label: "Partial", labelHi: "आंशिक" },
+      paid: { label: "Paid", labelHi: "भुगतान" },
+      overdue: { label: "Overdue", labelHi: "विलंबित" },
+    }
+
+    return {
+      payment_month: paymentDate?.toLocaleDateString("en-US", { month: "long", year: "numeric" }) || "",
+      payment_year: paymentDate?.getFullYear().toString() || "",
+      days_until_due: daysUntilDue,
+      is_overdue: dueDate && today > dueDate && item.status !== "paid",
+      status_label: statusConfig[item.status as string]?.label || item.status,
+      status_label_hi: statusConfig[item.status as string]?.labelHi || item.status,
+      display_amount: `₹${(item.bill_amount as number)?.toLocaleString("en-IN")}`,
+      balance_due: ((item.bill_amount as number) || 0) - ((item.paid_amount as number) || 0),
+    }
+  },
+}
+
+export const SERVICE_PROVIDER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "service_providers",
+  select: `
+    *,
+    category:service_categories(id, name, name_hi, default_tds_section, default_tds_rate)
+  `,
+  defaultOrderBy: "name",
+  defaultOrderDirection: "asc",
+  searchFields: ["name", "phone", "email", "pan", "address"],
+  joinFields: ["category"],
+  computedFields: (item) => ({
+    status_label: item.is_active ? "Active" : "Inactive",
+    rating_display: item.rating ? `${item.rating}/5` : "Not rated",
+    has_tds: item.tds_applicable,
+    has_pan: !!item.pan,
+  }),
+}
+
+export const SERVICE_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "service_payments",
+  select: `
+    *,
+    property:properties(id, name),
+    room:rooms(id, room_number),
+    provider:service_providers(id, name, phone, rating),
+    category:service_categories(id, name, name_hi),
+    complaint:complaints(id, title)
+  `,
+  defaultOrderBy: "service_date",
+  defaultOrderDirection: "desc",
+  searchFields: ["provider_name", "description", "notes", "category_name"],
+  joinFields: ["property", "room", "provider", "category", "complaint"],
+  computedFields: (item) => {
+    const serviceDate = item.service_date ? new Date(item.service_date as string) : null
+    const warrantyExpiry = item.warranty_expiry ? new Date(item.warranty_expiry as string) : null
+    const today = new Date()
+
+    let warrantyStatus: "active" | "expired" | "none" = "none"
+    if (warrantyExpiry) {
+      warrantyStatus = today <= warrantyExpiry ? "active" : "expired"
+    }
+
+    return {
+      service_month: serviceDate?.toLocaleDateString("en-US", { month: "long", year: "numeric" }) || "",
+      service_year: serviceDate?.getFullYear().toString() || "",
+      warranty_status: warrantyStatus,
+      display_gross: `₹${(item.gross_amount as number)?.toLocaleString("en-IN")}`,
+      display_net: `₹${(item.net_amount as number)?.toLocaleString("en-IN")}`,
+      display_tds: item.tds_amount ? `₹${(item.tds_amount as number)?.toLocaleString("en-IN")}` : "-",
+      linked_to_complaint: !!item.complaint_id,
+    }
+  },
+}
+
+export const KITCHEN_WASTAGE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "kitchen_wastage",
+  select: `
+    *,
+    property:properties(id, name),
+    product:products(id, name, name_hi)
+  `,
+  defaultOrderBy: "wastage_date",
+  defaultOrderDirection: "desc",
+  searchFields: ["product_name", "notes"],
+  joinFields: ["property", "product"],
+  computedFields: (item) => {
+    const date = item.wastage_date ? new Date(item.wastage_date as string) : new Date()
+    const reasonLabels: Record<string, { label: string; labelHi: string }> = {
+      over_prepared: { label: "Over Prepared", labelHi: "ज्यादा बनाया" },
+      spoiled: { label: "Spoiled", labelHi: "खराब हो गया" },
+      expired: { label: "Expired", labelHi: "समाप्त हो गया" },
+      damaged: { label: "Damaged", labelHi: "टूट/फूट" },
+      other: { label: "Other", labelHi: "अन्य" },
+    }
+    return {
+      wastage_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      wastage_year: date.getFullYear().toString(),
+      reason_label: reasonLabels[item.reason as string]?.label || item.reason,
+      reason_label_hi: reasonLabels[item.reason as string]?.labelHi || item.reason,
+      display_value: `₹${(item.estimated_value as number)?.toLocaleString("en-IN")}`,
+      display_qty: `${item.quantity} ${item.unit}`,
+    }
+  },
+}
