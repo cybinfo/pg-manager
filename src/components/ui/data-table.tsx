@@ -506,7 +506,7 @@ export function DataTable<T extends object>({
 
   // Build nested group structure recursively
   const buildNestedGroups = React.useCallback(
-    (rows: T[], configs: GroupConfig[], depth: number, parentKey: string): NestedGroup<T>[] => {
+    (rows: T[], configs: GroupConfig[], depth: number, parentKey: string, activeSortConfigs: SortConfig[]): NestedGroup<T>[] => {
       if (configs.length === 0) return []
 
       const [currentConfig, ...remainingConfigs] = configs
@@ -524,9 +524,25 @@ export function DataTable<T extends object>({
         groups.get(groupKey)!.rows.push(row)
       })
 
-      // Convert to NestedGroup array
+      // Determine sort direction for this group's key
+      // Check if the group key matches any active sort config
+      const matchingSort = activeSortConfigs.find(s =>
+        s.key === currentConfig.key ||
+        s.key === currentConfig.key.split('.')[0] // Handle nested keys like "category.name"
+      )
+      const sortDirection = matchingSort?.direction || "asc"
+
+      // Convert to NestedGroup array with proper sort order
       return Array.from(groups.entries())
-        .sort(([, a], [, b]) => a.label.localeCompare(b.label))
+        .sort(([keyA, a], [keyB, b]) => {
+          // Put "Ungrouped" at the end
+          if (keyA === "__null__") return 1
+          if (keyB === "__null__") return -1
+
+          // Sort by label (handles dates as strings correctly for ISO format)
+          const comparison = a.label.localeCompare(b.label)
+          return sortDirection === "desc" ? -comparison : comparison
+        })
         .map(([key, { label, rows: groupRows }]) => {
           const fullKey = parentKey ? `${parentKey}::${key}` : key
           return {
@@ -536,7 +552,7 @@ export function DataTable<T extends object>({
             config: currentConfig,
             rows: groupRows,
             children: remainingConfigs.length > 0
-              ? buildNestedGroups(groupRows, remainingConfigs, depth + 1, fullKey)
+              ? buildNestedGroups(groupRows, remainingConfigs, depth + 1, fullKey, activeSortConfigs)
               : [],
           }
         })
@@ -547,8 +563,8 @@ export function DataTable<T extends object>({
   // Group data if groupBy is specified
   const groupedData = React.useMemo(() => {
     if (groupConfigs.length === 0) return null
-    return buildNestedGroups(processedData, groupConfigs, 0, "")
-  }, [processedData, groupConfigs, buildNestedGroups])
+    return buildNestedGroups(processedData, groupConfigs, 0, "", sortConfigs)
+  }, [processedData, groupConfigs, buildNestedGroups, sortConfigs])
 
   // Collect all group keys for collapsed state initialization
   const getAllGroupKeys = React.useCallback((groups: NestedGroup<T>[]): string[] => {
