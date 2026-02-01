@@ -51,6 +51,7 @@ import {
   ExternalLink,
   Briefcase,
   Heart,
+  Undo2,
 } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatCurrency } from "@/lib/format"
@@ -126,6 +127,7 @@ export default function TenantDetailPage() {
   })
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showNoticeDialog, setShowNoticeDialog] = useState(false)
+  const [showCancelNoticeDialog, setShowCancelNoticeDialog] = useState(false)
   const [noticeData, setNoticeData] = useState({
     notice_date: "",
     expected_exit_date: "",
@@ -176,6 +178,29 @@ export default function TenantDetailPage() {
     if (success) {
       toast.success("Tenant put on notice period")
       setShowNoticeDialog(false)
+      refetch()
+    }
+    setActionLoading(false)
+  }
+
+  const handleCancelNotice = async () => {
+    if (!tenant) return
+
+    setActionLoading(true)
+    const today = new Date().toLocaleDateString("en-IN")
+
+    const success = await updateFields({
+      status: "active",
+      notice_date: null,
+      expected_exit_date: null,
+      notes: tenant.notes
+        ? `${tenant.notes}\n\n[Notice Cancelled - ${today}]: Tenant decided to continue staying`
+        : `[Notice Cancelled - ${today}]: Tenant decided to continue staying`
+    })
+
+    if (success) {
+      toast.success("Notice cancelled - tenant is now active again")
+      setShowCancelNoticeDialog(false)
       refetch()
     }
     setActionLoading(false)
@@ -466,6 +491,17 @@ export default function TenantDetailPage() {
             title="Notice Period"
             description="Tenant has given notice to vacate"
             icon={Bell}
+            actions={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCancelNoticeDialog(true)}
+                disabled={actionLoading}
+              >
+                <Undo2 className="mr-1 h-3 w-3" />
+                Cancel Notice
+              </Button>
+            }
           >
             <InfoRow
               label="Notice Given"
@@ -1064,6 +1100,18 @@ export default function TenantDetailPage() {
           </Card>
         </div>
       )}
+
+      {/* Cancel Notice Confirmation Dialog */}
+      <ConfirmDialog
+        open={showCancelNoticeDialog}
+        onOpenChange={setShowCancelNoticeDialog}
+        title="Cancel Notice Period"
+        description={`Are you sure you want to cancel the notice for "${tenant?.name}"? This will change their status back to "Active" and clear the expected exit date.`}
+        confirmText="Cancel Notice"
+        variant="default"
+        loading={actionLoading}
+        onConfirm={handleCancelNotice}
+      />
     </div>
   )
 }
