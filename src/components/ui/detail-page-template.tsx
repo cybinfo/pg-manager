@@ -107,15 +107,6 @@ export function DetailPageTemplate({
   maxActivityItems = 5,
   className,
 }: DetailPageTemplateProps) {
-  // DEBUG: Log props
-  console.log("[DetailPageTemplate] Rendering:", { layoutKey, entityType, recordId: record?.id })
-  console.log("[DetailPageTemplate] Imported components:", {
-    DetailPageContent: typeof DetailPageContent,
-    DetailSection: typeof DetailSection,
-    RecordMetadataContent: typeof RecordMetadataContent,
-    ActivityHistoryContent: typeof ActivityHistoryContent,
-  })
-
   return (
     <DetailPageContent
       layout="sortable-masonry"

@@ -286,18 +286,6 @@ export default function TenantDetailPage() {
     return null
   }
 
-  // DEBUG: Log tenant data to identify undefined values
-  console.log("[TenantDetail] Tenant loaded:", {
-    id: tenant.id,
-    name: tenant.name,
-    status: tenant.status,
-    person: tenant.person,
-    property: tenant.property,
-    room: tenant.room,
-    notice_date: tenant.notice_date,
-    expected_exit_date: tenant.expected_exit_date,
-  })
-
   // Map status to StatusBadge status
   const getStatusKey = (status: string) => {
     const map: Record<string, string> = {

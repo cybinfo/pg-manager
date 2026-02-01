@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { format, formatDistanceToNow } from "date-fns"
-import { History, Plus, Pencil, Trash2, User, ChevronDown, ChevronUp } from "lucide-react"
+import { History, Plus, Pencil, Trash2, User, ChevronDown, ChevronUp, LucideIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,7 +13,7 @@ interface AuditEvent {
   id: string
   entity_type: string
   entity_id: string
-  action: "insert" | "update" | "delete"
+  action: "insert" | "update" | "delete" | "status_change"
   actor_id: string | null
   actor_type: string
   changes: {
@@ -39,22 +39,25 @@ interface ActivityHistoryProps {
   showChanges?: boolean
 }
 
-const actionIcons = {
+const actionIcons: Record<string, LucideIcon> = {
   insert: Plus,
   update: Pencil,
   delete: Trash2,
+  status_change: Pencil,  // Status changes are a type of update
 }
 
-const actionLabels = {
+const actionLabels: Record<string, string> = {
   insert: "Created",
   update: "Updated",
   delete: "Deleted",
+  status_change: "Status Changed",
 }
 
-const actionColors = {
+const actionColors: Record<string, string> = {
   insert: "text-green-600 bg-green-50",
   update: "text-blue-600 bg-blue-50",
   delete: "text-red-600 bg-red-50",
+  status_change: "text-amber-600 bg-amber-50",
 }
 
 /**
@@ -263,15 +266,11 @@ export function ActivityHistory({
           <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
 
           {events.map((event, index) => {
-            const Icon = actionIcons[event.action]
+            // Use fallback for unknown action types
+            const Icon = actionIcons[event.action] || Pencil
             const changes = showChanges ? formatChanges(event.changes) : null
             const isExpanded = expanded.has(event.id)
             const hasChanges = changes && changes.length > 0
-
-            // DEBUG: Log if Icon is undefined
-            if (!Icon) {
-              console.error("[ActivityHistory] Unknown action type:", event.action, "for event:", event.id)
-            }
 
             return (
               <div key={event.id} className="relative flex gap-4 pl-2">
@@ -279,10 +278,10 @@ export function ActivityHistory({
                 <div
                   className={cn(
                     "relative z-10 flex h-8 w-8 items-center justify-center rounded-full",
-                    actionColors[event.action]
+                    actionColors[event.action] || "text-slate-600 bg-slate-50"
                   )}
                 >
-                  {Icon ? <Icon className="h-4 w-4" /> : <span className="h-4 w-4">?</span>}
+                  <Icon className="h-4 w-4" />
                 </div>
 
                 {/* Content */}
@@ -546,15 +545,11 @@ export function ActivityHistoryContent({
       <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
 
       {events.map((event) => {
-        const Icon = actionIcons[event.action]
+        // Use fallback for unknown action types
+        const Icon = actionIcons[event.action] || Pencil
         const changes = showChanges ? formatChanges(event.changes) : null
         const isExpanded = expanded.has(event.id)
         const hasChanges = changes && changes.length > 0
-
-        // DEBUG: Log if Icon is undefined
-        if (!Icon) {
-          console.error("[ActivityHistoryContent] Unknown action type:", event.action, "for event:", event.id)
-        }
 
         return (
           <div key={event.id} className="relative flex gap-4 pl-2">
@@ -562,10 +557,10 @@ export function ActivityHistoryContent({
             <div
               className={cn(
                 "relative z-10 flex h-8 w-8 items-center justify-center rounded-full",
-                actionColors[event.action]
+                actionColors[event.action] || "text-slate-600 bg-slate-50"
               )}
             >
-              {Icon ? <Icon className="h-4 w-4" /> : <span className="h-4 w-4">?</span>}
+              <Icon className="h-4 w-4" />
             </div>
 
             {/* Content */}
