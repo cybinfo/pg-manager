@@ -19,8 +19,9 @@ import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
-import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PageLoading } from "@/components/ui/loading"
+import { Combobox, ComboboxOption } from "@/components/ui/combobox"
+import { VendorSelector } from "@/components/expenses/vendor-selector"
 
 import type { Product, ProductCategory, Vendor } from "@/types/expense-enhanced.types"
 
@@ -131,18 +132,10 @@ export default function NewDailySpendPage() {
   }, [workspaceId])
 
   // Handle vendor selection
-  const handleVendorSelect = (selectedVendorId: string) => {
-    setVendorId(selectedVendorId)
-    const vendor = vendors.find((v) => v.id === selectedVendorId)
+  const handleVendorSelect = (vendor: Vendor | null) => {
+    setVendorId(vendor?.id || "")
     setVendorName(vendor?.name || "")
   }
-
-  // Prepare vendor options for combobox
-  const vendorOptions: ComboboxOption[] = vendors.map((v) => ({
-    value: v.id,
-    label: v.name,
-    description: v.phone || undefined,
-  }))
 
   // Prepare product options for combobox
   const productOptions: ComboboxOption[] = products.map((p) => ({
@@ -150,6 +143,59 @@ export default function NewDailySpendPage() {
     label: p.name_hi ? `${p.name} (${p.name_hi})` : p.name,
     description: p.category?.name || undefined,
   }))
+
+  // State for quick-create product modal
+  const [showProductModal, setShowProductModal] = useState(false)
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    name_hi: "",
+    category_id: "",
+    default_unit: "Kg",
+    default_rate: "",
+  })
+  const [creatingProduct, setCreatingProduct] = useState(false)
+
+  // Handle quick-create product
+  const handleCreateProduct = async () => {
+    if (!newProduct.name.trim()) {
+      toast.error("Product name is required")
+      return
+    }
+
+    setCreatingProduct(true)
+    const supabase = createClient()
+
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .insert(
+          withCreatedBy({
+            workspace_id: workspaceId,
+            name: newProduct.name.trim(),
+            name_hi: newProduct.name_hi || null,
+            category_id: newProduct.category_id || null,
+            default_unit: newProduct.default_unit || "Kg",
+            default_rate: newProduct.default_rate ? parseFloat(newProduct.default_rate) : null,
+            is_active: true,
+          }, user?.id || "")
+        )
+        .select("*, category:product_categories(id, name, name_hi)")
+        .single()
+
+      if (error) throw error
+
+      // Add to products list
+      setProducts((prev) => [...prev, data])
+      toast.success("Product created successfully")
+      setShowProductModal(false)
+      setNewProduct({ name: "", name_hi: "", category_id: "", default_unit: "Kg", default_rate: "" })
+    } catch (error) {
+      console.error("Failed to create product:", error)
+      toast.error("Failed to create product")
+    } finally {
+      setCreatingProduct(false)
+    }
+  }
 
   // Handle product selection
   const handleProductSelect = (index: number, productId: string) => {
@@ -320,23 +366,13 @@ export default function NewDailySpendPage() {
                     />
                   </FormField>
 
-                  <FormField
-                    label="Vendor/Shop Name"
-                    action={
-                      <Link href="/expenses/vendors/new" target="_blank" className="text-xs text-teal-600 hover:underline flex items-center gap-1">
-                        <Plus className="h-3 w-3" />
-                        Add New
-                      </Link>
-                    }
-                  >
-                    <Combobox
-                      options={vendorOptions}
-                      value={vendorId}
-                      onValueChange={handleVendorSelect}
-                      placeholder="Select vendor..."
-                      searchPlaceholder="Search vendors..."
-                      emptyText="No vendors found"
-                      clearable
+                  <FormField label="Vendor/Shop Name">
+                    <VendorSelector
+                      workspaceId={workspaceId || ""}
+                      userId={user?.id || ""}
+                      selectedVendorId={vendorId}
+                      onSelect={handleVendorSelect}
+                      allowQuickCreate
                     />
                   </FormField>
 
@@ -365,14 +401,14 @@ export default function NewDailySpendPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <h3 className="text-sm font-medium">Items</h3>
-                      <Link
-                        href="/expenses/products/new"
-                        target="_blank"
+                      <button
+                        type="button"
+                        onClick={() => setShowProductModal(true)}
                         className="text-xs text-teal-600 hover:underline flex items-center gap-1"
                       >
                         <Plus className="h-3 w-3" />
                         Add New Product
-                      </Link>
+                      </button>
                     </div>
                     <Button
                       type="button"
@@ -527,6 +563,108 @@ export default function NewDailySpendPage() {
               </Button>
             </div>
           </form>
+
+          {/* Quick Create Product Modal */}
+          {showProductModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/50"
+                onClick={() => setShowProductModal(false)}
+              />
+              {/* Modal */}
+              <Card className="relative z-10 w-full max-w-md mx-4">
+                <CardHeader>
+                  <CardTitle className="text-lg">Add New Product</CardTitle>
+                  <CardDescription>
+                    Create a new product for your inventory
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField label="Product Name" required className="col-span-2 md:col-span-1">
+                      <Input
+                        placeholder="e.g., Rice"
+                        value={newProduct.name}
+                        onChange={(e) =>
+                          setNewProduct((prev) => ({ ...prev, name: e.target.value }))
+                        }
+                        autoFocus
+                      />
+                    </FormField>
+                    <FormField label="Hindi Name" className="col-span-2 md:col-span-1">
+                      <Input
+                        placeholder="e.g., चावल"
+                        value={newProduct.name_hi}
+                        onChange={(e) =>
+                          setNewProduct((prev) => ({ ...prev, name_hi: e.target.value }))
+                        }
+                      />
+                    </FormField>
+                  </div>
+
+                  <FormField label="Category">
+                    <Select
+                      value={newProduct.category_id}
+                      onChange={(e) =>
+                        setNewProduct((prev) => ({ ...prev, category_id: e.target.value }))
+                      }
+                      options={[
+                        { value: "", label: "Select Category" },
+                        ...categories.map((c) => ({ value: c.id, label: c.name })),
+                      ]}
+                    />
+                  </FormField>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField label="Default Unit">
+                      <Select
+                        value={newProduct.default_unit}
+                        onChange={(e) =>
+                          setNewProduct((prev) => ({ ...prev, default_unit: e.target.value }))
+                        }
+                        options={UNIT_OPTIONS}
+                      />
+                    </FormField>
+                    <FormField label="Default Rate (₹)">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={newProduct.default_rate}
+                        onChange={(e) =>
+                          setNewProduct((prev) => ({ ...prev, default_rate: e.target.value }))
+                        }
+                      />
+                    </FormField>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setShowProductModal(false)
+                        setNewProduct({ name: "", name_hi: "", category_id: "", default_unit: "Kg", default_rate: "" })
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      className="flex-1"
+                      onClick={handleCreateProduct}
+                      disabled={creatingProduct || !newProduct.name.trim()}
+                    >
+                      {creatingProduct ? "Creating..." : "Create Product"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </PermissionGuard>
     </FeatureGuard>
