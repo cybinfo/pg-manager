@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 interface UserInfo {
   id: string
   email?: string
-  full_name?: string
+  name?: string
 }
 
 interface RecordMetadataProps {
@@ -52,7 +52,7 @@ export function RecordMetadata({
         const supabase = createClient()
         const { data } = await supabase
           .from("user_profiles")
-          .select("id, email, full_name")
+          .select("id, email, name")
           .in("id", userIds)
 
         if (data) {
@@ -84,7 +84,7 @@ export function RecordMetadata({
 
   const getUserDisplayName = (user: UserInfo | null, userId?: string) => {
     if (loading) return "Loading..."
-    if (user?.full_name) return user.full_name
+    if (user?.name) return user.name
     if (user?.email) return user.email.split("@")[0]
     return userId ? `User ${userId.slice(0, 8)}...` : "Unknown"
   }
@@ -240,7 +240,7 @@ export function RecordMetadataContent({
         const supabase = createClient()
         const { data } = await supabase
           .from("user_profiles")
-          .select("id, email, full_name")
+          .select("id, email, name")
           .in("id", userIds)
 
         if (data) {
@@ -268,7 +268,7 @@ export function RecordMetadataContent({
 
   const getUserDisplayName = (user: UserInfo | null, userId?: string) => {
     if (loading) return "Loading..."
-    if (user?.full_name) return user.full_name
+    if (user?.name) return user.name
     if (user?.email) return user.email.split("@")[0]
     return userId ? `User ${userId.slice(0, 8)}...` : "Unknown"
   }

@@ -37,6 +37,18 @@ export function DetailHero({
   children,
   className,
 }: DetailHeroProps) {
+  // DEBUG: Log props to identify undefined values
+  console.log("[DetailHero] Props:", {
+    title,
+    backHref,
+    status,
+    statusLabel,
+    hasIcon: !!Icon,
+    hasAvatar: !!avatar,
+    hasActions: !!actions,
+    hasSubtitle: !!subtitle,
+  })
+
   return (
     <div className={cn("space-y-4 animate-fade-in-up", className)}>
       <Link href={backHref}>

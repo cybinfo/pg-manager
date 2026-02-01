@@ -27,7 +27,7 @@ interface AuditEvent {
 interface UserInfo {
   id: string
   email?: string
-  full_name?: string
+  name?: string
 }
 
 interface ActivityHistoryProps {
@@ -106,7 +106,7 @@ export function ActivityHistory({
         if (actorIds.length > 0) {
           const { data: userData } = await supabase
             .from("user_profiles")
-            .select("id, email, full_name")
+            .select("id, email, name")
             .in("id", actorIds)
 
           if (userData) {
@@ -139,7 +139,7 @@ export function ActivityHistory({
   const getUserDisplayName = (actorId: string | null) => {
     if (!actorId) return "System"
     const user = users.get(actorId)
-    if (user?.full_name) return user.full_name
+    if (user?.name) return user.name
     if (user?.email) return user.email.split("@")[0]
     return `User ${actorId.slice(0, 8)}...`
   }
@@ -428,7 +428,7 @@ export function ActivityHistoryContent({
         if (actorIds.length > 0) {
           const { data: userData } = await supabase
             .from("user_profiles")
-            .select("id, email, full_name")
+            .select("id, email, name")
             .in("id", actorIds)
 
           if (userData) {
@@ -461,7 +461,7 @@ export function ActivityHistoryContent({
   const getUserDisplayName = (actorId: string | null) => {
     if (!actorId) return "System"
     const user = users.get(actorId)
-    if (user?.full_name) return user.full_name
+    if (user?.name) return user.name
     if (user?.email) return user.email.split("@")[0]
     return `User ${actorId.slice(0, 8)}...`
   }
