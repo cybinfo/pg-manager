@@ -460,6 +460,51 @@ export default function TenantDetailPage() {
           )}
         </DetailSection>
 
+        {/* Notice Period Section - Only shown when tenant is on notice */}
+        {tenant.status === "notice_period" && (
+          <DetailSection
+            title="Notice Period"
+            description="Tenant has given notice to vacate"
+            icon={Bell}
+          >
+            <InfoRow
+              label="Notice Given"
+              value={tenant.notice_date ? formatDate(tenant.notice_date) : "Not recorded"}
+              icon={Calendar}
+            />
+            <InfoRow
+              label="Expected Exit"
+              value={
+                tenant.expected_exit_date ? (
+                  <span className="text-amber-600 font-medium">{formatDate(tenant.expected_exit_date)}</span>
+                ) : (
+                  "Not set"
+                )
+              }
+              icon={LogOut}
+            />
+            {tenant.notice_date && tenant.expected_exit_date && (
+              <InfoRow
+                label="Days Remaining"
+                value={(() => {
+                  const today = new Date()
+                  const exitDate = new Date(tenant.expected_exit_date)
+                  const diffTime = exitDate.getTime() - today.getTime()
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                  if (diffDays < 0) {
+                    return <span className="text-rose-600 font-medium">Overdue by {Math.abs(diffDays)} days</span>
+                  } else if (diffDays === 0) {
+                    return <span className="text-amber-600 font-medium">Today</span>
+                  } else {
+                    return <span className="text-amber-600 font-medium">{diffDays} days</span>
+                  }
+                })()}
+                icon={Clock}
+              />
+            )}
+          </DetailSection>
+        )}
+
         {/* Personal Information (from People module - read only) */}
         <DetailSection
           title="Personal Information"
