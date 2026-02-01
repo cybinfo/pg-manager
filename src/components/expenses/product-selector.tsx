@@ -135,25 +135,26 @@ export function ProductSelector({
     }
   }, [selectedProductId, selectedProduct])
 
-  // Search for products
+  // Search for products (or load all if no query)
   const searchProducts = useCallback(async (query: string) => {
-    if (!query || query.length < 2) {
-      setResults([])
-      return
-    }
-
     setLoading(true)
     const supabase = createClient()
 
-    const { data, error: searchError } = await supabase
+    let queryBuilder = supabase
       .from("products")
       .select("*, category:product_categories(id, name, name_hi)")
       .eq("workspace_id", workspaceId)
       .eq("is_active", true)
       .is("deleted_at", null)
-      .or(`name.ilike.%${query}%,name_hi.ilike.%${query}%`)
       .order("name")
-      .limit(10)
+      .limit(20)
+
+    // Apply search filter if query provided
+    if (query && query.length > 0) {
+      queryBuilder = queryBuilder.or(`name.ilike.%${query}%,name_hi.ilike.%${query}%`)
+    }
+
+    const { data, error: searchError } = await queryBuilder
 
     if (searchError) {
       console.error("Search error:", searchError)
@@ -165,13 +166,13 @@ export function ProductSelector({
     setLoading(false)
   }, [workspaceId])
 
-  // Debounced search
+  // Debounced search - also load on open with empty search
   useEffect(() => {
+    if (!isOpen) return
+
     const timer = setTimeout(() => {
-      if (isOpen) {
-        searchProducts(search)
-      }
-    }, 300)
+      searchProducts(search)
+    }, search ? 300 : 0) // Immediate load if no search, debounce if typing
 
     return () => clearTimeout(timer)
   }, [search, isOpen, searchProducts])
@@ -368,7 +369,11 @@ export function ProductSelector({
         {isOpen && (
           <Card className="absolute z-50 w-full mt-1 shadow-lg max-h-64 overflow-hidden">
             <CardContent className="p-0">
-              {results.length > 0 ? (
+              {loading ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Loading...
+                </div>
+              ) : results.length > 0 ? (
                 <div className="max-h-56 overflow-y-auto">
                   {results.map((product) => (
                     <button
@@ -396,13 +401,13 @@ export function ProductSelector({
                     </button>
                   ))}
                 </div>
-              ) : search.length >= 2 && !loading ? (
+              ) : search ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   No products found matching "{search}"
                 </div>
               ) : (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  Type at least 2 characters to search
+                  No products yet. Add one below.
                 </div>
               )}
 

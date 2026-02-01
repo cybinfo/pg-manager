@@ -368,8 +368,8 @@ export function ListPageTemplate({
 
       {/* Filters & Grouping & Tools */}
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Simple Filters */}
-        {mergedFilterConfigs.length > 0 && (
+        {/* Simple Filters - only show if advanced filters are NOT enabled */}
+        {mergedFilterConfigs.length > 0 && !enableAdvancedFilters && (
           <div className="flex-1">
             <ListPageFilters
               filters={mergedFilterConfigs}

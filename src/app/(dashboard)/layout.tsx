@@ -118,7 +118,7 @@ const navigation: NavItem[] = [
       { name: "Overview", href: "/expenses", icon: TrendingDown, permission: "expenses.view", feature: "expenses" },
       { name: "Daily Spend", href: "/expenses/daily-spend", icon: ShoppingCart, permission: "expenses.view", feature: "expenses" },
       { name: "Products", href: "/expenses/products", icon: Package, permission: "expenses.view", feature: "expenses" },
-      { name: "Vendors", href: "/expenses/vendors", icon: Store, permission: "expenses.view", feature: "expenses" },
+      { name: "Vendors/Shops", href: "/expenses/vendors", icon: Store, permission: "expenses.view", feature: "expenses" },
       { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", feature: "expenses" },
       { name: "Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", feature: "expenses" },
       { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", feature: "expenses" },

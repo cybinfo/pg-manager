@@ -320,13 +320,14 @@ export default function NewDailySpendPage() {
                     />
                   </FormField>
 
-                  <FormField label="Vendor/Shop Name">
+                  <FormField label="Vendor/Shop">
                     <VendorSelector
                       workspaceId={workspaceId || ""}
                       userId={user?.id || ""}
                       selectedVendorId={vendorId}
                       onSelect={handleVendorSelect}
                       allowQuickCreate
+                      compact
                     />
                   </FormField>
 
@@ -374,7 +375,7 @@ export default function NewDailySpendPage() {
                         {/* Product Select */}
                         <div className="col-span-12 md:col-span-4">
                           <label className="text-xs text-muted-foreground">
-                            Item
+                            Product
                           </label>
                           <ProductSelector
                             workspaceId={workspaceId || ""}
@@ -383,7 +384,7 @@ export default function NewDailySpendPage() {
                             onSelect={(product) => handleProductSelect(index, product)}
                             onCreate={handleProductCreated}
                             categories={categories}
-                            placeholder="Search items..."
+                            placeholder="Search products..."
                             allowQuickCreate
                             compact
                           />
@@ -398,7 +399,8 @@ export default function NewDailySpendPage() {
                             type="number"
                             min="0"
                             step="0.01"
-                            value={item.quantity}
+                            placeholder="0"
+                            value={item.quantity || ""}
                             onChange={(e) =>
                               handleLineItemChange(
                                 index,
@@ -432,7 +434,8 @@ export default function NewDailySpendPage() {
                             type="number"
                             min="0"
                             step="0.01"
-                            value={item.rate}
+                            placeholder="0"
+                            value={item.rate || ""}
                             onChange={(e) =>
                               handleLineItemChange(
                                 index,

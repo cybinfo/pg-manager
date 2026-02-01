@@ -40,6 +40,8 @@ interface VendorSelectorProps {
   required?: boolean
   error?: string
   allowQuickCreate?: boolean
+  /** Compact mode for inline/table use - shows simpler selected state */
+  compact?: boolean
 }
 
 interface QuickCreateForm {
@@ -54,11 +56,12 @@ export function VendorSelector({
   selectedVendorId,
   onSelect,
   onCreate,
-  placeholder = "Search vendors by name or phone...",
+  placeholder = "Search vendors/shops...",
   disabled = false,
   required = false,
   error,
   allowQuickCreate = true,
+  compact = false,
 }: VendorSelectorProps) {
   const [search, setSearch] = useState("")
   const [results, setResults] = useState<Vendor[]>([])
@@ -92,25 +95,26 @@ export function VendorSelector({
     }
   }, [selectedVendorId, selectedVendor])
 
-  // Search for vendors
+  // Search for vendors (or load all if no query)
   const searchVendors = useCallback(async (query: string) => {
-    if (!query || query.length < 2) {
-      setResults([])
-      return
-    }
-
     setLoading(true)
     const supabase = createClient()
 
-    const { data, error: searchError } = await supabase
+    let queryBuilder = supabase
       .from("vendors")
       .select("*")
       .eq("workspace_id", workspaceId)
       .eq("is_active", true)
       .is("deleted_at", null)
-      .or(`name.ilike.%${query}%,phone.ilike.%${query}%`)
       .order("name")
-      .limit(10)
+      .limit(20)
+
+    // Apply search filter if query provided
+    if (query && query.length > 0) {
+      queryBuilder = queryBuilder.or(`name.ilike.%${query}%,phone.ilike.%${query}%`)
+    }
+
+    const { data, error: searchError } = await queryBuilder
 
     if (searchError) {
       console.error("Search error:", searchError)
@@ -122,13 +126,13 @@ export function VendorSelector({
     setLoading(false)
   }, [workspaceId])
 
-  // Debounced search
+  // Debounced search - also load on open with empty search
   useEffect(() => {
+    if (!isOpen) return
+
     const timer = setTimeout(() => {
-      if (isOpen) {
-        searchVendors(search)
-      }
-    }, 300)
+      searchVendors(search)
+    }, search ? 300 : 0) // Immediate load if no search, debounce if typing
 
     return () => clearTimeout(timer)
   }, [search, isOpen, searchVendors])
@@ -205,8 +209,36 @@ export function VendorSelector({
     onSelect(null)
   }
 
-  // If vendor is selected, show selection card
+  // If vendor is selected, show selection card (or compact display)
   if (selectedVendor) {
+    // Compact mode - simple inline display matching input height
+    if (compact) {
+      return (
+        <div className="space-y-2">
+          <div className={cn(
+            "h-10 flex items-center justify-between gap-2 px-3 rounded-lg border",
+            error ? "border-red-300" : "border-primary/30 bg-primary/5"
+          )}>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Store className="h-4 w-4 text-orange-600 flex-shrink-0" />
+              <span className="font-medium truncate text-sm">{selectedVendor.name}</span>
+            </div>
+            {!disabled && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="text-muted-foreground hover:text-foreground flex-shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+        </div>
+      )
+    }
+
+    // Full card mode
     return (
       <div className="space-y-2">
         <Card className={cn(
@@ -290,7 +322,11 @@ export function VendorSelector({
         {isOpen && (
           <Card className="absolute z-50 w-full mt-1 shadow-lg max-h-64 overflow-hidden">
             <CardContent className="p-0">
-              {results.length > 0 ? (
+              {loading ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Loading...
+                </div>
+              ) : results.length > 0 ? (
                 <div className="max-h-56 overflow-y-auto">
                   {results.map((vendor) => (
                     <button
@@ -312,13 +348,13 @@ export function VendorSelector({
                     </button>
                   ))}
                 </div>
-              ) : search.length >= 2 && !loading ? (
+              ) : search ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   No vendors found matching "{search}"
                 </div>
               ) : (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  Type at least 2 characters to search
+                  No vendors yet. Add one below.
                 </div>
               )}
 
