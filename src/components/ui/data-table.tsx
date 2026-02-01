@@ -139,6 +139,7 @@ interface DataTableProps<T> {
   onSortChange?: (sortConfigs: SortConfig[]) => void
   // Grouping options - supports single or nested grouping
   groupBy?: GroupConfig | GroupConfig[] | string | string[]
+  groupCounts?: Record<string, number>  // Server-side counts for accurate group totals
   collapsibleGroups?: boolean     // Allow groups to be collapsed
   defaultCollapsed?: boolean      // Start groups collapsed
   // Column visibility - list of column keys to hide
@@ -248,6 +249,7 @@ function NestedGroupRenderer<T extends object>({
   gridTemplate,
   isClickable,
   onRowClick,
+  groupCounts,
 }: {
   groups: NestedGroup<T>[]
   collapsedGroups: Set<string>
@@ -259,6 +261,7 @@ function NestedGroupRenderer<T extends object>({
   gridTemplate: string
   isClickable: boolean
   onRowClick: (row: T) => void
+  groupCounts?: Record<string, number>
 }) {
   // Depth-based styling
   const getDepthStyles = (depth: number) => {
@@ -294,7 +297,14 @@ function NestedGroupRenderer<T extends object>({
         const GroupIcon = isCollapsed ? FolderClosed : FolderOpen
         const styles = getDepthStyles(group.depth)
         const hasChildren = group.children.length > 0
-        const rowCount = getTotalRowCount(group)
+        const pageRowCount = getTotalRowCount(group)
+
+        // Try to get server count using the group config key and label
+        // The key format from useListPage is "groupField:value"
+        const serverCountKey = `${group.config.key}:${group.label}`
+        const serverCount = groupCounts?.[serverCountKey]
+        const rowCount = serverCount ?? pageRowCount
+        const isPartial = serverCount !== undefined && pageRowCount < serverCount
 
         return (
           <div key={group.key}>
@@ -330,7 +340,7 @@ function NestedGroupRenderer<T extends object>({
                 "text-xs text-muted-foreground px-2 py-0.5 rounded-full",
                 styles.countBg
               )}>
-                {rowCount}
+                {isPartial ? `${pageRowCount} of ${rowCount}` : rowCount}
               </span>
             </div>
 
@@ -349,6 +359,7 @@ function NestedGroupRenderer<T extends object>({
                   gridTemplate={gridTemplate}
                   isClickable={isClickable}
                   onRowClick={onRowClick}
+                  groupCounts={groupCounts}
                 />
               ) : (
                 // Render data rows at leaf level
@@ -391,6 +402,7 @@ export function DataTable<T extends object>({
   defaultSort,
   onSortChange,
   groupBy,
+  groupCounts,
   collapsibleGroups = true,
   defaultCollapsed = false,
   hiddenColumns = [],
@@ -860,6 +872,7 @@ export function DataTable<T extends object>({
                 gridTemplate={gridTemplate}
                 isClickable={isClickable}
                 onRowClick={handleRowClick}
+                groupCounts={groupCounts}
               />
             ) : (
               // Non-grouped rendering

@@ -164,6 +164,7 @@ export interface UseListPageReturn<T> {
   selectedGroups: string[]
   setSelectedGroups: (groups: string[]) => void
   groupConfig: { key: string; label: string | undefined }[]
+  groupCounts: Record<string, number> // Server-side counts for accurate group totals
 
   // Metrics
   metricsData: { id: string; label: string; value: number | string; icon?: React.ComponentType<{ className?: string }>; highlight?: boolean }[]
@@ -255,6 +256,9 @@ export function useListPage<T extends object>(
 
   // Server-side metric sums (for accurate aggregations across all pages)
   const [serverSums, setServerSums] = useState<Record<string, number>>({})
+
+  // Server-side group counts (for accurate group totals when paginated)
+  const [groupCounts, setGroupCounts] = useState<Record<string, number>>({})
 
   // Track if server counts/sums are loading
   const [serverCountsLoading, setServerCountsLoading] = useState(false)
@@ -470,10 +474,8 @@ export function useListPage<T extends object>(
         query = applyAdvancedFilters(query, currentAdvancedFilters)
       }
 
-      // Apply server-side pagination
-      // Skip pagination when grouping is active to show complete groups
-      const hasActiveGrouping = selectedGroupsRef.current.length > 0
-      if (enableServerPagination && !hasActiveGrouping) {
+      // Apply server-side pagination (works with grouping - group counts are fetched separately)
+      if (enableServerPagination) {
         const from = (currentPage - 1) * currentPageSize
         const to = from + currentPageSize - 1
         query = query.range(from, to)
@@ -782,12 +784,151 @@ export function useListPage<T extends object>(
     }
   }, [filters, searchQuery])
 
+  // Fetch server-side group counts for accurate group totals when paginated
+  const fetchGroupCounts = useCallback(async (
+    groupFields?: string[],
+    fetchFilters?: Record<string, string>,
+    fetchSearchQuery?: string
+  ) => {
+    const currentConfig = configRef.current
+    const currentFilterConfigs = filterConfigsRef.current
+    const currentFilters = fetchFilters ?? filters
+    const currentSearchQuery = fetchSearchQuery ?? searchQuery
+    const groups = groupFields ?? selectedGroupsRef.current
+
+    // No groups selected, clear counts
+    if (groups.length === 0) {
+      setGroupCounts({})
+      return
+    }
+
+    try {
+      const supabase = createClient()
+      const counts: Record<string, number> = {}
+
+      // For each group field, get counts
+      // We'll select the group field and count using a workaround
+      for (const groupField of groups) {
+        // Determine the actual column to group by
+        // For nested fields like "room.room_number", we need the FK column
+        let selectColumn = groupField
+        let isNestedField = groupField.includes(".")
+
+        if (isNestedField) {
+          // For "room.room_number", we group by room_id but display room_number
+          // Map common patterns
+          if (groupField.startsWith("room.")) selectColumn = "room_id"
+          else if (groupField.startsWith("property.")) selectColumn = "property_id"
+          else if (groupField.startsWith("category.")) selectColumn = "category_id"
+          else if (groupField.startsWith("tenant.")) selectColumn = "tenant_id"
+          else if (groupField.startsWith("product.")) selectColumn = "product_id"
+          else if (groupField.startsWith("vendor.")) selectColumn = "vendor_id"
+          else if (groupField.startsWith("person.")) selectColumn = "person_id"
+          else {
+            // Can't handle this nested field, skip
+            continue
+          }
+        }
+
+        // Build query to get all values of the group column
+        let query = supabase
+          .from(currentConfig.table)
+          .select(selectColumn)
+
+        // Filter out soft-deleted records by default
+        if (!currentConfig.includeSoftDeleted) {
+          query = query.is("deleted_at", null)
+        }
+
+        // Apply active filters (same logic as fetchData)
+        for (const [filterId, filterValue] of Object.entries(currentFilters)) {
+          if (!filterValue || filterValue === "all") continue
+
+          const filterConfig = currentFilterConfigs.find((f) => f.id === filterId)
+          if (!filterConfig) continue
+
+          if (filterConfig.type === "select") {
+            if (filterId === "property") {
+              query = query.eq("property_id", filterValue)
+            } else if (filterId === "tenant") {
+              query = query.eq("tenant_id", filterValue)
+            } else if (filterId === "room") {
+              query = query.eq("room_id", filterValue)
+            } else if (filterId === "tags") {
+              query = query.contains("tags", [filterValue])
+            } else if (filterId === "status" && currentConfig.table === "people") {
+              if (filterValue === "verified") {
+                query = query.eq("is_verified", true)
+              } else if (filterValue === "blocked") {
+                query = query.eq("is_blocked", true)
+              }
+            } else if (filterId === "visitor_type") {
+              query = query.eq("visitor_type", filterValue)
+            } else if (filterId === "settlement_status") {
+              query = query.eq("settlement_status", filterValue)
+            } else if (filterId === "refund_type") {
+              query = query.eq("refund_type", filterValue)
+            } else if (filterId === "meter_type") {
+              query = query.eq("meter_type", filterValue)
+            } else {
+              query = query.eq(filterId, filterValue)
+            }
+          } else if (filterConfig.type === "date") {
+            query = query.eq(filterId, filterValue)
+          }
+        }
+
+        // Apply search filter
+        if (currentSearchQuery && currentConfig.searchFields.length > 0) {
+          const searchConditions = currentConfig.searchFields
+            .filter((field) => !String(field).includes("."))
+            .map((field) => `${String(field)}.ilike.%${currentSearchQuery}%`)
+            .join(",")
+
+          if (searchConditions) {
+            query = query.or(searchConditions)
+          }
+        }
+
+        const { data, error } = await query
+
+        if (!error && data) {
+          // Count occurrences of each value
+          const valueCounts: Record<string, number> = {}
+          for (const row of data as Record<string, unknown>[]) {
+            const value = row[selectColumn]
+            const key = value != null ? String(value) : "__null__"
+            valueCounts[key] = (valueCounts[key] || 0) + 1
+          }
+
+          // Store counts with the group field as prefix for uniqueness
+          for (const [value, count] of Object.entries(valueCounts)) {
+            counts[`${groupField}:${value}`] = count
+          }
+        }
+      }
+
+      setGroupCounts(counts)
+    } catch (err) {
+      console.error("[useListPage] Error fetching group counts:", err)
+    }
+  }, [filters, searchQuery])
+
   // Keep fetch function refs updated (for use in applyViewConfig without dependency issues)
   useEffect(() => {
     fetchDataRef.current = fetchData
     fetchServerCountsRef.current = fetchServerCounts
     fetchServerSumsRef.current = fetchServerSums
   }, [fetchData, fetchServerCounts, fetchServerSums])
+
+  // Fetch group counts when grouping changes
+  useEffect(() => {
+    if (selectedGroups.length > 0) {
+      fetchGroupCounts(selectedGroups, filters, searchQuery)
+    } else {
+      setGroupCounts({})
+    }
+  }, [selectedGroups, filters, searchQuery, fetchGroupCounts])
 
   // Initial fetch - only run once
   useEffect(() => {
@@ -1157,6 +1298,7 @@ export function useListPage<T extends object>(
     selectedGroups,
     setSelectedGroups: handleSetSelectedGroups,
     groupConfig,
+    groupCounts,
     metricsData,
     searchQuery,
     setSearchQuery,  // Now triggers server-side search with debounce

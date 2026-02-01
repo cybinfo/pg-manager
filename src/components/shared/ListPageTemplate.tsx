@@ -221,6 +221,7 @@ export function ListPageTemplate({
     clearAdvancedFilters,
     selectedGroups,
     setSelectedGroups,
+    groupCounts,
     metricsData,
     searchQuery,
     setSearchQuery,
@@ -583,6 +584,7 @@ export function ListPageTemplate({
         externalSearch={searchQuery}
         onExternalSearchChange={setSearchQuery}
         groupBy={groupConfig}
+        groupCounts={groupCounts}
         defaultSort={sortConfig}
         onSortChange={handleSortChange}
         hiddenColumns={hiddenColumns}
@@ -609,8 +611,8 @@ export function ListPageTemplate({
         }
       />
 
-      {/* Pagination - show when there's data and grouping is not active */}
-      {pagination.total > 0 && selectedGroups.length === 0 && (
+      {/* Pagination - always show when there's data */}
+      {pagination.total > 0 && (
         <Pagination
           pagination={pagination}
           onPageChange={setPage}
@@ -618,12 +620,6 @@ export function ListPageTemplate({
           showTotal
           showPageSize
         />
-      )}
-      {/* When grouping is active, show total count without pagination controls */}
-      {pagination.total > 0 && selectedGroups.length > 0 && (
-        <div className="text-sm text-muted-foreground">
-          Showing all {pagination.total} results (pagination disabled when grouped)
-        </div>
       )}
     </div>
   )
