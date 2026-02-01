@@ -609,8 +609,8 @@ export function ListPageTemplate({
         }
       />
 
-      {/* Pagination */}
-      {pagination.total > pagination.pageSize && (
+      {/* Pagination - always show when there's data so page size can be changed */}
+      {pagination.total > 0 && (
         <Pagination
           pagination={pagination}
           onPageChange={setPage}
