@@ -79,6 +79,15 @@ const pathPermissions: Record<string, string> = {
   "/architecture": "properties.view",
   "/approvals": "tenants.view",
   "/staff": "staff.view",
+  // Library permissions
+  "/library": "library.view",
+  "/library-sections": "library_sections.view",
+  "/library-seats": "library_seats.view",
+  "/library-members": "library_members.view",
+  "/library-attendance": "library_attendance.view",
+  "/library-lockers": "library_lockers.view",
+  "/library-payments": "library_payments.view",
+  "/library-plans": "library.view",
 }
 
 // Path-to-feature mapping for feature-gated routes
@@ -93,6 +102,15 @@ const pathFeatures: Record<string, FeatureFlagKey> = {
   "/activity": "activityLog",
   "/architecture": "architectureView",
   "/approvals": "approvals",
+  // Library feature flag
+  "/library": "library",
+  "/library-sections": "library",
+  "/library-seats": "library",
+  "/library-members": "library",
+  "/library-attendance": "library",
+  "/library-lockers": "library",
+  "/library-payments": "library",
+  "/library-plans": "library",
 }
 
 // Navigation item type with optional children for sub-menus
@@ -103,24 +121,58 @@ type NavItem = {
   permission: string | null
   feature: FeatureFlagKey | null
   children?: NavItem[]
-  isSection?: boolean  // For section headers
 }
 
 // Navigation items with required permissions and feature flags
 // null permission means always visible, string means need that permission
 // feature: null means always visible, string means feature must be enabled
 const navigation: NavItem[] = [
+  // Common - Always visible
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
 
-  // PG Management Section
-  { name: "PG Management", href: "#", icon: Building2, permission: null, feature: null, isSection: true },
-  { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", feature: null },
-  { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", feature: null },
-  { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
-  { name: "People", href: "/people", icon: Contact, permission: "tenants.view", feature: null },
-  { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
-  { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
-  { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", feature: null },
+  // PG Management - Collapsible dropdown
+  {
+    name: "PG Management",
+    href: "/properties",
+    icon: Building2,
+    permission: "properties.view",
+    feature: null,
+    children: [
+      { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", feature: null },
+      { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", feature: null },
+      { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
+      { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
+      { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
+      { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", feature: null },
+      { name: "Meter Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
+      { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", feature: null },
+      { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
+      { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
+      { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
+      { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
+    ]
+  },
+
+  // Library Management - Collapsible dropdown
+  {
+    name: "Library",
+    href: "/library",
+    icon: Library,
+    permission: "library.view",
+    feature: "library",
+    children: [
+      { name: "Libraries", href: "/library", icon: Library, permission: "library.view", feature: "library" },
+      { name: "Sections", href: "/library-sections", icon: Grid3X3, permission: "library_sections.view", feature: "library" },
+      { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", feature: "library" },
+      { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
+      { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", feature: "library" },
+      { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", feature: "library" },
+      { name: "Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
+      { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", feature: "library" },
+    ]
+  },
+
+  // Expenses - Collapsible dropdown (shared)
   {
     name: "Expenses",
     href: "/expenses",
@@ -138,28 +190,14 @@ const navigation: NavItem[] = [
       { name: "Misc Transactions", href: "/expenses/misc", icon: ArrowLeftRight, permission: "expenses.view", feature: "expenses" },
     ]
   },
-  { name: "Meter Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
-  { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", feature: null },
-  { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
-  { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
+
+  // Common modules (not inside dropdowns)
+  { name: "People", href: "/people", icon: Contact, permission: "tenants.view", feature: null },
   { name: "Complaints", href: "/complaints", icon: MessageSquare, permission: "complaints.view", feature: "complaints" },
   { name: "Notices", href: "/notices", icon: Bell, permission: "notices.view", feature: "notices" },
   { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", feature: "reports" },
   { name: "Activity Log", href: "/activity", icon: Activity, permission: null, feature: "activityLog" },
-  { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
-  { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
   { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", feature: null },
-
-  // Library Management Section
-  { name: "Library Management", href: "#", icon: Library, permission: null, feature: "library", isSection: true },
-  { name: "Libraries", href: "/library", icon: Library, permission: "library.view", feature: "library" },
-  { name: "Sections", href: "/library-sections", icon: Grid3X3, permission: "library_sections.view", feature: "library" },
-  { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", feature: "library" },
-  { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
-  { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", feature: "library" },
-  { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", feature: "library" },
-  { name: "Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
-  { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", feature: "library" },
 ]
 
 // Mobile bottom nav items (5 most used)
@@ -460,20 +498,6 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             )}
             <ul className="space-y-1">
               {finalNavigation.map((item, itemIndex) => {
-                // Section headers - render as dividers with labels
-                if (item.isSection) {
-                  return (
-                    <li key={item.name} className="pt-4 pb-1 first:pt-0">
-                      <div className="flex items-center gap-2 px-3 py-1">
-                        <item.icon className="h-4 w-4 text-muted-foreground/70" />
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          {item.name}
-                        </span>
-                      </div>
-                    </li>
-                  )
-                }
-
                 const hasChildren = item.children && item.children.length > 0
                 const isExpanded = hasChildren && isMenuExpanded(item)
 
@@ -492,7 +516,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 return (
                   <li key={item.name} className={sidebarEditMode ? "relative group" : ""}>
                     {/* Edit mode reorder controls for main items */}
-                    {sidebarEditMode && !item.isSection && (
+                    {sidebarEditMode && (
                       <div className="absolute -left-1 top-1/2 -translate-y-1/2 flex flex-col z-10">
                         <button
                           onClick={() => handleMoveMain(itemIndex, "up")}
