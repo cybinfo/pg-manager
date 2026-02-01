@@ -471,8 +471,9 @@ export function useListPage<T extends object>(
       }
 
       // Apply server-side pagination
-      // Pagination works with grouping - groups will show items from current page only
-      if (enableServerPagination) {
+      // Skip pagination when grouping is active to show complete groups
+      const hasActiveGrouping = selectedGroupsRef.current.length > 0
+      if (enableServerPagination && !hasActiveGrouping) {
         const from = (currentPage - 1) * currentPageSize
         const to = from + currentPageSize - 1
         query = query.range(from, to)
@@ -511,7 +512,7 @@ export function useListPage<T extends object>(
     } finally {
       setLoading(false)
     }
-  }, [enabled, enableServerPagination, page, pageSize, filters, searchQuery]) // Dependencies for pagination and filtering
+  }, [enabled, enableServerPagination, page, pageSize, filters, searchQuery, selectedGroups]) // Dependencies for pagination, filtering, and grouping
 
   // Helper function to apply serverFilter to a query (centralized operator handling)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
