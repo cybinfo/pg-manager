@@ -1,0 +1,368 @@
+/**
+ * New Library Attendance Page (Check-In)
+ *
+ * Form to check in a library member.
+ */
+
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Combobox, ComboboxOption } from "@/components/ui/combobox"
+import { ArrowLeft, Clock, Loader2, Users, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
+import { PageLoading } from "@/components/ui/loading"
+import { withCreatedBy } from "@/lib/audit"
+
+interface MemberOption {
+  id: string
+  name: string
+  member_code: string | null
+  status: string
+  hours_balance: number
+  library_id: string
+  current_subscription_id: string | null
+}
+
+interface LibraryOption {
+  id: string
+  name: string
+}
+
+export default function NewLibraryAttendancePage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const preselectedMember = searchParams.get("member")
+  const { user, workspaceId } = useAuthContext()
+  const [loading, setLoading] = useState(false)
+  const [loadingData, setLoadingData] = useState(true)
+  const [members, setMembers] = useState<MemberOption[]>([])
+  const [libraries, setLibraries] = useState<LibraryOption[]>([])
+  const [selectedMember, setSelectedMember] = useState<MemberOption | null>(null)
+
+  const [formData, setFormData] = useState({
+    member_id: preselectedMember || "",
+    library_id: "",
+    check_in_time: new Date().toISOString().slice(0, 16), // datetime-local format
+    notes: "",
+  })
+
+  useEffect(() => {
+    async function fetchData() {
+      if (!workspaceId) return
+
+      const supabase = createClient()
+
+      // Fetch libraries
+      const { data: librariesData } = await supabase
+        .from("libraries")
+        .select("id, name")
+        .eq("workspace_id", workspaceId)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("name")
+
+      setLibraries(librariesData || [])
+
+      // Fetch active members
+      const { data: membersData } = await supabase
+        .from("library_members")
+        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id")
+        .eq("workspace_id", workspaceId)
+        .eq("status", "active")
+        .is("deleted_at", null)
+        .order("name")
+
+      setMembers(membersData || [])
+
+      // If preselected member, set form data
+      if (preselectedMember && membersData) {
+        const member = membersData.find((m: MemberOption) => m.id === preselectedMember)
+        if (member) {
+          setSelectedMember(member)
+          setFormData((prev) => ({
+            ...prev,
+            member_id: member.id,
+            library_id: member.library_id,
+          }))
+        }
+      }
+
+      setLoadingData(false)
+    }
+
+    fetchData()
+  }, [workspaceId, preselectedMember])
+
+  const handleMemberChange = (memberId: string) => {
+    const member = members.find((m) => m.id === memberId)
+    setSelectedMember(member || null)
+    setFormData((prev) => ({
+      ...prev,
+      member_id: memberId,
+      library_id: member?.library_id || prev.library_id,
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!formData.member_id) {
+      toast.error("Please select a member")
+      return
+    }
+
+    if (!selectedMember) {
+      toast.error("Member not found")
+      return
+    }
+
+    if (selectedMember.hours_balance <= 0) {
+      toast.error("Member has no hours remaining. Please renew subscription first.")
+      return
+    }
+
+    if (!user || !workspaceId) {
+      toast.error("Session expired. Please login again.")
+      router.push("/login")
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const supabase = createClient()
+
+      // Get owner_id from workspace
+      const { data: workspace } = await supabase
+        .from("workspaces")
+        .select("owner_user_id")
+        .eq("id", workspaceId)
+        .single()
+
+      if (!workspace) {
+        toast.error("Workspace not found")
+        setLoading(false)
+        return
+      }
+
+      // Check if member already has an active check-in (no check-out)
+      const { data: activeCheckIn } = await supabase
+        .from("library_attendance")
+        .select("id")
+        .eq("member_id", formData.member_id)
+        .is("check_out_time", null)
+        .is("deleted_at", null)
+        .single()
+
+      if (activeCheckIn) {
+        toast.error("Member already has an active check-in. Please check out first.")
+        setLoading(false)
+        return
+      }
+
+      // Create attendance record
+      const checkInTime = new Date(formData.check_in_time).toISOString()
+      const attendanceDate = formData.check_in_time.split("T")[0]
+
+      const attendanceData = withCreatedBy(
+        {
+          owner_id: workspace.owner_user_id,
+          workspace_id: workspaceId,
+          member_id: formData.member_id,
+          membership_id: selectedMember.current_subscription_id,
+          attendance_date: attendanceDate,
+          check_in_time: checkInTime,
+          notes: formData.notes || null,
+        },
+        user.id
+      )
+
+      const { data: newAttendance, error } = await supabase
+        .from("library_attendance")
+        .insert(attendanceData)
+        .select()
+        .single()
+
+      if (error) {
+        console.error("Error creating attendance:", error)
+        toast.error(`Failed to check in: ${error.message}`)
+        return
+      }
+
+      toast.success(`${selectedMember.name} checked in successfully!`)
+      router.push(`/library-attendance/${newAttendance.id}`)
+    } catch (error) {
+      console.error("Error:", error)
+      toast.error("Failed to check in. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loadingData) {
+    return <PageLoading message="Loading..." />
+  }
+
+  const memberOptions: ComboboxOption[] = members.map((m) => ({
+    value: m.id,
+    label: m.name + (m.member_code ? ` (${m.member_code})` : "") + ` - ${m.hours_balance.toFixed(1)}h remaining`,
+  }))
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link href="/library-attendance">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold">Check In</h1>
+          <p className="text-muted-foreground">
+            Record member attendance
+          </p>
+        </div>
+      </div>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Check-In Details</CardTitle>
+                <CardDescription>
+                  Select a member and record their check-in time
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Member Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="member_id">Select Member *</Label>
+              {members.length > 0 ? (
+                <Combobox
+                  options={memberOptions}
+                  value={formData.member_id}
+                  onValueChange={handleMemberChange}
+                  placeholder="Search for a member..."
+                  emptyText="No active members found"
+                  disabled={loading}
+                />
+              ) : (
+                <div className="p-4 bg-muted/50 rounded-lg text-center">
+                  <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    No active members found
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Member Info */}
+            {selectedMember && (
+              <div className={`p-4 rounded-lg border ${
+                selectedMember.hours_balance <= 0
+                  ? "bg-red-50 border-red-200"
+                  : selectedMember.hours_balance <= 2
+                    ? "bg-yellow-50 border-yellow-200"
+                    : "bg-green-50 border-green-200"
+              }`}>
+                <div className="flex items-start gap-3">
+                  {selectedMember.hours_balance <= 0 ? (
+                    <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                  ) : (
+                    <Clock className="h-5 w-5 text-green-500 mt-0.5" />
+                  )}
+                  <div>
+                    <p className="font-medium">{selectedMember.name}</p>
+                    {selectedMember.member_code && (
+                      <p className="text-sm text-muted-foreground font-mono">{selectedMember.member_code}</p>
+                    )}
+                    <p className={`text-sm font-medium mt-1 ${
+                      selectedMember.hours_balance <= 0
+                        ? "text-red-600"
+                        : selectedMember.hours_balance <= 2
+                          ? "text-yellow-600"
+                          : "text-green-600"
+                    }`}>
+                      {selectedMember.hours_balance.toFixed(1)} hours remaining
+                    </p>
+                    {selectedMember.hours_balance <= 0 && (
+                      <Link href={`/library-members/${selectedMember.id}/renew`} className="text-sm text-primary hover:underline">
+                        Renew subscription →
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Check-in Time */}
+            <div className="space-y-2">
+              <Label htmlFor="check_in_time">Check-In Time *</Label>
+              <Input
+                id="check_in_time"
+                name="check_in_time"
+                type="datetime-local"
+                value={formData.check_in_time}
+                onChange={(e) => setFormData((prev) => ({ ...prev, check_in_time: e.target.value }))}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                name="notes"
+                placeholder="Any additional notes..."
+                value={formData.notes}
+                onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                disabled={loading}
+                rows={2}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-4 mt-6">
+          <Link href="/library-attendance">
+            <Button type="button" variant="outline" disabled={loading}>
+              Cancel
+            </Button>
+          </Link>
+          <Button
+            type="submit"
+            disabled={loading || members.length === 0 || (selectedMember?.hours_balance ?? 0) <= 0}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Checking In...
+              </>
+            ) : (
+              "Check In"
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}

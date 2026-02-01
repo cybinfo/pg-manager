@@ -1,0 +1,310 @@
+/**
+ * Library Payments List Page
+ *
+ * Displays all library payments with member info.
+ */
+
+"use client"
+
+import { CreditCard, Users, Calendar, Receipt } from "lucide-react"
+import { Column, StatusDot } from "@/components/ui/data-table"
+import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
+import { LIBRARY_PAYMENT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { FilterConfig } from "@/components/ui/list-page-filters"
+import { formatDate } from "@/lib/format"
+import { Currency } from "@/components/ui/currency"
+import { Avatar } from "@/components/ui/avatar"
+import { LIBRARY_PAYMENT_TYPE_CONFIG, LIBRARY_PAYMENT_METHOD_CONFIG, LIBRARY_PAYMENT_STATUS_CONFIG } from "@/types/library.types"
+
+// ============================================
+// Types
+// ============================================
+
+interface PaymentItem {
+  id: string
+  receipt_number: string | null
+  payment_date: string
+  amount: number
+  payment_type: string
+  payment_method: string
+  payment_reference: string | null
+  notes: string | null
+  status: string
+  created_at: string
+  member?: {
+    id: string
+    name: string
+    member_code: string | null
+    person?: { id: string; name?: string; photo_url?: string } | null
+  } | null
+  // Computed
+  display_name?: string
+  type_label?: string
+  method_label?: string
+}
+
+// ============================================
+// Column Definitions
+// ============================================
+
+const columns: Column<PaymentItem>[] = [
+  {
+    key: "member",
+    header: "Member",
+    width: "primary",
+    sortable: false,
+    canHide: false,
+    render: (payment) => {
+      const displayName = payment.member?.person?.name || payment.member?.name || "Unknown"
+      const photoUrl = payment.member?.person?.photo_url
+      return (
+        <div className="flex items-center gap-3">
+          <Avatar name={displayName} src={photoUrl} size="sm" />
+          <div>
+            <div className="font-medium">{displayName}</div>
+            <div className="text-xs text-muted-foreground">
+              {payment.member?.member_code || "—"}
+            </div>
+          </div>
+        </div>
+      )
+    },
+  },
+  {
+    key: "receipt_number",
+    header: "Receipt",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: true,
+    render: (payment) => (
+      <div>
+        <div className="font-mono text-sm">{payment.receipt_number || "—"}</div>
+        <div className="text-xs text-muted-foreground">
+          {formatDate(payment.payment_date)}
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: "amount",
+    header: "Amount",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: true,
+    render: (payment) => (
+      <span className="font-semibold text-green-600">
+        +<Currency amount={payment.amount} />
+      </span>
+    ),
+  },
+  {
+    key: "payment_type",
+    header: "Type",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: true,
+    render: (payment) => {
+      const config = LIBRARY_PAYMENT_TYPE_CONFIG[payment.payment_type as keyof typeof LIBRARY_PAYMENT_TYPE_CONFIG]
+      return (
+        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+          payment.payment_type === "subscription" ? "bg-blue-100 text-blue-700" :
+          payment.payment_type === "locker_rent" ? "bg-purple-100 text-purple-700" :
+          payment.payment_type === "locker_deposit" ? "bg-yellow-100 text-yellow-700" :
+          "bg-gray-100 text-gray-700"
+        }`}>
+          {config?.label || payment.payment_type}
+        </span>
+      )
+    },
+  },
+  {
+    key: "payment_method",
+    header: "Method",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: true,
+    render: (payment) => {
+      const config = LIBRARY_PAYMENT_METHOD_CONFIG[payment.payment_method as keyof typeof LIBRARY_PAYMENT_METHOD_CONFIG]
+      return config?.label || payment.payment_method
+    },
+  },
+  {
+    key: "status",
+    header: "Status",
+    width: "status",
+    sortable: true,
+    canHide: true,
+    defaultVisible: true,
+    render: (payment) => {
+      const config = LIBRARY_PAYMENT_STATUS_CONFIG[payment.status as keyof typeof LIBRARY_PAYMENT_STATUS_CONFIG]
+      return (
+        <StatusDot
+          status={config?.variant || "muted"}
+          label={config?.label || payment.status}
+        />
+      )
+    },
+  },
+  // Hidden by default
+  {
+    key: "payment_reference",
+    header: "Reference",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.payment_reference || "—",
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "tertiary",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.notes ? (
+      <span className="text-sm text-muted-foreground truncate max-w-[200px]">
+        {payment.notes}
+      </span>
+    ) : "—",
+  },
+  {
+    key: "created_at",
+    header: "Recorded On",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => formatDate(payment.created_at),
+  },
+]
+
+// ============================================
+// Filter Configurations
+// ============================================
+
+const filters: FilterConfig[] = [
+  {
+    id: "member_id",
+    label: "Member",
+    type: "select",
+    placeholder: "All Members",
+  },
+  {
+    id: "payment_type",
+    label: "Type",
+    type: "select",
+    placeholder: "All Types",
+    options: [
+      { value: "subscription", label: "Subscription" },
+      { value: "locker_rent", label: "Locker Rent" },
+      { value: "locker_deposit", label: "Locker Deposit" },
+      { value: "fine", label: "Fine" },
+      { value: "other", label: "Other" },
+    ],
+  },
+  {
+    id: "payment_method",
+    label: "Method",
+    type: "select",
+    placeholder: "All Methods",
+    options: [
+      { value: "cash", label: "Cash" },
+      { value: "upi", label: "UPI" },
+      { value: "card", label: "Card" },
+      { value: "bank_transfer", label: "Bank Transfer" },
+    ],
+  },
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    placeholder: "All Status",
+    options: [
+      { value: "completed", label: "Completed" },
+      { value: "pending", label: "Pending" },
+      { value: "refunded", label: "Refunded" },
+    ],
+  },
+]
+
+// ============================================
+// Group By Options
+// ============================================
+
+const groupByOptions: GroupByOption[] = [
+  { value: "payment_type", label: "Type" },
+  { value: "payment_method", label: "Method" },
+  { value: "status", label: "Status" },
+  { value: "payment_date", label: "Date" },
+]
+
+// ============================================
+// Metrics Configuration
+// ============================================
+
+const metrics: MetricConfig<PaymentItem>[] = [
+  {
+    id: "total",
+    label: "Total Payments",
+    icon: Receipt,
+    compute: (_items, total) => total,
+  },
+  {
+    id: "total_amount",
+    label: "Total Amount",
+    icon: CreditCard,
+    compute: (items) => {
+      const total = items.reduce((sum, p) => sum + (p.amount || 0), 0)
+      return `₹${total.toLocaleString("en-IN")}`
+    },
+  },
+  {
+    id: "subscriptions",
+    label: "Subscriptions",
+    icon: Users,
+    compute: (items) => items.filter((p) => p.payment_type === "subscription").length,
+  },
+  {
+    id: "today",
+    label: "Today",
+    icon: Calendar,
+    compute: (items) => {
+      const today = new Date().toISOString().split("T")[0]
+      return items.filter((p) => p.payment_date === today).length
+    },
+  },
+]
+
+// ============================================
+// Page Component
+// ============================================
+
+export default function LibraryPaymentsPage() {
+  return (
+    <ListPageTemplate
+      tableKey="library-payments"
+      title="Library Payments"
+      description="Track subscription and locker payments"
+      icon={CreditCard}
+      permission="library_payments.view"
+      config={LIBRARY_PAYMENT_LIST_CONFIG}
+      filters={filters}
+      groupByOptions={groupByOptions}
+      metrics={metrics}
+      columns={columns}
+      searchPlaceholder="Search by receipt number, member..."
+      enableColumnManager={true}
+      createHref="/library-payments/new"
+      createLabel="Record Payment"
+      createPermission="library_payments.create"
+      detailHref={(payment) => `/library-payments/${payment.id}`}
+      emptyTitle="No payments recorded"
+      emptyDescription="Record payments when members pay for subscriptions or lockers"
+    />
+  )
+}

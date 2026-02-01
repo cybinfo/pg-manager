@@ -96,6 +96,16 @@ export type SoftDeletableTable =
   // Miscellaneous transactions
   | 'misc_transactions'
   | 'misc_transaction_categories'
+  // Library module tables
+  | 'libraries'
+  | 'library_sections'
+  | 'library_seats'
+  | 'library_members'
+  | 'library_memberships'
+  | 'library_attendance'
+  | 'library_lockers'
+  | 'library_locker_assignments'
+  | 'library_payments'
 
 /**
  * Entity types that support created_by tracking.

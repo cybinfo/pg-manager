@@ -1944,3 +1944,250 @@ export const MISC_TRANSACTION_LIST_CONFIG: ListPageConfig<Record<string, unknown
     }
   },
 }
+
+// ============================================
+// LIBRARY MODULE CONFIGS
+// ============================================
+
+export const LIBRARY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "libraries",
+  select: `*`,
+  defaultOrderBy: "name",
+  defaultOrderDirection: "asc",
+  searchFields: ["name", "code", "city", "phone"],
+  joinFields: [],
+  computedFields: (item) => ({
+    available_seats: (item.total_seats as number) - (item.occupied_seats as number),
+    occupancy_percent: item.total_seats
+      ? Math.round(((item.occupied_seats as number) / (item.total_seats as number)) * 100)
+      : 0,
+    status_label: item.is_active ? "Active" : "Inactive",
+  }),
+}
+
+export const LIBRARY_SECTION_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "library_sections",
+  select: `
+    *,
+    library:libraries(id, name, code)
+  `,
+  defaultOrderBy: "name",
+  defaultOrderDirection: "asc",
+  searchFields: ["name", "section_number", "library.name"],
+  joinFields: ["library"],
+  computedFields: (item) => ({
+    available_seats: (item.total_seats as number) - (item.occupied_seats as number),
+    occupancy_percent: item.total_seats
+      ? Math.round(((item.occupied_seats as number) / (item.total_seats as number)) * 100)
+      : 0,
+    status_label: item.is_active ? "Active" : "Inactive",
+    ac_label: item.is_ac ? "AC" : "Non-AC",
+  }),
+}
+
+export const LIBRARY_SEAT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "library_seats",
+  select: `
+    *,
+    section:library_sections(id, name, library:libraries(id, name)),
+    current_member:library_members(id, name, member_code)
+  `,
+  defaultOrderBy: "seat_number",
+  defaultOrderDirection: "asc",
+  searchFields: ["seat_number", "row_number", "section.name"],
+  joinFields: ["section", "current_member"],
+  computedFields: (item) => {
+    const statusLabels: Record<string, string> = {
+      available: "Available",
+      occupied: "Occupied",
+      reserved: "Reserved",
+      maintenance: "Maintenance",
+    }
+    return {
+      status_label: statusLabels[item.status as string] || (item.status as string),
+      has_power: item.has_power_outlet ? "Yes" : "No",
+    }
+  },
+}
+
+export const LIBRARY_MEMBER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "library_members",
+  select: `
+    *,
+    person:people(id, name, photo_url),
+    library:libraries(id, name),
+    assigned_seat:library_seats(id, seat_number, section:library_sections(id, name))
+  `,
+  defaultOrderBy: "created_at",
+  defaultOrderDirection: "desc",
+  searchFields: ["name", "phone", "email", "member_code"],
+  joinFields: ["person", "library", "assigned_seat"],
+  computedFields: (item) => {
+    const joinDate = item.join_date ? new Date(item.join_date as string) : new Date()
+    const statusLabels: Record<string, string> = {
+      active: "Active",
+      expired: "Expired",
+      suspended: "Suspended",
+      cancelled: "Cancelled",
+    }
+    return {
+      join_month: joinDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      join_year: joinDate.getFullYear().toString(),
+      status_label: statusLabels[item.status as string] || (item.status as string),
+      display_name: (item.person as { name?: string })?.name || item.name,
+      hours_display: `${item.hours_used || 0}h used / ${item.hours_balance || 0}h remaining`,
+    }
+  },
+}
+
+export const LIBRARY_MEMBERSHIP_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "library_memberships",
+  select: `
+    *,
+    member:library_members(id, name, member_code, person:people(id, name, photo_url))
+  `,
+  defaultOrderBy: "start_date",
+  defaultOrderDirection: "desc",
+  searchFields: ["plan_name", "member.name", "member.member_code"],
+  joinFields: ["member"],
+  computedFields: (item) => {
+    const startDate = item.start_date ? new Date(item.start_date as string) : new Date()
+    const endDate = item.end_date ? new Date(item.end_date as string) : null
+    const today = new Date()
+    const statusLabels: Record<string, string> = {
+      active: "Active",
+      expired: "Expired",
+      cancelled: "Cancelled",
+      upgraded: "Upgraded",
+    }
+    return {
+      start_month: startDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      start_year: startDate.getFullYear().toString(),
+      status_label: statusLabels[item.status as string] || (item.status as string),
+      is_expired: endDate && today > endDate,
+      hours_display: item.hours_included
+        ? `${item.hours_used || 0}h / ${item.hours_included}h`
+        : "Unlimited",
+      display_amount: `₹${(item.final_amount as number)?.toLocaleString("en-IN")}`,
+    }
+  },
+}
+
+export const LIBRARY_ATTENDANCE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "library_attendance",
+  select: `
+    *,
+    member:library_members(id, name, member_code, person:people(id, name, photo_url)),
+    seat:library_seats(id, seat_number)
+  `,
+  defaultOrderBy: "check_in_time",
+  defaultOrderDirection: "desc",
+  searchFields: ["member.name", "member.member_code"],
+  joinFields: ["member", "seat"],
+  computedFields: (item) => {
+    const checkIn = item.check_in_time ? new Date(item.check_in_time as string) : new Date()
+    const checkOut = item.check_out_time ? new Date(item.check_out_time as string) : null
+    return {
+      attendance_month: checkIn.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      attendance_year: checkIn.getFullYear().toString(),
+      is_checked_in: !checkOut,
+      check_in_display: checkIn.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+      check_out_display: checkOut?.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) || "-",
+      hours_display: item.hours_spent ? `${(item.hours_spent as number).toFixed(1)}h` : "-",
+      display_name: (item.member as { person?: { name?: string }; name?: string })?.person?.name
+        || (item.member as { name?: string })?.name || "Unknown",
+    }
+  },
+}
+
+export const LIBRARY_LOCKER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "library_lockers",
+  select: `
+    *,
+    library:libraries(id, name),
+    current_member:library_members(id, name, member_code)
+  `,
+  defaultOrderBy: "locker_number",
+  defaultOrderDirection: "asc",
+  searchFields: ["locker_number", "section", "library.name"],
+  joinFields: ["library", "current_member"],
+  computedFields: (item) => {
+    const statusLabels: Record<string, string> = {
+      available: "Available",
+      occupied: "Occupied",
+      maintenance: "Maintenance",
+    }
+    const sizeLabels: Record<string, string> = {
+      small: "Small",
+      medium: "Medium",
+      large: "Large",
+    }
+    return {
+      status_label: statusLabels[item.status as string] || (item.status as string),
+      size_label: sizeLabels[item.size as string] || (item.size as string),
+      display_rent: item.monthly_rent ? `₹${(item.monthly_rent as number).toLocaleString("en-IN")}/mo` : "-",
+      display_deposit: item.deposit_amount ? `₹${(item.deposit_amount as number).toLocaleString("en-IN")}` : "-",
+    }
+  },
+}
+
+export const LIBRARY_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "library_payments",
+  select: `
+    *,
+    member:library_members(id, name, member_code, person:people(id, name, photo_url))
+  `,
+  defaultOrderBy: "payment_date",
+  defaultOrderDirection: "desc",
+  searchFields: ["receipt_number", "member.name", "member.member_code"],
+  joinFields: ["member"],
+  computedFields: (item) => {
+    const paymentDate = item.payment_date ? new Date(item.payment_date as string) : new Date()
+    const typeLabels: Record<string, string> = {
+      subscription: "Subscription",
+      locker_rent: "Locker Rent",
+      locker_deposit: "Locker Deposit",
+      fine: "Fine",
+      other: "Other",
+    }
+    const statusLabels: Record<string, string> = {
+      completed: "Completed",
+      pending: "Pending",
+      refunded: "Refunded",
+    }
+    const methodLabels: Record<string, string> = {
+      cash: "Cash",
+      upi: "UPI",
+      card: "Card",
+      bank_transfer: "Bank Transfer",
+      cheque: "Cheque",
+      paytm: "Paytm",
+      other: "Other",
+    }
+    return {
+      payment_month: paymentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      payment_year: paymentDate.getFullYear().toString(),
+      type_label: typeLabels[item.payment_type as string] || (item.payment_type as string),
+      status_label: statusLabels[item.status as string] || (item.status as string),
+      method_label: methodLabels[item.payment_method as string] || (item.payment_method as string),
+      display_amount: `₹${(item.amount as number)?.toLocaleString("en-IN")}`,
+      display_name: (item.member as { person?: { name?: string }; name?: string })?.person?.name
+        || (item.member as { name?: string })?.name || "Unknown",
+    }
+  },
+}
+
+export const LIBRARY_PLAN_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "library_plans",
+  select: `*`,
+  defaultOrderBy: "sort_order",
+  defaultOrderDirection: "asc",
+  searchFields: ["name", "description"],
+  joinFields: [],
+  computedFields: (item) => ({
+    hours_display: item.hours_included ? `${item.hours_included}h` : "Unlimited",
+    validity_display: `${item.validity_days} days`,
+    display_price: `₹${(item.base_price as number)?.toLocaleString("en-IN")}`,
+    status_label: item.is_active ? "Active" : "Inactive",
+  }),
+}

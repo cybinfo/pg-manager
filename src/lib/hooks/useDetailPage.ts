@@ -1065,3 +1065,194 @@ export const KITCHEN_WASTAGE_DETAIL_CONFIG: DetailPageConfig = {
   redirectOnNotFound: "/expenses/kitchen/wastage",
   notFoundMessage: "Wastage entry not found",
 }
+
+// ============================================
+// LIBRARY MODULE DETAIL CONFIGS
+// ============================================
+
+// Library Detail Config
+export const LIBRARY_DETAIL_CONFIG: DetailPageConfig = {
+  table: "libraries",
+  select: "*",
+  redirectOnNotFound: "/library",
+  notFoundMessage: "Library not found",
+  relatedQueries: [
+    {
+      key: "sections",
+      table: "library_sections",
+      select: "id, name, section_number, floor, total_seats, occupied_seats, is_ac, is_active",
+      foreignKey: "library_id",
+      orderBy: "name",
+      orderDirection: "asc",
+    },
+    {
+      key: "members",
+      table: "library_members",
+      select: "id, name, member_code, phone, status, hours_balance, join_date, person:people(id, photo_url)",
+      foreignKey: "library_id",
+      joinFields: ["person"],
+      filter: { status: ["active"] },
+      orderBy: "name",
+      orderDirection: "asc",
+      limit: 10,
+    },
+    {
+      key: "lockers",
+      table: "library_lockers",
+      select: "id, locker_number, size, status, monthly_rent, current_member:library_members(id, name)",
+      foreignKey: "library_id",
+      joinFields: ["current_member"],
+      orderBy: "locker_number",
+      orderDirection: "asc",
+    },
+    {
+      key: "recentPayments",
+      table: "library_payments",
+      select: "id, amount, payment_date, payment_type, member:library_members(id, name)",
+      foreignKey: "workspace_id",
+      foreignKeyValue: "field:workspace_id",
+      joinFields: ["member"],
+      orderBy: "payment_date",
+      orderDirection: "desc",
+      limit: 5,
+    },
+  ],
+}
+
+// Library Section Detail Config
+export const LIBRARY_SECTION_DETAIL_CONFIG: DetailPageConfig = {
+  table: "library_sections",
+  select: `
+    *,
+    library:libraries(id, name, code)
+  `,
+  joinFields: ["library"],
+  redirectOnNotFound: "/library-sections",
+  notFoundMessage: "Section not found",
+  relatedQueries: [
+    {
+      key: "seats",
+      table: "library_seats",
+      select: "id, seat_number, row_number, status, has_power_outlet, current_member:library_members(id, name, member_code)",
+      foreignKey: "section_id",
+      joinFields: ["current_member"],
+      orderBy: "seat_number",
+      orderDirection: "asc",
+    },
+  ],
+}
+
+// Library Seat Detail Config
+export const LIBRARY_SEAT_DETAIL_CONFIG: DetailPageConfig = {
+  table: "library_seats",
+  select: `
+    *,
+    section:library_sections(id, name, library:libraries(id, name)),
+    current_member:library_members(id, name, member_code, phone)
+  `,
+  joinFields: ["section", "current_member"],
+  redirectOnNotFound: "/library-sections",
+  notFoundMessage: "Seat not found",
+}
+
+// Library Member Detail Config
+export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
+  table: "library_members",
+  select: `
+    *,
+    person:people(id, name, phone, email, photo_url, aadhaar_number, pan_number, date_of_birth, gender),
+    library:libraries(id, name, code),
+    assigned_seat:library_seats(id, seat_number, section:library_sections(id, name)),
+    locker:library_lockers(id, locker_number, size)
+  `,
+  joinFields: ["person", "library", "assigned_seat", "locker"],
+  redirectOnNotFound: "/library-members",
+  notFoundMessage: "Member not found",
+  relatedQueries: [
+    {
+      key: "memberships",
+      table: "library_memberships",
+      select: "id, plan_name, start_date, end_date, hours_included, hours_used, hours_remaining, final_amount, status",
+      foreignKey: "member_id",
+      orderBy: "start_date",
+      orderDirection: "desc",
+    },
+    {
+      key: "attendance",
+      table: "library_attendance",
+      select: "id, attendance_date, check_in_time, check_out_time, hours_spent",
+      foreignKey: "member_id",
+      orderBy: "check_in_time",
+      orderDirection: "desc",
+      limit: 10,
+    },
+    {
+      key: "payments",
+      table: "library_payments",
+      select: "id, amount, payment_date, payment_type, payment_method, receipt_number",
+      foreignKey: "member_id",
+      orderBy: "payment_date",
+      orderDirection: "desc",
+      limit: 10,
+    },
+    {
+      key: "lockerAssignments",
+      table: "library_locker_assignments",
+      select: "id, start_date, end_date, rent_amount, deposit_amount, status, locker:library_lockers(id, locker_number)",
+      foreignKey: "member_id",
+      joinFields: ["locker"],
+      orderBy: "start_date",
+      orderDirection: "desc",
+    },
+  ],
+}
+
+// Library Attendance Detail Config
+export const LIBRARY_ATTENDANCE_DETAIL_CONFIG: DetailPageConfig = {
+  table: "library_attendance",
+  select: `
+    *,
+    member:library_members(id, name, member_code, phone, person:people(id, photo_url)),
+    seat:library_seats(id, seat_number, section:library_sections(id, name))
+  `,
+  joinFields: ["member", "seat"],
+  redirectOnNotFound: "/library-attendance",
+  notFoundMessage: "Attendance record not found",
+}
+
+// Library Locker Detail Config
+export const LIBRARY_LOCKER_DETAIL_CONFIG: DetailPageConfig = {
+  table: "library_lockers",
+  select: `
+    *,
+    library:libraries(id, name),
+    current_member:library_members(id, name, member_code, phone)
+  `,
+  joinFields: ["library", "current_member"],
+  redirectOnNotFound: "/library-lockers",
+  notFoundMessage: "Locker not found",
+  relatedQueries: [
+    {
+      key: "assignments",
+      table: "library_locker_assignments",
+      select: "id, start_date, end_date, rent_amount, deposit_amount, deposit_returned, status, member:library_members(id, name, member_code)",
+      foreignKey: "locker_id",
+      joinFields: ["member"],
+      orderBy: "start_date",
+      orderDirection: "desc",
+    },
+  ],
+}
+
+// Library Payment Detail Config
+export const LIBRARY_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
+  table: "library_payments",
+  select: `
+    *,
+    member:library_members(id, name, member_code, phone, person:people(id, photo_url)),
+    membership:library_memberships(id, plan_name, start_date, end_date)
+  `,
+  joinFields: ["member", "membership"],
+  redirectOnNotFound: "/library-payments",
+  notFoundMessage: "Payment not found",
+}

@@ -211,6 +211,46 @@ export const PERMISSIONS = {
   // Profile (for tenants)
   PROFILE_VIEW: 'profile.view',
   PROFILE_EDIT: 'profile.edit',
+
+  // Expenses
+  EXPENSES_VIEW: 'expenses.view',
+  EXPENSES_CREATE: 'expenses.create',
+  EXPENSES_EDIT: 'expenses.edit',
+  EXPENSES_DELETE: 'expenses.delete',
+
+  // Library
+  LIBRARY_VIEW: 'library.view',
+  LIBRARY_CREATE: 'library.create',
+  LIBRARY_EDIT: 'library.edit',
+  LIBRARY_DELETE: 'library.delete',
+
+  // Library Sections
+  LIBRARY_SECTIONS_VIEW: 'library_sections.view',
+  LIBRARY_SECTIONS_CREATE: 'library_sections.create',
+  LIBRARY_SECTIONS_EDIT: 'library_sections.edit',
+  LIBRARY_SECTIONS_DELETE: 'library_sections.delete',
+
+  // Library Members
+  LIBRARY_MEMBERS_VIEW: 'library_members.view',
+  LIBRARY_MEMBERS_CREATE: 'library_members.create',
+  LIBRARY_MEMBERS_EDIT: 'library_members.edit',
+  LIBRARY_MEMBERS_DELETE: 'library_members.delete',
+
+  // Library Attendance
+  LIBRARY_ATTENDANCE_VIEW: 'library_attendance.view',
+  LIBRARY_ATTENDANCE_CREATE: 'library_attendance.create',
+  LIBRARY_ATTENDANCE_EDIT: 'library_attendance.edit',
+
+  // Library Lockers
+  LIBRARY_LOCKERS_VIEW: 'library_lockers.view',
+  LIBRARY_LOCKERS_CREATE: 'library_lockers.create',
+  LIBRARY_LOCKERS_EDIT: 'library_lockers.edit',
+  LIBRARY_LOCKERS_DELETE: 'library_lockers.delete',
+
+  // Library Payments
+  LIBRARY_PAYMENTS_VIEW: 'library_payments.view',
+  LIBRARY_PAYMENTS_CREATE: 'library_payments.create',
+  LIBRARY_PAYMENTS_EDIT: 'library_payments.edit',
 } as const
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS]

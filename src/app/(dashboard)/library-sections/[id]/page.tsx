@@ -1,0 +1,271 @@
+/**
+ * Library Section Detail Page
+ *
+ * Shows section information with all seats.
+ */
+
+"use client"
+
+import { useParams } from "next/navigation"
+import Link from "next/link"
+import { useDetailPage, LIBRARY_SECTION_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { Button } from "@/components/ui/button"
+import {
+  DetailHero,
+  InfoCard,
+  DetailSection,
+  InfoRow,
+  DetailListSection,
+  DetailPageTemplate,
+} from "@/components/ui"
+import { Currency } from "@/components/ui/currency"
+import { PageLoading } from "@/components/ui/loading"
+import {
+  Grid3X3,
+  Armchair,
+  Plus,
+  Pencil,
+  Plug,
+  Lightbulb,
+} from "lucide-react"
+import type { LibrarySection, LibrarySeat } from "@/types/library.types"
+
+const statusColors: Record<string, string> = {
+  available: "bg-green-100 text-green-700",
+  occupied: "bg-blue-100 text-blue-700",
+  reserved: "bg-yellow-100 text-yellow-700",
+  maintenance: "bg-gray-100 text-gray-700",
+}
+
+export default function LibrarySectionDetailPage() {
+  const params = useParams()
+
+  const {
+    data: section,
+    related,
+    loading,
+  } = useDetailPage<LibrarySection>({
+    config: LIBRARY_SECTION_DETAIL_CONFIG,
+    id: params.id as string,
+  })
+
+  if (loading) {
+    return <PageLoading message="Loading section details..." />
+  }
+
+  if (!section) {
+    return null
+  }
+
+  const seats = (related.seats || []) as LibrarySeat[]
+
+  // Calculate stats
+  const availableSeats = section.total_seats - section.occupied_seats
+  const occupancyRate = section.total_seats > 0
+    ? Math.round((section.occupied_seats / section.total_seats) * 100)
+    : 0
+
+  // Group seats by row
+  const seatsByRow = seats.reduce((acc, seat) => {
+    const row = seat.row_number || "Unassigned"
+    if (!acc[row]) acc[row] = []
+    acc[row].push(seat)
+    return acc
+  }, {} as Record<string, LibrarySeat[]>)
+
+  return (
+    <div className="space-y-6">
+      {/* Hero Header */}
+      <DetailHero
+        title={section.name}
+        subtitle={
+          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+            {section.library?.name && (
+              <Link href={`/library/${section.library.id}`} className="hover:text-primary hover:underline">
+                {section.library.name}
+              </Link>
+            )}
+            {section.floor > 0 && <span>Floor {section.floor}</span>}
+            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+              section.is_ac ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
+            }`}>
+              {section.is_ac ? "AC" : "Non-AC"}
+            </span>
+          </div>
+        }
+        backHref="/library-sections"
+        backLabel="All Sections"
+        status={section.is_active ? "active" : "inactive"}
+        avatar={
+          <div className="p-3 bg-primary/10 rounded-lg">
+            <Grid3X3 className="h-8 w-8 text-primary" />
+          </div>
+        }
+        actions={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link href={`/library-sections/${section.id}/edit`}>
+              <Button variant="outline" size="sm">
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </Link>
+            <Link href={`/library-sections/${section.id}/seats/new`}>
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Seats
+              </Button>
+            </Link>
+          </div>
+        }
+      />
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <InfoCard
+          label="Total Seats"
+          value={section.total_seats}
+          icon={Armchair}
+          variant="default"
+        />
+        <InfoCard
+          label="Available"
+          value={availableSeats}
+          icon={Armchair}
+          variant={availableSeats > 0 ? "success" : "warning"}
+        />
+        <InfoCard
+          label="Occupied"
+          value={section.occupied_seats}
+          icon={Armchair}
+          variant="warning"
+        />
+        <InfoCard
+          label="Occupancy"
+          value={`${occupancyRate}%`}
+          icon={Grid3X3}
+          variant={occupancyRate >= 80 ? "warning" : "default"}
+        />
+      </div>
+
+      <DetailPageTemplate layoutKey="section-detail" entityType="library_section" record={section}>
+        {/* Section Details */}
+        <DetailSection
+          title="Section Details"
+          description="Configuration and pricing"
+          icon={Grid3X3}
+        >
+          <InfoRow label="Section Number" value={section.section_number || "—"} />
+          <InfoRow label="Floor" value={section.floor === 0 ? "Ground Floor" : `Floor ${section.floor}`} />
+          <InfoRow
+            label="Power Outlets"
+            value={section.has_power_outlets ? "Yes" : "No"}
+            icon={Plug}
+          />
+          {section.hourly_rate && (
+            <InfoRow label="Hourly Rate" value={<Currency amount={section.hourly_rate} />} />
+          )}
+          {section.monthly_rate && (
+            <InfoRow label="Monthly Rate" value={<Currency amount={section.monthly_rate} />} />
+          )}
+        </DetailSection>
+
+        {/* Seats List */}
+        <DetailListSection
+          title="Seats"
+          description={`${seats.length} seats in this section`}
+          icon={Armchair}
+          items={seats}
+          keyExtractor={(seat) => seat.id}
+          renderItem={(seat) => (
+            <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${statusColors[seat.status]}`}>
+                  <span className="text-xs font-bold">{seat.seat_number}</span>
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Seat {seat.seat_number}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {seat.row_number && <span>Row {seat.row_number}</span>}
+                    {seat.has_power_outlet && <Plug className="h-3 w-3" />}
+                    {seat.has_lamp && <Lightbulb className="h-3 w-3" />}
+                    {seat.is_window_seat && <span>Window</span>}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[seat.status]}`}>
+                  {seat.status}
+                </span>
+                {seat.current_member && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {(seat.current_member as { name?: string })?.name}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          initialLimit={10}
+          viewAllMode="expand"
+          emptyIcon={Armchair}
+          emptyText="No seats added yet"
+          actions={
+            <Link href={`/library-sections/${section.id}/seats/new`}>
+              <Button size="sm">
+                <Plus className="mr-1 h-3 w-3" />
+                Add Seats
+              </Button>
+            </Link>
+          }
+        />
+
+        {/* Seats by Row Visualization */}
+        {Object.keys(seatsByRow).length > 0 && (
+          <DetailSection
+            title="Seat Map"
+            description="Visual layout by row"
+            icon={Grid3X3}
+          >
+            <div className="space-y-4">
+              {Object.entries(seatsByRow).sort().map(([row, rowSeats]) => (
+                <div key={row}>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                    Row {row}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {rowSeats.sort((a, b) => a.seat_number.localeCompare(b.seat_number)).map((seat) => (
+                      <div
+                        key={seat.id}
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold cursor-default ${statusColors[seat.status]}`}
+                        title={`Seat ${seat.seat_number} - ${seat.status}${seat.current_member ? ` (${(seat.current_member as { name?: string })?.name})` : ""}`}
+                      >
+                        {seat.seat_number.slice(-2)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-4 mt-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-green-100 border border-green-300"></div>
+                <span>Available</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-blue-100 border border-blue-300"></div>
+                <span>Occupied</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-300"></div>
+                <span>Reserved</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-gray-100 border border-gray-300"></div>
+                <span>Maintenance</span>
+              </div>
+            </div>
+          </DetailSection>
+        )}
+      </DetailPageTemplate>
+    </div>
+  )
+}

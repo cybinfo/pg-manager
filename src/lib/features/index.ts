@@ -122,6 +122,13 @@ export const FEATURE_FLAGS = {
     defaultEnabled: false,
     category: "special",
   },
+  library: {
+    key: "library",
+    name: "Library Management",
+    description: "Manage study libraries with seats, hours, and lockers",
+    defaultEnabled: false,
+    category: "optional",
+  },
 } as const
 
 export type FeatureFlagKey = keyof typeof FEATURE_FLAGS
