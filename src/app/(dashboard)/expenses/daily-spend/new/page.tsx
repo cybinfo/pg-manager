@@ -255,7 +255,7 @@ export default function NewDailySpendPage() {
             total: item.total,
             vendor_name: vendorName || null,
             payment_mode: paymentMode,
-            upi_ref_number: paymentMode === "upi" ? upiRefNumber || null : null,
+            payment_reference: paymentMode === "upi" ? upiRefNumber || null : null,
             notes: notes || null,
           },
           user.id

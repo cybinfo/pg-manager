@@ -160,7 +160,7 @@ export default function EditDailySpendPage({
         vendor_id: matchedVendor?.id || "",
         vendor_name: transformed.vendor_name || "",
         payment_mode: transformed.payment_mode,
-        upi_ref_number: transformed.upi_ref_number || "",
+        upi_ref_number: transformed.payment_reference || "",
         notes: transformed.notes || "",
       })
 
@@ -248,7 +248,7 @@ export default function EditDailySpendPage({
           total,
           vendor_name: formData.vendor_name.trim() || null,
           payment_mode: formData.payment_mode,
-          upi_ref_number:
+          payment_reference:
             formData.payment_mode === "upi"
               ? formData.upi_ref_number.trim() || null
               : null,
