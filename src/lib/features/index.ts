@@ -126,8 +126,8 @@ export const FEATURE_FLAGS = {
     key: "library",
     name: "Library Management",
     description: "Manage study libraries with seats, hours, and lockers",
-    defaultEnabled: false,
-    category: "optional",
+    defaultEnabled: true,
+    category: "core",
   },
 } as const
 
