@@ -1990,7 +1990,7 @@ export const LIBRARY_SEAT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
   select: `
     *,
     section:library_sections(id, name, library:libraries(id, name)),
-    current_member:library_members(id, name, member_code)
+    current_member:library_members!fk_seats_current_member(id, name, member_code)
   `,
   defaultOrderBy: "seat_number",
   defaultOrderDirection: "asc",
@@ -2016,7 +2016,7 @@ export const LIBRARY_MEMBER_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
     *,
     person:people(id, name, photo_url),
     library:libraries(id, name),
-    assigned_seat:library_seats(id, seat_number, section:library_sections(id, name))
+    assigned_seat:library_seats!library_members_assigned_seat_id_fkey(id, seat_number, section:library_sections(id, name))
   `,
   defaultOrderBy: "created_at",
   defaultOrderDirection: "desc",
@@ -2105,7 +2105,7 @@ export const LIBRARY_LOCKER_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
   select: `
     *,
     library:libraries(id, name),
-    current_member:library_members(id, name, member_code)
+    current_member:library_members!fk_lockers_current_member(id, name, member_code)
   `,
   defaultOrderBy: "locker_number",
   defaultOrderDirection: "asc",
