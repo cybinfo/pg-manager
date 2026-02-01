@@ -611,8 +611,8 @@ export function ListPageTemplate({
         }
       />
 
-      {/* Pagination - always show when there's data */}
-      {pagination.total > 0 && (
+      {/* Pagination - show when there's data and grouping is not active */}
+      {pagination.total > 0 && selectedGroups.length === 0 && (
         <Pagination
           pagination={pagination}
           onPageChange={setPage}
@@ -620,6 +620,12 @@ export function ListPageTemplate({
           showTotal
           showPageSize
         />
+      )}
+      {/* When grouping is active, show simple count (pagination doesn't apply) */}
+      {pagination.total > 0 && selectedGroups.length > 0 && (
+        <div className="text-sm text-muted-foreground">
+          Showing all {pagination.total} results
+        </div>
       )}
     </div>
   )

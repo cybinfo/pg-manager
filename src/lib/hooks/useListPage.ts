@@ -474,8 +474,10 @@ export function useListPage<T extends object>(
         query = applyAdvancedFilters(query, currentAdvancedFilters)
       }
 
-      // Apply server-side pagination (works with grouping - group counts are fetched separately)
-      if (enableServerPagination) {
+      // Apply server-side pagination
+      // Skip pagination when grouping is active to keep groups complete
+      const hasActiveGrouping = selectedGroupsRef.current.length > 0
+      if (enableServerPagination && !hasActiveGrouping) {
         const from = (currentPage - 1) * currentPageSize
         const to = from + currentPageSize - 1
         query = query.range(from, to)
