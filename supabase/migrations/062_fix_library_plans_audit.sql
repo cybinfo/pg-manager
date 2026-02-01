@@ -22,7 +22,7 @@ ALTER TABLE staff_members
 ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS deleted_by UUID REFERENCES auth.users(id);
 
-CREATE INDEX IF NOT EXISTS idx_staff_members_active ON staff_members(workspace_id) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_staff_members_active ON staff_members(owner_id) WHERE deleted_at IS NULL;
 
 -- ============================================================================
 -- 3. APPROVALS - Missing deleted_at columns
