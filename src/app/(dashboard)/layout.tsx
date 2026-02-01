@@ -44,6 +44,10 @@ import {
   ChevronUp,
   Pencil,
   Check,
+  Library,
+  Armchair,
+  Clock,
+  Lock,
 } from "lucide-react"
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
 import { toast } from "sonner"
@@ -141,6 +145,15 @@ const navigation: NavItem[] = [
   { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
   { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
   { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", feature: null },
+  // Library Module
+  { name: "Library", href: "/library", icon: Library, permission: "library.view", feature: "library" },
+  { name: "Sections", href: "/library-sections", icon: Grid3X3, permission: "library_sections.view", feature: "library" },
+  { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", feature: "library" },
+  { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
+  { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", feature: "library" },
+  { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", feature: "library" },
+  { name: "Library Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
+  { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", feature: "library" },
 ]
 
 // Mobile bottom nav items (5 most used)
