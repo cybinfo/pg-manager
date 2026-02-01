@@ -268,6 +268,11 @@ export function ActivityHistory({
             const isExpanded = expanded.has(event.id)
             const hasChanges = changes && changes.length > 0
 
+            // DEBUG: Log if Icon is undefined
+            if (!Icon) {
+              console.error("[ActivityHistory] Unknown action type:", event.action, "for event:", event.id)
+            }
+
             return (
               <div key={event.id} className="relative flex gap-4 pl-2">
                 {/* Icon */}
@@ -277,7 +282,7 @@ export function ActivityHistory({
                     actionColors[event.action]
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  {Icon ? <Icon className="h-4 w-4" /> : <span className="h-4 w-4">?</span>}
                 </div>
 
                 {/* Content */}
@@ -546,6 +551,11 @@ export function ActivityHistoryContent({
         const isExpanded = expanded.has(event.id)
         const hasChanges = changes && changes.length > 0
 
+        // DEBUG: Log if Icon is undefined
+        if (!Icon) {
+          console.error("[ActivityHistoryContent] Unknown action type:", event.action, "for event:", event.id)
+        }
+
         return (
           <div key={event.id} className="relative flex gap-4 pl-2">
             {/* Icon */}
@@ -555,7 +565,7 @@ export function ActivityHistoryContent({
                 actionColors[event.action]
               )}
             >
-              <Icon className="h-4 w-4" />
+              {Icon ? <Icon className="h-4 w-4" /> : <span className="h-4 w-4">?</span>}
             </div>
 
             {/* Content */}
