@@ -130,7 +130,7 @@ const navigation: NavItem[] = [
   // Common - Always visible
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
 
-  // PG Management - Collapsible dropdown
+  // PG Management - Collapsible dropdown (core PG items only)
   {
     name: "PG Management",
     href: "/properties",
@@ -144,12 +144,8 @@ const navigation: NavItem[] = [
       { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
       { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
       { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", feature: null },
-      { name: "Meter Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
-      { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", feature: null },
       { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
-      { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
       { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
-      { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
     ]
   },
 
@@ -172,6 +168,19 @@ const navigation: NavItem[] = [
     ]
   },
 
+  // Meters - Collapsible dropdown (separate module)
+  {
+    name: "Meters",
+    href: "/meters",
+    icon: Gauge,
+    permission: "meters.view",
+    feature: null,
+    children: [
+      { name: "All Meters", href: "/meters", icon: Gauge, permission: "meters.view", feature: null },
+      { name: "Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
+    ]
+  },
+
   // Expenses - Collapsible dropdown (shared)
   {
     name: "Expenses",
@@ -191,10 +200,12 @@ const navigation: NavItem[] = [
     ]
   },
 
-  // Common modules (not inside dropdowns)
+  // Separate modules (not inside dropdowns)
   { name: "People", href: "/people", icon: Contact, permission: "tenants.view", feature: null },
+  { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
   { name: "Complaints", href: "/complaints", icon: MessageSquare, permission: "complaints.view", feature: "complaints" },
   { name: "Notices", href: "/notices", icon: Bell, permission: "notices.view", feature: "notices" },
+  { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
   { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", feature: "reports" },
   { name: "Activity Log", href: "/activity", icon: Activity, permission: null, feature: "activityLog" },
   { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", feature: null },
