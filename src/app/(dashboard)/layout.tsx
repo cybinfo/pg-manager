@@ -510,9 +510,14 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                           }`}
                         >
                           {item.children?.map((child: NavItem, childIndex: number) => {
-                            const isChildActive =
-                              pathname === child.href ||
-                              (child.href !== "/expenses" && pathname.startsWith(child.href + "/"))
+                            // Check if any sibling has an exact match - if so, only highlight that one
+                            const siblingHasExactMatch = item.children?.some(
+                              (sibling: NavItem) => pathname === sibling.href
+                            )
+                            const isChildActive = siblingHasExactMatch
+                              ? pathname === child.href
+                              : pathname === child.href ||
+                                (child.href !== "/expenses" && pathname.startsWith(child.href + "/"))
                             return (
                               <li key={child.href} className={sidebarEditMode ? "relative" : ""}>
                                 {/* Edit mode reorder controls for child items */}
