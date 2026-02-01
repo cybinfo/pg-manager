@@ -898,6 +898,7 @@ export function useListPage<T extends object>(
         }
       }
 
+      console.log("[useListPage] Group counts computed:", counts)
       setGroupCounts(counts)
     } catch (err) {
       console.error("[useListPage] Error fetching group counts:", err)
