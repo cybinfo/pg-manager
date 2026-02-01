@@ -925,8 +925,11 @@ export function useListPage<T extends object>(
       // Only filter client-side if there are nested fields to search
       if (nestedSearchFields.length > 0) {
         const query = searchQuery.toLowerCase()
+        // Check ALL search fields (direct + nested) to avoid incorrectly removing
+        // items that matched on direct fields but not nested ones
+        const allSearchFields = currentConfig.searchFields
         result = result.filter((item) =>
-          nestedSearchFields.some((field) => {
+          allSearchFields.some((field) => {
             const value = getNestedValue(item as unknown as Record<string, unknown>, field as string)
             return value && String(value).toLowerCase().includes(query)
           })
