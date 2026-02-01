@@ -41,6 +41,8 @@ interface ProductSelectorProps {
   allowQuickCreate?: boolean
   /** Categories for quick create form */
   categories?: ProductCategory[]
+  /** Compact mode for inline/table use - shows simpler selected state */
+  compact?: boolean
 }
 
 interface QuickCreateForm {
@@ -76,6 +78,7 @@ export function ProductSelector({
   error,
   allowQuickCreate = true,
   categories = [],
+  compact = false,
 }: ProductSelectorProps) {
   const [search, setSearch] = useState("")
   const [results, setResults] = useState<Product[]>([])
@@ -247,8 +250,39 @@ export function ProductSelector({
     onSelect(null)
   }
 
-  // If product is selected, show selection card
+  // If product is selected, show selection card (or compact display)
   if (selectedProduct) {
+    // Compact mode - simple inline display matching input height
+    if (compact) {
+      return (
+        <div className="space-y-2">
+          <div className={cn(
+            "h-10 flex items-center justify-between gap-2 px-3 rounded-lg border",
+            error ? "border-red-300" : "border-primary/30 bg-primary/5"
+          )}>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Package className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+              <span className="font-medium truncate text-sm">
+                {selectedProduct.name}
+                {selectedProduct.name_hi && ` (${selectedProduct.name_hi})`}
+              </span>
+            </div>
+            {!disabled && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="text-muted-foreground hover:text-foreground flex-shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+        </div>
+      )
+    }
+
+    // Full card mode
     return (
       <div className="space-y-2">
         <Card className={cn(

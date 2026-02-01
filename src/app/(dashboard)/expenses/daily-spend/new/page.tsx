@@ -385,6 +385,7 @@ export default function NewDailySpendPage() {
                             categories={categories}
                             placeholder="Search items..."
                             allowQuickCreate
+                            compact
                           />
                         </div>
 
