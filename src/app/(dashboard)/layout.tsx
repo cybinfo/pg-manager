@@ -103,6 +103,7 @@ type NavItem = {
   permission: string | null
   feature: FeatureFlagKey | null
   children?: NavItem[]
+  isSection?: boolean  // For section headers
 }
 
 // Navigation items with required permissions and feature flags
@@ -110,6 +111,9 @@ type NavItem = {
 // feature: null means always visible, string means feature must be enabled
 const navigation: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
+
+  // PG Management Section
+  { name: "PG Management", href: "#", icon: Building2, permission: null, feature: null, isSection: true },
   { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", feature: null },
   { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", feature: null },
   { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
@@ -145,14 +149,16 @@ const navigation: NavItem[] = [
   { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
   { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
   { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", feature: null },
-  // Library Module
-  { name: "Library", href: "/library", icon: Library, permission: "library.view", feature: "library" },
+
+  // Library Management Section
+  { name: "Library Management", href: "#", icon: Library, permission: null, feature: "library", isSection: true },
+  { name: "Libraries", href: "/library", icon: Library, permission: "library.view", feature: "library" },
   { name: "Sections", href: "/library-sections", icon: Grid3X3, permission: "library_sections.view", feature: "library" },
   { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", feature: "library" },
   { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
   { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", feature: "library" },
   { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", feature: "library" },
-  { name: "Library Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
+  { name: "Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
   { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", feature: "library" },
 ]
 
@@ -454,6 +460,20 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             )}
             <ul className="space-y-1">
               {finalNavigation.map((item, itemIndex) => {
+                // Section headers - render as dividers with labels
+                if (item.isSection) {
+                  return (
+                    <li key={item.name} className="pt-4 pb-1 first:pt-0">
+                      <div className="flex items-center gap-2 px-3 py-1">
+                        <item.icon className="h-4 w-4 text-muted-foreground/70" />
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {item.name}
+                        </span>
+                      </div>
+                    </li>
+                  )
+                }
+
                 const hasChildren = item.children && item.children.length > 0
                 const isExpanded = hasChildren && isMenuExpanded(item)
 
@@ -472,7 +492,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 return (
                   <li key={item.name} className={sidebarEditMode ? "relative group" : ""}>
                     {/* Edit mode reorder controls for main items */}
-                    {sidebarEditMode && (
+                    {sidebarEditMode && !item.isSection && (
                       <div className="absolute -left-1 top-1/2 -translate-y-1/2 flex flex-col z-10">
                         <button
                           onClick={() => handleMoveMain(itemIndex, "up")}
