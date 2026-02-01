@@ -240,15 +240,15 @@ export default function NewDailySpendPage() {
       const supabase = createClient()
 
       // Insert all line items
-      const insertData = validItems.map((item) =>
-        withCreatedBy(
+      const insertData = validItems.map((item) => {
+        const product = products.find((p) => p.id === item.product_id)
+        return withCreatedBy(
           {
             workspace_id: workspaceId,
             spend_date: spendDate,
             product_id: item.product_id || null,
             product_name: item.product_name,
-            category_id:
-              products.find((p) => p.id === item.product_id)?.category_id || null,
+            category_name: product?.category?.name || null,
             quantity: item.quantity,
             unit: item.unit,
             rate: item.rate,
@@ -260,7 +260,7 @@ export default function NewDailySpendPage() {
           },
           user.id
         )
-      )
+      })
 
       const { error } = await supabase.from("daily_spend").insert(insertData)
 
@@ -320,14 +320,22 @@ export default function NewDailySpendPage() {
                     />
                   </FormField>
 
-                  <FormField label="Vendor/Shop Name">
+                  <FormField
+                    label="Vendor/Shop Name"
+                    action={
+                      <Link href="/expenses/vendors/new" target="_blank" className="text-xs text-teal-600 hover:underline flex items-center gap-1">
+                        <Plus className="h-3 w-3" />
+                        Add New
+                      </Link>
+                    }
+                  >
                     <Combobox
                       options={vendorOptions}
                       value={vendorId}
                       onValueChange={handleVendorSelect}
                       placeholder="Select vendor..."
                       searchPlaceholder="Search vendors..."
-                      emptyText="No vendors found. Add vendors in Expenses → Vendors."
+                      emptyText="No vendors found"
                       clearable
                     />
                   </FormField>
@@ -355,7 +363,17 @@ export default function NewDailySpendPage() {
                 {/* Line Items */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium">Items</h3>
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-sm font-medium">Items</h3>
+                      <Link
+                        href="/expenses/products/new"
+                        target="_blank"
+                        className="text-xs text-teal-600 hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add New Product
+                      </Link>
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
@@ -363,7 +381,7 @@ export default function NewDailySpendPage() {
                       onClick={addLineItem}
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      Add Item
+                      Add Row
                     </Button>
                   </div>
 

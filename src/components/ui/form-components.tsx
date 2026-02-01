@@ -15,6 +15,7 @@ interface FormFieldProps {
   required?: boolean
   error?: string
   hint?: string
+  action?: React.ReactNode
   children: React.ReactNode
   className?: string
 }
@@ -25,6 +26,7 @@ export function FormField({
   required,
   error,
   hint,
+  action,
   children,
   className
 }: FormFieldProps) {
@@ -48,11 +50,14 @@ export function FormField({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Label htmlFor={fieldId} className="text-sm font-medium">
-        {label}
-        {required && <span className="text-rose-500 ml-1" aria-hidden="true">*</span>}
-        {required && <span className="sr-only">(required)</span>}
-      </Label>
+      <div className="flex items-center justify-between">
+        <Label htmlFor={fieldId} className="text-sm font-medium">
+          {label}
+          {required && <span className="text-rose-500 ml-1" aria-hidden="true">*</span>}
+          {required && <span className="sr-only">(required)</span>}
+        </Label>
+        {action}
+      </div>
       {enhancedChildren}
       {hint && !error && (
         <p id={hintId} className="text-xs text-muted-foreground">{hint}</p>
