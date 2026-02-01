@@ -785,6 +785,7 @@ export function useListPage<T extends object>(
   }, [filters, searchQuery])
 
   // Fetch server-side group counts for accurate group totals when paginated
+  // Uses the same select query as main fetch to get proper nested values
   const fetchGroupCounts = useCallback(async (
     groupFields?: string[],
     fetchFilters?: Record<string, string>,
@@ -804,107 +805,96 @@ export function useListPage<T extends object>(
 
     try {
       const supabase = createClient()
-      const counts: Record<string, number> = {}
 
-      // For each group field, get counts
-      // We'll select the group field and count using a workaround
-      for (const groupField of groups) {
-        // Determine the actual column to group by
-        // For nested fields like "room.room_number", we need the FK column
-        let selectColumn = groupField
-        let isNestedField = groupField.includes(".")
+      // Use the same select as the main query to get proper nested values
+      let query = supabase
+        .from(currentConfig.table)
+        .select(currentConfig.select)
 
-        if (isNestedField) {
-          // For "room.room_number", we group by room_id but display room_number
-          // Map common patterns
-          if (groupField.startsWith("room.")) selectColumn = "room_id"
-          else if (groupField.startsWith("property.")) selectColumn = "property_id"
-          else if (groupField.startsWith("category.")) selectColumn = "category_id"
-          else if (groupField.startsWith("tenant.")) selectColumn = "tenant_id"
-          else if (groupField.startsWith("product.")) selectColumn = "product_id"
-          else if (groupField.startsWith("vendor.")) selectColumn = "vendor_id"
-          else if (groupField.startsWith("person.")) selectColumn = "person_id"
-          else {
-            // Can't handle this nested field, skip
-            continue
-          }
-        }
+      // Filter out soft-deleted records by default
+      if (!currentConfig.includeSoftDeleted) {
+        query = query.is("deleted_at", null)
+      }
 
-        // Build query to get all values of the group column
-        let query = supabase
-          .from(currentConfig.table)
-          .select(selectColumn)
+      // Apply active filters (same logic as fetchData)
+      for (const [filterId, filterValue] of Object.entries(currentFilters)) {
+        if (!filterValue || filterValue === "all") continue
 
-        // Filter out soft-deleted records by default
-        if (!currentConfig.includeSoftDeleted) {
-          query = query.is("deleted_at", null)
-        }
+        const filterConfig = currentFilterConfigs.find((f) => f.id === filterId)
+        if (!filterConfig) continue
 
-        // Apply active filters (same logic as fetchData)
-        for (const [filterId, filterValue] of Object.entries(currentFilters)) {
-          if (!filterValue || filterValue === "all") continue
-
-          const filterConfig = currentFilterConfigs.find((f) => f.id === filterId)
-          if (!filterConfig) continue
-
-          if (filterConfig.type === "select") {
-            if (filterId === "property") {
-              query = query.eq("property_id", filterValue)
-            } else if (filterId === "tenant") {
-              query = query.eq("tenant_id", filterValue)
-            } else if (filterId === "room") {
-              query = query.eq("room_id", filterValue)
-            } else if (filterId === "tags") {
-              query = query.contains("tags", [filterValue])
-            } else if (filterId === "status" && currentConfig.table === "people") {
-              if (filterValue === "verified") {
-                query = query.eq("is_verified", true)
-              } else if (filterValue === "blocked") {
-                query = query.eq("is_blocked", true)
-              }
-            } else if (filterId === "visitor_type") {
-              query = query.eq("visitor_type", filterValue)
-            } else if (filterId === "settlement_status") {
-              query = query.eq("settlement_status", filterValue)
-            } else if (filterId === "refund_type") {
-              query = query.eq("refund_type", filterValue)
-            } else if (filterId === "meter_type") {
-              query = query.eq("meter_type", filterValue)
-            } else {
-              query = query.eq(filterId, filterValue)
+        if (filterConfig.type === "select") {
+          if (filterId === "property") {
+            query = query.eq("property_id", filterValue)
+          } else if (filterId === "tenant") {
+            query = query.eq("tenant_id", filterValue)
+          } else if (filterId === "room") {
+            query = query.eq("room_id", filterValue)
+          } else if (filterId === "tags") {
+            query = query.contains("tags", [filterValue])
+          } else if (filterId === "status" && currentConfig.table === "people") {
+            if (filterValue === "verified") {
+              query = query.eq("is_verified", true)
+            } else if (filterValue === "blocked") {
+              query = query.eq("is_blocked", true)
             }
-          } else if (filterConfig.type === "date") {
+          } else if (filterId === "visitor_type") {
+            query = query.eq("visitor_type", filterValue)
+          } else if (filterId === "settlement_status") {
+            query = query.eq("settlement_status", filterValue)
+          } else if (filterId === "refund_type") {
+            query = query.eq("refund_type", filterValue)
+          } else if (filterId === "meter_type") {
+            query = query.eq("meter_type", filterValue)
+          } else {
             query = query.eq(filterId, filterValue)
           }
+        } else if (filterConfig.type === "date") {
+          query = query.eq(filterId, filterValue)
+        }
+      }
+
+      // Apply search filter
+      if (currentSearchQuery && currentConfig.searchFields.length > 0) {
+        const searchConditions = currentConfig.searchFields
+          .filter((field) => !String(field).includes("."))
+          .map((field) => `${String(field)}.ilike.%${currentSearchQuery}%`)
+          .join(",")
+
+        if (searchConditions) {
+          query = query.or(searchConditions)
+        }
+      }
+
+      const { data: rawData, error } = await query
+
+      if (error || !rawData) {
+        console.error("[useListPage] Error fetching group counts:", error)
+        return
+      }
+
+      // Transform JOIN fields to get proper nested values
+      let transformedData = rawData as Record<string, unknown>[]
+      if (currentConfig.joinFields && currentConfig.joinFields.length > 0) {
+        transformedData = transformArrayJoins(transformedData, currentConfig.joinFields as string[])
+      }
+
+      // Now count by each group field using the display values
+      const counts: Record<string, number> = {}
+
+      for (const groupField of groups) {
+        const valueCounts: Record<string, number> = {}
+
+        for (const row of transformedData) {
+          // Get the nested value (e.g., "room.room_number" -> room?.room_number)
+          const value = getNestedValue(row, groupField)
+          const key = value != null ? String(value) : "__null__"
+          valueCounts[key] = (valueCounts[key] || 0) + 1
         }
 
-        // Apply search filter
-        if (currentSearchQuery && currentConfig.searchFields.length > 0) {
-          const searchConditions = currentConfig.searchFields
-            .filter((field) => !String(field).includes("."))
-            .map((field) => `${String(field)}.ilike.%${currentSearchQuery}%`)
-            .join(",")
-
-          if (searchConditions) {
-            query = query.or(searchConditions)
-          }
-        }
-
-        const { data, error } = await query
-
-        if (!error && data) {
-          // Count occurrences of each value
-          const valueCounts: Record<string, number> = {}
-          for (const row of data as Record<string, unknown>[]) {
-            const value = row[selectColumn]
-            const key = value != null ? String(value) : "__null__"
-            valueCounts[key] = (valueCounts[key] || 0) + 1
-          }
-
-          // Store counts with the group field as prefix for uniqueness
-          for (const [value, count] of Object.entries(valueCounts)) {
-            counts[`${groupField}:${value}`] = count
-          }
+        // Store counts with the group field as prefix for uniqueness
+        for (const [value, count] of Object.entries(valueCounts)) {
+          counts[`${groupField}:${value}`] = count
         }
       }
 
