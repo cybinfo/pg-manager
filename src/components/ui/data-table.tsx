@@ -303,7 +303,6 @@ function NestedGroupRenderer<T extends object>({
         // The key format from useListPage is "groupField:value"
         const serverCountKey = `${group.config.key}:${group.label}`
         const serverCount = groupCounts?.[serverCountKey]
-        console.log("[DataTable] Group lookup:", { key: serverCountKey, serverCount, groupCounts, pageRowCount })
         const rowCount = serverCount ?? pageRowCount
         const isPartial = serverCount !== undefined && pageRowCount < serverCount
 
