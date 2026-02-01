@@ -76,6 +76,9 @@ const columns: Column<Meter>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
+    editable: true,
+    editType: "text",
+    editValidation: { required: true },
     render: (meter) => {
       const typeConfig = METER_TYPE_CONFIG[meter.meter_type] || METER_TYPE_CONFIG.electricity
       const Icon = meterTypeIcons[meter.meter_type] || Zap
@@ -143,6 +146,13 @@ const columns: Column<Meter>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "active", label: "Active" },
+      { value: "inactive", label: "Inactive" },
+      { value: "faulty", label: "Faulty" },
+    ],
     render: (meter) => {
       const statusConfig = METER_STATUS_CONFIG[meter.status] || METER_STATUS_CONFIG.active
       return <StatusBadge variant={statusConfig.variant} label={statusConfig.label} />
@@ -357,6 +367,7 @@ export default function MetersPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/meters/new"
       createLabel="Add Meter"
       createPermission="meters.create"

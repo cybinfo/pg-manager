@@ -160,6 +160,9 @@ const columns: Column<StaffMember>[] = [
     sortKey: "is_active",
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "boolean",
+    editField: "is_active",
     render: (staff) => (
       <StatusDot
         status={staff.is_active ? "success" : "muted"}
@@ -332,6 +335,7 @@ export default function StaffPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/staff/new"
       createLabel="Add Staff"
       createPermission="staff.create"

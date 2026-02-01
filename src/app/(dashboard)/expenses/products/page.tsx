@@ -44,6 +44,9 @@ const columns: Column<Product>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
+    editable: true,
+    editType: "text",
+    editValidation: { required: true, minLength: 2 },
     render: (product) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-teal-100 flex items-center justify-center">
@@ -81,6 +84,18 @@ const columns: Column<Product>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "kg", label: "Kilogram (kg)" },
+      { value: "g", label: "Gram (g)" },
+      { value: "l", label: "Litre (l)" },
+      { value: "ml", label: "Millilitre (ml)" },
+      { value: "pcs", label: "Pieces (pcs)" },
+      { value: "pkt", label: "Packet (pkt)" },
+      { value: "dz", label: "Dozen (dz)" },
+      { value: "box", label: "Box" },
+    ],
     render: (product) => (
       <TableBadge variant="muted">
         {product.default_unit || "—"}
@@ -96,6 +111,9 @@ const columns: Column<Product>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
     render: (product) =>
       product.default_rate ? (
         <span className="font-medium tabular-nums">
@@ -115,6 +133,8 @@ const columns: Column<Product>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "boolean",
     render: (product) =>
       product.is_active ? (
         <TableBadge variant="success">
@@ -135,6 +155,8 @@ const columns: Column<Product>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (product) => product.name_hi || <span className="text-muted-foreground">—</span>,
   },
   {
@@ -289,6 +311,7 @@ export default function ProductsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/expenses/products/new"
       createLabel="Add Product"
       createPermission="expenses.create"

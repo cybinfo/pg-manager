@@ -127,6 +127,9 @@ const columns: Column<MiscTransactionItem>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
     render: (item) => (
       <span className={item.transaction_type === "in" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
         {item.transaction_type === "in" ? "+" : "-"}
@@ -162,6 +165,8 @@ const columns: Column<MiscTransactionItem>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (item) => item.description ? (
       <span className="text-sm text-muted-foreground line-clamp-2">{item.description}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -390,6 +395,7 @@ export default function MiscTransactionsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/expenses/misc/new"
       createLabel="New Transaction"
       createPermission="expenses.create"

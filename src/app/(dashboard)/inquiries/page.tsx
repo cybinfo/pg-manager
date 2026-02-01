@@ -146,7 +146,28 @@ const columns: Column<Inquiry>[] = [
     header: "Status",
     width: "status",
     sortable: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "new", label: "New" },
+      { value: "contacted", label: "Contacted" },
+      { value: "scheduled", label: "Scheduled" },
+      { value: "converted", label: "Converted" },
+      { value: "lost", label: "Lost" },
+    ],
     render: (inquiry) => <StatusBadge status={inquiry.status} label={inquiry.status_label} />,
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    editable: true,
+    editType: "text",
+    render: (inquiry) => inquiry.notes ? (
+      <span className="text-sm text-muted-foreground line-clamp-2">{inquiry.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
   },
 ]
 
@@ -313,6 +334,7 @@ export default function InquiriesPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       detailHref={(inquiry) => `/inquiries/${inquiry.id}`}
       emptyTitle="No inquiries yet"
       emptyDescription="Inquiries from your public PG websites will appear here"

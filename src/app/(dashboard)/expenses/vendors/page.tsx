@@ -49,6 +49,9 @@ const columns: Column<VendorListItem>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
+    editable: true,
+    editType: "text",
+    editValidation: { required: true, minLength: 2 },
     render: (vendor) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
@@ -82,6 +85,8 @@ const columns: Column<VendorListItem>[] = [
     hideOnMobile: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "text",
     render: (vendor) => (
       <div className="flex items-center gap-2">
         {vendor.phone ? (
@@ -138,6 +143,8 @@ const columns: Column<VendorListItem>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "boolean",
     render: (vendor) =>
       vendor.is_active ? (
         <TableBadge variant="success">
@@ -313,6 +320,7 @@ export default function VendorsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/expenses/vendors/new"
       createLabel="Add Vendor"
       createPermission="expenses.create"

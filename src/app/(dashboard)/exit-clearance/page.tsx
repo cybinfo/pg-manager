@@ -147,6 +147,13 @@ const columns: Column<ExitClearance>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "pending", label: "Pending" },
+      { value: "partial", label: "Partial" },
+      { value: "completed", label: "Completed" },
+    ],
     render: (clearance) => {
       const status = EXIT_CLEARANCE_STATUS[clearance.settlement_status] || {
         variant: "muted" as const,
@@ -498,6 +505,7 @@ export default function ExitClearancePage() {
         enableColumnManager={true}
         enableAdvancedFilters={true}
         advancedFilterColumns={advancedFilterColumns}
+        enableInlineEdit={true}
         createHref="/exit-clearance/new"
         createLabel="Initiate Checkout"
         createPermission="exit_clearance.initiate"

@@ -227,6 +227,8 @@ const columns: Column<Visitor>[] = [
     width: "tertiary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (visitor) => (
       <span className="text-sm text-muted-foreground truncate">
         {visitor.purpose || "—"}
@@ -444,6 +446,7 @@ export default function VisitorsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/visitors/new"
       createLabel="Check In Visitor"
       createPermission="visitors.create"

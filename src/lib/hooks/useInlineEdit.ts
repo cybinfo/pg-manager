@@ -1,310 +1,276 @@
 /**
  * useInlineEdit Hook
  *
- * Centralized inline editing state management for detail pages.
- * Eliminates duplicate editing patterns in complaints, notices, exit-clearance.
+ * Manages inline editing state and Supabase updates for list pages.
+ * Provides optimistic updates with rollback on failure.
  *
  * @example
- * const edit = useInlineEdit({
- *   initialData: complaint,
- *   onSave: async (data) => {
- *     await supabase.from("complaints").update(data).eq("id", complaint.id)
- *   },
- *   successMessage: "Complaint updated",
+ * const { updateRow, saving } = useInlineEdit({
+ *   table: "tenants",
+ *   workspaceId: currentContext.workspace_id,
+ *   onSuccess: refetch,
  * })
  *
- * {edit.isEditing ? (
- *   <form onSubmit={edit.handleSubmit}>
- *     <Input value={edit.editData.status} onChange={edit.handleChange} />
- *     <Button onClick={edit.handleSave}>Save</Button>
- *     <Button onClick={edit.cancel}>Cancel</Button>
- *   </form>
- * ) : (
- *   <Button onClick={edit.startEditing}>Edit</Button>
- * )}
+ * // In column render:
+ * <InlineEditCell
+ *   value={row.name}
+ *   field="name"
+ *   onSave={(field, value) => updateRow(row.id, { [field]: value })}
+ * />
  */
 
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 
-// ============================================================================
-// TYPES
-// ============================================================================
+// ============================================
+// Types
+// ============================================
 
-interface UseInlineEditOptions<T> {
-  /** Initial data to edit */
-  initialData: T
-  /** Save handler */
-  onSave: (data: T) => Promise<void>
-  /** Success message */
+export interface UseInlineEditOptions {
+  /** Database table name */
+  table: string
+  /** Current workspace ID for RLS */
+  workspaceId: string | null
+  /** Callback after successful update */
+  onSuccess?: () => void
+  /** Whether to show success toast (default: true) */
+  showSuccessToast?: boolean
+  /** Custom success message */
   successMessage?: string
-  /** Error message */
-  errorMessage?: string
-  /** Callback after successful save */
-  onSuccess?: (data: T) => void
-  /** Callback on error */
-  onError?: (error: Error) => void
-  /** Validate before save */
-  validate?: (data: T) => string | null
+  /** Whether to show error toast (default: true) */
+  showErrorToast?: boolean
 }
 
-interface UseInlineEditReturn<T> {
-  /** Whether currently in edit mode */
-  isEditing: boolean
-  /** Whether save is in progress */
+export interface UseInlineEditReturn {
+  /** Update a single row with given updates */
+  updateRow: (id: string, updates: Record<string, unknown>) => Promise<boolean>
+  /** Whether an update is in progress */
   saving: boolean
-  /** Current edit data */
-  editData: T
-  /** Error message if any */
-  error: string | null
-  /** Start editing */
-  startEditing: () => void
-  /** Cancel editing and reset to initial data */
-  cancel: () => void
-  /** Update a single field */
-  setField: <K extends keyof T>(field: K, value: T[K]) => void
-  /** Update entire edit data */
-  setEditData: React.Dispatch<React.SetStateAction<T>>
-  /** Handle input change event */
-  handleChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => void
-  /** Save the changes */
-  handleSave: () => Promise<boolean>
-  /** Form submit handler (prevents default and calls handleSave) */
-  handleSubmit: (e?: React.FormEvent) => Promise<void>
-  /** Reset edit data to initial */
-  reset: () => void
-  /** Check if data has changed */
-  hasChanges: boolean
+  /** ID of the row currently being saved (null if none) */
+  savingId: string | null
 }
 
-// ============================================================================
-// HOOK
-// ============================================================================
+// ============================================
+// Hook Implementation
+// ============================================
 
-/**
- * Hook for managing inline editing state
- */
-export function useInlineEdit<T extends Record<string, unknown>>(
-  options: UseInlineEditOptions<T>
-): UseInlineEditReturn<T> {
-  const {
-    initialData,
-    onSave,
-    successMessage = "Changes saved",
-    errorMessage = "Failed to save changes",
-    onSuccess,
-    onError,
-    validate,
-  } = options
-
-  const [isEditing, setIsEditing] = useState(false)
+export function useInlineEdit({
+  table,
+  workspaceId,
+  onSuccess,
+  showSuccessToast = true,
+  successMessage = "Updated successfully",
+  showErrorToast = true,
+}: UseInlineEditOptions): UseInlineEditReturn {
   const [saving, setSaving] = useState(false)
-  const [editData, setEditData] = useState<T>(initialData)
-  const [error, setError] = useState<string | null>(null)
+  const [savingId, setSavingId] = useState<string | null>(null)
 
-  // Keep track of original data to detect changes
-  const originalDataRef = useRef<T>(initialData)
-
-  const startEditing = useCallback(() => {
-    originalDataRef.current = initialData
-    setEditData(initialData)
-    setError(null)
-    setIsEditing(true)
-  }, [initialData])
-
-  const cancel = useCallback(() => {
-    setEditData(originalDataRef.current)
-    setError(null)
-    setIsEditing(false)
-  }, [])
-
-  const reset = useCallback(() => {
-    setEditData(initialData)
-    setError(null)
-  }, [initialData])
-
-  const setField = useCallback(<K extends keyof T>(field: K, value: T[K]) => {
-    setEditData((prev) => ({ ...prev, [field]: value }))
-    setError(null)
-  }, [])
-
-  const handleChange = useCallback(
-    (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-    ) => {
-      const { name, value, type } = e.target
-      const newValue =
-        type === "checkbox" ? (e.target as HTMLInputElement).checked : value
-
-      setEditData((prev) => ({
-        ...prev,
-        [name]: newValue,
-      }))
-      setError(null)
-    },
-    []
-  )
-
-  const handleSave = useCallback(async (): Promise<boolean> => {
-    // Validate if validator provided
-    if (validate) {
-      const validationError = validate(editData)
-      if (validationError) {
-        setError(validationError)
-        toast.error(validationError)
+  const updateRow = useCallback(
+    async (id: string, updates: Record<string, unknown>): Promise<boolean> => {
+      if (!workspaceId) {
+        if (showErrorToast) {
+          toast.error("No workspace selected")
+        }
         return false
       }
-    }
 
-    setSaving(true)
-    setError(null)
+      setSaving(true)
+      setSavingId(id)
 
-    try {
-      await onSave(editData)
-      toast.success(successMessage)
-      originalDataRef.current = editData
-      setIsEditing(false)
-      onSuccess?.(editData)
-      return true
-    } catch (err) {
-      const errorObj = err instanceof Error ? err : new Error(String(err))
-      const message = errorObj.message || errorMessage
-      setError(message)
-      toast.error(message)
-      onError?.(errorObj)
-      return false
-    } finally {
-      setSaving(false)
-    }
-  }, [editData, validate, onSave, successMessage, errorMessage, onSuccess, onError])
+      try {
+        const supabase = createClient()
 
-  const handleSubmit = useCallback(
-    async (e?: React.FormEvent) => {
-      if (e) {
-        e.preventDefault()
+        // Add updated_at timestamp
+        const payload = {
+          ...updates,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { error } = await supabase
+          .from(table)
+          .update(payload)
+          .eq("id", id)
+          .eq("workspace_id", workspaceId)
+
+        if (error) {
+          console.error(`[useInlineEdit] Update failed:`, error)
+          if (showErrorToast) {
+            toast.error(error.message || "Failed to update")
+          }
+          return false
+        }
+
+        if (showSuccessToast) {
+          toast.success(successMessage)
+        }
+
+        // Call success callback (usually to refetch data)
+        onSuccess?.()
+
+        return true
+      } catch (err) {
+        console.error(`[useInlineEdit] Unexpected error:`, err)
+        if (showErrorToast) {
+          toast.error("An unexpected error occurred")
+        }
+        return false
+      } finally {
+        setSaving(false)
+        setSavingId(null)
       }
-      await handleSave()
     },
-    [handleSave]
+    [table, workspaceId, onSuccess, showSuccessToast, successMessage, showErrorToast]
   )
 
-  // Check if data has changed
-  const hasChanges = JSON.stringify(editData) !== JSON.stringify(originalDataRef.current)
-
   return {
-    isEditing,
+    updateRow,
     saving,
-    editData,
-    error,
-    startEditing,
-    cancel,
-    setField,
-    setEditData,
-    handleChange,
-    handleSave,
-    handleSubmit,
-    reset,
-    hasChanges,
+    savingId,
   }
 }
 
-// ============================================================================
-// FIELD-LEVEL INLINE EDIT
-// ============================================================================
+// ============================================
+// Batch Update Hook (for row edit mode)
+// ============================================
 
-interface UseFieldEditOptions<T> {
-  /** Initial value */
-  initialValue: T
-  /** Save handler */
-  onSave: (value: T) => Promise<void>
-  /** Success message */
-  successMessage?: string
-  /** Error message */
-  errorMessage?: string
+export interface UseBatchInlineEditOptions extends UseInlineEditOptions {
+  /** Callback before batch update (for validation) */
+  onBeforeUpdate?: (id: string, updates: Record<string, unknown>) => string | null
 }
 
-interface UseFieldEditReturn<T> {
-  isEditing: boolean
-  saving: boolean
-  value: T
-  error: string | null
-  startEditing: () => void
-  cancel: () => void
-  setValue: (value: T) => void
-  handleSave: () => Promise<boolean>
+export interface UseBatchInlineEditReturn extends UseInlineEditReturn {
+  /** ID of the row currently in edit mode */
+  editingId: string | null
+  /** Start editing a row */
+  startEditing: (id: string) => void
+  /** Cancel editing */
+  cancelEditing: () => void
+  /** Pending changes for the editing row */
+  pendingChanges: Record<string, unknown>
+  /** Set a pending change */
+  setPendingChange: (field: string, value: unknown) => void
+  /** Save all pending changes */
+  savePendingChanges: () => Promise<boolean>
 }
 
-/**
- * Simplified hook for editing a single field inline
- *
- * @example
- * const statusEdit = useFieldEdit({
- *   initialValue: complaint.status,
- *   onSave: async (status) => {
- *     await updateStatus(complaint.id, status)
- *   },
- * })
- */
-export function useFieldEdit<T>(
-  options: UseFieldEditOptions<T>
-): UseFieldEditReturn<T> {
-  const {
-    initialValue,
-    onSave,
-    successMessage = "Saved",
-    errorMessage = "Failed to save",
-  } = options
-
-  const [isEditing, setIsEditing] = useState(false)
+export function useBatchInlineEdit({
+  table,
+  workspaceId,
+  onSuccess,
+  onBeforeUpdate,
+  showSuccessToast = true,
+  successMessage = "Updated successfully",
+  showErrorToast = true,
+}: UseBatchInlineEditOptions): UseBatchInlineEditReturn {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [pendingChanges, setPendingChanges] = useState<Record<string, unknown>>({})
   const [saving, setSaving] = useState(false)
-  const [value, setValue] = useState<T>(initialValue)
-  const [error, setError] = useState<string | null>(null)
-  const originalValueRef = useRef<T>(initialValue)
+  const [savingId, setSavingId] = useState<string | null>(null)
 
-  const startEditing = useCallback(() => {
-    originalValueRef.current = initialValue
-    setValue(initialValue)
-    setError(null)
-    setIsEditing(true)
-  }, [initialValue])
-
-  const cancel = useCallback(() => {
-    setValue(originalValueRef.current)
-    setError(null)
-    setIsEditing(false)
+  const startEditing = useCallback((id: string) => {
+    setEditingId(id)
+    setPendingChanges({})
   }, [])
 
-  const handleSave = useCallback(async (): Promise<boolean> => {
-    setSaving(true)
-    setError(null)
+  const cancelEditing = useCallback(() => {
+    setEditingId(null)
+    setPendingChanges({})
+  }, [])
 
-    try {
-      await onSave(value)
-      toast.success(successMessage)
-      setIsEditing(false)
+  const setPendingChange = useCallback((field: string, value: unknown) => {
+    setPendingChanges((prev) => ({ ...prev, [field]: value }))
+  }, [])
+
+  const updateRow = useCallback(
+    async (id: string, updates: Record<string, unknown>): Promise<boolean> => {
+      if (!workspaceId) {
+        if (showErrorToast) {
+          toast.error("No workspace selected")
+        }
+        return false
+      }
+
+      // Run before update validation
+      if (onBeforeUpdate) {
+        const validationError = onBeforeUpdate(id, updates)
+        if (validationError) {
+          if (showErrorToast) {
+            toast.error(validationError)
+          }
+          return false
+        }
+      }
+
+      setSaving(true)
+      setSavingId(id)
+
+      try {
+        const supabase = createClient()
+
+        const payload = {
+          ...updates,
+          updated_at: new Date().toISOString(),
+        }
+
+        const { error } = await supabase
+          .from(table)
+          .update(payload)
+          .eq("id", id)
+          .eq("workspace_id", workspaceId)
+
+        if (error) {
+          console.error(`[useBatchInlineEdit] Update failed:`, error)
+          if (showErrorToast) {
+            toast.error(error.message || "Failed to update")
+          }
+          return false
+        }
+
+        if (showSuccessToast) {
+          toast.success(successMessage)
+        }
+
+        onSuccess?.()
+        return true
+      } catch (err) {
+        console.error(`[useBatchInlineEdit] Unexpected error:`, err)
+        if (showErrorToast) {
+          toast.error("An unexpected error occurred")
+        }
+        return false
+      } finally {
+        setSaving(false)
+        setSavingId(null)
+      }
+    },
+    [table, workspaceId, onSuccess, onBeforeUpdate, showSuccessToast, successMessage, showErrorToast]
+  )
+
+  const savePendingChanges = useCallback(async (): Promise<boolean> => {
+    if (!editingId || Object.keys(pendingChanges).length === 0) {
+      cancelEditing()
       return true
-    } catch (err) {
-      const message = err instanceof Error ? err.message : errorMessage
-      setError(message)
-      toast.error(message)
-      return false
-    } finally {
-      setSaving(false)
     }
-  }, [value, onSave, successMessage, errorMessage])
+
+    const success = await updateRow(editingId, pendingChanges)
+    if (success) {
+      cancelEditing()
+    }
+    return success
+  }, [editingId, pendingChanges, updateRow, cancelEditing])
 
   return {
-    isEditing,
+    updateRow,
     saving,
-    value,
-    error,
+    savingId,
+    editingId,
     startEditing,
-    cancel,
-    setValue,
-    handleSave,
+    cancelEditing,
+    pendingChanges,
+    setPendingChange,
+    savePendingChanges,
   }
 }

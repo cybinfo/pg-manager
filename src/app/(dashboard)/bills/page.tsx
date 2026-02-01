@@ -138,6 +138,16 @@ const columns: Column<Bill>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "draft", label: "Draft" },
+      { value: "sent", label: "Sent" },
+      { value: "partial", label: "Partial" },
+      { value: "paid", label: "Paid" },
+      { value: "overdue", label: "Overdue" },
+      { value: "cancelled", label: "Cancelled" },
+    ],
     render: (bill) => {
       const info = getStatusInfo(bill.status)
       return <StatusDot status={info.status} label={info.label} />
@@ -194,6 +204,8 @@ const columns: Column<Bill>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (bill) => bill.notes ? (
       <span className="truncate max-w-[150px]" title={bill.notes}>{bill.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -404,6 +416,7 @@ export default function BillsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/bills/new"
       createLabel="Generate Bill"
       createPermission="bills.create"

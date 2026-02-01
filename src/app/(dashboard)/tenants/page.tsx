@@ -122,6 +122,9 @@ const columns: ExtendedColumn<Tenant>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
     render: (tenant) => (
       <span className="font-medium tabular-nums">{formatCurrency(tenant.monthly_rent)}</span>
     ),
@@ -147,6 +150,13 @@ const columns: ExtendedColumn<Tenant>[] = [
     groupable: true,
     groupKey: "status",
     groupLabel: "Status",
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "active", label: "Active" },
+      { value: "notice_period", label: "Notice Period" },
+      { value: "checked_out", label: "Checked Out" },
+    ],
     render: (tenant) => {
       const info = getTenantStatusInfo("tenant", tenant.status)
       return <StatusDot status={info.status} label={info.label} />
@@ -179,6 +189,9 @@ const columns: ExtendedColumn<Tenant>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
     render: (tenant) => (
       <span className="tabular-nums">{formatCurrency(tenant.security_deposit)}</span>
     ),
@@ -191,6 +204,15 @@ const columns: ExtendedColumn<Tenant>[] = [
     canHide: true,
     defaultVisible: false,
     groupable: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "pending", label: "Pending" },
+      { value: "submitted", label: "Submitted" },
+      { value: "verified", label: "Verified" },
+      { value: "rejected", label: "Rejected" },
+      { value: "not_required", label: "Not Required" },
+    ],
     render: (tenant) => {
       const statusMap: Record<string, { label: string; className: string }> = {
         pending: { label: "Pending", className: "text-yellow-600 bg-yellow-50" },
@@ -214,6 +236,8 @@ const columns: ExtendedColumn<Tenant>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "boolean",
     render: (tenant) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
         tenant.agreement_signed
@@ -263,6 +287,18 @@ const columns: ExtendedColumn<Tenant>[] = [
     canHide: true,
     defaultVisible: false,
     render: (tenant) => formatDate(tenant.created_at),
+  },
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    editable: true,
+    editType: "text",
+    render: (tenant) => tenant.notes ? (
+      <span className="truncate max-w-[150px]" title={tenant.notes}>{tenant.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
   },
 ]
 
@@ -496,6 +532,7 @@ export default function TenantsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       // Actions
       createHref="/tenants/new"
       createLabel="Add Tenant"

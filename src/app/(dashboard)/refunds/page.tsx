@@ -171,6 +171,14 @@ const columns: Column<Refund>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "pending", label: "Pending" },
+      { value: "approved", label: "Approved" },
+      { value: "processed", label: "Processed" },
+      { value: "rejected", label: "Rejected" },
+    ],
     render: (refund) => {
       const status = REFUND_STATUS[refund.status] || { variant: "muted" as const, label: refund.status }
       return <TableBadge variant={status.variant}>{status.label}</TableBadge>
@@ -222,6 +230,8 @@ const columns: Column<Refund>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (refund) => refund.notes ? (
       <span className="text-sm text-muted-foreground line-clamp-2">{refund.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -455,6 +465,7 @@ export default function RefundsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/refunds/new"
       createLabel="New Refund"
       createPermission="refunds.create"

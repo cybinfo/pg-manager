@@ -127,6 +127,9 @@ const columns: Column<MeterReading>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
     render: (reading) => (
       <span className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</span>
     ),
@@ -187,6 +190,8 @@ const columns: Column<MeterReading>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (reading) => reading.notes ? (
       <span className="text-sm text-muted-foreground line-clamp-2">{reading.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -334,6 +339,7 @@ export default function MeterReadingsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/meter-readings/new"
       createLabel="Record Reading"
       createPermission="meter_readings.create"

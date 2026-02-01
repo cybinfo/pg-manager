@@ -95,6 +95,9 @@ const columns: Column<Person>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
+    editable: true,
+    editType: "text",
+    editValidation: { required: true },
     render: (person) => (
       <div className="flex items-center gap-3">
         <Avatar
@@ -194,6 +197,8 @@ const columns: Column<Person>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (person) => person.phone ? (
       <div className="flex items-center gap-1 text-sm">
         <Phone className="h-3 w-3 text-muted-foreground" />
@@ -207,6 +212,9 @@ const columns: Column<Person>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
+    editField: "email",
     render: (person) => person.email || <span className="text-muted-foreground">—</span>,
   },
   {
@@ -473,6 +481,7 @@ export default function PeoplePage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       // Actions
       createHref="/people/new"
       createLabel="Add Person"

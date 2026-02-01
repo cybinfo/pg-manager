@@ -32,6 +32,28 @@ export const columnWidths = {
 
 export type ColumnWidthKey = keyof typeof columnWidths
 
+// ============================================
+// Inline Edit Types (for Column interface)
+// ============================================
+export type EditType = "text" | "number" | "select" | "date" | "boolean"
+
+export interface EditValidation {
+  required?: boolean
+  min?: number
+  max?: number
+  minLength?: number
+  maxLength?: number
+  pattern?: RegExp
+  patternMessage?: string
+  custom?: (value: unknown) => string | null
+}
+
+export interface EditOption {
+  value: string
+  label: string
+  disabled?: boolean
+}
+
 export interface Column<T> {
   key: string
   header: string
@@ -52,6 +74,22 @@ export interface Column<T> {
   // Column visibility options (for Column Manager)
   canHide?: boolean  // Whether this column can be hidden (default: true, except for primary columns)
   defaultVisible?: boolean  // Whether this column is visible by default (default: true)
+
+  // ============================================
+  // Inline Edit Options
+  // ============================================
+  /** Whether this column is editable inline */
+  editable?: boolean
+  /** Input type for inline editing */
+  editType?: EditType
+  /** Database field name if different from key (e.g., for joined fields) */
+  editField?: string
+  /** Options for select type editing */
+  editOptions?: EditOption[]
+  /** Validation rules for the edit value */
+  editValidation?: EditValidation
+  /** Placeholder text when editing */
+  editPlaceholder?: string
 }
 
 export type SortDirection = "asc" | "desc" | null

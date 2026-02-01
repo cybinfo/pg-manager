@@ -91,6 +91,14 @@ const columns: Column<Complaint>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "open", label: "Open" },
+      { value: "in_progress", label: "In Progress" },
+      { value: "resolved", label: "Resolved" },
+      { value: "closed", label: "Closed" },
+    ],
     render: (row) => {
       const info = getComplaintStatusInfo("complaint", row.status)
       return <StatusDot status={info.status} label={info.label} />
@@ -127,6 +135,14 @@ const columns: Column<Complaint>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "low", label: "Low" },
+      { value: "medium", label: "Medium" },
+      { value: "high", label: "High" },
+      { value: "urgent", label: "Urgent" },
+    ],
     render: (row) => (
       <TableBadge variant={COMPLAINT_PRIORITY[row.priority]?.variant || "default"}>
         {COMPLAINT_PRIORITY[row.priority]?.label || row.priority}
@@ -364,6 +380,7 @@ export default function ComplaintsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/complaints/new"
       createLabel="New Complaint"
       createPermission="complaints.create"

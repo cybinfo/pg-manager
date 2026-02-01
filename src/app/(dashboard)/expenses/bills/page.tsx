@@ -87,6 +87,9 @@ const columns: Column<BillPaymentListItem>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
     render: (bill) => (
       <span className="font-medium tabular-nums">{formatCurrency(bill.bill_amount)}</span>
     ),
@@ -144,6 +147,14 @@ const columns: Column<BillPaymentListItem>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "pending", label: "Pending" },
+      { value: "partial", label: "Partial" },
+      { value: "paid", label: "Paid" },
+      { value: "overdue", label: "Overdue" },
+    ],
     render: (bill) => {
       const statusConfig: Record<string, { variant: "success" | "warning" | "error" | "muted"; label: string }> = {
         paid: { variant: "success", label: "Paid" },
@@ -191,6 +202,9 @@ const columns: Column<BillPaymentListItem>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
     render: (bill) => bill.paid_amount ? (
       <span className="text-green-600 font-medium tabular-nums">{formatCurrency(bill.paid_amount)}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -370,6 +384,7 @@ export default function BillPaymentsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/expenses/bills/new"
       createLabel="Add Bill"
       createPermission="expenses.create"

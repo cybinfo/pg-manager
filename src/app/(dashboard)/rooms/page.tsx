@@ -112,6 +112,10 @@ const columns: Column<Room>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "number",
+    editField: "total_beds",
+    editValidation: { required: true, min: 1 },
     render: (room) => (
       <span className="tabular-nums">{room.occupied_beds}/{room.total_beds}</span>
     ),
@@ -124,6 +128,9 @@ const columns: Column<Room>[] = [
     sortType: "number",
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
     render: (room) => (
       <span className="font-medium tabular-nums">{formatCurrency(room.rent_amount)}</span>
     ),
@@ -135,6 +142,14 @@ const columns: Column<Room>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "select",
+    editOptions: [
+      { value: "available", label: "Available" },
+      { value: "occupied", label: "Occupied" },
+      { value: "maintenance", label: "Maintenance" },
+      { value: "blocked", label: "Blocked" },
+    ],
     render: (room) => {
       const info = getStatusInfo(room.status)
       return <StatusDot status={info.status} label={info.label} />
@@ -418,6 +433,7 @@ export default function RoomsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/rooms/new"
       createLabel="Add Room"
       createPermission="rooms.create"

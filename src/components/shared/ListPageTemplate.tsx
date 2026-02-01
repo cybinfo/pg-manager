@@ -23,7 +23,7 @@
 
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { LucideIcon, Plus, Layers, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -38,6 +38,7 @@ import { Pagination } from "@/components/ui/pagination"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ColumnManager, type ColumnVisibilityConfig } from "@/components/ui/column-manager"
 import { AdvancedFilterBuilder, type FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { InlineEditCell } from "@/components/ui/inline-edit"
 import {
   useListPage,
   ListPageConfig,
@@ -47,6 +48,8 @@ import {
   TableViewConfig,
 } from "@/lib/hooks/useListPage"
 import { useTableViews } from "@/lib/hooks/useTableViews"
+import { useInlineEdit } from "@/lib/hooks/useInlineEdit"
+import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { SavedViewSelector } from "@/components/ui/saved-view-selector"
 import type { FilterGroup } from "@/types/table-features.types"
 import { createEmptyFilterGroup, hasActiveAdvancedFilters } from "@/types/table-features.types"
@@ -114,6 +117,17 @@ export interface ListPageTemplateProps {
   // Callbacks
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onRowClick?: (item: any) => void
+
+  // ============================================
+  // Inline Editing Options
+  // ============================================
+  /** Enable inline editing for editable columns */
+  enableInlineEdit?: boolean
+  /** Permission required to edit (e.g., "tenants.update"). Defaults to derived from permission prop */
+  editPermission?: string
+  /** Custom callback for row updates. If not provided, uses default Supabase update */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onRowUpdate?: (id: string, updates: Record<string, unknown>) => Promise<boolean>
 }
 
 // ============================================
@@ -173,6 +187,11 @@ export function ListPageTemplate({
 
   // Callbacks
   onRowClick,
+
+  // Inline Editing
+  enableInlineEdit = false,
+  editPermission,
+  onRowUpdate,
 }: ListPageTemplateProps) {
   // Track if initial load is complete (to avoid unmounting DataTable during search)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
@@ -236,6 +255,71 @@ export function ListPageTemplate({
       applyViewConfig(viewConfig)
     }
   }, [viewConfig, applyViewConfig])
+
+  // ============================================
+  // Inline Edit Setup
+  // ============================================
+  const { hasPermission, workspaceId } = useAuthContext()
+
+  // Derive edit permission from view permission (e.g., "tenants.view" -> "tenants.update")
+  const derivedEditPermission = editPermission || permission.replace(".view", ".update")
+  const canEdit = enableInlineEdit && hasPermission(derivedEditPermission)
+
+  // Use inline edit hook
+  const { updateRow: inlineUpdateRow, saving: inlineSaving } = useInlineEdit({
+    table: config.table,
+    workspaceId,
+    onSuccess: () => {
+      // Trigger a refetch to get updated data
+      // The hook doesn't expose refetch directly, but data updates via subscription or page reload
+    },
+  })
+
+  // Handle row update - use custom callback or default inline update
+  const handleRowUpdate = useCallback(
+    async (id: string, updates: Record<string, unknown>): Promise<boolean> => {
+      if (onRowUpdate) {
+        return onRowUpdate(id, updates)
+      }
+      return inlineUpdateRow(id, updates)
+    },
+    [onRowUpdate, inlineUpdateRow]
+  )
+
+  // Enhance columns with inline edit capability
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const enhancedColumns: Column<any>[] = useMemo(() => {
+    if (!canEdit) return columns
+
+    return columns.map((col) => {
+      // Skip non-editable columns
+      if (!col.editable) return col
+
+      // Create enhanced column with InlineEditCell wrapper
+      return {
+        ...col,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        render: (row: any) => {
+          const fieldName = col.editField || col.key
+          const value = row[col.key]
+
+          return (
+            <InlineEditCell
+              value={value}
+              field={fieldName}
+              editType={col.editType || "text"}
+              editOptions={col.editOptions}
+              validation={col.editValidation}
+              placeholder={col.editPlaceholder}
+              disabled={inlineSaving}
+              onSave={(field, newValue) => handleRowUpdate(row.id, { [field]: newValue })}
+              renderDisplay={col.render ? () => col.render!(row) : undefined}
+            />
+          )
+        },
+      }
+    })
+  }, [columns, canEdit, inlineSaving, handleRowUpdate])
 
   // Group dropdown state
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false)
@@ -488,7 +572,7 @@ export function ListPageTemplate({
 
       {/* DataTable */}
       <DataTable
-        columns={columns}
+        columns={enhancedColumns}
         data={filteredData}
         keyField="id"
         href={detailHref}

@@ -152,6 +152,8 @@ const columns: Column<Payment>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (payment) => payment.for_period || <span className="text-muted-foreground">—</span>,
   },
   {
@@ -188,6 +190,8 @@ const columns: Column<Payment>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (payment) => payment.notes ? (
       <span className="truncate max-w-[150px]" title={payment.notes}>{payment.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
@@ -361,6 +365,7 @@ export default function PaymentsPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/payments/new"
       createLabel="Record Payment"
       createPermission="payments.create"

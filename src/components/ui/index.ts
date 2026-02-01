@@ -11,7 +11,7 @@ export { Label } from "./label"
 
 // Data Display Components
 export { DataTable, StatusDot, TableBadge } from "./data-table"
-export type { Column } from "./data-table"
+export type { Column, EditType as ColumnEditType, EditValidation as ColumnEditValidation, EditOption as ColumnEditOption } from "./data-table"
 export { MetricsBar, MetricsBarCompact } from "./metrics-bar"
 export type { MetricItem } from "./metrics-bar"
 
@@ -149,3 +149,16 @@ export {
   ActiveFiltersSummary,
 } from "./table-toolbar"
 export type { TableToolbarProps, GroupByOption } from "./table-toolbar"
+
+// Inline Edit Components
+export { InlineEditCell, validateValue } from "./inline-edit"
+export type {
+  InlineEditCellProps,
+  EditType,
+  EditValidation,
+  SelectOption as InlineEditSelectOption,
+} from "./inline-edit"
+
+// Table Row Actions
+export { TableRowActions, createActionsColumn } from "./table-row-actions"
+export type { TableRowActionsProps } from "./table-row-actions"

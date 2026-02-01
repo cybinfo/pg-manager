@@ -50,6 +50,9 @@ const columns: Column<Property>[] = [
     width: "primary",
     sortable: true,
     canHide: false,
+    editable: true,
+    editType: "text",
+    editValidation: { required: true, minLength: 2 },
     render: (property) => (
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
@@ -104,6 +107,8 @@ const columns: Column<Property>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
+    editable: true,
+    editType: "boolean",
     render: (property) => (
       <StatusDot
         status={property.is_active ? "success" : "muted"}
@@ -118,6 +123,8 @@ const columns: Column<Property>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
+    editable: true,
+    editType: "text",
     render: (property) => property.address || <span className="text-muted-foreground">—</span>,
   },
   {
@@ -327,6 +334,7 @@ export default function PropertiesPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/properties/new"
       createLabel="Add Property"
       createPermission="properties.create"
