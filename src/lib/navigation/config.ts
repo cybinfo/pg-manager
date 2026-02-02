@@ -46,6 +46,8 @@ import {
   Armchair,
   Clock,
   Lock,
+  BarChart3,
+  ListOrdered,
   type LucideIcon,
 } from "lucide-react"
 import type { FeatureFlagKey } from "@/lib/features"
@@ -114,9 +116,11 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Sections", href: "/library-sections", icon: Grid3X3, permission: "library_sections.view", feature: "library" },
   { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", feature: "library" },
   { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
+  { name: "Waitlist", href: "/library-waitlist", icon: ListOrdered, permission: "library_waitlist.view", feature: "library" },
   { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", feature: "library" },
   { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", feature: "library" },
   { name: "Library Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
+  { name: "Library Reports", href: "/library-reports", icon: BarChart3, permission: "library.view", feature: "library" },
   { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", feature: "library" },
 ]
 
@@ -245,9 +249,11 @@ export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   "/library": { path: "/library", permission: "library.view", feature: "library", title: "Library", icon: Library },
   "/library-sections": { path: "/library-sections", permission: "library_sections.view", feature: "library", title: "Sections", icon: Grid3X3 },
   "/library-members": { path: "/library-members", permission: "library_members.view", feature: "library", title: "Members", icon: Users },
+  "/library-waitlist": { path: "/library-waitlist", permission: "library_waitlist.view", feature: "library", title: "Waitlist", icon: ListOrdered },
   "/library-attendance": { path: "/library-attendance", permission: "library_attendance.view", feature: "library", title: "Attendance", icon: Clock },
   "/library-lockers": { path: "/library-lockers", permission: "library_lockers.view", feature: "library", title: "Lockers", icon: Lock },
   "/library-payments": { path: "/library-payments", permission: "library_payments.view", feature: "library", title: "Library Payments", icon: CreditCard },
+  "/library-reports": { path: "/library-reports", permission: "library.view", feature: "library", title: "Library Reports", icon: BarChart3 },
 }
 
 /**

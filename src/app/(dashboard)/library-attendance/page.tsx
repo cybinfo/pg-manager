@@ -6,9 +6,9 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { Clock, Users, Armchair, LogIn, LogOut } from "lucide-react"
+import { Clock, Users, Armchair, LogIn, LogOut, RefreshCw, QrCode } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_ATTENDANCE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
@@ -43,6 +43,166 @@ interface AttendanceItem {
   // Computed
   is_checked_in?: boolean
   display_name?: string
+}
+
+// ============================================
+// Currently Checked In Panel
+// ============================================
+
+interface CheckedInMember {
+  id: string
+  check_in_time: string
+  seat_id: string | null
+  member: {
+    id: string
+    name: string
+    member_code: string | null
+    hours_balance: number
+    person?: { name?: string; photo_url?: string } | null
+  }
+}
+
+function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; onCheckOut: () => void }) {
+  const [checkedIn, setCheckedIn] = useState<CheckedInMember[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchCheckedIn = useCallback(async () => {
+    const supabase = createClient()
+    const today = new Date().toISOString().split("T")[0]
+
+    const { data } = await supabase
+      .from("library_attendance")
+      .select(`
+        id,
+        check_in_time,
+        seat_id,
+        member:library_members!library_attendance_member_id_fkey(id, name, member_code, hours_balance, person:people(name, photo_url))
+      `)
+      .eq("attendance_date", today)
+      .is("check_out_time", null)
+      .is("deleted_at", null)
+      .order("check_in_time", { ascending: false })
+
+    setCheckedIn((data as unknown as CheckedInMember[]) || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    fetchCheckedIn()
+  }, [fetchCheckedIn, refreshKey])
+
+  const handleQuickCheckOut = async (attendanceId: string, memberName: string, seatId: string | null) => {
+    const supabase = createClient()
+    const checkOutTime = new Date().toISOString()
+
+    const { error } = await supabase
+      .from("library_attendance")
+      .update({ check_out_time: checkOutTime })
+      .eq("id", attendanceId)
+
+    if (error) {
+      toast.error(`Check-out failed: ${error.message}`)
+      return
+    }
+
+    // Release seat if one was assigned
+    if (seatId) {
+      await supabase
+        .from("library_seats")
+        .update({
+          status: "available",
+          current_member_id: null,
+          updated_at: checkOutTime,
+        })
+        .eq("id", seatId)
+    }
+
+    toast.success(`${memberName} checked out!`)
+    onCheckOut()
+  }
+
+  if (loading) {
+    return (
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Currently Checked In
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">Loading...</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (checkedIn.length === 0) {
+    return (
+      <Card className="mb-6 border-dashed">
+        <CardContent className="py-8 text-center">
+          <Users className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+          <p className="text-muted-foreground">No members currently checked in</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="mb-6">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <div className="p-1.5 bg-green-100 rounded-lg">
+              <Users className="h-5 w-5 text-green-600" />
+            </div>
+            Currently Checked In
+            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
+              {checkedIn.length}
+            </span>
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={fetchCheckedIn}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {checkedIn.map((record) => {
+            const displayName = record.member?.person?.name || record.member?.name || "Unknown"
+            const photoUrl = record.member?.person?.photo_url
+            const checkInTime = new Date(record.check_in_time)
+            const hoursAgo = ((Date.now() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(1)
+
+            return (
+              <div
+                key={record.id}
+                className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
+              >
+                <Avatar name={displayName} src={photoUrl} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {checkInTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                    {" • "}
+                    <span className="text-green-600">{hoursAgo}h</span>
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-2"
+                  onClick={() => handleQuickCheckOut(record.id, displayName, record.seat_id)}
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 // ============================================
@@ -169,7 +329,7 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <Input
             placeholder="Member code or phone..."
             value={memberCode}
@@ -181,6 +341,12 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
           <Button onClick={handleCheckIn} disabled={loading}>
             {loading ? "Checking in..." : "Check In"}
           </Button>
+          <Link href="/library-attendance/scan">
+            <Button variant="outline">
+              <QrCode className="mr-2 h-4 w-4" />
+              QR Scanner
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>
@@ -293,16 +459,36 @@ function CheckOutButton({ attendanceId, memberName }: { attendanceId: string; me
     setLoading(true)
 
     const supabase = createClient()
+    const checkOutTime = new Date().toISOString()
 
     try {
+      // First, get the attendance record to check if a seat was assigned
+      const { data: attendance } = await supabase
+        .from("library_attendance")
+        .select("seat_id")
+        .eq("id", attendanceId)
+        .single()
+
       const { error } = await supabase
         .from("library_attendance")
-        .update({ check_out_time: new Date().toISOString() })
+        .update({ check_out_time: checkOutTime })
         .eq("id", attendanceId)
 
       if (error) {
         toast.error(`Check-out failed: ${error.message}`)
         return
+      }
+
+      // Release seat if one was assigned
+      if (attendance?.seat_id) {
+        await supabase
+          .from("library_seats")
+          .update({
+            status: "available",
+            current_member_id: null,
+            updated_at: checkOutTime,
+          })
+          .eq("id", attendance.seat_id)
       }
 
       toast.success(`${memberName} checked out successfully!`)
@@ -400,10 +586,17 @@ import { Calendar } from "lucide-react"
 export default function LibraryAttendancePage() {
   const [refreshKey, setRefreshKey] = useState(0)
 
+  const handleRefresh = () => setRefreshKey((k) => k + 1)
+
   return (
     <div>
-      <QuickCheckIn onCheckIn={() => setRefreshKey((k) => k + 1)} />
+      {/* Quick Check-In */}
+      <QuickCheckIn onCheckIn={handleRefresh} />
 
+      {/* Currently Checked In Panel */}
+      <CurrentlyCheckedIn refreshKey={refreshKey} onCheckOut={handleRefresh} />
+
+      {/* Attendance Records List */}
       <ListPageTemplate
         key={refreshKey}
         tableKey="library-attendance"

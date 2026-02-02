@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
-import { ArrowLeft, Users, Loader2, CreditCard } from "lucide-react"
+import { ArrowLeft, Users, Loader2, CreditCard, UserCheck } from "lucide-react"
 import { toast } from "sonner"
 import { withCreatedBy } from "@/lib/audit"
 import { TIME_SLOTS } from "@/types/library.types"
@@ -45,16 +45,22 @@ export default function NewLibraryMemberPage() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
+  // Read pre-filled values from URL (e.g., from waitlist conversion)
   const preselectedLibrary = searchParams.get("library")
+  const prefilledName = searchParams.get("name")
+  const prefilledPhone = searchParams.get("phone")
+  const prefilledEmail = searchParams.get("email")
+  const prefilledSlot = searchParams.get("slot")
+  const waitlistId = searchParams.get("waitlist_id")
 
   const [formData, setFormData] = useState({
     library_id: preselectedLibrary || "",
-    name: "",
-    phone: "",
-    email: "",
+    name: prefilledName || "",
+    phone: prefilledPhone || "",
+    email: prefilledEmail || "",
     id_proof_type: "aadhar",
     id_proof_number: "",
-    preferred_slot: "Morning",
+    preferred_slot: prefilledSlot || "Morning",
     notes: "",
     // Subscription
     plan_id: "",
@@ -263,6 +269,24 @@ export default function NewLibraryMemberPage() {
           .eq("id", member.id)
       }
 
+      // If converting from waitlist, update the waitlist entry
+      if (waitlistId) {
+        const { error: waitlistError } = await supabase
+          .from("library_waitlist")
+          .update({
+            status: "converted",
+            converted_member_id: member.id,
+            converted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", waitlistId)
+
+        if (waitlistError) {
+          console.error("Error updating waitlist entry:", waitlistError)
+          // Don't fail - member is created, waitlist update is secondary
+        }
+      }
+
       toast.success("Member registered successfully!")
       router.push(`/library-members/${member.id}`)
     } catch (error) {
@@ -299,6 +323,21 @@ export default function NewLibraryMemberPage() {
           </p>
         </div>
       </div>
+
+      {/* Waitlist Conversion Banner */}
+      {waitlistId && (
+        <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <UserCheck className="h-5 w-5 text-green-600 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-green-800">
+              Converting from Waitlist
+            </p>
+            <p className="text-xs text-green-600">
+              Contact details have been pre-filled. Complete the subscription to convert this waitlist entry to a member.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit}>

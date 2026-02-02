@@ -41,7 +41,10 @@ import {
   Percent,
   MessageSquare,
   CalendarDays,
+  Library,
+  Armchair,
 } from "lucide-react"
+import { FeatureGuard } from "@/components/auth/feature-guard"
 import { formatCurrency } from "@/lib/format"
 
 interface DashboardStats {
@@ -56,6 +59,11 @@ interface DashboardStats {
   overdueCount: number
   openComplaints: number
   expiringLeases: number
+  // Library stats
+  libraries: number
+  libraryMembers: number
+  libraryActiveMembers: number
+  libraryCheckedIn: number
 }
 
 interface GettingStartedItem {
@@ -111,6 +119,11 @@ export default function DashboardPage() {
     overdueCount: 0,
     openComplaints: 0,
     expiringLeases: 0,
+    // Library stats
+    libraries: 0,
+    libraryMembers: 0,
+    libraryActiveMembers: 0,
+    libraryCheckedIn: 0,
   })
   const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([])
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus[]>([])
@@ -142,6 +155,8 @@ export default function DashboardPage() {
       const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
       const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
+      const today = now.toISOString().split("T")[0]
+
       // Fetch counts in parallel
       const [
         propertiesRes,
@@ -154,6 +169,11 @@ export default function DashboardPage() {
         complaintsRes,
         expiringLeasesRes,
         monthlyPaymentsRes,
+        // Library stats
+        librariesRes,
+        libraryMembersRes,
+        libraryActiveMembersRes,
+        libraryCheckedInRes,
       ] = await Promise.all([
         supabase.from("properties").select("id", { count: "exact", head: true }),
         supabase.from("rooms").select("total_beds, occupied_beds"),
@@ -172,6 +192,14 @@ export default function DashboardPage() {
           .select("amount, payment_date")
           .gte("payment_date", new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString())
           .order("payment_date"),
+        // Library stats
+        supabase.from("libraries").select("id", { count: "exact", head: true }).is("deleted_at", null),
+        supabase.from("library_members").select("id", { count: "exact", head: true }).is("deleted_at", null),
+        supabase.from("library_members").select("id", { count: "exact", head: true }).eq("status", "active").is("deleted_at", null),
+        supabase.from("library_attendance").select("id", { count: "exact", head: true })
+          .eq("attendance_date", today)
+          .is("check_out_time", null)
+          .is("deleted_at", null),
       ])
 
       // Calculate room stats
@@ -258,6 +286,11 @@ export default function DashboardPage() {
         overdueCount,
         openComplaints: complaintsRes.count || 0,
         expiringLeases: expiringLeasesRes.count || 0,
+        // Library stats
+        libraries: librariesRes.count || 0,
+        libraryMembers: libraryMembersRes.count || 0,
+        libraryActiveMembers: libraryActiveMembersRes.count || 0,
+        libraryCheckedIn: libraryCheckedInRes.count || 0,
       })
 
       // Update getting started checklist
@@ -481,6 +514,68 @@ export default function DashboardPage() {
             </Link>
           )}
         </div>
+      )}
+
+      {/* Library Overview - only show if user has libraries */}
+      {!loading && stats.libraries > 0 && (
+        <FeatureGuard feature="library">
+          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white rounded-lg shadow-sm">
+                    <Library className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <CardTitle className="text-base font-medium text-purple-900">Library Overview</CardTitle>
+                </div>
+                <Link href="/library">
+                  <Button variant="ghost" size="sm" className="text-purple-600 hover:text-purple-700 hover:bg-purple-100">
+                    View All
+                    <ArrowRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Link href="/library" className="block">
+                  <div className="p-3 bg-white/70 rounded-lg hover:bg-white transition-colors">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Library className="h-4 w-4 text-purple-500" />
+                      <span className="text-xs text-purple-600">Libraries</span>
+                    </div>
+                    <p className="text-2xl font-bold text-purple-900">{stats.libraries}</p>
+                  </div>
+                </Link>
+                <Link href="/library-members" className="block">
+                  <div className="p-3 bg-white/70 rounded-lg hover:bg-white transition-colors">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Users className="h-4 w-4 text-purple-500" />
+                      <span className="text-xs text-purple-600">Active Members</span>
+                    </div>
+                    <p className="text-2xl font-bold text-purple-900">{stats.libraryActiveMembers}</p>
+                    <p className="text-xs text-purple-600/70">{stats.libraryMembers} total</p>
+                  </div>
+                </Link>
+                <Link href="/library-attendance" className="block">
+                  <div className="p-3 bg-white/70 rounded-lg hover:bg-white transition-colors">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="h-4 w-4 text-green-500" />
+                      <span className="text-xs text-purple-600">Checked In Now</span>
+                    </div>
+                    <p className="text-2xl font-bold text-green-600">{stats.libraryCheckedIn}</p>
+                  </div>
+                </Link>
+                <Link href="/library-attendance/new" className="block">
+                  <div className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                    <Armchair className="h-5 w-5" />
+                    <span className="font-medium">Quick Check-In</span>
+                  </div>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </FeatureGuard>
       )}
 
       {/* Charts Section - only visible to those with reports.view permission */}

@@ -18,12 +18,18 @@ import {
   Wrench,
   CreditCard,
   Users,
-  Calendar
+  Calendar,
+  Library
 } from "lucide-react"
 import { toast } from "sonner"
 import { PageLoader } from "@/components/ui/page-loader"
 
 interface Property {
+  id: string
+  name: string
+}
+
+interface LibraryItem {
   id: string
   name: string
 }
@@ -52,12 +58,15 @@ export default function NewNoticePage() {
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [properties, setProperties] = useState<Property[]>([])
+  const [libraries, setLibraries] = useState<LibraryItem[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [selectedRooms, setSelectedRooms] = useState<string[]>([])
 
   const [formData, setFormData] = useState({
+    entity_type: "all" as "all" | "property" | "library",
     property_id: "",
+    library_id: "",
     type: "general",
     target_audience: "all",
     title: "",
@@ -70,13 +79,15 @@ export default function NewNoticePage() {
     const fetchData = async () => {
       const supabase = createClient()
 
-      const [propertiesRes, roomsRes] = await Promise.all([
-        supabase.from("properties").select("id, name").order("name"),
-        supabase.from("rooms").select("id, room_number, property_id").order("room_number"),
+      const [propertiesRes, roomsRes, librariesRes] = await Promise.all([
+        supabase.from("properties").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("rooms").select("id, room_number, property_id").is("deleted_at", null).order("room_number"),
+        supabase.from("libraries").select("id, name").is("deleted_at", null).order("name"),
       ])
 
       if (propertiesRes.data) setProperties(propertiesRes.data)
       if (roomsRes.data) setRooms(roomsRes.data)
+      if (librariesRes.data) setLibraries(librariesRes.data)
 
       setLoadingData(false)
     }
@@ -96,10 +107,21 @@ export default function NewNoticePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }))
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      }
+
+      // Reset dependent fields when entity_type changes
+      if (name === "entity_type") {
+        newData.property_id = ""
+        newData.library_id = ""
+        newData.target_audience = value === "library" ? "all" : prev.target_audience
+      }
+
+      return newData
+    })
   }
 
   const handleRoomToggle = (roomId: string) => {
@@ -146,7 +168,8 @@ export default function NewNoticePage() {
       const { error } = await supabase.from("notices").insert({
         owner_id: user.id,
         created_by: user.id,
-        property_id: formData.property_id || null,
+        property_id: formData.entity_type === "property" ? formData.property_id : null,
+        library_id: formData.entity_type === "library" ? formData.library_id : null,
         type: formData.type,
         target_audience: formData.target_audience,
         target_rooms: formData.target_audience === "specific_rooms" ? selectedRooms : null,
@@ -248,27 +271,120 @@ export default function NewNoticePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="property_id">Property (Optional)</Label>
-              <select
-                id="property_id"
-                name="property_id"
-                value={formData.property_id}
-                onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                disabled={loading}
-              >
-                <option value="">All Properties</option>
-                {properties.map((property) => (
-                  <option key={property.id} value={property.id}>
-                    {property.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground">
-                Leave empty to send to all properties
-              </p>
-            </div>
+            {/* Entity Type Selection */}
+            {libraries.length > 0 && (
+              <div className="space-y-2">
+                <Label>Notice For</Label>
+                <div className="flex gap-3 flex-wrap">
+                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-lg hover:bg-muted/50">
+                    <input
+                      type="radio"
+                      name="entity_type"
+                      value="all"
+                      checked={formData.entity_type === "all"}
+                      onChange={handleChange}
+                      className="h-4 w-4"
+                    />
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm">All</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-lg hover:bg-muted/50">
+                    <input
+                      type="radio"
+                      name="entity_type"
+                      value="property"
+                      checked={formData.entity_type === "property"}
+                      onChange={handleChange}
+                      className="h-4 w-4"
+                    />
+                    <Building2 className="h-4 w-4" />
+                    <span className="text-sm">Property/PG</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-lg hover:bg-muted/50">
+                    <input
+                      type="radio"
+                      name="entity_type"
+                      value="library"
+                      checked={formData.entity_type === "library"}
+                      onChange={handleChange}
+                      className="h-4 w-4"
+                    />
+                    <Library className="h-4 w-4" />
+                    <span className="text-sm">Library</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Property Selection */}
+            {formData.entity_type === "property" && (
+              <div className="space-y-2">
+                <Label htmlFor="property_id">Property *</Label>
+                <select
+                  id="property_id"
+                  name="property_id"
+                  value={formData.property_id}
+                  onChange={handleChange}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                  disabled={loading}
+                  required
+                >
+                  <option value="">Select Property</option>
+                  {properties.map((property) => (
+                    <option key={property.id} value={property.id}>
+                      {property.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Library Selection */}
+            {formData.entity_type === "library" && (
+              <div className="space-y-2">
+                <Label htmlFor="library_id">Library *</Label>
+                <select
+                  id="library_id"
+                  name="library_id"
+                  value={formData.library_id}
+                  onChange={handleChange}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                  disabled={loading}
+                  required
+                >
+                  <option value="">Select Library</option>
+                  {libraries.map((library) => (
+                    <option key={library.id} value={library.id}>
+                      {library.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {formData.entity_type === "all" && libraries.length === 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="property_id">Property (Optional)</Label>
+                <select
+                  id="property_id"
+                  name="property_id"
+                  value={formData.property_id}
+                  onChange={handleChange}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                  disabled={loading}
+                >
+                  <option value="">All Properties</option>
+                  {properties.map((property) => (
+                    <option key={property.id} value={property.id}>
+                      {property.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to send to all properties
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Audience</Label>
@@ -291,8 +407,8 @@ export default function NewNoticePage() {
               </div>
             </div>
 
-            {/* Room Selection */}
-            {formData.target_audience === "specific_rooms" && formData.property_id && (
+            {/* Room Selection - only for property */}
+            {formData.entity_type === "property" && formData.target_audience === "specific_rooms" && formData.property_id && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Select Rooms</Label>
@@ -329,9 +445,15 @@ export default function NewNoticePage() {
               </div>
             )}
 
-            {formData.target_audience === "specific_rooms" && !formData.property_id && (
+            {formData.entity_type === "property" && formData.target_audience === "specific_rooms" && !formData.property_id && (
               <p className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
                 Please select a property first to choose specific rooms
+              </p>
+            )}
+
+            {formData.entity_type === "library" && (
+              <p className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">
+                This notice will be visible to all members of the selected library
               </p>
             )}
           </CardContent>

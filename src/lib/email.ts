@@ -6,6 +6,9 @@ import {
   invitationEmailTemplate,
   emailVerificationTemplate,
   dailySummaryTemplate,
+  libraryLowHoursTemplate,
+  libraryExpiringMembershipTemplate,
+  libraryExpiredMembershipTemplate,
 } from "./email-templates"
 
 // Lazy initialization of Resend client
@@ -97,6 +100,43 @@ export interface DailySummaryData {
   exits: number
   openComplaints: number
   whatsappMessage: string
+}
+
+// ========== LIBRARY EMAIL DATA TYPES ==========
+
+export interface LibraryLowHoursData {
+  to: string
+  memberName: string
+  memberCode?: string
+  libraryName: string
+  hoursRemaining: number
+  totalHours: number
+  timeSlot?: string
+  ownerPhone?: string
+}
+
+export interface LibraryExpiringMembershipData {
+  to: string
+  memberName: string
+  memberCode?: string
+  libraryName: string
+  expiryDate: Date
+  daysRemaining: number
+  planName: string
+  hoursRemaining: number
+  timeSlot?: string
+  ownerPhone?: string
+}
+
+export interface LibraryExpiredMembershipData {
+  to: string
+  memberName: string
+  memberCode?: string
+  libraryName: string
+  expiryDate: Date
+  planName: string
+  hoursRemaining: number
+  ownerPhone?: string
 }
 
 export async function sendPaymentReminder(
@@ -292,6 +332,83 @@ export async function sendDailySummary(
     return { success: true, id: result?.id }
   } catch (err) {
     console.error("Error sending daily summary:", err)
+    return { success: false, error: String(err) }
+  }
+}
+
+// ========== LIBRARY EMAIL FUNCTIONS ==========
+
+// Low hours warning for library members
+export async function sendLibraryLowHoursWarning(
+  data: LibraryLowHoursData
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    const client = getResendClient()
+    const { data: result, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: data.to,
+      subject: `Low Hours Alert - ${data.libraryName}`,
+      html: libraryLowHoursTemplate(data),
+    })
+
+    if (error) {
+      console.error("Failed to send low hours warning:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, id: result?.id }
+  } catch (err) {
+    console.error("Error sending low hours warning:", err)
+    return { success: false, error: String(err) }
+  }
+}
+
+// Expiring membership notification for library members
+export async function sendLibraryExpiringMembership(
+  data: LibraryExpiringMembershipData
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    const client = getResendClient()
+    const { data: result, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: data.to,
+      subject: `Membership Expiring Soon - ${data.libraryName}`,
+      html: libraryExpiringMembershipTemplate(data),
+    })
+
+    if (error) {
+      console.error("Failed to send expiring membership notification:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, id: result?.id }
+  } catch (err) {
+    console.error("Error sending expiring membership notification:", err)
+    return { success: false, error: String(err) }
+  }
+}
+
+// Expired membership notification for library members
+export async function sendLibraryExpiredMembership(
+  data: LibraryExpiredMembershipData
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    const client = getResendClient()
+    const { data: result, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: data.to,
+      subject: `Membership Expired - ${data.libraryName}`,
+      html: libraryExpiredMembershipTemplate(data),
+    })
+
+    if (error) {
+      console.error("Failed to send expired membership notification:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, id: result?.id }
+  } catch (err) {
+    console.error("Error sending expired membership notification:", err)
     return { success: false, error: String(err) }
   }
 }

@@ -34,7 +34,9 @@ import {
   Plus,
   Pencil,
   FileText,
+  RefreshCw,
 } from "lucide-react"
+import { MemberHoursCard, MemberQRCode } from "@/components/library"
 import { formatDate } from "@/lib/format"
 import { LIBRARY_MEMBER_STATUS_CONFIG, LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
 import type {
@@ -115,7 +117,7 @@ export default function LibraryMemberDetailPage() {
               </Button>
             </Link>
             {!member.locker_id && (
-              <Link href={`/library-lockers?status=available&for_member=${member.id}`}>
+              <Link href={`/library-members/${member.id}/assign-locker`}>
                 <Button variant="outline" size="sm">
                   <Lock className="mr-2 h-4 w-4" />
                   Assign Locker
@@ -138,24 +140,25 @@ export default function LibraryMemberDetailPage() {
         }
       />
 
+      {/* Hours Balance Card */}
+      <MemberHoursCard
+        hoursUsed={totalHoursUsed}
+        hoursRemaining={hoursRemaining}
+        memberName={displayName}
+      />
+
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <InfoCard
-          label="Hours Remaining"
-          value={`${hoursRemaining.toFixed(1)}h`}
-          icon={Clock}
-          variant={hoursRemaining <= 2 ? "warning" : "success"}
-        />
-        <InfoCard
-          label="Hours Used"
-          value={`${totalHoursUsed.toFixed(1)}h`}
-          icon={Clock}
-          variant="default"
-        />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <InfoCard
           label="Total Paid"
           value={<Currency amount={totalPaid} />}
           icon={CreditCard}
+          variant="default"
+        />
+        <InfoCard
+          label="Subscriptions"
+          value={memberships.length}
+          icon={RefreshCw}
           variant="default"
         />
         <InfoCard
@@ -377,6 +380,15 @@ export default function LibraryMemberDetailPage() {
             emptyText="No locker assignments"
           />
         )}
+
+        {/* QR Code for Check-in */}
+        <MemberQRCode
+          memberId={member.id}
+          memberName={displayName}
+          memberCode={member.member_code}
+          libraryId={member.library_id}
+          size={180}
+        />
 
         {/* Notes */}
         {member.notes && (

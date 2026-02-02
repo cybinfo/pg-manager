@@ -236,6 +236,12 @@ export const PERMISSIONS = {
   LIBRARY_MEMBERS_EDIT: 'library_members.edit',
   LIBRARY_MEMBERS_DELETE: 'library_members.delete',
 
+  // Library Waitlist
+  LIBRARY_WAITLIST_VIEW: 'library_waitlist.view',
+  LIBRARY_WAITLIST_CREATE: 'library_waitlist.create',
+  LIBRARY_WAITLIST_EDIT: 'library_waitlist.edit',
+  LIBRARY_WAITLIST_DELETE: 'library_waitlist.delete',
+
   // Library Attendance
   LIBRARY_ATTENDANCE_VIEW: 'library_attendance.view',
   LIBRARY_ATTENDANCE_CREATE: 'library_attendance.create',

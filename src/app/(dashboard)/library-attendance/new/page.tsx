@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
-import { ArrowLeft, Clock, Loader2, Users, AlertCircle } from "lucide-react"
+import { ArrowLeft, Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
 import { toast } from "sonner"
 import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
@@ -37,6 +37,15 @@ interface LibraryOption {
   name: string
 }
 
+interface SeatOption {
+  id: string
+  seat_number: string
+  section_name: string
+  section_id: string
+  is_ac: boolean
+  has_power_outlet: boolean
+}
+
 export default function NewLibraryAttendancePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -46,11 +55,14 @@ export default function NewLibraryAttendancePage() {
   const [loadingData, setLoadingData] = useState(true)
   const [members, setMembers] = useState<MemberOption[]>([])
   const [libraries, setLibraries] = useState<LibraryOption[]>([])
+  const [seats, setSeats] = useState<SeatOption[]>([])
+  const [loadingSeats, setLoadingSeats] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberOption | null>(null)
 
   const [formData, setFormData] = useState({
     member_id: preselectedMember || "",
     library_id: "",
+    seat_id: "",
     check_in_time: new Date().toISOString().slice(0, 16), // datetime-local format
     notes: "",
   })
@@ -102,6 +114,58 @@ export default function NewLibraryAttendancePage() {
     fetchData()
   }, [workspaceId, preselectedMember])
 
+  // Fetch available seats for a library
+  const fetchAvailableSeats = async (libraryId: string) => {
+    if (!libraryId) {
+      setSeats([])
+      return
+    }
+
+    setLoadingSeats(true)
+    try {
+      const supabase = createClient()
+      const { data: seatsData } = await supabase
+        .from("library_seats")
+        .select(`
+          id,
+          seat_number,
+          has_power_outlet,
+          section:library_sections!library_seats_section_id_fkey(
+            id,
+            name,
+            is_ac,
+            library_id
+          )
+        `)
+        .eq("status", "available")
+        .is("deleted_at", null)
+
+      // Filter seats for this library and transform
+      const availableSeats: SeatOption[] = (seatsData || [])
+        .map((seat: { id: string; seat_number: string; has_power_outlet: boolean; section: { id: string; name: string; is_ac: boolean; library_id: string } | { id: string; name: string; is_ac: boolean; library_id: string }[] | null }) => {
+          const section = Array.isArray(seat.section) ? seat.section[0] : seat.section
+          if (!section || section.library_id !== libraryId) return null
+          return {
+            id: seat.id,
+            seat_number: seat.seat_number,
+            section_name: section.name,
+            section_id: section.id,
+            is_ac: section.is_ac,
+            has_power_outlet: seat.has_power_outlet,
+          }
+        })
+        .filter((s: SeatOption | null): s is SeatOption => s !== null)
+        .sort((a: SeatOption, b: SeatOption) => a.seat_number.localeCompare(b.seat_number, undefined, { numeric: true }))
+
+      setSeats(availableSeats)
+    } catch (error) {
+      console.error("Error fetching seats:", error)
+      setSeats([])
+    } finally {
+      setLoadingSeats(false)
+    }
+  }
+
   const handleMemberChange = (memberId: string) => {
     const member = members.find((m) => m.id === memberId)
     setSelectedMember(member || null)
@@ -109,7 +173,15 @@ export default function NewLibraryAttendancePage() {
       ...prev,
       member_id: memberId,
       library_id: member?.library_id || prev.library_id,
+      seat_id: "", // Reset seat when member changes
     }))
+
+    // Fetch available seats for the member's library
+    if (member?.library_id) {
+      fetchAvailableSeats(member.library_id)
+    } else {
+      setSeats([])
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,6 +253,7 @@ export default function NewLibraryAttendancePage() {
           membership_id: selectedMember.current_subscription_id,
           attendance_date: attendanceDate,
           check_in_time: checkInTime,
+          seat_id: formData.seat_id || null,
           notes: formData.notes || null,
         },
         user.id
@@ -198,7 +271,26 @@ export default function NewLibraryAttendancePage() {
         return
       }
 
-      toast.success(`${selectedMember.name} checked in successfully!`)
+      // If seat was assigned, update seat status to occupied
+      if (formData.seat_id) {
+        const { error: seatError } = await supabase
+          .from("library_seats")
+          .update({
+            status: "occupied",
+            current_member_id: formData.member_id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", formData.seat_id)
+
+        if (seatError) {
+          console.error("Error updating seat status:", seatError)
+          // Don't fail the check-in, just log the error
+        }
+      }
+
+      const selectedSeat = seats.find(s => s.id === formData.seat_id)
+      const seatInfo = selectedSeat ? ` at seat ${selectedSeat.seat_number}` : ""
+      toast.success(`${selectedMember.name} checked in${seatInfo} successfully!`)
       router.push(`/library-attendance/${newAttendance.id}`)
     } catch (error) {
       console.error("Error:", error)
@@ -309,6 +401,45 @@ export default function NewLibraryAttendancePage() {
                     )}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Seat Assignment */}
+            {selectedMember && (
+              <div className="space-y-2">
+                <Label htmlFor="seat_id" className="flex items-center gap-2">
+                  <Armchair className="h-4 w-4" />
+                  Assign Seat (Optional)
+                </Label>
+                {loadingSeats ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading available seats...
+                  </div>
+                ) : seats.length > 0 ? (
+                  <>
+                    <Combobox
+                      options={seats.map((s) => ({
+                        value: s.id,
+                        label: `${s.seat_number} - ${s.section_name}${s.is_ac ? " (AC)" : ""}${s.has_power_outlet ? " ⚡" : ""}`,
+                      }))}
+                      value={formData.seat_id}
+                      onValueChange={(seatId) => setFormData((prev) => ({ ...prev, seat_id: seatId }))}
+                      placeholder="Select a seat..."
+                      emptyText="No seats available"
+                      disabled={loading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {seats.length} seat{seats.length !== 1 ? "s" : ""} available
+                    </p>
+                  </>
+                ) : (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-700">
+                      No available seats in this library. Member can still check in without seat assignment.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

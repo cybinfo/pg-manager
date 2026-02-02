@@ -116,6 +116,18 @@ export default function LibraryAttendanceDetailPage() {
         }
       }
 
+      // Release seat if one was assigned
+      if (attendance.seat_id) {
+        await supabase
+          .from("library_seats")
+          .update({
+            status: "available",
+            current_member_id: null,
+            updated_at: checkOutTime,
+          })
+          .eq("id", attendance.seat_id)
+      }
+
       toast.success(`Checked out successfully! Duration: ${hoursSpent.toFixed(1)} hours`)
       refetch()
     } catch (error) {

@@ -5,6 +5,9 @@ import type {
   InvitationEmailData,
   EmailVerificationData,
   DailySummaryData,
+  LibraryLowHoursData,
+  LibraryExpiringMembershipData,
+  LibraryExpiredMembershipData,
 } from "./email"
 
 // Use shared formatters
@@ -484,6 +487,204 @@ export function dailySummaryTemplate(data: DailySummaryData): string {
       <p style="color: #6B7280; margin: 0; font-size: 14px;">
         Stay on top of your PG business!<br>
         <strong style="color: #111827;">ManageKar</strong>
+      </p>
+    </div>
+  `
+
+  return emailWrapper(content)
+}
+
+// ========== LIBRARY EMAIL TEMPLATES ==========
+
+// Library Low Hours Warning Template
+export function libraryLowHoursTemplate(data: LibraryLowHoursData): string {
+  const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #FEF3C7; color: #D97706; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Low Hours Warning
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.memberName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Your study hours balance at <strong style="color: #10B981;">${data.libraryName}</strong> is running low.
+    </p>
+
+    <!-- Hours Balance Card -->
+    <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="color: #92400E; font-size: 14px; margin: 0 0 8px 0;">Remaining Hours</p>
+      <p style="color: #D97706; font-size: 36px; font-weight: bold; margin: 0;">${data.hoursRemaining.toFixed(1)}h</p>
+      <p style="color: #B45309; font-size: 14px; margin: 8px 0 0 0;">out of ${data.totalHours}h purchased</p>
+    </div>
+
+    ${data.memberCode ? `
+    <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Member Code</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right; font-family: monospace;">${data.memberCode}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Time Slot</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.timeSlot || "Any"}</td>
+        </tr>
+      </table>
+    </div>
+    ` : ""}
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      To continue uninterrupted access to the library, please renew your subscription or purchase additional hours.
+    </p>
+
+    ${data.ownerPhone ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 0;">
+      Contact library: <strong>${data.ownerPhone}</strong>
+    </p>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Thank you for being a valued member,<br>
+        <strong style="color: #111827;">${data.libraryName}</strong>
+      </p>
+    </div>
+  `
+
+  return emailWrapper(content)
+}
+
+// Library Expiring Membership Template
+export function libraryExpiringMembershipTemplate(data: LibraryExpiringMembershipData): string {
+  const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #FED7AA; color: #C2410C; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Membership Expiring Soon
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.memberName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Your membership at <strong style="color: #10B981;">${data.libraryName}</strong> will expire soon.
+    </p>
+
+    <!-- Expiry Card -->
+    <div style="background: #FED7AA; border: 1px solid #FDBA74; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="color: #C2410C; font-size: 14px; margin: 0 0 8px 0;">Expiry Date</p>
+      <p style="color: #9A3412; font-size: 28px; font-weight: bold; margin: 0;">${formatDate(data.expiryDate)}</p>
+      <p style="color: #EA580C; font-size: 16px; font-weight: 600; margin: 8px 0 0 0;">${data.daysRemaining} days remaining</p>
+    </div>
+
+    <!-- Membership Details -->
+    <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        ${data.memberCode ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Member Code</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right; font-family: monospace;">${data.memberCode}</td>
+        </tr>
+        ` : ""}
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Plan</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.planName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Hours Remaining</td>
+          <td style="padding: 8px 0; color: #10B981; font-weight: 500; text-align: right;">${data.hoursRemaining.toFixed(1)}h</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Time Slot</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.timeSlot || "Any"}</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Renew your membership to continue enjoying uninterrupted access to the library. Early renewal helps secure your preferred seat and time slot.
+    </p>
+
+    ${data.ownerPhone ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 0;">
+      Contact library for renewal: <strong>${data.ownerPhone}</strong>
+    </p>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Thank you for being a valued member,<br>
+        <strong style="color: #111827;">${data.libraryName}</strong>
+      </p>
+    </div>
+  `
+
+  return emailWrapper(content)
+}
+
+// Library Expired Membership Template
+export function libraryExpiredMembershipTemplate(data: LibraryExpiredMembershipData): string {
+  const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #FEE2E2; color: #DC2626; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Membership Expired
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.memberName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Your membership at <strong style="color: #10B981;">${data.libraryName}</strong> has expired.
+    </p>
+
+    <!-- Expired Card -->
+    <div style="background: #FEE2E2; border: 1px solid #FECACA; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="color: #DC2626; font-size: 14px; margin: 0 0 8px 0;">Expired On</p>
+      <p style="color: #B91C1C; font-size: 28px; font-weight: bold; margin: 0;">${formatDate(data.expiryDate)}</p>
+    </div>
+
+    <!-- Membership Details -->
+    <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        ${data.memberCode ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Member Code</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right; font-family: monospace;">${data.memberCode}</td>
+        </tr>
+        ` : ""}
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Plan</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.planName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Unused Hours</td>
+          <td style="padding: 8px 0; color: #DC2626; font-weight: 500; text-align: right;">${data.hoursRemaining.toFixed(1)}h</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      You will not be able to check in until you renew your membership. Contact the library to renew and continue your studies.
+    </p>
+
+    ${data.ownerPhone ? `
+    <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
+      <p style="color: #065F46; font-size: 14px; font-weight: 600; margin: 0 0 4px 0;">Ready to Renew?</p>
+      <p style="color: #6B7280; font-size: 14px; margin: 0;">
+        Call: <strong style="color: #10B981;">${data.ownerPhone}</strong>
+      </p>
+    </div>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        We hope to see you back soon!<br>
+        <strong style="color: #111827;">${data.libraryName}</strong>
       </p>
     </div>
   `

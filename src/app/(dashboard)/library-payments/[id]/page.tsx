@@ -29,6 +29,7 @@ import {
   FileText,
   Hash,
   Wallet,
+  Download,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import {
@@ -92,6 +93,16 @@ export default function LibraryPaymentDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href={`/api/library-receipts/${payment.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="default" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Download Receipt
+              </Button>
+            </a>
             {payment.member && (
               <Link href={`/library-members/${payment.member.id}`}>
                 <Button variant="outline" size="sm">

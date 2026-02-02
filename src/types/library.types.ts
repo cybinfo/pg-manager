@@ -588,3 +588,52 @@ export interface LibraryMemberSummary {
   total_paid: number
   active_locker: boolean
 }
+
+// ============================================================================
+// WAITLIST TYPES
+// ============================================================================
+
+export type LibraryWaitlistStatus = "waiting" | "contacted" | "converted" | "cancelled"
+
+export const LIBRARY_WAITLIST_STATUS_CONFIG = {
+  waiting: { label: "Waiting", variant: "warning" as const },
+  contacted: { label: "Contacted", variant: "muted" as const },
+  converted: { label: "Converted", variant: "success" as const },
+  cancelled: { label: "Cancelled", variant: "error" as const },
+}
+
+export interface LibraryWaitlist extends AuditableEntity {
+  id: string
+  owner_id: string
+  workspace_id: string
+  library_id: string
+  name: string
+  phone: string
+  email: string | null
+  person_id: string | null
+  preferred_slot: string | null
+  preferred_plan: string | null
+  notes: string | null
+  status: LibraryWaitlistStatus
+  position: number | null
+  last_contacted_at: string | null
+  contact_notes: string | null
+  converted_member_id: string | null
+  converted_at: string | null
+
+  // Joined fields
+  library?: Pick<Library, "id" | "name"> | null
+  person?: Person | null
+  converted_member?: Pick<LibraryMember, "id" | "name" | "member_code"> | null
+}
+
+export interface LibraryWaitlistFormData {
+  library_id: string
+  name: string
+  phone: string
+  email?: string
+  person_id?: string
+  preferred_slot?: string
+  preferred_plan?: string
+  notes?: string
+}

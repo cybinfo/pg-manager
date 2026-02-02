@@ -9,13 +9,24 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle } from "lucide-react"
+import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle, Library } from "lucide-react"
 import { toast } from "sonner"
 import { PageLoader } from "@/components/ui/page-loader"
 
 interface Property {
   id: string
   name: string
+}
+
+interface LibraryItem {
+  id: string
+  name: string
+}
+
+interface LibraryMember {
+  id: string
+  name: string
+  member_code: string | null
 }
 
 interface Room {
@@ -72,15 +83,21 @@ function NewComplaintForm() {
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [properties, setProperties] = useState<Property[]>([])
+  const [libraries, setLibraries] = useState<LibraryItem[]>([])
+  const [libraryMembers, setLibraryMembers] = useState<LibraryMember[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [filteredTenants, setFilteredTenants] = useState<Tenant[]>([])
+  const [filteredMembers, setFilteredMembers] = useState<LibraryMember[]>([])
 
   const [formData, setFormData] = useState({
+    entity_type: "property" as "property" | "library",
     property_id: "",
+    library_id: "",
     room_id: "",
     tenant_id: preselectedTenantId || "",
+    member_id: "",
     category: "other",
     priority: "medium",
     title: "",
@@ -91,18 +108,23 @@ function NewComplaintForm() {
     const fetchData = async () => {
       const supabase = createClient()
 
-      const [propertiesRes, roomsRes, tenantsRes] = await Promise.all([
-        supabase.from("properties").select("id, name").order("name"),
-        supabase.from("rooms").select("id, room_number, property_id").order("room_number"),
+      const [propertiesRes, roomsRes, tenantsRes, librariesRes, membersRes] = await Promise.all([
+        supabase.from("properties").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("rooms").select("id, room_number, property_id").is("deleted_at", null).order("room_number"),
         supabase
           .from("tenants")
           .select("id, name, property_id, room_id, room:rooms(room_number), property:properties(name)")
           .eq("status", "active")
+          .is("deleted_at", null)
           .order("name"),
+        supabase.from("libraries").select("id, name").is("deleted_at", null).order("name"),
+        supabase.from("library_members").select("id, name, member_code").eq("status", "active").is("deleted_at", null).order("name"),
       ])
 
       if (propertiesRes.data) setProperties(propertiesRes.data)
       if (roomsRes.data) setRooms(roomsRes.data)
+      if (librariesRes.data) setLibraries(librariesRes.data)
+      if (membersRes.data) setLibraryMembers(membersRes.data)
       if (tenantsRes.data) {
         // Transform Supabase array joins to single objects
         const transformedTenants: Tenant[] = (tenantsRes.data as TenantRaw[]).map((t) => ({
@@ -160,9 +182,19 @@ function NewComplaintForm() {
       const newData = { ...prev, [name]: value }
 
       // Reset dependent fields
+      if (name === "entity_type") {
+        newData.property_id = ""
+        newData.library_id = ""
+        newData.room_id = ""
+        newData.tenant_id = ""
+        newData.member_id = ""
+      }
       if (name === "property_id") {
         newData.room_id = ""
         newData.tenant_id = ""
+      }
+      if (name === "library_id") {
+        newData.member_id = ""
       }
       if (name === "room_id") {
         newData.tenant_id = ""
@@ -175,7 +207,8 @@ function NewComplaintForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.property_id || !formData.title || !formData.category) {
+    const hasLocation = formData.entity_type === "property" ? formData.property_id : formData.library_id
+    if (!hasLocation || !formData.title || !formData.category) {
       toast.error("Please fill in all required fields")
       return
     }
@@ -194,7 +227,8 @@ function NewComplaintForm() {
 
       const { error } = await supabase.from("complaints").insert({
         owner_id: user.id,
-        property_id: formData.property_id,
+        property_id: formData.entity_type === "property" ? formData.property_id : null,
+        library_id: formData.entity_type === "library" ? formData.library_id : null,
         room_id: formData.room_id || null,
         tenant_id: formData.tenant_id || null,
         category: formData.category,
@@ -225,7 +259,7 @@ function NewComplaintForm() {
     return <PageLoader />
   }
 
-  if (properties.length === 0) {
+  if (properties.length === 0 && libraries.length === 0) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
@@ -243,13 +277,18 @@ function NewComplaintForm() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Building2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No properties found</h3>
+            <h3 className="text-lg font-medium mb-2">No properties or libraries found</h3>
             <p className="text-muted-foreground text-center mb-4">
-              You need to add a property before logging complaints
+              You need to add a property or library before logging complaints
             </p>
-            <Link href="/properties/new">
-              <Button>Add Property First</Button>
-            </Link>
+            <div className="flex gap-3">
+              <Link href="/properties/new">
+                <Button>Add Property</Button>
+              </Link>
+              <Link href="/library/new">
+                <Button variant="outline">Add Library</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -278,7 +317,11 @@ function NewComplaintForm() {
           <CardHeader>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Building2 className="h-5 w-5 text-primary" />
+                {formData.entity_type === "library" ? (
+                  <Library className="h-5 w-5 text-primary" />
+                ) : (
+                  <Building2 className="h-5 w-5 text-primary" />
+                )}
               </div>
               <div>
                 <CardTitle>Location</CardTitle>
@@ -287,64 +330,146 @@ function NewComplaintForm() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            {/* Entity Type Selection */}
+            {libraries.length > 0 && (
               <div className="space-y-2">
-                <Label htmlFor="property_id">Property *</Label>
-                <select
-                  id="property_id"
-                  name="property_id"
-                  value={formData.property_id}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  required
-                  disabled={loading}
-                >
-                  <option value="">Select property</option>
-                  {properties.map((property) => (
-                    <option key={property.id} value={property.id}>
-                      {property.name}
-                    </option>
-                  ))}
-                </select>
+                <Label>Complaint For *</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="entity_type"
+                      value="property"
+                      checked={formData.entity_type === "property"}
+                      onChange={handleChange}
+                      className="h-4 w-4"
+                    />
+                    <Building2 className="h-4 w-4" />
+                    <span>Property/PG</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="entity_type"
+                      value="library"
+                      checked={formData.entity_type === "library"}
+                      onChange={handleChange}
+                      className="h-4 w-4"
+                    />
+                    <Library className="h-4 w-4" />
+                    <span>Library</span>
+                  </label>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="room_id">Room (Optional)</Label>
-                <select
-                  id="room_id"
-                  name="room_id"
-                  value={formData.room_id}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  disabled={loading || !formData.property_id}
-                >
-                  <option value="">Select room</option>
-                  {filteredRooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      Room {room.room_number}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="tenant_id">Reported By (Optional)</Label>
-              <select
-                id="tenant_id"
-                name="tenant_id"
-                value={formData.tenant_id}
-                onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                disabled={loading}
-              >
-                <option value="">Select tenant</option>
-                {filteredTenants.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name} - Room {tenant.room?.room_number}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Property Fields */}
+            {formData.entity_type === "property" && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="property_id">Property *</Label>
+                    <select
+                      id="property_id"
+                      name="property_id"
+                      value={formData.property_id}
+                      onChange={handleChange}
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                      required
+                      disabled={loading}
+                    >
+                      <option value="">Select property</option>
+                      {properties.map((property) => (
+                        <option key={property.id} value={property.id}>
+                          {property.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="room_id">Room (Optional)</Label>
+                    <select
+                      id="room_id"
+                      name="room_id"
+                      value={formData.room_id}
+                      onChange={handleChange}
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                      disabled={loading || !formData.property_id}
+                    >
+                      <option value="">Select room</option>
+                      {filteredRooms.map((room) => (
+                        <option key={room.id} value={room.id}>
+                          Room {room.room_number}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tenant_id">Reported By (Optional)</Label>
+                  <select
+                    id="tenant_id"
+                    name="tenant_id"
+                    value={formData.tenant_id}
+                    onChange={handleChange}
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    disabled={loading}
+                  >
+                    <option value="">Select tenant</option>
+                    {filteredTenants.map((tenant) => (
+                      <option key={tenant.id} value={tenant.id}>
+                        {tenant.name} - Room {tenant.room?.room_number}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
+
+            {/* Library Fields */}
+            {formData.entity_type === "library" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="library_id">Library *</Label>
+                  <select
+                    id="library_id"
+                    name="library_id"
+                    value={formData.library_id}
+                    onChange={handleChange}
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    required
+                    disabled={loading}
+                  >
+                    <option value="">Select library</option>
+                    {libraries.map((library) => (
+                      <option key={library.id} value={library.id}>
+                        {library.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="member_id">Reported By (Optional)</Label>
+                  <select
+                    id="member_id"
+                    name="member_id"
+                    value={formData.member_id}
+                    onChange={handleChange}
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                    disabled={loading}
+                  >
+                    <option value="">Select member</option>
+                    {libraryMembers.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name} {member.member_code && `(${member.member_code})`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
