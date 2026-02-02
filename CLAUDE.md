@@ -1,7 +1,7 @@
 # ManageKar - AI Development Guide
 
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-01-31
+> **Last Updated**: 2026-02-02
 
 ---
 
@@ -12,7 +12,7 @@
 | **Production URL** | https://managekar.com |
 | **Stack** | Next.js 16 + TypeScript + Supabase + Tailwind + shadcn/ui |
 | **Database** | PostgreSQL with Row Level Security (RLS) |
-| **Migrations** | 58 total (001-058) |
+| **Migrations** | 65 total (001-065) |
 
 ```bash
 npm run dev          # Development server at localhost:3000
@@ -28,21 +28,33 @@ vercel --prod        # Deploy to production
 
 ## 1. Product Overview
 
-**ManageKar** ("Let's Manage" in Hindi) is a SaaS platform for Indian small businesses, starting with **PG Manager** for Paying Guest accommodations and hostels.
+**ManageKar** ("Let's Manage" in Hindi) is a SaaS platform for Indian small businesses with two main modules:
+- **PG Manager** - For Paying Guest accommodations and hostels
+- **Library Manager** - For study libraries (reading rooms/study halls)
 
 ### Target Users
 
 | User Type | Description |
 |-----------|-------------|
-| **Owners** | PG/Hostel owners managing 1-50 properties |
+| **Owners** | PG/Hostel/Library owners managing multiple properties |
 | **Staff** | Property managers, accountants, receptionists |
-| **Tenants** | Self-service portal users |
+| **Tenants** | PG self-service portal users |
+| **Members** | Library self-service portal users |
 
 ### Business Model
 
 ```
 Free Trial (3 months) → Free Tier (1 PG/10 rooms) → Pro ₹499/month → Business ₹999/month
 ```
+
+### Library Module Overview
+
+Indian "libraries" in this context are **study spaces** (not book-lending), where:
+- Students pay for **hours of access** (e.g., ₹1000 for 9 hours)
+- They get assigned **seats** (similar to beds in PG)
+- Attendance is tracked via check-in/check-out
+- Lockers are rented separately
+- Time slots (Morning/Evening/Night/24 Hours) determine access
 
 ---
 
@@ -54,8 +66,9 @@ Free Trial (3 months) → Free Tier (1 PG/10 rooms) → Pro ₹499/month → Bus
 src/
 ├── app/
 │   ├── (auth)/              # Login, Register, Password Reset
-│   ├── (dashboard)/         # 19 dashboard modules
+│   ├── (dashboard)/         # 30+ dashboard modules (PG + Library)
 │   ├── (tenant)/            # Tenant self-service portal
+│   ├── (member)/            # Library member self-service portal
 │   ├── pg/[slug]/           # Public PG websites
 │   └── api/                 # API routes + cron jobs
 ├── components/
@@ -63,7 +76,8 @@ src/
 │   ├── forms/               # Form components
 │   ├── shared/              # Templates (ListPageTemplate)
 │   ├── auth/                # PermissionGuard, FeatureGuard
-│   └── journey/             # Tenant journey components
+│   ├── journey/             # Tenant journey components
+│   └── library/             # Library-specific components
 └── lib/
     ├── supabase/            # Clients + transforms
     ├── auth/                # Auth context + hooks
@@ -71,10 +85,13 @@ src/
     ├── features/            # Feature flags
     ├── services/            # Service layer (workflow engine, audit)
     ├── workflows/           # Business workflows
+    ├── navigation/          # Navigation config
     └── hooks/               # Reusable hooks
 ```
 
-### Dashboard Modules (20)
+### Dashboard Modules
+
+#### PG Modules (20)
 
 | Module | URL | Description |
 |--------|-----|-------------|
@@ -98,6 +115,28 @@ src/
 | Architecture | `/architecture` | Property 2D map |
 | Activity | `/activity` | Audit log viewer |
 | Approvals | `/approvals` | Tenant requests |
+
+#### Library Modules (10)
+
+| Module | URL | Description |
+|--------|-----|-------------|
+| Library | `/library` | Library management |
+| Sections | `/library-sections` | Study areas (AC Hall, etc.) |
+| Seats | `/library-seats` | Individual study positions |
+| Members | `/library-members` | Student subscriptions |
+| Waitlist | `/library-waitlist` | Prospective members queue |
+| Attendance | `/library-attendance` | Check-in/check-out |
+| Lockers | `/library-lockers` | Locker rental |
+| Library Payments | `/library-payments` | Subscription payments |
+| Library Reports | `/library-reports` | Revenue & occupancy analytics |
+| Plans | `/library-plans` | Subscription plans |
+
+#### Self-Service Portals
+
+| Portal | URL | Description |
+|--------|-----|-------------|
+| Tenant Portal | `/tenant` | PG tenant self-service |
+| Member Portal | `/member` | Library member self-service |
 
 ---
 
@@ -196,55 +235,56 @@ render: (tenant) => {
     <span>{displayName}</span>
   )
 }
-
-// For visitors (deeper hierarchy)
-const displayName = visitor.visitor_contact?.person?.name
-  || visitor.visitor_contact?.name
-  || visitor.visitor_name
 ```
-
-**Why this matters:**
-- People module is the single source of truth for personal data
-- When a person's name is updated in People, all lists show the updated name
-- Denormalized fields (`tenant.name`) are kept for performance but may be stale
-- Always prefer `person.name` → `entity.name` fallback pattern
 
 ### 3.6 List Page Architecture
 
 All list pages use the centralized `ListPageTemplate` + `useListPage` hook pattern:
 
 ```typescript
-// 1. Define config in useListPage.ts
-export const ENTITY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+// 1. Define config
+const ENTITY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   table: "entity_table",
   select: `*, related:table(id, name)`,
   joinFields: ["related"],
   searchFields: ["name", "phone"],
-  defaultSort: { column: "created_at", ascending: false },
+  defaultOrderBy: "created_at",
+  defaultOrderDirection: "desc",
   defaultPageSize: 25,
 }
 
-// 2. Use in page component
-export default function EntityPage() {
-  return (
-    <ListPageTemplate
-      tableKey="entities"
-      config={ENTITY_LIST_CONFIG}
-      columns={columns}
-      filters={filters}
-      metrics={metrics}
-      // ...
-    />
-  )
-}
-```
+// 2. Define metrics with compute function
+const metrics: MetricConfig<EntityType>[] = [
+  {
+    id: "total",
+    label: "Total",
+    icon: Users,
+    compute: (_items, total) => total,
+  },
+  {
+    id: "active",
+    label: "Active",
+    icon: CheckCircle,
+    compute: (items) => items.filter((i) => i.status === "active").length,
+    serverFilter: { column: "status", operator: "eq", value: "active" },
+  },
+]
 
-**Key features:**
-- Server-side pagination (skipped when grouping is active)
-- Saved views support
-- Search with debounce (preserves input focus)
-- Server-side metric counts
-- Automatic soft-delete filtering (`deleted_at IS NULL`)
+// 3. Use in page component
+<ListPageTemplate
+  tableKey="entities"
+  config={ENTITY_LIST_CONFIG}
+  columns={columns}
+  filters={filters}
+  metrics={metrics}
+  title="Entities"
+  description="Manage entities"
+  icon={Users}
+  permission="entities.view"
+  createHref="/entities/new"
+  createLabel="Add Entity"
+/>
+```
 
 ### 3.7 Audit System (MANDATORY)
 
@@ -257,7 +297,6 @@ All entities must track accountability using the centralized audit utilities.
 ```typescript
 import { withCreatedBy } from "@/lib/audit"
 
-// Insert with created_by tracking
 const { data, error } = await supabase
   .from("tenants")
   .insert(withCreatedBy(tenantData, user.id))
@@ -280,8 +319,8 @@ const result = await cascadeSoftDelete(propertyId, user.id, [
 ])
 ```
 
-**Soft-deletable tables** (16 total):
-`tenants`, `bills`, `payments`, `expenses`, `refunds`, `complaints`, `notices`, `visitors`, `meter_readings`, `exit_clearance`, `properties`, `rooms`, `people`, `meters`, `staff_members`, `visitor_contacts`
+**Soft-deletable tables** (17 total):
+`tenants`, `bills`, `payments`, `expenses`, `refunds`, `complaints`, `notices`, `visitors`, `meter_readings`, `exit_clearance`, `properties`, `rooms`, `people`, `meters`, `staff_members`, `visitor_contacts`, `library_waitlist`
 
 #### 3.7.3 Detail Page Audit Display
 
@@ -290,41 +329,16 @@ const result = await cascadeSoftDelete(propertyId, user.id, [
 ```typescript
 import { DetailPageTemplate } from "@/components/ui"
 
-// DetailPageTemplate automatically adds Record Information & Activity History
 <DetailPageTemplate
   layoutKey="tenant-detail"
   entityType="tenant"
   record={tenant}
 >
   <DetailSection title="Room Details">...</DetailSection>
-  <DetailSection title="Pending Dues">...</DetailSection>
 </DetailPageTemplate>
 ```
 
 **DO NOT manually add `DetailPageAudit`** - it's included in the template.
-
-For standalone audit display (rare cases outside templates):
-
-```typescript
-import { DetailPageAudit } from "@/components/ui"
-
-<DetailPageAudit record={payment} entityType="payment" layout="compact" />
-```
-
-#### 3.7.4 Type Safety with AuditableEntity
-
-All entity types must extend `AuditableEntity`:
-
-```typescript
-import type { AuditableEntity } from "@/types/audit.types"
-
-export interface Tenant extends AuditableEntity {
-  id: string
-  name: string
-  // ... other fields
-  // Audit fields inherited: created_at, updated_at, created_by?, deleted_at?, deleted_by?
-}
-```
 
 ---
 
@@ -355,54 +369,8 @@ import { Select } from "@/components/ui/form-components"
 | Items | 10 or fewer | More than 10 |
 | Searchable | No | Yes |
 | Dynamic data | No | Yes |
-| Mobile UX | Native dropdown | Custom popover |
 
-### 4.3 DataTable
-
-```typescript
-import { DataTable, Column } from "@/components/ui/data-table"
-
-const columns: Column<T>[] = [
-  {
-    key: "name",
-    header: "Name",
-    width: "primary",  // primary|secondary|tertiary|amount|count|date|status|badge|actions
-    sortable: true,
-    render: (row) => <span>{row.name}</span>,
-  },
-]
-
-<DataTable
-  columns={columns}
-  data={data}
-  keyField="id"  // REQUIRED - unique identifier
-  onRowClick={(row) => router.push(`/path/${row.id}`)}
-  searchable
-/>
-```
-
-### 4.4 Entity Links
-
-```typescript
-import { PropertyLink, TenantLink, RoomLink, MeterLink } from "@/components/ui/entity-link"
-
-<PropertyLink id={property.id} name={property.name} size="sm" />
-<TenantLink id={tenant.id} name={tenant.name} />
-<RoomLink id={room.id} roomNumber={room.room_number} />
-<MeterLink id={meter.id} meterNumber={meter.meter_number} meterType={meter.meter_type} />
-```
-
-### 4.5 Avatar Component
-
-```typescript
-import { Avatar } from "@/components/ui/avatar"
-
-// Takes name and optional src - NOT AvatarImage/AvatarFallback children
-<Avatar name={tenant.name} src={tenant.photo_url} size="md" />
-// Sizes: xs | sm | md | lg | xl
-```
-
-### 4.6 Common UI Components
+### 4.3 Common UI Components
 
 | Component | Import | Usage |
 |-----------|--------|-------|
@@ -410,215 +378,94 @@ import { Avatar } from "@/components/ui/avatar"
 | `MetricsBar` | `@/components/ui/metrics-bar` | Stats row |
 | `DataTable` | `@/components/ui/data-table` | Table + search |
 | `PageLoader` | `@/components/ui/page-loader` | Loading state |
-| `StatCard` | `@/components/ui/stat-card` | Metric card |
-| `TableBadge` | `@/components/ui/table-badge` | Status badges |
 | `StatusBadge` | `@/components/ui/status-badge` | Entity status |
 | `Combobox` | `@/components/ui/combobox` | Searchable select |
-| `EmptyState` | `@/components/ui/empty-state` | No data placeholder |
 | `Currency` | `@/components/ui/currency` | INR formatting |
-| `Pagination` | `@/components/ui/pagination` | Page navigation |
-| `DetailPageTemplate` | `@/components/ui` | **Centralized detail page wrapper** |
-| `DetailPageAudit` | `@/components/ui` | Audit display (auto-included in template) |
-| `RecordMetadata` | `@/components/ui` | Created/deleted info display |
-| `ActivityHistory` | `@/components/ui` | Entity activity timeline |
+| `Progress` | `@/components/ui/progress` | Progress bar |
+| `DetailPageTemplate` | `@/components/ui` | Detail page wrapper |
 | `DetailListSection` | `@/components/ui` | Limited list with "View All" |
-| `DetailPageContent` | `@/components/ui` | Layout wrapper (use Template instead) |
-| `SortableMasonry` | `@/components/ui` | Drag-and-drop masonry layout |
 
-### 4.7 Detail Page Components (IMPORTANT)
+### 4.4 Library Components
 
-Detail pages use the centralized `DetailPageTemplate` for consistent UX:
-
-#### DetailPageTemplate - Centralized Template (ALWAYS USE)
-
-```typescript
-import { DetailPageTemplate, DetailSection } from "@/components/ui"
-
-<DetailPageTemplate
-  layoutKey="tenant-detail"
-  entityType="tenant"
-  record={tenant}
->
-  <DetailSection title="Room Details" icon={Home}>
-    <InfoRow label="Property" value={tenant.property?.name} />
-    <InfoRow label="Room" value={tenant.room?.room_number} />
-  </DetailSection>
-  <DetailSection title="Pending Dues" icon={AlertCircle}>
-    ...
-  </DetailSection>
-</DetailPageTemplate>
-```
-
-**Props:**
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `layoutKey` | `string` | Yes | Unique key for layout preferences (e.g., "tenant-detail") |
-| `entityType` | `string` | Yes | Entity type for audit (e.g., "tenant", "bill") |
-| `record` | `AuditableEntity` | Yes | The entity record with id, created_at, etc. |
-| `columns` | `1 \| 2 \| 3` | No | Number of columns (default: 2) |
-| `gap` | `"sm" \| "md" \| "lg"` | No | Gap between sections (default: "md") |
-| `editable` | `boolean` | No | Show customize button (default: true) |
-| `showActivityHistory` | `boolean` | No | Show activity section (default: true) |
-
-**What it provides automatically:**
-- Sortable masonry layout (gap-free, auto-balancing)
-- "Customize Layout" button for drag-and-drop reordering
-- Layout preferences persist in localStorage per section type
-- Record Information section (created, created by, updated)
-- Activity History section (audit trail)
-
-#### DetailListSection - Limited Lists with View All
-
-Shows only first N items with "View All" button. **ALWAYS use for lists on detail pages:**
-
-```typescript
-import { DetailListSection } from "@/components/ui"
-
-<DetailListSection
-  title="Recent Payments"
-  description="Transaction history"
-  icon={CreditCard}
-  items={payments}
-  keyExtractor={(payment, idx) => payment.id}
-  renderItem={(payment) => (
-    <div className="flex justify-between py-2 border-b">
-      <span>{payment.description}</span>
-      <Currency amount={payment.amount} />
-    </div>
-  )}
-  initialLimit={5}
-  viewAllHref={`/payments?tenant=${tenant.id}`}
-  viewAllMode="auto"
-  emptyIcon={CreditCard}
-  emptyText="No payments recorded"
-/>
-```
-
-**Props:**
-| Prop | Type | Description |
-|------|------|-------------|
-| `items` | `T[]` | Array of items to display |
-| `renderItem` | `(item: T, index: number) => ReactNode` | Render function for each item |
-| `keyExtractor` | `(item: T, index: number) => string` | Key function for React |
-| `initialLimit` | `number` | Items to show initially (default: 3) |
-| `maxInlineExpand` | `number` | Max items for inline expand (default: 10) |
-| `viewAllMode` | `"link"` \| `"expand"` \| `"auto"` | How "View All" behaves |
-| `viewAllHref` | `string` | URL for link mode |
-| `emptyIcon` | `LucideIcon` | Icon for empty state |
-| `emptyText` | `string` | Text for empty state |
-| `emptyAction` | `{label, href}` | CTA button for empty state |
-
-**viewAllMode Behavior:**
-- `"expand"`: Expands inline with animation
-- `"link"`: Navigates to `viewAllHref`
-- `"auto"`: Expand if ≤10 items, else link
-
-#### MasonryGrid - CSS Columns Layout
-
-Auto-balancing layout using CSS multi-columns:
-
-```typescript
-import { MasonryGrid } from "@/components/ui"
-
-<MasonryGrid columns={2} gap="md">
-  <DetailSection>Short content</DetailSection>
-  <DetailSection>Longer content here</DetailSection>
-  <DetailSection>Medium content</DetailSection>
-</MasonryGrid>
-```
-
-**Benefits:**
-- Auto-balances without JavaScript
-- Best browser support
-- `break-inside: avoid` keeps sections intact
-- Responsive breakpoints built-in
+| Component | Import | Usage |
+|-----------|--------|-------|
+| `MemberQRCode` | `@/components/library` | QR code for quick check-in |
+| `MemberHoursCard` | `@/components/library` | Hours balance display |
 
 ---
 
 ## 5. Database Schema
 
-### 5.1 Key Tables
+### 5.1 Key Tables - PG Module
 
 | Table | Purpose |
 |-------|---------|
 | `workspaces` | One per owner (auto-created) |
 | `user_profiles` | Central identity |
-| `user_contexts` | Links users to workspaces (has `is_active`) |
+| `user_contexts` | Links users to workspaces |
 | `platform_admins` | Superusers (NO `is_active` column) |
 | `properties` | Buildings |
 | `rooms` | Rooms with `total_beds`, `occupied_beds` |
 | `tenants` | Tenant records |
-| `tenant_stays` | Track multiple stays (re-joining tenants) |
+| `tenant_stays` | Track multiple stays |
 | `bills` | Monthly bills with `line_items` JSONB |
 | `payments` | Payment records |
 | `refunds` | Refund tracking |
 | `exit_clearance` | Checkout process |
-| `meters` | Physical utility meters (electricity, water, gas) |
-| `meter_assignments` | Meter-to-room assignments with date ranges |
-| `meter_readings` | Consumption readings linked to meters |
-| `tenant_risk_alerts` | AI-generated risk alerts |
-| `communications` | Message tracking |
+| `meters` | Physical utility meters |
+| `meter_assignments` | Meter-to-room assignments |
+| `meter_readings` | Consumption readings |
 | `audit_events` | Comprehensive audit trail |
 
-### 5.2 Critical Column Names
+### 5.2 Key Tables - Library Module
+
+| Table | Purpose |
+|-------|---------|
+| `libraries` | Library locations |
+| `library_sections` | Study areas (AC Hall, Non-AC, etc.) |
+| `library_seats` | Individual study positions |
+| `library_members` | Student records with subscriptions |
+| `library_memberships` | Subscription periods with hours |
+| `library_attendance` | Check-in/check-out tracking |
+| `library_lockers` | Locker management |
+| `library_locker_assignments` | Locker rental history |
+| `library_payments` | Subscription & locker payments |
+| `library_plans` | Subscription plan definitions |
+| `library_waitlist` | Prospective member queue |
+
+### 5.3 Critical Column Names
 
 | Table | Correct Column | NOT |
 |-------|----------------|-----|
 | `rooms` | `total_beds` | ~~bed_count~~ |
 | `tenants` | `phone_numbers` (JSONB) | ~~phones~~ |
-| `tenants` | `guardian_contacts` (JSONB) | ~~guardians~~ |
 | `tenant_stays` | `join_date` | ~~start_date~~ |
 | `exit_clearance` | `settlement_status` | ~~status~~ |
 | `platform_admins` | NO `is_active` column | ~~is_active~~ |
-
-### 5.3 UUID Generation
-
-```sql
--- Postgres (preferred)
-id UUID PRIMARY KEY DEFAULT gen_random_uuid()
-
--- Client-side (TypeScript)
-const id = crypto.randomUUID()
-```
 
 ### 5.4 Key Migrations
 
 | # | File | Purpose |
 |---|------|---------|
 | 001 | initial_schema.sql | Core tables |
-| 007 | tenant_history.sql | Re-joining tenants, room transfers |
+| 007 | tenant_history.sql | Re-joining tenants |
 | 012 | unified_identity.sql | Multi-context auth |
 | 016 | audit_logging.sql | Audit trail |
-| 017 | platform_admins.sql | Superuser system |
 | 038 | comprehensive_audit_system.sql | Universal triggers |
-| 039 | refunds_table.sql | Refund tracking |
-| 040 | fix_schema_gaps.sql | Feature flags, RLS |
-| 041 | tenant_journey_analytics.sql | Risk alerts |
-| 042 | schema_reconciliation.sql | FK indexes, atomic RPCs |
-| 043 | security_fixes.sql | Audit policy, CHECK constraints |
-| 052 | meter_management.sql | Meters table, meter_assignments, RLS |
-| 053 | cleanup_old_meter_readings.sql | Remove legacy readings, make meter_id required |
-| 057 | add_created_by.sql | created_by column on 14 tables, backfill from audit_events |
-| 058 | add_soft_delete.sql | deleted_at/deleted_by columns, partial indexes, helper functions |
-
-### 5.5 CHECK Constraints (Migration 043)
-
-```sql
-tenants.discount_percent: 0-100 range
-bills.paid_amount: non-negative
-bills.balance_due: non-negative
-payments.amount: positive (> 0)
-refunds.amount: positive (> 0)
-tenant_risk_alerts.severity: 'low', 'medium', 'high', 'critical'
-```
+| 052 | meter_management.sql | Meters table |
+| 057 | add_created_by.sql | created_by column |
+| 058 | add_soft_delete.sql | deleted_at/deleted_by |
+| 061 | library_module.sql | Core library tables |
+| 062 | library_plans.sql | Subscription plans |
+| 063 | library_complaints_notices.sql | Library support for complaints/notices |
+| 064 | library_attendance_hours_trigger.sql | Auto-calculate hours on check-out |
+| 065 | library_waitlist.sql | Waitlist with auto-queue positioning |
 
 ---
 
 ## 6. Service Layer
 
 ### 6.1 Workflow Engine
-
-The workflow engine (`src/lib/services/workflow.engine.ts`) orchestrates multi-step operations:
 
 ```typescript
 import { executeWorkflow, WorkflowDefinition } from "@/lib/services/workflow.engine"
@@ -631,31 +478,21 @@ const myWorkflow: WorkflowDefinition<InputType, OutputType> = {
   ],
   buildOutput: (results) => results.process as OutputType,
 }
-
-// Execute with idempotency key to prevent duplicates
-const result = await executeWorkflow(
-  myWorkflow,
-  input,
-  actorId,
-  actorType,
-  workspaceId,
-  { idempotency_key: `payment-${paymentId}` }
-)
 ```
 
-### 6.2 Audit Service
+### 6.2 Email Service
 
 ```typescript
-import { createAuditEvent, logAuditEvent } from "@/lib/services/audit.service"
+import { sendLibraryLowHoursWarning, sendLibraryExpiringMembership } from "@/lib/email"
 
-const event = createAuditEvent(
-  "tenant",           // entity_type
-  tenantId,           // entity_id
-  "update",           // action
-  { actor_id, actor_type, workspace_id },
-  { before: oldData, after: newData }
-)
-await logAuditEvent(event)
+// Send low hours warning (≤2 hours remaining)
+await sendLibraryLowHoursWarning({
+  to: member.email,
+  memberName: member.name,
+  libraryName: library.name,
+  hoursRemaining: member.hours_balance,
+  totalHours: membership.hours_included,
+})
 ```
 
 ### 6.3 API Response Pattern
@@ -663,64 +500,96 @@ await logAuditEvent(event)
 ```typescript
 import { apiSuccess, apiError, unauthorized, notFound } from "@/lib/api-response"
 
-// Success
 return apiSuccess(data, "Operation successful")
-
-// Errors
 return unauthorized()
 return notFound("Tenant")
 return apiError(ErrorCodes.VALIDATION_ERROR, "Invalid input", details)
 ```
 
-### 6.4 Structured Logging
+---
 
-```typescript
-import { cronLogger, apiLogger, workflowLogger } from "@/lib/logger"
+## 7. Cron Jobs
 
-cronLogger.info("Bill generation started", { ownerId, count: tenants.length })
-apiLogger.error("Request failed", { error: extractErrorMeta(err) })
+| Cron | Schedule | Description |
+|------|----------|-------------|
+| `/api/cron/generate-bills` | Daily | Auto-generate monthly bills |
+| `/api/cron/expire-library-memberships` | Daily | Mark expired memberships, update member status |
+| `/api/cron/library-notifications` | Daily | Send low hours & expiring membership emails |
+
+### Cron Configuration (vercel.json)
+
+```json
+{
+  "crons": [
+    { "path": "/api/cron/generate-bills", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/expire-library-memberships", "schedule": "0 1 * * *" },
+    { "path": "/api/cron/library-notifications", "schedule": "0 9 * * *" }
+  ]
+}
 ```
 
 ---
 
-## 7. Authentication & Authorization
+## 8. Authentication & Authorization
 
-### 7.1 Multi-Context Identity
-
-- One login, multiple roles
-- Same email can be owner at one PG, staff at another
-- Context switching via header dropdown
-- `user_contexts` table with `is_active` flag
-
-### 7.2 RBAC System
-
-- 50+ permissions organized by module
-- 5 default roles: Admin, Property Manager, Accountant, Maintenance, Receptionist
-- Multi-role support via `user_roles`
-- Permissions aggregated from ALL assigned roles (UNION)
-
-### 7.3 Permission Hierarchy
+### 8.1 Permission Hierarchy
 
 ```
-Platform Admin > Owner > Staff > Tenant
+Platform Admin > Owner > Staff > Tenant/Member
 ```
 
-### 7.4 Permissions List
+### 8.2 Permissions List
 
 ```typescript
-// All permissions from src/lib/auth/types.ts
+// PG Permissions
 DASHBOARD_VIEW, PROPERTIES_*, ROOMS_*, TENANTS_*,
 BILLS_*, PAYMENTS_*, EXPENSES_*, REFUNDS_*,
 METERS_*, METER_READINGS_*, STAFF_*, NOTICES_*, COMPLAINTS_*,
-VISITORS_*, EXIT_CLEARANCE_*, REPORTS_*, APPROVALS_*,
-SETTINGS_*, ARCHITECTURE_VIEW, ACTIVITY_VIEW
+VISITORS_*, EXIT_CLEARANCE_*, REPORTS_*, APPROVALS_*
+
+// Library Permissions
+LIBRARY_VIEW, LIBRARY_CREATE, LIBRARY_EDIT, LIBRARY_DELETE,
+LIBRARY_SECTIONS_*, LIBRARY_SEATS_*,
+LIBRARY_MEMBERS_*, LIBRARY_WAITLIST_*,
+LIBRARY_ATTENDANCE_*, LIBRARY_LOCKERS_*, LIBRARY_PAYMENTS_*
 ```
 
 ---
 
-## 8. Security
+## 9. Navigation Configuration
 
-### 8.1 Implemented Protections
+Navigation is centralized in `src/lib/navigation/config.ts`:
+
+```typescript
+import { DASHBOARD_NAVIGATION, filterNavigation } from "@/lib/navigation/config"
+
+// Filter based on permissions and features
+const filteredNav = filterNavigation(DASHBOARD_NAVIGATION, {
+  hasPermission,
+  isFeatureEnabled,
+  isPlatformAdmin,
+})
+```
+
+### Adding a New Navigation Item
+
+```typescript
+// In src/lib/navigation/config.ts
+{
+  name: "New Module",
+  href: "/new-module",
+  icon: NewIcon,
+  permission: "new_module.view",
+  feature: "newModule",  // or null if always visible
+  dividerBefore: true,   // optional divider
+}
+```
+
+---
+
+## 10. Security
+
+### 10.1 Implemented Protections
 
 | Protection | Location | Description |
 |------------|----------|-------------|
@@ -729,9 +598,8 @@ SETTINGS_*, ARCHITECTURE_VIEW, ACTIVITY_VIEW
 | Security Headers | `next.config.ts` | CSP, HSTS, X-Frame-Options |
 | RLS | All tables | Row Level Security |
 | Audit Logging | Universal triggers | Critical tables |
-| Input Validation | API routes | UUID, date, limit validation |
 
-### 8.2 Rate Limiters
+### 10.2 Rate Limiters
 
 | Limiter | Limit | Usage |
 |---------|-------|-------|
@@ -739,122 +607,6 @@ SETTINGS_*, ARCHITECTURE_VIEW, ACTIVITY_VIEW
 | `apiLimiter` | 100 req/min | General API routes |
 | `sensitiveLimiter` | 3 req/min | Admin operations |
 | `cronLimiter` | 2 req/min | Cron jobs |
-
-### 8.3 Security Patterns
-
-```typescript
-// Rate limiting
-import { withRateLimit, apiLimiter } from "@/lib/rate-limit"
-const { limited, headers } = await withRateLimit(request, apiLimiter)
-if (limited) return rateLimited()
-
-// CSRF protection
-import { validateCsrfToken } from "@/lib/csrf"
-const valid = await validateCsrfToken(request)
-if (!valid) return csrfError()
-
-// Filename sanitization for downloads
-import { sanitizeFilename } from "@/lib/format"
-const safe = sanitizeFilename(tenantName)
-```
-
-### 8.4 Proxy (formerly Middleware)
-
-Next.js 16 renamed `middleware.ts` to `proxy.ts`. The proxy handles:
-- Supabase session refresh
-- Route protection (redirects unauthenticated users)
-- CSRF cookie setting for authenticated users
-
-**File**: `src/proxy.ts` (exports `proxy` function)
-
-**Runtime Notes** (Node.js runtime in proxy):
-- `import crypto from "crypto"` - Use `crypto.getRandomValues()` (Web Crypto API)
-- `Buffer.from()` / `Buffer.toString()` - Use `btoa()` / `atob()`
-- `crypto.timingSafeEqual()` - Use manual constant-time comparison
-
----
-
-## 9. Testing
-
-### 9.1 Test Suite Overview
-
-The project uses Jest with React Testing Library. **280 tests** across 10 test suites:
-
-| Test File | Tests | Coverage |
-|-----------|-------|----------|
-| `format.test.ts` | 45 | Currency, number, text formatting |
-| `validators.test.ts` | 42 | Indian mobile, PAN, Aadhaar, GST validators |
-| `validators-extended.test.ts` | 40 | Extended validation rules |
-| `api-response.test.ts` | 32 | API response helpers, error codes |
-| `workflow-engine.test.ts` | 35 | Workflow engine operations |
-| `services/types.test.ts` | 26 | Service layer error codes |
-| `currency.test.tsx` | 21 | Currency display components |
-| `rate-limit.test.ts` | 20 | Rate limiting utilities |
-| `csrf.test.ts` | 19 | CSRF protection |
-
-### 9.2 Running Tests
-
-```bash
-npm test             # Run all tests
-npm run test:watch   # Watch mode for development
-npm run test:coverage # Generate coverage report
-```
-
-### 9.3 Test Configuration
-
-- **Config**: `jest.config.js` (uses `next/jest`)
-- **Setup**: `jest.setup.js` (mocks for NextResponse, router, Supabase)
-- **Location**: `src/__tests__/`
-
-### 9.4 Writing New Tests
-
-```typescript
-// Component test example
-import { render, screen } from '@testing-library/react'
-import { MyComponent } from '@/components/ui/my-component'
-
-describe('MyComponent', () => {
-  it('renders correctly', () => {
-    render(<MyComponent prop="value" />)
-    expect(screen.getByText('Expected Text')).toBeInTheDocument()
-  })
-})
-
-// Utility test example
-import { myFunction } from '@/lib/my-utility'
-
-describe('myFunction', () => {
-  it('handles valid input', () => {
-    expect(myFunction('input')).toBe('expected')
-  })
-})
-```
-
----
-
-## 10. Common Issues & Solutions
-
-### "Column does not exist"
-- Check column names in Section 5.2
-- Common mistakes: `bed_count` vs `total_beds`, `is_active` on `platform_admins`
-
-### 400 Bad Request on insert
-- Verify all required columns exist
-- Check column names match exactly
-- Ensure JSONB fields are properly formatted
-
-### RLS Policy blocking
-- Check `owner_id = auth.uid()` pattern
-- Verify workspace_id for staff access
-- Use `is_platform_admin()` function (not column check)
-
-### Supabase client hanging
-- Use direct REST API for complex workflows
-- See `exit.workflow.ts` for pattern
-
-### TypeScript implicit any errors
-- Add explicit type annotations to array callbacks
-- Example: `.filter((b: { status: string }) => b.status === "paid")`
 
 ---
 
@@ -864,28 +616,17 @@ describe('myFunction', () => {
 
 **List Page:**
 1. Create `src/app/(dashboard)/[module]/page.tsx`
-2. Wrap with `<PermissionGuard permission="module.view">`
-3. Add config to `src/lib/hooks/useListPage.ts`
-4. Use `ListPageTemplate` with centralized config
-5. Add to navigation in layout
+2. Define config with `ListPageConfig` type
+3. Define metrics with `MetricConfig` type and `compute` function
+4. Use `ListPageTemplate` with all required props
+5. Add to navigation in `src/lib/navigation/config.ts`
+6. Add permissions in `src/lib/auth/types.ts`
 
 **Detail Page:**
 1. Create `src/app/(dashboard)/[module]/[id]/page.tsx`
-2. Wrap with `<PermissionGuard permission="module.view">`
-3. Use `useDetailPage` hook for data fetching
-4. **Use `<DetailPageTemplate>` for consistent layout** (REQUIRED):
-   ```typescript
-   <DetailPageTemplate
-     layoutKey="module-detail"
-     entityType="module"
-     record={entity}
-   >
-     <DetailSection>...</DetailSection>
-   </DetailPageTemplate>
-   ```
-5. Use `<DetailListSection>` for all lists (shows 3-5 items with "View All")
-6. Use `DetailHero`, `InfoCard`, `DetailSection`, `InfoRow` patterns
-7. **DO NOT manually add `<DetailPageAudit>`** - it's included in the template
+2. Use `useDetailPage` hook for data fetching
+3. Use `<DetailPageTemplate>` for consistent layout
+4. Use `<DetailListSection>` for lists with "View All"
 
 ### 11.2 Adding a New Database Table
 
@@ -893,56 +634,20 @@ describe('myFunction', () => {
 2. Add RLS policies using `owner_id` pattern
 3. Use `is_platform_admin()` for admin bypass
 4. Create indexes for common queries
-5. Add to audit triggers if needed
-6. **Add audit columns**: `created_by`, `deleted_at`, `deleted_by` (see migrations 057-058)
-7. Update `SoftDeletableTable` type in `src/types/audit.types.ts`
+5. Add audit trigger: `EXECUTE FUNCTION universal_audit_trigger()`
+6. Add audit columns: `created_by`, `deleted_at`, `deleted_by`
+7. Update `SoftDeletableTable` type if needed
 
-### 11.3 Adding a New Permission
+### 11.3 Code Style
 
-1. Update `src/lib/auth/types.ts` - PERMISSIONS constant
-2. Update role definitions in database
-3. Update navigation filtering
-
-### 11.4 Code Style
-
-- **TypeScript**: Strict mode, explicit types
+- **TypeScript**: Strict mode, explicit types on callbacks
 - **Logging**: Use structured logger (`src/lib/logger.ts`)
 - **Errors**: Use API response helpers (`src/lib/api-response.ts`)
-- **Constants**: Use `src/lib/constants.ts` for magic numbers
-- **Formatting**: Use `src/lib/format.ts` for currency, dates
+- **Audit**: Always use `withCreatedBy()` and `softDelete()`
 
 ---
 
-## 12. Workflows
-
-### Tenant Workflow (`tenant.workflow.ts`)
-
-1. `validate_room` - Check capacity
-2. `create_tenant` - Insert tenant record
-3. `create_tenant_stay` - Track stay history
-4. `update_room_occupancy` - Atomic increment
-5. `update_bed` - Assign bed if applicable
-6. `save_documents` - Store ID documents
-7. `generate_initial_bill` - Optional first bill
-
-### Exit Workflow (`exit.workflow.ts`)
-
-1. Initiate exit clearance
-2. Calculate settlement (dues - refundable + advance)
-3. Process checklist (inspection, key return)
-4. Create refund record
-5. Update tenant and room status
-
-### Payment Workflow (`payment.workflow.ts`)
-
-1. Validate payment amount (positive)
-2. Verify bill belongs to tenant
-3. Record payment
-4. Update bill status
-
----
-
-## 13. Environment Variables
+## 12. Environment Variables
 
 ```env
 # Required
@@ -957,112 +662,44 @@ CRON_SECRET=<cron_secret>
 
 ---
 
-## 14. Deployment
+## 13. Deployment
 
-### Git Account Requirement (IMPORTANT)
+### Git Account Requirement
 
 **ALWAYS use the personal GitHub account (`cybinfo`) for this repository.**
 
-The developer has two GitHub accounts:
-- **Personal**: `cybinfo` - USE THIS for pg-manager
-- **Enterprise**: `rajat-seth_sndt` - DO NOT use for this repo
-
-Before pushing, ensure correct authentication:
-```bash
-# Verify you're using the cybinfo account
-gh auth status
-
-# If wrong account, switch to personal:
-gh auth setup-git
-```
-
 ### Quick Deploy
+
 ```bash
 git add . && git commit -m "description" && git push && vercel --prod
 ```
 
 ### Database Migration
+
 1. Create SQL in `supabase/migrations/`
-2. Run in Supabase SQL Editor
+2. Run in Supabase SQL Editor (production)
 3. Test locally before production
 
 ---
 
-## 15. Development Philosophy
+## 14. Common Issues & Solutions
 
-> **Core Principle**: Build a **unified web application experience** through aggressive centralization and modularization. Every pattern should be implemented once and reused everywhere.
+### "Column does not exist"
+- Check column names in Section 5.3
+- Common: `bed_count` vs `total_beds`, `is_active` on `platform_admins`
 
-### 15.1 Centralization First
+### TypeScript implicit any errors
+- Add explicit type annotations to array callbacks
+- Example: `.reduce((sum: number, r: Record) => sum + r.amount, 0)`
 
-**Every cross-cutting concern must have a single source of truth:**
+### RLS Policy blocking
+- Check `owner_id = auth.uid()` pattern
+- Use `is_platform_admin()` function (not column check)
 
-| Concern | Centralized Location | Usage |
-|---------|---------------------|-------|
-| Types | `src/types/*.types.ts` | Import types, never inline |
-| Audit | `src/lib/audit/` | `withCreatedBy()`, `softDelete()` |
-| UI | `src/components/ui/index.ts` | Single import point |
-| Auth | `src/lib/auth/` | `useAuth()`, `hasPermission()` |
-| Supabase | `src/lib/supabase/` | Client, transforms, helpers |
-| List Pages | `src/lib/hooks/useListPage.ts` | All list page configs |
-| Detail Pages | `DetailPageTemplate` | Sortable masonry + audit |
-| Design Tokens | `src/lib/design-tokens.ts` | Colors, spacing, typography |
-
-**Anti-patterns to avoid:**
-- ❌ Inline type definitions
-- ❌ Duplicated utility functions
-- ❌ Module-specific audit implementations
-- ❌ Scattered configuration files
-
-### 15.2 Modular Architecture
-
-**Components and utilities should be:**
-
-1. **Single Responsibility** - Each module does one thing well
-2. **Composable** - Small pieces that combine into larger features
-3. **Configurable** - Behavior driven by configuration, not code duplication
-4. **Self-Documenting** - Types and interfaces as documentation
-
-```typescript
-// GOOD: Centralized, configurable pattern
-export const TENANT_LIST_CONFIG: ListPageConfig = {
-  table: "tenants",
-  select: `*, property:properties(id, name)`,
-  // ... configuration drives behavior
-}
-
-// BAD: Duplicated logic in each page
-const tenants = await supabase.from("tenants").select(...)
-const bills = await supabase.from("bills").select(...)  // same pattern, duplicated
-```
-
-### 15.3 Unified Experience Principles
-
-1. **Consistency** - Same patterns across all 20 modules
-2. **Predictability** - Users learn once, apply everywhere
-3. **Maintainability** - Change in one place, reflected everywhere
-4. **Scalability** - Adding new modules follows established patterns
-
-### 15.4 Implementation Checklist
-
-When adding any feature, verify:
-
-- [ ] Types defined in centralized `src/types/`
-- [ ] Uses existing UI components from `@/components/ui`
-- [ ] Audit tracking via `withCreatedBy()` and `softDelete()`
-- [ ] Detail pages use `<DetailPageTemplate>` (includes audit automatically)
-- [ ] List pages use `ListPageTemplate` + config
-- [ ] Permissions defined in `src/lib/auth/types.ts`
-- [ ] No inline magic values (use `src/lib/constants.ts`)
-
-### 15.5 Design Principles Summary
-
-1. **Centralized** - Single source of truth for every concern
-2. **Modular** - Reusable, composable components
-3. **Unified** - Consistent experience across all modules
-4. **Secure** - RLS, validation, audit logging baked in
-5. **Accountable** - Every action tracked (created_by, deleted_by)
-6. **Customer-Centric** - Built for Indian business needs
-7. **AI-Ready** - Predictive analytics and insights
+### MetricConfig type errors
+- Use generic type: `MetricConfig<EntityType>[]`
+- Include `compute` function (required)
+- Use `serverFilter` for server-side counting
 
 ---
 
@@ -1074,4 +711,4 @@ When adding any feature, verify:
 
 ---
 
-*Last Updated: 2026-01-31*
+*Last Updated: 2026-02-02*
