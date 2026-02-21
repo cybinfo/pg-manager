@@ -41,7 +41,7 @@ import { formatCurrency } from "@/lib/format"
 import { PageHeader } from "@/components/ui/page-header"
 import { PageLoader } from "@/components/ui/page-loader"
 import { OwnerGuard, EmailVerificationCard } from "@/components/auth"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { sendTestEmail } from "@/lib/email"
 import { withCreatedBy } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
@@ -289,9 +289,9 @@ export default function SettingsPage() {
       if (error) throw error
 
       setOwner({ ...owner, ...profileForm })
-      toast.success("Profile updated successfully")
+      showSuccess("Profile updated successfully")
     } catch (error) {
-      toast.error("Failed to update profile")
+      showError("Failed to update profile")
     } finally {
       setSaving(false)
     }
@@ -316,9 +316,9 @@ export default function SettingsPage() {
       if (error) throw error
 
       setConfig({ ...config, ...configForm })
-      toast.success("Settings updated successfully")
+      showSuccess("Settings updated successfully")
     } catch (error) {
-      toast.error("Failed to update settings")
+      showError("Failed to update settings")
     } finally {
       setSaving(false)
     }
@@ -333,7 +333,7 @@ export default function SettingsPage() {
       .eq("id", chargeType.id)
 
     if (error) {
-      toast.error("Failed to update charge type")
+      showError("Failed to update charge type")
       return
     }
 
@@ -344,7 +344,7 @@ export default function SettingsPage() {
 
   const addChargeType = async () => {
     if (!newChargeType.name || !newChargeType.code) {
-      toast.error("Please enter name and code")
+      showError("Please enter name and code")
       return
     }
 
@@ -373,9 +373,9 @@ export default function SettingsPage() {
       setChargeTypes([...chargeTypes, data])
       setNewChargeType({ name: "", code: "" })
       setShowAddCharge(false)
-      toast.success("Charge type added")
+      showSuccess("Charge type added")
     } catch (error: any) {
-      toast.error(error.message || "Failed to add charge type")
+      showError(error.message || "Failed to add charge type")
     } finally {
       setSaving(false)
     }
@@ -398,9 +398,9 @@ export default function SettingsPage() {
       if (error) throw error
 
       setConfig({ ...config, notification_settings: notificationSettings })
-      toast.success("Notification settings saved")
+      showSuccess("Notification settings saved")
     } catch (error) {
-      toast.error("Failed to save notification settings")
+      showError("Failed to save notification settings")
     } finally {
       setSaving(false)
     }
@@ -440,10 +440,10 @@ export default function SettingsPage() {
         setConfig(data)
       }
 
-      toast.success("Auto billing settings saved")
+      showSuccess("Auto billing settings saved")
     } catch (error) {
       console.error("Save error:", error)
-      toast.error("Failed to save auto billing settings")
+      showError("Failed to save auto billing settings")
     } finally {
       setSaving(false)
     }
@@ -486,10 +486,10 @@ export default function SettingsPage() {
         setConfig(data)
       }
 
-      toast.success("Room pricing saved")
+      showSuccess("Room pricing saved")
     } catch (error) {
       console.error("Save error:", error)
-      toast.error("Failed to save room pricing")
+      showError("Failed to save room pricing")
     } finally {
       setSaving(false)
     }
@@ -521,10 +521,10 @@ export default function SettingsPage() {
         setConfig(data)
       }
 
-      toast.success("Room types saved")
+      showSuccess("Room types saved")
     } catch (error) {
       console.error("Save error:", error)
-      toast.error("Failed to save room types")
+      showError("Failed to save room types")
     } finally {
       setSaving(false)
     }
@@ -556,10 +556,10 @@ export default function SettingsPage() {
         setConfig(data)
       }
 
-      toast.success("Billing cycle mode saved")
+      showSuccess("Billing cycle mode saved")
     } catch (error) {
       console.error("Save error:", error)
-      toast.error("Failed to save billing cycle mode")
+      showError("Failed to save billing cycle mode")
     } finally {
       setSaving(false)
     }
@@ -587,10 +587,10 @@ export default function SettingsPage() {
         if (error) throw error
       }
 
-      toast.success("Utility rates saved")
+      showSuccess("Utility rates saved")
     } catch (error) {
       console.error("Save error:", error)
-      toast.error("Failed to save utility rates")
+      showError("Failed to save utility rates")
     } finally {
       setSavingUtilityRates(false)
     }
@@ -606,12 +606,12 @@ export default function SettingsPage() {
   // Add new room type
   const addRoomType = () => {
     if (!newRoomType.name || !newRoomType.code) {
-      toast.error("Please enter name and code")
+      showError("Please enter name and code")
       return
     }
     // Check for duplicate code
     if (configurableRoomTypes.some(rt => rt.code === newRoomType.code.toLowerCase())) {
-      toast.error("A room type with this code already exists")
+      showError("A room type with this code already exists")
       return
     }
     const newType: ConfigurableRoomType = {
@@ -649,7 +649,7 @@ export default function SettingsPage() {
 
   const handleSendTestEmail = async () => {
     if (!owner?.email) {
-      toast.error("No email address found")
+      showError("No email address found")
       return
     }
 
@@ -657,12 +657,12 @@ export default function SettingsPage() {
     try {
       const result = await sendTestEmail(owner.email, owner.name || "User")
       if (result.success) {
-        toast.success("Test email sent! Check your inbox.")
+        showSuccess("Test email sent! Check your inbox.")
       } else {
-        toast.error(result.error || "Failed to send test email")
+        showError(result.error || "Failed to send test email")
       }
     } catch (error) {
-      toast.error("Failed to send test email")
+      showError("Failed to send test email")
     } finally {
       setSendingTestEmail(false)
     }
@@ -670,7 +670,7 @@ export default function SettingsPage() {
 
   const deleteChargeType = async (chargeType: ChargeType) => {
     if (chargeType.category !== "custom") {
-      toast.error("Cannot delete system charge types")
+      showError("Cannot delete system charge types")
       return
     }
 
@@ -684,12 +684,12 @@ export default function SettingsPage() {
       .eq("id", chargeType.id)
 
     if (error) {
-      toast.error("Failed to delete charge type")
+      showError("Failed to delete charge type")
       return
     }
 
     setChargeTypes(chargeTypes.filter((ct) => ct.id !== chargeType.id))
-    toast.success("Charge type deleted")
+    showSuccess("Charge type deleted")
   }
 
   const toggleExpenseType = async (expenseType: ExpenseType) => {
@@ -701,7 +701,7 @@ export default function SettingsPage() {
       .eq("id", expenseType.id)
 
     if (error) {
-      toast.error("Failed to update expense type")
+      showError("Failed to update expense type")
       return
     }
 
@@ -712,7 +712,7 @@ export default function SettingsPage() {
 
   const addExpenseType = async () => {
     if (!newExpenseType.name || !newExpenseType.code) {
-      toast.error("Please enter name and code")
+      showError("Please enter name and code")
       return
     }
 
@@ -740,9 +740,9 @@ export default function SettingsPage() {
       setExpenseTypes([...expenseTypes, data])
       setNewExpenseType({ name: "", code: "" })
       setShowAddExpense(false)
-      toast.success("Expense category added")
+      showSuccess("Expense category added")
     } catch (error: any) {
-      toast.error(error.message || "Failed to add expense category")
+      showError(error.message || "Failed to add expense category")
     } finally {
       setSaving(false)
     }
@@ -759,12 +759,12 @@ export default function SettingsPage() {
       .eq("id", expenseType.id)
 
     if (error) {
-      toast.error("Failed to delete expense category. It may be in use.")
+      showError("Failed to delete expense category. It may be in use.")
       return
     }
 
     setExpenseTypes(expenseTypes.filter((et) => et.id !== expenseType.id))
-    toast.success("Expense category deleted")
+    showSuccess("Expense category deleted")
   }
 
   const toggleFeatureFlag = (feature: FeatureFlagKey) => {
@@ -790,9 +790,9 @@ export default function SettingsPage() {
 
       if (error) throw error
 
-      toast.success("Feature settings saved")
+      showSuccess("Feature settings saved")
     } catch (error) {
-      toast.error("Failed to save feature settings")
+      showError("Failed to save feature settings")
     } finally {
       setSaving(false)
     }
@@ -1737,9 +1737,9 @@ export default function SettingsPage() {
                       .eq("id", config?.id)
 
                     if (error) throw error
-                    toast.success("Food settings saved!")
+                    showSuccess("Food settings saved!")
                   } catch (error) {
-                    toast.error("Failed to save food settings")
+                    showError("Failed to save food settings")
                   } finally {
                     setSaving(false)
                   }

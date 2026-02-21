@@ -17,7 +17,7 @@ import {
   Users,
   Lock
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 interface Role {
   id: string
@@ -157,7 +157,7 @@ export default function EditRolePage() {
 
       if (error || !data) {
         console.error("Error fetching role:", error)
-        toast.error("Role not found")
+        showError("Role not found")
         router.push("/staff/roles")
         return
       }
@@ -230,17 +230,17 @@ export default function EditRolePage() {
     if (!role) return
 
     if (role.is_system_role) {
-      toast.error("Cannot modify system roles")
+      showError("Cannot modify system roles")
       return
     }
 
     if (!formData.name) {
-      toast.error("Please enter a role name")
+      showError("Please enter a role name")
       return
     }
 
     if (selectedPermissions.length === 0) {
-      toast.error("Please select at least one permission")
+      showError("Please select at least one permission")
       return
     }
 
@@ -263,11 +263,11 @@ export default function EditRolePage() {
         throw error
       }
 
-      toast.success("Role updated successfully!")
+      showSuccess("Role updated successfully!")
       router.push("/staff/roles")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update role. Please try again.")
+      showError("Failed to update role. Please try again.")
     } finally {
       setSaving(false)
     }
@@ -277,12 +277,12 @@ export default function EditRolePage() {
     if (!role) return
 
     if (role.is_system_role) {
-      toast.error("Cannot delete system roles")
+      showError("Cannot delete system roles")
       return
     }
 
     if (userCount > 0) {
-      toast.error("Cannot delete role with assigned users")
+      showError("Cannot delete role with assigned users")
       return
     }
 
@@ -304,11 +304,11 @@ export default function EditRolePage() {
         throw error
       }
 
-      toast.success("Role deleted")
+      showSuccess("Role deleted")
       router.push("/staff/roles")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to delete role")
+      showError("Failed to delete role")
     } finally {
       setSaving(false)
     }

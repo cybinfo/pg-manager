@@ -17,7 +17,7 @@ import {
   Wallet,
   FileText,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoader } from "@/components/ui/page-loader"
 
 interface ExpenseType {
@@ -102,7 +102,7 @@ export default function NewExpensePage() {
       setProperties(propertiesData || [])
     } catch (error) {
       console.error("Error fetching data:", error)
-      toast.error("Failed to load form data")
+      showError("Failed to load form data")
     } finally {
       setLoading(false)
     }
@@ -119,17 +119,17 @@ export default function NewExpensePage() {
     e.preventDefault()
 
     if (!formData.expense_type_id) {
-      toast.error("Please select an expense category")
+      showError("Please select an expense category")
       return
     }
 
     if (!formData.amount || Number(formData.amount) <= 0) {
-      toast.error("Please enter a valid amount")
+      showError("Please enter a valid amount")
       return
     }
 
     if (!formData.expense_date) {
-      toast.error("Please select a date")
+      showError("Please select a date")
       return
     }
 
@@ -160,15 +160,15 @@ export default function NewExpensePage() {
 
       if (error) {
         console.error("Error creating expense:", error)
-        toast.error(`Failed to add expense: ${error.message}`)
+        showError(`Failed to add expense: ${error.message}`)
         return
       }
 
-      toast.success("Expense added successfully")
+      showSuccess("Expense added successfully")
       router.push("/expenses")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to add expense")
+      showError("Failed to add expense")
     } finally {
       setSubmitting(false)
     }

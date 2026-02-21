@@ -47,7 +47,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import {
   LIBRARY_LOCKER_STATUS_CONFIG,
   LIBRARY_LOCKER_SIZE_CONFIG,
@@ -92,7 +92,7 @@ export default function LibraryLockerDetailPage() {
 
       if (assignmentError) {
         console.error("Error ending assignment:", assignmentError)
-        toast.error(`Failed to end assignment: ${assignmentError.message}`)
+        showError(`Failed to end assignment: ${assignmentError.message}`)
         return
       }
 
@@ -110,7 +110,7 @@ export default function LibraryLockerDetailPage() {
 
       if (lockerError) {
         console.error("Error updating locker:", lockerError)
-        toast.error(`Failed to update locker: ${lockerError.message}`)
+        showError(`Failed to update locker: ${lockerError.message}`)
         return
       }
 
@@ -128,11 +128,11 @@ export default function LibraryLockerDetailPage() {
         // Don't fail the whole operation
       }
 
-      toast.success("Locker unassigned successfully!")
+      showSuccess("Locker unassigned successfully!")
       refetch()
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to unassign locker. Please try again.")
+      showError("Failed to unassign locker. Please try again.")
     } finally {
       setUnassigning(false)
     }

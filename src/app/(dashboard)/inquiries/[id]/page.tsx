@@ -45,7 +45,7 @@ import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime, formatDate, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
 import { PermissionGate } from "@/components/auth"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 // ============================================
 // Types
@@ -145,7 +145,7 @@ export default function InquiryDetailPage() {
   const handleQuickStatusChange = async (newStatus: string) => {
     const success = await updateFields({ status: newStatus })
     if (success) {
-      toast.success(`Status updated to ${statusLabels[newStatus]}`)
+      showSuccess(`Status updated to ${statusLabels[newStatus]}`)
     }
   }
 
@@ -156,7 +156,7 @@ export default function InquiryDetailPage() {
     })
     if (success) {
       setEditing(false)
-      toast.success("Inquiry updated successfully")
+      showSuccess("Inquiry updated successfully")
     }
   }
 

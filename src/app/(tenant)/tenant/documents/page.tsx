@@ -18,7 +18,7 @@ import {
   File
 } from "lucide-react"
 import { DocumentUploadDialog } from "@/components/tenant/document-upload-dialog"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
 import { PageLoader } from "@/components/ui/page-loader"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -32,6 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { TenantWithContext } from "@/types/tenants.types"
 
 interface TenantDocument {
@@ -92,7 +93,7 @@ export default function TenantDocumentsPage() {
     }
 
     // Handle Supabase array join
-    const property = Array.isArray(tenant.property) ? tenant.property[0] : tenant.property
+    const property = transformJoin(tenant.property)
     const ownerId = property?.owner_id || tenant.owner_id
 
     // Get workspace_id from workspaces table via owner
@@ -151,11 +152,11 @@ export default function TenantDocumentsPage() {
     setDocumentToDelete(null)
 
     if (error) {
-      toast.error("Failed to delete document")
+      showError("Failed to delete document")
       return
     }
 
-    toast.success("Document deleted")
+    showSuccess("Document deleted")
     fetchDocuments()
   }
 

@@ -23,7 +23,7 @@
 "use client"
 
 import { useState, useCallback, useMemo } from "react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 // ============================================================================
 // TYPES
@@ -146,7 +146,7 @@ export function useDialogState<T extends Record<string, unknown>>(
           await handler(formData)
 
           if (submitOptions?.successMessage) {
-            toast.success(submitOptions.successMessage)
+            showSuccess(submitOptions.successMessage)
           }
 
           close()
@@ -159,7 +159,7 @@ export function useDialogState<T extends Record<string, unknown>>(
           setError(errorMessage)
 
           if (showErrorToast) {
-            toast.error(errorMessage)
+            showError(errorMessage)
           }
         } finally {
           setLoading(false)

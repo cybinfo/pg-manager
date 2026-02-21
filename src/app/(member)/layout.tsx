@@ -18,7 +18,7 @@ import {
   BookOpen,
   QrCode,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess } from "@/lib/toast-helpers"
 
 interface MemberPortalInfo {
   id: string
@@ -119,7 +119,7 @@ export default function MemberLayout({
     if (!result.success) {
       console.error('[MemberLayout] Logout error:', result.error?.message)
     }
-    toast.success("Logged out successfully")
+    showSuccess("Logged out successfully")
     router.push("/login")
   }
 

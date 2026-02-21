@@ -53,7 +53,7 @@ import {
   Heart,
   Undo2,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
@@ -158,7 +158,7 @@ export default function TenantDetailPage() {
 
   const handlePutOnNotice = async () => {
     if (!tenant || !noticeData.expected_exit_date || !noticeData.notice_date) {
-      toast.error("Please fill in all required fields")
+      showError("Please fill in all required fields")
       return
     }
 
@@ -176,7 +176,7 @@ export default function TenantDetailPage() {
     })
 
     if (success) {
-      toast.success("Tenant put on notice period")
+      showSuccess("Tenant put on notice period")
       setShowNoticeDialog(false)
       refetch()
     }
@@ -199,7 +199,7 @@ export default function TenantDetailPage() {
     })
 
     if (success) {
-      toast.success("Notice cancelled - tenant is now active again")
+      showSuccess("Notice cancelled - tenant is now active again")
       setShowCancelNoticeDialog(false)
       refetch()
     }
@@ -235,7 +235,7 @@ export default function TenantDetailPage() {
 
   const handleRoomTransfer = async () => {
     if (!tenant || !transferData.to_room_id) {
-      toast.error("Please select a room")
+      showError("Please select a room")
       return
     }
 
@@ -292,12 +292,12 @@ export default function TenantDetailPage() {
         .update({ property_id: selectedRoom.property_id, room_id: selectedRoom.id, monthly_rent: newRent })
         .eq("id", tenant.id)
 
-      toast.success("Room transfer completed!")
+      showSuccess("Room transfer completed!")
       setShowTransferModal(false)
       window.location.reload()
     } catch (error) {
       console.error("Error transferring room:", error)
-      toast.error("Failed to transfer room")
+      showError("Failed to transfer room")
     } finally {
       setActionLoading(false)
     }

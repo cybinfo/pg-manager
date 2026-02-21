@@ -27,7 +27,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -131,14 +131,14 @@ export default function ProductDetailPage({
     try {
       const result = await softDelete("products", id, user.id)
       if (!result.error) {
-        toast.success("Product deleted successfully")
+        showSuccess("Product deleted successfully")
         router.push("/expenses/products")
       } else {
-        toast.error(result.error.message || "Failed to delete product")
+        showError(result.error.message || "Failed to delete product")
       }
     } catch (error) {
       console.error("Failed to delete product:", error)
-      toast.error("Failed to delete product")
+      showError("Failed to delete product")
     }
   }
 

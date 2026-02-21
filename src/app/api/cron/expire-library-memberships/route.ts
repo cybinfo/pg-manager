@@ -12,6 +12,7 @@
 import { validateCronRequest } from "@/lib/api-middleware"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { apiSuccess, internalError } from "@/lib/api-response"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 export async function GET(request: Request) {
   try {
@@ -56,7 +57,7 @@ export async function GET(request: Request) {
     // Process each expired membership
     for (const membership of expiredMemberships || []) {
       try {
-        const member = Array.isArray(membership.member) ? membership.member[0] : membership.member
+        const member = transformJoin(membership.member)
 
         // Update membership status to expired
         const { error: updateError } = await supabaseAdmin

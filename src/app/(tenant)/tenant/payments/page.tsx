@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { PageLoader } from "@/components/ui/page-loader"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { TenantWithContext } from "@/types/tenants.types"
 
@@ -104,7 +105,7 @@ export default function TenantPaymentsPage() {
       }
 
       // Handle Supabase array join
-      const property = Array.isArray(tenant.property) ? tenant.property[0] : tenant.property
+      const property = transformJoin(tenant.property)
       const ownerId = property?.owner_id || tenant.owner_id
 
       // Get workspace_id from workspaces table via owner
@@ -136,6 +137,7 @@ export default function TenantPaymentsPage() {
           charge_type:charge_types(name)
         `)
         .eq("tenant_id", tenant.id)
+        .is("deleted_at", null)
         .order("payment_date", { ascending: false })
 
       // Transform the data from arrays to single objects

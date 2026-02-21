@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Mail, CheckCircle, XCircle, Loader2, Send } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
 
 interface EmailVerificationCardProps {
@@ -40,13 +40,13 @@ export function EmailVerificationCard({
       const data = await response.json()
 
       if (response.ok && data.success) {
-        toast.success("Verification email sent! Check your inbox.")
+        showSuccess("Verification email sent! Check your inbox.")
         onVerificationSent?.()
       } else {
-        toast.error(data.error || "Failed to send verification email")
+        showError(data.error || "Failed to send verification email")
       }
     } catch (error) {
-      toast.error("An error occurred while sending verification email")
+      showError("An error occurred while sending verification email")
     } finally {
       setSending(false)
     }

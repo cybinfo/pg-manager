@@ -20,6 +20,7 @@ import {
   User
 } from "lucide-react"
 import { PageLoader } from "@/components/ui/page-loader"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
 
 interface TenantFeatures {
@@ -108,12 +109,8 @@ export default function TenantHomePage() {
       // Transform Supabase join arrays to objects (Supabase returns joins as arrays)
       const normalizedTenant = {
         ...tenantData,
-        property: Array.isArray(tenantData.property)
-          ? tenantData.property[0]
-          : tenantData.property,
-        room: Array.isArray(tenantData.room)
-          ? tenantData.room[0]
-          : tenantData.room,
+        property: transformJoin(tenantData.property),
+        room: transformJoin(tenantData.room),
       }
 
       // Fetch recent payments
@@ -121,6 +118,7 @@ export default function TenantHomePage() {
         .from("payments")
         .select("id, amount, payment_date, payment_method, for_period")
         .eq("tenant_id", tenantData.id)
+        .is("deleted_at", null)
         .order("payment_date", { ascending: false })
         .limit(3)
 
@@ -129,6 +127,7 @@ export default function TenantHomePage() {
         .from("complaints")
         .select("id", { count: "exact", head: true })
         .eq("tenant_id", tenantData.id)
+        .is("deleted_at", null)
         .in("status", ["open", "acknowledged", "in_progress"])
 
       // Fetch notices count
@@ -136,6 +135,7 @@ export default function TenantHomePage() {
         .from("notices")
         .select("id", { count: "exact", head: true })
         .eq("property_id", tenantData.property_id)
+        .is("deleted_at", null)
         .eq("is_active", true)
 
       // Calculate total paid this year
@@ -144,6 +144,7 @@ export default function TenantHomePage() {
         .from("payments")
         .select("amount")
         .eq("tenant_id", tenantData.id)
+        .is("deleted_at", null)
         .gte("payment_date", yearStart)
 
       const totalPaid = yearPayments?.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0) || 0

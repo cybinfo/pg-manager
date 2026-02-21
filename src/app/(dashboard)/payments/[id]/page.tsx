@@ -30,7 +30,7 @@ import {
   Receipt,
   IndianRupee,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, toast } from "@/lib/toast-helpers"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
@@ -121,11 +121,11 @@ export default function PaymentReceiptPage() {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
       toast.dismiss()
-      toast.success("PDF downloaded successfully!")
+      showSuccess("PDF downloaded successfully!")
     } catch (error) {
       console.error("Error downloading PDF:", error)
       toast.dismiss()
-      toast.error("Failed to download PDF")
+      showError("Failed to download PDF")
     }
   }
 

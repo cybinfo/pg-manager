@@ -39,7 +39,8 @@ import {
 import { PageHeader } from "@/components/ui/page-header"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { useDemoMode } from "@/lib/demo-mode"
-import { toast } from "sonner"
+import { transformJoin } from "@/lib/supabase/transforms"
+import { showError } from "@/lib/toast-helpers"
 
 interface Property {
   id: string
@@ -224,7 +225,7 @@ export default function ReportsPage() {
       const complaintsData = complaintsRes.data || []
       const expensesData = (expensesRes.data || []).map((e: any) => ({
         ...e,
-        expense_type: Array.isArray(e.expense_type) ? e.expense_type[0] : e.expense_type,
+        expense_type: transformJoin(e.expense_type),
       }))
 
       setProperties(propertiesData)
@@ -522,7 +523,7 @@ export default function ReportsPage() {
 
     // Check demo mode before exporting
     if (!canPerformAction("export_data")) {
-      toast.error(getDemoMessage("export_data"))
+      showError(getDemoMessage("export_data"))
       return
     }
 

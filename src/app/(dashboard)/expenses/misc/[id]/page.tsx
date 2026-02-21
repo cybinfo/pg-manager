@@ -25,7 +25,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -91,14 +91,14 @@ export default function MiscTransactionDetailPage({
     try {
       const result = await softDelete("misc_transactions", id, user.id)
       if (!result.error) {
-        toast.success("Transaction deleted")
+        showSuccess("Transaction deleted")
         router.push("/expenses/misc")
       } else {
-        toast.error(result.error.message || "Failed to delete")
+        showError(result.error.message || "Failed to delete")
       }
     } catch (error) {
       console.error("Failed to delete:", error)
-      toast.error("Failed to delete")
+      showError("Failed to delete")
     }
   }
 

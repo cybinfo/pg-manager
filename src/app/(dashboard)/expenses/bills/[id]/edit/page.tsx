@@ -11,7 +11,7 @@ import { Receipt, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -117,7 +117,7 @@ export default function EditBillPaymentPage({
         .single()
 
       if (error || !billData) {
-        toast.error("Bill not found")
+        showError("Bill not found")
         router.push("/expenses/bills")
         return
       }
@@ -178,12 +178,12 @@ export default function EditBillPaymentPage({
     e.preventDefault()
 
     if (!formData.vendor_name.trim()) {
-      toast.error("Vendor name is required")
+      showError("Vendor name is required")
       return
     }
 
     if (formData.bill_amount <= 0) {
-      toast.error("Bill amount must be greater than 0")
+      showError("Bill amount must be greater than 0")
       return
     }
 
@@ -243,11 +243,11 @@ export default function EditBillPaymentPage({
 
       if (error) throw error
 
-      toast.success("Bill updated successfully")
+      showSuccess("Bill updated successfully")
       router.push(`/expenses/bills/${id}`)
     } catch (error) {
       console.error("Failed to update bill:", error)
-      toast.error("Failed to update bill")
+      showError("Failed to update bill")
     } finally {
       setLoading(false)
     }

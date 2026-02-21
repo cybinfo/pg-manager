@@ -18,7 +18,7 @@
 
 import { useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useAuth, useCurrentContext } from "@/lib/auth"
 import {
   EntityType,
@@ -160,7 +160,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
 
         // Success toast
         if (!mutationOptions?.silent) {
-          toast.success(successMessages.create || `${formatEntityName(entityType)} created successfully`)
+          showSuccess(successMessages.create || `${formatEntityName(entityType)} created successfully`)
         }
 
         onSuccess?.(result, "create")
@@ -170,7 +170,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          toast.error(errorMessages.create || `Failed to create ${formatEntityName(entityType)}`)
+          showError(errorMessages.create || `Failed to create ${formatEntityName(entityType)}`)
         }
 
         onError?.(err, "create")
@@ -239,7 +239,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
 
         // Success toast
         if (!mutationOptions?.silent) {
-          toast.success(successMessages.update || `${formatEntityName(entityType)} updated successfully`)
+          showSuccess(successMessages.update || `${formatEntityName(entityType)} updated successfully`)
         }
 
         onSuccess?.(result, "update")
@@ -249,7 +249,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          toast.error(errorMessages.update || `Failed to update ${formatEntityName(entityType)}`)
+          showError(errorMessages.update || `Failed to update ${formatEntityName(entityType)}`)
         }
 
         onError?.(err, "update")
@@ -321,7 +321,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
 
         // Success toast
         if (!mutationOptions?.silent) {
-          toast.success(successMessages.delete || `${formatEntityName(entityType)} deleted successfully`)
+          showSuccess(successMessages.delete || `${formatEntityName(entityType)} deleted successfully`)
         }
 
         onSuccess?.(undefined, "delete")
@@ -331,7 +331,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          toast.error(errorMessages.delete || `Failed to delete ${formatEntityName(entityType)}`)
+          showError(errorMessages.delete || `Failed to delete ${formatEntityName(entityType)}`)
         }
 
         onError?.(err, "delete")
@@ -386,7 +386,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         }
 
         if (!mutationOptions?.silent) {
-          toast.success(`${results.length} ${formatEntityName(entityType)}s created successfully`)
+          showSuccess(`${results.length} ${formatEntityName(entityType)}s created successfully`)
         }
 
         onSuccess?.(results, "create")
@@ -396,7 +396,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          toast.error(`Failed to create ${formatEntityName(entityType)}s`)
+          showError(`Failed to create ${formatEntityName(entityType)}s`)
         }
 
         onError?.(err, "create")
@@ -455,7 +455,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         }
 
         if (!mutationOptions?.silent) {
-          toast.success(`${results.length} ${formatEntityName(entityType)}s updated successfully`)
+          showSuccess(`${results.length} ${formatEntityName(entityType)}s updated successfully`)
         }
 
         onSuccess?.(results, "update")
@@ -465,7 +465,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          toast.error(`Failed to update ${formatEntityName(entityType)}s`)
+          showError(`Failed to update ${formatEntityName(entityType)}s`)
         }
 
         onError?.(err, "update")
@@ -525,7 +525,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         }
 
         if (!mutationOptions?.silent) {
-          toast.success(`${ids.length} ${formatEntityName(entityType)}s deleted successfully`)
+          showSuccess(`${ids.length} ${formatEntityName(entityType)}s deleted successfully`)
         }
 
         onSuccess?.(undefined, "delete")
@@ -535,7 +535,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          toast.error(`Failed to delete ${formatEntityName(entityType)}s`)
+          showError(`Failed to delete ${formatEntityName(entityType)}s`)
         }
 
         onError?.(err, "delete")

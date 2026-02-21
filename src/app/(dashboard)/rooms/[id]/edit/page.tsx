@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Home, Loader2, Building2 } from "lucide-react"
 import { PhotoGallery } from "@/components/forms"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 interface Property {
   id: string
@@ -91,7 +91,7 @@ export default function EditRoomPage() {
 
       if (roomRes.error || !roomRes.data) {
         console.error("Error fetching room:", roomRes.error)
-        toast.error("Room not found")
+        showError("Room not found")
         router.push("/rooms")
         return
       }
@@ -146,7 +146,7 @@ export default function EditRoomPage() {
     e.preventDefault()
 
     if (!formData.property_id || !formData.room_number || !formData.rent_amount) {
-      toast.error("Please fill in all required fields")
+      showError("Please fill in all required fields")
       return
     }
 
@@ -187,18 +187,18 @@ export default function EditRoomPage() {
       if (error) {
         console.error("Error updating room:", error)
         if (error.code === "23505") {
-          toast.error("A room with this number already exists in this property")
+          showError("A room with this number already exists in this property")
         } else {
           throw error
         }
         return
       }
 
-      toast.success("Room updated successfully!")
+      showSuccess("Room updated successfully!")
       router.push(`/rooms/${params.id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update room. Please try again.")
+      showError("Failed to update room. Please try again.")
     } finally {
       setLoading(false)
     }

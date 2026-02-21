@@ -11,7 +11,7 @@ import { Hammer, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -115,7 +115,7 @@ export default function EditServicePaymentPage({
         .single()
 
       if (error || !paymentData) {
-        toast.error("Payment not found")
+        showError("Payment not found")
         router.push("/expenses/services")
         return
       }
@@ -212,17 +212,17 @@ export default function EditServicePaymentPage({
     e.preventDefault()
 
     if (!formData.provider_name.trim()) {
-      toast.error("Provider name is required")
+      showError("Provider name is required")
       return
     }
 
     if (!formData.description.trim()) {
-      toast.error("Service description is required")
+      showError("Service description is required")
       return
     }
 
     if (formData.gross_amount <= 0) {
-      toast.error("Amount must be greater than 0")
+      showError("Amount must be greater than 0")
       return
     }
 
@@ -263,11 +263,11 @@ export default function EditServicePaymentPage({
 
       if (error) throw error
 
-      toast.success("Service payment updated")
+      showSuccess("Service payment updated")
       router.push(`/expenses/services/${id}`)
     } catch (error) {
       console.error("Failed to update service payment:", error)
-      toast.error("Failed to update")
+      showError("Failed to update")
     } finally {
       setLoading(false)
     }

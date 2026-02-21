@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { ContextPicker } from "@/components/auth/context-picker"
 import { ContextWithDetails } from "@/lib/auth/types"
 
@@ -101,12 +101,12 @@ function LoginForm() {
       })
 
       if (error) {
-        toast.error(error.message)
+        showError(error.message)
         return
       }
 
       if (!data.user) {
-        toast.error("Login failed")
+        showError("Login failed")
         return
       }
 
@@ -118,7 +118,7 @@ function LoginForm() {
       if (ctxError) {
         console.error('Error fetching contexts:', ctxError)
         // Fallback to old behavior
-        toast.success("Welcome back!")
+        showSuccess("Welcome back!")
         router.push(redirectTo || '/dashboard')
         router.refresh()
         return
@@ -128,7 +128,7 @@ function LoginForm() {
 
       if (contextsArray.length === 0) {
         // No contexts - likely a new owner, redirect to setup or dashboard
-        toast.success("Welcome back!")
+        showSuccess("Welcome back!")
         router.push(redirectTo || '/dashboard')
         // Don't use router.refresh() - it causes full page reload and remount issues
       } else if (contextsArray.length === 1) {
@@ -139,10 +139,10 @@ function LoginForm() {
         setContexts(contextsArray)
         setUserName(data.user.user_metadata?.name || data.user.email?.split('@')[0] || '')
         setStep('context-picker')
-        toast.success("Welcome back!")
+        showSuccess("Welcome back!")
       }
     } catch {
-      toast.error("An unexpected error occurred")
+      showError("An unexpected error occurred")
     } finally {
       setLoading(false)
     }
@@ -184,7 +184,7 @@ function LoginForm() {
       // Don't use router.refresh() - it causes full page reload and remount issues
     } catch (error) {
       console.error('Error selecting context:', error)
-      toast.error('Failed to select account')
+      showError('Failed to select account')
     }
   }
 

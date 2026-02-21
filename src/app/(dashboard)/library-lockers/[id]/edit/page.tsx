@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 
 interface LockerData {
@@ -66,7 +66,7 @@ export default function EditLibraryLockerPage({
         .single()
 
       if (error || !data) {
-        toast.error("Locker not found")
+        showError("Locker not found")
         router.push("/library-lockers")
         return
       }
@@ -99,12 +99,12 @@ export default function EditLibraryLockerPage({
     e.preventDefault()
 
     if (!formData.locker_number) {
-      toast.error("Please enter locker number")
+      showError("Please enter locker number")
       return
     }
 
     if (!user) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -132,15 +132,15 @@ export default function EditLibraryLockerPage({
 
       if (error) {
         console.error("Error updating locker:", error)
-        toast.error(`Failed to update locker: ${error.message}`)
+        showError(`Failed to update locker: ${error.message}`)
         return
       }
 
-      toast.success("Locker updated successfully!")
+      showSuccess("Locker updated successfully!")
       router.push(`/library-lockers/${id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update locker. Please try again.")
+      showError("Failed to update locker. Please try again.")
     } finally {
       setLoading(false)
     }

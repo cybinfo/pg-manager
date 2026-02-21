@@ -16,6 +16,7 @@
  */
 
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import {
   WorkflowDefinition,
   executeWorkflow,
@@ -663,7 +664,7 @@ export const processApprovalWorkflow: WorkflowDefinition<ApprovalDecisionInput, 
         }
 
         // Transform join
-        const tenant = Array.isArray(approval.tenant) ? approval.tenant[0] : approval.tenant
+        const tenant = transformJoin(approval.tenant)
 
         return createSuccessResult({ ...approval, tenant })
       },

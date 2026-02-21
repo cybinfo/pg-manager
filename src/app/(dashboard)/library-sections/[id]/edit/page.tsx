@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 
 interface SectionData {
@@ -66,7 +66,7 @@ export default function EditLibrarySectionPage({
         .single()
 
       if (error || !data) {
-        toast.error("Section not found")
+        showError("Section not found")
         router.push("/library-sections")
         return
       }
@@ -106,12 +106,12 @@ export default function EditLibrarySectionPage({
     e.preventDefault()
 
     if (!formData.name) {
-      toast.error("Please enter section name")
+      showError("Please enter section name")
       return
     }
 
     if (!user) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -139,15 +139,15 @@ export default function EditLibrarySectionPage({
 
       if (error) {
         console.error("Error updating section:", error)
-        toast.error(`Failed to update section: ${error.message}`)
+        showError(`Failed to update section: ${error.message}`)
         return
       }
 
-      toast.success("Section updated successfully!")
+      showSuccess("Section updated successfully!")
       router.push(`/library-sections/${id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update section. Please try again.")
+      showError("Failed to update section. Please try again.")
     } finally {
       setLoading(false)
     }

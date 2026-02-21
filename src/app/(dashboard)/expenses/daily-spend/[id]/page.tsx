@@ -25,7 +25,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -102,14 +102,14 @@ export default function DailySpendDetailPage({
     try {
       const result = await softDelete("daily_spend", id, user.id)
       if (!result.error) {
-        toast.success("Entry deleted successfully")
+        showSuccess("Entry deleted successfully")
         router.push("/expenses/daily-spend")
       } else {
-        toast.error(result.error.message || "Failed to delete entry")
+        showError(result.error.message || "Failed to delete entry")
       }
     } catch (error) {
       console.error("Failed to delete entry:", error)
-      toast.error("Failed to delete entry")
+      showError("Failed to delete entry")
     }
   }
 

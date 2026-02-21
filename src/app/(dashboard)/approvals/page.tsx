@@ -16,7 +16,7 @@ import {
   User, AlertTriangle, FileText, ChevronRight, Paperclip, ExternalLink,
   Layers, ChevronDown
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
 import { formatDate, formatDateTime } from "@/lib/format"
 import {
@@ -218,7 +218,7 @@ export default function ApprovalsPage() {
       .eq("id", selectedApproval.id)
 
     if (error) {
-      toast.error("Failed to approve request")
+      showError("Failed to approve request")
     } else {
       // Try to apply the change (updates tenants + user_profiles)
       const { error: applyError } = await (supabase.rpc as Function)("apply_approval_change", {
@@ -241,9 +241,9 @@ export default function ApprovalsPage() {
           if (!response.ok) {
             const data = await response.json()
             console.error("Failed to update auth email:", data.error)
-            toast.warning("Request approved but login email needs manual update in Supabase")
+            showWarning("Request approved but login email needs manual update in Supabase")
           } else {
-            toast.success("Request approved and email updated everywhere!")
+            showSuccess("Request approved and email updated everywhere!")
             // ARCH-001: Use centralized refetch
             refetch()
             setProcessing(false)
@@ -253,14 +253,14 @@ export default function ApprovalsPage() {
           }
         } catch (err) {
           console.error("Error calling email update API:", err)
-          toast.warning("Request approved but login email needs manual update")
+          showWarning("Request approved but login email needs manual update")
         }
       }
 
       if (applyError) {
-        toast.success("Request approved (change needs manual application)")
+        showSuccess("Request approved (change needs manual application)")
       } else {
-        toast.success("Request approved and change applied!")
+        showSuccess("Request approved and change applied!")
       }
 
       // ARCH-001: Use centralized refetch
@@ -275,7 +275,7 @@ export default function ApprovalsPage() {
   const handleReject = async () => {
     if (!selectedApproval) return
     if (!decisionNotes.trim()) {
-      toast.error("Please provide a reason for rejection")
+      showError("Please provide a reason for rejection")
       return
     }
 
@@ -295,9 +295,9 @@ export default function ApprovalsPage() {
       .eq("id", selectedApproval.id)
 
     if (error) {
-      toast.error("Failed to reject request")
+      showError("Failed to reject request")
     } else {
-      toast.success("Request rejected")
+      showSuccess("Request rejected")
       // ARCH-001: Use centralized refetch
       refetch()
     }

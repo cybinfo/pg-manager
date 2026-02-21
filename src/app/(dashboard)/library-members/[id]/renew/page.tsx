@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2, Clock, RefreshCw } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
 import { TIME_SLOTS } from "@/types/library.types"
@@ -81,7 +81,7 @@ export default function RenewLibraryMemberPage({
         .single()
 
       if (memberError || !memberData) {
-        toast.error("Member not found")
+        showError("Member not found")
         router.push("/library-members")
         return
       }
@@ -128,12 +128,12 @@ export default function RenewLibraryMemberPage({
     e.preventDefault()
 
     if (!formData.plan_id && !formData.amount) {
-      toast.error("Please select a plan or enter an amount")
+      showError("Please select a plan or enter an amount")
       return
     }
 
     if (!user || !member) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -194,7 +194,7 @@ export default function RenewLibraryMemberPage({
 
         if (paymentError) {
           console.error("Error creating payment:", paymentError)
-          toast.error(`Failed to create payment: ${paymentError.message}`)
+          showError(`Failed to create payment: ${paymentError.message}`)
           setLoading(false)
           return
         }
@@ -230,7 +230,7 @@ export default function RenewLibraryMemberPage({
 
       if (membershipError) {
         console.error("Error creating membership:", membershipError)
-        toast.error(`Failed to create subscription: ${membershipError.message}`)
+        showError(`Failed to create subscription: ${membershipError.message}`)
         setLoading(false)
         return
       }
@@ -263,11 +263,11 @@ export default function RenewLibraryMemberPage({
         .eq("status", "active")
         .neq("id", membership.id)
 
-      toast.success(`Subscription renewed! Added ${hoursToAdd}h to balance.`)
+      showSuccess(`Subscription renewed! Added ${hoursToAdd}h to balance.`)
       router.push(`/library-members/${id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to renew subscription. Please try again.")
+      showError("Failed to renew subscription. Please try again.")
     } finally {
       setLoading(false)
     }

@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Users, Plus, ArrowLeft, Home } from "lucide-react"
 import { formatDate } from "@/lib/format"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface Tenant {
   id: string
@@ -64,7 +65,7 @@ export default function RoomTenantsPage() {
         }
         setRoom({
           ...r,
-          property: Array.isArray(r.property) ? r.property[0] : r.property
+          property: transformJoin(r.property)
         })
       }
 

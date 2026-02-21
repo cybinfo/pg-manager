@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 
 interface Library {
@@ -78,12 +78,12 @@ export default function NewLibraryLockerPage() {
     e.preventDefault()
 
     if (!formData.library_id || !formData.locker_number) {
-      toast.error("Please fill in required fields (Library, Locker Number)")
+      showError("Please fill in required fields (Library, Locker Number)")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -101,7 +101,7 @@ export default function NewLibraryLockerPage() {
         .single()
 
       if (!library) {
-        toast.error("Library not found")
+        showError("Library not found")
         setLoading(false)
         return
       }
@@ -123,11 +123,11 @@ export default function NewLibraryLockerPage() {
 
       if (error) {
         console.error("Error creating locker:", error)
-        toast.error(`Failed to create locker: ${error.message}`)
+        showError(`Failed to create locker: ${error.message}`)
         return
       }
 
-      toast.success("Locker created successfully!")
+      showSuccess("Locker created successfully!")
 
       if (preselectedLibrary) {
         router.push(`/library/${preselectedLibrary}`)
@@ -136,7 +136,7 @@ export default function NewLibraryLockerPage() {
       }
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to create locker. Please try again.")
+      showError("Failed to create locker. Please try again.")
     } finally {
       setLoading(false)
     }

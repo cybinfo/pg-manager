@@ -28,8 +28,9 @@ import {
   Save,
   Loader2,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
+import { transformJoin } from "@/lib/supabase/transforms"
 import {
   MeterType,
   MeterStatus,
@@ -106,14 +107,14 @@ export default function EditMeterPage() {
 
       if (meterRes.error || !meterRes.data) {
         console.error("Error fetching meter:", meterRes.error)
-        toast.error("Meter not found")
+        showError("Meter not found")
         router.push("/meters")
         return
       }
 
       const meterData = {
         ...meterRes.data,
-        property: Array.isArray(meterRes.data.property) ? meterRes.data.property[0] : meterRes.data.property,
+        property: transformJoin(meterRes.data.property),
       } as Meter
 
       setMeter(meterData)
@@ -169,7 +170,7 @@ export default function EditMeterPage() {
     e.preventDefault()
 
     if (!validate() || !meter) {
-      toast.error("Please fix the errors before submitting")
+      showError("Please fix the errors before submitting")
       return
     }
 
@@ -187,7 +188,7 @@ export default function EditMeterPage() {
         .single()
 
       if (existing) {
-        toast.error(`A meter with number "${formData.meter_number}" already exists`)
+        showError(`A meter with number "${formData.meter_number}" already exists`)
         setLoading(false)
         return
       }
@@ -211,12 +212,12 @@ export default function EditMeterPage() {
 
     if (error) {
       console.error("Error updating meter:", error)
-      toast.error("Failed to update meter")
+      showError("Failed to update meter")
       setLoading(false)
       return
     }
 
-    toast.success("Meter updated successfully")
+    showSuccess("Meter updated successfully")
     router.push(`/meters/${meter.id}`)
   }
 

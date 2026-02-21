@@ -32,7 +32,7 @@ import {
   FileText,
   Target,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -156,12 +156,12 @@ export default function NoticeDetailPage() {
 
   const handleSave = async () => {
     if (!formData.title || !formData.content) {
-      toast.error("Please fill in title and content")
+      showError("Please fill in title and content")
       return
     }
 
     if (formData.target_audience === "specific_rooms" && selectedRooms.length === 0) {
-      toast.error("Please select at least one room")
+      showError("Please select at least one room")
       return
     }
 
@@ -186,14 +186,14 @@ export default function NoticeDetailPage() {
         .eq("id", params.id)
 
       if (error) {
-        toast.error("Failed to update notice")
+        showError("Failed to update notice")
         return
       }
 
-      toast.success("Notice updated successfully")
+      showSuccess("Notice updated successfully")
       router.push("/notices")
     } catch {
-      toast.error("Failed to update notice")
+      showError("Failed to update notice")
     } finally {
       setSaving(false)
     }

@@ -28,7 +28,7 @@ import {
   Download,
   UserCog
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 // Shared form components
 import { PropertyAddressInput, CoverImageUpload, PhotoGallery } from "@/components/forms"
@@ -145,7 +145,7 @@ export default function EditPropertyPage() {
 
       if (error || !data) {
         console.error("Error fetching property:", error)
-        toast.error("Property not found")
+        showError("Property not found")
         router.push("/properties")
         return
       }
@@ -260,7 +260,7 @@ export default function EditPropertyPage() {
     navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-    toast.success("Website URL copied!")
+    showSuccess("Website URL copied!")
   }
 
   const handleTenantFeatureChange = (key: keyof TenantFeatures, value: boolean) => {
@@ -274,7 +274,7 @@ export default function EditPropertyPage() {
     e.preventDefault()
 
     if (!formData.name || !formData.city) {
-      toast.error("Please fill in required fields")
+      showError("Please fill in required fields")
       return
     }
 
@@ -325,11 +325,11 @@ export default function EditPropertyPage() {
         throw error
       }
 
-      toast.success("Property updated successfully!")
+      showSuccess("Property updated successfully!")
       router.push(`/properties/${params.id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update property. Please try again.")
+      showError("Failed to update property. Please try again.")
     } finally {
       setLoading(false)
     }

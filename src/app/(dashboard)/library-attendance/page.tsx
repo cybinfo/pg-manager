@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
-import { toast } from "sonner"
+import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 
 // ============================================
@@ -101,7 +101,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
       .eq("id", attendanceId)
 
     if (error) {
-      toast.error(`Check-out failed: ${error.message}`)
+      showError(`Check-out failed: ${error.message}`)
       return
     }
 
@@ -117,7 +117,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
         .eq("id", seatId)
     }
 
-    toast.success(`${memberName} checked out!`)
+    showSuccess(`${memberName} checked out!`)
     onCheckOut()
   }
 
@@ -215,7 +215,7 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
 
   const handleCheckIn = async () => {
     if (!memberCode.trim()) {
-      toast.error("Please enter member code or phone")
+      showError("Please enter member code or phone")
       return
     }
 
@@ -232,19 +232,19 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
         .single()
 
       if (memberError || !member) {
-        toast.error("Member not found")
+        showError("Member not found")
         setLoading(false)
         return
       }
 
       if (member.status !== "active") {
-        toast.error(`Member status is ${member.status}. Cannot check in.`)
+        showError(`Member status is ${member.status}. Cannot check in.`)
         setLoading(false)
         return
       }
 
       if (member.hours_balance <= 0) {
-        toast.error("No hours remaining. Please renew subscription.")
+        showError("No hours remaining. Please renew subscription.")
         setLoading(false)
         return
       }
@@ -260,7 +260,7 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
         .single()
 
       if (existing) {
-        toast.error("Member is already checked in")
+        showError("Member is already checked in")
         setLoading(false)
         return
       }
@@ -273,7 +273,7 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
         .single()
 
       if (!fullMember) {
-        toast.error("Could not retrieve member data")
+        showError("Could not retrieve member data")
         setLoading(false)
         return
       }
@@ -297,17 +297,17 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
         .insert(attendanceData)
 
       if (attendanceError) {
-        toast.error(`Check-in failed: ${attendanceError.message}`)
+        showError(`Check-in failed: ${attendanceError.message}`)
         setLoading(false)
         return
       }
 
-      toast.success(`${member.name} checked in successfully!`)
+      showSuccess(`${member.name} checked in successfully!`)
       setMemberCode("")
       onCheckIn()
     } catch (error) {
       console.error("Check-in error:", error)
-      toast.error("Check-in failed. Please try again.")
+      showError("Check-in failed. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -475,7 +475,7 @@ function CheckOutButton({ attendanceId, memberName }: { attendanceId: string; me
         .eq("id", attendanceId)
 
       if (error) {
-        toast.error(`Check-out failed: ${error.message}`)
+        showError(`Check-out failed: ${error.message}`)
         return
       }
 
@@ -491,12 +491,12 @@ function CheckOutButton({ attendanceId, memberName }: { attendanceId: string; me
           .eq("id", attendance.seat_id)
       }
 
-      toast.success(`${memberName} checked out successfully!`)
+      showSuccess(`${memberName} checked out successfully!`)
       // Trigger page refresh
       window.location.reload()
     } catch (error) {
       console.error("Check-out error:", error)
-      toast.error("Check-out failed. Please try again.")
+      showError("Check-out failed. Please try again.")
     } finally {
       setLoading(false)
     }

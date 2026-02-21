@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,10 +88,7 @@ export function SessionTimeout({
 
     // Logout and redirect
     await logout()
-    toast.error("Session Expired", {
-      description: "You have been logged out due to inactivity.",
-      duration: 5000,
-    })
+    showError("Session Expired", "You have been logged out due to inactivity.")
     router.push("/login")
   }, [clearTimers, logout, router, onTimeout])
 
@@ -150,10 +147,7 @@ export function SessionTimeout({
   const handleExtendSession = useCallback(() => {
     setShowWarning(false)
     resetTimer()
-    toast.success("Session Extended", {
-      description: "Your session has been extended.",
-      duration: 2000,
-    })
+    showSuccess("Session Extended", "Your session has been extended.")
   }, [resetTimer])
 
   // Set up activity listeners

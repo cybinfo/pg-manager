@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 import { ArrowLeft, Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import type { Library as LibraryType } from "@/types/library.types"
 
 export default function EditLibraryPage() {
@@ -55,7 +55,7 @@ export default function EditLibraryPage() {
         .single()
 
       if (error || !data) {
-        toast.error("Library not found")
+        showError("Library not found")
         router.push("/library")
         return
       }
@@ -103,7 +103,7 @@ export default function EditLibraryPage() {
     e.preventDefault()
 
     if (!formData.name || !formData.city) {
-      toast.error("Please fill in required fields (Name, City)")
+      showError("Please fill in required fields (Name, City)")
       return
     }
 
@@ -135,15 +135,15 @@ export default function EditLibraryPage() {
 
       if (error) {
         console.error("Error updating library:", error)
-        toast.error(`Failed to update library: ${error.message}`)
+        showError(`Failed to update library: ${error.message}`)
         return
       }
 
-      toast.success("Library updated successfully!")
+      showSuccess("Library updated successfully!")
       router.push(`/library/${params.id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update library. Please try again.")
+      showError("Failed to update library. Please try again.")
     } finally {
       setSaving(false)
     }

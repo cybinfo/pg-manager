@@ -13,7 +13,7 @@ import { Receipt, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -146,17 +146,17 @@ export default function NewBillPaymentPage() {
     e.preventDefault()
 
     if (!formData.vendor_name.trim()) {
-      toast.error("Vendor name is required")
+      showError("Vendor name is required")
       return
     }
 
     if (formData.bill_amount <= 0) {
-      toast.error("Bill amount must be greater than 0")
+      showError("Bill amount must be greater than 0")
       return
     }
 
     if (!workspaceId || !user?.id) {
-      toast.error("Session error. Please refresh the page.")
+      showError("Session error. Please refresh the page.")
       return
     }
 
@@ -222,11 +222,11 @@ export default function NewBillPaymentPage() {
 
       if (error) throw error
 
-      toast.success("Bill recorded successfully")
+      showSuccess("Bill recorded successfully")
       router.push(`/expenses/bills/${data.id}`)
     } catch (error) {
       console.error("Failed to create bill:", error)
-      toast.error("Failed to create bill")
+      showError("Failed to create bill")
     } finally {
       setLoading(false)
     }

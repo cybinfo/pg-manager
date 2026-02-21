@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, Loader2, CheckCircle, ArrowLeft } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -26,14 +26,14 @@ export default function ForgotPasswordPage() {
       })
 
       if (error) {
-        toast.error(error.message)
+        showError(error.message)
         return
       }
 
       setSuccess(true)
-      toast.success("Password reset email sent!")
+      showSuccess("Password reset email sent!")
     } catch {
-      toast.error("An unexpected error occurred")
+      showError("An unexpected error occurred")
     } finally {
       setLoading(false)
     }

@@ -15,6 +15,7 @@ import {
   csrfError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { authLogger, extractErrorMeta } from "@/lib/logger"
 
 // Service role client for database operations
 const supabaseAdmin = createClient(
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (tokenError) {
-      console.error("Failed to create verification token:", tokenError)
+      authLogger.error("Failed to create verification token", extractErrorMeta(tokenError))
       return internalError("Failed to create verification token")
     }
 
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     return apiSuccess(undefined, { message: "Verification email sent successfully" })
   } catch (error) {
-    console.error("Error in send verification email:", error)
+    authLogger.error("Error in send verification email", extractErrorMeta(error))
     return internalError("Internal server error")
   }
 }

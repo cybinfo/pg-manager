@@ -24,7 +24,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -137,14 +137,14 @@ export default function ServiceProviderDetailPage({
     try {
       const result = await softDelete("service_providers", id, user.id)
       if (!result.error) {
-        toast.success("Provider deleted successfully")
+        showSuccess("Provider deleted successfully")
         router.push("/expenses/services/providers")
       } else {
-        toast.error(result.error.message || "Failed to delete provider")
+        showError(result.error.message || "Failed to delete provider")
       }
     } catch (error) {
       console.error("Failed to delete provider:", error)
-      toast.error("Failed to delete provider")
+      showError("Failed to delete provider")
     }
   }
 

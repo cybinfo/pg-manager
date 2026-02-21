@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { PageLoader } from "@/components/ui/page-loader"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
@@ -113,7 +113,7 @@ function NewPaymentForm() {
 
       if (tenantsRes.error) {
         console.error("Error fetching tenants:", tenantsRes.error)
-        toast.error("Failed to load tenants")
+        showError("Failed to load tenants")
       } else {
         // Transform the data from arrays to single objects
         const transformedTenants = ((tenantsRes.data as RawTenant[]) || []).map((tenant) => ({
@@ -223,12 +223,12 @@ function NewPaymentForm() {
     e.preventDefault()
 
     if (!formData.tenant_id || !formData.amount || !formData.payment_method) {
-      toast.error("Please fill in all required fields")
+      showError("Please fill in all required fields")
       return
     }
 
     if (!formData.bill_id) {
-      toast.error("Payment must be linked to a bill. Please select a bill or create one first.")
+      showError("Payment must be linked to a bill. Please select a bill or create one first.")
       return
     }
 
@@ -239,7 +239,7 @@ function NewPaymentForm() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -269,17 +269,17 @@ function NewPaymentForm() {
       if (!result.success) {
         console.error("Error recording payment:", result.errors)
         const errorMsg = result.errors?.[0]?.message || "Unknown error"
-        toast.error(`Failed to record payment: ${errorMsg}`)
+        showError(`Failed to record payment: ${errorMsg}`)
         setLoading(false)
         return
       }
 
-      toast.success(`Payment recorded! Receipt: ${result.data?.receipt_number || "Generated"}`)
+      showSuccess(`Payment recorded! Receipt: ${result.data?.receipt_number || "Generated"}`)
       setLoading(false)
       router.push("/payments")
     } catch (error: unknown) {
       console.error("Error:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to record payment. Please try again.")
+      showError(error instanceof Error ? error.message : "Failed to record payment. Please try again.")
       setLoading(false)
     }
   }

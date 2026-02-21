@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Home, Loader2, Building2, Info } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { PageLoader } from "@/components/ui/page-loader"
 
@@ -101,7 +101,7 @@ export default function NewRoomPage() {
 
       if (propertiesRes.error) {
         console.error("Error fetching properties:", propertiesRes.error)
-        toast.error("Failed to load properties")
+        showError("Failed to load properties")
       } else {
         setProperties(propertiesRes.data || [])
 
@@ -175,7 +175,7 @@ export default function NewRoomPage() {
     e.preventDefault()
 
     if (!formData.property_id || !formData.room_number || !formData.rent_amount) {
-      toast.error("Please fill in all required fields")
+      showError("Please fill in all required fields")
       return
     }
 
@@ -186,7 +186,7 @@ export default function NewRoomPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -215,18 +215,18 @@ export default function NewRoomPage() {
       if (error) {
         console.error("Error creating room:", error)
         if (error.code === "23505") {
-          toast.error("A room with this number already exists in this property")
+          showError("A room with this number already exists in this property")
         } else {
           throw error
         }
         return
       }
 
-      toast.success("Room created successfully!")
+      showSuccess("Room created successfully!")
       router.push("/rooms")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to create room. Please try again.")
+      showError("Failed to create room. Please try again.")
     } finally {
       setLoading(false)
     }

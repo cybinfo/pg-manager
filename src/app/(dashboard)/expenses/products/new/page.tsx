@@ -12,7 +12,7 @@ import { Package, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -69,7 +69,7 @@ export default function NewProductPage() {
 
       if (error) {
         console.error("Failed to load categories:", error)
-        toast.error("Failed to load categories")
+        showError("Failed to load categories")
       } else {
         setCategories(data || [])
 
@@ -112,12 +112,12 @@ export default function NewProductPage() {
     e.preventDefault()
 
     if (!formData.name.trim()) {
-      toast.error("Product name is required")
+      showError("Product name is required")
       return
     }
 
     if (!workspaceId || !user?.id) {
-      toast.error("Session error. Please refresh the page.")
+      showError("Session error. Please refresh the page.")
       return
     }
 
@@ -147,18 +147,18 @@ export default function NewProductPage() {
 
       if (error) {
         if (error.code === "23505") {
-          toast.error("A product with this name already exists")
+          showError("A product with this name already exists")
         } else {
           throw error
         }
         return
       }
 
-      toast.success("Product created successfully")
+      showSuccess("Product created successfully")
       router.push(`/expenses/products/${data.id}`)
     } catch (error) {
       console.error("Failed to create product:", error)
-      toast.error("Failed to create product")
+      showError("Failed to create product")
     } finally {
       setLoading(false)
     }

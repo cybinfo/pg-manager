@@ -34,7 +34,7 @@ import {
   AlertCircle,
   UserCheck,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoader } from "@/components/ui/page-loader"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
@@ -218,7 +218,7 @@ export default function NewVisitorPage() {
   // Select a contact and auto-fill form
   const handleSelectContact = (contact: VisitorContactSearchResult) => {
     if (contact.is_blocked) {
-      toast.error(`This visitor is blocked: ${contact.name}`)
+      showError(`This visitor is blocked: ${contact.name}`)
       return
     }
 
@@ -234,7 +234,7 @@ export default function NewVisitorPage() {
     }))
     setSearchQuery("")
     setShowSearchResults(false)
-    toast.success(`Selected: ${contact.name}${contact.visit_count > 0 ? ` (${contact.visit_count} previous visits)` : ""}`)
+    showSuccess(`Selected: ${contact.name}${contact.visit_count > 0 ? ` (${contact.visit_count} previous visits)` : ""}`)
   }
 
   // Clear selected contact
@@ -310,7 +310,7 @@ export default function NewVisitorPage() {
       if (data && !data.is_blocked) {
         handlePersonSelect(data)
       } else if (data?.is_blocked) {
-        toast.error("This person is blocked and cannot check in as a visitor")
+        showError("This person is blocked and cannot check in as a visitor")
       }
     }
 
@@ -363,7 +363,7 @@ export default function NewVisitorPage() {
         visitor_type: visitorType,
       }))
 
-      toast.success(`Selected: ${person.name}`)
+      showSuccess(`Selected: ${person.name}`)
     }
   }
 
@@ -389,25 +389,25 @@ export default function NewVisitorPage() {
 
     // Person-centric: Require person selection
     if (!selectedPerson) {
-      toast.error("Please select a visitor from the People directory")
+      showError("Please select a visitor from the People directory")
       return
     }
 
     if (!formData.property_id) {
-      toast.error("Please select a property")
+      showError("Please select a property")
       return
     }
 
     // Validate tenant_visitor requires tenant
     if (formData.visitor_type === "tenant_visitor" && !formData.tenant_id) {
-      toast.error("Please select a tenant for tenant visitor")
+      showError("Please select a tenant for tenant visitor")
       return
     }
 
     // Validate service_provider requires service_type (now from selectedPerson or formData)
     const serviceType = selectedPerson.occupation || formData.service_type
     if (formData.visitor_type === "service_provider" && !serviceType) {
-      toast.error("Please select a service type or add occupation in People module")
+      showError("Please select a service type or add occupation in People module")
       return
     }
 
@@ -418,7 +418,7 @@ export default function NewVisitorPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -518,7 +518,7 @@ export default function NewVisitorPage() {
 
         if (billError) {
           console.error("Error creating bill:", billError)
-          toast.error("Failed to create bill, but visitor will be checked in")
+          showError("Failed to create bill, but visitor will be checked in")
         } else {
           billId = billData.id
         }
@@ -582,11 +582,11 @@ export default function NewVisitorPage() {
         : selectedContact
         ? `${formData.visitor_name} checked in (visit #${(selectedContact.visit_count || 0) + 1})`
         : "Visitor checked in successfully!"
-      toast.success(message)
+      showSuccess(message)
       router.push("/visitors")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to check in visitor. Please try again.")
+      showError("Failed to check in visitor. Please try again.")
     } finally {
       setLoading(false)
     }

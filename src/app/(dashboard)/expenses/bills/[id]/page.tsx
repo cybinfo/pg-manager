@@ -24,7 +24,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -96,14 +96,14 @@ export default function BillPaymentDetailPage({
     try {
       const result = await softDelete("bill_payments", id, user.id)
       if (!result.error) {
-        toast.success("Bill deleted successfully")
+        showSuccess("Bill deleted successfully")
         router.push("/expenses/bills")
       } else {
-        toast.error(result.error.message || "Failed to delete bill")
+        showError(result.error.message || "Failed to delete bill")
       }
     } catch (error) {
       console.error("Failed to delete bill:", error)
-      toast.error("Failed to delete bill")
+      showError("Failed to delete bill")
     }
   }
 
@@ -125,7 +125,7 @@ export default function BillPaymentDetailPage({
 
       if (error) throw error
 
-      toast.success("Bill marked as paid")
+      showSuccess("Bill marked as paid")
       // Refresh data
       setBill((prev) =>
         prev
@@ -139,7 +139,7 @@ export default function BillPaymentDetailPage({
       )
     } catch (error) {
       console.error("Failed to update bill:", error)
-      toast.error("Failed to update bill")
+      showError("Failed to update bill")
     }
   }
 

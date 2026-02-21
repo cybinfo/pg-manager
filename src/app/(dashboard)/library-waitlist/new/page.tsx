@@ -19,7 +19,7 @@ import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Users, Loader2, Clock } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
 import { validateIndianMobile } from "@/lib/validators"
@@ -74,27 +74,27 @@ export default function AddToWaitlistPage() {
     e.preventDefault()
 
     if (!formData.library_id) {
-      toast.error("Please select a library")
+      showError("Please select a library")
       return
     }
 
     if (!formData.name.trim()) {
-      toast.error("Please enter a name")
+      showError("Please enter a name")
       return
     }
 
     if (!formData.phone.trim()) {
-      toast.error("Please enter a phone number")
+      showError("Please enter a phone number")
       return
     }
 
     if (!validateIndianMobile(formData.phone)) {
-      toast.error("Please enter a valid 10-digit mobile number")
+      showError("Please enter a valid 10-digit mobile number")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -112,7 +112,7 @@ export default function AddToWaitlistPage() {
         .single()
 
       if (!workspace) {
-        toast.error("Workspace not found")
+        showError("Workspace not found")
         setLoading(false)
         return
       }
@@ -128,7 +128,7 @@ export default function AddToWaitlistPage() {
         .single()
 
       if (existing) {
-        toast.error("This person is already on the waitlist for this library")
+        showError("This person is already on the waitlist for this library")
         setLoading(false)
         return
       }
@@ -154,15 +154,15 @@ export default function AddToWaitlistPage() {
 
       if (error) {
         console.error("Error adding to waitlist:", error)
-        toast.error(`Failed to add to waitlist: ${error.message}`)
+        showError(`Failed to add to waitlist: ${error.message}`)
         return
       }
 
-      toast.success("Added to waitlist successfully!")
+      showSuccess("Added to waitlist successfully!")
       router.push("/library-waitlist")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to add to waitlist. Please try again.")
+      showError("Failed to add to waitlist. Please try again.")
     } finally {
       setLoading(false)
     }

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { MessageCircle, Copy, Check, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { generateWhatsAppLink, copyToClipboard } from "@/lib/notifications"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 interface WhatsAppButtonProps {
   phone: string
@@ -36,10 +36,10 @@ export function WhatsAppButton({
     const success = await copyToClipboard(message)
     if (success) {
       setCopied(true)
-      toast.success("Message copied to clipboard")
+      showSuccess("Message copied to clipboard")
       setTimeout(() => setCopied(false), 2000)
     } else {
-      toast.error("Failed to copy message")
+      showError("Failed to copy message")
     }
   }
 

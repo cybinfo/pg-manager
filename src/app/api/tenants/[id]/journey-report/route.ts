@@ -4,6 +4,7 @@ import { createContentDisposition, sanitizeFilename } from "@/lib/format"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { TenantJourneyReportPDF, JourneyReportData } from "@/lib/pdf-journey-report"
 import { validateTenantRequest } from "@/lib/api-middleware"
+import { apiLogger, extractErrorMeta } from "@/lib/logger"
 import {
   apiError,
   internalError,
@@ -87,7 +88,7 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error("[Journey Report API] Error generating PDF:", error)
+    apiLogger.error("Error generating journey report PDF", extractErrorMeta(error))
     return internalError("Failed to generate journey report PDF")
   }
 }

@@ -52,7 +52,7 @@ import {
   XCircle,
   Loader2,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import {
@@ -140,14 +140,14 @@ export default function MeterDetailPage() {
     const success = await updateField("status", newStatus)
     if (success) {
       setShowStatusDialog(false)
-      toast.success(`Meter marked as ${METER_STATUS_CONFIG[newStatus].label}`)
+      showSuccess(`Meter marked as ${METER_STATUS_CONFIG[newStatus].label}`)
     }
     setSaving(false)
   }
 
   const handleAssign = async () => {
     if (!meter || !assignForm.room_id) {
-      toast.error("Please select a room")
+      showError("Please select a room")
       return
     }
     setSaving(true)
@@ -166,13 +166,13 @@ export default function MeterDetailPage() {
     })
 
     if (error) {
-      toast.error("Failed to assign meter")
+      showError("Failed to assign meter")
       console.error(error)
       setSaving(false)
       return
     }
 
-    toast.success("Meter assigned to room")
+    showSuccess("Meter assigned to room")
     setShowAssignDialog(false)
     refetch()
     setSaving(false)
@@ -180,7 +180,7 @@ export default function MeterDetailPage() {
 
   const handleEndAssignment = async () => {
     if (!currentAssignment || !endForm.end_reading) {
-      toast.error("Please enter the final reading")
+      showError("Please enter the final reading")
       return
     }
     setSaving(true)
@@ -197,7 +197,7 @@ export default function MeterDetailPage() {
       .eq("id", currentAssignment.id)
 
     if (assignError) {
-      toast.error("Failed to end assignment")
+      showError("Failed to end assignment")
       setSaving(false)
       return
     }
@@ -210,7 +210,7 @@ export default function MeterDetailPage() {
         .eq("id", meter.id)
     }
 
-    toast.success("Assignment ended")
+    showSuccess("Assignment ended")
     setShowEndAssignDialog(false)
     refetch()
     setSaving(false)

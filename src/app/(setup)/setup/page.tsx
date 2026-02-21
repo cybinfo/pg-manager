@@ -19,7 +19,7 @@ import {
   Users,
   CreditCard
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 const templates = [
   {
@@ -78,7 +78,7 @@ export default function SetupPage() {
 
   const handleComplete = async () => {
     if (!propertyName || !propertyCity) {
-      toast.error("Please fill in property name and city")
+      showError("Please fill in property name and city")
       return
     }
 
@@ -89,7 +89,7 @@ export default function SetupPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -187,12 +187,12 @@ export default function SetupPage() {
         // Non-fatal
       }
 
-      toast.success("Setup complete! Welcome to PG Manager!")
+      showSuccess("Setup complete! Welcome to PG Manager!")
       router.push("/dashboard")
       router.refresh()
     } catch (error) {
       console.error("Setup error:", error)
-      toast.error("Something went wrong. Please try again.")
+      showError("Something went wrong. Please try again.")
       setLoading(false)
     }
   }

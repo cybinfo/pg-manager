@@ -24,7 +24,7 @@ import {
   Store,
   MapPin,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, showInfo } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { cn } from "@/lib/utils"
 import type { Vendor } from "@/types/expense-enhanced.types"
@@ -148,7 +148,7 @@ export function VendorSelector({
   // Handle quick create
   const handleQuickCreate = async () => {
     if (!quickCreateForm.name.trim()) {
-      toast.error("Vendor name is required")
+      showError("Vendor name is required")
       return
     }
 
@@ -165,7 +165,7 @@ export function VendorSelector({
       .maybeSingle()
 
     if (existing) {
-      toast.info("Vendor already exists with this name")
+      showInfo("Vendor already exists with this name")
       handleSelect(existing)
       setCreating(false)
       setShowQuickCreate(false)
@@ -189,12 +189,12 @@ export function VendorSelector({
 
     if (createError) {
       console.error("Create error:", createError)
-      toast.error("Failed to create vendor")
+      showError("Failed to create vendor")
       setCreating(false)
       return
     }
 
-    toast.success("Vendor created successfully")
+    showSuccess("Vendor created successfully")
     handleSelect(newVendor)
     onCreate?.(newVendor)
     setCreating(false)

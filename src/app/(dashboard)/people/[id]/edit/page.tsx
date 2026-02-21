@@ -36,7 +36,7 @@ import {
   Loader2,
   Camera,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { Select } from "@/components/ui/form-components"
 import {
@@ -82,7 +82,7 @@ export default function EditPersonPage() {
 
       if (error || !data) {
         console.error("Error fetching person:", error)
-        toast.error("Person not found")
+        showError("Person not found")
         router.push("/people")
         return
       }
@@ -241,7 +241,7 @@ export default function EditPersonPage() {
     e.preventDefault()
 
     if (!validate()) {
-      toast.error("Please fix the errors before submitting")
+      showError("Please fix the errors before submitting")
       return
     }
 
@@ -258,7 +258,7 @@ export default function EditPersonPage() {
         .single()
 
       if (existing) {
-        toast.error(`A person with this phone already exists: ${existing.name}`)
+        showError(`A person with this phone already exists: ${existing.name}`)
         setLoading(false)
         return
       }
@@ -310,12 +310,12 @@ export default function EditPersonPage() {
 
     if (error) {
       console.error("Error updating person:", error)
-      toast.error("Failed to update person")
+      showError("Failed to update person")
       setLoading(false)
       return
     }
 
-    toast.success("Person updated successfully")
+    showSuccess("Person updated successfully")
     router.push(`/people/${params.id}`)
   }
 

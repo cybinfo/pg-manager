@@ -4,7 +4,7 @@ import React, { useState, useRef, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "./button"
 import { Upload, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
 
 interface FileUploadProps {
@@ -56,7 +56,7 @@ export function FileUpload({
         (file) => file.size > maxSize * 1024 * 1024
       )
       if (oversizedFiles.length > 0) {
-        toast.error(`File(s) too large. Maximum size is ${maxSize}MB`)
+        showError(`File(s) too large. Maximum size is ${maxSize}MB`)
         return
       }
 
@@ -84,7 +84,7 @@ export function FileUpload({
 
           if (error) {
             console.error("Upload error:", error)
-            toast.error(`Failed to upload ${file.name}`)
+            showError(`Failed to upload ${file.name}`)
             continue
           }
 
@@ -104,7 +104,7 @@ export function FileUpload({
           } else {
             onChange?.(uploadedUrls[0])
           }
-          toast.success(
+          showSuccess(
             uploadedUrls.length === 1
               ? "File uploaded successfully"
               : `${uploadedUrls.length} files uploaded`
@@ -112,7 +112,7 @@ export function FileUpload({
         }
       } catch (error) {
         console.error("Upload error:", error)
-        toast.error("Failed to upload file(s)")
+        showError("Failed to upload file(s)")
       } finally {
         setUploading(false)
         // Reset input
@@ -164,10 +164,10 @@ export function FileUpload({
           onChange?.("")
         }
         onRemove?.(urlToRemove)
-        toast.success("File removed")
+        showSuccess("File removed")
       } catch (error) {
         console.error("Remove error:", error)
-        toast.error("Failed to remove file")
+        showError("Failed to remove file")
       }
     },
     [bucket, multiple, files, onChange, onRemove]
@@ -338,7 +338,7 @@ export function ProfilePhotoUpload({
 
     const file = files[0]
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("File too large. Maximum size is 10MB")
+      showError("File too large. Maximum size is 10MB")
       return
     }
 
@@ -377,11 +377,11 @@ export function ProfilePhotoUpload({
 
       if (urlData?.publicUrl) {
         onChange?.(urlData.publicUrl)
-        toast.success("Photo uploaded")
+        showSuccess("Photo uploaded")
       }
     } catch (error) {
       console.error("Upload error:", error)
-      toast.error("Failed to upload photo")
+      showError("Failed to upload photo")
     } finally {
       setUploading(false)
       // Clean up object URL

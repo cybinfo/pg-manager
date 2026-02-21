@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
 import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 
 interface Library {
@@ -86,12 +86,12 @@ export default function NewLibrarySectionPage() {
     e.preventDefault()
 
     if (!formData.library_id || !formData.name) {
-      toast.error("Please select a library and enter section name")
+      showError("Please select a library and enter section name")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -109,7 +109,7 @@ export default function NewLibrarySectionPage() {
         .single()
 
       if (!library) {
-        toast.error("Library not found")
+        showError("Library not found")
         setLoading(false)
         return
       }
@@ -131,11 +131,11 @@ export default function NewLibrarySectionPage() {
 
       if (error) {
         console.error("Error creating section:", error)
-        toast.error(`Failed to create section: ${error.message}`)
+        showError(`Failed to create section: ${error.message}`)
         return
       }
 
-      toast.success("Section created successfully!")
+      showSuccess("Section created successfully!")
 
       if (preselectedLibrary) {
         router.push(`/library/${preselectedLibrary}`)
@@ -144,7 +144,7 @@ export default function NewLibrarySectionPage() {
       }
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to create section. Please try again.")
+      showError("Failed to create section. Please try again.")
     } finally {
       setLoading(false)
     }

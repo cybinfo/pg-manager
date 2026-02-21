@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 
 export default function NewLibraryPage() {
@@ -61,12 +61,12 @@ export default function NewLibraryPage() {
     e.preventDefault()
 
     if (!formData.name || !formData.city) {
-      toast.error("Please fill in required fields (Name, City)")
+      showError("Please fill in required fields (Name, City)")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -104,15 +104,15 @@ export default function NewLibraryPage() {
 
       if (error) {
         console.error("Error creating library:", error)
-        toast.error(`Failed to create library: ${error.message}`)
+        showError(`Failed to create library: ${error.message}`)
         return
       }
 
-      toast.success("Library created successfully!")
+      showSuccess("Library created successfully!")
       router.push("/library")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to create library. Please try again.")
+      showError("Failed to create library. Please try again.")
     } finally {
       setLoading(false)
     }

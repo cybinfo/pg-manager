@@ -9,9 +9,14 @@ import {
   unauthorized,
   forbidden,
   notFound,
+  badRequest,
   internalError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { transformJoin } from "@/lib/supabase/transforms"
+import { checkStaffPermission } from "@/lib/supabase/auth-helpers"
+import { isValidUUID } from "@/lib/validators"
+import { apiLogger, extractErrorMeta } from "@/lib/logger"
 
 export async function GET(
   request: NextRequest,
@@ -35,6 +40,12 @@ export async function GET(
     }
 
     const { id } = await params
+
+    // Validate UUID format before querying database
+    if (!isValidUUID(id)) {
+      return badRequest("Invalid payment ID format")
+    }
+
     const supabase = await createClient()
 
     // Verify user is authenticated
@@ -77,32 +88,13 @@ export async function GET(
     const isOwner = payment.owner_id === user.id
 
     // Check if user is the tenant for this payment
-    const tenant = Array.isArray(payment.tenant) ? payment.tenant[0] : payment.tenant
+    const tenant = transformJoin(payment.tenant)
     const isTenantOwner = tenant?.user_id === user.id
 
     // Check if user is staff with payments.view permission in this workspace
     let isAuthorizedStaff = false
     if (!isOwner && !isTenantOwner) {
-      // Get user's context for this workspace
-      const { data: userContext } = await supabase
-        .from("user_contexts")
-        .select("id, context_type")
-        .eq("user_id", user.id)
-        .eq("workspace_id", payment.workspace_id)
-        .eq("is_active", true)
-        .single()
-
-      if (userContext?.context_type === "staff") {
-        // Check staff permissions
-        const { data: permissions } = await (supabase.rpc as Function)("get_user_permissions", {
-          p_user_id: user.id,
-          p_workspace_id: payment.workspace_id,
-        })
-
-        if (permissions && Array.isArray(permissions) && permissions.includes("payments.view")) {
-          isAuthorizedStaff = true
-        }
-      }
+      isAuthorizedStaff = await checkStaffPermission(supabase, user.id, payment.workspace_id, "payments.view")
     }
 
     if (!isOwner && !isTenantOwner && !isAuthorizedStaff) {
@@ -117,16 +109,8 @@ export async function GET(
       .single()
 
     // Transform nested data (tenant already extracted above)
-    const room = tenant?.room
-      ? Array.isArray(tenant.room)
-        ? tenant.room[0]
-        : tenant.room
-      : null
-    const property = room?.property
-      ? Array.isArray(room.property)
-        ? room.property[0]
-        : room.property
-      : null
+    const room = tenant?.room ? transformJoin(tenant.room) : null
+    const property = room?.property ? transformJoin(room.property) : null
 
     // Generate receipt number
     const receiptNumber = `RCP-${new Date(payment.payment_date).getFullYear()}-${String(payment.id).slice(0, 8).toUpperCase()}`
@@ -168,7 +152,7 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error("Error generating PDF:", error)
+    apiLogger.error("Error generating PDF", extractErrorMeta(error))
     return internalError("Failed to generate PDF")
   }
 }

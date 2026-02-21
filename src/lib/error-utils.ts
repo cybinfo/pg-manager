@@ -5,7 +5,7 @@
  * Development: Verbose logging for debugging
  */
 
-import { toast } from "sonner"
+import { toast } from "@/lib/toast-helpers"
 import { TOAST_DURATION_DEFAULT_MS, TOAST_DURATION_ERROR_MS, TOAST_MAX_WIDTH_PX } from "@/lib/constants"
 
 // Environment-based logging control

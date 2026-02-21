@@ -15,7 +15,7 @@ import {
   Edit,
   Lock
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 interface Role {
   id: string
@@ -65,7 +65,7 @@ export default function RolesPage() {
 
     if (error) {
       console.error("Error fetching roles:", error)
-      toast.error("Failed to load roles")
+      showError("Failed to load roles")
     } else {
       // Get user count for each role
       type RoleData = Omit<Role, "_count">
@@ -91,12 +91,12 @@ export default function RolesPage() {
 
   const handleDelete = async (role: Role) => {
     if (role.is_system_role) {
-      toast.error("Cannot delete system roles")
+      showError("Cannot delete system roles")
       return
     }
 
     if (role._count && role._count.users > 0) {
-      toast.error("Cannot delete role with assigned users")
+      showError("Cannot delete role with assigned users")
       return
     }
 
@@ -113,9 +113,9 @@ export default function RolesPage() {
       .eq("id", role.id)
 
     if (error) {
-      toast.error("Failed to delete role")
+      showError("Failed to delete role")
     } else {
-      toast.success("Role deleted")
+      showSuccess("Role deleted")
       setRoles(roles.filter((r) => r.id !== role.id))
     }
 

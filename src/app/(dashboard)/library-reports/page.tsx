@@ -40,7 +40,8 @@ import {
 import { PageHeader } from "@/components/ui/page-header"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { useDemoMode } from "@/lib/demo-mode"
-import { toast } from "sonner"
+import { transformJoin } from "@/lib/supabase/transforms"
+import { showError } from "@/lib/toast-helpers"
 
 interface LibraryOption {
   id: string
@@ -197,20 +198,20 @@ export default function LibraryReportsPage() {
       const librariesData = librariesRes.data || []
       const seatsData = (seatsRes.data || []).map((s: any) => ({
         ...s,
-        section: Array.isArray(s.section) ? s.section[0] : s.section,
+        section: transformJoin(s.section),
       }))
       const membersData = membersRes.data || []
       const membershipsData = (membershipsRes.data || []).map((m: any) => ({
         ...m,
-        member: Array.isArray(m.member) ? m.member[0] : m.member,
+        member: transformJoin(m.member),
       }))
       const paymentsData = (paymentsRes.data || []).map((p: any) => ({
         ...p,
-        member: Array.isArray(p.member) ? p.member[0] : p.member,
+        member: transformJoin(p.member),
       }))
       const attendanceData = (attendanceRes.data || []).map((a: any) => ({
         ...a,
-        member: Array.isArray(a.member) ? a.member[0] : a.member,
+        member: transformJoin(a.member),
       }))
 
       setLibraries(librariesData.map((l: { id: string; name: string }) => ({ id: l.id, name: l.name })))
@@ -471,7 +472,7 @@ export default function LibraryReportsPage() {
     if (!reportData) return
 
     if (!canPerformAction("export_data")) {
-      toast.error(getDemoMessage("export_data"))
+      showError(getDemoMessage("export_data"))
       return
     }
 

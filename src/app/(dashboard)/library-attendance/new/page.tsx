@@ -18,9 +18,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface MemberOption {
   id: string
@@ -143,7 +144,7 @@ export default function NewLibraryAttendancePage() {
       // Filter seats for this library and transform
       const availableSeats: SeatOption[] = (seatsData || [])
         .map((seat: { id: string; seat_number: string; has_power_outlet: boolean; section: { id: string; name: string; is_ac: boolean; library_id: string } | { id: string; name: string; is_ac: boolean; library_id: string }[] | null }) => {
-          const section = Array.isArray(seat.section) ? seat.section[0] : seat.section
+          const section = transformJoin(seat.section)
           if (!section || section.library_id !== libraryId) return null
           return {
             id: seat.id,
@@ -188,22 +189,22 @@ export default function NewLibraryAttendancePage() {
     e.preventDefault()
 
     if (!formData.member_id) {
-      toast.error("Please select a member")
+      showError("Please select a member")
       return
     }
 
     if (!selectedMember) {
-      toast.error("Member not found")
+      showError("Member not found")
       return
     }
 
     if (selectedMember.hours_balance <= 0) {
-      toast.error("Member has no hours remaining. Please renew subscription first.")
+      showError("Member has no hours remaining. Please renew subscription first.")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -221,7 +222,7 @@ export default function NewLibraryAttendancePage() {
         .single()
 
       if (!workspace) {
-        toast.error("Workspace not found")
+        showError("Workspace not found")
         setLoading(false)
         return
       }
@@ -236,7 +237,7 @@ export default function NewLibraryAttendancePage() {
         .single()
 
       if (activeCheckIn) {
-        toast.error("Member already has an active check-in. Please check out first.")
+        showError("Member already has an active check-in. Please check out first.")
         setLoading(false)
         return
       }
@@ -267,7 +268,7 @@ export default function NewLibraryAttendancePage() {
 
       if (error) {
         console.error("Error creating attendance:", error)
-        toast.error(`Failed to check in: ${error.message}`)
+        showError(`Failed to check in: ${error.message}`)
         return
       }
 
@@ -290,11 +291,11 @@ export default function NewLibraryAttendancePage() {
 
       const selectedSeat = seats.find(s => s.id === formData.seat_id)
       const seatInfo = selectedSeat ? ` at seat ${selectedSeat.seat_number}` : ""
-      toast.success(`${selectedMember.name} checked in${seatInfo} successfully!`)
+      showSuccess(`${selectedMember.name} checked in${seatInfo} successfully!`)
       router.push(`/library-attendance/${newAttendance.id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to check in. Please try again.")
+      showError("Failed to check in. Please try again.")
     } finally {
       setLoading(false)
     }

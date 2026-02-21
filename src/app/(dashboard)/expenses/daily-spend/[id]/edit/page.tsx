@@ -11,7 +11,7 @@ import { ShoppingBag, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -128,7 +128,7 @@ export default function EditDailySpendPage({
         .single()
 
       if (error || !entryData) {
-        toast.error("Entry not found")
+        showError("Entry not found")
         router.push("/expenses/daily-spend")
         return
       }
@@ -220,12 +220,12 @@ export default function EditDailySpendPage({
     e.preventDefault()
 
     if (!formData.product_name.trim()) {
-      toast.error("Item name is required")
+      showError("Item name is required")
       return
     }
 
     if (formData.quantity <= 0) {
-      toast.error("Quantity must be greater than 0")
+      showError("Quantity must be greater than 0")
       return
     }
 
@@ -259,11 +259,11 @@ export default function EditDailySpendPage({
 
       if (error) throw error
 
-      toast.success("Entry updated successfully")
+      showSuccess("Entry updated successfully")
       router.push(`/expenses/daily-spend/${id}`)
     } catch (error) {
       console.error("Failed to update entry:", error)
-      toast.error("Failed to update entry")
+      showError("Failed to update entry")
     } finally {
       setLoading(false)
     }

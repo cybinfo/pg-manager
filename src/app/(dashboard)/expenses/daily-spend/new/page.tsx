@@ -13,7 +13,7 @@ import { ShoppingBag, ArrowLeft, Plus, Trash2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -225,12 +225,12 @@ export default function NewDailySpendPage() {
     // Validate
     const validItems = lineItems.filter((item) => item.product_name && item.quantity > 0)
     if (validItems.length === 0) {
-      toast.error("Please add at least one item")
+      showError("Please add at least one item")
       return
     }
 
     if (!workspaceId || !user?.id) {
-      toast.error("Session error. Please refresh the page.")
+      showError("Session error. Please refresh the page.")
       return
     }
 
@@ -266,11 +266,11 @@ export default function NewDailySpendPage() {
 
       if (error) throw error
 
-      toast.success(`${validItems.length} item(s) recorded successfully`)
+      showSuccess(`${validItems.length} item(s) recorded successfully`)
       router.push("/expenses/daily-spend")
     } catch (error) {
       console.error("Failed to save daily spend:", error)
-      toast.error("Failed to save expense")
+      showError("Failed to save expense")
     } finally {
       setLoading(false)
     }

@@ -47,7 +47,7 @@ import {
   Bath,
   BedDouble,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
 import { validateIndianMobile } from "@/lib/validators"
@@ -216,10 +216,10 @@ function ShareButton({ property, propertyType }: { property: PropertyWebsite; pr
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl)
-      toast.success("Link copied to clipboard!")
+      showSuccess("Link copied to clipboard!")
       setShowMenu(false)
     } catch {
-      toast.error("Failed to copy link")
+      showError("Failed to copy link")
     }
   }
 
@@ -380,13 +380,13 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
 
     // Validate required fields
     if (!inquiryForm.name.trim() || !inquiryForm.phone.trim()) {
-      toast.error("Please fill in required fields")
+      showError("Please fill in required fields")
       return
     }
 
     // Validate name length (prevent excessively long names)
     if (inquiryForm.name.trim().length > 100) {
-      toast.error("Name is too long (max 100 characters)")
+      showError("Name is too long (max 100 characters)")
       return
     }
 
@@ -400,13 +400,13 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
 
     // Validate email if provided
     if (inquiryForm.email.trim() && !isValidEmail(inquiryForm.email.trim())) {
-      toast.error("Please enter a valid email address")
+      showError("Please enter a valid email address")
       return
     }
 
     // Rate limit check
     if (!checkRateLimit()) {
-      toast.error("Too many submissions. Please try again later.")
+      showError("Too many submissions. Please try again later.")
       return
     }
 
@@ -430,10 +430,10 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
       if (error) throw error
 
       setSubmitted(true)
-      toast.success("Inquiry submitted successfully!")
+      showSuccess("Inquiry submitted successfully!")
     } catch (error) {
       console.error("Error submitting inquiry:", error)
-      toast.error("Failed to submit inquiry. Please try calling directly.")
+      showError("Failed to submit inquiry. Please try calling directly.")
     } finally {
       setSubmitting(false)
     }

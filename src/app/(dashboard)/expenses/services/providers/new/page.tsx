@@ -11,7 +11,7 @@ import { Wrench, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -98,12 +98,12 @@ export default function NewServiceProviderPage() {
     e.preventDefault()
 
     if (!formData.name.trim()) {
-      toast.error("Provider name is required")
+      showError("Provider name is required")
       return
     }
 
     if (!workspaceId || !user?.id) {
-      toast.error("Session error. Please refresh the page.")
+      showError("Session error. Please refresh the page.")
       return
     }
 
@@ -141,11 +141,11 @@ export default function NewServiceProviderPage() {
 
       if (error) throw error
 
-      toast.success("Provider created successfully")
+      showSuccess("Provider created successfully")
       router.push(`/expenses/services/providers/${data.id}`)
     } catch (error) {
       console.error("Failed to create provider:", error)
-      toast.error("Failed to create provider")
+      showError("Failed to create provider")
     } finally {
       setLoading(false)
     }

@@ -21,7 +21,7 @@ import {
   Calendar,
   Library
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoader } from "@/components/ui/page-loader"
 
 interface Property {
@@ -144,12 +144,12 @@ export default function NewNoticePage() {
     e.preventDefault()
 
     if (!formData.title || !formData.content) {
-      toast.error("Please fill in title and content")
+      showError("Please fill in title and content")
       return
     }
 
     if (formData.target_audience === "specific_rooms" && selectedRooms.length === 0) {
-      toast.error("Please select at least one room")
+      showError("Please select at least one room")
       return
     }
 
@@ -160,7 +160,7 @@ export default function NewNoticePage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -181,15 +181,15 @@ export default function NewNoticePage() {
 
       if (error) {
         console.error("Error creating notice:", error)
-        toast.error(`Failed to create notice: ${error.message}`)
+        showError(`Failed to create notice: ${error.message}`)
         return
       }
 
-      toast.success("Notice created successfully")
+      showSuccess("Notice created successfully")
       router.push("/notices")
     } catch (error: any) {
       console.error("Error:", error)
-      toast.error(error?.message || "Failed to create notice")
+      showError(error?.message || "Failed to create notice")
     } finally {
       setLoading(false)
     }

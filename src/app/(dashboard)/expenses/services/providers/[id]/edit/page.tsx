@@ -11,7 +11,7 @@ import { Wrench, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -95,7 +95,7 @@ export default function EditServiceProviderPage({
         .single()
 
       if (error || !providerData) {
-        toast.error("Provider not found")
+        showError("Provider not found")
         router.push("/expenses/services/providers")
         return
       }
@@ -142,7 +142,7 @@ export default function EditServiceProviderPage({
     e.preventDefault()
 
     if (!formData.name.trim()) {
-      toast.error("Provider name is required")
+      showError("Provider name is required")
       return
     }
 
@@ -174,11 +174,11 @@ export default function EditServiceProviderPage({
 
       if (error) throw error
 
-      toast.success("Provider updated successfully")
+      showSuccess("Provider updated successfully")
       router.push(`/expenses/services/providers/${id}`)
     } catch (error) {
       console.error("Failed to update provider:", error)
-      toast.error("Failed to update provider")
+      showError("Failed to update provider")
     } finally {
       setLoading(false)
     }

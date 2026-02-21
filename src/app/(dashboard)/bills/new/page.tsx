@@ -23,11 +23,12 @@ import {
   IndianRupee,
   Check
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { withCreatedBy } from "@/lib/audit"
 import { PageLoader } from "@/components/ui/page-loader"
 import { cn } from "@/lib/utils"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface Tenant {
   id: string
@@ -153,14 +154,14 @@ function NewBillContent() {
 
       if (tenantsRes.error) {
         console.error("Error fetching tenants:", tenantsRes.error)
-        toast.error("Failed to load tenants")
+        showError("Failed to load tenants")
         return
       }
 
       const transformedTenants: Tenant[] = (tenantsRes.data || []).map((t: Record<string, unknown>) => ({
         ...t,
-        property: Array.isArray(t.property) ? t.property[0] : t.property,
-        room: Array.isArray(t.room) ? t.room[0] : t.room,
+        property: transformJoin(t.property),
+        room: transformJoin(t.room),
       })) as Tenant[]
 
       setTenants(transformedTenants)
@@ -224,7 +225,7 @@ function NewBillContent() {
 
       const transformedCharges: PendingCharge[] = (charges || []).map((c: Record<string, unknown>) => ({
         ...c,
-        charge_type: Array.isArray(c.charge_type) ? c.charge_type[0] : c.charge_type,
+        charge_type: transformJoin(c.charge_type),
       })) as PendingCharge[]
 
       setPendingCharges(transformedCharges)
@@ -347,12 +348,12 @@ function NewBillContent() {
     e.preventDefault()
 
     if (!selectedTenant) {
-      toast.error("Please select a tenant")
+      showError("Please select a tenant")
       return
     }
 
     if (lineItems.length === 0) {
-      toast.error("Please add at least one line item")
+      showError("Please add at least one line item")
       return
     }
 
@@ -363,7 +364,7 @@ function NewBillContent() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired")
+        showError("Session expired")
         router.push("/login")
         return
       }
@@ -433,11 +434,11 @@ function NewBillContent() {
           .in("id", chargeIds)
       }
 
-      toast.success("Bill generated successfully!")
+      showSuccess("Bill generated successfully!")
       router.push(`/bills/${billData.id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to generate bill")
+      showError("Failed to generate bill")
     } finally {
       setLoading(false)
     }

@@ -24,6 +24,7 @@ import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { EXIT_CLEARANCE_STATUS } from "@/lib/status-config"
 
 // ============================================
@@ -427,8 +428,8 @@ function TenantsOnNoticeAlert() {
             id: t.id as string,
             name: t.name as string,
             phone: t.phone as string,
-            property: Array.isArray(t.property) ? t.property[0] : t.property,
-            room: Array.isArray(t.room) ? t.room[0] : t.room,
+            property: transformJoin(t.property),
+            room: transformJoin(t.room),
           })) as TenantOnNotice[]
         setTenantsOnNotice(transformed)
       }

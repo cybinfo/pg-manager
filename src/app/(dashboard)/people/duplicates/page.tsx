@@ -32,7 +32,7 @@ import {
   CheckCircle2,
   Users,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 
@@ -97,7 +97,7 @@ export default function DuplicatesPage() {
 
     if (error) {
       console.error("Error fetching duplicates:", error)
-      toast.error("Failed to load duplicates")
+      showError("Failed to load duplicates")
     } else {
       setDuplicateGroups(data || [])
     }
@@ -130,7 +130,7 @@ export default function DuplicatesPage() {
 
     if (error) {
       console.error("Error fetching group persons:", error)
-      toast.error("Failed to load person details")
+      showError("Failed to load person details")
       setLoadingGroup(null)
       return
     }

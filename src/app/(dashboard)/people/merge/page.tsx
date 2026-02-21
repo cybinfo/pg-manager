@@ -33,7 +33,7 @@ import {
   UserCircle,
   Calendar,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { Person } from "@/types/people.types"
@@ -119,7 +119,7 @@ export default function PersonMergePage() {
 
     if (error) {
       console.error("Search error:", error)
-      toast.error("Search failed")
+      showError("Search failed")
     } else {
       // Exclude already selected persons
       const filtered = (data || []).filter(
@@ -157,12 +157,12 @@ export default function PersonMergePage() {
   // Perform merge
   const handleMerge = async () => {
     if (!primaryPerson || !secondaryPerson) {
-      toast.error("Select both persons to merge")
+      showError("Select both persons to merge")
       return
     }
 
     if (secondaryPerson.is_blocked && !primaryPerson.is_blocked) {
-      toast.error("Cannot merge a blocked person into an unblocked person")
+      showError("Cannot merge a blocked person into an unblocked person")
       return
     }
 
@@ -188,12 +188,12 @@ export default function PersonMergePage() {
 
     if (error) {
       console.error("Merge error:", error)
-      toast.error(`Merge failed: ${error.message}`)
+      showError(`Merge failed: ${error.message}`)
       setMerging(false)
       return
     }
 
-    toast.success(
+    showSuccess(
       `Merged successfully! ${data.total_references_updated} records updated.`
     )
     router.push(`/people/${primaryPerson.id}`)

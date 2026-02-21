@@ -30,8 +30,9 @@ import {
   MapPin,
   Calendar,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface Person {
   id: string
@@ -119,14 +120,14 @@ export default function EditTenantPage() {
 
       if (tenantRes.error || !tenantRes.data) {
         console.error("Error fetching tenant:", tenantRes.error)
-        toast.error("Tenant not found")
+        showError("Tenant not found")
         router.push("/tenants")
         return
       }
 
       const tenantData = {
         ...tenantRes.data,
-        person: Array.isArray(tenantRes.data.person) ? tenantRes.data.person[0] : tenantRes.data.person,
+        person: transformJoin(tenantRes.data.person),
       } as Tenant
 
       setTenant(tenantData)
@@ -182,7 +183,7 @@ export default function EditTenantPage() {
     e.preventDefault()
 
     if (!formData.property_id || !formData.room_id || !formData.monthly_rent) {
-      toast.error("Please fill in all required fields")
+      showError("Please fill in all required fields")
       return
     }
 
@@ -211,11 +212,11 @@ export default function EditTenantPage() {
         throw error
       }
 
-      toast.success("Tenant updated successfully!")
+      showSuccess("Tenant updated successfully!")
       router.push(`/tenants/${params.id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update tenant. Please try again.")
+      showError("Failed to update tenant. Please try again.")
     } finally {
       setLoading(false)
     }

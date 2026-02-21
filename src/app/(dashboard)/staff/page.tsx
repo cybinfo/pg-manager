@@ -64,8 +64,8 @@ interface StaffMember {
 const transformStaffRoles = (staff: StaffMember) => {
   return (staff.roles || []).map((r) => ({
     ...r,
-    role: Array.isArray(r.role) ? transformJoin(r.role) : r.role,
-    property: Array.isArray(r.property) ? transformJoin(r.property) : r.property,
+    role: transformJoin(r.role),
+    property: transformJoin(r.property),
   }))
 }
 

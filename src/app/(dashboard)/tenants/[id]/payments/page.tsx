@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { CreditCard, Plus, ArrowLeft, User } from "lucide-react"
 import { formatDate } from "@/lib/format"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface Payment {
   id: string
@@ -65,8 +66,8 @@ export default function TenantPaymentsPage() {
         setTenant({
           id: t.id,
           name: t.name,
-          property: Array.isArray(t.property) ? t.property[0] : t.property,
-          room: Array.isArray(t.room) ? t.room[0] : t.room
+          property: transformJoin(t.property),
+          room: transformJoin(t.room)
         })
       }
 
@@ -87,7 +88,7 @@ export default function TenantPaymentsPage() {
           bill: { bill_number: string }[] | null
         }) => ({
           ...p,
-          bill: Array.isArray(p.bill) ? p.bill[0] : p.bill
+          bill: transformJoin(p.bill)
         }))
         setPayments(processed)
         setTotalPaid(processed.reduce((sum: number, p: { amount: number }) => sum + p.amount, 0))

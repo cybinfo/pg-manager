@@ -42,7 +42,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Person, PersonSearchResult } from "@/types/people.types"
-import { toast } from "sonner"
+import { showSuccess, showError, showInfo } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { cn } from "@/lib/utils"
 
@@ -193,12 +193,12 @@ export function PersonSelector({
   // Handle quick create
   const handleQuickCreate = async () => {
     if (!quickCreateForm.name.trim()) {
-      toast.error("Name is required")
+      showError("Name is required")
       return
     }
 
     if (!quickCreateForm.phone && !quickCreateForm.email) {
-      toast.error("Phone or email is required")
+      showError("Phone or email is required")
       return
     }
 
@@ -220,7 +220,7 @@ export function PersonSelector({
     const { data: existing } = await existingQuery.maybeSingle()
 
     if (existing) {
-      toast.info("Person already exists with this phone/email")
+      showInfo("Person already exists with this phone/email")
       handleSelect(existing)
       setCreating(false)
       setShowQuickCreate(false)
@@ -246,12 +246,12 @@ export function PersonSelector({
 
     if (createError) {
       console.error("Create error:", createError)
-      toast.error("Failed to create person")
+      showError("Failed to create person")
       setCreating(false)
       return
     }
 
-    toast.success("Person created successfully")
+    showSuccess("Person created successfully")
     handleSelect(newPerson)
     onCreate?.(newPerson as Person)
     setCreating(false)

@@ -16,7 +16,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin, transformArrayJoins } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
+import { showError } from "@/lib/toast-helpers"
 import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
 import { applyAdvancedFilters } from "@/lib/filters/apply-advanced-filters"
 import type { FilterGroup } from "@/types/table-features.types"
@@ -512,7 +512,7 @@ export function useListPage<T extends object>(
     } catch (err) {
       console.error(`[useListPage] Error fetching ${currentConfig.table}:`, err)
       setError(err as Error)
-      toast.error(`Failed to load data`)
+      showError(`Failed to load data`)
     } finally {
       setLoading(false)
     }

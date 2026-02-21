@@ -50,7 +50,7 @@ import {
   Lock,
 } from "lucide-react"
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
-import { toast } from "sonner"
+import { showSuccess } from "@/lib/toast-helpers"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { AuthProvider, useAuth, useCurrentContext } from "@/lib/auth"
 import { ContextSwitcher, SessionTimeout } from "@/components/auth"
@@ -334,7 +334,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     await logout()
-    toast.success("Logged out successfully")
+    showSuccess("Logged out successfully")
     router.push("/login")
     // Note: Don't call router.refresh() here - it causes hydration issues
     // The auth context handles state clearing internally

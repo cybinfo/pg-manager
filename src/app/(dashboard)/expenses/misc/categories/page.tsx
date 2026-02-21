@@ -22,7 +22,7 @@ import { createClient } from "@/lib/supabase/client"
 import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -106,12 +106,12 @@ export default function MiscCategoriesPage() {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      toast.error("Category name is required")
+      showError("Category name is required")
       return
     }
 
     if (!workspaceId || !user?.id) {
-      toast.error("Session error. Please refresh the page.")
+      showError("Session error. Please refresh the page.")
       return
     }
 
@@ -133,7 +133,7 @@ export default function MiscCategoriesPage() {
           .eq("id", editingCategory.id)
 
         if (error) throw error
-        toast.success("Category updated")
+        showSuccess("Category updated")
       } else {
         // Create new
         const maxSort = Math.max(0, ...categories.map((c) => c.sort_order || 0))
@@ -150,14 +150,14 @@ export default function MiscCategoriesPage() {
           })
 
         if (error) throw error
-        toast.success("Category created")
+        showSuccess("Category created")
       }
 
       setDialogOpen(false)
       loadCategories()
     } catch (error) {
       console.error("Failed to save category:", error)
-      toast.error("Failed to save category")
+      showError("Failed to save category")
     } finally {
       setSaving(false)
     }
@@ -174,14 +174,14 @@ export default function MiscCategoriesPage() {
     try {
       const result = await softDelete("misc_transaction_categories", category.id, user.id)
       if (!result.error) {
-        toast.success("Category deleted")
+        showSuccess("Category deleted")
         loadCategories()
       } else {
-        toast.error(result.error.message || "Failed to delete")
+        showError(result.error.message || "Failed to delete")
       }
     } catch (error) {
       console.error("Failed to delete:", error)
-      toast.error("Failed to delete")
+      showError("Failed to delete")
     }
   }
 
@@ -198,11 +198,11 @@ export default function MiscCategoriesPage() {
         .eq("id", category.id)
 
       if (error) throw error
-      toast.success(category.is_active ? "Category deactivated" : "Category activated")
+      showSuccess(category.is_active ? "Category deactivated" : "Category activated")
       loadCategories()
     } catch (error) {
       console.error("Failed to toggle category:", error)
-      toast.error("Failed to update category")
+      showError("Failed to update category")
     }
   }
 

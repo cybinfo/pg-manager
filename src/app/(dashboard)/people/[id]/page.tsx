@@ -47,8 +47,9 @@ import {
   ExternalLink,
   Trash2,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate, formatCurrency } from "@/lib/format"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete, cascadeSoftDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { PermissionGuard, PermissionGate } from "@/components/auth"
@@ -273,7 +274,7 @@ export default function PersonDetailPage() {
           check_out_time: v.check_out_time,
           visitor_type: v.visitor_type,
           purpose: v.purpose,
-          property_name: Array.isArray(v.property) ? v.property[0]?.name : (v.property as { name: string } | null)?.name || "Unknown",
+          property_name: transformJoin(v.property)?.name || "Unknown",
         }))
         setVisitHistory(transformed)
       }
@@ -290,11 +291,11 @@ export default function PersonDetailPage() {
     const { error } = await supabase.rpc("verify_person", { p_person_id: person.id })
 
     if (error) {
-      toast.error("Failed to verify person")
+      showError("Failed to verify person")
       return
     }
 
-    toast.success("Person verified successfully")
+    showSuccess("Person verified successfully")
     refetch()
   }
 
@@ -312,11 +313,11 @@ export default function PersonDetailPage() {
     })
 
     if (error) {
-      toast.error("Failed to block person")
+      showError("Failed to block person")
       return
     }
 
-    toast.success("Person blocked successfully")
+    showSuccess("Person blocked successfully")
     refetch()
   }
 
@@ -328,11 +329,11 @@ export default function PersonDetailPage() {
     const { error } = await supabase.rpc("unblock_person", { p_person_id: person.id })
 
     if (error) {
-      toast.error("Failed to unblock person")
+      showError("Failed to unblock person")
       return
     }
 
-    toast.success("Person unblocked successfully")
+    showSuccess("Person unblocked successfully")
     refetch()
   }
 
@@ -341,12 +342,12 @@ export default function PersonDetailPage() {
     if (!person || !user) return
 
     if (summary.is_current_tenant) {
-      toast.error("Cannot delete: This person is currently an active tenant")
+      showError("Cannot delete: This person is currently an active tenant")
       return
     }
 
     if (summary.is_staff) {
-      toast.error("Cannot delete: This person is currently an active staff member")
+      showError("Cannot delete: This person is currently an active staff member")
       return
     }
 
@@ -398,14 +399,14 @@ export default function PersonDetailPage() {
       const { error } = await softDelete("people", person.id, user.id)
 
       if (error) {
-        toast.error("Failed to delete person")
+        showError("Failed to delete person")
         return
       }
 
-      toast.success("Person deleted successfully")
+      showSuccess("Person deleted successfully")
       router.push("/people")
     } catch {
-      toast.error("Failed to delete person")
+      showError("Failed to delete person")
     }
   }
 

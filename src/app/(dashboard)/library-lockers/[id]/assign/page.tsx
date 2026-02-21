@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Lock, Loader2, Users } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 import { Currency } from "@/components/ui/currency"
 import { withCreatedBy } from "@/lib/audit"
@@ -76,13 +76,13 @@ export default function AssignLockerPage({
         .single()
 
       if (lockerError || !lockerData) {
-        toast.error("Locker not found")
+        showError("Locker not found")
         router.push("/library-lockers")
         return
       }
 
       if (lockerData.status !== "available") {
-        toast.error("Locker is not available for assignment")
+        showError("Locker is not available for assignment")
         router.push(`/library-lockers/${id}`)
         return
       }
@@ -117,17 +117,17 @@ export default function AssignLockerPage({
     e.preventDefault()
 
     if (!formData.member_id) {
-      toast.error("Please select a member")
+      showError("Please select a member")
       return
     }
 
     if (!formData.start_date) {
-      toast.error("Please enter start date")
+      showError("Please enter start date")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -147,7 +147,7 @@ export default function AssignLockerPage({
         .single()
 
       if (!workspace) {
-        toast.error("Workspace not found")
+        showError("Workspace not found")
         setLoading(false)
         return
       }
@@ -174,7 +174,7 @@ export default function AssignLockerPage({
 
       if (assignmentError) {
         console.error("Error creating assignment:", assignmentError)
-        toast.error(`Failed to assign locker: ${assignmentError.message}`)
+        showError(`Failed to assign locker: ${assignmentError.message}`)
         return
       }
 
@@ -192,7 +192,7 @@ export default function AssignLockerPage({
 
       if (lockerError) {
         console.error("Error updating locker:", lockerError)
-        toast.error(`Failed to update locker status: ${lockerError.message}`)
+        showError(`Failed to update locker status: ${lockerError.message}`)
         return
       }
 
@@ -210,11 +210,11 @@ export default function AssignLockerPage({
         // Don't fail the whole operation for this
       }
 
-      toast.success("Locker assigned successfully!")
+      showSuccess("Locker assigned successfully!")
       router.push(`/library-lockers/${id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to assign locker. Please try again.")
+      showError("Failed to assign locker. Please try again.")
     } finally {
       setLoading(false)
     }

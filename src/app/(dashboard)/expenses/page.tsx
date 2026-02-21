@@ -16,7 +16,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess } from "@/lib/toast-helpers"
 
 // ============================================
 // Types
@@ -355,7 +355,7 @@ function ExportButton({ expenses }: { expenses: Expense[] }) {
     a.download = `expenses-${new Date().toISOString().split("T")[0]}.csv`
     a.click()
     URL.revokeObjectURL(url)
-    toast.success("Expenses exported to CSV")
+    showSuccess("Expenses exported to CSV")
   }
 
   return (

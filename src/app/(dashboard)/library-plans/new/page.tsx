@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { TIME_SLOTS } from "@/types/library.types"
 import { withCreatedBy } from "@/lib/audit"
 
@@ -59,12 +59,12 @@ export default function NewLibraryPlanPage() {
     e.preventDefault()
 
     if (!formData.name || !formData.base_price || !formData.validity_days) {
-      toast.error("Please fill in required fields (Name, Price, Validity)")
+      showError("Please fill in required fields (Name, Price, Validity)")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -82,7 +82,7 @@ export default function NewLibraryPlanPage() {
         .single()
 
       if (!workspace) {
-        toast.error("Workspace not found")
+        showError("Workspace not found")
         setLoading(false)
         return
       }
@@ -107,15 +107,15 @@ export default function NewLibraryPlanPage() {
 
       if (error) {
         console.error("Error creating plan:", error)
-        toast.error(`Failed to create plan: ${error.message}`)
+        showError(`Failed to create plan: ${error.message}`)
         return
       }
 
-      toast.success("Plan created successfully!")
+      showSuccess("Plan created successfully!")
       router.push("/library-plans")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to create plan. Please try again.")
+      showError("Failed to create plan. Please try again.")
     } finally {
       setLoading(false)
     }

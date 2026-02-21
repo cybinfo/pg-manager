@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "sonner"
+import { showSuccess } from "@/lib/toast-helpers"
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false)
@@ -38,7 +38,7 @@ export default function ContactPage() {
 
     setLoading(false)
     setSubmitted(true)
-    toast.success("Opening your email client...")
+    showSuccess("Opening your email client...")
   }
 
   const contactMethods = [

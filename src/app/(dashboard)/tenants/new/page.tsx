@@ -14,7 +14,7 @@ import {
   ArrowLeft, Users, Loader2, Building2, Home, RefreshCw,
   Shield, ChevronRight, FileText
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, toast } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-utils"
 import { PageLoader } from "@/components/ui/page-loader"
@@ -75,10 +75,10 @@ export default function NewTenantPage() {
     const { data, error } = await supabase.from("rooms").select("*").order("room_number")
     if (error) {
       console.error("Error refreshing rooms:", error)
-      toast.error("Failed to refresh rooms")
+      showError("Failed to refresh rooms")
     } else {
       setRooms(data || [])
-      toast.success("Rooms refreshed")
+      showSuccess("Rooms refreshed")
     }
   }
 
@@ -99,7 +99,7 @@ export default function NewTenantPage() {
 
       if (propertiesRes.error) {
         console.error("Error fetching properties:", propertiesRes.error)
-        toast.error("Failed to load properties")
+        showError("Failed to load properties")
       } else {
         setProperties(propertiesRes.data || [])
         if (propertiesRes.data && propertiesRes.data.length > 0) {
@@ -134,7 +134,7 @@ export default function NewTenantPage() {
       if (data && !data.is_blocked) {
         handlePersonSelect(data)
       } else if (data?.is_blocked) {
-        toast.error("This person is blocked and cannot be added as a tenant")
+        showError("This person is blocked and cannot be added as a tenant")
       }
     }
 

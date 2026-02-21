@@ -14,7 +14,7 @@ import {
   Shield,
   Check
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 
 // Available permissions grouped by module
@@ -177,12 +177,12 @@ export default function NewRolePage() {
     e.preventDefault()
 
     if (!formData.name) {
-      toast.error("Please enter a role name")
+      showError("Please enter a role name")
       return
     }
 
     if (selectedPermissions.length === 0) {
-      toast.error("Please select at least one permission")
+      showError("Please select at least one permission")
       return
     }
 
@@ -193,7 +193,7 @@ export default function NewRolePage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -213,11 +213,11 @@ export default function NewRolePage() {
         throw error
       }
 
-      toast.success("Role created successfully!")
+      showSuccess("Role created successfully!")
       router.push("/staff/roles")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to create role. Please try again.")
+      showError("Failed to create role. Please try again.")
     } finally {
       setLoading(false)
     }

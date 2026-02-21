@@ -13,7 +13,7 @@ import {
   Mail, Phone, Send, Copy, Clock, Check, X, Loader2,
   UserPlus, RefreshCw, Trash2, ExternalLink
 } from 'lucide-react'
-import { toast } from 'sonner'
+import { showSuccess, showError } from '@/lib/toast-helpers'
 import { cn } from '@/lib/utils'
 
 // ============================================
@@ -55,7 +55,7 @@ export function InvitationForm({
     e.preventDefault()
 
     if (!formData.email && !formData.phone) {
-      toast.error('Please provide email or phone number')
+      showError('Please provide email or phone number')
       return
     }
 
@@ -102,7 +102,7 @@ export function InvitationForm({
             .eq('id', entityId)
         }
 
-        toast.success(`${formData.name || 'User'} has been added and can now access the system`)
+        showSuccess(`${formData.name || 'User'} has been added and can now access the system`)
         onSuccess?.(context as unknown as Invitation)
       } else {
         // Create invitation
@@ -126,12 +126,12 @@ export function InvitationForm({
 
         if (inviteError) throw inviteError
 
-        toast.success('Invitation created successfully')
+        showSuccess('Invitation created successfully')
         onSuccess?.(invitation as Invitation)
       }
     } catch (error: any) {
       console.error('Error creating invitation:', error)
-      toast.error(error.message || 'Failed to create invitation')
+      showError(error.message || 'Failed to create invitation')
     } finally {
       setIsLoading(false)
     }
@@ -292,7 +292,7 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
   const copyInviteLink = (token: string) => {
     const link = `${window.location.origin}/invite/${token}`
     navigator.clipboard.writeText(link)
-    toast.success('Invitation link copied!')
+    showSuccess('Invitation link copied!')
   }
 
   const revokeInvitation = async (id: string) => {
@@ -302,9 +302,9 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
       .eq('id', id)
 
     if (error) {
-      toast.error('Failed to revoke invitation')
+      showError('Failed to revoke invitation')
     } else {
-      toast.success('Invitation revoked')
+      showSuccess('Invitation revoked')
       fetchInvitations()
       onInvitationChange?.()
     }
@@ -312,7 +312,7 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
 
   const resendInvitation = async (invitation: Invitation) => {
     // In a real app, this would trigger an email/SMS
-    toast.success('Invitation reminder sent!')
+    showSuccess('Invitation reminder sent!')
   }
 
   if (isLoading) {
@@ -475,7 +475,7 @@ export function AcceptInvitation({ token }: AcceptInvitationProps) {
 
       if (error) throw error
 
-      toast.success('Invitation accepted!')
+      showSuccess('Invitation accepted!')
 
       // Redirect based on context type
       if (invitation?.context_type === 'tenant') {
@@ -485,7 +485,7 @@ export function AcceptInvitation({ token }: AcceptInvitationProps) {
       }
     } catch (error: any) {
       console.error('Error accepting invitation:', error)
-      toast.error(error.message || 'Failed to accept invitation')
+      showError(error.message || 'Failed to accept invitation')
     } finally {
       setIsAccepting(false)
     }

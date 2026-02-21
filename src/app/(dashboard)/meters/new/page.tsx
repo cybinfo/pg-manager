@@ -28,7 +28,7 @@ import {
   Save,
   Loader2,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 import {
   MeterType,
@@ -157,7 +157,7 @@ export default function NewMeterPage() {
     e.preventDefault()
 
     if (!validate()) {
-      toast.error("Please fix the errors before submitting")
+      showError("Please fix the errors before submitting")
       return
     }
 
@@ -166,7 +166,7 @@ export default function NewMeterPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      toast.error("Session expired. Please log in again.")
+      showError("Session expired. Please log in again.")
       setLoading(false)
       return
     }
@@ -180,7 +180,7 @@ export default function NewMeterPage() {
       .single()
 
     if (existing) {
-      toast.error(`A meter with number "${formData.meter_number}" already exists`)
+      showError(`A meter with number "${formData.meter_number}" already exists`)
       setLoading(false)
       return
     }
@@ -206,7 +206,7 @@ export default function NewMeterPage() {
 
     if (meterError) {
       console.error("Error creating meter:", meterError)
-      toast.error("Failed to create meter")
+      showError("Failed to create meter")
       setLoading(false)
       return
     }
@@ -226,12 +226,12 @@ export default function NewMeterPage() {
 
       if (assignError) {
         console.error("Error assigning meter:", assignError)
-        toast.warning("Meter created but failed to assign to room")
+        showWarning("Meter created but failed to assign to room")
       } else {
-        toast.success("Meter created and assigned to room")
+        showSuccess("Meter created and assigned to room")
       }
     } else {
-      toast.success("Meter created successfully")
+      showSuccess("Meter created successfully")
     }
 
     router.push(`/meters/${meterData.id}`)

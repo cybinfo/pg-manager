@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle, Library } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoader } from "@/components/ui/page-loader"
 
 interface Property {
@@ -209,7 +209,7 @@ function NewComplaintForm() {
 
     const hasLocation = formData.entity_type === "property" ? formData.property_id : formData.library_id
     if (!hasLocation || !formData.title || !formData.category) {
-      toast.error("Please fill in all required fields")
+      showError("Please fill in all required fields")
       return
     }
 
@@ -220,7 +220,7 @@ function NewComplaintForm() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -241,15 +241,15 @@ function NewComplaintForm() {
 
       if (error) {
         console.error("Error creating complaint:", error)
-        toast.error(`Failed to create complaint: ${error.message}`)
+        showError(`Failed to create complaint: ${error.message}`)
         return
       }
 
-      toast.success("Complaint logged successfully")
+      showSuccess("Complaint logged successfully")
       router.push("/complaints")
     } catch (error: any) {
       console.error("Error:", error)
-      toast.error(error?.message || "Failed to create complaint")
+      showError(error?.message || "Failed to create complaint")
     } finally {
       setLoading(false)
     }

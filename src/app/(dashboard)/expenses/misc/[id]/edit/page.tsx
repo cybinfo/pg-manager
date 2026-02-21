@@ -10,7 +10,7 @@ import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import {
   FormPageTemplate,
@@ -129,12 +129,12 @@ export default function EditMiscTransactionPage({
     e.preventDefault()
 
     if (formData.amount <= 0) {
-      toast.error("Amount must be greater than 0")
+      showError("Amount must be greater than 0")
       return
     }
 
     if (!formData.person_name?.trim() && !formData.description?.trim()) {
-      toast.error("Please enter person name or description")
+      showError("Please enter person name or description")
       return
     }
 
@@ -166,11 +166,11 @@ export default function EditMiscTransactionPage({
 
       if (error) throw error
 
-      toast.success("Transaction updated")
+      showSuccess("Transaction updated")
       router.push(`/expenses/misc/${id}`)
     } catch (error) {
       console.error("Failed to update transaction:", error)
-      toast.error("Failed to update transaction")
+      showError("Failed to update transaction")
     } finally {
       setLoading(false)
     }

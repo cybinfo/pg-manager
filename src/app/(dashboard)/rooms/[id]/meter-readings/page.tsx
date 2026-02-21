@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Gauge, Plus, ArrowLeft, Home, Zap, Droplets, Calendar } from "lucide-react"
 import { formatDate } from "@/lib/format"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface MeterReading {
   id: string
@@ -65,7 +66,7 @@ export default function RoomMeterReadingsPage() {
         }
         setRoom({
           ...r,
-          property: Array.isArray(r.property) ? r.property[0] : r.property
+          property: transformJoin(r.property)
         })
       }
 
@@ -86,7 +87,7 @@ export default function RoomMeterReadingsPage() {
           charge_type: { id: string; name: string }[] | { id: string; name: string } | null
         }) => ({
           ...r,
-          charge_type: Array.isArray(r.charge_type) ? r.charge_type[0] : r.charge_type
+          charge_type: transformJoin(r.charge_type)
         }))
         setReadings(transformed)
       }

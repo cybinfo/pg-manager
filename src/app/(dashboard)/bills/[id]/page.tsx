@@ -35,7 +35,7 @@ import {
   CreditCard,
   Trash2,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -119,13 +119,13 @@ export default function BillDetailPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || !bill) {
-        toast.error("Session expired")
+        showError("Session expired")
         return
       }
 
       const amount = parseFloat(paymentData.amount)
       if (isNaN(amount) || amount <= 0) {
-        toast.error("Please enter a valid amount")
+        showError("Please enter a valid amount")
         setSubmitting(false)
         return
       }
@@ -146,12 +146,12 @@ export default function BillDetailPage() {
 
       if (error) {
         console.error("Error recording payment:", error)
-        toast.error("Failed to record payment")
+        showError("Failed to record payment")
         setSubmitting(false)
         return
       }
 
-      toast.success("Payment recorded successfully")
+      showSuccess("Payment recorded successfully")
       setShowPaymentForm(false)
       setPaymentData({
         amount: "",
@@ -162,7 +162,7 @@ export default function BillDetailPage() {
       })
       refetch()
     } catch {
-      toast.error("Something went wrong")
+      showError("Something went wrong")
     } finally {
       setSubmitting(false)
     }
@@ -170,7 +170,7 @@ export default function BillDetailPage() {
 
   const handleWhatsAppShare = () => {
     if (!bill || !bill.tenant?.phone) {
-      toast.error("Tenant phone number not available")
+      showError("Tenant phone number not available")
       return
     }
 

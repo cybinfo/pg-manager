@@ -17,7 +17,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { softDelete, cascadeSoftDelete } from "@/lib/audit"
 import type { SoftDeletableTable } from "@/types/audit.types"
 
@@ -122,7 +122,7 @@ export function useDetailPage<T extends object>(
       if (fetchError) {
         if (fetchError.code === "PGRST116") {
           // Not found
-          toast.error(currentConfig.notFoundMessage || `${currentConfig.table.slice(0, -1)} not found`)
+          showError(currentConfig.notFoundMessage || `${currentConfig.table.slice(0, -1)} not found`)
           if (currentConfig.redirectOnNotFound) {
             router.push(currentConfig.redirectOnNotFound)
           }
@@ -253,7 +253,7 @@ export function useDetailPage<T extends object>(
           : String(err)
       console.error(`[useDetailPage] Error fetching ${currentConfig.table}:`, errorDetails)
       setError(err as Error)
-      toast.error(`Failed to load data`)
+      showError(`Failed to load data`)
     } finally {
       setLoading(false)
     }
@@ -296,11 +296,11 @@ export function useDetailPage<T extends object>(
 
         // Update local state optimistically
         setData((prev) => (prev ? { ...prev, [field]: value } : null))
-        toast.success("Updated successfully")
+        showSuccess("Updated successfully")
         return true
       } catch (err) {
         console.error(`[useDetailPage] Error updating ${field}:`, err)
-        toast.error("Failed to update")
+        showError("Failed to update")
         return false
       } finally {
         setIsSaving(false)
@@ -332,11 +332,11 @@ export function useDetailPage<T extends object>(
 
         // Update local state optimistically
         setData((prev) => (prev ? { ...prev, ...updates } : null))
-        toast.success("Updated successfully")
+        showSuccess("Updated successfully")
         return true
       } catch (err) {
         console.error(`[useDetailPage] Error updating fields:`, err)
-        toast.error("Failed to update")
+        showError("Failed to update")
         return false
       } finally {
         setIsSaving(false)
@@ -373,7 +373,7 @@ export function useDetailPage<T extends object>(
         // Get current user for audit trail
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-          toast.error("Session expired. Please log in again.")
+          showError("Session expired. Please log in again.")
           return false
         }
 
@@ -435,7 +435,7 @@ export function useDetailPage<T extends object>(
           }
         }
 
-        toast.success("Deleted successfully")
+        showSuccess("Deleted successfully")
 
         // Redirect after deletion
         if (currentConfig.redirectOnNotFound) {
@@ -445,7 +445,7 @@ export function useDetailPage<T extends object>(
         return true
       } catch (err) {
         console.error(`[useDetailPage] Error deleting:`, err)
-        toast.error("Failed to delete")
+        showError("Failed to delete")
         return false
       } finally {
         setIsDeleting(false)

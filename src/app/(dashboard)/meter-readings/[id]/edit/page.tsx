@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Calculator, Zap, Droplets, Building2, Home } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoader } from "@/components/ui/page-loader"
 import { formatDate } from "@/lib/format"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface MeterReading {
   id: string
@@ -70,7 +71,7 @@ export default function EditMeterReadingPage() {
 
       if (error || !data) {
         console.error("Error fetching reading:", error)
-        toast.error("Meter reading not found")
+        showError("Meter reading not found")
         router.push("/meter-readings")
         return
       }
@@ -78,9 +79,9 @@ export default function EditMeterReadingPage() {
       // Transform joins
       const transformedData: MeterReading = {
         ...data,
-        meter: Array.isArray(data.meter) ? data.meter[0] : data.meter,
-        property: Array.isArray(data.property) ? data.property[0] : data.property,
-        room: Array.isArray(data.room) ? data.room[0] : data.room,
+        meter: transformJoin(data.meter),
+        property: transformJoin(data.property),
+        room: transformJoin(data.room),
       }
 
       setReading(transformedData)
@@ -122,18 +123,18 @@ export default function EditMeterReadingPage() {
     e.preventDefault()
 
     if (!formData.reading_value) {
-      toast.error("Please enter a reading value")
+      showError("Please enter a reading value")
       return
     }
 
     const readingValue = parseFloat(formData.reading_value)
     if (isNaN(readingValue) || readingValue < 0) {
-      toast.error("Please enter a valid reading value")
+      showError("Please enter a valid reading value")
       return
     }
 
     if (reading && reading.previous_reading !== null && readingValue < reading.previous_reading) {
-      toast.error("Current reading cannot be less than the previous reading")
+      showError("Current reading cannot be less than the previous reading")
       return
     }
 
@@ -154,15 +155,15 @@ export default function EditMeterReadingPage() {
 
       if (error) {
         console.error("Error updating meter reading:", error)
-        toast.error(`Database error: ${error.message}`)
+        showError(`Database error: ${error.message}`)
         return
       }
 
-      toast.success("Meter reading updated successfully!")
+      showSuccess("Meter reading updated successfully!")
       router.push(`/meter-readings/${params.id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update meter reading. Please try again.")
+      showError("Failed to update meter reading. Please try again.")
     } finally {
       setLoading(false)
     }

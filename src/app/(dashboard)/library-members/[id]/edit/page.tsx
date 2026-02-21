@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Users, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
 
@@ -70,7 +70,7 @@ export default function EditLibraryMemberPage({
         .single()
 
       if (error || !data) {
-        toast.error("Member not found")
+        showError("Member not found")
         router.push("/library-members")
         return
       }
@@ -104,12 +104,12 @@ export default function EditLibraryMemberPage({
     e.preventDefault()
 
     if (!formData.name || !formData.phone) {
-      toast.error("Please fill in required fields (Name, Phone)")
+      showError("Please fill in required fields (Name, Phone)")
       return
     }
 
     if (!user) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -138,15 +138,15 @@ export default function EditLibraryMemberPage({
 
       if (error) {
         console.error("Error updating member:", error)
-        toast.error(`Failed to update member: ${error.message}`)
+        showError(`Failed to update member: ${error.message}`)
         return
       }
 
-      toast.success("Member updated successfully!")
+      showSuccess("Member updated successfully!")
       router.push(`/library-members/${id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update member. Please try again.")
+      showError("Failed to update member. Please try again.")
     } finally {
       setLoading(false)
     }

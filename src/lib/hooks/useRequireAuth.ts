@@ -19,7 +19,7 @@
 
 import { useCallback, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+import { showError } from "@/lib/toast-helpers"
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
 
@@ -58,7 +58,7 @@ interface UseRequireAuthReturn {
  * ```
  * const { data: { user } } = await supabase.auth.getUser()
  * if (!user) {
- *   toast.error("Session expired. Please login again.")
+ *   showError("Session expired. Please login again.")
  *   router.push("/login")
  *   return
  * }
@@ -105,7 +105,7 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}): UseRequireA
 
     if (!currentUser) {
       if (showToast) {
-        toast.error(errorMessage)
+        showError(errorMessage)
       }
       router.push(redirectTo)
       return null
@@ -152,7 +152,7 @@ export async function requireAuth(
 
   if (!user) {
     if (showToast) {
-      toast.error(errorMessage)
+      showError(errorMessage)
     }
     router.push(redirectTo)
     return null

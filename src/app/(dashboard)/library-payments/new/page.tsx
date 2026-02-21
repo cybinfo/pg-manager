@@ -19,7 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { Currency } from "@/components/ui/currency"
 
@@ -96,18 +96,18 @@ export default function NewLibraryPaymentPage() {
     e.preventDefault()
 
     if (!formData.member_id || !formData.amount) {
-      toast.error("Please fill in required fields (Member, Amount)")
+      showError("Please fill in required fields (Member, Amount)")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
 
     if (!selectedMember) {
-      toast.error("Please select a member")
+      showError("Please select a member")
       return
     }
 
@@ -149,11 +149,11 @@ export default function NewLibraryPaymentPage() {
 
       if (error) {
         console.error("Error creating payment:", error)
-        toast.error(`Failed to record payment: ${error.message}`)
+        showError(`Failed to record payment: ${error.message}`)
         return
       }
 
-      toast.success(`Payment recorded! Receipt: ${receiptNumber}`)
+      showSuccess(`Payment recorded! Receipt: ${receiptNumber}`)
 
       if (preselectedMember) {
         router.push(`/library-members/${preselectedMember}`)
@@ -162,7 +162,7 @@ export default function NewLibraryPaymentPage() {
       }
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to record payment. Please try again.")
+      showError("Failed to record payment. Please try again.")
     } finally {
       setLoading(false)
     }

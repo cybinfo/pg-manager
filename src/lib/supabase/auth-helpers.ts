@@ -187,6 +187,46 @@ export async function requireAdminClient(): Promise<RequireUserWithClientResult>
 }
 
 // ============================================================================
+// STAFF PERMISSION HELPERS
+// ============================================================================
+
+/**
+ * Check if a user has a specific permission in a workspace via staff role.
+ * Centralizes the get_user_permissions RPC call used across API routes.
+ *
+ * @example
+ * const hasAccess = await checkStaffPermission(supabase, user.id, workspaceId, "payments.view")
+ * if (!hasAccess) return forbidden("Access denied")
+ */
+export async function checkStaffPermission(
+  supabase: SupabaseClient,
+  userId: string,
+  workspaceId: string,
+  requiredPermission: string
+): Promise<boolean> {
+  // Get user's context for this workspace
+  const { data: userContext } = await supabase
+    .from("user_contexts")
+    .select("id, context_type")
+    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
+    .eq("is_active", true)
+    .single()
+
+  if (userContext?.context_type !== "staff") {
+    return false
+  }
+
+  // Check staff permissions via RPC
+  const { data: permissions } = await (supabase.rpc as Function)("get_user_permissions", {
+    p_user_id: userId,
+    p_workspace_id: workspaceId,
+  })
+
+  return Array.isArray(permissions) && permissions.includes(requiredPermission)
+}
+
+// ============================================================================
 // USER ID HELPERS
 // ============================================================================
 

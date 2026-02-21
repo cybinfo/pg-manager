@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
 import { ArrowLeft, Armchair, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 
 interface Section {
@@ -84,12 +84,12 @@ export default function NewLibrarySeatPage() {
     e.preventDefault()
 
     if (!formData.section_id || !formData.seat_number) {
-      toast.error("Please fill in required fields (Section, Seat Number)")
+      showError("Please fill in required fields (Section, Seat Number)")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -107,7 +107,7 @@ export default function NewLibrarySeatPage() {
         .single()
 
       if (!section) {
-        toast.error("Section not found")
+        showError("Section not found")
         setLoading(false)
         return
       }
@@ -128,11 +128,11 @@ export default function NewLibrarySeatPage() {
 
       if (error) {
         console.error("Error creating seat:", error)
-        toast.error(`Failed to create seat: ${error.message}`)
+        showError(`Failed to create seat: ${error.message}`)
         return
       }
 
-      toast.success("Seat created successfully!")
+      showSuccess("Seat created successfully!")
 
       if (preselectedSection) {
         router.push(`/library-sections/${preselectedSection}`)
@@ -141,7 +141,7 @@ export default function NewLibrarySeatPage() {
       }
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to create seat. Please try again.")
+      showError("Failed to create seat. Please try again.")
     } finally {
       setLoading(false)
     }

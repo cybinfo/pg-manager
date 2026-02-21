@@ -43,7 +43,7 @@ import {
   Star,
   Ban,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDateTime, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
@@ -170,7 +170,7 @@ export default function VisitorDetailPage() {
     setActionLoading(true)
     const success = await updateField("check_out_time", new Date().toISOString())
     if (success) {
-      toast.success("Visitor checked out successfully")
+      showSuccess("Visitor checked out successfully")
     }
     setActionLoading(false)
   }
@@ -180,7 +180,7 @@ export default function VisitorDetailPage() {
     setActionLoading(true)
     const success = await updateField("enquiry_status", newStatus)
     if (success) {
-      toast.success(`Enquiry marked as ${ENQUIRY_STATUS_LABELS[newStatus]}`)
+      showSuccess(`Enquiry marked as ${ENQUIRY_STATUS_LABELS[newStatus]}`)
     }
     setActionLoading(false)
   }

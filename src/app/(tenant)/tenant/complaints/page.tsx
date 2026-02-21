@@ -18,10 +18,11 @@ import {
   X,
   Send
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 import { PageLoader } from "@/components/ui/page-loader"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { TenantWithContext } from "@/types/tenants.types"
 
 interface Complaint {
@@ -87,7 +88,7 @@ export default function TenantComplaintsPage() {
     }
 
     // Handle Supabase array join
-    const property = Array.isArray(tenant.property) ? tenant.property[0] : tenant.property
+    const property = transformJoin(tenant.property)
     const ownerId = property?.owner_id || tenant.owner_id
 
     // Get workspace_id from workspaces table via owner
@@ -110,6 +111,7 @@ export default function TenantComplaintsPage() {
       .from("complaints")
       .select("*")
       .eq("tenant_id", tenant.id)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
 
     setComplaints(complaintsData || [])
@@ -120,7 +122,7 @@ export default function TenantComplaintsPage() {
     e.preventDefault()
 
     if (!tenantInfo || !formData.title) {
-      toast.error("Please fill in all required fields")
+      showError("Please fill in all required fields")
       return
     }
 
@@ -138,7 +140,7 @@ export default function TenantComplaintsPage() {
         .single()
 
       if (!property) {
-        toast.error("Property not found")
+        showError("Property not found")
         return
       }
 
@@ -164,9 +166,9 @@ export default function TenantComplaintsPage() {
       setComplaints([data, ...complaints])
       setFormData({ category: "other", title: "", description: "" })
       setShowForm(false)
-      toast.success("Complaint submitted successfully")
+      showSuccess("Complaint submitted successfully")
     } catch (error: any) {
-      toast.error(error.message || "Failed to submit complaint")
+      showError(error.message || "Failed to submit complaint")
     } finally {
       setSubmitting(false)
     }

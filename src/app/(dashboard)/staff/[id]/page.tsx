@@ -34,7 +34,7 @@ import {
   Save,
   Edit,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGate } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
@@ -138,7 +138,7 @@ export default function StaffDetailPage() {
     if (!staff) return
 
     if (!formData.name || !formData.email) {
-      toast.error("Name and email are required")
+      showError("Name and email are required")
       return
     }
 
@@ -166,7 +166,7 @@ export default function StaffDetailPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-      toast.error("Session expired")
+      showError("Session expired")
       setRoleLoading(false)
       return
     }
@@ -181,9 +181,9 @@ export default function StaffDetailPage() {
     })
 
     if (error) {
-      toast.error("Failed to add role")
+      showError("Failed to add role")
     } else {
-      toast.success("Role assigned")
+      showSuccess("Role assigned")
       refetch()
     }
 
@@ -202,9 +202,9 @@ export default function StaffDetailPage() {
       .eq("id", roleId)
 
     if (error) {
-      toast.error("Failed to remove role")
+      showError("Failed to remove role")
     } else {
-      toast.success("Role removed")
+      showSuccess("Role removed")
       refetch()
     }
 

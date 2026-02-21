@@ -14,7 +14,7 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 interface UseCopyToClipboardOptions {
   /** Duration to show "copied" state in ms (default: 2000) */
@@ -70,7 +70,7 @@ export function useCopyToClipboard(
         setCopied(true)
 
         if (showToast) {
-          toast.success(successMessage)
+          showSuccess(successMessage)
         }
 
         // Reset after delay
@@ -81,7 +81,7 @@ export function useCopyToClipboard(
         return true
       } catch (err) {
         console.error("Failed to copy:", err)
-        toast.error("Failed to copy to clipboard")
+        showError("Failed to copy to clipboard")
         return false
       }
     },

@@ -32,7 +32,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import type { LibraryAttendance } from "@/types/library.types"
 
 export default function LibraryAttendanceDetailPage() {
@@ -70,7 +70,7 @@ export default function LibraryAttendanceDetailPage() {
 
       if (attendanceError) {
         console.error("Error checking out:", attendanceError)
-        toast.error(`Failed to check out: ${attendanceError.message}`)
+        showError(`Failed to check out: ${attendanceError.message}`)
         return
       }
 
@@ -128,11 +128,11 @@ export default function LibraryAttendanceDetailPage() {
           .eq("id", attendance.seat_id)
       }
 
-      toast.success(`Checked out successfully! Duration: ${hoursSpent.toFixed(1)} hours`)
+      showSuccess(`Checked out successfully! Duration: ${hoursSpent.toFixed(1)} hours`)
       refetch()
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to check out. Please try again.")
+      showError("Failed to check out. Please try again.")
     } finally {
       setCheckingOut(false)
     }

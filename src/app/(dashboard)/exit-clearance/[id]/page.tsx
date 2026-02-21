@@ -36,7 +36,7 @@ import {
   Receipt,
   IndianRupee,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
@@ -90,7 +90,7 @@ export default function ExitClearanceDetailPage() {
 
   const addDeduction = () => {
     if (!newDeduction.reason || !newDeduction.amount) {
-      toast.error("Please enter reason and amount")
+      showError("Please enter reason and amount")
       return
     }
 
@@ -152,12 +152,12 @@ export default function ExitClearanceDetailPage() {
     if (!clearance) return
 
     if (!formData.room_inspection_done) {
-      toast.error("Please complete room inspection first")
+      showError("Please complete room inspection first")
       return
     }
 
     if (!formData.key_returned) {
-      toast.error("Please confirm key has been returned")
+      showError("Please confirm key has been returned")
       return
     }
 
@@ -180,7 +180,7 @@ export default function ExitClearanceDetailPage() {
 
       // Update tenant status
       if (!clearance.tenant) {
-        toast.error("Tenant data not found")
+        showError("Tenant data not found")
         setSaving(false)
         return
       }
@@ -197,7 +197,7 @@ export default function ExitClearanceDetailPage() {
 
       // Update room status
       if (!clearance.room) {
-        toast.error("Room data not found")
+        showError("Room data not found")
         setSaving(false)
         return
       }
@@ -209,11 +209,11 @@ export default function ExitClearanceDetailPage() {
 
       if (roomError) throw roomError
 
-      toast.success("Exit clearance completed! Room is now available.")
+      showSuccess("Exit clearance completed! Room is now available.")
       router.push("/exit-clearance")
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Failed to complete clearance"
-      toast.error(errorMessage)
+      showError(errorMessage)
     } finally {
       setSaving(false)
     }

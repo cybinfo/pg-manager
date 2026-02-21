@@ -38,10 +38,11 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface MeterReading {
   id: string
@@ -125,7 +126,7 @@ export default function MeterReadingDetailPage() {
           tenant: { id: string; name: string }[] | null
         }) => ({
           ...charge,
-          tenant: Array.isArray(charge.tenant) ? charge.tenant[0] : charge.tenant,
+          tenant: transformJoin(charge.tenant),
         }))
         setCharges(transformedCharges)
       }
@@ -140,13 +141,13 @@ export default function MeterReadingDetailPage() {
 
   const handleGenerateCharges = async () => {
     if (!reading || !reading.units_consumed || reading.units_consumed <= 0) {
-      toast.error("Cannot generate charges: No units consumed")
+      showError("Cannot generate charges: No units consumed")
       return
     }
 
     const ratePerUnit = (reading.charge_type?.calculation_config as { rate_per_unit?: number; split_by?: string })?.rate_per_unit
     if (!ratePerUnit || ratePerUnit <= 0) {
-      toast.error("Cannot generate charges: No rate configured for this meter type")
+      showError("Cannot generate charges: No rate configured for this meter type")
       return
     }
 
@@ -156,7 +157,7 @@ export default function MeterReadingDetailPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -168,12 +169,12 @@ export default function MeterReadingDetailPage() {
         .eq("status", "active")
 
       if (tenantsError) {
-        toast.error("Failed to fetch tenants")
+        showError("Failed to fetch tenants")
         return
       }
 
       if (!tenants || tenants.length === 0) {
-        toast.error("No active tenants in this room")
+        showError("No active tenants in this room")
         return
       }
 
@@ -224,7 +225,7 @@ export default function MeterReadingDetailPage() {
         `)
 
       if (chargeError) {
-        toast.error("Failed to generate charges")
+        showError("Failed to generate charges")
         return
       }
 
@@ -240,14 +241,14 @@ export default function MeterReadingDetailPage() {
           tenant: { id: string; name: string }[] | null
         }) => ({
           ...charge,
-          tenant: Array.isArray(charge.tenant) ? charge.tenant[0] : charge.tenant,
+          tenant: transformJoin(charge.tenant),
         }))
         setCharges((prev) => [...transformedCharges, ...prev])
       }
 
-      toast.success(`${tenants.length} charge${tenants.length > 1 ? "s" : ""} generated successfully!`)
+      showSuccess(`${tenants.length} charge${tenants.length > 1 ? "s" : ""} generated successfully!`)
     } catch {
-      toast.error("Failed to generate charges")
+      showError("Failed to generate charges")
     } finally {
       setGenerating(false)
     }

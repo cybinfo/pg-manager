@@ -12,6 +12,7 @@
 import { validateCronRequest } from "@/lib/api-middleware"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { apiSuccess, internalError } from "@/lib/api-response"
+import { transformJoin } from "@/lib/supabase/transforms"
 import {
   sendLibraryLowHoursWarning,
   sendLibraryExpiringMembership,
@@ -73,10 +74,8 @@ export async function GET(request: Request) {
 
       for (const member of lowHoursMembers) {
         try {
-          const library = Array.isArray(member.library) ? member.library[0] : member.library
-          const subscription = Array.isArray(member.current_subscription)
-            ? member.current_subscription[0]
-            : member.current_subscription
+          const library = transformJoin(member.library)
+          const subscription = transformJoin(member.current_subscription)
 
           if (!member.email || !library) continue
 
@@ -135,10 +134,10 @@ export async function GET(request: Request) {
 
       for (const membership of expiringMemberships) {
         try {
-          const member = Array.isArray(membership.member) ? membership.member[0] : membership.member
+          const member = transformJoin(membership.member)
           if (!member || !member.email) continue
 
-          const library = Array.isArray(member.library) ? member.library[0] : member.library
+          const library = transformJoin(member.library)
           if (!library) continue
 
           const result = await sendLibraryExpiringMembership({
@@ -199,10 +198,10 @@ export async function GET(request: Request) {
 
       for (const membership of expiredMemberships) {
         try {
-          const member = Array.isArray(membership.member) ? membership.member[0] : membership.member
+          const member = transformJoin(membership.member)
           if (!member || !member.email) continue
 
-          const library = Array.isArray(member.library) ? member.library[0] : member.library
+          const library = transformJoin(member.library)
           if (!library) continue
 
           const result = await sendLibraryExpiredMembership({
@@ -233,6 +232,27 @@ export async function GET(request: Request) {
     }
 
     cronLogger.info("Library notifications complete", results)
+
+    // Log audit event for notification batch
+    const totalSent = results.lowHoursWarnings + results.expiringNotifications + results.expiredNotifications
+    if (totalSent > 0) {
+      await supabaseAdmin
+        .from("audit_events")
+        .insert({
+          action: "library_notifications_sent",
+          entity_type: "library_member",
+          entity_id: null,
+          actor_id: null,
+          metadata: {
+            low_hours_warnings: results.lowHoursWarnings,
+            expiring_notifications: results.expiringNotifications,
+            expired_notifications: results.expiredNotifications,
+            total_sent: totalSent,
+            errors_count: results.errors.length,
+            triggered_by: "cron",
+          },
+        })
+    }
 
     return apiSuccess(
       {

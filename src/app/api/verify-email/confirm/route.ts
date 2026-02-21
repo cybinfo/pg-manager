@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { authLogger, extractErrorMeta } from "@/lib/logger"
 import { validateCsrf } from "@/lib/csrf"
 import {
   apiSuccess,
@@ -10,6 +11,7 @@ import {
   csrfError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 // Service role client for database operations
 const supabaseAdmin = createClient(
@@ -54,12 +56,12 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
-      console.error("Failed to verify token:", error)
+      authLogger.error("Failed to verify token", extractErrorMeta(error))
       return internalError("Failed to verify token")
     }
 
     // The RPC returns a table, get the first row
-    const result = Array.isArray(data) ? data[0] : data
+    const result = transformJoin(data)
 
     if (!result?.success) {
       return badRequest(result?.message || "Invalid or expired token")
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
       { message: result.message }
     )
   } catch (error) {
-    console.error("Error in verify email:", error)
+    authLogger.error("Error in verify email", extractErrorMeta(error))
     return internalError("Internal server error")
   }
 }

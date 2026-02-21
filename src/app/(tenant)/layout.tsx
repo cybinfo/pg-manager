@@ -20,7 +20,7 @@ import {
   Building2,
   FolderOpen
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess } from "@/lib/toast-helpers"
 import { TenantPortalInfo, RawTenantPortalInfo } from "@/types/tenants.types"
 
 const navigation = [
@@ -109,7 +109,7 @@ export default function TenantLayout({
     if (!result.success) {
       console.error('[TenantLayout] Logout error:', result.error?.message)
     }
-    toast.success("Logged out successfully")
+    showSuccess("Logged out successfully")
     router.push("/login")
   }
 

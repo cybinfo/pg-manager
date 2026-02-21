@@ -32,7 +32,7 @@ import {
   Filter,
   MoreVertical,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { PageLoader } from "@/components/ui/page-loader"
@@ -105,7 +105,7 @@ export default function VisitorDirectoryPage() {
 
     if (error) {
       console.error("Error fetching contacts:", error)
-      toast.error("Failed to load visitor directory")
+      showError("Failed to load visitor directory")
       return
     }
 
@@ -139,9 +139,9 @@ export default function VisitorDirectoryPage() {
       .eq("id", contact.id)
 
     if (error) {
-      toast.error("Failed to update contact")
+      showError("Failed to update contact")
     } else {
-      toast.success(contact.is_frequent ? "Removed from frequent" : "Marked as frequent")
+      showSuccess(contact.is_frequent ? "Removed from frequent" : "Marked as frequent")
       fetchContacts()
     }
     setActionLoading(null)
@@ -161,9 +161,9 @@ export default function VisitorDirectoryPage() {
       .eq("id", contact.id)
 
     if (error) {
-      toast.error("Failed to update contact")
+      showError("Failed to update contact")
     } else {
-      toast.success(contact.is_blocked ? "Contact unblocked" : "Contact blocked")
+      showSuccess(contact.is_blocked ? "Contact unblocked" : "Contact blocked")
       fetchContacts()
     }
     setActionLoading(null)

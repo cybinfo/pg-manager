@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
 
@@ -67,7 +67,7 @@ export default function EditLibraryPlanPage({
         .single()
 
       if (error || !data) {
-        toast.error("Plan not found")
+        showError("Plan not found")
         router.push("/library-plans")
         return
       }
@@ -110,12 +110,12 @@ export default function EditLibraryPlanPage({
     e.preventDefault()
 
     if (!formData.name || !formData.base_price || !formData.validity_days) {
-      toast.error("Please fill in required fields (Name, Price, Validity)")
+      showError("Please fill in required fields (Name, Price, Validity)")
       return
     }
 
     if (!user) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -144,15 +144,15 @@ export default function EditLibraryPlanPage({
 
       if (error) {
         console.error("Error updating plan:", error)
-        toast.error(`Failed to update plan: ${error.message}`)
+        showError(`Failed to update plan: ${error.message}`)
         return
       }
 
-      toast.success("Plan updated successfully!")
+      showSuccess("Plan updated successfully!")
       router.push("/library-plans")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update plan. Please try again.")
+      showError("Failed to update plan. Please try again.")
     } finally {
       setLoading(false)
     }

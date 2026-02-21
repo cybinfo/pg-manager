@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { transformJoin } from '@/lib/supabase/transforms'
 
 // ============================================
 // Context Analytics & Business Intelligence
@@ -218,8 +219,8 @@ export async function getStaffProductivity(workspaceId: string): Promise<StaffPr
       .slice(0, 5)
       .map(([p]) => p)
 
-    const role = Array.isArray(ctx.role) ? ctx.role[0] : ctx.role
-    const staff = Array.isArray(ctx.staff) ? ctx.staff[0] : ctx.staff
+    const role = transformJoin(ctx.role)
+    const staff = transformJoin(ctx.staff)
 
     productivity.push({
       staff_id: ctx.entity_id || '',

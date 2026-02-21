@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users, Zap, Droplets, Plus } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PageLoader } from "@/components/ui/page-loader"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface ChargeType {
   id: string
@@ -111,10 +112,10 @@ export default function NewMeterReadingPage() {
 
             return {
               ...meter,
-              property: Array.isArray(meter.property) ? meter.property[0] : meter.property,
+              property: transformJoin(meter.property),
               current_assignment: {
                 room_id: assignment.room_id,
-                room_number: Array.isArray(assignment.room) ? assignment.room[0]?.room_number : (assignment.room as { room_number: string } | null)?.room_number,
+                room_number: transformJoin(assignment.room)?.room_number ?? null,
                 start_reading: assignment.start_reading,
               },
             } as Meter
@@ -223,23 +224,23 @@ export default function NewMeterReadingPage() {
     e.preventDefault()
 
     if (!formData.meter_id || !selectedMeter) {
-      toast.error("Please select a meter")
+      showError("Please select a meter")
       return
     }
 
     if (!formData.reading_value) {
-      toast.error("Please enter a reading value")
+      showError("Please enter a reading value")
       return
     }
 
     const readingValue = parseFloat(formData.reading_value)
     if (isNaN(readingValue) || readingValue < 0) {
-      toast.error("Please enter a valid reading value")
+      showError("Please enter a valid reading value")
       return
     }
 
     if (lastReading && readingValue < lastReading.reading_value) {
-      toast.error("Current reading cannot be less than the previous reading")
+      showError("Current reading cannot be less than the previous reading")
       return
     }
 
@@ -250,7 +251,7 @@ export default function NewMeterReadingPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -264,7 +265,7 @@ export default function NewMeterReadingPage() {
         .maybeSingle()
 
       if (existingReading) {
-        toast.error("A reading already exists for this meter on the selected date. Please choose a different date.")
+        showError("A reading already exists for this meter on the selected date. Please choose a different date.")
         setLoading(false)
         return
       }
@@ -296,7 +297,7 @@ export default function NewMeterReadingPage() {
 
       if (error) {
         console.error("Error creating meter reading:", error)
-        toast.error(`Database error: ${error.message}`)
+        showError(`Database error: ${error.message}`)
         return
       }
 
@@ -343,10 +344,10 @@ export default function NewMeterReadingPage() {
 
           if (chargeError) {
             console.error("Error creating charges:", chargeError)
-            toast.warning("Meter reading saved, but failed to generate charges")
+            showWarning("Meter reading saved, but failed to generate charges")
           } else {
             const chargeCount = splitByOccupants ? roomTenants.length : 1
-            toast.success(`Meter reading recorded and ${chargeCount} charge(s) generated!`)
+            showSuccess(`Meter reading recorded and ${chargeCount} charge(s) generated!`)
             // Redirect back to room's meter readings if we came from there
             if (roomIdFromUrl) {
               router.push(`/rooms/${roomIdFromUrl}/meter-readings`)
@@ -358,7 +359,7 @@ export default function NewMeterReadingPage() {
         }
       }
 
-      toast.success("Meter reading recorded successfully!")
+      showSuccess("Meter reading recorded successfully!")
       // Redirect back to room's meter readings if we came from there
       if (roomIdFromUrl) {
         router.push(`/rooms/${roomIdFromUrl}/meter-readings`)
@@ -367,7 +368,7 @@ export default function NewMeterReadingPage() {
       }
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to record meter reading. Please try again.")
+      showError("Failed to record meter reading. Please try again.")
     } finally {
       setLoading(false)
     }

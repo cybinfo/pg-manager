@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Building2, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { showDetailedError } from "@/lib/error-utils"
 
 // Shared form components
@@ -43,7 +43,7 @@ export default function NewPropertyPage() {
     e.preventDefault()
 
     if (!formData.name || !formData.city) {
-      toast.error("Please fill in required fields")
+      showError("Please fill in required fields")
       return
     }
 
@@ -54,7 +54,7 @@ export default function NewPropertyPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -80,15 +80,15 @@ export default function NewPropertyPage() {
 
       if (error) {
         console.error("Error creating property:", error)
-        toast.error(`Database error: ${error.message}`)
+        showError(`Database error: ${error.message}`)
         return
       }
 
-      toast.success("Property created successfully!")
+      showSuccess("Property created successfully!")
       router.push("/properties")
     } catch (error: any) {
       console.error("Error:", error)
-      toast.error(error?.message || "Failed to create property. Please try again.")
+      showError(error?.message || "Failed to create property. Please try again.")
     } finally {
       setLoading(false)
     }

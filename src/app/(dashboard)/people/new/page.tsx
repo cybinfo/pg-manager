@@ -34,7 +34,7 @@ import {
   Loader2,
   Camera,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { Select } from "@/components/ui/form-components"
 import {
@@ -158,7 +158,7 @@ export default function NewPersonPage() {
     e.preventDefault()
 
     if (!validate()) {
-      toast.error("Please fix the errors before submitting")
+      showError("Please fix the errors before submitting")
       return
     }
 
@@ -168,7 +168,7 @@ export default function NewPersonPage() {
     // Get current user
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      toast.error("You must be logged in to add a person")
+      showError("You must be logged in to add a person")
       setLoading(false)
       return
     }
@@ -182,7 +182,7 @@ export default function NewPersonPage() {
         .single()
 
       if (existing) {
-        toast.error(`A person with this phone already exists: ${existing.name}`)
+        showError(`A person with this phone already exists: ${existing.name}`)
         setLoading(false)
         return
       }
@@ -238,12 +238,12 @@ export default function NewPersonPage() {
 
     if (error) {
       console.error("Error creating person:", error)
-      toast.error("Failed to create person")
+      showError("Failed to create person")
       setLoading(false)
       return
     }
 
-    toast.success("Person added successfully")
+    showSuccess("Person added successfully")
     router.push(`/people/${data.id}`)
   }
 

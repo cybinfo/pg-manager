@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, Loader2, CheckCircle } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -24,12 +24,12 @@ export default function RegisterPage() {
     e.preventDefault()
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
+      showError("Passwords do not match")
       return
     }
 
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters")
+      showError("Password must be at least 6 characters")
       return
     }
 
@@ -49,12 +49,12 @@ export default function RegisterPage() {
       })
 
       if (error) {
-        toast.error(error.message)
+        showError(error.message)
         return
       }
 
       setSuccess(true)
-      toast.success("Account created successfully!")
+      showSuccess("Account created successfully!")
 
       // Redirect to setup wizard after a short delay
       setTimeout(() => {
@@ -62,7 +62,7 @@ export default function RegisterPage() {
         router.refresh()
       }, 2000)
     } catch {
-      toast.error("An unexpected error occurred")
+      showError("An unexpected error occurred")
     } finally {
       setLoading(false)
     }

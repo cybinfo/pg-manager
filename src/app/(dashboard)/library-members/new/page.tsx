@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Users, Loader2, CreditCard, UserCheck } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { TIME_SLOTS } from "@/types/library.types"
 
@@ -121,12 +121,12 @@ export default function NewLibraryMemberPage() {
     e.preventDefault()
 
     if (!formData.library_id || !formData.name || !formData.phone) {
-      toast.error("Please fill in required fields (Library, Name, Phone)")
+      showError("Please fill in required fields (Library, Name, Phone)")
       return
     }
 
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -144,7 +144,7 @@ export default function NewLibraryMemberPage() {
         .single()
 
       if (!library) {
-        toast.error("Library not found")
+        showError("Library not found")
         setLoading(false)
         return
       }
@@ -197,7 +197,7 @@ export default function NewLibraryMemberPage() {
 
       if (memberError || !member) {
         console.error("Error creating member:", memberError)
-        toast.error(`Failed to create member: ${memberError?.message}`)
+        showError(`Failed to create member: ${memberError?.message}`)
         setLoading(false)
         return
       }
@@ -287,11 +287,11 @@ export default function NewLibraryMemberPage() {
         }
       }
 
-      toast.success("Member registered successfully!")
+      showSuccess("Member registered successfully!")
       router.push(`/library-members/${member.id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to register member. Please try again.")
+      showError("Failed to register member. Please try again.")
     } finally {
       setLoading(false)
     }

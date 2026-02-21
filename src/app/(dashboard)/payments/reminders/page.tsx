@@ -19,11 +19,12 @@ import {
   CheckCircle2,
   MessageCircle
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { PageLoader } from "@/components/ui/page-loader"
 import { messageTemplates, generateWhatsAppLink, formatCurrency } from "@/lib/notifications"
 import { formatDate } from "@/lib/format"
+import { transformJoin } from "@/lib/supabase/transforms"
 
 interface TenantWithDues {
   id: string
@@ -92,7 +93,7 @@ export default function PaymentRemindersPage() {
 
     if (tenantsError) {
       console.error("Error fetching tenants:", tenantsError)
-      toast.error("Failed to load tenants")
+      showError("Failed to load tenants")
       setLoading(false)
       return
     }
@@ -118,8 +119,8 @@ export default function PaymentRemindersPage() {
     const now = new Date()
     const tenantsWithDues: TenantWithDues[] = ((tenantsData || []) as RawTenant[]).map((tenant) => {
       // Transform arrays to single objects (Supabase join pattern)
-      const property = Array.isArray(tenant.property) ? tenant.property[0] : tenant.property
-      const room = Array.isArray(tenant.room) ? tenant.room[0] : tenant.room
+      const property = transformJoin(tenant.property) as TenantWithDues["property"]
+      const room = transformJoin(tenant.room) as TenantWithDues["room"]
 
       // Calculate months active
       const checkIn = new Date(tenant.check_in_date)
@@ -182,7 +183,7 @@ export default function PaymentRemindersPage() {
 
   const handleMarkSent = (tenantId: string) => {
     setSentReminders(prev => new Set([...prev, tenantId]))
-    toast.success("Marked as sent")
+    showSuccess("Marked as sent")
   }
 
   // Calculate due date (1st of next month)

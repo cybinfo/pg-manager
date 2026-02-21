@@ -14,6 +14,7 @@
  */
 
 import { createClient } from "@/lib/supabase/client"
+import { transformJoin } from "@/lib/supabase/transforms"
 import {
   WorkflowDefinition,
   executeWorkflow,
@@ -128,8 +129,8 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
 
           const tenant = {
             ...tenantData[0],
-            property: Array.isArray(tenantData[0].property) ? tenantData[0].property[0] : tenantData[0].property,
-            room: Array.isArray(tenantData[0].room) ? tenantData[0].room[0] : tenantData[0].room,
+            property: transformJoin(tenantData[0].property),
+            room: transformJoin(tenantData[0].room),
           }
 
           if (tenant.status === "checked_out") {
@@ -325,7 +326,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
           }
 
           // Response is an array when using Prefer: return=representation
-          const clearance = Array.isArray(responseData) ? responseData[0] : responseData
+          const clearance = transformJoin(responseData)
           return createSuccessResult(clearance)
         } catch (err) {
           clearTimeout(timeoutId)

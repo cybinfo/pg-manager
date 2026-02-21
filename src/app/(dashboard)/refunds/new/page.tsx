@@ -23,7 +23,7 @@ import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 
 interface Tenant {
@@ -138,7 +138,7 @@ export default function NewRefundPage() {
     e.preventDefault()
 
     if (!formData.tenant_id || !formData.amount) {
-      toast.error("Please fill in all required fields")
+      showError("Please fill in all required fields")
       return
     }
 
@@ -149,7 +149,7 @@ export default function NewRefundPage() {
       const { data: { session } } = await supabase.auth.getSession()
 
       if (!session?.user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         return
       }
 
@@ -179,9 +179,9 @@ export default function NewRefundPage() {
 
       if (error) {
         console.error("Error creating refund:", error)
-        toast.error(`Failed to create refund: ${error.message}`)
+        showError(`Failed to create refund: ${error.message}`)
       } else {
-        toast.success("Refund recorded successfully")
+        showSuccess("Refund recorded successfully")
 
         // Update exit_clearance refund status if linked
         if (exitClearanceId) {
@@ -198,7 +198,7 @@ export default function NewRefundPage() {
       }
     } catch (err) {
       console.error("Error:", err)
-      toast.error("An error occurred")
+      showError("An error occurred")
     } finally {
       setSubmitting(false)
     }

@@ -23,7 +23,7 @@
 
 import { useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 // ============================================
 // Types
@@ -72,7 +72,7 @@ export function useInlineEdit({
     async (id: string, updates: Record<string, unknown>): Promise<boolean> => {
       if (!workspaceId) {
         if (showErrorToast) {
-          toast.error("No workspace selected")
+          showError("No workspace selected")
         }
         return false
       }
@@ -98,13 +98,13 @@ export function useInlineEdit({
         if (error) {
           console.error(`[useInlineEdit] Update failed:`, error)
           if (showErrorToast) {
-            toast.error(error.message || "Failed to update")
+            showError(error.message || "Failed to update")
           }
           return false
         }
 
         if (showSuccessToast) {
-          toast.success(successMessage)
+          showSuccess(successMessage)
         }
 
         // Call success callback (usually to refetch data)
@@ -114,7 +114,7 @@ export function useInlineEdit({
       } catch (err) {
         console.error(`[useInlineEdit] Unexpected error:`, err)
         if (showErrorToast) {
-          toast.error("An unexpected error occurred")
+          showError("An unexpected error occurred")
         }
         return false
       } finally {
@@ -188,7 +188,7 @@ export function useBatchInlineEdit({
     async (id: string, updates: Record<string, unknown>): Promise<boolean> => {
       if (!workspaceId) {
         if (showErrorToast) {
-          toast.error("No workspace selected")
+          showError("No workspace selected")
         }
         return false
       }
@@ -198,7 +198,7 @@ export function useBatchInlineEdit({
         const validationError = onBeforeUpdate(id, updates)
         if (validationError) {
           if (showErrorToast) {
-            toast.error(validationError)
+            showError(validationError)
           }
           return false
         }
@@ -224,13 +224,13 @@ export function useBatchInlineEdit({
         if (error) {
           console.error(`[useBatchInlineEdit] Update failed:`, error)
           if (showErrorToast) {
-            toast.error(error.message || "Failed to update")
+            showError(error.message || "Failed to update")
           }
           return false
         }
 
         if (showSuccessToast) {
-          toast.success(successMessage)
+          showSuccess(successMessage)
         }
 
         onSuccess?.()
@@ -238,7 +238,7 @@ export function useBatchInlineEdit({
       } catch (err) {
         console.error(`[useBatchInlineEdit] Unexpected error:`, err)
         if (showErrorToast) {
-          toast.error("An unexpected error occurred")
+          showError("An unexpected error occurred")
         }
         return false
       } finally {

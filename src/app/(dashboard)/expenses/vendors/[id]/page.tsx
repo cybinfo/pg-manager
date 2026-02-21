@@ -27,7 +27,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -150,14 +150,14 @@ export default function VendorDetailPage({
     try {
       const result = await softDelete("vendors", id, user.id)
       if (!result.error) {
-        toast.success("Vendor deleted successfully")
+        showSuccess("Vendor deleted successfully")
         router.push("/expenses/vendors")
       } else {
-        toast.error(result.error.message || "Failed to delete vendor")
+        showError(result.error.message || "Failed to delete vendor")
       }
     } catch (error) {
       console.error("Failed to delete vendor:", error)
-      toast.error("Failed to delete vendor")
+      showError("Failed to delete vendor")
     }
   }
 

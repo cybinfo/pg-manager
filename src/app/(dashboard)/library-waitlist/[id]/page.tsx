@@ -57,7 +57,7 @@ import {
   Hash,
 } from "lucide-react"
 import { formatDate, formatDateTime } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist, LibraryWaitlistStatus } from "@/types/library.types"
 import type { DetailPageConfig } from "@/lib/hooks/useDetailPage"
@@ -108,14 +108,14 @@ export default function WaitlistDetailPage({
         .eq("id", entry.id)
 
       if (error) {
-        toast.error(`Failed to update status: ${error.message}`)
+        showError(`Failed to update status: ${error.message}`)
         return
       }
 
-      toast.success(`Status updated to ${LIBRARY_WAITLIST_STATUS_CONFIG[newStatus].label}`)
+      showSuccess(`Status updated to ${LIBRARY_WAITLIST_STATUS_CONFIG[newStatus].label}`)
       refetch()
     } catch (err) {
-      toast.error("Failed to update status")
+      showError("Failed to update status")
     } finally {
       setUpdating(false)
     }
@@ -138,16 +138,16 @@ export default function WaitlistDetailPage({
         .eq("id", entry.id)
 
       if (error) {
-        toast.error(`Failed to update: ${error.message}`)
+        showError(`Failed to update: ${error.message}`)
         return
       }
 
-      toast.success("Marked as contacted")
+      showSuccess("Marked as contacted")
       setContactDialogOpen(false)
       setContactNotes("")
       refetch()
     } catch (err) {
-      toast.error("Failed to update")
+      showError("Failed to update")
     } finally {
       setUpdating(false)
     }

@@ -15,7 +15,7 @@ import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Camera, CheckCircle, XCircle, Loader2, Users, Clock, AlertCircle } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { Avatar } from "@/components/ui/avatar"
 
@@ -47,7 +47,7 @@ export default function QRScannerPage() {
 
   const processCheckIn = useCallback(async (payload: QRPayload) => {
     if (!user || !workspaceId) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       return
     }
 
@@ -81,7 +81,7 @@ export default function QRScannerPage() {
           timestamp: new Date(),
         }
         setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-        toast.error("Member not found")
+        showError("Member not found")
         return
       }
 
@@ -96,7 +96,7 @@ export default function QRScannerPage() {
           timestamp: new Date(),
         }
         setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-        toast.error(`Member ${member.name} is ${member.status}`)
+        showError(`Member ${member.name} is ${member.status}`)
         return
       }
 
@@ -111,7 +111,7 @@ export default function QRScannerPage() {
           timestamp: new Date(),
         }
         setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-        toast.error(`${member.name} has no hours remaining`)
+        showError(`${member.name} has no hours remaining`)
         return
       }
 
@@ -134,7 +134,7 @@ export default function QRScannerPage() {
           timestamp: new Date(),
         }
         setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-        toast.warning(`${member.name} is already checked in`)
+        showWarning(`${member.name} is already checked in`)
         return
       }
 
@@ -146,7 +146,7 @@ export default function QRScannerPage() {
         .single()
 
       if (!workspace) {
-        toast.error("Workspace not found")
+        showError("Workspace not found")
         return
       }
 
@@ -184,7 +184,7 @@ export default function QRScannerPage() {
         timestamp: new Date(),
       }
       setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-      toast.success(`${member.name} checked in! (${member.hours_balance.toFixed(1)}h remaining)`)
+      showSuccess(`${member.name} checked in! (${member.hours_balance.toFixed(1)}h remaining)`)
 
       // Play success sound (optional)
       try {
@@ -205,7 +205,7 @@ export default function QRScannerPage() {
         timestamp: new Date(),
       }
       setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-      toast.error("Check-in failed")
+      showError("Check-in failed")
     } finally {
       setProcessing(false)
     }
@@ -228,10 +228,10 @@ export default function QRScannerPage() {
             if (payload.type === "library_checkin" && payload.member_id) {
               processCheckIn(payload)
             } else {
-              toast.error("Invalid QR code format")
+              showError("Invalid QR code format")
             }
           } catch {
-            toast.error("Invalid QR code")
+            showError("Invalid QR code")
           }
         },
         () => {

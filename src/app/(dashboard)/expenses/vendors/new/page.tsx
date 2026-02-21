@@ -13,7 +13,7 @@ import { Building2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import {
   FormPageTemplate,
@@ -110,12 +110,12 @@ export default function NewVendorPage() {
     e.preventDefault()
 
     if (!formData.name.trim()) {
-      toast.error("Vendor name is required")
+      showError("Vendor name is required")
       return
     }
 
     if (!workspaceId || !user?.id) {
-      toast.error("Session error. Please refresh the page.")
+      showError("Session error. Please refresh the page.")
       return
     }
 
@@ -153,18 +153,18 @@ export default function NewVendorPage() {
 
       if (error) {
         if (error.code === "23505") {
-          toast.error("A vendor with this name already exists")
+          showError("A vendor with this name already exists")
         } else {
           throw error
         }
         return
       }
 
-      toast.success("Vendor created successfully")
+      showSuccess("Vendor created successfully")
       router.push(`/expenses/vendors/${data.id}`)
     } catch (error) {
       console.error("Failed to create vendor:", error)
-      toast.error("Failed to create vendor")
+      showError("Failed to create vendor")
     } finally {
       setLoading(false)
     }

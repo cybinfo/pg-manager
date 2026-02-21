@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { PageLoader } from "@/components/ui/page-loader"
 import { ReportIssueDialog, ApprovalType } from "@/components/tenant/report-issue-dialog"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDistanceToNow } from "date-fns"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
@@ -123,7 +124,7 @@ export default function TenantProfilePage() {
 
       if (data) {
         // Handle Supabase array joins
-        const property = Array.isArray(data.property) ? data.property[0] : data.property
+        const property = transformJoin(data.property)
         const ownerId = property?.owner_id || data.owner_id
 
         // Fetch workspace_id from workspaces table via owner
@@ -136,7 +137,7 @@ export default function TenantProfilePage() {
         const transformedData = {
           ...data,
           property,
-          room: Array.isArray(data.room) ? data.room[0] : data.room,
+          room: transformJoin(data.room),
           owner_id: ownerId,
           workspace_id: workspace?.id || "",
         }

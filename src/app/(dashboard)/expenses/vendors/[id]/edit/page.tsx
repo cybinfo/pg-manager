@@ -11,7 +11,7 @@ import { Building2, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -81,7 +81,7 @@ export default function EditVendorPage({
         .single()
 
       if (error || !vendorData) {
-        toast.error("Vendor not found")
+        showError("Vendor not found")
         router.push("/expenses/vendors")
         return
       }
@@ -119,7 +119,7 @@ export default function EditVendorPage({
     e.preventDefault()
 
     if (!formData.name.trim()) {
-      toast.error("Vendor name is required")
+      showError("Vendor name is required")
       return
     }
 
@@ -151,18 +151,18 @@ export default function EditVendorPage({
 
       if (error) {
         if (error.code === "23505") {
-          toast.error("A vendor with this name already exists")
+          showError("A vendor with this name already exists")
         } else {
           throw error
         }
         return
       }
 
-      toast.success("Vendor updated successfully")
+      showSuccess("Vendor updated successfully")
       router.push(`/expenses/vendors/${id}`)
     } catch (error) {
       console.error("Failed to update vendor:", error)
-      toast.error("Failed to update vendor")
+      showError("Failed to update vendor")
     } finally {
       setLoading(false)
     }

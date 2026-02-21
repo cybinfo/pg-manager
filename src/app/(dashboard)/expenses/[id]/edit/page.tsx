@@ -15,7 +15,7 @@ import {
   Wallet,
   FileText,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 interface ExpenseType {
   id: string
@@ -102,7 +102,7 @@ export default function EditExpensePage() {
       setProperties(propertiesData || [])
     } catch (error) {
       console.error("Error fetching data:", error)
-      toast.error("Failed to load expense")
+      showError("Failed to load expense")
       router.push("/expenses")
     } finally {
       setLoading(false)
@@ -120,17 +120,17 @@ export default function EditExpensePage() {
     e.preventDefault()
 
     if (!formData.expense_type_id) {
-      toast.error("Please select an expense category")
+      showError("Please select an expense category")
       return
     }
 
     if (!formData.amount || Number(formData.amount) <= 0) {
-      toast.error("Please enter a valid amount")
+      showError("Please enter a valid amount")
       return
     }
 
     if (!formData.expense_date) {
-      toast.error("Please select a date")
+      showError("Please select a date")
       return
     }
 
@@ -156,15 +156,15 @@ export default function EditExpensePage() {
 
       if (error) {
         console.error("Error updating expense:", error)
-        toast.error(`Failed to update expense: ${error.message}`)
+        showError(`Failed to update expense: ${error.message}`)
         return
       }
 
-      toast.success("Expense updated successfully")
+      showSuccess("Expense updated successfully")
       router.push(`/expenses/${params.id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update expense")
+      showError("Failed to update expense")
     } finally {
       setSubmitting(false)
     }

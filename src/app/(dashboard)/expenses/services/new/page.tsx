@@ -11,7 +11,7 @@ import { Hammer, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -164,22 +164,22 @@ export default function NewServicePaymentPage() {
     e.preventDefault()
 
     if (!formData.provider_name.trim()) {
-      toast.error("Provider name is required")
+      showError("Provider name is required")
       return
     }
 
     if (!formData.description.trim()) {
-      toast.error("Service description is required")
+      showError("Service description is required")
       return
     }
 
     if (formData.gross_amount <= 0) {
-      toast.error("Amount must be greater than 0")
+      showError("Amount must be greater than 0")
       return
     }
 
     if (!workspaceId || !user?.id) {
-      toast.error("Session error. Please refresh the page.")
+      showError("Session error. Please refresh the page.")
       return
     }
 
@@ -227,11 +227,11 @@ export default function NewServicePaymentPage() {
 
       if (error) throw error
 
-      toast.success("Service payment recorded")
+      showSuccess("Service payment recorded")
       router.push(`/expenses/services/${data.id}`)
     } catch (error) {
       console.error("Failed to create service payment:", error)
-      toast.error("Failed to create service payment")
+      showError("Failed to create service payment")
     } finally {
       setLoading(false)
     }

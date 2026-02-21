@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { sensitiveLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { apiLogger, extractErrorMeta } from "@/lib/logger"
 import { validateCsrf } from "@/lib/csrf"
 import {
   apiSuccess,
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
         .eq("id", tenantId)
 
       if (tenantError) {
-        console.error("Error updating tenants email:", tenantError)
+        apiLogger.error("Error updating tenants email", extractErrorMeta(tenantError))
         return internalError("Failed to update tenant email")
       }
     }
@@ -163,7 +164,7 @@ export async function POST(request: NextRequest) {
     )
 
     if (authError) {
-      console.error("Error updating auth.users email:", authError)
+      apiLogger.error("Error updating auth.users email", extractErrorMeta(authError))
       return internalError(`Failed to update auth email: ${authError.message}`)
     }
 
@@ -174,7 +175,7 @@ export async function POST(request: NextRequest) {
       .eq("user_id", userId)
 
     if (profileError) {
-      console.error("Error updating user_profiles email:", profileError)
+      apiLogger.error("Error updating user_profiles email", extractErrorMeta(profileError))
       // Don't fail completely, auth email is already updated
     }
 
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest) {
       { message: "Email updated successfully across all tables" }
     )
   } catch (error) {
-    console.error("Error in update-user-email:", error)
+    apiLogger.error("Error in update-user-email", extractErrorMeta(error))
     return internalError("Internal server error")
   }
 }

@@ -23,7 +23,7 @@ import {
   Trash2,
   Bell
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoader } from "@/components/ui/page-loader"
 import { initiateExitClearance, ExitClearanceInput } from "@/lib/workflows/exit.workflow"
 
@@ -127,7 +127,7 @@ function InitiateCheckoutForm() {
 
       if (error) {
         console.error("Error fetching tenants:", error)
-        toast.error("Failed to load tenants")
+        showError("Failed to load tenants")
         setLoadingData(false)
         return
       }
@@ -212,7 +212,7 @@ function InitiateCheckoutForm() {
 
   const addDeduction = () => {
     if (!newDeduction.reason || !newDeduction.amount) {
-      toast.error("Please enter reason and amount")
+      showError("Please enter reason and amount")
       return
     }
 
@@ -286,7 +286,7 @@ function InitiateCheckoutForm() {
     e.preventDefault()
 
     if (!formData.tenant_id || !formData.expected_exit_date) {
-      toast.error("Please fill in all required fields")
+      showError("Please fill in all required fields")
       return
     }
 
@@ -302,7 +302,7 @@ function InitiateCheckoutForm() {
       console.log("[ExitClearance] Selected tenant ID:", selectedTenant?.id)
 
       if (!session?.user || !session?.access_token || !selectedTenant) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         setLoading(false)
         return
       }
@@ -334,16 +334,16 @@ function InitiateCheckoutForm() {
       if (!result.success) {
         console.error("Error initiating exit:", result.errors)
         const errorMsg = result.errors?.[0]?.message || "Unknown error"
-        toast.error(`Failed to initiate checkout: ${errorMsg}`)
+        showError(`Failed to initiate checkout: ${errorMsg}`)
         setLoading(false)
         return
       }
 
-      toast.success("Exit clearance initiated")
+      showSuccess("Exit clearance initiated")
       router.push(`/exit-clearance/${result.data?.clearance_id}`)
     } catch (error: unknown) {
       console.error("Error:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to initiate checkout")
+      showError(error instanceof Error ? error.message : "Failed to initiate checkout")
     } finally {
       setLoading(false)
     }

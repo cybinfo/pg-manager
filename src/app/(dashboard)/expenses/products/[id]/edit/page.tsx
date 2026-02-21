@@ -11,7 +11,7 @@ import { Package, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -87,7 +87,7 @@ export default function EditProductPage({
         .single()
 
       if (error || !productData) {
-        toast.error("Product not found")
+        showError("Product not found")
         router.push("/expenses/products")
         return
       }
@@ -117,7 +117,7 @@ export default function EditProductPage({
     e.preventDefault()
 
     if (!formData.name.trim()) {
-      toast.error("Product name is required")
+      showError("Product name is required")
       return
     }
 
@@ -141,18 +141,18 @@ export default function EditProductPage({
 
       if (error) {
         if (error.code === "23505") {
-          toast.error("A product with this name already exists")
+          showError("A product with this name already exists")
         } else {
           throw error
         }
         return
       }
 
-      toast.success("Product updated successfully")
+      showSuccess("Product updated successfully")
       router.push(`/expenses/products/${id}`)
     } catch (error) {
       console.error("Failed to update product:", error)
-      toast.error("Failed to update product")
+      showError("Failed to update product")
     } finally {
       setLoading(false)
     }

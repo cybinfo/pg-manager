@@ -20,7 +20,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 // ============================================================================
 // TYPES
@@ -94,7 +94,7 @@ export function useDeleteConfirmation<T = string>(
       try {
         await onDelete(id)
 
-        toast.success(successMessage)
+        showSuccess(successMessage)
         onSuccess?.()
 
         return true
@@ -105,7 +105,7 @@ export function useDeleteConfirmation<T = string>(
             ? errorMessage(error)
             : errorMessage
 
-        toast.error(message)
+        showError(message)
         onError?.(error)
 
         return false
@@ -256,13 +256,13 @@ export function useMultiDelete<T = string>(
           ? successMessage(selectedIds.length)
           : successMessage
 
-      toast.success(msg)
+      showSuccess(msg)
       clearSelection()
       onSuccess?.()
 
       return true
     } catch (err) {
-      toast.error(errorMessage)
+      showError(errorMessage)
       return false
     } finally {
       setDeleting(false)

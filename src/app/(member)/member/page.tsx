@@ -19,6 +19,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { PageLoader } from "@/components/ui/page-loader"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
 
 interface MemberData {
@@ -119,12 +120,8 @@ export default function MemberHomePage() {
       }
 
       // Transform joins
-      const library = Array.isArray(memberData.library)
-        ? memberData.library[0]
-        : memberData.library
-      const currentSubscription = Array.isArray(memberData.current_subscription)
-        ? memberData.current_subscription[0]
-        : memberData.current_subscription
+      const library = transformJoin(memberData.library)
+      const currentSubscription = transformJoin(memberData.current_subscription)
 
       const normalizedMember: MemberData = {
         ...memberData,

@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Armchair, Loader2 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 
 interface SeatData {
@@ -65,7 +65,7 @@ export default function EditLibrarySeatPage({
         .single()
 
       if (error || !data) {
-        toast.error("Seat not found")
+        showError("Seat not found")
         router.push("/library-seats")
         return
       }
@@ -104,12 +104,12 @@ export default function EditLibrarySeatPage({
     e.preventDefault()
 
     if (!formData.seat_number) {
-      toast.error("Please enter seat number")
+      showError("Please enter seat number")
       return
     }
 
     if (!user) {
-      toast.error("Session expired. Please login again.")
+      showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
@@ -136,15 +136,15 @@ export default function EditLibrarySeatPage({
 
       if (error) {
         console.error("Error updating seat:", error)
-        toast.error(`Failed to update seat: ${error.message}`)
+        showError(`Failed to update seat: ${error.message}`)
         return
       }
 
-      toast.success("Seat updated successfully!")
+      showSuccess("Seat updated successfully!")
       router.push(`/library-seats/${id}`)
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to update seat. Please try again.")
+      showError("Failed to update seat. Please try again.")
     } finally {
       setLoading(false)
     }

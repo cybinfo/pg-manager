@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, Loader2, CheckCircle, XCircle } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -48,12 +48,12 @@ function ResetPasswordForm() {
     e.preventDefault()
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
+      showError("Passwords do not match")
       return
     }
 
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters")
+      showError("Password must be at least 6 characters")
       return
     }
 
@@ -66,19 +66,19 @@ function ResetPasswordForm() {
       })
 
       if (error) {
-        toast.error(error.message)
+        showError(error.message)
         return
       }
 
       setSuccess(true)
-      toast.success("Password updated successfully!")
+      showSuccess("Password updated successfully!")
 
       // Redirect to login after a short delay
       setTimeout(() => {
         router.push("/login")
       }, 3000)
     } catch {
-      toast.error("An unexpected error occurred")
+      showError("An unexpected error occurred")
     } finally {
       setLoading(false)
     }

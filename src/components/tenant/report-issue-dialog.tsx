@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, AlertCircle, FileText, Paperclip } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 
 interface TenantDocument {
@@ -123,12 +123,12 @@ export function ReportIssueDialog({
     e.preventDefault()
 
     if (!requestedValue.trim() && approvalType !== "complaint" && approvalType !== "other") {
-      toast.error("Please enter the requested change")
+      showError("Please enter the requested change")
       return
     }
 
     if (!reason.trim()) {
-      toast.error("Please provide a reason for your request")
+      showError("Please provide a reason for your request")
       return
     }
 
@@ -175,11 +175,11 @@ export function ReportIssueDialog({
 
     if (error) {
       console.error("Error submitting request:", error)
-      toast.error("Failed to submit request. Please try again.")
+      showError("Failed to submit request. Please try again.")
       return
     }
 
-    toast.success("Request submitted successfully! You'll be notified once it's reviewed.")
+    showSuccess("Request submitted successfully! You'll be notified once it's reviewed.")
     setRequestedValue("")
     setReason("")
     setSelectedDocIds([])

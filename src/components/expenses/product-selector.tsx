@@ -23,7 +23,7 @@ import {
   ChevronUp,
   Package,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError, showInfo } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { cn } from "@/lib/utils"
 import type { Product, ProductCategory } from "@/types/expense-enhanced.types"
@@ -188,7 +188,7 @@ export function ProductSelector({
   // Handle quick create
   const handleQuickCreate = async () => {
     if (!quickCreateForm.name.trim()) {
-      toast.error("Product name is required")
+      showError("Product name is required")
       return
     }
 
@@ -205,7 +205,7 @@ export function ProductSelector({
       .maybeSingle()
 
     if (existing) {
-      toast.info("Product already exists with this name")
+      showInfo("Product already exists with this name")
       handleSelect(existing)
       setCreating(false)
       setShowQuickCreate(false)
@@ -231,12 +231,12 @@ export function ProductSelector({
 
     if (createError) {
       console.error("Create error:", createError)
-      toast.error("Failed to create product")
+      showError("Failed to create product")
       setCreating(false)
       return
     }
 
-    toast.success("Product created successfully")
+    showSuccess("Product created successfully")
     handleSelect(newProduct)
     onCreate?.(newProduct)
     setCreating(false)

@@ -25,7 +25,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
+import { showSuccess, showError } from '@/lib/toast-helpers'
 
 export function ContextSwitcher() {
   const router = useRouter()
@@ -61,9 +61,9 @@ export function ContextSwitcher() {
         router.push('/dashboard')
       }
 
-      toast.success(`Switched to ${targetContext?.workspace_name}`)
+      showSuccess(`Switched to ${targetContext?.workspace_name}`)
     } else {
-      toast.error('Failed to switch context')
+      showError('Failed to switch context')
     }
 
     setIsLoading(false)
@@ -75,9 +75,9 @@ export function ContextSwitcher() {
 
     const success = await setDefaultContext(contextId)
     if (success) {
-      toast.success('Default account updated')
+      showSuccess('Default account updated')
     } else {
-      toast.error('Failed to update default')
+      showError('Failed to update default')
     }
   }
 

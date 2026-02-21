@@ -10,7 +10,7 @@ import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import {
   FormPageTemplate,
@@ -90,17 +90,17 @@ export default function NewMiscTransactionPage() {
     e.preventDefault()
 
     if (formData.amount <= 0) {
-      toast.error("Amount must be greater than 0")
+      showError("Amount must be greater than 0")
       return
     }
 
     if (!formData.person_name?.trim() && !formData.description?.trim()) {
-      toast.error("Please enter person name or description")
+      showError("Please enter person name or description")
       return
     }
 
     if (!workspaceId || !user?.id) {
-      toast.error("Session error. Please refresh the page.")
+      showError("Session error. Please refresh the page.")
       return
     }
 
@@ -136,7 +136,7 @@ export default function NewMiscTransactionPage() {
 
       if (error) throw error
 
-      toast.success(
+      showSuccess(
         formData.transaction_type === "in"
           ? "Money In recorded"
           : "Money Out recorded"
@@ -144,7 +144,7 @@ export default function NewMiscTransactionPage() {
       router.push(`/expenses/misc/${data.id}`)
     } catch (error) {
       console.error("Failed to create transaction:", error)
-      toast.error("Failed to create transaction")
+      showError("Failed to create transaction")
     } finally {
       setLoading(false)
     }

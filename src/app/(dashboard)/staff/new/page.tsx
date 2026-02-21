@@ -21,7 +21,7 @@ import {
   X,
   UserCheck,
 } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { sendInvitationEmail } from "@/lib/email"
 import { withCreatedBy, withCreatedByBatch } from "@/lib/audit"
 import { PageLoader } from "@/components/ui/page-loader"
@@ -114,7 +114,7 @@ export default function NewStaffPage() {
       if (data && !data.is_blocked) {
         handlePersonSelect(data)
       } else if (data?.is_blocked) {
-        toast.error("This person is blocked and cannot be added as staff")
+        showError("This person is blocked and cannot be added as staff")
       }
     }
 
@@ -142,7 +142,7 @@ export default function NewStaffPage() {
 
   const addRoleAssignment = () => {
     if (roles.length === 0) {
-      toast.error("No roles available. Create a role first.")
+      showError("No roles available. Create a role first.")
       return
     }
     setRoleAssignments((prev) => [...prev, { role_id: roles[0].id, property_id: null }])
@@ -169,20 +169,20 @@ export default function NewStaffPage() {
     const staffPhone = selectedPerson?.phone || formData.phone
 
     if (!staffName || !staffEmail) {
-      toast.error("Please select a person or fill in name and email")
+      showError("Please select a person or fill in name and email")
       return
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(staffEmail)) {
-      toast.error("Please enter a valid email address")
+      showError("Please enter a valid email address")
       return
     }
 
     // Validate phone if provided
     if (staffPhone && !validateIndianMobile(staffPhone)) {
-      toast.error("Please enter a valid Indian mobile number (10 digits)")
+      showError("Please enter a valid Indian mobile number (10 digits)")
       return
     }
 
@@ -193,7 +193,7 @@ export default function NewStaffPage() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error("Session expired. Please login again.")
+        showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
@@ -276,7 +276,7 @@ export default function NewStaffPage() {
 
         if (roleError) {
           console.error("Error assigning roles:", roleError)
-          toast.error("Staff created but role assignment failed")
+          showError("Staff created but role assignment failed")
         }
       }
 
@@ -303,7 +303,7 @@ export default function NewStaffPage() {
         if (contextError) {
           console.error("Error creating context:", contextError)
         } else {
-          toast.success(`Staff member added! ${existingProfile.name} can now login and switch to this staff account.`)
+          showSuccess(`Staff member added! ${existingProfile.name} can now login and switch to this staff account.`)
         }
       } else if (workspace) {
         // User doesn't exist - create invitation
@@ -329,7 +329,7 @@ export default function NewStaffPage() {
 
         if (inviteError) {
           console.error("Error creating invitation:", inviteError)
-          toast.success("Staff member added! (Invitation could not be created)")
+          showSuccess("Staff member added! (Invitation could not be created)")
         } else if (invitation) {
           // Get role name for email
           const selectedRole = roles.find(r => r.id === primaryRoleId)
@@ -358,20 +358,20 @@ export default function NewStaffPage() {
           })
 
           if (emailResult.success) {
-            toast.success("Staff member added! An invitation email has been sent.")
+            showSuccess("Staff member added! An invitation email has been sent.")
           } else {
             console.warn("Failed to send invitation email:", emailResult.error)
-            toast.success("Staff member added! Invitation created but email failed to send.")
+            showSuccess("Staff member added! Invitation created but email failed to send.")
           }
         }
       } else {
-        toast.success("Staff member added successfully!")
+        showSuccess("Staff member added successfully!")
       }
 
       router.push("/staff")
     } catch (error) {
       console.error("Error:", error)
-      toast.error("Failed to add staff member. Please try again.")
+      showError("Failed to add staff member. Please try again.")
     } finally {
       setLoading(false)
     }

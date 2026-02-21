@@ -1,6 +1,7 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { PublicPropertyPage } from "./client"
 
 // ============================================================================
@@ -77,6 +78,7 @@ async function getProperty(slug: string): Promise<PropertyWebsite | null> {
     `)
     .eq("website_slug", slug)
     .eq("website_enabled", true)
+    .is("deleted_at", null)
     .single()
 
   if (error || !data) {
@@ -84,7 +86,7 @@ async function getProperty(slug: string): Promise<PropertyWebsite | null> {
   }
 
   // Transform data (handle Supabase join array format)
-  const owner = Array.isArray(data.owner) ? data.owner[0] : data.owner
+  const owner = transformJoin(data.owner)
 
   return {
     ...data,

@@ -24,7 +24,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -96,14 +96,14 @@ export default function ServicePaymentDetailPage({
     try {
       const result = await softDelete("service_payments", id, user.id)
       if (!result.error) {
-        toast.success("Service payment deleted")
+        showSuccess("Service payment deleted")
         router.push("/expenses/services")
       } else {
-        toast.error(result.error.message || "Failed to delete")
+        showError(result.error.message || "Failed to delete")
       }
     } catch (error) {
       console.error("Failed to delete:", error)
-      toast.error("Failed to delete")
+      showError("Failed to delete")
     }
   }
 

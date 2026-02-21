@@ -19,7 +19,7 @@
 "use client"
 
 import { useState, useCallback, useRef } from "react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 // ============================================================================
 // TYPES
@@ -102,7 +102,7 @@ export function useAsyncOperation<T, Args extends unknown[] = []>(
               typeof successMessage === "function"
                 ? successMessage(res)
                 : successMessage
-            toast.success(message)
+            showSuccess(message)
           }
 
           // Call success callback
@@ -124,7 +124,7 @@ export function useAsyncOperation<T, Args extends unknown[] = []>(
 
           // Show error toast
           if (showErrorToast) {
-            toast.error(message)
+            showError(message)
           }
 
           // Call error callback

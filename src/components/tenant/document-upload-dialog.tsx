@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Loader2, Upload } from "lucide-react"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 
 export type DocumentType = "id_proof" | "address_proof" | "income_proof" | "agreement" | "receipt" | "other"
@@ -57,12 +57,12 @@ export function DocumentUploadDialog({
     e.preventDefault()
 
     if (!name.trim()) {
-      toast.error("Please enter a document name")
+      showError("Please enter a document name")
       return
     }
 
     if (!fileUrl) {
-      toast.error("Please upload a file")
+      showError("Please upload a file")
       return
     }
 
@@ -102,11 +102,11 @@ export function DocumentUploadDialog({
 
     if (error) {
       console.error("Error uploading document:", error)
-      toast.error("Failed to save document. Please try again.")
+      showError("Failed to save document. Please try again.")
       return
     }
 
-    toast.success("Document uploaded successfully! It will be reviewed by the administrator.")
+    showSuccess("Document uploaded successfully! It will be reviewed by the administrator.")
     resetForm()
     onOpenChange(false)
     onSuccess?.()

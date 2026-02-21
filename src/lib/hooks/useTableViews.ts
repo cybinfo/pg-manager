@@ -18,7 +18,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { toast } from "sonner"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 // ============================================
 // Types
@@ -186,7 +186,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
           data: { user },
         } = await supabase.auth.getUser()
         if (!user) {
-          toast.error("You must be logged in to save views")
+          showError("You must be logged in to save views")
           return null
         }
 
@@ -219,11 +219,11 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
         setActiveViewId(newView.id)
         onViewAppliedRef.current?.(newView.config)
 
-        toast.success(`View "${input.name}" saved`)
+        showSuccess(`View "${input.name}" saved`)
         return newView
       } catch (err) {
         console.error("[useTableViews] Error creating view:", err)
-        toast.error("Failed to save view")
+        showError("Failed to save view")
         return null
       }
     },
@@ -260,11 +260,11 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
           onViewAppliedRef.current?.(input.config)
         }
 
-        toast.success("View updated")
+        showSuccess("View updated")
         return true
       } catch (err) {
         console.error("[useTableViews] Error updating view:", err)
-        toast.error("Failed to update view")
+        showError("Failed to update view")
         return false
       }
     },
@@ -295,11 +295,11 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
           onViewAppliedRef.current?.(null)
         }
 
-        toast.success("View deleted")
+        showSuccess("View deleted")
         return true
       } catch (err) {
         console.error("[useTableViews] Error deleting view:", err)
-        toast.error("Failed to delete view")
+        showError("Failed to delete view")
         return false
       }
     },
@@ -321,7 +321,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
       }
 
       if (!success) {
-        toast.error("View not found or access denied")
+        showError("View not found or access denied")
         return false
       }
 
@@ -333,11 +333,11 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
         }))
       )
 
-      toast.success("Default view updated")
+      showSuccess("Default view updated")
       return true
     } catch (err) {
       console.error("[useTableViews] Error setting default:", err)
-      toast.error("Failed to set default view")
+      showError("Failed to set default view")
       return false
     }
   }, [])
@@ -365,11 +365,11 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
         }))
       )
 
-      toast.success("Default view cleared")
+      showSuccess("Default view cleared")
       return true
     } catch (err) {
       console.error("[useTableViews] Error clearing default:", err)
-      toast.error("Failed to clear default view")
+      showError("Failed to clear default view")
       return false
     }
   }, [])
@@ -379,7 +379,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
     (id: string) => {
       const view = views.find((v) => v.id === id)
       if (!view) {
-        toast.error("View not found")
+        showError("View not found")
         return
       }
 
