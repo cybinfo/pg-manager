@@ -18,6 +18,7 @@ export * from "./useListPage"
 export * from "./useAsyncOperation"
 export * from "./useFormState"
 export * from "./useRequireAuth"
+export * from "./useActivityHistory"
 
 // Utility hooks
 export * from "./useDebounce"
@@ -42,3 +43,6 @@ export * from "./useSidebarOrder"
 export * from "./useKeyboardShortcuts"
 export * from "./useCountUp"
 export * from "./useRowSelection"
+
+// Filter builder hooks
+export * from "./useFilterBuilder"

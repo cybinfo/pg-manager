@@ -19,6 +19,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PortalStatsGrid, QuickActionLink } from "@/components/portal"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
 
@@ -258,63 +259,38 @@ export default function MemberHomePage() {
       </Card>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-50 rounded-lg">
-                <BookOpen className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Library</p>
-                <p className="font-semibold truncate">{member.library?.name || "-"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 rounded-lg">
-                <Clock className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="font-semibold">{data.totalHoursThisMonth.toFixed(1)}h</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-sky-50 rounded-lg">
-                <Calendar className="h-5 w-5 text-sky-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Visits</p>
-                <p className="font-semibold">{data.visitsThisMonth}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-50 rounded-lg">
-                <CreditCard className="h-5 w-5 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Paid</p>
-                <p className="font-semibold">{formatCurrency(data.totalPaid)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <PortalStatsGrid
+        stats={[
+          {
+            icon: BookOpen,
+            label: "Library",
+            value: member.library?.name || "-",
+            bgColor: "bg-purple-50",
+            iconColor: "text-purple-600",
+          },
+          {
+            icon: Clock,
+            label: "This Month",
+            value: `${data.totalHoursThisMonth.toFixed(1)}h`,
+            bgColor: "bg-emerald-50",
+            iconColor: "text-emerald-600",
+          },
+          {
+            icon: Calendar,
+            label: "Visits",
+            value: data.visitsThisMonth,
+            bgColor: "bg-sky-50",
+            iconColor: "text-sky-600",
+          },
+          {
+            icon: CreditCard,
+            label: "Total Paid",
+            value: formatCurrency(data.totalPaid),
+            bgColor: "bg-violet-50",
+            iconColor: "text-violet-600",
+          },
+        ]}
+      />
 
       {/* Subscription Info & Quick Actions */}
       <div className="grid md:grid-cols-2 gap-6">
@@ -384,65 +360,38 @@ export default function MemberHomePage() {
             <CardTitle className="text-lg">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Link href="/member/qr" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-50 rounded-lg">
-                    <QrCode className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">My QR Code</p>
-                    <p className="text-xs text-muted-foreground">Quick check-in</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </Link>
-
-            <Link href="/member/attendance" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-50 rounded-lg">
-                    <Clock className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">View Attendance</p>
-                    <p className="text-xs text-muted-foreground">Check-in history</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </Link>
-
-            <Link href="/member/payments" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-sky-50 rounded-lg">
-                    <CreditCard className="h-4 w-4 text-sky-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Payment History</p>
-                    <p className="text-xs text-muted-foreground">View all payments</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </Link>
-
-            <Link href="/member/profile" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-violet-50 rounded-lg">
-                    <User className="h-4 w-4 text-violet-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">My Profile</p>
-                    <p className="text-xs text-muted-foreground">View details</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </Link>
+            <QuickActionLink
+              href="/member/qr"
+              icon={QrCode}
+              title="My QR Code"
+              description="Quick check-in"
+              bgColor="bg-purple-50"
+              iconColor="text-purple-600"
+            />
+            <QuickActionLink
+              href="/member/attendance"
+              icon={Clock}
+              title="View Attendance"
+              description="Check-in history"
+              bgColor="bg-emerald-50"
+              iconColor="text-emerald-600"
+            />
+            <QuickActionLink
+              href="/member/payments"
+              icon={CreditCard}
+              title="Payment History"
+              description="View all payments"
+              bgColor="bg-sky-50"
+              iconColor="text-sky-600"
+            />
+            <QuickActionLink
+              href="/member/profile"
+              icon={User}
+              title="My Profile"
+              description="View details"
+              bgColor="bg-violet-50"
+              iconColor="text-violet-600"
+            />
           </CardContent>
         </Card>
       </div>

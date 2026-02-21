@@ -8,9 +8,12 @@
 
 import { Armchair, Users, CheckCircle, XCircle } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { LIBRARY_SEAT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { LIBRARY_SEAT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { createStatusFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { LIBRARY_SEAT_STATUS_CONFIG } from "@/types/library.types"
 
@@ -83,23 +86,7 @@ const columns: Column<SeatItem>[] = [
       </div>
     ) : "—",
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (seat) => {
-      const config = LIBRARY_SEAT_STATUS_CONFIG[seat.status as keyof typeof LIBRARY_SEAT_STATUS_CONFIG]
-      return (
-        <StatusDot
-          status={config?.variant || "muted"}
-          label={config?.label || seat.status}
-        />
-      )
-    },
-  },
+  statusColumn(LIBRARY_SEAT_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
   {
     key: "current_member",
     header: "Assigned To",
@@ -129,16 +116,7 @@ const columns: Column<SeatItem>[] = [
       return features.length > 0 ? features.join(", ") : "—"
     },
   },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (seat) => formatDate(seat.created_at),
-  },
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -152,18 +130,12 @@ const filters: FilterConfig[] = [
     type: "select",
     placeholder: "All Sections",
   },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "available", label: "Available" },
-      { value: "occupied", label: "Occupied" },
-      { value: "reserved", label: "Reserved" },
-      { value: "maintenance", label: "Maintenance" },
-    ],
-  },
+  createStatusFilter([
+    { value: "available", label: "Available" },
+    { value: "occupied", label: "Occupied" },
+    { value: "reserved", label: "Reserved" },
+    { value: "maintenance", label: "Maintenance" },
+  ]),
 ]
 
 // ============================================
@@ -180,31 +152,11 @@ const groupByOptions: GroupByOption[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<SeatItem>[] = [
-  {
-    id: "total",
-    label: "Total Seats",
-    icon: Armchair,
-    compute: (_items, total) => total,
-  },
-  {
-    id: "available",
-    label: "Available",
-    icon: CheckCircle,
-    compute: (items) => items.filter((s) => s.status === "available").length,
-  },
-  {
-    id: "occupied",
-    label: "Occupied",
-    icon: Users,
-    compute: (items) => items.filter((s) => s.status === "occupied").length,
-  },
-  {
-    id: "maintenance",
-    label: "Maintenance",
-    icon: XCircle,
-    compute: (items) => items.filter((s) => s.status === "maintenance").length,
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Seats", icon: Armchair }),
+  createStatusMetric("available", "Available", CheckCircle),
+  createStatusMetric("occupied", "Occupied", Users),
+  createStatusMetric("maintenance", "Maintenance", XCircle),
 ]
 
 // ============================================

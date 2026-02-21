@@ -17,8 +17,11 @@ import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { Avatar, getAvatarUrl } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { TENANT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { statusColumn, currencyColumn, dateColumn } from "@/lib/column-builders"
+import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
@@ -130,39 +133,21 @@ const columns: ExtendedColumn<Tenant>[] = [
       <span className="font-medium tabular-nums">{formatCurrency(tenant.monthly_rent)}</span>
     ),
   },
+  dateColumn("check_in_date", "Since", { hideOnMobile: true }),
   {
-    key: "check_in_date",
-    header: "Since",
-    width: "date",
-    hideOnMobile: true,
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: true,
-    render: (tenant) => formatDate(tenant.check_in_date),
-  },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
+    ...statusColumn((status) => getTenantStatusInfo("tenant", status), {
+      editable: true,
+      editType: "select",
+      editOptions: [
+        { value: "active", label: "Active" },
+        { value: "notice_period", label: "Notice Period" },
+        { value: "checked_out", label: "Checked Out" },
+      ],
+    }),
     groupable: true,
     groupKey: "status",
     groupLabel: "Status",
-    editable: true,
-    editType: "select",
-    editOptions: [
-      { value: "active", label: "Active" },
-      { value: "notice_period", label: "Notice Period" },
-      { value: "checked_out", label: "Checked Out" },
-    ],
-    render: (tenant) => {
-      const info = getTenantStatusInfo("tenant", tenant.status)
-      return <StatusDot status={info.status} label={info.label} />
-    },
-  },
+  } as ExtendedColumn<Tenant>,
   // Additional columns - hidden by default, user can toggle them on
   {
     key: "email",
@@ -182,21 +167,13 @@ const columns: ExtendedColumn<Tenant>[] = [
     defaultVisible: false,
     render: (tenant) => tenant.phone,
   },
-  {
-    key: "security_deposit",
-    header: "Security Deposit",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
+  currencyColumn("security_deposit", "Security Deposit", {
     defaultVisible: false,
+    bold: false,
     editable: true,
     editType: "number",
     editValidation: { min: 0 },
-    render: (tenant) => (
-      <span className="tabular-nums">{formatCurrency(tenant.security_deposit)}</span>
-    ),
-  },
+  }),
   {
     key: "police_verification_status",
     header: "Police Verification",
@@ -249,46 +226,10 @@ const columns: ExtendedColumn<Tenant>[] = [
       </span>
     ),
   },
-  {
-    key: "check_out_date",
-    header: "Check-out Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (tenant) => tenant.check_out_date ? formatDate(tenant.check_out_date) : <span className="text-muted-foreground">—</span>,
-  },
-  {
-    key: "expected_exit_date",
-    header: "Expected Exit",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (tenant) => tenant.expected_exit_date ? formatDate(tenant.expected_exit_date) : <span className="text-muted-foreground">—</span>,
-  },
-  {
-    key: "notice_date",
-    header: "Notice Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (tenant) => tenant.notice_date ? formatDate(tenant.notice_date) : <span className="text-muted-foreground">—</span>,
-  },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (tenant) => formatDate(tenant.created_at),
-  },
+  dateColumn("check_out_date", "Check-out Date", { defaultVisible: false }),
+  dateColumn("expected_exit_date", "Expected Exit", { defaultVisible: false }),
+  dateColumn("notice_date", "Notice Date", { defaultVisible: false }),
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
   {
     key: "notes",
     header: "Notes",
@@ -308,29 +249,13 @@ const columns: ExtendedColumn<Tenant>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-    // Options will be loaded from database by useListPage hook
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "active", label: "Active" },
-      { value: "notice_period", label: "Notice Period" },
-      { value: "checked_out", label: "Moved Out" },
-    ],
-  },
-  {
-    id: "check_in_date",
-    label: "Check-in Date",
-    type: "date-range",
-  },
+  PROPERTY_FILTER,
+  createStatusFilter([
+    { value: "active", label: "Active" },
+    { value: "notice_period", label: "Notice Period" },
+    { value: "checked_out", label: "Moved Out" },
+  ]),
+  createDateRangeFilter("check_in_date", "Check-in Date"),
 ]
 
 // ============================================
@@ -444,68 +369,14 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Tenant>[] = [
-  {
-    id: "total",
-    label: "Total",
-    icon: Users,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: UserCheck,
-    compute: (items) => items.filter((t) => t.status === "active").length,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "active",
-    },
-  },
-  {
-    id: "notice",
-    label: "Notice Period",
-    icon: Clock,
-    compute: (items) => items.filter((t) => t.status === "notice_period").length,
-    highlight: (value) => (value as number) > 0,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "notice_period",
-    },
-  },
-  {
-    id: "moved_out",
-    label: "Moved Out",
-    icon: UserMinus,
-    compute: (items) => items.filter((t) => t.status === "checked_out").length,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "checked_out",
-    },
-  },
-  {
-    id: "rent",
-    label: "Monthly Rent",
-    compute: (items, _total, serverData) => {
-      // If server sum is available, use it; otherwise fall back to page data
-      if (serverData?.rent !== undefined) {
-        return formatCurrency(serverData.rent)
-      }
-      return formatCurrency(
-        items.filter((t) => t.status === "active").reduce((sum, t) => sum + t.monthly_rent, 0)
-      )
-    },
-    serverSum: {
-      column: "monthly_rent",
-      filter: {
-        column: "status",
-        operator: "eq",
-        value: "active",
-      },
-    },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total", icon: Users }),
+  createStatusMetric("active", "Active", UserCheck),
+  createStatusMetric("notice_period", "Notice Period", Clock, { id: "notice", highlight: true }),
+  createStatusMetric("checked_out", "Moved Out", UserMinus, { id: "moved_out" }),
+  createSumMetric("monthly_rent", "rent", "Monthly Rent", Users, {
+    filter: { column: "status", operator: "eq", value: "active" },
+  }),
 ]
 
 // ============================================

@@ -10,8 +10,10 @@
 import { Receipt, Calendar, AlertCircle, Check, Clock, IndianRupee } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { BILL_PAYMENT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { BILL_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { EXPENSE_CATEGORY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 
@@ -236,30 +238,19 @@ const columns: Column<BillPaymentListItem>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "category_id",
-    label: "Category",
-    type: "select",
-    placeholder: "All Categories",
-  },
+  EXPENSE_CATEGORY_FILTER,
   {
     id: "vendor_id",
     label: "Vendor",
     type: "select",
     placeholder: "All Vendors",
   },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "pending", label: "Pending" },
-      { value: "partial", label: "Partial" },
-      { value: "paid", label: "Paid" },
-      { value: "overdue", label: "Overdue" },
-    ],
-  },
+  createStatusFilter([
+    { value: "pending", label: "Pending" },
+    { value: "partial", label: "Partial" },
+    { value: "paid", label: "Paid" },
+    { value: "overdue", label: "Overdue" },
+  ]),
 ]
 
 // ============================================
@@ -320,46 +311,11 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<BillPaymentListItem>[] = [
-  {
-    id: "total",
-    label: "Total Bills",
-    icon: Receipt,
-    compute: (_items, total) => total,
-    format: "number",
-  },
-  {
-    id: "pending",
-    label: "Pending",
-    icon: Clock,
-    compute: (_items, _total, serverData) => serverData?.pending ?? 0,
-    format: "number",
-    serverFilter: {
-      column: "status",
-      operator: "in",
-      value: ["pending", "partial"],
-    },
-  },
-  {
-    id: "overdue",
-    label: "Overdue",
-    icon: AlertCircle,
-    compute: (_items, _total, serverData) => serverData?.overdue ?? 0,
-    format: "number",
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "overdue",
-    },
-  },
-  {
-    id: "total_amount",
-    label: "Total Amount",
-    icon: IndianRupee,
-    compute: (_items, _total, serverData) => serverData?.total_amount ?? 0,
-    format: "currency",
-    serverSum: { column: "bill_amount" },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Bills", icon: Receipt, format: "number" }),
+  createStatusMetric(["pending", "partial"], "Pending", Clock, { id: "pending", format: "number" }),
+  createStatusMetric("overdue", "Overdue", AlertCircle, { format: "number" }),
+  createSumMetric("bill_amount", "total_amount", "Total Amount", IndianRupee),
 ]
 
 // ============================================

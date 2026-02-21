@@ -13,11 +13,14 @@
 import Link from "next/link"
 import { Users, UserCheck, Clock, CalendarDays, Search, Wrench, User, Star, Ban, BookUser } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { VISITOR_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { VISITOR_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createNullCheckMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatDate } from "@/lib/format"
@@ -198,28 +201,8 @@ const columns: Column<Visitor>[] = [
       </div>
     ),
   },
-  {
-    key: "check_in_date",
-    header: "Check In",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: true,
-    render: (visitor) => formatDate(visitor.check_in_date),
-  },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (visitor) => {
-      const info = getVisitorStatusInfo("visitor", visitor.status)
-      return <StatusDot status={info.status} label={info.label} />
-    },
-  },
+  dateColumn("check_in_date", "Check In"),
+  statusColumn((status) => getVisitorStatusInfo("visitor", status)),
   // Hidden by default columns
   {
     key: "purpose",
@@ -251,16 +234,7 @@ const columns: Column<Visitor>[] = [
     defaultVisible: false,
     render: (visitor) => visitor.company_name || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "check_out_date",
-    header: "Check Out",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (visitor) => visitor.check_out_date ? formatDate(visitor.check_out_date) : <span className="text-muted-foreground">—</span>,
-  },
+  dateColumn("check_out_date", "Check Out", { defaultVisible: false }),
   {
     key: "total_visits",
     header: "Total Visits",
@@ -271,16 +245,7 @@ const columns: Column<Visitor>[] = [
     defaultVisible: false,
     render: (visitor) => <span className="tabular-nums">{visitor.total_visits}</span>,
   },
-  {
-    key: "created_at",
-    header: "Recorded On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (visitor) => formatDate(visitor.created_at),
-  },
+  dateColumn("created_at", "Recorded On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -300,27 +265,12 @@ const filters: FilterConfig[] = [
       { value: "general", label: "General" },
     ],
   },
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "checked_in", label: "Inside" },
-      { value: "checked_out", label: "Left" },
-    ],
-  },
-  {
-    id: "check_in_date",
-    label: "Check In Date",
-    type: "date-range",
-  },
+  PROPERTY_FILTER,
+  createStatusFilter([
+    { value: "checked_in", label: "Inside" },
+    { value: "checked_out", label: "Left" },
+  ]),
+  createDateRangeFilter("check_in_date", "Check In Date"),
 ]
 
 // ============================================
@@ -386,41 +336,21 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Visitor>[] = [
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Entries", icon: Users }),
+  createNullCheckMetric("check_out_time", true, "Currently Inside", UserCheck, { id: "inside", highlight: true }),
+  createCountMetric("frequent", "Frequent Visitors", Star,
+    (item) => Boolean(item.is_frequent_visitor)
+  ),
   {
-    id: "total",
-    label: "Total Entries",
-    icon: Users,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
-    id: "inside",
-    label: "Currently Inside",
-    icon: UserCheck,
-    compute: (items) => items.filter((v) => v.status === "checked_in").length,
-    highlight: (value) => (value as number) > 0,
-    // "checked_in" status means check_out_time is NULL
-    serverFilter: {
-      column: "check_out_time",
-      operator: "is_null",
-    },
-  },
-  {
-    id: "frequent",
-    label: "Frequent Visitors",
-    icon: Star,
-    compute: (items) => items.filter((v) => v.is_frequent_visitor).length,
-    // Note: is_frequent_visitor comes from joined visitor_contact table - page totals only
-  },
-  {
+    // Custom: dynamic date comparison with "today" - page totals only
     id: "today",
     label: "Today",
     icon: CalendarDays,
     compute: (items) => {
       const today = new Date().toDateString()
-      return items.filter((v) => new Date(v.check_in_date).toDateString() === today).length
+      return items.filter((v) => new Date(v.check_in_date as string).toDateString() === today).length
     },
-    // Note: Date comparison with "today" is dynamic - page totals only
   },
 ]
 

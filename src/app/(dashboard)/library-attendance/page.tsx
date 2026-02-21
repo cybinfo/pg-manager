@@ -11,8 +11,10 @@ import Link from "next/link"
 import { Clock, Users, Armchair, LogIn, LogOut, RefreshCw, QrCode } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { LIBRARY_ATTENDANCE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { LIBRARY_ATTENDANCE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { createDateFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -520,12 +522,7 @@ function CheckOutButton({ attendanceId, memberName }: { attendanceId: string; me
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "attendance_date",
-    label: "Date",
-    type: "date",
-    placeholder: "Select date",
-  },
+  createDateFilter("attendance_date", "Date"),
 ]
 
 // ============================================
@@ -541,20 +538,13 @@ const groupByOptions: GroupByOption[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<AttendanceItem>[] = [
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Records", icon: Clock }),
+  createCountMetric("checked_in", "Currently In", Users,
+    (item) => !item.check_out_time
+  ),
   {
-    id: "total",
-    label: "Total Records",
-    icon: Clock,
-    compute: (_items, total) => total,
-  },
-  {
-    id: "checked_in",
-    label: "Currently In",
-    icon: Users,
-    compute: (items) => items.filter((a) => !a.check_out_time).length,
-  },
-  {
+    // Custom: dynamic date comparison with "today"
     id: "today",
     label: "Today",
     icon: Calendar,
@@ -564,6 +554,7 @@ const metrics: MetricConfig<AttendanceItem>[] = [
     },
   },
   {
+    // Custom: sum with dynamic date filter
     id: "hours_today",
     label: "Hours Today",
     icon: Clock,
@@ -571,7 +562,7 @@ const metrics: MetricConfig<AttendanceItem>[] = [
       const today = new Date().toISOString().split("T")[0]
       return items
         .filter((a) => a.attendance_date === today && a.hours_spent)
-        .reduce((sum, a) => sum + (a.hours_spent || 0), 0)
+        .reduce((sum: number, a) => sum + (Number(a.hours_spent) || 0), 0)
         .toFixed(1)
     },
   },

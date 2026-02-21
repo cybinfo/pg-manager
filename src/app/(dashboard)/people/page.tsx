@@ -25,9 +25,12 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { PEOPLE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { PEOPLE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { Avatar } from "@/components/ui/avatar"
 import { formatDate } from "@/lib/format"
@@ -261,16 +264,7 @@ const columns: Column<Person>[] = [
       />
     ),
   },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (person) => formatDate(person.created_at),
-  },
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -291,16 +285,10 @@ const filters: FilterConfig[] = [
       { value: "vip", label: "VIP" },
     ],
   },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "verified", label: "Verified" },
-      { value: "blocked", label: "Blocked" },
-    ],
-  },
+  createStatusFilter([
+    { value: "verified", label: "Verified" },
+    { value: "blocked", label: "Blocked" },
+  ]),
 ]
 
 // ============================================
@@ -363,70 +351,44 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Person>[] = [
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ icon: Users }),
   {
-    id: "total",
-    label: "Total",
-    icon: Users,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
+    // Custom: tags array contains filter
     id: "tenants",
     label: "Tenants",
     icon: Home,
-    // Fallback compute (not used when serverFilter is defined)
-    compute: (items) => items.filter((p) => p.tags?.includes("tenant")).length,
-    // Server-side count for accurate cross-page totals
-    serverFilter: {
-      column: "tags",
-      operator: "contains",
-      value: ["tenant"],
-    },
+    compute: (items) => items.filter((p) => (p.tags as string[] | null)?.includes("tenant")).length,
+    serverFilter: { column: "tags", operator: "contains", value: ["tenant"] },
   },
   {
     id: "staff",
     label: "Staff",
     icon: Briefcase,
-    compute: (items) => items.filter((p) => p.tags?.includes("staff")).length,
-    serverFilter: {
-      column: "tags",
-      operator: "contains",
-      value: ["staff"],
-    },
+    compute: (items) => items.filter((p) => (p.tags as string[] | null)?.includes("staff")).length,
+    serverFilter: { column: "tags", operator: "contains", value: ["staff"] },
   },
   {
     id: "visitors",
     label: "Visitors",
     icon: UserCircle,
-    compute: (items) => items.filter((p) => p.tags?.includes("visitor")).length,
-    serverFilter: {
-      column: "tags",
-      operator: "contains",
-      value: ["visitor"],
-    },
+    compute: (items) => items.filter((p) => (p.tags as string[] | null)?.includes("visitor")).length,
+    serverFilter: { column: "tags", operator: "contains", value: ["visitor"] },
   },
   {
     id: "verified",
     label: "Verified",
     icon: BadgeCheck,
-    compute: (items) => items.filter((p) => p.is_verified).length,
-    serverFilter: {
-      column: "is_verified",
-      operator: "eq",
-      value: true,
-    },
+    compute: (items) => items.filter((p) => Boolean(p.is_verified)).length,
+    serverFilter: { column: "is_verified", operator: "eq", value: true },
   },
   {
     id: "blocked",
     label: "Blocked",
     icon: Ban,
-    compute: (items) => items.filter((p) => p.is_blocked).length,
+    compute: (items) => items.filter((p) => Boolean(p.is_blocked)).length,
     highlight: (value) => (value as number) > 0,
-    serverFilter: {
-      column: "is_blocked",
-      operator: "eq",
-      value: true,
-    },
+    serverFilter: { column: "is_blocked", operator: "eq", value: true },
   },
 ]
 

@@ -16,9 +16,12 @@ import {
   ArrowDownRight,
 } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
+import { dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { METER_READING_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { METER_READING_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, METER_TYPE_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { formatDate } from "@/lib/format"
@@ -196,16 +199,7 @@ const columns: Column<MeterReading>[] = [
       <span className="text-sm text-muted-foreground line-clamp-2">{reading.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Recorded On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (reading) => formatDate(reading.created_at),
-  },
+  dateColumn("created_at", "Recorded On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -213,28 +207,9 @@ const columns: Column<MeterReading>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "meter_type",
-    label: "Meter Type",
-    type: "select",
-    placeholder: "All Types",
-    options: [
-      { value: "electricity", label: "Electricity" },
-      { value: "water", label: "Water" },
-      { value: "gas", label: "Gas" },
-    ],
-  },
-  {
-    id: "reading_date",
-    label: "Date",
-    type: "date-range",
-  },
+  PROPERTY_FILTER,
+  { ...METER_TYPE_FILTER, label: "Meter Type" },
+  createDateRangeFilter("reading_date", "Date"),
 ]
 
 // ============================================

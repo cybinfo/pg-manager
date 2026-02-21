@@ -13,13 +13,15 @@
 import { NextRequest } from "next/server"
 import { createClient, SupabaseClient } from "@supabase/supabase-js"
 import { getClientIdentifier, rateLimitHeaders, RateLimitResult } from "./rate-limit"
-import { cronLimiter, apiLimiter, sensitiveLimiter, adminLimiter } from "./rate-limit"
+import { authLimiter, cronLimiter, apiLimiter, sensitiveLimiter, adminLimiter } from "./rate-limit"
 import { timingSafeEqual, validateCsrf as validateCsrfToken } from "./csrf"
-import { apiError, unauthorized, forbidden, notFound, ErrorCodes } from "./api-response"
+import { apiError, unauthorized, forbidden, notFound, csrfError, internalError, ErrorCodes } from "./api-response"
+import { validateBody } from "./validation"
+import type { ZodType } from "zod"
 import { createClient as createServerClient } from "./supabase/server"
 
 // Re-export rate limiters for convenience
-export { cronLimiter, apiLimiter, sensitiveLimiter, adminLimiter }
+export { authLimiter, cronLimiter, apiLimiter, sensitiveLimiter, adminLimiter }
 
 // ============================================================================
 // TYPES
@@ -374,4 +376,117 @@ export async function validateTenantRequest(
 
   // Then check tenant access
   return checkTenantAccess(tenantId)
+}
+
+// ============================================================================
+// COMPOSABLE API HANDLER MIDDLEWARE
+// ============================================================================
+
+const LIMITER_MAP = {
+  auth: authLimiter,
+  sensitive: sensitiveLimiter,
+  api: apiLimiter,
+  admin: adminLimiter,
+  cron: cronLimiter,
+} as const
+
+export interface ApiHandlerOptions<T = unknown> {
+  /** Require authenticated user (default: true) */
+  requireAuth?: boolean
+  /** Validate CSRF token (default: false) */
+  requireCsrf?: boolean
+  /** Which rate limiter to use (default: "api") */
+  limiter?: keyof typeof LIMITER_MAP
+  /** Zod schema to validate the request body */
+  bodySchema?: ZodType<T>
+}
+
+export interface ApiContext<T = unknown> {
+  user: { id: string; email?: string }
+  body: T
+  supabase: SupabaseClient
+}
+
+/**
+ * Composable API handler middleware that chains common checks:
+ * rate limiting, CSRF, auth, and body validation.
+ *
+ * @example
+ * const MySchema = z.object({ email: z.string().email() })
+ *
+ * export async function POST(request: NextRequest) {
+ *   return withApiMiddleware(request, {
+ *     requireAuth: true,
+ *     requireCsrf: true,
+ *     limiter: "auth",
+ *     bodySchema: MySchema,
+ *   }, async (ctx) => {
+ *     // ctx.user, ctx.body (typed), ctx.supabase are all available
+ *     return apiSuccess(ctx.body)
+ *   })
+ * }
+ */
+export async function withApiMiddleware<T = unknown>(
+  request: NextRequest,
+  options: ApiHandlerOptions<T>,
+  handler: (ctx: ApiContext<T>) => Promise<Response>
+): Promise<Response> {
+  try {
+    const {
+      requireAuth = true,
+      requireCsrf = false,
+      limiter = "api",
+      bodySchema,
+    } = options
+
+    // 1. Rate limiting
+    const selectedLimiter = LIMITER_MAP[limiter]
+    const rateLimitCheck = await checkRateLimit(request, selectedLimiter)
+    if (!rateLimitCheck.success) {
+      return rateLimitCheck.response!
+    }
+
+    // 2. CSRF validation
+    if (requireCsrf) {
+      const csrfResult = validateCsrfToken(request)
+      if (!csrfResult.valid) {
+        return csrfError(csrfResult.error || "CSRF validation failed")
+      }
+    }
+
+    // 3. Authentication
+    let user: { id: string; email?: string } | null = null
+    const supabase = await createServerClient()
+
+    if (requireAuth) {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
+        return unauthorized("Authentication required")
+      }
+      user = { id: authUser.id, email: authUser.email }
+    }
+
+    // 4. Body validation
+    let body: T = undefined as T
+    if (bodySchema) {
+      const rawBody = await request.json()
+      const validation = validateBody(bodySchema, rawBody)
+      if (!validation.success) {
+        return validation.response
+      }
+      body = validation.data
+    }
+
+    // 5. Execute handler
+    return await handler({
+      user: user!,
+      body,
+      supabase,
+    })
+  } catch (error) {
+    // Let the caller's own catch handle domain-specific logging if needed;
+    // this provides a safety net for unexpected failures.
+    const message = error instanceof Error ? error.message : "Internal server error"
+    return internalError(message)
+  }
 }

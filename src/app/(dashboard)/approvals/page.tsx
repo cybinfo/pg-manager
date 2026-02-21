@@ -30,7 +30,8 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 // ARCH-001: Use centralized useListPage hook for data fetching
-import { useListPage, ListPageConfig, GroupByOption, MetricConfig } from "@/lib/hooks/useListPage"
+import { useListPage, ListPageConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { createStatusMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { APPROVAL_STATUS, APPROVAL_PRIORITY, getStatusInfo as getApprovalStatusInfo } from "@/lib/status-config"
 
 interface AttachedDocument {
@@ -119,32 +120,15 @@ const APPROVAL_CONFIG: ListPageConfig<Approval> = {
 }
 
 // ARCH-001: Metrics config for approvals
-const approvalMetrics: MetricConfig<Approval>[] = [
-  {
-    id: "pending",
-    label: "Pending",
-    icon: Clock,
-    compute: (items) => items.filter(a => a.status === "pending").length,
-  },
-  {
-    id: "approved",
-    label: "Approved",
-    icon: CheckCircle,
-    compute: (items) => items.filter(a => a.status === "approved").length,
-  },
-  {
-    id: "rejected",
-    label: "Rejected",
-    icon: XCircle,
-    compute: (items) => items.filter(a => a.status === "rejected").length,
-  },
-  {
-    id: "urgent",
-    label: "Urgent",
-    icon: AlertTriangle,
-    compute: (items) => items.filter(a => a.status === "pending" && a.priority === "urgent").length,
-    highlight: (value) => Number(value) > 0,
-  },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const approvalMetrics: MetricConfig<any>[] = [
+  createStatusMetric("pending", "Pending", Clock),
+  createStatusMetric("approved", "Approved", CheckCircle),
+  createStatusMetric("rejected", "Rejected", XCircle),
+  createCountMetric("urgent", "Urgent", AlertTriangle,
+    (item) => item.status === "pending" && item.priority === "urgent",
+    { highlight: true }
+  ),
 ]
 
 export default function ApprovalsPage() {

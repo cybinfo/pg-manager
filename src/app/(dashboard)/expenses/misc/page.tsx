@@ -19,8 +19,10 @@ import {
 
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { MISC_TRANSACTION_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { MISC_TRANSACTION_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { EXPENSE_CATEGORY_FILTER, createDateFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Button } from "@/components/ui/button"
@@ -232,12 +234,7 @@ const filters: FilterConfig[] = [
       { value: "out", label: "Money Out" },
     ],
   },
-  {
-    id: "category_id",
-    label: "Category",
-    type: "select",
-    placeholder: "All Categories",
-  },
+  EXPENSE_CATEGORY_FILTER,
   {
     id: "payment_mode",
     label: "Payment Mode",
@@ -253,12 +250,7 @@ const filters: FilterConfig[] = [
       { value: "other", label: "Other" },
     ],
   },
-  {
-    id: "transaction_date",
-    label: "Date",
-    type: "date",
-    placeholder: "Select date",
-  },
+  createDateFilter("transaction_date", "Date"),
 ]
 
 // ============================================
@@ -313,31 +305,16 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<MiscTransactionItem>[] = [
-  {
-    id: "money_in",
-    label: "Money In",
-    icon: ArrowDownLeft,
-    compute: (_items, _total, serverData) => serverData?.money_in ?? 0,
-    format: "currency",
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createSumMetric("amount", "money_in", "Money In", ArrowDownLeft, {
+    filter: { column: "transaction_type", operator: "eq", value: "in" },
     highlight: () => true,
-    serverSum: {
-      column: "amount",
-      filter: { column: "transaction_type", operator: "eq", value: "in" },
-    },
-  },
+  }),
+  createSumMetric("amount", "money_out", "Money Out", ArrowUpRight, {
+    filter: { column: "transaction_type", operator: "eq", value: "out" },
+  }),
   {
-    id: "money_out",
-    label: "Money Out",
-    icon: ArrowUpRight,
-    compute: (_items, _total, serverData) => serverData?.money_out ?? 0,
-    format: "currency",
-    serverSum: {
-      column: "amount",
-      filter: { column: "transaction_type", operator: "eq", value: "out" },
-    },
-  },
-  {
+    // Custom: net balance computed from two server sums
     id: "net_amount",
     label: "Net Balance",
     icon: TrendingUp,
@@ -347,18 +324,9 @@ const metrics: MetricConfig<MiscTransactionItem>[] = [
       return inAmount - outAmount
     },
     format: "currency",
-    highlight: (_value, _items) => {
-      // Highlight if positive
-      return typeof _value === "number" && _value >= 0
-    },
+    highlight: (_value) => typeof _value === "number" && _value >= 0,
   },
-  {
-    id: "total_transactions",
-    label: "Transactions",
-    icon: ArrowLeftRight,
-    compute: (_items, total) => total,
-    format: "number",
-  },
+  createTotalMetric({ id: "total_transactions", label: "Transactions", icon: ArrowLeftRight, format: "number" }),
 ]
 
 // ============================================

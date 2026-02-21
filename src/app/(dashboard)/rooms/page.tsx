@@ -9,9 +9,12 @@
 
 import { Home, Bed, CheckCircle, AlertCircle } from "lucide-react"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { statusColumn, currencyColumn, dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { ROOM_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { ROOM_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, ROOM_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -135,13 +138,7 @@ const columns: Column<Room>[] = [
       <span className="font-medium tabular-nums">{formatCurrency(room.rent_amount)}</span>
     ),
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
+  statusColumn(getStatusInfo, {
     editable: true,
     editType: "select",
     editOptions: [
@@ -150,11 +147,7 @@ const columns: Column<Room>[] = [
       { value: "maintenance", label: "Maintenance" },
       { value: "blocked", label: "Blocked" },
     ],
-    render: (room) => {
-      const info = getStatusInfo(room.status)
-      return <StatusDot status={info.status} label={info.label} />
-    },
-  },
+  }),
   // Hidden by default columns
   {
     key: "floor",
@@ -166,18 +159,7 @@ const columns: Column<Room>[] = [
     defaultVisible: false,
     render: (room) => <span className="tabular-nums">{room.floor}</span>,
   },
-  {
-    key: "deposit_amount",
-    header: "Deposit",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
-    defaultVisible: false,
-    render: (room) => (
-      <span className="tabular-nums">{formatCurrency(room.deposit_amount)}</span>
-    ),
-  },
+  currencyColumn("deposit_amount", "Deposit", { defaultVisible: false, bold: false }),
   {
     key: "has_ac",
     header: "AC",
@@ -241,16 +223,7 @@ const columns: Column<Room>[] = [
       <span className="truncate max-w-[150px]" title={room.notes}>{room.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (room) => formatDate(room.created_at),
-  },
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -258,36 +231,14 @@ const columns: Column<Room>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "available", label: "Available" },
-      { value: "occupied", label: "Occupied" },
-      { value: "partially_occupied", label: "Partially Occupied" },
-      { value: "maintenance", label: "Maintenance" },
-    ],
-  },
-  {
-    id: "room_type",
-    label: "Room Type",
-    type: "select",
-    placeholder: "All Types",
-    options: [
-      { value: "single", label: "Single" },
-      { value: "double", label: "Double" },
-      { value: "triple", label: "Triple" },
-      { value: "dormitory", label: "Dormitory" },
-    ],
-  },
+  PROPERTY_FILTER,
+  createStatusFilter([
+    { value: "available", label: "Available" },
+    { value: "occupied", label: "Occupied" },
+    { value: "partially_occupied", label: "Partially Occupied" },
+    { value: "maintenance", label: "Maintenance" },
+  ]),
+  ROOM_TYPE_FILTER,
 ]
 
 // ============================================
@@ -363,46 +314,18 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Room>[] = [
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Rooms", icon: Home }),
+  createStatusMetric("available", "Available Rooms", CheckCircle),
+  createSumMetric("total_beds", "total_beds", "Total Beds", Bed, { format: "number" }),
   {
-    id: "total",
-    label: "Total Rooms",
-    icon: Home,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
-    id: "available",
-    label: "Available Rooms",
-    icon: CheckCircle,
-    compute: (items) => items.filter((r) => r.status === "available").length,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "available",
-    },
-  },
-  {
-    id: "total_beds",
-    label: "Total Beds",
-    icon: Bed,
-    compute: (items, _total, serverData) => {
-      if (serverData?.total_beds !== undefined) {
-        return serverData.total_beds
-      }
-      return items.reduce((sum, r) => sum + r.total_beds, 0)
-    },
-    serverSum: {
-      column: "total_beds",
-    },
-  },
-  {
+    // Custom: computes occupancy rate from two server sums
     id: "occupied_beds",
     label: "Occupied Beds",
     icon: AlertCircle,
-    compute: (items, _total, serverData) => {
-      // Use server sums if available for accurate totals
-      const totalBeds = serverData?.total_beds ?? items.reduce((sum, r) => sum + r.total_beds, 0)
-      const occupiedBeds = serverData?.occupied_beds ?? items.reduce((sum, r) => sum + r.occupied_beds, 0)
+    compute: (items: Record<string, unknown>[], _total: number, serverData?: Record<string, number>) => {
+      const totalBeds = serverData?.total_beds ?? items.reduce((sum: number, r) => sum + (Number(r.total_beds) || 0), 0)
+      const occupiedBeds = serverData?.occupied_beds ?? items.reduce((sum: number, r) => sum + (Number(r.occupied_beds) || 0), 0)
       const rate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
       return `${occupiedBeds} (${rate}%)`
     },

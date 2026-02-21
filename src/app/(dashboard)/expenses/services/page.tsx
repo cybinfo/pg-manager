@@ -10,8 +10,10 @@
 import { Hammer, Calendar, Shield, IndianRupee, FileText } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { SERVICE_PAYMENT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { SERVICE_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { EXPENSE_CATEGORY_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 
@@ -251,12 +253,7 @@ const columns: Column<ServicePaymentListItem>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "category_id",
-    label: "Category",
-    type: "select",
-    placeholder: "All Categories",
-  },
+  EXPENSE_CATEGORY_FILTER,
   {
     id: "provider_id",
     label: "Provider",
@@ -330,41 +327,17 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<ServicePaymentListItem>[] = [
-  {
-    id: "total",
-    label: "Total Services",
-    icon: Hammer,
-    compute: (_items, total) => total,
-    format: "number",
-  },
-  {
-    id: "total_amount",
-    label: "Total Amount",
-    icon: IndianRupee,
-    compute: (_items, _total, serverData) => serverData?.total_amount ?? 0,
-    format: "currency",
-    serverSum: { column: "net_amount" },
-  },
-  {
-    id: "tds_deducted",
-    label: "TDS Deducted",
-    icon: FileText,
-    compute: (_items, _total, serverData) => serverData?.tds_deducted ?? 0,
-    format: "currency",
-    serverSum: { column: "tds_amount" },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Services", icon: Hammer, format: "number" }),
+  createSumMetric("net_amount", "total_amount", "Total Amount", IndianRupee),
+  createSumMetric("tds_amount", "tds_deducted", "TDS Deducted", FileText),
   {
     id: "with_warranty",
     label: "With Warranty",
     icon: Shield,
     compute: (_items, _total, serverData) => serverData?.with_warranty ?? 0,
     format: "number",
-    serverFilter: {
-      column: "warranty_months",
-      operator: "gt",
-      value: 0,
-    },
+    serverFilter: { column: "warranty_months", operator: "gt", value: 0 },
   },
 ]
 

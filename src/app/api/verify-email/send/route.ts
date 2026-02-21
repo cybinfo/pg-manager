@@ -1,22 +1,14 @@
 import { NextRequest } from "next/server"
-import { createClient as createServerClient } from "@/lib/supabase/server"
 import { sendVerificationEmail } from "@/lib/email"
 import crypto from "crypto"
 import { z } from "zod"
-import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
-import { validateCsrf } from "@/lib/csrf"
 import {
   apiSuccess,
-  apiError,
-  unauthorized,
   forbidden,
   internalError,
-  csrfError,
-  ErrorCodes,
 } from "@/lib/api-response"
-import { validateBody } from "@/lib/validation"
+import { withApiMiddleware, getAdminSupabaseClient } from "@/lib/api-middleware"
 import { authLogger, extractErrorMeta } from "@/lib/logger"
-import { getAdminSupabaseClient } from "@/lib/api-middleware"
 
 const SendVerificationSchema = z.object({
   userId: z.string().uuid("Invalid user ID format"),
@@ -24,51 +16,24 @@ const SendVerificationSchema = z.object({
   userName: z.string().min(1, "User name must not be empty").optional(),
 })
 
+type SendVerificationBody = z.infer<typeof SendVerificationSchema>
+
 export async function POST(request: NextRequest) {
-  try {
-    // SECURITY: Rate limiting - 5 requests per minute for auth operations
-    const clientId = getClientIdentifier(request)
-    const rateLimitResult = await authLimiter.check(clientId)
-
-    if (!rateLimitResult.success) {
-      return apiError(
-        ErrorCodes.TOO_MANY_REQUESTS,
-        "Too many verification emails requested. Please try again later.",
-        {
-          status: 429,
-          details: { retryAfter: rateLimitResult.retryAfter },
-          headers: rateLimitHeaders(rateLimitResult),
-        }
-      )
-    }
-
-    // SECURITY: CSRF validation for state-changing requests
-    const csrfResult = validateCsrf(request)
-    if (!csrfResult.valid) {
-      return csrfError(csrfResult.error || "CSRF validation failed")
-    }
-
-    // SEC-015: Verify authentication and token ownership
-    const supabase = await createServerClient()
-    const { data: { user: currentUser } } = await supabase.auth.getUser()
-
-    if (!currentUser) {
-      return unauthorized("Authentication required to request verification email")
-    }
-
-    const body = await request.json()
-    const validation = validateBody(SendVerificationSchema, body)
-    if (!validation.success) return validation.response
-    const { userId, email, userName } = validation.data
+  return withApiMiddleware(request, {
+    requireAuth: true,
+    requireCsrf: true,
+    limiter: "auth",
+    bodySchema: SendVerificationSchema,
+  }, async (ctx) => {
+    const { userId, email, userName } = ctx.body as SendVerificationBody
 
     // SEC-015: Validate that the authenticated user is requesting their own verification
-    // Users can only request verification emails for their own account
-    if (currentUser.id !== userId) {
+    if (ctx.user.id !== userId) {
       return forbidden("You can only request verification for your own account")
     }
 
     // Additional security: verify the email matches the authenticated user's email
-    if (currentUser.email !== email) {
+    if (ctx.user.email !== email) {
       return forbidden("Email does not match your account")
     }
 
@@ -111,8 +76,5 @@ export async function POST(request: NextRequest) {
     }
 
     return apiSuccess(undefined, { message: "Verification email sent successfully" })
-  } catch (error) {
-    authLogger.error("Error in send verification email", extractErrorMeta(error))
-    return internalError("Internal server error")
-  }
+  })
 }

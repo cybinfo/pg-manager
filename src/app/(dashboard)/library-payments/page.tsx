@@ -8,9 +8,12 @@
 
 import { CreditCard, Users, Calendar, Receipt } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { LIBRARY_PAYMENT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { LIBRARY_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PAYMENT_METHOD_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { Avatar } from "@/components/ui/avatar"
@@ -133,23 +136,7 @@ const columns: Column<PaymentItem>[] = [
       return config?.label || payment.payment_method
     },
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (payment) => {
-      const config = LIBRARY_PAYMENT_STATUS_CONFIG[payment.status as keyof typeof LIBRARY_PAYMENT_STATUS_CONFIG]
-      return (
-        <StatusDot
-          status={config?.variant || "muted"}
-          label={config?.label || payment.status}
-        />
-      )
-    },
-  },
+  statusColumn(LIBRARY_PAYMENT_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
   // Hidden by default
   {
     key: "payment_reference",
@@ -171,16 +158,7 @@ const columns: Column<PaymentItem>[] = [
       </span>
     ) : "—",
   },
-  {
-    key: "created_at",
-    header: "Recorded On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (payment) => formatDate(payment.created_at),
-  },
+  dateColumn("created_at", "Recorded On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -207,29 +185,17 @@ const filters: FilterConfig[] = [
       { value: "other", label: "Other" },
     ],
   },
-  {
-    id: "payment_method",
-    label: "Method",
-    type: "select",
-    placeholder: "All Methods",
-    options: [
-      { value: "cash", label: "Cash" },
-      { value: "upi", label: "UPI" },
-      { value: "card", label: "Card" },
-      { value: "bank_transfer", label: "Bank Transfer" },
-    ],
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "completed", label: "Completed" },
-      { value: "pending", label: "Pending" },
-      { value: "refunded", label: "Refunded" },
-    ],
-  },
+  { ...PAYMENT_METHOD_FILTER, options: [
+    { value: "cash", label: "Cash" },
+    { value: "upi", label: "UPI" },
+    { value: "card", label: "Card" },
+    { value: "bank_transfer", label: "Bank Transfer" },
+  ]},
+  createStatusFilter([
+    { value: "completed", label: "Completed" },
+    { value: "pending", label: "Pending" },
+    { value: "refunded", label: "Refunded" },
+  ]),
 ]
 
 // ============================================
@@ -247,29 +213,20 @@ const groupByOptions: GroupByOption[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<PaymentItem>[] = [
-  {
-    id: "total",
-    label: "Total Payments",
-    icon: Receipt,
-    compute: (_items, total) => total,
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Payments", icon: Receipt }),
   {
     id: "total_amount",
     label: "Total Amount",
     icon: CreditCard,
     compute: (items) => {
-      const total = items.reduce((sum, p) => sum + (p.amount || 0), 0)
-      return `₹${total.toLocaleString("en-IN")}`
+      const total = items.reduce((sum: number, p) => sum + (Number(p.amount) || 0), 0)
+      return `\u20B9${total.toLocaleString("en-IN")}`
     },
   },
+  createStatusMetric("subscription", "Subscriptions", Users, { id: "subscriptions", column: "payment_type" }),
   {
-    id: "subscriptions",
-    label: "Subscriptions",
-    icon: Users,
-    compute: (items) => items.filter((p) => p.payment_type === "subscription").length,
-  },
-  {
+    // Custom: dynamic date comparison with "today"
     id: "today",
     label: "Today",
     icon: Calendar,

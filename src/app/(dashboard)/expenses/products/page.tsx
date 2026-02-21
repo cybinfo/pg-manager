@@ -10,8 +10,10 @@
 import { Package, Check, X, Tag } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { PRODUCT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { PRODUCT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 
@@ -176,22 +178,8 @@ const columns: Column<Product>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "category_id",
-    label: "Category",
-    type: "select",
-    placeholder: "All Categories",
-  },
-  {
-    id: "is_active",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
+  EXPENSE_CATEGORY_FILTER,
+  ACTIVE_STATUS_FILTER,
 ]
 
 // ============================================
@@ -243,46 +231,17 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Product>[] = [
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Products", icon: Package, format: "number" }),
+  createBooleanMetric("is_active", true, "Active", Check, { id: "active", format: "number" }),
+  createBooleanMetric("is_active", false, "Inactive", X, { id: "inactive", format: "number" }),
   {
-    id: "total",
-    label: "Total Products",
-    icon: Package,
-    compute: (_items, total) => total,
-    format: "number",
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: Check,
-    compute: (_items, _total, serverData) => serverData?.active ?? 0,
-    format: "number",
-    serverFilter: {
-      column: "is_active",
-      operator: "eq",
-      value: true,
-    },
-  },
-  {
-    id: "inactive",
-    label: "Inactive",
-    icon: X,
-    compute: (_items, _total, serverData) => serverData?.inactive ?? 0,
-    format: "number",
-    serverFilter: {
-      column: "is_active",
-      operator: "eq",
-      value: false,
-    },
-  },
-  {
+    // Custom: distinct count of categories
     id: "categories",
     label: "Categories",
     icon: Tag,
     compute: (items) => {
-      // Note: This is computed from current page data as there's no simple way
-      // to count distinct categories server-side via REST API
-      const categories = new Set(items.map((p) => p.category?.id).filter(Boolean))
+      const categories = new Set(items.map((p) => (p.category as { id?: string } | null)?.id).filter(Boolean))
       return categories.size
     },
     format: "number",

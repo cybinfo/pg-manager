@@ -1,22 +1,15 @@
 import { NextRequest } from "next/server"
-import { createClient as createServerClient } from "@/lib/supabase/server"
 import { z } from "zod"
-import { sensitiveLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 import { apiLogger, extractErrorMeta } from "@/lib/logger"
-import { validateCsrf } from "@/lib/csrf"
 import {
   apiSuccess,
   apiError,
-  unauthorized,
   forbidden,
   badRequest,
   internalError,
-  csrfError,
-  ErrorCodes,
 } from "@/lib/api-response"
-import { validateBody } from "@/lib/validation"
 import { validateEmail } from "@/lib/validators"
-import { getAdminSupabaseClient } from "@/lib/api-middleware"
+import { withApiMiddleware, getAdminSupabaseClient } from "@/lib/api-middleware"
 
 const UpdateUserEmailSchema = z.object({
   userId: z.string().uuid("Invalid user ID format"),
@@ -24,42 +17,16 @@ const UpdateUserEmailSchema = z.object({
   tenantId: z.string().uuid("Invalid tenant ID format").optional(),
 })
 
+type UpdateUserEmailBody = z.infer<typeof UpdateUserEmailSchema>
+
 export async function POST(request: NextRequest) {
-  try {
-    // SECURITY: Rate limiting - 3 requests per minute for sensitive operations
-    const clientId = getClientIdentifier(request)
-    const rateLimitResult = await sensitiveLimiter.check(clientId)
-
-    if (!rateLimitResult.success) {
-      return apiError(
-        ErrorCodes.TOO_MANY_REQUESTS,
-        "Rate limit exceeded. Please try again later.",
-        {
-          status: 429,
-          details: { retryAfter: rateLimitResult.retryAfter },
-          headers: rateLimitHeaders(rateLimitResult),
-        }
-      )
-    }
-
-    // SECURITY: CSRF validation for state-changing requests
-    const csrfResult = validateCsrf(request)
-    if (!csrfResult.valid) {
-      return csrfError(csrfResult.error || "CSRF validation failed")
-    }
-
-    // SECURITY: Verify authentication first
-    const supabase = await createServerClient()
-    const { data: { user: currentUser } } = await supabase.auth.getUser()
-
-    if (!currentUser) {
-      return unauthorized("Authentication required")
-    }
-
-    const body = await request.json()
-    const validation = validateBody(UpdateUserEmailSchema, body)
-    if (!validation.success) return validation.response
-    const { userId, newEmail, tenantId } = validation.data
+  return withApiMiddleware(request, {
+    requireAuth: true,
+    requireCsrf: true,
+    limiter: "sensitive",
+    bodySchema: UpdateUserEmailSchema,
+  }, async (ctx) => {
+    const { userId, newEmail, tenantId } = ctx.body as UpdateUserEmailBody
 
     // SECURITY: Get admin client after auth check (validated env vars)
     const supabaseAdmin = getAdminSupabaseClient()
@@ -69,7 +36,7 @@ export async function POST(request: NextRequest) {
     const { data: platformAdmin } = await supabaseAdmin
       .from("platform_admins")
       .select("user_id")
-      .eq("user_id", currentUser.id)
+      .eq("user_id", ctx.user.id)
       .single()
 
     const isPlatformAdmin = !!platformAdmin
@@ -87,7 +54,7 @@ export async function POST(request: NextRequest) {
         .eq("id", tenantId)
         .single()
 
-      if (!tenant || tenant.owner_id !== currentUser.id) {
+      if (!tenant || tenant.owner_id !== ctx.user.id) {
         return forbidden("You do not have permission to update this user's email")
       }
     }
@@ -107,7 +74,7 @@ export async function POST(request: NextRequest) {
       .eq("user_id", userId)
 
     const hasOwnerOrStaffContext = contexts?.some(
-      (ctx) => ctx.context_type === "owner" || ctx.context_type === "staff"
+      (ctx: { context_type: string }) => ctx.context_type === "owner" || ctx.context_type === "staff"
     )
 
     // Always update tenants email (the record) if tenantId provided
@@ -172,8 +139,5 @@ export async function POST(request: NextRequest) {
       { loginEmailUpdated: true },
       { message: "Email updated successfully across all tables" }
     )
-  } catch (error) {
-    apiLogger.error("Error in update-user-email", extractErrorMeta(error))
-    return internalError("Internal server error")
-  }
+  })
 }

@@ -24,7 +24,9 @@ export {
 export { PermissionGuard, OwnerGuard, PlatformAdminGuard, withPermission } from './permission-guard'
 
 // Invitation Components
-export { InvitationForm, InvitationList, AcceptInvitation } from './invitation-components'
+export { InvitationForm } from './invitation-form'
+export { InvitationList } from './invitation-list'
+export { AcceptInvitation } from './accept-invitation'
 
 // Session Timeout
 export { SessionTimeout, useSessionTimeout } from './session-timeout'

@@ -19,9 +19,12 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { STAFF_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { STAFF_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createBooleanMetric, createNullCheckMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { Avatar } from "@/components/ui/avatar"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -193,16 +196,7 @@ const columns: Column<StaffMember>[] = [
       />
     ),
   },
-  {
-    key: "created_at",
-    header: "Joined",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (staff) => formatDate(staff.created_at),
-  },
+  dateColumn("created_at", "Joined", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -210,16 +204,7 @@ const columns: Column<StaffMember>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "is_active",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
+  ACTIVE_STATUS_FILTER,
 ]
 
 // ============================================
@@ -273,45 +258,11 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<StaffMember>[] = [
-  {
-    id: "total",
-    label: "Total Staff",
-    icon: Users,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: CheckCircle,
-    compute: (items) => items.filter((s) => s.is_active).length,
-    serverFilter: {
-      column: "is_active",
-      operator: "eq",
-      value: true,
-    },
-  },
-  {
-    id: "inactive",
-    label: "Inactive",
-    icon: XCircle,
-    compute: (items) => items.filter((s) => !s.is_active).length,
-    serverFilter: {
-      column: "is_active",
-      operator: "eq",
-      value: false,
-    },
-  },
-  {
-    id: "withLogin",
-    label: "With Login",
-    icon: Shield,
-    compute: (items) => items.filter((s) => s.user_id).length,
-    serverFilter: {
-      column: "user_id",
-      operator: "is_not_null",
-    },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Staff", icon: Users }),
+  createBooleanMetric("is_active", true, "Active", CheckCircle, { id: "active" }),
+  createBooleanMetric("is_active", false, "Inactive", XCircle, { id: "inactive" }),
+  createNullCheckMetric("user_id", false, "With Login", Shield, { id: "withLogin" }),
 ]
 
 // ============================================

@@ -18,9 +18,12 @@ import {
   Smartphone,
 } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
+import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { REFUND_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { REFUND_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { Avatar } from "@/components/ui/avatar"
@@ -164,13 +167,8 @@ const columns: Column<Refund>[] = [
       </div>
     ),
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
+  statusColumn(REFUND_STATUS, {
+    style: "badge",
     editable: true,
     editType: "select",
     editOptions: [
@@ -179,11 +177,7 @@ const columns: Column<Refund>[] = [
       { value: "processed", label: "Processed" },
       { value: "rejected", label: "Rejected" },
     ],
-    render: (refund) => {
-      const status = REFUND_STATUS[refund.status] || { variant: "muted" as const, label: refund.status }
-      return <TableBadge variant={status.variant}>{status.label}</TableBadge>
-    },
-  },
+  }),
   // Hidden by default columns
   {
     key: "refund_type",
@@ -204,16 +198,7 @@ const columns: Column<Refund>[] = [
     defaultVisible: false,
     render: (refund) => refund.reference_number || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "due_date",
-    header: "Due Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (refund) => refund.due_date ? formatDate(refund.due_date) : <span className="text-muted-foreground">—</span>,
-  },
+  dateColumn("due_date", "Due Date", { defaultVisible: false }),
   {
     key: "reason",
     header: "Reason",
@@ -246,16 +231,7 @@ const columns: Column<Refund>[] = [
       <span className="text-sm">Exit: {formatDate(refund.exit_clearance.expected_exit_date)}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Created On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (refund) => formatDate(refund.created_at),
-  },
+  dateColumn("created_at", "Created On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -263,25 +239,14 @@ const columns: Column<Refund>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "pending", label: "Pending" },
-      { value: "processing", label: "Processing" },
-      { value: "completed", label: "Completed" },
-      { value: "failed", label: "Failed" },
-      { value: "cancelled", label: "Cancelled" },
-    ],
-  },
+  PROPERTY_FILTER,
+  createStatusFilter([
+    { value: "pending", label: "Pending" },
+    { value: "processing", label: "Processing" },
+    { value: "completed", label: "Completed" },
+    { value: "failed", label: "Failed" },
+    { value: "cancelled", label: "Cancelled" },
+  ]),
   {
     id: "refund_type",
     label: "Type",
@@ -369,79 +334,17 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Refund>[] = [
-  {
-    id: "total",
-    label: "Total Refunds",
-    icon: Wallet,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
-    id: "pending",
-    label: "Pending",
-    icon: Clock,
-    compute: (items) => items.filter((r) => r.status === "pending").length,
-    highlight: (value) => (value as number) > 0,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "pending",
-    },
-  },
-  {
-    id: "completed",
-    label: "Completed",
-    icon: CheckCircle,
-    compute: (items) => items.filter((r) => r.status === "completed").length,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "completed",
-    },
-  },
-  {
-    id: "pendingAmount",
-    label: "Pending Amount",
-    icon: AlertCircle,
-    compute: (items, _total, serverData) => {
-      if (serverData?.pendingAmount !== undefined) {
-        return formatCurrency(serverData.pendingAmount)
-      }
-      return formatCurrency(
-        items.filter((r) => r.status === "pending").reduce((sum, r) => sum + r.amount, 0)
-      )
-    },
-    highlight: (value) => value !== "₹0",
-    serverSum: {
-      column: "amount",
-      filter: {
-        column: "status",
-        operator: "eq",
-        value: "pending",
-      },
-    },
-  },
-  {
-    id: "paidOut",
-    label: "Paid Out",
-    icon: Banknote,
-    compute: (items, _total, serverData) => {
-      if (serverData?.paidOut !== undefined) {
-        return formatCurrency(serverData.paidOut)
-      }
-      return formatCurrency(
-        items.filter((r) => r.status === "completed").reduce((sum, r) => sum + r.amount, 0)
-      )
-    },
-    serverSum: {
-      column: "amount",
-      filter: {
-        column: "status",
-        operator: "eq",
-        value: "completed",
-      },
-    },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Refunds", icon: Wallet }),
+  createStatusMetric("pending", "Pending", Clock, { highlight: true }),
+  createStatusMetric("completed", "Completed", CheckCircle),
+  createSumMetric("amount", "pendingAmount", "Pending Amount", AlertCircle, {
+    filter: { column: "status", operator: "eq", value: "pending" },
+    highlight: true,
+  }),
+  createSumMetric("amount", "paidOut", "Paid Out", Banknote, {
+    filter: { column: "status", operator: "eq", value: "completed" },
+  }),
 ]
 
 // ============================================

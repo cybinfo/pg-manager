@@ -17,6 +17,7 @@ import {
   FileText,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { ProfileFieldRow } from "@/components/portal"
 import { formatDate } from "@/lib/format"
 
 interface MemberProfile {
@@ -205,35 +206,27 @@ export default function MemberProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Phone</p>
-                <p className="font-medium">{member.phone || "-"}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{member.email || "-"}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Join Date</p>
-                <p className="font-medium">{formatDate(member.join_date)}</p>
-              </div>
-            </div>
+            <ProfileFieldRow
+              icon={Phone}
+              label="Phone"
+              value={member.phone || "-"}
+            />
+            <ProfileFieldRow
+              icon={Mail}
+              label="Email"
+              value={member.email || "-"}
+            />
+            <ProfileFieldRow
+              icon={Calendar}
+              label="Join Date"
+              value={formatDate(member.join_date)}
+            />
             {member.expiry_date && (
-              <div className="flex items-center gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Expiry Date</p>
-                  <p className="font-medium">{formatDate(member.expiry_date)}</p>
-                </div>
-              </div>
+              <ProfileFieldRow
+                icon={Calendar}
+                label="Expiry Date"
+                value={formatDate(member.expiry_date)}
+              />
             )}
           </CardContent>
         </Card>
@@ -257,24 +250,18 @@ export default function MemberProfilePage() {
               )}
             </div>
             {member.library?.phone && (
-              <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Library Contact</p>
-                  <p className="font-medium">{member.library.phone}</p>
-                </div>
-              </div>
+              <ProfileFieldRow
+                icon={Phone}
+                label="Library Contact"
+                value={member.library.phone}
+              />
             )}
             {(member.library?.opening_time || member.library?.closing_time) && (
-              <div className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Timing</p>
-                  <p className="font-medium">
-                    {member.library.opening_time || "?"} - {member.library.closing_time || "?"}
-                  </p>
-                </div>
-              </div>
+              <ProfileFieldRow
+                icon={Clock}
+                label="Timing"
+                value={`${member.library.opening_time || "?"} - ${member.library.closing_time || "?"}`}
+              />
             )}
           </CardContent>
         </Card>
@@ -336,28 +323,24 @@ export default function MemberProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Armchair className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Assigned Seat</p>
-                <p className="font-medium">
-                  {member.assigned_seat
-                    ? `${member.assigned_seat.seat_number}${member.assigned_seat.section ? ` (${member.assigned_seat.section.name})` : ""}`
-                    : "No seat assigned"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Lock className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Locker</p>
-                <p className="font-medium">
-                  {member.locker
-                    ? `#${member.locker.locker_number}`
-                    : "No locker assigned"}
-                </p>
-              </div>
-            </div>
+            <ProfileFieldRow
+              icon={Armchair}
+              label="Assigned Seat"
+              value={
+                member.assigned_seat
+                  ? `${member.assigned_seat.seat_number}${member.assigned_seat.section ? ` (${member.assigned_seat.section.name})` : ""}`
+                  : "No seat assigned"
+              }
+            />
+            <ProfileFieldRow
+              icon={Lock}
+              label="Locker"
+              value={
+                member.locker
+                  ? `#${member.locker.locker_number}`
+                  : "No locker assigned"
+              }
+            />
           </CardContent>
         </Card>
       </div>

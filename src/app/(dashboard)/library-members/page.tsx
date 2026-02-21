@@ -8,9 +8,12 @@
 
 import { Users, Library, Clock, CreditCard } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { LIBRARY_MEMBER_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { LIBRARY_MEMBER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { LIBRARY_FILTER, TIME_SLOT_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { LIBRARY_MEMBER_STATUS_CONFIG } from "@/types/library.types"
@@ -109,23 +112,7 @@ const columns: Column<LibraryMemberItem>[] = [
       </span>
     ) : "—",
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (member) => {
-      const config = LIBRARY_MEMBER_STATUS_CONFIG[member.status as keyof typeof LIBRARY_MEMBER_STATUS_CONFIG]
-      return (
-        <StatusDot
-          status={config?.variant || "muted"}
-          label={config?.label || member.status}
-        />
-      )
-    },
-  },
+  statusColumn(LIBRARY_MEMBER_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
   // Hidden by default
   {
     key: "phone",
@@ -166,26 +153,8 @@ const columns: Column<LibraryMemberItem>[] = [
     defaultVisible: false,
     render: (member) => `${member.hours_used?.toFixed(1) || 0}h`,
   },
-  {
-    key: "join_date",
-    header: "Joined",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (member) => formatDate(member.join_date),
-  },
-  {
-    key: "expiry_date",
-    header: "Expiry",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (member) => member.expiry_date ? formatDate(member.expiry_date) : "—",
-  },
+  dateColumn("join_date", "Joined", { defaultVisible: false }),
+  dateColumn("expiry_date", "Expiry", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -193,36 +162,14 @@ const columns: Column<LibraryMemberItem>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "library_id",
-    label: "Library",
-    type: "select",
-    placeholder: "All Libraries",
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "active", label: "Active" },
-      { value: "expired", label: "Expired" },
-      { value: "suspended", label: "Suspended" },
-      { value: "cancelled", label: "Cancelled" },
-    ],
-  },
-  {
-    id: "preferred_slot",
-    label: "Slot",
-    type: "select",
-    placeholder: "All Slots",
-    options: [
-      { value: "Morning", label: "Morning" },
-      { value: "Evening", label: "Evening" },
-      { value: "Night", label: "Night" },
-      { value: "24 Hours", label: "24 Hours" },
-    ],
-  },
+  LIBRARY_FILTER,
+  createStatusFilter([
+    { value: "active", label: "Active" },
+    { value: "expired", label: "Expired" },
+    { value: "suspended", label: "Suspended" },
+    { value: "cancelled", label: "Cancelled" },
+  ]),
+  TIME_SLOT_FILTER,
 ]
 
 // ============================================
@@ -240,31 +187,13 @@ const groupByOptions: GroupByOption[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<LibraryMemberItem>[] = [
-  {
-    id: "total",
-    label: "Members",
-    icon: Users,
-    compute: (_items, total) => total,
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: Users,
-    compute: (items) => items.filter((m) => m.status === "active").length,
-  },
-  {
-    id: "expired",
-    label: "Expired",
-    icon: Users,
-    compute: (items) => items.filter((m) => m.status === "expired").length,
-  },
-  {
-    id: "low_hours",
-    label: "Low Hours (<2h)",
-    icon: Clock,
-    compute: (items) => items.filter((m) => m.hours_balance < 2 && m.status === "active").length,
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Members", icon: Users }),
+  createStatusMetric("active", "Active", Users),
+  createStatusMetric("expired", "Expired", Users),
+  createCountMetric("low_hours", "Low Hours (<2h)", Clock,
+    (item) => (Number(item.hours_balance) || 0) < 2 && item.status === "active"
+  ),
 ]
 
 // ============================================

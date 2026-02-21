@@ -10,8 +10,10 @@
 import { ShoppingBag, Calendar, TrendingUp, Package } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { DAILY_SPEND_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { DAILY_SPEND_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { EXPENSE_CATEGORY_FILTER, createDateFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 
@@ -206,12 +208,7 @@ const columns: Column<DailySpendItem>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "category_id",
-    label: "Category",
-    type: "select",
-    placeholder: "All Categories",
-  },
+  EXPENSE_CATEGORY_FILTER,
   {
     id: "payment_mode",
     label: "Payment",
@@ -225,12 +222,7 @@ const filters: FilterConfig[] = [
       { value: "credit", label: "Credit" },
     ],
   },
-  {
-    id: "spend_date",
-    label: "Date",
-    type: "date",
-    placeholder: "Select date",
-  },
+  createDateFilter("spend_date", "Date"),
 ]
 
 // ============================================
@@ -287,44 +279,15 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<DailySpendItem>[] = [
-  {
-    id: "total_spend",
-    label: "Total Spend",
-    icon: TrendingUp,
-    compute: (_items, _total, serverData) => serverData?.total_spend ?? 0,
-    format: "currency",
-    serverSum: { column: "total" },
-  },
-  {
-    id: "total_items",
-    label: "Items",
-    icon: Package,
-    compute: (_items, total) => total,
-    format: "number",
-  },
-  {
-    id: "cash",
-    label: "Cash",
-    icon: ShoppingBag,
-    compute: (_items, _total, serverData) => serverData?.cash ?? 0,
-    format: "currency",
-    serverSum: {
-      column: "total",
-      filter: { column: "payment_mode", operator: "eq", value: "cash" },
-    },
-  },
-  {
-    id: "upi",
-    label: "UPI",
-    icon: ShoppingBag,
-    compute: (_items, _total, serverData) => serverData?.upi ?? 0,
-    format: "currency",
-    serverSum: {
-      column: "total",
-      filter: { column: "payment_mode", operator: "eq", value: "upi" },
-    },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createSumMetric("total", "total_spend", "Total Spend", TrendingUp),
+  createTotalMetric({ id: "total_items", label: "Items", icon: Package, format: "number" }),
+  createSumMetric("total", "cash", "Cash", ShoppingBag, {
+    filter: { column: "payment_mode", operator: "eq", value: "cash" },
+  }),
+  createSumMetric("total", "upi", "UPI", ShoppingBag, {
+    filter: { column: "payment_mode", operator: "eq", value: "upi" },
+  }),
 ]
 
 // ============================================

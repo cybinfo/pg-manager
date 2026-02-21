@@ -10,9 +10,12 @@
 import { FileText, CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { statusColumn, currencyColumn, dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { BILL_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { BILL_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -121,24 +124,8 @@ const columns: Column<Bill>[] = [
       </div>
     ),
   },
-  {
-    key: "due_date",
-    header: "Due",
-    width: "date",
-    hideOnMobile: true,
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: true,
-    render: (bill) => formatDate(bill.due_date),
-  },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
+  dateColumn("due_date", "Due", { hideOnMobile: true }),
+  statusColumn(getStatusInfo, {
     editable: true,
     editType: "select",
     editOptions: [
@@ -149,48 +136,11 @@ const columns: Column<Bill>[] = [
       { value: "overdue", label: "Overdue" },
       { value: "cancelled", label: "Cancelled" },
     ],
-    render: (bill) => {
-      const info = getStatusInfo(bill.status)
-      return <StatusDot status={info.status} label={info.label} />
-    },
-  },
+  }),
   // Hidden by default columns
-  {
-    key: "paid_amount",
-    header: "Paid Amount",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
-    defaultVisible: false,
-    render: (bill) => (
-      <span className="tabular-nums text-emerald-600">{formatCurrency(bill.paid_amount)}</span>
-    ),
-  },
-  {
-    key: "balance_due",
-    header: "Balance Due",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
-    defaultVisible: false,
-    render: (bill) => (
-      <span className={`tabular-nums ${bill.balance_due > 0 ? "text-rose-600" : ""}`}>
-        {formatCurrency(bill.balance_due)}
-      </span>
-    ),
-  },
-  {
-    key: "bill_date",
-    header: "Bill Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (bill) => formatDate(bill.bill_date),
-  },
+  currencyColumn("paid_amount", "Paid Amount", { defaultVisible: false, color: "text-emerald-600", bold: false }),
+  currencyColumn("balance_due", "Balance Due", { defaultVisible: false, color: "text-rose-600", bold: false }),
+  dateColumn("bill_date", "Bill Date", { defaultVisible: false }),
   {
     key: "tenant_phone",
     header: "Tenant Phone",
@@ -211,16 +161,7 @@ const columns: Column<Bill>[] = [
       <span className="truncate max-w-[150px]" title={bill.notes}>{bill.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Created",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (bill) => formatDate(bill.created_at),
-  },
+  dateColumn("created_at", "Created", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -228,29 +169,14 @@ const columns: Column<Bill>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "pending", label: "Pending" },
-      { value: "partial", label: "Partial" },
-      { value: "paid", label: "Paid" },
-      { value: "overdue", label: "Overdue" },
-    ],
-  },
-  {
-    id: "bill_date",
-    label: "Bill Date",
-    type: "date-range",
-  },
+  PROPERTY_FILTER,
+  createStatusFilter([
+    { value: "pending", label: "Pending" },
+    { value: "partial", label: "Partial" },
+    { value: "paid", label: "Paid" },
+    { value: "overdue", label: "Overdue" },
+  ]),
+  createDateRangeFilter("bill_date", "Bill Date"),
 ]
 
 // ============================================
@@ -319,81 +245,17 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Bill>[] = [
-  {
-    id: "total",
-    label: "Total Billed",
-    icon: FileText,
-    compute: (items, _total, serverData) => {
-      if (serverData?.total !== undefined) {
-        return formatCurrency(serverData.total)
-      }
-      return formatCurrency(items.reduce((sum, b) => sum + Number(b.total_amount), 0))
-    },
-    serverSum: {
-      column: "total_amount",
-    },
-  },
-  {
-    id: "collected",
-    label: "Collected",
-    icon: CheckCircle,
-    compute: (items, _total, serverData) => {
-      if (serverData?.collected !== undefined) {
-        return formatCurrency(serverData.collected)
-      }
-      return formatCurrency(items.reduce((sum, b) => sum + Number(b.paid_amount), 0))
-    },
-    serverSum: {
-      column: "paid_amount",
-    },
-  },
-  {
-    id: "pending",
-    label: "Pending",
-    icon: Clock,
-    compute: (items, _total, serverData) => {
-      if (serverData?.pending !== undefined) {
-        return formatCurrency(serverData.pending)
-      }
-      return formatCurrency(
-        items
-          .filter((b) => b.status === "pending" || b.status === "partial")
-          .reduce((sum, b) => sum + Number(b.balance_due), 0)
-      )
-    },
-    highlight: (value) => value !== "₹0",
-    serverSum: {
-      column: "balance_due",
-      filter: {
-        column: "status",
-        operator: "in",
-        value: ["pending", "partial"],
-      },
-    },
-  },
-  {
-    id: "overdue",
-    label: "Overdue",
-    icon: AlertCircle,
-    compute: (items, _total, serverData) => {
-      if (serverData?.overdue !== undefined) {
-        return formatCurrency(serverData.overdue)
-      }
-      return formatCurrency(
-        items.filter((b) => b.status === "overdue").reduce((sum, b) => sum + Number(b.balance_due), 0)
-      )
-    },
-    highlight: (value) => value !== "₹0",
-    serverSum: {
-      column: "balance_due",
-      filter: {
-        column: "status",
-        operator: "eq",
-        value: "overdue",
-      },
-    },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createSumMetric("total_amount", "total", "Total Billed", FileText),
+  createSumMetric("paid_amount", "collected", "Collected", CheckCircle),
+  createSumMetric("balance_due", "pending", "Pending", Clock, {
+    filter: { column: "status", operator: "in", value: ["pending", "partial"] },
+    highlight: true,
+  }),
+  createSumMetric("balance_due", "overdue", "Overdue", AlertCircle, {
+    filter: { column: "status", operator: "eq", value: "overdue" },
+    highlight: true,
+  }),
 ]
 
 // ============================================

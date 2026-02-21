@@ -10,10 +10,13 @@
 import { CreditCard, IndianRupee, Receipt, Wallet, Banknote, Bell } from "lucide-react"
 import Link from "next/link"
 import { Column, TableBadge } from "@/components/ui/data-table"
+import { currencyColumn, dateColumn, badgeColumn } from "@/lib/column-builders"
 import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { PAYMENT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, PAYMENT_METHOD_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
@@ -70,44 +73,9 @@ const columns: Column<Payment>[] = [
       </div>
     ),
   },
-  {
-    key: "amount",
-    header: "Amount",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
-    defaultVisible: true,
-    render: (payment) => (
-      <span className="font-semibold text-emerald-600 tabular-nums">
-        {formatCurrency(Number(payment.amount))}
-      </span>
-    ),
-  },
-  {
-    key: "payment_method",
-    header: "Method",
-    width: "badge",
-    hideOnMobile: true,
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (payment) => (
-      <TableBadge variant="default">
-        {PAYMENT_METHODS[payment.payment_method] || payment.payment_method}
-      </TableBadge>
-    ),
-  },
-  {
-    key: "payment_date",
-    header: "Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: true,
-    render: (payment) => formatDate(payment.payment_date),
-  },
+  currencyColumn("amount", "Amount", { color: "text-emerald-600", bold: true }),
+  badgeColumn("payment_method", "Method", PAYMENT_METHODS, { hideOnMobile: true }),
+  dateColumn("payment_date", "Date"),
   {
     key: "actions",
     header: "",
@@ -196,16 +164,7 @@ const columns: Column<Payment>[] = [
       <span className="truncate max-w-[150px]" title={payment.notes}>{payment.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Recorded On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (payment) => formatDate(payment.created_at),
-  },
+  dateColumn("created_at", "Recorded On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -213,30 +172,9 @@ const columns: Column<Payment>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "payment_method",
-    label: "Method",
-    type: "select",
-    placeholder: "All Methods",
-    options: [
-      { value: "cash", label: "Cash" },
-      { value: "upi", label: "UPI" },
-      { value: "bank_transfer", label: "Bank Transfer" },
-      { value: "cheque", label: "Cheque" },
-      { value: "card", label: "Card" },
-    ],
-  },
-  {
-    id: "payment_date",
-    label: "Date",
-    type: "date-range",
-  },
+  PROPERTY_FILTER,
+  PAYMENT_METHOD_FILTER,
+  createDateRangeFilter("payment_date", "Date"),
 ]
 
 // ============================================
@@ -295,52 +233,34 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Payment>[] = [
+const metrics: MetricConfig<Record<string, unknown>>[] = [
   {
+    // Custom: dynamic date filtering not expressible as serverFilter
     id: "this_month",
     label: "This Month",
     icon: IndianRupee,
     compute: (items) => {
       const now = new Date()
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      const thisMonthPayments = items.filter((p) => new Date(p.payment_date) >= firstOfMonth)
-      return formatCurrency(thisMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0))
-    },
-    // Note: Dynamic date filtering requires runtime filter values - page totals only
-  },
-  {
-    id: "all_time",
-    label: "All Time",
-    icon: Wallet,
-    compute: (items, _total, serverData) => {
-      if (serverData?.all_time !== undefined) {
-        return formatCurrency(serverData.all_time)
-      }
-      return formatCurrency(items.reduce((sum, p) => sum + Number(p.amount), 0))
-    },
-    serverSum: {
-      column: "amount",
+      const thisMonthPayments = items.filter((p) => new Date(p.payment_date as string) >= firstOfMonth)
+      return formatCurrency(thisMonthPayments.reduce((sum: number, p) => sum + Number(p.amount), 0))
     },
   },
+  createSumMetric("amount", "all_time", "All Time", Wallet),
+  createTotalMetric({ id: "transactions", label: "Transactions", icon: Receipt }),
   {
-    id: "transactions",
-    label: "Transactions",
-    icon: Receipt,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
+    // Custom: requires counting by group - not a simple filter
     id: "top_method",
     label: "Top Method",
     icon: Banknote,
     compute: (items) => {
-      const methodCounts = items.reduce((acc, p) => {
-        acc[p.payment_method] = (acc[p.payment_method] || 0) + 1
+      const methodCounts = items.reduce((acc: Record<string, number>, p) => {
+        acc[p.payment_method as string] = (acc[p.payment_method as string] || 0) + 1
         return acc
       }, {} as Record<string, number>)
       const topMethod = Object.entries(methodCounts).sort((a, b) => b[1] - a[1])[0]
       return topMethod ? PAYMENT_METHODS[topMethod[0]] || topMethod[0] : "—"
     },
-    // Note: Requires counting by group - page totals only
   },
 ]
 

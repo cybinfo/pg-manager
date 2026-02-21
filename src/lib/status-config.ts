@@ -204,6 +204,174 @@ export const POLICE_VERIFICATION_STATUS: Record<string, StatusConfig> = {
 }
 
 // ============================================================================
+// NOTICE TYPE LABELS (for list page computed fields)
+// ============================================================================
+
+export const NOTICE_TYPE_LABELS: Record<string, string> = {
+  general: "General",
+  maintenance: "Maintenance",
+  payment_reminder: "Payment Reminder",
+  emergency: "Emergency",
+}
+
+// ============================================================================
+// REFUND TYPE LABELS
+// ============================================================================
+
+export const REFUND_TYPE_LABELS: Record<string, string> = {
+  deposit_refund: "Deposit Refund",
+  overpayment: "Overpayment",
+  adjustment: "Adjustment",
+  other: "Other",
+}
+
+// ============================================================================
+// REFUND STATUS LABELS (simple string labels extracted from REFUND_STATUS)
+// ============================================================================
+
+export const REFUND_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  processing: "Processing",
+  completed: "Completed",
+  failed: "Failed",
+  cancelled: "Cancelled",
+}
+
+// ============================================================================
+// METER STATUS & TYPE LABELS
+// ============================================================================
+
+export const METER_STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  faulty: "Faulty",
+  replaced: "Replaced",
+  retired: "Retired",
+}
+
+export const METER_TYPE_LABELS: Record<string, string> = {
+  electricity: "Electricity",
+  water: "Water",
+  gas: "Gas",
+}
+
+// ============================================================================
+// INQUIRY STATUS & SOURCE LABELS
+// ============================================================================
+
+export const INQUIRY_STATUS_LABELS: Record<string, string> = {
+  new: "New",
+  contacted: "Contacted",
+  converted: "Converted",
+  closed: "Closed",
+}
+
+export const INQUIRY_SOURCE_LABELS: Record<string, string> = {
+  website: "Website",
+  whatsapp: "WhatsApp",
+  phone: "Phone",
+}
+
+// ============================================================================
+// KITCHEN WASTAGE REASON LABELS (with Hindi)
+// ============================================================================
+
+export const KITCHEN_WASTAGE_REASON_LABELS: Record<string, { label: string; labelHi: string }> = {
+  over_prepared: { label: "Over Prepared", labelHi: "ज्यादा बनाया" },
+  spoiled: { label: "Spoiled", labelHi: "खराब हो गया" },
+  expired: { label: "Expired", labelHi: "समाप्त हो गया" },
+  damaged: { label: "Damaged", labelHi: "टूट/फूट" },
+  other: { label: "Other", labelHi: "अन्य" },
+}
+
+// ============================================================================
+// BILL PAYMENT STATUS LABELS (with Hindi, for enhanced expense module)
+// ============================================================================
+
+export const BILL_PAYMENT_STATUS_LABELS: Record<string, { label: string; labelHi: string }> = {
+  pending: { label: "Pending", labelHi: "बाकी" },
+  partial: { label: "Partial", labelHi: "आंशिक" },
+  paid: { label: "Paid", labelHi: "भुगतान" },
+  overdue: { label: "Overdue", labelHi: "विलंबित" },
+}
+
+// ============================================================================
+// LIBRARY SEAT STATUS LABELS
+// ============================================================================
+
+export const LIBRARY_SEAT_STATUS_LABELS: Record<string, string> = {
+  available: "Available",
+  occupied: "Occupied",
+  reserved: "Reserved",
+  maintenance: "Maintenance",
+}
+
+// ============================================================================
+// LIBRARY MEMBER STATUS LABELS
+// ============================================================================
+
+export const LIBRARY_MEMBER_STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  expired: "Expired",
+  suspended: "Suspended",
+  cancelled: "Cancelled",
+}
+
+// ============================================================================
+// LIBRARY MEMBERSHIP STATUS LABELS
+// ============================================================================
+
+export const LIBRARY_MEMBERSHIP_STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  expired: "Expired",
+  cancelled: "Cancelled",
+  upgraded: "Upgraded",
+}
+
+// ============================================================================
+// LIBRARY LOCKER STATUS & SIZE LABELS
+// ============================================================================
+
+export const LIBRARY_LOCKER_STATUS_LABELS: Record<string, string> = {
+  available: "Available",
+  occupied: "Occupied",
+  maintenance: "Maintenance",
+}
+
+export const LIBRARY_LOCKER_SIZE_LABELS: Record<string, string> = {
+  small: "Small",
+  medium: "Medium",
+  large: "Large",
+}
+
+// ============================================================================
+// LIBRARY PAYMENT LABELS
+// ============================================================================
+
+export const LIBRARY_PAYMENT_TYPE_LABELS: Record<string, string> = {
+  subscription: "Subscription",
+  locker_rent: "Locker Rent",
+  locker_deposit: "Locker Deposit",
+  fine: "Fine",
+  other: "Other",
+}
+
+export const LIBRARY_PAYMENT_STATUS_LABELS: Record<string, string> = {
+  completed: "Completed",
+  pending: "Pending",
+  refunded: "Refunded",
+}
+
+export const LIBRARY_PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: "Cash",
+  upi: "UPI",
+  card: "Card",
+  bank_transfer: "Bank Transfer",
+  cheque: "Cheque",
+  paytm: "Paytm",
+  other: "Other",
+}
+
+// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 

@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
+import { createDateRangeFilter } from "@/lib/filter-presets"
 import { FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -132,11 +133,7 @@ export default function ActivityLogPage() {
         { value: "staff", label: "Staff" },
       ],
     },
-    {
-      id: "date",
-      label: "Date",
-      type: "date-range",
-    },
+    createDateRangeFilter("date", "Date"),
   ]
 
   // Apply filters

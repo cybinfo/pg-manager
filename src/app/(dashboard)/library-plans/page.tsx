@@ -9,8 +9,10 @@
 import { CreditCard, Clock, Calendar, CheckCircle } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { LIBRARY_PLAN_LIST_CONFIG, MetricConfig } from "@/lib/hooks/useListPage"
+import { LIBRARY_PLAN_LIST_CONFIG } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { Currency } from "@/components/ui/currency"
 
 // ============================================
@@ -140,53 +142,36 @@ const columns: Column<PlanItem>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "is_active",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
+  ACTIVE_STATUS_FILTER,
 ]
 
 // ============================================
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<PlanItem>[] = [
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Plans", icon: CreditCard }),
+  createBooleanMetric("is_active", true, "Active", CheckCircle, { id: "active" }),
   {
-    id: "total",
-    label: "Total Plans",
-    icon: CreditCard,
-    compute: (_items, total) => total,
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: CheckCircle,
-    compute: (items) => items.filter((p) => p.is_active).length,
-  },
-  {
+    // Custom: average computation
     id: "avg_hours",
     label: "Avg Hours",
     icon: Clock,
     compute: (items) => {
       const withHours = items.filter((p) => p.hours_included)
-      if (withHours.length === 0) return "—"
-      const avg = withHours.reduce((sum, p) => sum + (p.hours_included || 0), 0) / withHours.length
+      if (withHours.length === 0) return "\u2014"
+      const avg = withHours.reduce((sum: number, p) => sum + (Number(p.hours_included) || 0), 0) / withHours.length
       return `${avg.toFixed(0)}h`
     },
   },
   {
+    // Custom: average computation
     id: "avg_validity",
     label: "Avg Validity",
     icon: Calendar,
     compute: (items) => {
-      if (items.length === 0) return "—"
-      const avg = items.reduce((sum, p) => sum + p.validity_days, 0) / items.length
+      if (items.length === 0) return "\u2014"
+      const avg = items.reduce((sum: number, p) => sum + (Number(p.validity_days) || 0), 0) / items.length
       return `${avg.toFixed(0)} days`
     },
   },

@@ -10,8 +10,10 @@
 import { Building2, Check, X, Phone, CreditCard } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { VENDOR_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { VENDOR_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createBooleanMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 
@@ -202,22 +204,8 @@ const columns: Column<VendorListItem>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "category_id",
-    label: "Category",
-    type: "select",
-    placeholder: "All Categories",
-  },
-  {
-    id: "is_active",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
+  EXPENSE_CATEGORY_FILTER,
+  ACTIVE_STATUS_FILTER,
 ]
 
 // ============================================
@@ -262,40 +250,17 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<VendorListItem>[] = [
-  {
-    id: "total",
-    label: "Total Vendors",
-    icon: Building2,
-    compute: (items, total) => total,
-    format: "number",
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: Check,
-    compute: (items) => items.filter((v) => v.is_active).length,
-    format: "number",
-    serverFilter: {
-      column: "is_active",
-      operator: "eq",
-      value: true,
-    },
-  },
-  {
-    id: "with_gstin",
-    label: "With GSTIN",
-    icon: Building2,
-    compute: (items) => items.filter((v) => v.gstin).length,
-    format: "number",
-  },
-  {
-    id: "with_upi",
-    label: "With UPI",
-    icon: CreditCard,
-    compute: (items) => items.filter((v) => v.upi_id).length,
-    format: "number",
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Vendors", icon: Building2, format: "number" }),
+  createBooleanMetric("is_active", true, "Active", Check, { id: "active", format: "number" }),
+  createCountMetric("with_gstin", "With GSTIN", Building2,
+    (item) => Boolean(item.gstin),
+    { format: "number" }
+  ),
+  createCountMetric("with_upi", "With UPI", CreditCard,
+    (item) => Boolean(item.upi_id),
+    { format: "number" }
+  ),
 ]
 
 // ============================================

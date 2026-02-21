@@ -9,8 +9,10 @@
 import { Library, Users, Armchair, MapPin, Phone, Clock } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { LIBRARY_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { LIBRARY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatDate } from "@/lib/format"
 
@@ -214,16 +216,7 @@ const filters: FilterConfig[] = [
     type: "select",
     placeholder: "All Cities",
   },
-  {
-    id: "is_active",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
+  ACTIVE_STATUS_FILTER,
   {
     id: "has_ac",
     label: "AC",
@@ -285,30 +278,20 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<LibraryItem>[] = [
-  {
-    id: "total",
-    label: "Libraries",
-    icon: Library,
-    compute: (_items, total) => total,
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: Library,
-    compute: (items) => items.filter((l) => l.is_active).length,
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Libraries", icon: Library }),
+  createBooleanMetric("is_active", true, "Active", Library, { id: "active" }),
   {
     id: "total_seats",
     label: "Total Seats",
     icon: Armchair,
-    compute: (items) => items.reduce((sum, l) => sum + (l.total_seats || 0), 0),
+    compute: (items) => items.reduce((sum: number, l) => sum + (Number(l.total_seats) || 0), 0),
   },
   {
     id: "occupied_seats",
     label: "Occupied",
     icon: Users,
-    compute: (items) => items.reduce((sum, l) => sum + (l.occupied_seats || 0), 0),
+    compute: (items) => items.reduce((sum: number, l) => sum + (Number(l.occupied_seats) || 0), 0),
   },
 ]
 

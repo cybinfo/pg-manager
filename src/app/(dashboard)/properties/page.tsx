@@ -9,9 +9,12 @@
 
 import { Building2, Home, Users, MapPin, Phone } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { PROPERTY_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { PROPERTY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createBooleanMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatDate } from "@/lib/format"
 
@@ -202,16 +205,7 @@ const columns: Column<Property>[] = [
       />
     ),
   },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (property) => formatDate(property.created_at),
-  },
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -231,16 +225,7 @@ const filters: FilterConfig[] = [
     type: "select",
     placeholder: "All States",
   },
-  {
-    id: "is_active",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
+  ACTIVE_STATUS_FILTER,
 ]
 
 // ============================================
@@ -286,30 +271,20 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Property>[] = [
-  {
-    id: "total",
-    label: "Properties",
-    icon: Building2,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: Building2,
-    compute: (items) => items.filter((p) => p.is_active).length,
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Properties", icon: Building2 }),
+  createBooleanMetric("is_active", true, "Active", Building2, { id: "active" }),
   {
     id: "total_rooms",
     label: "Total Rooms",
     icon: Home,
-    compute: (items) => items.reduce((sum, p) => sum + (p.room_count || 0), 0),
+    compute: (items) => items.reduce((sum: number, p) => sum + (Number(p.room_count) || 0), 0),
   },
   {
     id: "total_tenants",
     label: "Total Tenants",
     icon: Users,
-    compute: (items) => items.reduce((sum, p) => sum + (p.tenant_count || 0), 0),
+    compute: (items) => items.reduce((sum: number, p) => sum + (Number(p.tenant_count) || 0), 0),
   },
 ]
 

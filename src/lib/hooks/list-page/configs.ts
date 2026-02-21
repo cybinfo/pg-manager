@@ -6,6 +6,25 @@
  */
 
 import type { ListPageConfig } from "./types"
+import {
+  NOTICE_TYPE_LABELS,
+  REFUND_STATUS_LABELS,
+  REFUND_TYPE_LABELS,
+  METER_STATUS_LABELS,
+  METER_TYPE_LABELS,
+  INQUIRY_STATUS_LABELS,
+  INQUIRY_SOURCE_LABELS,
+  KITCHEN_WASTAGE_REASON_LABELS,
+  BILL_PAYMENT_STATUS_LABELS,
+  LIBRARY_SEAT_STATUS_LABELS,
+  LIBRARY_MEMBER_STATUS_LABELS,
+  LIBRARY_MEMBERSHIP_STATUS_LABELS,
+  LIBRARY_LOCKER_STATUS_LABELS,
+  LIBRARY_LOCKER_SIZE_LABELS,
+  LIBRARY_PAYMENT_TYPE_LABELS,
+  LIBRARY_PAYMENT_STATUS_LABELS,
+  LIBRARY_PAYMENT_METHOD_LABELS,
+} from "@/lib/status-config"
 
 // ============================================
 // PG Module Configs
@@ -240,18 +259,12 @@ export const NOTICE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   joinFields: ["property"],
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
-    const typeLabels: Record<string, string> = {
-      general: "General",
-      maintenance: "Maintenance",
-      payment_reminder: "Payment Reminder",
-      emergency: "Emergency",
-    }
     const isExpired = item.expires_at ? new Date(item.expires_at as string) < new Date() : false
     return {
       created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       created_year: date.getFullYear().toString(),
       active_label: item.is_active && !isExpired ? "Active" : "Inactive",
-      type_label: typeLabels[item.type as string] || (item.type as string),
+      type_label: NOTICE_TYPE_LABELS[item.type as string] || (item.type as string),
       is_expired: isExpired,
     }
   },
@@ -308,24 +321,11 @@ export const REFUND_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   joinFields: ["tenant", "property", "exit_clearance"],
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
-    const statusLabels: Record<string, string> = {
-      pending: "Pending",
-      processing: "Processing",
-      completed: "Completed",
-      failed: "Failed",
-      cancelled: "Cancelled",
-    }
-    const typeLabels: Record<string, string> = {
-      deposit_refund: "Deposit Refund",
-      overpayment: "Overpayment",
-      adjustment: "Adjustment",
-      other: "Other",
-    }
     return {
       refund_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       refund_year: date.getFullYear().toString(),
-      status_label: statusLabels[item.status as string] || (item.status as string),
-      type_label: typeLabels[item.refund_type as string] || (item.refund_type as string),
+      status_label: REFUND_STATUS_LABELS[item.status as string] || (item.status as string),
+      type_label: REFUND_TYPE_LABELS[item.refund_type as string] || (item.refund_type as string),
     }
   },
 }
@@ -363,22 +363,11 @@ export const METER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   joinFields: ["property"],
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
-    const statusLabels: Record<string, string> = {
-      active: "Active",
-      faulty: "Faulty",
-      replaced: "Replaced",
-      retired: "Retired",
-    }
-    const typeLabels: Record<string, string> = {
-      electricity: "Electricity",
-      water: "Water",
-      gas: "Gas",
-    }
     return {
       created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       created_year: date.getFullYear().toString(),
-      status_label: statusLabels[item.status as string] || (item.status as string),
-      type_label: typeLabels[item.meter_type as string] || (item.meter_type as string),
+      status_label: METER_STATUS_LABELS[item.status as string] || (item.status as string),
+      type_label: METER_TYPE_LABELS[item.meter_type as string] || (item.meter_type as string),
     }
   },
 }
@@ -395,22 +384,11 @@ export const INQUIRY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   joinFields: ["property"],
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
-    const statusLabels: Record<string, string> = {
-      new: "New",
-      contacted: "Contacted",
-      converted: "Converted",
-      closed: "Closed",
-    }
-    const sourceLabels: Record<string, string> = {
-      website: "Website",
-      whatsapp: "WhatsApp",
-      phone: "Phone",
-    }
     return {
       created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       created_year: date.getFullYear().toString(),
-      status_label: statusLabels[item.status as string] || (item.status as string),
-      source_label: sourceLabels[item.source as string] || (item.source as string),
+      status_label: INQUIRY_STATUS_LABELS[item.status as string] || (item.status as string),
+      source_label: INQUIRY_SOURCE_LABELS[item.source as string] || (item.source as string),
     }
   },
 }
@@ -492,20 +470,13 @@ export const BILL_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
     const today = new Date()
     const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null
 
-    const statusConfig: Record<string, { label: string; labelHi: string }> = {
-      pending: { label: "Pending", labelHi: "बाकी" },
-      partial: { label: "Partial", labelHi: "आंशिक" },
-      paid: { label: "Paid", labelHi: "भुगतान" },
-      overdue: { label: "Overdue", labelHi: "विलंबित" },
-    }
-
     return {
       payment_month: paymentDate?.toLocaleDateString("en-US", { month: "long", year: "numeric" }) || "",
       payment_year: paymentDate?.getFullYear().toString() || "",
       days_until_due: daysUntilDue,
       is_overdue: dueDate && today > dueDate && item.status !== "paid",
-      status_label: statusConfig[item.status as string]?.label || item.status,
-      status_label_hi: statusConfig[item.status as string]?.labelHi || item.status,
+      status_label: BILL_PAYMENT_STATUS_LABELS[item.status as string]?.label || item.status,
+      status_label_hi: BILL_PAYMENT_STATUS_LABELS[item.status as string]?.labelHi || item.status,
       display_amount: `₹${(item.bill_amount as number)?.toLocaleString("en-IN")}`,
       balance_due: ((item.bill_amount as number) || 0) - ((item.paid_amount as number) || 0),
     }
@@ -579,18 +550,11 @@ export const KITCHEN_WASTAGE_LIST_CONFIG: ListPageConfig<Record<string, unknown>
   joinFields: ["property", "product"],
   computedFields: (item) => {
     const date = item.wastage_date ? new Date(item.wastage_date as string) : new Date()
-    const reasonLabels: Record<string, { label: string; labelHi: string }> = {
-      over_prepared: { label: "Over Prepared", labelHi: "ज्यादा बनाया" },
-      spoiled: { label: "Spoiled", labelHi: "खराब हो गया" },
-      expired: { label: "Expired", labelHi: "समाप्त हो गया" },
-      damaged: { label: "Damaged", labelHi: "टूट/फूट" },
-      other: { label: "Other", labelHi: "अन्य" },
-    }
     return {
       wastage_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       wastage_year: date.getFullYear().toString(),
-      reason_label: reasonLabels[item.reason as string]?.label || item.reason,
-      reason_label_hi: reasonLabels[item.reason as string]?.labelHi || item.reason,
+      reason_label: KITCHEN_WASTAGE_REASON_LABELS[item.reason as string]?.label || item.reason,
+      reason_label_hi: KITCHEN_WASTAGE_REASON_LABELS[item.reason as string]?.labelHi || item.reason,
       display_value: `₹${(item.estimated_value as number)?.toLocaleString("en-IN")}`,
       display_qty: `${item.quantity} ${item.unit}`,
     }
@@ -672,14 +636,8 @@ export const LIBRARY_SEAT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
   searchFields: ["seat_number", "row_number", "section.name"],
   joinFields: ["section", "current_member"],
   computedFields: (item) => {
-    const statusLabels: Record<string, string> = {
-      available: "Available",
-      occupied: "Occupied",
-      reserved: "Reserved",
-      maintenance: "Maintenance",
-    }
     return {
-      status_label: statusLabels[item.status as string] || (item.status as string),
+      status_label: LIBRARY_SEAT_STATUS_LABELS[item.status as string] || (item.status as string),
       has_power: item.has_power_outlet ? "Yes" : "No",
     }
   },
@@ -699,16 +657,10 @@ export const LIBRARY_MEMBER_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
   joinFields: ["person", "library", "assigned_seat"],
   computedFields: (item) => {
     const joinDate = item.join_date ? new Date(item.join_date as string) : new Date()
-    const statusLabels: Record<string, string> = {
-      active: "Active",
-      expired: "Expired",
-      suspended: "Suspended",
-      cancelled: "Cancelled",
-    }
     return {
       join_month: joinDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       join_year: joinDate.getFullYear().toString(),
-      status_label: statusLabels[item.status as string] || (item.status as string),
+      status_label: LIBRARY_MEMBER_STATUS_LABELS[item.status as string] || (item.status as string),
       display_name: (item.person as { name?: string })?.name || item.name,
       hours_display: `${item.hours_used || 0}h used / ${item.hours_balance || 0}h remaining`,
     }
@@ -729,16 +681,10 @@ export const LIBRARY_MEMBERSHIP_LIST_CONFIG: ListPageConfig<Record<string, unkno
     const startDate = item.start_date ? new Date(item.start_date as string) : new Date()
     const endDate = item.end_date ? new Date(item.end_date as string) : null
     const today = new Date()
-    const statusLabels: Record<string, string> = {
-      active: "Active",
-      expired: "Expired",
-      cancelled: "Cancelled",
-      upgraded: "Upgraded",
-    }
     return {
       start_month: startDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       start_year: startDate.getFullYear().toString(),
-      status_label: statusLabels[item.status as string] || (item.status as string),
+      status_label: LIBRARY_MEMBERSHIP_STATUS_LABELS[item.status as string] || (item.status as string),
       is_expired: endDate && today > endDate,
       hours_display: item.hours_included
         ? `${item.hours_used || 0}h / ${item.hours_included}h`
@@ -787,19 +733,9 @@ export const LIBRARY_LOCKER_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
   searchFields: ["locker_number", "section", "library.name"],
   joinFields: ["library", "current_member"],
   computedFields: (item) => {
-    const statusLabels: Record<string, string> = {
-      available: "Available",
-      occupied: "Occupied",
-      maintenance: "Maintenance",
-    }
-    const sizeLabels: Record<string, string> = {
-      small: "Small",
-      medium: "Medium",
-      large: "Large",
-    }
     return {
-      status_label: statusLabels[item.status as string] || (item.status as string),
-      size_label: sizeLabels[item.size as string] || (item.size as string),
+      status_label: LIBRARY_LOCKER_STATUS_LABELS[item.status as string] || (item.status as string),
+      size_label: LIBRARY_LOCKER_SIZE_LABELS[item.size as string] || (item.size as string),
       display_rent: item.monthly_rent ? `₹${(item.monthly_rent as number).toLocaleString("en-IN")}/mo` : "-",
       display_deposit: item.deposit_amount ? `₹${(item.deposit_amount as number).toLocaleString("en-IN")}` : "-",
     }
@@ -818,33 +754,12 @@ export const LIBRARY_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>
   joinFields: ["member"],
   computedFields: (item) => {
     const paymentDate = item.payment_date ? new Date(item.payment_date as string) : new Date()
-    const typeLabels: Record<string, string> = {
-      subscription: "Subscription",
-      locker_rent: "Locker Rent",
-      locker_deposit: "Locker Deposit",
-      fine: "Fine",
-      other: "Other",
-    }
-    const statusLabels: Record<string, string> = {
-      completed: "Completed",
-      pending: "Pending",
-      refunded: "Refunded",
-    }
-    const methodLabels: Record<string, string> = {
-      cash: "Cash",
-      upi: "UPI",
-      card: "Card",
-      bank_transfer: "Bank Transfer",
-      cheque: "Cheque",
-      paytm: "Paytm",
-      other: "Other",
-    }
     return {
       payment_month: paymentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       payment_year: paymentDate.getFullYear().toString(),
-      type_label: typeLabels[item.payment_type as string] || (item.payment_type as string),
-      status_label: statusLabels[item.status as string] || (item.status as string),
-      method_label: methodLabels[item.payment_method as string] || (item.payment_method as string),
+      type_label: LIBRARY_PAYMENT_TYPE_LABELS[item.payment_type as string] || (item.payment_type as string),
+      status_label: LIBRARY_PAYMENT_STATUS_LABELS[item.status as string] || (item.status as string),
+      method_label: LIBRARY_PAYMENT_METHOD_LABELS[item.payment_method as string] || (item.payment_method as string),
       display_amount: `₹${(item.amount as number)?.toLocaleString("en-IN")}`,
       display_name: (item.member as { person?: { name?: string }; name?: string })?.person?.name
         || (item.member as { name?: string })?.name || "Unknown",

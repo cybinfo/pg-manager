@@ -47,16 +47,13 @@ export const UPI_APP_CONFIG = {
 } as const
 
 /**
- * Bill payment status
+ * Bill payment status (for enhanced expense module vendor bill payments)
  */
 export type BillPaymentStatus = "pending" | "partial" | "paid" | "overdue"
 
-export const BILL_STATUS_CONFIG = {
-  pending: { label: "Pending", labelHi: "बाकी", variant: "warning" as const },
-  partial: { label: "Partial", labelHi: "आंशिक", variant: "info" as const },
-  paid: { label: "Paid", labelHi: "भुगतान", variant: "success" as const },
-  overdue: { label: "Overdue", labelHi: "विलंबित", variant: "error" as const },
-} as const
+// BILL_STATUS_CONFIG is the canonical source in bills.types.ts
+// For Hindi labels in bill payment list pages, use BILL_PAYMENT_STATUS_LABELS from @/lib/status-config
+export { BILL_STATUS_CONFIG } from "./bills.types"
 
 /**
  * TDS Sections for service payments

@@ -4,6 +4,8 @@
  * A reusable component for selecting an existing person or creating a new one.
  * Used by Tenant, Staff, and Visitor forms to ensure data is stored in People table.
  *
+ * Thin wrapper around EntitySelector with person-specific rendering and tag filtering.
+ *
  * Usage:
  * <PersonSelector
  *   ownerId={ownerId}
@@ -17,24 +19,17 @@
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar } from "@/components/ui/avatar"
 import {
-  Search,
   UserPlus,
   Phone,
   Mail,
-  Check,
   X,
   BadgeCheck,
   Ban,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
   ExternalLink,
   FileText,
   MapPin,
@@ -42,9 +37,18 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { Person, PersonSearchResult } from "@/types/people.types"
-import { showSuccess, showError, showInfo } from "@/lib/toast-helpers"
+import { showInfo } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { cn } from "@/lib/utils"
+import {
+  EntitySelector,
+  type EntitySelectorConfig,
+} from "@/components/ui/entity-selector"
+
+// ============================================================================
+// PROPS (preserved exactly as before)
+// ============================================================================
 
 interface PersonSelectorProps {
   ownerId: string
@@ -67,18 +71,187 @@ interface PersonSelectorProps {
   showDetailedInfo?: boolean
 }
 
-interface QuickCreateForm {
-  name: string
-  phone: string
-  email: string
-}
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 
-// Enhanced query to fetch more person details
 const PERSON_SELECT_FIELDS = `
   id, name, phone, email, photo_url, tags, is_verified, is_blocked, created_at,
   id_documents, company_name, occupation, emergency_contacts,
   permanent_address, permanent_city, current_address
 `
+
+// ============================================================================
+// HELPER RENDERERS (person-specific UI)
+// ============================================================================
+
+/** Render a person in the dropdown list */
+function PersonDropdownItem({ person }: { person: PersonSearchResult }) {
+  return (
+    <>
+      <Avatar name={person.name} src={person.photo_url} size="sm" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-medium truncate">{person.name}</span>
+          {person.is_verified && (
+            <BadgeCheck className="h-3 w-3 text-emerald-600" />
+          )}
+          {person.is_blocked && (
+            <Ban className="h-3 w-3 text-red-600" />
+          )}
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {person.phone && <span>{person.phone}</span>}
+          {person.phone && person.email && <span>·</span>}
+          {person.email && <span className="truncate">{person.email}</span>}
+        </div>
+      </div>
+    </>
+  )
+}
+
+/** Render the selected person card with optional detailed info */
+function PersonSelectedCard({
+  person,
+  onClear,
+  disabled,
+  error,
+  showEditLink,
+  showDetailedInfo,
+}: {
+  person: PersonSearchResult
+  onClear: () => void
+  disabled: boolean
+  error?: string
+  showEditLink: boolean
+  showDetailedInfo: boolean
+}) {
+  const hasIdDocuments = person.id_documents && person.id_documents.length > 0
+  const hasAddress = person.permanent_address || person.current_address
+
+  return (
+    <div className="space-y-2">
+      <Card className={cn(
+        "border-2",
+        error ? "border-red-300" : "border-primary/30 bg-primary/5"
+      )}>
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Avatar name={person.name} src={person.photo_url} size="md" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium truncate">{person.name}</span>
+                  {person.is_verified && (
+                    <BadgeCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                  )}
+                </div>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  {person.phone && (
+                    <span className="flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      {person.phone}
+                    </span>
+                  )}
+                  {person.email && (
+                    <span className="flex items-center gap-1 truncate">
+                      <Mail className="h-3 w-3" />
+                      {person.email}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              {showEditLink && (
+                <Link href={`/people/${person.id}/edit`} target="_blank">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-muted-foreground hover:text-primary"
+                  >
+                    Edit in People
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </Button>
+                </Link>
+              )}
+              {!disabled && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClear}
+                  className="flex-shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Detailed info section */}
+          {showDetailedInfo && (
+            <div className="mt-3 pt-3 border-t border-primary/10 space-y-2">
+              {hasIdDocuments && (
+                <div className="flex items-start gap-2 text-sm">
+                  <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <span className="text-muted-foreground">ID Documents: </span>
+                    {person.id_documents?.map((doc, i) => (
+                      <span key={i} className="inline-flex items-center gap-1">
+                        {i > 0 && ", "}
+                        {doc.type}
+                        {doc.verified && <BadgeCheck className="h-3 w-3 text-emerald-500" />}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(person.company_name || person.occupation) && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Briefcase className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    {person.occupation}
+                    {person.company_name && ` at ${person.company_name}`}
+                  </span>
+                </div>
+              )}
+
+              {hasAddress && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground truncate">
+                    {person.current_address || person.permanent_address}
+                    {person.permanent_city && `, ${person.permanent_city}`}
+                  </span>
+                </div>
+              )}
+
+              {!hasIdDocuments && (
+                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-2 rounded">
+                  <FileText className="h-4 w-4" />
+                  <span>No ID documents on file.</span>
+                  {showEditLink && (
+                    <Link href={`/people/${person.id}/edit`} target="_blank" className="underline">
+                      Add in People
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {error && <p className="text-sm text-red-500">{error}</p>}
+    </div>
+  )
+}
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
 
 export function PersonSelector({
   ownerId,
@@ -96,494 +269,150 @@ export function PersonSelector({
   showEditLink = true,
   showDetailedInfo = false,
 }: PersonSelectorProps) {
-  const [search, setSearch] = useState(initialSearch)
-  const [results, setResults] = useState<PersonSearchResult[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null)
-  const [isOpen, setIsOpen] = useState(false)
-  const [showQuickCreate, setShowQuickCreate] = useState(false)
-  const [quickCreateForm, setQuickCreateForm] = useState<QuickCreateForm>({
-    name: "",
-    phone: "",
-    email: "",
-  })
-  const [creating, setCreating] = useState(false)
+  // Build the config, memoized on stable deps
+  const config: EntitySelectorConfig<PersonSearchResult> = useMemo(() => ({
+    table: "people",
+    select: PERSON_SELECT_FIELDS,
+    searchColumns: ["name", "phone", "email"],
+    orderBy: "name",
+    limit: 10,
+    minSearchLength: 2,
+    scopeColumn: "owner_id",
+    staticFilters: [
+      { column: "is_active", op: "eq" as const, value: true },
+    ],
+    entityLabel: "Person",
+    quickCreateIcon: <><UserPlus className="mr-2 h-4 w-4" /></>,
+    searchHint: "Search and select a person, or add a new one",
 
-  // Fetch selected person details if ID provided
-  useEffect(() => {
-    if (selectedPersonId && !selectedPerson) {
-      const fetchPerson = async () => {
-        const supabase = createClient()
-        const { data } = await supabase
-          .from("people")
-          .select(PERSON_SELECT_FIELDS)
-          .eq("id", selectedPersonId)
-          .single()
+    // Render dropdown item
+    renderItem: (person: PersonSearchResult) => <PersonDropdownItem person={person} />,
 
-        if (data) {
-          setSelectedPerson(data)
-        }
+    // Render selected card
+    renderSelected: (
+      person: PersonSearchResult,
+      opts: { onClear: () => void; disabled: boolean; error?: string }
+    ) => (
+      <PersonSelectedCard
+        person={person}
+        onClear={opts.onClear}
+        disabled={opts.disabled}
+        error={opts.error}
+        showEditLink={showEditLink}
+        showDetailedInfo={showDetailedInfo}
+      />
+    ),
+
+    getDisplayName: (person: PersonSearchResult) => person.name,
+
+    // Quick create fields
+    quickCreateFields: [
+      { key: "name", placeholder: "Full Name *", required: true },
+      { key: "phone", placeholder: "Phone Number" },
+      { key: "email", placeholder: "Email", type: "email" },
+    ],
+    quickCreateDefaults: { name: "", phone: "", email: "" },
+
+    // Pre-fill name from search if it looks like a name (not email or number)
+    prefillNameFromSearch: (search: string) =>
+      !!search && !search.includes("@") && !/^\d+$/.test(search),
+
+    // Quick create handler with duplicate detection
+    onQuickCreate: async (formData, supabase, userId, scopeId) => {
+      if (!formData.phone && !formData.email) {
+        showError("Phone or email is required")
+        return null
       }
-      fetchPerson()
-    }
-  }, [selectedPersonId, selectedPerson])
 
-  // Search for people
-  const searchPeople = useCallback(async (query: string) => {
-    if (!query || query.length < 2) {
-      setResults([])
-      return
-    }
+      // Check for existing person with same phone/email
+      let existingQuery = supabase
+        .from("people")
+        .select(PERSON_SELECT_FIELDS)
+        .eq("owner_id", scopeId)
 
-    setLoading(true)
-    const supabase = createClient()
+      if (formData.phone) {
+        existingQuery = existingQuery.eq("phone", formData.phone)
+      } else if (formData.email) {
+        existingQuery = existingQuery.eq("email", formData.email)
+      }
 
-    let queryBuilder = supabase
-      .from("people")
-      .select(PERSON_SELECT_FIELDS)
-      .eq("owner_id", ownerId)
-      .eq("is_active", true)
-      .or(`name.ilike.%${query}%,phone.ilike.%${query}%,email.ilike.%${query}%`)
-      .order("name")
-      .limit(10)
+      const { data: existing } = await existingQuery.maybeSingle()
 
-    // Apply tag filters
-    if (filterTags && filterTags.length > 0) {
-      queryBuilder = queryBuilder.overlaps("tags", filterTags)
-    }
+      if (existing) {
+        showInfo("Person already exists with this phone/email")
+        // Return the existing person - EntitySelector will select it
+        return existing as PersonSearchResult
+      }
 
-    const { data, error: searchError } = await queryBuilder
+      // Create new person
+      const { data: newPerson, error: createError } = await supabase
+        .from("people")
+        .insert(
+          withCreatedBy({
+            owner_id: scopeId,
+            name: formData.name.trim(),
+            phone: formData.phone || null,
+            email: formData.email || null,
+            tags: [],
+            source: "manual",
+          }, userId)
+        )
+        .select(PERSON_SELECT_FIELDS)
+        .single()
 
-    if (searchError) {
-      console.error("Search error:", searchError)
-      setResults([])
-    } else {
-      // Client-side filter for excluded tags
-      let filtered = data || []
-      if (excludeTags && excludeTags.length > 0) {
-        filtered = filtered.filter(
-          (p: PersonSearchResult) => !p.tags?.some((t: string) => excludeTags.includes(t))
+      if (createError) {
+        console.error("Create error:", createError)
+        showError("Failed to create person")
+        return null
+      }
+
+      onCreate?.(newPerson as Person)
+      return newPerson as PersonSearchResult
+    },
+
+    // Person-specific: tag filtering
+    applyExtraFilters: (query, extra) => {
+      if (extra.filterTags && extra.filterTags.length > 0) {
+        return query.overlaps("tags", extra.filterTags)
+      }
+      return query
+    },
+
+    // Person-specific: exclude tags client-side
+    clientFilter: (items, extra) => {
+      if (extra.excludeTags && extra.excludeTags.length > 0) {
+        return items.filter(
+          (p: PersonSearchResult) => !p.tags?.some((t: string) => extra.excludeTags.includes(t))
         )
       }
-      setResults(filtered)
-    }
+      return items
+    },
 
-    setLoading(false)
-  }, [ownerId, filterTags, excludeTags])
+    noResultsMessage: (search: string) => `No people found matching "${search}"`,
+    emptyMessage: "Type at least 2 characters to search",
+  }), [showEditLink, showDetailedInfo, onCreate])
 
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isOpen) {
-        searchPeople(search)
-      }
-    }, 300)
-
-    return () => clearTimeout(timer)
-  }, [search, isOpen, searchPeople])
-
-  // Handle person selection
-  const handleSelect = (person: PersonSearchResult) => {
-    setSelectedPerson(person)
-    onSelect(person)
-    setIsOpen(false)
-    setSearch("")
-  }
-
-  // Handle quick create
-  const handleQuickCreate = async () => {
-    if (!quickCreateForm.name.trim()) {
-      showError("Name is required")
-      return
-    }
-
-    if (!quickCreateForm.phone && !quickCreateForm.email) {
-      showError("Phone or email is required")
-      return
-    }
-
-    setCreating(true)
-    const supabase = createClient()
-
-    // Check for existing person with same phone/email
-    let existingQuery = supabase
-      .from("people")
-      .select(PERSON_SELECT_FIELDS)
-      .eq("owner_id", ownerId)
-
-    if (quickCreateForm.phone) {
-      existingQuery = existingQuery.eq("phone", quickCreateForm.phone)
-    } else if (quickCreateForm.email) {
-      existingQuery = existingQuery.eq("email", quickCreateForm.email)
-    }
-
-    const { data: existing } = await existingQuery.maybeSingle()
-
-    if (existing) {
-      showInfo("Person already exists with this phone/email")
-      handleSelect(existing)
-      setCreating(false)
-      setShowQuickCreate(false)
-      return
-    }
-
-    // Create new person
-    // Note: ownerId is the user creating this record
-    const { data: newPerson, error: createError } = await supabase
-      .from("people")
-      .insert(
-        withCreatedBy({
-          owner_id: ownerId,
-          name: quickCreateForm.name.trim(),
-          phone: quickCreateForm.phone || null,
-          email: quickCreateForm.email || null,
-          tags: [],
-          source: "manual",
-        }, ownerId)
-      )
-      .select(PERSON_SELECT_FIELDS)
-      .single()
-
-    if (createError) {
-      console.error("Create error:", createError)
-      showError("Failed to create person")
-      setCreating(false)
-      return
-    }
-
-    showSuccess("Person created successfully")
-    handleSelect(newPerson)
-    onCreate?.(newPerson as Person)
-    setCreating(false)
-    setShowQuickCreate(false)
-    setQuickCreateForm({ name: "", phone: "", email: "" })
-  }
-
-  // Clear selection
-  const handleClear = () => {
-    setSelectedPerson(null)
-    setSearch("")
-    onSelect(null as unknown as PersonSearchResult)
-  }
-
-  // Helper to check if person has ID documents
-  const hasIdDocuments = selectedPerson?.id_documents && selectedPerson.id_documents.length > 0
-  const hasAddress = selectedPerson?.permanent_address || selectedPerson?.current_address
-
-  // If person is selected, show selection card
-  if (selectedPerson) {
-    return (
-      <div className="space-y-2">
-        <Card className={cn(
-          "border-2",
-          error ? "border-red-300" : "border-primary/30 bg-primary/5"
-        )}>
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <Avatar name={selectedPerson.name} src={selectedPerson.photo_url} size="md" />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{selectedPerson.name}</span>
-                    {selectedPerson.is_verified && (
-                      <BadgeCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    {selectedPerson.phone && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" />
-                        {selectedPerson.phone}
-                      </span>
-                    )}
-                    {selectedPerson.email && (
-                      <span className="flex items-center gap-1 truncate">
-                        <Mail className="h-3 w-3" />
-                        {selectedPerson.email}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                {showEditLink && (
-                  <Link href={`/people/${selectedPerson.id}/edit`} target="_blank">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs text-muted-foreground hover:text-primary"
-                    >
-                      Edit in People
-                      <ExternalLink className="h-3 w-3 ml-1" />
-                    </Button>
-                  </Link>
-                )}
-                {!disabled && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleClear}
-                    className="flex-shrink-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Detailed info section (shown when showDetailedInfo is true) */}
-            {showDetailedInfo && (
-              <div className="mt-3 pt-3 border-t border-primary/10 space-y-2">
-                {/* ID Documents */}
-                {hasIdDocuments && (
-                  <div className="flex items-start gap-2 text-sm">
-                    <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <span className="text-muted-foreground">ID Documents: </span>
-                      {selectedPerson.id_documents?.map((doc, i) => (
-                        <span key={i} className="inline-flex items-center gap-1">
-                          {i > 0 && ", "}
-                          {doc.type}
-                          {doc.verified && <BadgeCheck className="h-3 w-3 text-emerald-500" />}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Company/Occupation */}
-                {(selectedPerson.company_name || selectedPerson.occupation) && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      {selectedPerson.occupation}
-                      {selectedPerson.company_name && ` at ${selectedPerson.company_name}`}
-                    </span>
-                  </div>
-                )}
-
-                {/* Address */}
-                {hasAddress && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground truncate">
-                      {selectedPerson.current_address || selectedPerson.permanent_address}
-                      {selectedPerson.permanent_city && `, ${selectedPerson.permanent_city}`}
-                    </span>
-                  </div>
-                )}
-
-                {/* Missing info warning */}
-                {!hasIdDocuments && (
-                  <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-2 rounded">
-                    <FileText className="h-4 w-4" />
-                    <span>No ID documents on file.</span>
-                    {showEditLink && (
-                      <Link href={`/people/${selectedPerson.id}/edit`} target="_blank" className="underline">
-                        Add in People
-                      </Link>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        {error && <p className="text-sm text-red-500">{error}</p>}
-      </div>
-    )
-  }
+  const extraFilterData = useMemo(
+    () => ({ filterTags, excludeTags }),
+    [filterTags, excludeTags]
+  )
 
   return (
-    <div className="space-y-2">
-      <div className="relative">
-        {/* Search Input */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={placeholder}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onFocus={() => setIsOpen(true)}
-            disabled={disabled}
-            className={cn("pl-10 pr-10", error && "border-red-300")}
-          />
-          {loading && (
-            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-          )}
-          {!loading && isOpen && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-          )}
-        </div>
-
-        {/* Dropdown Results */}
-        {isOpen && (
-          <Card className="absolute z-50 w-full mt-1 shadow-lg max-h-64 overflow-hidden">
-            <CardContent className="p-0">
-              {results.length > 0 ? (
-                <div className="max-h-56 overflow-y-auto">
-                  {results.map((person) => (
-                    <button
-                      key={person.id}
-                      type="button"
-                      className="w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors text-left border-b last:border-b-0"
-                      onClick={() => handleSelect(person)}
-                    >
-                      <Avatar name={person.name} src={person.photo_url} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium truncate">{person.name}</span>
-                          {person.is_verified && (
-                            <BadgeCheck className="h-3 w-3 text-emerald-600" />
-                          )}
-                          {person.is_blocked && (
-                            <Ban className="h-3 w-3 text-red-600" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {person.phone && <span>{person.phone}</span>}
-                          {person.phone && person.email && <span>·</span>}
-                          {person.email && <span className="truncate">{person.email}</span>}
-                        </div>
-                      </div>
-                      <Check className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100" />
-                    </button>
-                  ))}
-                </div>
-              ) : search.length >= 2 && !loading ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No people found matching "{search}"
-                </div>
-              ) : (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  Type at least 2 characters to search
-                </div>
-              )}
-
-              {/* Quick Create Option */}
-              {allowQuickCreate && (
-                <div className="border-t p-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => {
-                      setShowQuickCreate(true)
-                      setIsOpen(false)
-                      // Pre-fill name if search looks like a name
-                      if (search && !search.includes("@") && !/^\d+$/.test(search)) {
-                        setQuickCreateForm((prev) => ({ ...prev, name: search }))
-                      }
-                    }}
-                  >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Add New Person
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Quick Create Form */}
-      {showQuickCreate && (
-        <Card className="border-primary/30">
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium">Add New Person</h4>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setShowQuickCreate(false)
-                  setQuickCreateForm({ name: "", phone: "", email: "" })
-                }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              <Input
-                placeholder="Full Name *"
-                value={quickCreateForm.name}
-                onChange={(e) => setQuickCreateForm((prev) => ({ ...prev, name: e.target.value }))}
-              />
-              <Input
-                placeholder="Phone Number"
-                value={quickCreateForm.phone}
-                onChange={(e) => setQuickCreateForm((prev) => ({ ...prev, phone: e.target.value }))}
-              />
-              <Input
-                type="email"
-                placeholder="Email"
-                value={quickCreateForm.email}
-                onChange={(e) => setQuickCreateForm((prev) => ({ ...prev, email: e.target.value }))}
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  setShowQuickCreate(false)
-                  setQuickCreateForm({ name: "", phone: "", email: "" })
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                className="flex-1"
-                onClick={handleQuickCreate}
-                disabled={creating}
-              >
-                {creating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Create & Select
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      {required && !selectedPerson && (
-        <p className="text-xs text-muted-foreground">
-          Search and select a person, or add a new one
-        </p>
-      )}
-
-      {/* Click outside handler */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-    </div>
+    <EntitySelector<PersonSearchResult>
+      config={config}
+      scopeId={ownerId}
+      userId={ownerId}
+      selectedId={selectedPersonId}
+      onSelect={(person) => onSelect(person as PersonSearchResult)}
+      onCreate={onCreate as ((item: PersonSearchResult) => void) | undefined}
+      allowQuickCreate={allowQuickCreate}
+      disabled={disabled}
+      error={error}
+      required={required}
+      placeholder={placeholder}
+      initialSearch={initialSearch}
+      extraFilterData={extraFilterData}
+    />
   )
 }
 

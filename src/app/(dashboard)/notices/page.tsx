@@ -21,8 +21,10 @@ import {
 } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { NOTICE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { NOTICE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatTimeAgo } from "@/lib/format"
@@ -207,12 +209,7 @@ const columns: Column<Notice>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
+  PROPERTY_FILTER,
   {
     id: "type",
     label: "Type",
@@ -225,16 +222,7 @@ const filters: FilterConfig[] = [
       { value: "emergency", label: "Emergency" },
     ],
   },
-  {
-    id: "is_active",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
+  ACTIVE_STATUS_FILTER,
 ]
 
 // ============================================
@@ -306,27 +294,17 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Notice>[] = [
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Notices", icon: Bell }),
+  createCountMetric("active", "Active", Eye,
+    (item) => Boolean(item.is_active) && !item.is_expired
+  ),
+  createCountMetric("emergency", "Emergency", AlertTriangle,
+    (item) => item.type === "emergency" && Boolean(item.is_active),
+    { highlight: true }
+  ),
   {
-    id: "total",
-    label: "Total Notices",
-    icon: Bell,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: Eye,
-    compute: (items) => items.filter((n) => n.is_active && !n.is_expired).length,
-  },
-  {
-    id: "emergency",
-    label: "Emergency",
-    icon: AlertTriangle,
-    compute: (items) => items.filter((n) => n.type === "emergency" && n.is_active).length,
-    highlight: (value) => (value as number) > 0,
-  },
-  {
+    // Custom: dynamic date comparison with "3 days from now" - page totals only
     id: "expiring",
     label: "Expiring Soon",
     icon: Clock,
@@ -335,7 +313,7 @@ const metrics: MetricConfig<Notice>[] = [
       const now = new Date().getTime()
       return items.filter((n) => {
         if (!n.expires_at || !n.is_active) return false
-        const expiresAt = new Date(n.expires_at).getTime()
+        const expiresAt = new Date(n.expires_at as string).getTime()
         return expiresAt > now && expiresAt - now < threeDays
       }).length
     },

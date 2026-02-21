@@ -7,10 +7,13 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { ListPageConfig, MetricConfig } from "@/lib/hooks/useListPage"
+import { ListPageConfig } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { ListPageTemplate } from "@/components/shared"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { createStatusFilter } from "@/lib/filter-presets"
 import { Users, Clock, Check, Phone } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
@@ -31,62 +34,22 @@ const LIBRARY_WAITLIST_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
 }
 
 // Metric configurations
-const metrics: MetricConfig<LibraryWaitlist>[] = [
-  {
-    id: "total",
-    label: "Total",
-    icon: Users,
-    compute: (_items, total) => total,
-  },
-  {
-    id: "waiting",
-    label: "Waiting",
-    icon: Clock,
-    compute: (items) => items.filter((item) => item.status === "waiting").length,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "waiting",
-    },
-  },
-  {
-    id: "contacted",
-    label: "Contacted",
-    icon: Phone,
-    compute: (items) => items.filter((item) => item.status === "contacted").length,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "contacted",
-    },
-  },
-  {
-    id: "converted",
-    label: "Converted",
-    icon: Check,
-    compute: (items) => items.filter((item) => item.status === "converted").length,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "converted",
-    },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ icon: Users }),
+  createStatusMetric("waiting", "Waiting", Clock),
+  createStatusMetric("contacted", "Contacted", Phone),
+  createStatusMetric("converted", "Converted", Check),
 ]
 
 // Filter configurations
 const filters: FilterConfig[] = [
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    options: [
-      { value: "all", label: "All Status" },
-      { value: "waiting", label: "Waiting" },
-      { value: "contacted", label: "Contacted" },
-      { value: "converted", label: "Converted" },
-      { value: "cancelled", label: "Cancelled" },
-    ],
-  },
+  createStatusFilter([
+    { value: "all", label: "All Status" },
+    { value: "waiting", label: "Waiting" },
+    { value: "contacted", label: "Contacted" },
+    { value: "converted", label: "Converted" },
+    { value: "cancelled", label: "Cancelled" },
+  ]),
   {
     id: "preferred_slot",
     label: "Slot",
@@ -151,32 +114,8 @@ const columns: Column<LibraryWaitlist>[] = [
       ) : "—"
     ),
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (item) => {
-      const config = LIBRARY_WAITLIST_STATUS_CONFIG[item.status]
-      return (
-        <StatusDot
-          status={config?.variant || "muted"}
-          label={config?.label || item.status}
-        />
-      )
-    },
-  },
-  {
-    key: "created_at",
-    header: "Joined",
-    width: "date",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (item) => formatDate(item.created_at),
-  },
+  statusColumn(LIBRARY_WAITLIST_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
+  dateColumn("created_at", "Joined"),
 ]
 
 export default function LibraryWaitlistPage() {

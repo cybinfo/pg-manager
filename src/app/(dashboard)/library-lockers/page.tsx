@@ -8,9 +8,12 @@
 
 import { Lock, Library, Users } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { LIBRARY_LOCKER_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { LIBRARY_LOCKER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { LIBRARY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { LIBRARY_LOCKER_STATUS_CONFIG, LIBRARY_LOCKER_SIZE_CONFIG } from "@/types/library.types"
@@ -104,23 +107,7 @@ const columns: Column<LockerItem>[] = [
       <Currency amount={locker.monthly_rent} />
     ) : "—",
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (locker) => {
-      const config = LIBRARY_LOCKER_STATUS_CONFIG[locker.status as keyof typeof LIBRARY_LOCKER_STATUS_CONFIG]
-      return (
-        <StatusDot
-          status={config?.variant || "muted"}
-          label={config?.label || locker.status}
-        />
-      )
-    },
-  },
+  statusColumn(LIBRARY_LOCKER_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
   {
     key: "current_member",
     header: "Assigned To",
@@ -159,36 +146,9 @@ const columns: Column<LockerItem>[] = [
       <Currency amount={locker.deposit_amount} />
     ) : "—",
   },
-  {
-    key: "assigned_from",
-    header: "Assigned From",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (locker) => locker.assigned_from ? formatDate(locker.assigned_from) : "—",
-  },
-  {
-    key: "assigned_until",
-    header: "Assigned Until",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (locker) => locker.assigned_until ? formatDate(locker.assigned_until) : "—",
-  },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (locker) => formatDate(locker.created_at),
-  },
+  dateColumn("assigned_from", "Assigned From", { defaultVisible: false }),
+  dateColumn("assigned_until", "Assigned Until", { defaultVisible: false }),
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -196,23 +156,12 @@ const columns: Column<LockerItem>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "library_id",
-    label: "Library",
-    type: "select",
-    placeholder: "All Libraries",
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "available", label: "Available" },
-      { value: "occupied", label: "Occupied" },
-      { value: "maintenance", label: "Maintenance" },
-    ],
-  },
+  LIBRARY_FILTER,
+  createStatusFilter([
+    { value: "available", label: "Available" },
+    { value: "occupied", label: "Occupied" },
+    { value: "maintenance", label: "Maintenance" },
+  ]),
   {
     id: "size",
     label: "Size",
@@ -241,31 +190,11 @@ const groupByOptions: GroupByOption[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<LockerItem>[] = [
-  {
-    id: "total",
-    label: "Total Lockers",
-    icon: Lock,
-    compute: (_items, total) => total,
-  },
-  {
-    id: "available",
-    label: "Available",
-    icon: Lock,
-    compute: (items) => items.filter((l) => l.status === "available").length,
-  },
-  {
-    id: "occupied",
-    label: "Occupied",
-    icon: Users,
-    compute: (items) => items.filter((l) => l.status === "occupied").length,
-  },
-  {
-    id: "maintenance",
-    label: "Maintenance",
-    icon: Lock,
-    compute: (items) => items.filter((l) => l.status === "maintenance").length,
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Lockers", icon: Lock }),
+  createStatusMetric("available", "Available", Lock),
+  createStatusMetric("occupied", "Occupied", Users),
+  createStatusMetric("maintenance", "Maintenance", Lock),
 ]
 
 // ============================================

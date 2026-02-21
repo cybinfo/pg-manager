@@ -10,8 +10,10 @@
 import { Inbox, Clock, CheckCircle, UserCheck, Phone, XCircle } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { INQUIRY_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { INQUIRY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDate, formatPhone } from "@/lib/format"
@@ -176,18 +178,12 @@ const columns: Column<Inquiry>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "new", label: "New" },
-      { value: "contacted", label: "Contacted" },
-      { value: "converted", label: "Converted" },
-      { value: "closed", label: "Closed" },
-    ],
-  },
+  createStatusFilter([
+    { value: "new", label: "New" },
+    { value: "contacted", label: "Contacted" },
+    { value: "converted", label: "Converted" },
+    { value: "closed", label: "Closed" },
+  ]),
   {
     id: "source",
     label: "Source",
@@ -199,17 +195,8 @@ const filters: FilterConfig[] = [
       { value: "phone", label: "Phone" },
     ],
   },
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "created_at",
-    label: "Received Date",
-    type: "date-range",
-  },
+  PROPERTY_FILTER,
+  createDateRangeFilter("created_at", "Received Date"),
 ]
 
 // ============================================
@@ -270,47 +257,11 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Inquiry>[] = [
-  {
-    id: "total",
-    label: "Total Inquiries",
-    icon: Inbox,
-    compute: (_items, total) => total,
-  },
-  {
-    id: "new",
-    label: "New",
-    icon: Clock,
-    compute: (items) => items.filter((i) => i.status === "new").length,
-    highlight: (value) => (value as number) > 0,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "new",
-    },
-  },
-  {
-    id: "contacted",
-    label: "Contacted",
-    icon: Phone,
-    compute: (items) => items.filter((i) => i.status === "contacted").length,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "contacted",
-    },
-  },
-  {
-    id: "converted",
-    label: "Converted",
-    icon: UserCheck,
-    compute: (items) => items.filter((i) => i.status === "converted").length,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "converted",
-    },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Inquiries", icon: Inbox }),
+  createStatusMetric("new", "New", Clock, { highlight: true }),
+  createStatusMetric("contacted", "Contacted", Phone),
+  createStatusMetric("converted", "Converted", UserCheck),
 ]
 
 // ============================================

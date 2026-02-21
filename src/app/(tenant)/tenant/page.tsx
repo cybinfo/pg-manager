@@ -15,11 +15,11 @@ import {
   Bell,
   AlertCircle,
   CheckCircle,
-  Clock,
   ArrowRight,
   User
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PortalStatsGrid, QuickActionLink, PaymentListItem } from "@/components/portal"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
 
@@ -184,6 +184,11 @@ export default function TenantHomePage() {
     )
   }
 
+  const features: TenantFeatures = {
+    ...defaultTenantFeatures,
+    ...(data.tenant?.property?.tenant_features || {}),
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
@@ -193,63 +198,38 @@ export default function TenantHomePage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Home className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Room</p>
-                <p className="font-semibold">{data.tenant.room?.room_number || "-"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Monthly Rent</p>
-                <p className="font-semibold">{formatCurrency(data.tenant.monthly_rent)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-sky-50 rounded-lg">
-                <Calendar className="h-5 w-5 text-sky-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Days Stayed</p>
-                <p className="font-semibold">{getDaysStayed()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-50 rounded-lg">
-                <CreditCard className="h-5 w-5 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Paid This Year</p>
-                <p className="font-semibold">{formatCurrency(data.totalPaid)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <PortalStatsGrid
+        stats={[
+          {
+            icon: Home,
+            label: "Room",
+            value: data.tenant.room?.room_number || "-",
+            bgColor: "bg-primary/10",
+            iconColor: "text-primary",
+          },
+          {
+            icon: IndianRupee,
+            label: "Monthly Rent",
+            value: formatCurrency(data.tenant.monthly_rent),
+            bgColor: "bg-emerald-50",
+            iconColor: "text-emerald-600",
+          },
+          {
+            icon: Calendar,
+            label: "Days Stayed",
+            value: getDaysStayed(),
+            bgColor: "bg-sky-50",
+            iconColor: "text-sky-600",
+          },
+          {
+            icon: CreditCard,
+            label: "Paid This Year",
+            value: formatCurrency(data.totalPaid),
+            bgColor: "bg-violet-50",
+            iconColor: "text-violet-600",
+          },
+        ]}
+      />
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Property Info */}
@@ -315,153 +295,97 @@ export default function TenantHomePage() {
             <CardTitle className="text-lg">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {/* Get tenant features from property, with defaults */}
-            {(() => {
-              const features: TenantFeatures = {
-                ...defaultTenantFeatures,
-                ...(data.tenant?.property?.tenant_features || {}),
-              }
+            {features.view_payments && (
+              <QuickActionLink
+                href="/tenant/payments"
+                icon={CreditCard}
+                title="View Payments"
+                description="Payment history & receipts"
+                bgColor="bg-emerald-50"
+                iconColor="text-emerald-600"
+              />
+            )}
 
-              return (
-                <>
-                  {features.view_payments && (
-                    <Link href="/tenant/payments" className="block">
-                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-emerald-50 rounded-lg">
-                            <CreditCard className="h-4 w-4 text-emerald-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium">View Payments</p>
-                            <p className="text-xs text-muted-foreground">Payment history & receipts</p>
-                          </div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </Link>
-                  )}
+            {features.submit_complaints && (
+              <QuickActionLink
+                href="/tenant/complaints"
+                icon={MessageSquare}
+                title="Submit Complaint"
+                description={
+                  data.openComplaints > 0
+                    ? `${data.openComplaints} open complaint${data.openComplaints > 1 ? "s" : ""}`
+                    : "Report an issue"
+                }
+                bgColor="bg-amber-50"
+                iconColor="text-amber-600"
+              />
+            )}
 
-                  {features.submit_complaints && (
-                    <Link href="/tenant/complaints" className="block">
-                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-amber-50 rounded-lg">
-                            <MessageSquare className="h-4 w-4 text-amber-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium">Submit Complaint</p>
-                            <p className="text-xs text-muted-foreground">
-                              {data.openComplaints > 0
-                                ? `${data.openComplaints} open complaint${data.openComplaints > 1 ? "s" : ""}`
-                                : "Report an issue"}
-                            </p>
-                          </div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </Link>
-                  )}
+            {features.view_notices && (
+              <QuickActionLink
+                href="/tenant/notices"
+                icon={Bell}
+                title="View Notices"
+                description={
+                  data.unreadNotices > 0
+                    ? `${data.unreadNotices} active notice${data.unreadNotices > 1 ? "s" : ""}`
+                    : "No new notices"
+                }
+                bgColor="bg-sky-50"
+                iconColor="text-sky-600"
+              />
+            )}
 
-                  {features.view_notices && (
-                    <Link href="/tenant/notices" className="block">
-                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-sky-50 rounded-lg">
-                            <Bell className="h-4 w-4 text-sky-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium">View Notices</p>
-                            <p className="text-xs text-muted-foreground">
-                              {data.unreadNotices > 0
-                                ? `${data.unreadNotices} active notice${data.unreadNotices > 1 ? "s" : ""}`
-                                : "No new notices"}
-                            </p>
-                          </div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </Link>
-                  )}
-
-                  {features.update_profile && (
-                    <Link href="/tenant/profile" className="block">
-                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-violet-50 rounded-lg">
-                            <User className="h-4 w-4 text-violet-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium">My Profile</p>
-                            <p className="text-xs text-muted-foreground">View & update your details</p>
-                          </div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </Link>
-                  )}
-                </>
-              )
-            })()}
+            {features.update_profile && (
+              <QuickActionLink
+                href="/tenant/profile"
+                icon={User}
+                title="My Profile"
+                description="View & update your details"
+                bgColor="bg-violet-50"
+                iconColor="text-violet-600"
+              />
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Recent Payments - Show only if view_payments is enabled */}
-      {(() => {
-        const features: TenantFeatures = {
-          ...defaultTenantFeatures,
-          ...(data.tenant?.property?.tenant_features || {}),
-        }
-
-        if (!features.view_payments) return null
-
-        return (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Recent Payments</CardTitle>
-                <CardDescription>Your last 3 payments</CardDescription>
+      {features.view_payments && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Recent Payments</CardTitle>
+              <CardDescription>Your last 3 payments</CardDescription>
+            </div>
+            <Link href="/tenant/payments">
+              <Button variant="ghost" size="sm">
+                View All
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {data.recentPayments.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">No payments recorded yet</p>
+            ) : (
+              <div className="space-y-3">
+                {data.recentPayments.map((payment) => (
+                  <PaymentListItem
+                    key={payment.id}
+                    amount={payment.amount}
+                    date={payment.payment_date}
+                    method={payment.payment_method}
+                    label={payment.for_period || formatDate(payment.payment_date)}
+                    statusBgColor="bg-teal-50"
+                    statusIconColor="text-teal-600"
+                  />
+                ))}
               </div>
-              <Link href="/tenant/payments">
-                <Button variant="ghost" size="sm">
-                  View All
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              {data.recentPayments.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No payments recorded yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {data.recentPayments.map((payment) => (
-                    <div
-                      key={payment.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-teal-50 rounded-full">
-                          <CheckCircle className="h-4 w-4 text-teal-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{formatCurrency(payment.amount)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {payment.for_period || formatDate(payment.payment_date)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm capitalize">{payment.payment_method}</p>
-                        <p className="text-xs text-muted-foreground">{formatDate(payment.payment_date)}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )
-      })()}
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

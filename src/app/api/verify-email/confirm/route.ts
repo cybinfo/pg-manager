@@ -1,52 +1,28 @@
 import { NextRequest } from "next/server"
 import { z } from "zod"
-import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 import { authLogger, extractErrorMeta } from "@/lib/logger"
-import { validateCsrf } from "@/lib/csrf"
 import {
   apiSuccess,
-  apiError,
   badRequest,
   internalError,
-  csrfError,
-  ErrorCodes,
 } from "@/lib/api-response"
-import { validateBody } from "@/lib/validation"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { getAdminSupabaseClient } from "@/lib/api-middleware"
+import { withApiMiddleware, getAdminSupabaseClient } from "@/lib/api-middleware"
 
 const ConfirmVerificationSchema = z.object({
   token: z.string().min(1, "Token is required"),
 })
 
+type ConfirmVerificationBody = z.infer<typeof ConfirmVerificationSchema>
+
 export async function POST(request: NextRequest) {
-  try {
-    // SECURITY: Rate limiting - 5 requests per minute for auth operations
-    const clientId = getClientIdentifier(request)
-    const rateLimitResult = await authLimiter.check(clientId)
-
-    if (!rateLimitResult.success) {
-      return apiError(
-        ErrorCodes.TOO_MANY_REQUESTS,
-        "Too many verification attempts. Please try again later.",
-        {
-          status: 429,
-          details: { retryAfter: rateLimitResult.retryAfter },
-          headers: rateLimitHeaders(rateLimitResult),
-        }
-      )
-    }
-
-    // SECURITY: CSRF validation for state-changing requests
-    const csrfResult = validateCsrf(request)
-    if (!csrfResult.valid) {
-      return csrfError(csrfResult.error || "CSRF validation failed")
-    }
-
-    const body = await request.json()
-    const validation = validateBody(ConfirmVerificationSchema, body)
-    if (!validation.success) return validation.response
-    const { token } = validation.data
+  return withApiMiddleware(request, {
+    requireAuth: false,
+    requireCsrf: true,
+    limiter: "auth",
+    bodySchema: ConfirmVerificationSchema,
+  }, async (ctx) => {
+    const { token } = ctx.body as ConfirmVerificationBody
 
     // Service role client for database operations (validated env vars)
     const supabaseAdmin = getAdminSupabaseClient()
@@ -73,8 +49,5 @@ export async function POST(request: NextRequest) {
       { email: result.value },
       { message: result.message }
     )
-  } catch (error) {
-    authLogger.error("Error in verify email", extractErrorMeta(error))
-    return internalError("Internal server error")
-  }
+  })
 }

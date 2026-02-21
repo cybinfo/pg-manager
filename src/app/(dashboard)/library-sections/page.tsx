@@ -9,8 +9,10 @@
 import { Grid3X3, Armchair, Library } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { LIBRARY_SECTION_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { LIBRARY_SECTION_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { LIBRARY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 
@@ -170,12 +172,7 @@ const columns: Column<LibrarySectionItem>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "library_id",
-    label: "Library",
-    type: "select",
-    placeholder: "All Libraries",
-  },
+  LIBRARY_FILTER,
   {
     id: "is_ac",
     label: "Type",
@@ -186,16 +183,7 @@ const filters: FilterConfig[] = [
       { value: "false", label: "Non-AC" },
     ],
   },
-  {
-    id: "is_active",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
+  ACTIVE_STATUS_FILTER,
 ]
 
 // ============================================
@@ -213,31 +201,21 @@ const groupByOptions: GroupByOption[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<LibrarySectionItem>[] = [
-  {
-    id: "total",
-    label: "Sections",
-    icon: Grid3X3,
-    compute: (_items, total) => total,
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Sections", icon: Grid3X3 }),
   {
     id: "total_seats",
     label: "Total Seats",
     icon: Armchair,
-    compute: (items) => items.reduce((sum, s) => sum + (s.total_seats || 0), 0),
+    compute: (items) => items.reduce((sum: number, s) => sum + (Number(s.total_seats) || 0), 0),
   },
   {
     id: "occupied",
     label: "Occupied",
     icon: Armchair,
-    compute: (items) => items.reduce((sum, s) => sum + (s.occupied_seats || 0), 0),
+    compute: (items) => items.reduce((sum: number, s) => sum + (Number(s.occupied_seats) || 0), 0),
   },
-  {
-    id: "ac_sections",
-    label: "AC Sections",
-    icon: Grid3X3,
-    compute: (items) => items.filter((s) => s.is_ac).length,
-  },
+  createBooleanMetric("is_ac", true, "AC Sections", Grid3X3, { id: "ac_sections" }),
 ]
 
 // ============================================

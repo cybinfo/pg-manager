@@ -169,3 +169,7 @@ export type { DateRange, DateRangePreset } from "./date-range-picker"
 
 // Animation Components
 export { AnimatedNumber } from "./animated-number"
+
+// Entity Selector (base component for Person/Product/Vendor selectors)
+export { EntitySelector } from "./entity-selector"
+export type { EntitySelectorConfig, EntitySelectorProps, QuickCreateFieldConfig } from "./entity-selector"

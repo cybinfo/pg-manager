@@ -10,8 +10,10 @@
 import { Wrench, Check, X, Phone, Star, FileText } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { SERVICE_PROVIDER_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { SERVICE_PROVIDER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createBooleanMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatDate } from "@/lib/format"
 
@@ -205,12 +207,7 @@ const columns: Column<ServiceProviderListItem>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "category_id",
-    label: "Category",
-    type: "select",
-    placeholder: "All Categories",
-  },
+  EXPENSE_CATEGORY_FILTER,
   {
     id: "tds_applicable",
     label: "TDS",
@@ -221,16 +218,7 @@ const filters: FilterConfig[] = [
       { value: "false", label: "No TDS" },
     ],
   },
-  {
-    id: "is_active",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
+  ACTIVE_STATUS_FILTER,
 ]
 
 // ============================================
@@ -292,38 +280,18 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<ServiceProviderListItem>[] = [
-  {
-    id: "total",
-    label: "Total Providers",
-    icon: Wrench,
-    compute: (items, total) => total,
-    format: "number",
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: Check,
-    compute: (items) => items.filter((p) => p.is_active).length,
-    format: "number",
-    serverFilter: {
-      column: "is_active",
-      operator: "eq",
-      value: true,
-    },
-  },
-  {
-    id: "with_tds",
-    label: "With TDS",
-    icon: FileText,
-    compute: (items) => items.filter((p) => p.tds_applicable).length,
-    format: "number",
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Providers", icon: Wrench, format: "number" }),
+  createBooleanMetric("is_active", true, "Active", Check, { id: "active", format: "number" }),
+  createCountMetric("with_tds", "With TDS", FileText,
+    (item) => Boolean(item.tds_applicable),
+    { format: "number" }
+  ),
   {
     id: "total_jobs",
     label: "Total Jobs",
     icon: Wrench,
-    compute: (items) => items.reduce((sum, p) => sum + p.total_jobs, 0),
+    compute: (items) => items.reduce((sum: number, p) => sum + (Number(p.total_jobs) || 0), 0),
     format: "number",
   },
 ]

@@ -3,6 +3,9 @@
  *
  * Complex filter UI with multiple operators, AND/OR logic,
  * and support for various data types.
+ *
+ * State management logic lives in useFilterBuilder / useFilterRow hooks.
+ * This file contains only UI rendering.
  */
 
 "use client"
@@ -20,33 +23,26 @@ import { cn } from "@/lib/utils"
 import type {
   FilterGroup,
   AdvancedFilter,
-  FilterCondition,
   FilterOperator,
   FilterType,
   FilterSelectOption,
 } from "@/types/table-features.types"
 import {
   FILTER_OPERATOR_LABELS,
-  OPERATORS_BY_TYPE,
-  createEmptyFilter,
-  createEmptyCondition,
   operatorRequiresValue,
   operatorRequiresTwoValues,
-  hasActiveAdvancedFilters,
 } from "@/types/table-features.types"
+import {
+  useFilterBuilder,
+  useFilterRow,
+  type FilterableColumn,
+} from "@/lib/hooks/useFilterBuilder"
 
 // ============================================
-// Types
+// Re-export types so existing imports keep working
 // ============================================
 
-export interface FilterableColumn {
-  key: string
-  header: string
-  filterType: FilterType
-  filterKey?: string        // Database column to filter on
-  filterOperators?: FilterOperator[]
-  filterOptions?: FilterSelectOption[]
-}
+export type { FilterableColumn } from "@/lib/hooks/useFilterBuilder"
 
 export interface AdvancedFilterBuilderProps {
   columns: FilterableColumn[]
@@ -67,62 +63,15 @@ export function AdvancedFilterBuilder({
 }: AdvancedFilterBuilderProps) {
   const [open, setOpen] = React.useState(false)
 
-  // Track active filter count
-  const activeFilterCount = hasActiveAdvancedFilters(value)
-    ? value.filters.length
-    : 0
-
-  // Add a new filter
-  const addFilter = (column: FilterableColumn) => {
-    const newFilter = createEmptyFilter(
-      column.filterKey || column.key,
-      column.header,
-      column.filterType
-    )
-    // Add filter options if column has them
-    if (column.filterOptions) {
-      // Store in the filter for later use in value inputs
-      (newFilter as AdvancedFilter & { _options?: FilterSelectOption[] })._options = column.filterOptions
-    }
-    onChange({
-      ...value,
-      filters: [...value.filters, newFilter],
-    })
-  }
-
-  // Update a filter
-  const updateFilter = (filterId: string, updates: Partial<AdvancedFilter>) => {
-    onChange({
-      ...value,
-      filters: value.filters.map(f =>
-        f.id === filterId ? { ...f, ...updates } : f
-      ),
-    })
-  }
-
-  // Remove a filter
-  const removeFilter = (filterId: string) => {
-    onChange({
-      ...value,
-      filters: value.filters.filter(f => f.id !== filterId),
-    })
-  }
-
-  // Clear all filters
-  const clearAllFilters = () => {
-    onChange({
-      filters: [],
-      combineMode: "and",
-    })
-  }
-
-  // Toggle group combine mode
-  const toggleCombineMode = () => {
-    onChange({
-      ...value,
-      combineMode: value.combineMode === "and" ? "or" : "and",
-    })
-  }
+  const {
+    activeFilterCount,
+    addFilter,
+    updateFilter,
+    removeFilter,
+    clearAllFilters,
+    toggleCombineMode,
+    findColumnForFilter,
+  } = useFilterBuilder({ columns, value, onChange })
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -180,40 +129,26 @@ export function AdvancedFilterBuilder({
             </div>
           ) : (
             <div className="p-4 space-y-3">
-              {value.filters.map((filter, index) => {
-                const column = columns.find(
-                  c => (c.filterKey || c.key) === filter.column
-                )
-                return (
-                  <React.Fragment key={filter.id}>
-                    {/* AND/OR toggle between filters */}
-                    {index > 0 && (
-                      <div className="flex items-center justify-center">
-                        <button
-                          onClick={toggleCombineMode}
-                          className={cn(
-                            "px-3 py-1 text-xs font-medium rounded-full border transition-colors",
-                            value.combineMode === "and"
-                              ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                              : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
-                          )}
-                        >
-                          {value.combineMode.toUpperCase()}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Filter Row */}
-                    <FilterRow
-                      filter={filter}
-                      column={column}
-                      columns={columns}
-                      onUpdate={(updates) => updateFilter(filter.id, updates)}
-                      onRemove={() => removeFilter(filter.id)}
+              {value.filters.map((filter, index) => (
+                <React.Fragment key={filter.id}>
+                  {/* AND/OR toggle between filters */}
+                  {index > 0 && (
+                    <CombineModeToggle
+                      mode={value.combineMode}
+                      onToggle={toggleCombineMode}
                     />
-                  </React.Fragment>
-                )
-              })}
+                  )}
+
+                  {/* Filter Row */}
+                  <FilterRow
+                    filter={filter}
+                    column={findColumnForFilter(filter)}
+                    columns={columns}
+                    onUpdate={(updates) => updateFilter(filter.id, updates)}
+                    onRemove={() => removeFilter(filter.id)}
+                  />
+                </React.Fragment>
+              ))}
             </div>
           )}
         </div>
@@ -227,6 +162,33 @@ export function AdvancedFilterBuilder({
         </div>
       </PopoverContent>
     </Popover>
+  )
+}
+
+// ============================================
+// CombineModeToggle
+// ============================================
+
+interface CombineModeToggleProps {
+  mode: "and" | "or"
+  onToggle: () => void
+}
+
+function CombineModeToggle({ mode, onToggle }: CombineModeToggleProps) {
+  return (
+    <div className="flex items-center justify-center">
+      <button
+        onClick={onToggle}
+        className={cn(
+          "px-3 py-1 text-xs font-medium rounded-full border transition-colors",
+          mode === "and"
+            ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+            : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+        )}
+      >
+        {mode.toUpperCase()}
+      </button>
+    </div>
   )
 }
 
@@ -249,57 +211,14 @@ function FilterRow({
   onUpdate,
   onRemove,
 }: FilterRowProps) {
-  // Get available operators for this filter type
-  const availableOperators = column?.filterOperators
-    || OPERATORS_BY_TYPE[filter.filterType]
-    || ["eq"]
-
-  // Get filter options if available
-  const filterOptions = column?.filterOptions
-    || (filter as AdvancedFilter & { _options?: FilterSelectOption[] })._options
-
-  // Update a condition
-  const updateCondition = (
-    conditionIndex: number,
-    updates: Partial<FilterCondition>
-  ) => {
-    onUpdate({
-      conditions: filter.conditions.map((c, i) =>
-        i === conditionIndex ? { ...c, ...updates } : c
-      ),
-    })
-  }
-
-  // Add a condition to this filter
-  const addCondition = () => {
-    onUpdate({
-      conditions: [
-        ...filter.conditions,
-        createEmptyCondition(filter.filterType),
-      ],
-    })
-  }
-
-  // Remove a condition
-  const removeCondition = (conditionIndex: number) => {
-    if (filter.conditions.length <= 1) {
-      onRemove()
-    } else {
-      onUpdate({
-        conditions: filter.conditions.filter((_, i) => i !== conditionIndex),
-      })
-    }
-  }
-
-  // Change column
-  const changeColumn = (newColumn: FilterableColumn) => {
-    onUpdate({
-      column: newColumn.filterKey || newColumn.key,
-      columnLabel: newColumn.header,
-      filterType: newColumn.filterType,
-      conditions: [createEmptyCondition(newColumn.filterType)],
-    })
-  }
+  const {
+    availableOperators,
+    filterOptions,
+    updateCondition,
+    addCondition,
+    removeCondition,
+    changeColumn,
+  } = useFilterRow({ filter, column, onUpdate, onRemove })
 
   return (
     <div className="rounded-lg border bg-white p-3 space-y-2">
@@ -620,87 +539,35 @@ export function AdvancedFilterBuilderInline({
   onChange,
   className,
 }: AdvancedFilterBuilderInlineProps) {
-  // Add a new filter
-  const addFilter = (column: FilterableColumn) => {
-    const newFilter = createEmptyFilter(
-      column.filterKey || column.key,
-      column.header,
-      column.filterType
-    )
-    onChange({
-      ...value,
-      filters: [...value.filters, newFilter],
-    })
-  }
-
-  // Update a filter
-  const updateFilter = (filterId: string, updates: Partial<AdvancedFilter>) => {
-    onChange({
-      ...value,
-      filters: value.filters.map(f =>
-        f.id === filterId ? { ...f, ...updates } : f
-      ),
-    })
-  }
-
-  // Remove a filter
-  const removeFilter = (filterId: string) => {
-    onChange({
-      ...value,
-      filters: value.filters.filter(f => f.id !== filterId),
-    })
-  }
-
-  // Clear all filters
-  const clearAllFilters = () => {
-    onChange({
-      filters: [],
-      combineMode: "and",
-    })
-  }
-
-  // Toggle group combine mode
-  const toggleCombineMode = () => {
-    onChange({
-      ...value,
-      combineMode: value.combineMode === "and" ? "or" : "and",
-    })
-  }
+  const {
+    addFilter,
+    updateFilter,
+    removeFilter,
+    clearAllFilters,
+    toggleCombineMode,
+    findColumnForFilter,
+  } = useFilterBuilder({ columns, value, onChange })
 
   return (
     <div className={cn("space-y-3", className)}>
       {/* Filter Rows */}
-      {value.filters.map((filter, index) => {
-        const column = columns.find(
-          c => (c.filterKey || c.key) === filter.column
-        )
-        return (
-          <React.Fragment key={filter.id}>
-            {index > 0 && (
-              <div className="flex items-center justify-center">
-                <button
-                  onClick={toggleCombineMode}
-                  className={cn(
-                    "px-3 py-1 text-xs font-medium rounded-full border transition-colors",
-                    value.combineMode === "and"
-                      ? "bg-blue-50 border-blue-200 text-blue-700"
-                      : "bg-amber-50 border-amber-200 text-amber-700"
-                  )}
-                >
-                  {value.combineMode.toUpperCase()}
-                </button>
-              </div>
-            )}
-            <FilterRow
-              filter={filter}
-              column={column}
-              columns={columns}
-              onUpdate={(updates) => updateFilter(filter.id, updates)}
-              onRemove={() => removeFilter(filter.id)}
+      {value.filters.map((filter, index) => (
+        <React.Fragment key={filter.id}>
+          {index > 0 && (
+            <CombineModeToggle
+              mode={value.combineMode}
+              onToggle={toggleCombineMode}
             />
-          </React.Fragment>
-        )
-      })}
+          )}
+          <FilterRow
+            filter={filter}
+            column={findColumnForFilter(filter)}
+            columns={columns}
+            onUpdate={(updates) => updateFilter(filter.id, updates)}
+            onRemove={() => removeFilter(filter.id)}
+          />
+        </React.Fragment>
+      ))}
 
       {/* Actions */}
       <div className="flex items-center gap-2">

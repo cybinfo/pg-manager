@@ -9,10 +9,13 @@
 
 import { Receipt, TrendingDown, Calendar, BarChart3, Wallet, Download } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
+import { currencyColumn, dateColumn, badgeColumn } from "@/lib/column-builders"
 import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { EXPENSE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { EXPENSE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, PAYMENT_METHOD_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -87,20 +90,10 @@ const columns: Column<Expense>[] = [
       </span>
     ),
   },
-  {
-    key: "payment_method",
-    header: "Method",
-    width: "badge",
+  badgeColumn("payment_method", "Method", paymentMethodLabels, {
     hideOnMobile: true,
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (expense) => (
-      <TableBadge variant="muted">
-        {paymentMethodLabels[expense.payment_method] || expense.payment_method}
-      </TableBadge>
-    ),
-  },
+    defaultVariant: "muted",
+  }),
   {
     key: "property",
     header: "Property",
@@ -117,16 +110,7 @@ const columns: Column<Expense>[] = [
         "General"
       ),
   },
-  {
-    key: "expense_date",
-    header: "Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: true,
-    render: (expense) => formatDate(expense.expense_date),
-  },
+  dateColumn("expense_date", "Date"),
   // Hidden by default columns
   {
     key: "description",
@@ -155,16 +139,7 @@ const columns: Column<Expense>[] = [
     defaultVisible: false,
     render: (expense) => expense.reference_number || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Recorded On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (expense) => formatDate(expense.created_at),
-  },
+  dateColumn("created_at", "Recorded On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -172,36 +147,15 @@ const columns: Column<Expense>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
+  PROPERTY_FILTER,
   {
     id: "expense_type_id",
     label: "Category",
     type: "select",
     placeholder: "All Categories",
   },
-  {
-    id: "payment_method",
-    label: "Method",
-    type: "select",
-    placeholder: "All Methods",
-    options: [
-      { value: "cash", label: "Cash" },
-      { value: "upi", label: "UPI" },
-      { value: "bank_transfer", label: "Bank Transfer" },
-      { value: "card", label: "Card" },
-      { value: "cheque", label: "Cheque" },
-    ],
-  },
-  {
-    id: "expense_date",
-    label: "Date",
-    type: "date-range",
-  },
+  PAYMENT_METHOD_FILTER,
+  createDateRangeFilter("expense_date", "Date"),
 ]
 
 // ============================================

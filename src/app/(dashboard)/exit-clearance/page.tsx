@@ -14,15 +14,18 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { LogOut, Clock, CheckCircle, AlertCircle, User, ArrowRight } from "lucide-react"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { dateColumn, currencyColumn } from "@/lib/column-builders"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { EXIT_CLEARANCE_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { EXIT_CLEARANCE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { Avatar } from "@/components/ui/avatar"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatCurrency } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { EXIT_CLEARANCE_STATUS } from "@/lib/status-config"
@@ -110,16 +113,7 @@ const columns: Column<ExitClearance>[] = [
       </div>
     ),
   },
-  {
-    key: "expected_exit_date",
-    header: "Exit Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: true,
-    render: (clearance) => formatDate(clearance.expected_exit_date),
-  },
+  dateColumn("expected_exit_date", "Exit Date"),
   {
     key: "final_amount",
     header: "Amount",
@@ -180,50 +174,10 @@ const columns: Column<ExitClearance>[] = [
     },
   },
   // Hidden by default columns
-  {
-    key: "notice_given_date",
-    header: "Notice Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (clearance) => clearance.notice_given_date ? formatDate(clearance.notice_given_date) : <span className="text-muted-foreground">—</span>,
-  },
-  {
-    key: "actual_exit_date",
-    header: "Actual Exit",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (clearance) => clearance.actual_exit_date ? formatDate(clearance.actual_exit_date) : <span className="text-muted-foreground">—</span>,
-  },
-  {
-    key: "total_dues",
-    header: "Total Dues",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
-    defaultVisible: false,
-    render: (clearance) => (
-      <span className="font-medium text-red-600">{formatCurrency(clearance.total_dues)}</span>
-    ),
-  },
-  {
-    key: "total_refundable",
-    header: "Refundable",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
-    defaultVisible: false,
-    render: (clearance) => (
-      <span className="font-medium text-green-600">{formatCurrency(clearance.total_refundable)}</span>
-    ),
-  },
+  dateColumn("notice_given_date", "Notice Date", { defaultVisible: false }),
+  dateColumn("actual_exit_date", "Actual Exit", { defaultVisible: false }),
+  currencyColumn("total_dues", "Total Dues", { defaultVisible: false, color: "text-red-600" }),
+  currencyColumn("total_refundable", "Refundable", { defaultVisible: false, color: "text-green-600" }),
   {
     key: "room_inspection_done",
     header: "Inspection",
@@ -252,16 +206,7 @@ const columns: Column<ExitClearance>[] = [
       />
     ),
   },
-  {
-    key: "created_at",
-    header: "Initiated On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (clearance) => formatDate(clearance.created_at),
-  },
+  dateColumn("created_at", "Initiated On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -269,28 +214,13 @@ const columns: Column<ExitClearance>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "settlement_status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "initiated", label: "Initiated" },
-      { value: "pending_payment", label: "Pending Payment" },
-      { value: "cleared", label: "Cleared" },
-    ],
-  },
-  {
-    id: "expected_exit_date",
-    label: "Exit Date",
-    type: "date-range",
-  },
+  PROPERTY_FILTER,
+  createStatusFilter([
+    { value: "initiated", label: "Initiated" },
+    { value: "pending_payment", label: "Pending Payment" },
+    { value: "cleared", label: "Cleared" },
+  ], { id: "settlement_status" }),
+  createDateRangeFilter("expected_exit_date", "Exit Date"),
 ]
 
 // ============================================
@@ -362,47 +292,11 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<ExitClearance>[] = [
-  {
-    id: "total",
-    label: "Total",
-    icon: LogOut,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
-    id: "initiated",
-    label: "Initiated",
-    icon: Clock,
-    compute: (items) => items.filter((c) => c.settlement_status === "initiated").length,
-    serverFilter: {
-      column: "settlement_status",
-      operator: "eq",
-      value: "initiated",
-    },
-  },
-  {
-    id: "pending",
-    label: "Pending Payment",
-    icon: AlertCircle,
-    compute: (items) => items.filter((c) => c.settlement_status === "pending_payment").length,
-    highlight: (value) => (value as number) > 0,
-    serverFilter: {
-      column: "settlement_status",
-      operator: "eq",
-      value: "pending_payment",
-    },
-  },
-  {
-    id: "cleared",
-    label: "Cleared",
-    icon: CheckCircle,
-    compute: (items) => items.filter((c) => c.settlement_status === "cleared").length,
-    serverFilter: {
-      column: "settlement_status",
-      operator: "eq",
-      value: "cleared",
-    },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ icon: LogOut }),
+  createStatusMetric("initiated", "Initiated", Clock, { column: "settlement_status" }),
+  createStatusMetric("pending_payment", "Pending Payment", AlertCircle, { id: "pending", column: "settlement_status", highlight: true }),
+  createStatusMetric("cleared", "Cleared", CheckCircle, { column: "settlement_status" }),
 ]
 
 // ============================================

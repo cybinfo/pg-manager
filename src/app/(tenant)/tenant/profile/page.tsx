@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   User,
@@ -12,8 +12,6 @@ import {
   Calendar,
   Building2,
   Home,
-  CreditCard,
-  Shield,
   FileText,
   Clock,
   CheckCircle,
@@ -23,6 +21,7 @@ import {
   ChevronUp
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { ProfileFieldRow } from "@/components/portal"
 import { ReportIssueDialog, ApprovalType } from "@/components/tenant/report-issue-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDistanceToNow } from "date-fns"
@@ -111,7 +110,7 @@ export default function TenantProfilePage() {
 
       setUserEmail(user.email || "")
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("tenants")
         .select(`
           *,
@@ -254,57 +253,24 @@ export default function TenantProfilePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            {/* Name Field */}
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <User className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Name</p>
-                <p className="font-medium">{profile.name}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                onClick={() => openReportDialog("Name", profile.name, "name_change")}
-                title="Report issue with name"
-              >
-                <Flag className="h-4 w-4" />
-              </Button>
-            </div>
-            {/* Phone Field */}
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <Phone className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Phone</p>
-                <p className="font-medium">{profile.phone}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                onClick={() => openReportDialog("Phone Number", profile.phone, "phone_change")}
-                title="Report issue with phone"
-              >
-                <Flag className="h-4 w-4" />
-              </Button>
-            </div>
-            {/* Email Field */}
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <Mail className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{userEmail || profile.email || "Not provided"}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                onClick={() => openReportDialog("Email", userEmail || profile.email || "", "email_change")}
-                title="Report issue with email"
-              >
-                <Flag className="h-4 w-4" />
-              </Button>
-            </div>
+            <ProfileFieldRow
+              icon={User}
+              label="Name"
+              value={profile.name}
+              onReport={() => openReportDialog("Name", profile.name, "name_change")}
+            />
+            <ProfileFieldRow
+              icon={Phone}
+              label="Phone"
+              value={profile.phone}
+              onReport={() => openReportDialog("Phone Number", profile.phone, "phone_change")}
+            />
+            <ProfileFieldRow
+              icon={Mail}
+              label="Email"
+              value={userEmail || profile.email || "Not provided"}
+              onReport={() => openReportDialog("Email", userEmail || profile.email || "", "email_change")}
+            />
           </div>
 
           {profile.custom_fields && Object.keys(profile.custom_fields).length > 0 && (

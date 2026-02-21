@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreditCard, CheckCircle, IndianRupee, Calendar } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PortalStatsGrid, PortalEmptyState } from "@/components/portal"
 import { formatDate, formatCurrency } from "@/lib/format"
 
 interface PaymentRecord {
@@ -104,65 +105,38 @@ export default function MemberPaymentsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Paid</p>
-                <p className="text-xl font-semibold">{formatCurrency(stats.totalPaid)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-50 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">This Year</p>
-                <p className="text-xl font-semibold">{formatCurrency(stats.thisYearPaid)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-sky-50 rounded-lg">
-                <CreditCard className="h-5 w-5 text-sky-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Payments</p>
-                <p className="text-xl font-semibold">{stats.paymentCount}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-50 rounded-lg">
-                <Calendar className="h-5 w-5 text-violet-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Last Payment</p>
-                <p className="text-xl font-semibold">
-                  {stats.lastPaymentDate ? formatDate(stats.lastPaymentDate) : "-"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <PortalStatsGrid
+        stats={[
+          {
+            icon: IndianRupee,
+            label: "Total Paid",
+            value: formatCurrency(stats.totalPaid),
+            bgColor: "bg-emerald-50",
+            iconColor: "text-emerald-600",
+          },
+          {
+            icon: IndianRupee,
+            label: "This Year",
+            value: formatCurrency(stats.thisYearPaid),
+            bgColor: "bg-purple-50",
+            iconColor: "text-purple-600",
+          },
+          {
+            icon: CreditCard,
+            label: "Payments",
+            value: stats.paymentCount,
+            bgColor: "bg-sky-50",
+            iconColor: "text-sky-600",
+          },
+          {
+            icon: Calendar,
+            label: "Last Payment",
+            value: stats.lastPaymentDate ? formatDate(stats.lastPaymentDate) : "-",
+            bgColor: "bg-violet-50",
+            iconColor: "text-violet-600",
+          },
+        ]}
+      />
 
       {/* Payments List */}
       <Card>

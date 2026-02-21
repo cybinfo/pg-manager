@@ -18,9 +18,12 @@ import {
   Archive,
 } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
+import { dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { METER_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { METER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, METER_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -179,16 +182,7 @@ const columns: Column<Meter>[] = [
     defaultVisible: false,
     render: (meter) => meter.model || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "installation_date",
-    header: "Installed On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (meter) => meter.installation_date ? formatDate(meter.installation_date) : <span className="text-muted-foreground">—</span>,
-  },
+  dateColumn("installation_date", "Installed On", { defaultVisible: false }),
   {
     key: "notes",
     header: "Notes",
@@ -199,16 +193,7 @@ const columns: Column<Meter>[] = [
       <span className="text-sm text-muted-foreground line-clamp-2">{meter.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (meter) => formatDate(meter.created_at),
-  },
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================
@@ -216,35 +201,14 @@ const columns: Column<Meter>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "meter_type",
-    label: "Type",
-    type: "select",
-    placeholder: "All Types",
-    options: [
-      { value: "electricity", label: "Electricity" },
-      { value: "water", label: "Water" },
-      { value: "gas", label: "Gas" },
-    ],
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Statuses",
-    options: [
-      { value: "active", label: "Active" },
-      { value: "faulty", label: "Faulty" },
-      { value: "replaced", label: "Replaced" },
-      { value: "retired", label: "Retired" },
-    ],
-  },
+  PROPERTY_FILTER,
+  METER_TYPE_FILTER,
+  createStatusFilter([
+    { value: "active", label: "Active" },
+    { value: "faulty", label: "Faulty" },
+    { value: "replaced", label: "Replaced" },
+    { value: "retired", label: "Retired" },
+  ], { placeholder: "All Statuses" }),
 ]
 
 // ============================================
@@ -303,47 +267,11 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Meter>[] = [
-  {
-    id: "total",
-    label: "Total Meters",
-    icon: Gauge,
-    compute: (_items, total) => total,  // Use server total for accurate count
-  },
-  {
-    id: "active",
-    label: "Active",
-    icon: CheckCircle2,
-    compute: (items) => items.filter((m) => m.status === "active").length,
-    highlight: () => true,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "active",
-    },
-  },
-  {
-    id: "electricity",
-    label: "Electricity",
-    icon: Zap,
-    compute: (items) => items.filter((m) => m.meter_type === "electricity").length,
-    serverFilter: {
-      column: "meter_type",
-      operator: "eq",
-      value: "electricity",
-    },
-  },
-  {
-    id: "water",
-    label: "Water",
-    icon: Droplets,
-    compute: (items) => items.filter((m) => m.meter_type === "water").length,
-    serverFilter: {
-      column: "meter_type",
-      operator: "eq",
-      value: "water",
-    },
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Meters", icon: Gauge }),
+  createStatusMetric("active", "Active", CheckCircle2),
+  createStatusMetric("electricity", "Electricity", Zap, { column: "meter_type" }),
+  createStatusMetric("water", "Water", Droplets, { column: "meter_type" }),
 ]
 
 // ============================================

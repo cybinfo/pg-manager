@@ -9,10 +9,13 @@
 
 import { MessageSquare, AlertCircle, Clock, CheckCircle, Wrench } from "lucide-react"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
+import { statusColumn, badgeColumn } from "@/lib/column-builders"
 import { formatTimeAgo } from "@/lib/format"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { COMPLAINT_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { COMPLAINT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createStatusMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { PROPERTY_FILTER, PRIORITY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { COMPLAINT_STATUS, COMPLAINT_PRIORITY, COMPLAINT_CATEGORIES, getStatusInfo as getComplaintStatusInfo } from "@/lib/status-config"
@@ -84,13 +87,7 @@ const columns: Column<Complaint>[] = [
       </div>
     ),
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
+  statusColumn((status) => getComplaintStatusInfo("complaint", status), {
     editable: true,
     editType: "select",
     editOptions: [
@@ -99,11 +96,7 @@ const columns: Column<Complaint>[] = [
       { value: "resolved", label: "Resolved" },
       { value: "closed", label: "Closed" },
     ],
-    render: (row) => {
-      const info = getComplaintStatusInfo("complaint", row.status)
-      return <StatusDot status={info.status} label={info.label} />
-    },
-  },
+  }),
   {
     key: "created_at",
     header: "Created",
@@ -128,12 +121,7 @@ const columns: Column<Complaint>[] = [
       <span className="text-sm text-muted-foreground line-clamp-2">{row.description}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "priority",
-    header: "Priority",
-    width: "badge",
-    sortable: true,
-    canHide: true,
+  badgeColumn("priority", "Priority", COMPLAINT_PRIORITY, {
     defaultVisible: false,
     editable: true,
     editType: "select",
@@ -143,12 +131,7 @@ const columns: Column<Complaint>[] = [
       { value: "high", label: "High" },
       { value: "urgent", label: "Urgent" },
     ],
-    render: (row) => (
-      <TableBadge variant={COMPLAINT_PRIORITY[row.priority]?.variant || "default"}>
-        {COMPLAINT_PRIORITY[row.priority]?.label || row.priority}
-      </TableBadge>
-    ),
-  },
+  }),
   {
     key: "category",
     header: "Category",
@@ -196,37 +179,15 @@ const columns: Column<Complaint>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "property",
-    label: "Property",
-    type: "select",
-    placeholder: "All Properties",
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    placeholder: "All Status",
-    options: [
-      { value: "open", label: "Open" },
-      { value: "acknowledged", label: "Acknowledged" },
-      { value: "in_progress", label: "In Progress" },
-      { value: "resolved", label: "Resolved" },
-      { value: "closed", label: "Closed" },
-    ],
-  },
-  {
-    id: "priority",
-    label: "Priority",
-    type: "select",
-    placeholder: "All Priority",
-    options: [
-      { value: "urgent", label: "Urgent" },
-      { value: "high", label: "High" },
-      { value: "medium", label: "Medium" },
-      { value: "low", label: "Low" },
-    ],
-  },
+  PROPERTY_FILTER,
+  createStatusFilter([
+    { value: "open", label: "Open" },
+    { value: "acknowledged", label: "Acknowledged" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "resolved", label: "Resolved" },
+    { value: "closed", label: "Closed" },
+  ]),
+  PRIORITY_FILTER,
   {
     id: "category",
     label: "Category",
@@ -307,55 +268,14 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<Complaint>[] = [
-  {
-    id: "open",
-    label: "Open",
-    icon: AlertCircle,
-    compute: (items) => items.filter((c) => c.status === "open").length,
-    highlight: (value) => (value as number) > 0,
-    serverFilter: {
-      column: "status",
-      operator: "eq",
-      value: "open",
-    },
-  },
-  {
-    id: "in_progress",
-    label: "In Progress",
-    icon: Wrench,
-    compute: (items) =>
-      items.filter((c) => c.status === "in_progress" || c.status === "acknowledged").length,
-    serverFilter: {
-      column: "status",
-      operator: "in",
-      value: ["in_progress", "acknowledged"],
-    },
-  },
-  {
-    id: "resolved",
-    label: "Resolved",
-    icon: CheckCircle,
-    compute: (items) =>
-      items.filter((c) => c.status === "resolved" || c.status === "closed").length,
-    serverFilter: {
-      column: "status",
-      operator: "in",
-      value: ["resolved", "closed"],
-    },
-  },
-  {
-    id: "urgent",
-    label: "Urgent",
-    icon: Clock,
-    compute: (items) =>
-      items.filter(
-        (c) => c.priority === "urgent" && c.status !== "resolved" && c.status !== "closed"
-      ).length,
-    highlight: (value) => (value as number) > 0,
-    // Note: Complex AND + NOT IN conditions require multiple filters - showing page totals
-    // Could be implemented with serverFilter array in future
-  },
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createStatusMetric("open", "Open", AlertCircle, { highlight: true }),
+  createStatusMetric(["in_progress", "acknowledged"], "In Progress", Wrench, { id: "in_progress" }),
+  createStatusMetric(["resolved", "closed"], "Resolved", CheckCircle, { id: "resolved" }),
+  createCountMetric("urgent", "Urgent", Clock,
+    (item) => item.priority === "urgent" && item.status !== "resolved" && item.status !== "closed",
+    { highlight: true }
+  ),
 ]
 
 // ============================================
