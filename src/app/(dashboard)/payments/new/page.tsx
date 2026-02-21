@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
 
 interface Tenant {
@@ -285,7 +285,7 @@ function NewPaymentForm() {
   }
 
   if (loadingData) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   if (tenants.length === 0) {

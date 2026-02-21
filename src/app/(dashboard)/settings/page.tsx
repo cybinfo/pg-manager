@@ -18,7 +18,7 @@ import {
   getDefaultFeatureFlags,
 } from "@/lib/features"
 import { PageHeader } from "@/components/ui/page-header"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { OwnerGuard } from "@/components/auth"
 import { useAuth } from "@/lib/auth"
 import {
@@ -247,7 +247,7 @@ export default function SettingsPage() {
   ]
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   return (

@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { WhatsAppButton } from "@/components/whatsapp-button"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { messageTemplates, generateWhatsAppLink, formatCurrency } from "@/lib/notifications"
 import { formatDate } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -193,7 +193,7 @@ export default function PaymentRemindersPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   return (

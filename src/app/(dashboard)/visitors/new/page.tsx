@@ -21,7 +21,7 @@ import {
   MessageSquare,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
 import {
@@ -578,7 +578,7 @@ export default function NewVisitorPage() {
   }
 
   if (loadingData) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   if (properties.length === 0) {

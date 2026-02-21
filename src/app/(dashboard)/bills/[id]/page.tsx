@@ -20,6 +20,7 @@ import {
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
+import { PrintButton } from "@/components/ui/print-button"
 import {
   FileText,
   Loader2,
@@ -247,6 +248,7 @@ ManageKar`
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            <PrintButton label="Print Bill" />
             <Button variant="outline" size="sm" onClick={handleWhatsAppShare}>
               <Send className="mr-2 h-4 w-4" />
               Share via WhatsApp

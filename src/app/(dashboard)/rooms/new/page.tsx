@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Home, Loader2, Building2, Info } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 
 // Shared form components
 import { PhotoGallery } from "@/components/forms"
@@ -233,7 +233,7 @@ export default function NewRoomPage() {
   }
 
   if (loadingProperties) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   if (properties.length === 0) {

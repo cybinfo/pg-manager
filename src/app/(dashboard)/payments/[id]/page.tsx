@@ -18,8 +18,8 @@ import {
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
+import { PrintButton } from "@/components/ui/print-button"
 import {
-  Printer,
   Building2,
   User,
   Phone,
@@ -93,10 +93,6 @@ export default function PaymentReceiptPage() {
 
     fetchOwnerInfo()
   }, [])
-
-  const handlePrint = () => {
-    window.print()
-  }
 
   const handleDelete = async () => {
     await deleteRecord({ confirm: false })
@@ -207,10 +203,7 @@ export default function PaymentReceiptPage() {
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </Button>
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer className="mr-2 h-4 w-4" />
-                Print
-              </Button>
+              <PrintButton label="Print Receipt" />
               <PermissionGate permission="payments.delete" hide>
                 <Button
                   variant="destructive"
@@ -388,28 +381,6 @@ export default function PaymentReceiptPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Print Styles */}
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-          #__next > div > div > main > div > div:last-child,
-          #__next > div > div > main > div > div:last-child * {
-            visibility: visible;
-          }
-          #__next > div > div > main > div > div:last-child {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-        }
-      `}</style>
 
       </DetailPageTemplate>
 

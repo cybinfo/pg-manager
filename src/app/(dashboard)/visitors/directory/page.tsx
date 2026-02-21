@@ -35,7 +35,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { Select } from "@/components/ui/form-components"
 import { EmptyState } from "@/components/ui/empty-state"
 import {
@@ -177,7 +177,7 @@ export default function VisitorDirectoryPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   return (

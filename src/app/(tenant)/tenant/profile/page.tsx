@@ -22,7 +22,7 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { ReportIssueDialog, ApprovalType } from "@/components/tenant/report-issue-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDistanceToNow } from "date-fns"
@@ -196,7 +196,7 @@ export default function TenantProfilePage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="detail" />
   }
 
   if (!profile) {

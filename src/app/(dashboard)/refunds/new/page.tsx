@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/form-components"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
@@ -204,7 +204,7 @@ export default function NewRefundPage() {
     }
   }
 
-  if (loading) return <PageLoader />
+  if (loading) return <PageSkeleton variant="form" />
 
   return (
     <PermissionGuard permission="payments.create">

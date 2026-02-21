@@ -26,7 +26,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { withCreatedBy } from "@/lib/audit"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { cn } from "@/lib/utils"
 import { transformJoin } from "@/lib/supabase/transforms"
 
@@ -447,7 +447,7 @@ function NewBillContent() {
   const { subtotal, total } = calculateTotals()
 
   if (loadingTenants) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   return (

@@ -51,10 +51,13 @@ import {
 } from "lucide-react"
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
 import { showSuccess } from "@/lib/toast-helpers"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { AuthProvider, useAuth, useCurrentContext } from "@/lib/auth"
 import { ContextSwitcher, SessionTimeout } from "@/components/auth"
 import { DemoModeProvider, DemoBanner, DemoWatermark } from "@/lib/demo-mode"
+import { DashboardShortcuts } from "@/components/dashboard-shortcuts"
+import { CommandPalette } from "@/components/command-palette"
 import { useFeatures } from "@/lib/features/use-features"
 import { FeatureFlagKey } from "@/lib/features"
 import { getPathPermissions, getPathFeatures } from "@/lib/navigation/config"
@@ -617,8 +620,13 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             </ul>
           </nav>
 
-          {/* Settings & Logout */}
+          {/* Theme Toggle, Settings & Logout */}
           <div className="border-t p-4 space-y-1 bg-muted/30">
+            {/* Theme Toggle */}
+            <div className="flex items-center gap-3 px-3 py-1">
+              <ThemeToggle />
+              <span className="text-sm font-medium text-muted-foreground">Theme</span>
+            </div>
             {/* Settings only for owners */}
             {currentContext.isOwner && (
               <Link
@@ -727,6 +735,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       {/* Demo Mode Watermark */}
       <DemoWatermark />
     </div>
+    <DashboardShortcuts />
+    <CommandPalette />
     </SessionTimeout>
   )
 }

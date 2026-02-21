@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column } from "@/components/ui/data-table"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Receipt, Plus, ArrowLeft, User } from "lucide-react"
@@ -126,7 +126,7 @@ export default function TenantBillsPage() {
     }
   ]
 
-  if (loading) return <PageLoader />
+  if (loading) return <PageSkeleton variant="list" />
 
   if (!tenant) {
     return (

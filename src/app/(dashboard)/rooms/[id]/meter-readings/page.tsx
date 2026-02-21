@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column } from "@/components/ui/data-table"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Gauge, Plus, ArrowLeft, Home, Zap, Droplets, Calendar } from "lucide-react"
@@ -157,7 +157,7 @@ export default function RoomMeterReadingsPage() {
     },
   ]
 
-  if (loading) return <PageLoader />
+  if (loading) return <PageSkeleton variant="list" />
 
   if (!room) {
     return (

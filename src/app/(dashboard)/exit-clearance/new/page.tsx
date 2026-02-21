@@ -24,7 +24,7 @@ import {
   Bell
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { initiateExitClearance, ExitClearanceInput } from "@/lib/workflows/exit.workflow"
 
 interface TenantRaw {
@@ -350,7 +350,7 @@ function InitiateCheckoutForm() {
   }
 
   if (loadingData) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   return (

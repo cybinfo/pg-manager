@@ -138,6 +138,13 @@ export interface DataTableProps<T> {
   defaultCollapsed?: boolean      // Start groups collapsed
   // Column visibility - list of column keys to hide
   hiddenColumns?: string[]
+  // Row selection - opt-in via selectable prop
+  selectable?: boolean
+  selectedIds?: string[]
+  onToggleRow?: (id: string) => void
+  onToggleAll?: () => void
+  isAllSelected?: boolean
+  isSomeSelected?: boolean
 }
 
 // Helper to get nested value from object (e.g., "property.name")
@@ -157,8 +164,9 @@ export function getColumnFr(width?: ColumnWidthKey | number): number {
   return columnWidths.tertiary // default
 }
 
-export function buildGridTemplate<T>(visibleColumns: Column<T>[], isClickable: boolean): string {
-  return visibleColumns
+export function buildGridTemplate<T>(visibleColumns: Column<T>[], isClickable: boolean, selectable?: boolean): string {
+  const prefix = selectable ? "auto " : ""
+  return prefix + visibleColumns
     .map(c => `${getColumnFr(c.width)}fr`)
     .join(" ") + (isClickable ? ` ${columnWidths.menu}fr` : "")
 }

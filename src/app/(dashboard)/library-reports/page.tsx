@@ -18,7 +18,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import {
   Library,
   Users,
@@ -29,7 +29,6 @@ import {
   AlertCircle,
   CheckCircle,
   Download,
-  Filter,
   BarChart3,
   Armchair,
   UserPlus,
@@ -38,6 +37,7 @@ import {
   Timer,
 } from "lucide-react"
 import { PageHeader } from "@/components/ui/page-header"
+import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { useDemoMode } from "@/lib/demo-mode"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -125,20 +125,19 @@ const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 const CHART_COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]
 
-const dateRangeOptions = [
-  { value: "this_month", label: "This Month" },
-  { value: "last_month", label: "Last Month" },
-  { value: "last_3_months", label: "Last 3 Months" },
-  { value: "last_6_months", label: "Last 6 Months" },
-  { value: "this_year", label: "This Year" },
-]
+// Default date range: This month
+function getDefaultDateRange(): DateRange {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), 1)
+  return { from: start, to: now, label: "This month" }
+}
 
 export default function LibraryReportsPage() {
   const [loading, setLoading] = useState(true)
   const [libraries, setLibraries] = useState<LibraryOption[]>([])
   const [selectedLibrary, setSelectedLibrary] = useState<string>("all")
   const [reportData, setReportData] = useState<LibraryReportData | null>(null)
-  const [dateRange, setDateRange] = useState<string>("this_month")
+  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange)
   const { canPerformAction, getDemoMessage } = useDemoMode()
 
   useEffect(() => {
@@ -146,29 +145,7 @@ export default function LibraryReportsPage() {
   }, [selectedLibrary, dateRange])
 
   const getDateRange = () => {
-    const now = new Date()
-    let startDate: Date
-    let endDate: Date = now
-
-    switch (dateRange) {
-      case "last_month":
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0)
-        break
-      case "last_3_months":
-        startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1)
-        break
-      case "last_6_months":
-        startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1)
-        break
-      case "this_year":
-        startDate = new Date(now.getFullYear(), 0, 1)
-        break
-      default: // this_month
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-    }
-
-    return { startDate, endDate }
+    return { startDate: dateRange.from, endDate: dateRange.to }
   }
 
   const fetchReportData = async () => {
@@ -544,7 +521,7 @@ export default function LibraryReportsPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   if (!reportData) {
@@ -566,20 +543,10 @@ export default function LibraryReportsPage() {
             breadcrumbs={[{ label: "Library Reports" }]}
             actions={
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
-                  <Filter className="h-4 w-4 ml-2 text-muted-foreground" />
-                  <select
-                    value={dateRange}
-                    onChange={(e) => setDateRange(e.target.value)}
-                    className="h-9 px-3 rounded-md border-0 bg-transparent text-sm font-medium focus:outline-none"
-                  >
-                    {dateRangeOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={setDateRange}
+                />
                 <select
                   value={selectedLibrary}
                   onChange={(e) => setSelectedLibrary(e.target.value)}

@@ -18,7 +18,7 @@ import {
   FileText,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 
 interface ExpenseType {
   id: string
@@ -175,7 +175,7 @@ export default function NewExpensePage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   return (

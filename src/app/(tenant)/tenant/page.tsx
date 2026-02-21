@@ -19,7 +19,7 @@ import {
   ArrowRight,
   User
 } from "lucide-react"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
 
@@ -171,7 +171,7 @@ export default function TenantHomePage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="detail" />
   }
 
   if (!data.tenant) {

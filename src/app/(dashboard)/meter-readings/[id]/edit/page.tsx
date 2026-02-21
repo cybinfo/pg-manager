@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Calculator, Zap, Droplets, Building2, Home } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { formatDate } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 
@@ -170,7 +170,7 @@ export default function EditMeterReadingPage() {
   }
 
   if (loadingData) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   if (!reading) {

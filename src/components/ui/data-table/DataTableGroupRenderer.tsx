@@ -86,6 +86,9 @@ interface NestedGroupRendererProps<T extends object> {
   isClickable: boolean
   onRowClick: (row: T) => void
   groupCounts?: Record<string, number>
+  selectable?: boolean
+  selectedIdSet?: Set<string>
+  onToggleRow?: (id: string) => void
 }
 
 // Depth-based styling
@@ -127,6 +130,9 @@ export function NestedGroupRenderer<T extends object>({
   isClickable,
   onRowClick,
   groupCounts,
+  selectable,
+  selectedIdSet,
+  onToggleRow,
 }: NestedGroupRendererProps<T>) {
   return (
     <>
@@ -198,6 +204,9 @@ export function NestedGroupRenderer<T extends object>({
                   isClickable={isClickable}
                   onRowClick={onRowClick}
                   groupCounts={groupCounts}
+                  selectable={selectable}
+                  selectedIdSet={selectedIdSet}
+                  onToggleRow={onToggleRow}
                 />
               ) : (
                 // Render data rows at leaf level
@@ -211,6 +220,9 @@ export function NestedGroupRenderer<T extends object>({
                       gridTemplate={gridTemplate}
                       isClickable={isClickable}
                       onRowClick={onRowClick}
+                      selectable={selectable}
+                      isSelected={selectedIdSet?.has(String(row[keyField]))}
+                      onToggleRow={() => onToggleRow?.(String(row[keyField]))}
                     />
                   ))}
                 </div>

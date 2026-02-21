@@ -53,6 +53,7 @@ import {
   Heart,
   Undo2,
 } from "lucide-react"
+import { PrintButton } from "@/components/ui/print-button"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
@@ -355,6 +356,7 @@ export default function TenantDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            <PrintButton />
             {tenant.person_id && (
               <Link href={`/people/${tenant.person_id}`}>
                 <Button variant="outline" size="sm">

@@ -4,6 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AnimatedNumber } from "./animated-number"
 
 export interface MetricItem {
   label: string
@@ -59,7 +60,7 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
               "flex-1 min-w-[140px] px-4 py-3 flex items-center gap-3 text-left",
               index !== items.length - 1 && "border-r border-dashed",
               item.highlight && "bg-amber-50/50",
-              isClickable && "cursor-pointer hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-inset"
+              isClickable && "hover-lift cursor-pointer hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-inset"
             )}
             onClick={() => handleClick(item.href)}
             onKeyDown={(e) => handleKeyDown(e as React.KeyboardEvent, item.href)}
@@ -80,12 +81,22 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
                 {item.label}
               </span>
               <div className="flex items-center gap-2">
-                <span className={cn(
-                  "text-lg font-bold tabular-nums",
-                  item.highlight && "text-amber-600"
-                )}>
-                  {item.value}
-                </span>
+                {typeof item.value === "number" ? (
+                  <AnimatedNumber
+                    value={item.value}
+                    className={cn(
+                      "text-lg font-bold tabular-nums",
+                      item.highlight && "text-amber-600"
+                    )}
+                  />
+                ) : (
+                  <span className={cn(
+                    "text-lg font-bold tabular-nums",
+                    item.highlight && "text-amber-600"
+                  )}>
+                    {item.value}
+                  </span>
+                )}
                 {item.trend && (
                   <span className={cn(
                     "text-xs font-medium",

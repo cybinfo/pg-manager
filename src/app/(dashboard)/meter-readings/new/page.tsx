@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users, Zap, Droplets, Plus } from "lucide-react"
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 
 interface ChargeType {
@@ -385,7 +385,7 @@ export default function NewMeterReadingPage() {
   }) : null
 
   if (loadingData) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   // No assigned meters - show empty state

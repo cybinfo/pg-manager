@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Avatar } from "@/components/ui/avatar"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import {
   ArrowLeft,
   Search,
@@ -200,7 +200,7 @@ export default function PersonMergePage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   return (

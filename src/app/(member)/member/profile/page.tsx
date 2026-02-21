@@ -16,7 +16,7 @@ import {
   Lock,
   FileText,
 } from "lucide-react"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { formatDate } from "@/lib/format"
 
 interface MemberProfile {
@@ -145,7 +145,7 @@ export default function MemberProfilePage() {
   }, [])
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="detail" />
   }
 
   if (!member) {

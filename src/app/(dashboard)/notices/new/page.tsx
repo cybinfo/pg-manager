@@ -22,7 +22,7 @@ import {
   Library
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 
 interface Property {
   id: string
@@ -196,7 +196,7 @@ export default function NewNoticePage() {
   }
 
   if (loadingData) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   return (

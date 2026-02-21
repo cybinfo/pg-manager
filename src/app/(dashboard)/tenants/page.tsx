@@ -13,6 +13,7 @@
 "use client"
 
 import { Users, UserCheck, UserMinus, Clock } from "lucide-react"
+import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { Avatar, getAvatarUrl } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
@@ -533,6 +534,13 @@ export default function TenantsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      // Contextual help
+      headerActions={
+        <HelpTooltip
+          content="Tenants are linked to rooms. Add a property and rooms first before adding tenants."
+          side="bottom"
+        />
+      }
       // Actions
       createHref="/tenants/new"
       createLabel="Add Tenant"

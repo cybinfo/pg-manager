@@ -45,6 +45,7 @@ import {
   Armchair,
 } from "lucide-react"
 import { FeatureGuard } from "@/components/auth/feature-guard"
+import { InfoBanner } from "@/components/ui/info-banner"
 import { formatCurrency } from "@/lib/format"
 
 interface DashboardStats {
@@ -396,6 +397,10 @@ export default function DashboardPage() {
       ]}
     >
     <div className="space-y-6">
+      <InfoBanner storageKey="dashboard-welcome" variant="tip">
+        Welcome to ManageKar! Start by adding a property, then rooms and tenants. Use the sidebar to navigate between modules.
+      </InfoBanner>
+
       {/* Welcome header with greeting */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">

@@ -18,7 +18,7 @@ import {
   Timer,
   AlertCircle,
 } from "lucide-react"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
 
@@ -190,7 +190,7 @@ export default function MemberHomePage() {
   }, [])
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="detail" />
   }
 
   if (!data.member) {

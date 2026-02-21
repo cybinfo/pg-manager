@@ -51,7 +51,7 @@ import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { FeatureFlagKey } from "@/lib/features"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { ErrorState } from "@/components/ui/empty-state"
 import { Pagination } from "@/components/ui/pagination"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -579,7 +579,7 @@ export function ListPageTemplate({
   // Only show full-page loader for initial load
   // After that, keep DataTable mounted to preserve search focus
   if (loading && !initialLoadComplete) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   // Show error state if data failed to load

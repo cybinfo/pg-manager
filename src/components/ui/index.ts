@@ -162,3 +162,10 @@ export type {
 // Table Row Actions
 export { TableRowActions, createActionsColumn } from "./table-row-actions"
 export type { TableRowActionsProps } from "./table-row-actions"
+
+// Date Range Picker
+export { DateRangePicker } from "./date-range-picker"
+export type { DateRange, DateRangePreset } from "./date-range-picker"
+
+// Animation Components
+export { AnimatedNumber } from "./animated-number"

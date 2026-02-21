@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock, CheckCircle, Calendar, Timer } from "lucide-react"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { formatDate } from "@/lib/format"
 
 interface AttendanceRecord {
@@ -92,7 +92,7 @@ export default function MemberAttendancePage() {
   }, [])
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   return (

@@ -8,6 +8,7 @@
 "use client"
 
 import { FileText, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { BILL_LIST_CONFIG, MetricConfig, GroupByOption } from "@/lib/hooks/useListPage"
@@ -413,6 +414,12 @@ export default function BillsPage() {
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by bill number, tenant, or month..."
+      headerActions={
+        <HelpTooltip
+          content="Bills are auto-generated monthly via cron. You can also create them manually."
+          side="bottom"
+        />
+      }
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}

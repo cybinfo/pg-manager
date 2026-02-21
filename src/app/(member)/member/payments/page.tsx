@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreditCard, CheckCircle, IndianRupee, Calendar } from "lucide-react"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { formatDate, formatCurrency } from "@/lib/format"
 
 interface PaymentRecord {
@@ -93,7 +93,7 @@ export default function MemberPaymentsPage() {
   }, [])
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   return (

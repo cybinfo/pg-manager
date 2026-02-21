@@ -24,7 +24,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { sendInvitationEmail } from "@/lib/email"
 import { withCreatedBy, withCreatedByBatch } from "@/lib/audit"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
 import { validateIndianMobile } from "@/lib/validators"
@@ -378,7 +378,7 @@ export default function NewStaffPage() {
   }
 
   if (loadingData) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   return (

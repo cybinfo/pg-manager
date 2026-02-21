@@ -11,6 +11,10 @@ interface DataTableHeaderProps<T> {
   isClickable: boolean
   sortConfigs: SortConfig[]
   onSort: (column: Column<T>, event: React.MouseEvent) => void
+  selectable?: boolean
+  isAllSelected?: boolean
+  isSomeSelected?: boolean
+  onToggleAll?: () => void
 }
 
 export function DataTableHeader<T>({
@@ -19,12 +23,30 @@ export function DataTableHeader<T>({
   isClickable,
   sortConfigs,
   onSort,
+  selectable,
+  isAllSelected,
+  isSomeSelected,
+  onToggleAll,
 }: DataTableHeaderProps<T>) {
   return (
     <div
       className="hidden md:grid gap-4 border-b bg-slate-50/80 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider"
       style={{ gridTemplateColumns: gridTemplate }}
     >
+      {selectable && (
+        <div className="flex items-center justify-center">
+          <input
+            type="checkbox"
+            checked={isAllSelected}
+            ref={(el) => {
+              if (el) el.indeterminate = !!isSomeSelected
+            }}
+            onChange={onToggleAll}
+            className="h-4 w-4 rounded border-gray-300 accent-primary cursor-pointer"
+            aria-label="Select all rows"
+          />
+        </div>
+      )}
       {visibleColumns.map((column) => {
         const sortKey = column.sortKey || column.key
         const sortIndex = sortConfigs.findIndex((s) => s.key === sortKey)

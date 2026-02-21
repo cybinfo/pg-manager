@@ -327,6 +327,21 @@ body {
   animation: bounce-soft 2s ease-in-out infinite;
 }
 
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 /* Animation Delays */
 .animation-delay-100 { animation-delay: 100ms; }
 .animation-delay-200 { animation-delay: 200ms; }
@@ -554,4 +569,212 @@ body {
    ======================================== */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* ========================================
+   Micro-interaction: Staggered Fade-In
+   (lighter variant of stagger-children)
+   ======================================== */
+@keyframes stagger-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-stagger > * {
+  opacity: 0;
+  animation: stagger-fade-in 0.3s ease forwards;
+}
+.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.animate-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.animate-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.animate-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.animate-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.animate-stagger > *:nth-child(6) { animation-delay: 250ms; }
+.animate-stagger > *:nth-child(7) { animation-delay: 300ms; }
+.animate-stagger > *:nth-child(8) { animation-delay: 350ms; }
+.animate-stagger > *:nth-child(9) { animation-delay: 400ms; }
+.animate-stagger > *:nth-child(10) { animation-delay: 450ms; }
+.animate-stagger > *:nth-child(n+11) { animation-delay: 500ms; }
+
+/* ========================================
+   Accessibility: Reduced Motion
+   Disables all custom animations for users
+   who prefer reduced motion.
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-fade-in-down,
+  .animate-fade-in,
+  .animate-slide-in-left,
+  .animate-slide-in-right,
+  .animate-scale-in,
+  .animate-pulse-soft,
+  .animate-float,
+  .animate-shimmer,
+  .animate-spin-slow,
+  .animate-bounce-soft,
+  .animate-timeline-connector,
+  .animate-event-slide-in,
+  .animate-progress-fill,
+  .animate-slide-up,
+  .stagger-children > *,
+  .animate-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .hover-lift,
+  .hover-scale,
+  .hover-glow,
+  .card-hover,
+  .btn-press {
+    transition: none !important;
+  }
+
+  .hover-lift:hover,
+  .hover-scale:hover,
+  .card-hover:hover {
+    transform: none !important;
+  }
+}
+
+/* ============================================
+ * Print Styles
+ * ============================================ */
+@media print {
+  /* Hide non-essential UI */
+  aside,
+  header,
+  nav,
+  .mobile-nav,
+  .glass-nav,
+  button:not(.print-visible),
+  .no-print,
+  [data-sonner-toaster],
+  .pwa-install-prompt {
+    display: none !important;
+  }
+
+  /* Reset layout */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .lg\:pl-64 {
+    padding-left: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  /* Cards and borders */
+  .bg-white,
+  .bg-card,
+  [class*="bg-gradient"] {
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  .border,
+  .border-b,
+  .border-t {
+    border-color: #e5e5e5 !important;
+  }
+
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4, h5, h6 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  p, li, td, th {
+    color: #333 !important;
+  }
+
+  /* Tables */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    text-align: left !important;
+  }
+
+  th {
+    background-color: #f5f5f5 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Page breaks */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  /* Links */
+  a {
+    color: black !important;
+    text-decoration: none !important;
+  }
+
+  /* Status badges - keep colored */
+  .inline-flex[class*="bg-"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Currency amounts */
+  .font-mono,
+  .tabular-nums {
+    font-family: monospace !important;
+  }
+
+  /* Metrics bar - print inline */
+  .flex-wrap {
+    flex-wrap: wrap !important;
+  }
+
+  /* Charts - force print */
+  .recharts-wrapper {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Footer with page URL */
+  @page {
+    margin: 1.5cm;
+    @bottom-center {
+      content: "ManageKar - managekar.com";
+      font-size: 8pt;
+      color: #999;
+    }
+  }
 }

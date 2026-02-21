@@ -12,6 +12,9 @@ interface DataTableRowProps<T> {
   gridTemplate: string
   isClickable: boolean
   onRowClick: (row: T) => void
+  selectable?: boolean
+  isSelected?: boolean
+  onToggleRow?: () => void
 }
 
 export function DataTableRow<T extends object>({
@@ -21,12 +24,16 @@ export function DataTableRow<T extends object>({
   gridTemplate,
   isClickable,
   onRowClick,
+  selectable,
+  isSelected,
+  onToggleRow,
 }: DataTableRowProps<T>) {
   return (
     <div
       className={cn(
         "px-4 py-3 transition-colors",
-        isClickable && "cursor-pointer hover:bg-slate-50"
+        isClickable && "cursor-pointer hover:bg-slate-50",
+        isSelected && "bg-primary/5"
       )}
       onClick={() => onRowClick(row)}
     >
@@ -35,6 +42,21 @@ export function DataTableRow<T extends object>({
         className="hidden md:grid items-center gap-4"
         style={{ gridTemplateColumns: gridTemplate }}
       >
+        {selectable && (
+          <div className="flex items-center justify-center">
+            <input
+              type="checkbox"
+              checked={!!isSelected}
+              onChange={(e) => {
+                e.stopPropagation()
+                onToggleRow?.()
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="h-4 w-4 rounded border-gray-300 accent-primary cursor-pointer"
+              aria-label="Select row"
+            />
+          </div>
+        )}
         {visibleColumns.map((column) => (
           <div key={column.key} className={cn("text-sm min-w-0", column.className)}>
             {column.render

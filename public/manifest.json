@@ -1,13 +1,20 @@
 {
-  "name": "ManageKar - Smart PG Management",
+  "id": "managekar-app",
+  "name": "ManageKar - Smart PG & Library Management",
   "short_name": "ManageKar",
-  "description": "India's smartest PG & hostel management software. Manage tenants, billing, meter readings, complaints, and more. Free forever.",
+  "description": "India's smartest PG, hostel & library management software. Manage tenants, members, billing, meter readings, attendance, and more. Free forever.",
   "start_url": "/dashboard",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#ffffff",
   "theme_color": "#10B981",
   "orientation": "portrait-primary",
   "scope": "/",
+  "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "icons": [
     {
       "src": "/icons/icon.svg",
@@ -69,29 +76,43 @@
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
-      "description": "View your PG dashboard",
+      "description": "View your dashboard",
       "url": "/dashboard",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
       "name": "Add Tenant",
       "short_name": "Add Tenant",
-      "description": "Add a new tenant",
-      "url": "/dashboard/tenants/new",
+      "description": "Add a new PG tenant",
+      "url": "/tenants/new",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
       "name": "Record Payment",
       "short_name": "Payment",
       "description": "Record a payment",
-      "url": "/dashboard/payments/new",
+      "url": "/payments/new",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Library Members",
+      "short_name": "Members",
+      "description": "Manage library members",
+      "url": "/library-members",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Library Attendance",
+      "short_name": "Attendance",
+      "description": "Check-in/check-out members",
+      "url": "/library-attendance",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
       "name": "Meter Reading",
       "short_name": "Meter",
       "description": "Record meter reading",
-      "url": "/dashboard/meter-readings/new",
+      "url": "/meter-readings/new",
       "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     }
   ]

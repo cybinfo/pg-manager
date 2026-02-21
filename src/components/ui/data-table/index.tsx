@@ -61,6 +61,12 @@ export function DataTable<T extends object>({
   collapsibleGroups = true,
   defaultCollapsed = false,
   hiddenColumns = [],
+  selectable,
+  selectedIds,
+  onToggleRow,
+  onToggleAll,
+  isAllSelected,
+  isSomeSelected,
 }: DataTableProps<T>) {
   const router = useRouter()
   const [internalSearch, setInternalSearch] = React.useState("")
@@ -353,7 +359,13 @@ export function DataTable<T extends object>({
     [columns, hiddenColumns]
   )
 
-  const gridTemplate = buildGridTemplate(visibleColumns, isClickable)
+  const gridTemplate = buildGridTemplate(visibleColumns, isClickable, selectable)
+
+  // Convert selectedIds array to a Set for O(1) lookups
+  const selectedIdSet = React.useMemo(
+    () => new Set(selectedIds || []),
+    [selectedIds]
+  )
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -385,6 +397,10 @@ export function DataTable<T extends object>({
           isClickable={isClickable}
           sortConfigs={sortConfigs}
           onSort={handleSort}
+          selectable={selectable}
+          isAllSelected={isAllSelected}
+          isSomeSelected={isSomeSelected}
+          onToggleAll={onToggleAll}
         />
 
         {/* Loading State */}
@@ -412,6 +428,9 @@ export function DataTable<T extends object>({
                 isClickable={isClickable}
                 onRowClick={handleRowClick}
                 groupCounts={groupCounts}
+                selectable={selectable}
+                selectedIdSet={selectedIdSet}
+                onToggleRow={onToggleRow}
               />
             ) : (
               // Non-grouped rendering
@@ -424,6 +443,9 @@ export function DataTable<T extends object>({
                   gridTemplate={gridTemplate}
                   isClickable={isClickable}
                   onRowClick={handleRowClick}
+                  selectable={selectable}
+                  isSelected={selectedIdSet.has(String(row[keyField]))}
+                  onToggleRow={() => onToggleRow?.(String(row[keyField]))}
                 />
               ))
             )}

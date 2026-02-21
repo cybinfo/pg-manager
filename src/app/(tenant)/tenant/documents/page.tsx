@@ -20,7 +20,7 @@ import {
 import { DocumentUploadDialog } from "@/components/tenant/document-upload-dialog"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
 import {
   AlertDialog,
@@ -171,7 +171,7 @@ export default function TenantDocumentsPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   return (

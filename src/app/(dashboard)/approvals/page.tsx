@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { DataTable, Column, StatusDot } from "@/components/ui/data-table"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   ClipboardCheck, CheckCircle, XCircle, Clock, Loader2,
@@ -419,7 +419,7 @@ export default function ApprovalsPage() {
   ]
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   return (

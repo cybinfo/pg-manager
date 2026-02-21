@@ -17,7 +17,7 @@ import {
 import { showSuccess, showError, toast } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-utils"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { sendInvitationEmail } from "@/lib/email"
 import { withCreatedBy } from "@/lib/audit"
 import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
@@ -494,7 +494,7 @@ export default function NewTenantPage() {
   }
 
   if (loadingData) {
-    return <PageLoader />
+    return <PageSkeleton variant="form" />
   }
 
   if (properties.length === 0) {

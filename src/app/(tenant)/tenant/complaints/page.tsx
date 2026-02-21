@@ -20,7 +20,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate, formatTimeAgo } from "@/lib/format"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { TenantWithContext } from "@/types/tenants.types"
@@ -183,7 +183,7 @@ export default function TenantComplaintsPage() {
   )
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   return (

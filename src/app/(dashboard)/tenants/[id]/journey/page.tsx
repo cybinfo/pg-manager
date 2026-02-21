@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth"
 import { PermissionGuard } from "@/components/auth"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { getTenantJourney, getEventCategoryCounts } from "@/lib/services/journey.service"
 import {
   TenantJourneyData,
@@ -186,7 +186,7 @@ function JourneyPageContent({ tenantId }: JourneyPageContentProps) {
 
   // Loading state
   if (loading) {
-    return <PageLoader message="Loading tenant journey..." />
+    return <PageSkeleton variant="detail" />
   }
 
   // Error state

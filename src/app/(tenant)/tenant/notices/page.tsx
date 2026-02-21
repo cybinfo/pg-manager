@@ -12,7 +12,7 @@ import {
   Calendar,
   Clock
 } from "lucide-react"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 
 interface Notice {
@@ -128,7 +128,7 @@ export default function TenantNoticesPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   return (

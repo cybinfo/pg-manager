@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar } from "@/components/ui/avatar"
-import { PageLoader } from "@/components/ui/page-loader"
+import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import {
   ArrowLeft,
@@ -188,7 +188,7 @@ export default function DuplicatesPage() {
   }
 
   if (loading) {
-    return <PageLoader />
+    return <PageSkeleton variant="list" />
   }
 
   const totalDuplicates = duplicateGroups.reduce((sum, g) => sum + g.duplicate_count, 0)

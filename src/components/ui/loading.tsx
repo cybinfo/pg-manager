@@ -57,7 +57,7 @@ export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-slate-200/70",
+        "animate-pulse rounded-md bg-muted",
         className
       )}
       {...props}
@@ -87,7 +87,7 @@ export function SkeletonText({ lines = 1, className }: { lines?: number; classNa
 
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn("bg-white rounded-xl border p-4 space-y-3", className)}>
+    <div className={cn("bg-card rounded-xl border p-4 space-y-3", className)}>
       <div className="flex items-center gap-3">
         <Skeleton className="h-10 w-10 rounded-lg" />
         <div className="space-y-2 flex-1">
@@ -103,9 +103,9 @@ export function SkeletonCard({ className }: { className?: string }) {
 
 export function SkeletonTable({ rows = 5, columns = 4, className }: { rows?: number; columns?: number; className?: string }) {
   return (
-    <div className={cn("bg-white rounded-xl border overflow-hidden", className)}>
+    <div className={cn("bg-card rounded-xl border overflow-hidden", className)}>
       {/* Header */}
-      <div className="px-4 py-3 border-b bg-slate-50/80">
+      <div className="px-4 py-3 border-b bg-muted/50">
         <div className="flex gap-4">
           {Array.from({ length: columns }).map((_, i) => (
             <Skeleton key={i} className="h-4 flex-1" />
@@ -137,7 +137,7 @@ export function SkeletonTable({ rows = 5, columns = 4, className }: { rows?: num
 
 export function SkeletonMetricsBar({ items = 4, className }: { items?: number; className?: string }) {
   return (
-    <div className={cn("flex flex-wrap items-stretch bg-white rounded-xl border shadow-sm overflow-hidden", className)}>
+    <div className={cn("flex flex-wrap items-stretch bg-card rounded-xl border shadow-sm overflow-hidden", className)}>
       {Array.from({ length: items }).map((_, i) => (
         <div
           key={i}
