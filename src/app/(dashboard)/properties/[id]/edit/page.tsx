@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 
 import {
   PropertyDetailsTab,
@@ -256,8 +257,7 @@ export default function EditPropertyPage() {
       showSuccess("Property updated successfully!")
       router.push(`/properties/${params.id}`)
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to update property. Please try again.")
+      handleClientError(error, "Updating property")
     } finally {
       setLoading(false)
     }

@@ -5,7 +5,20 @@ import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 
-type ColorVariant = "blue" | "green" | "red" | "amber" | "purple" | "teal" | "orange" | "rose" | "slate"
+// ============================================================================
+// COLOR SYSTEM
+// ============================================================================
+
+export type StatColorVariant =
+  | "blue"
+  | "green"
+  | "red"
+  | "amber"
+  | "purple"
+  | "teal"
+  | "orange"
+  | "rose"
+  | "slate"
 
 /**
  * UI-007: Unified color classes for stat cards.
@@ -15,7 +28,7 @@ type ColorVariant = "blue" | "green" | "red" | "amber" | "purple" | "teal" | "or
  * - purple -> violet (matches purple semantic)
  * - red -> rose (matches error)
  */
-const colorClasses: Record<ColorVariant, { bg: string; text: string }> = {
+const colorClasses: Record<StatColorVariant, { bg: string; text: string }> = {
   blue: { bg: "bg-sky-100", text: "text-sky-600" },
   green: { bg: "bg-emerald-100", text: "text-emerald-600" },
   red: { bg: "bg-rose-100", text: "text-rose-600" },
@@ -27,33 +40,78 @@ const colorClasses: Record<ColorVariant, { bg: string; text: string }> = {
   slate: { bg: "bg-slate-100", text: "text-slate-600" },
 }
 
-interface StatCardProps {
+/** Resolve icon colors from either a named variant or custom bg/iconColor strings */
+function resolveColors(props: {
+  color?: StatColorVariant
+  bgColor?: string
+  iconColor?: string
+}): { bg: string; text: string } {
+  if (props.bgColor && props.iconColor) {
+    return { bg: props.bgColor, text: props.iconColor }
+  }
+  return colorClasses[props.color || "blue"]
+}
+
+// ============================================================================
+// STAT CARD
+// ============================================================================
+
+export interface StatCardProps {
   /** Icon to display */
   icon: LucideIcon
   /** Label/title for the stat */
   label: string
   /** Value to display */
-  value: string | number
-  /** Color variant */
-  color?: ColorVariant
+  value: React.ReactNode
+  /** Named color variant (use this OR bgColor+iconColor) */
+  color?: StatColorVariant
+  /** Custom Tailwind bg class for the icon container, e.g. "bg-primary/10" */
+  bgColor?: string
+  /** Custom Tailwind text color class for the icon, e.g. "text-primary" */
+  iconColor?: string
   /** Additional className for the card */
   className?: string
   /** Optional subtitle/description */
   subtitle?: string
+  /** Click handler */
+  onClick?: () => void
 }
 
+/**
+ * Unified stat card component.
+ *
+ * Supports two color modes:
+ * 1. Named variant: `color="green"` (maps to predefined bg/text classes)
+ * 2. Custom colors: `bgColor="bg-emerald-50" iconColor="text-emerald-600"`
+ *
+ * @example
+ * // Named color
+ * <StatCard icon={Users} label="Total" value={42} color="blue" />
+ *
+ * // Custom colors (portal style)
+ * <StatCard icon={Users} label="Total" value={42} bgColor="bg-primary/10" iconColor="text-primary" />
+ */
 export function StatCard({
   icon: Icon,
   label,
   value,
-  color = "blue",
+  color,
+  bgColor,
+  iconColor,
   className,
   subtitle,
+  onClick,
 }: StatCardProps) {
-  const colors = colorClasses[color]
+  const colors = resolveColors({ color, bgColor, iconColor })
 
   return (
-    <Card className={className}>
+    <Card
+      className={cn(
+        onClick && "cursor-pointer hover:bg-muted/50 transition-colors",
+        className
+      )}
+      onClick={onClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
           <div className={cn("p-2 rounded-lg", colors.bg)}>
@@ -72,23 +130,31 @@ export function StatCard({
   )
 }
 
-/** Inline stat without card wrapper - for use inside existing cards */
-interface StatItemProps {
+// ============================================================================
+// STAT ITEM (inline, no card wrapper)
+// ============================================================================
+
+export interface StatItemProps {
   icon: LucideIcon
   label: string
-  value: string | number
-  color?: ColorVariant
+  value: React.ReactNode
+  color?: StatColorVariant
+  bgColor?: string
+  iconColor?: string
   className?: string
 }
 
+/** Inline stat without card wrapper - for use inside existing cards */
 export function StatItem({
   icon: Icon,
   label,
   value,
-  color = "blue",
+  color,
+  bgColor,
+  iconColor,
   className,
 }: StatItemProps) {
-  const colors = colorClasses[color]
+  const colors = resolveColors({ color, bgColor, iconColor })
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
@@ -99,6 +165,46 @@ export function StatItem({
         <p className="text-sm text-muted-foreground">{label}</p>
         <p className="font-semibold">{value}</p>
       </div>
+    </div>
+  )
+}
+
+// ============================================================================
+// STATS GRID (consistent grid layout for stat cards)
+// ============================================================================
+
+export interface StatsGridProps {
+  /** StatCard items to render in the grid */
+  stats: StatCardProps[]
+  /** Number of columns at md breakpoint (default: 4) */
+  columns?: 2 | 3 | 4
+  /** Additional CSS classes */
+  className?: string
+}
+
+const columnClasses = {
+  2: "grid-cols-2",
+  3: "grid-cols-2 md:grid-cols-3",
+  4: "grid-cols-2 md:grid-cols-4",
+}
+
+/**
+ * Grid wrapper for rendering multiple StatCards in a responsive layout.
+ *
+ * @example
+ * <StatsGrid
+ *   stats={[
+ *     { icon: Users, label: "Total", value: 42, color: "blue" },
+ *     { icon: Check, label: "Active", value: 38, color: "green" },
+ *   ]}
+ * />
+ */
+export function StatsGrid({ stats, columns = 4, className }: StatsGridProps) {
+  return (
+    <div className={cn("grid gap-4", columnClasses[columns], className)}>
+      {stats.map((stat, index) => (
+        <StatCard key={index} {...stat} />
+      ))}
     </div>
   )
 }

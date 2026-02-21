@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { validateIndianMobile, formatIndianMobile } from "@/lib/validators"
+import { validatePhone, formatNormalizedPhone } from "@/lib/phone"
 import { cn } from "@/lib/utils"
 import { CheckCircle, XCircle, Phone } from "lucide-react"
 
@@ -44,7 +44,7 @@ export function PhoneInput({
   // Validate on value change
   useEffect(() => {
     if (displayValue) {
-      const result = validateIndianMobile(displayValue)
+      const result = validatePhone(displayValue)
       setValidation({ isValid: result.isValid, error: result.error })
       // Pass normalized value to parent
       onChange(result.normalized || displayValue, result.isValid)
@@ -57,9 +57,9 @@ export function PhoneInput({
   // Format on blur
   const handleBlur = () => {
     setTouched(true)
-    const result = validateIndianMobile(displayValue)
+    const result = validatePhone(displayValue)
     if (result.isValid && result.normalized) {
-      setDisplayValue(formatIndianMobile(result.normalized))
+      setDisplayValue(formatNormalizedPhone(result.normalized))
     }
   }
 
@@ -138,7 +138,7 @@ export function SimplePhoneInput({
   }
 
   const handleBlur = () => {
-    const result = validateIndianMobile(value)
+    const result = validatePhone(value)
     if (result.isValid && result.normalized) {
       onChange(result.normalized)
     }

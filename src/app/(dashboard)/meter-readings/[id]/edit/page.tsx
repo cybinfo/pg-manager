@@ -1,189 +1,118 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
+import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Calculator, Zap, Droplets, Building2, Home } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
-import { formatDate } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
-
-interface MeterReading {
-  id: string
-  meter_id: string
-  property_id: string
-  room_id: string
-  reading_date: string
-  reading_value: number
-  previous_reading: number | null
-  units_consumed: number | null
-  notes: string | null
-  meter: {
-    id: string
-    meter_number: string
-    meter_type: string
-  } | null
-  property: {
-    id: string
-    name: string
-  } | null
-  room: {
-    id: string
-    room_number: string
-  } | null
-}
 
 export default function EditMeterReadingPage() {
   const params = useParams()
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
-  const [reading, setReading] = useState<MeterReading | null>(null)
-
-  const [formData, setFormData] = useState({
-    reading_date: "",
-    reading_value: "",
-    notes: "",
-  })
-
+  const id = params.id as string
   const [calculatedUnits, setCalculatedUnits] = useState<number | null>(null)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient()
+  const {
+    formData,
+    handleChange,
+    handleSubmit,
+    loading,
+    saving,
+    record,
+  } = useFormEditPage({
+    table: "meter_readings",
+    id,
+    select: `*, meter:meters(id, meter_number, meter_type), property:properties(id, name), room:rooms(id, room_number)`,
+    initialData: {
+      reading_date: "",
+      reading_value: "",
+      notes: "",
+    },
+    redirectTo: `/meter-readings/${id}`,
+    successMessage: "Meter reading updated successfully!",
+    errorMessage: "Failed to update meter reading",
+    mapToForm: (rec) => ({
+      reading_date: (rec.reading_date as string) || "",
+      reading_value: rec.reading_value?.toString() || "",
+      notes: (rec.notes as string) || "",
+    }),
+    validate: (data) => {
+      if (!data.reading_value) {
+        return "Please enter a reading value"
+      }
+      const readingValue = parseFloat(data.reading_value as string)
+      if (isNaN(readingValue) || readingValue < 0) {
+        return "Please enter a valid reading value"
+      }
+      return null
+    },
+    customSubmit: async (data, _userId, recordId, supabase) => {
+      const readingValue = parseFloat(data.reading_value as string)
 
-      const { data, error } = await supabase
+      // Get previous reading from the record
+      const { data: rec } = await supabase
         .from("meter_readings")
-        .select(`
-          *,
-          meter:meters(id, meter_number, meter_type),
-          property:properties(id, name),
-          room:rooms(id, room_number)
-        `)
-        .eq("id", params.id)
+        .select("previous_reading")
+        .eq("id", recordId)
         .single()
 
-      if (error || !data) {
-        console.error("Error fetching reading:", error)
-        showError("Meter reading not found")
-        router.push("/meter-readings")
-        return
+      const previousReading = rec?.previous_reading as number | null
+      if (previousReading !== null && readingValue < previousReading) {
+        throw new Error("Current reading cannot be less than the previous reading")
       }
 
-      // Transform joins
-      const transformedData: MeterReading = {
-        ...data,
-        meter: transformJoin(data.meter),
-        property: transformJoin(data.property),
-        room: transformJoin(data.room),
-      }
+      const unitsConsumed = previousReading !== null ? readingValue - previousReading : null
 
-      setReading(transformedData)
-      setFormData({
-        reading_date: data.reading_date,
-        reading_value: data.reading_value?.toString() || "",
-        notes: data.notes || "",
-      })
+      const { error } = await supabase
+        .from("meter_readings")
+        .update({
+          reading_date: data.reading_date,
+          reading_value: readingValue,
+          units_consumed: unitsConsumed,
+          notes: data.notes || null,
+        })
+        .eq("id", recordId)
 
-      setLoadingData(false)
-    }
+      if (error) throw new Error(`Database error: ${error.message}`)
+    },
+  })
 
-    fetchData()
-  }, [params.id, router])
+  // Transform joined data from record for display
+  const meter = record ? transformJoin(record.meter as Record<string, unknown>) as Record<string, unknown> | null : null
+  const property = record ? transformJoin(record.property as Record<string, unknown>) as Record<string, unknown> | null : null
+  const room = record ? transformJoin(record.room as Record<string, unknown>) as Record<string, unknown> | null : null
+  const previousReading = record?.previous_reading as number | null
+  const meterType = (meter?.meter_type as string) || "electricity"
 
-  // Calculate units consumed
+  // Calculate units consumed live
   useEffect(() => {
-    if (reading && reading.previous_reading !== null && formData.reading_value) {
-      const currentValue = parseFloat(formData.reading_value)
-      const prevValue = reading.previous_reading
-      if (!isNaN(currentValue) && currentValue >= prevValue) {
-        setCalculatedUnits(currentValue - prevValue)
+    if (previousReading !== null && previousReading !== undefined && formData.reading_value) {
+      const currentValue = parseFloat(formData.reading_value as string)
+      if (!isNaN(currentValue) && currentValue >= previousReading) {
+        setCalculatedUnits(currentValue - previousReading)
       } else {
         setCalculatedUnits(null)
       }
     } else {
       setCalculatedUnits(null)
     }
-  }, [formData.reading_value, reading])
+  }, [formData.reading_value, previousReading])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.reading_value) {
-      showError("Please enter a reading value")
-      return
-    }
-
-    const readingValue = parseFloat(formData.reading_value)
-    if (isNaN(readingValue) || readingValue < 0) {
-      showError("Please enter a valid reading value")
-      return
-    }
-
-    if (reading && reading.previous_reading !== null && readingValue < reading.previous_reading) {
-      showError("Current reading cannot be less than the previous reading")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase
-        .from("meter_readings")
-        .update({
-          reading_date: formData.reading_date,
-          reading_value: readingValue,
-          units_consumed: calculatedUnits,
-          notes: formData.notes || null,
-        })
-        .eq("id", params.id)
-
-      if (error) {
-        console.error("Error updating meter reading:", error)
-        showError(`Database error: ${error.message}`)
-        return
-      }
-
-      showSuccess("Meter reading updated successfully!")
-      router.push(`/meter-readings/${params.id}`)
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to update meter reading. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loadingData) {
+  if (loading) {
     return <PageSkeleton variant="form" />
   }
-
-  if (!reading) {
-    return null
-  }
-
-  const meterType = reading.meter?.meter_type || "electricity"
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/meter-readings/${params.id}`}>
+        <Link href={`/meter-readings/${id}`}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -214,17 +143,17 @@ export default function EditMeterReadingPage() {
           <CardContent>
             <div className="p-4 bg-muted/50 rounded-lg space-y-2">
               <div className="flex items-center gap-2">
-                <span className="font-medium">{reading.meter?.meter_number || "Unknown Meter"}</span>
+                <span className="font-medium">{(meter?.meter_number as string) || "Unknown Meter"}</span>
                 <span className="text-sm text-muted-foreground capitalize">({meterType})</span>
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
                 <div className="flex items-center gap-1">
                   <Building2 className="h-3 w-3" />
-                  {reading.property?.name || "Unknown Property"}
+                  {(property?.name as string) || "Unknown Property"}
                 </div>
                 <div className="flex items-center gap-1">
                   <Home className="h-3 w-3" />
-                  Room {reading.room?.room_number || "Unknown"}
+                  Room {(room?.room_number as string) || "Unknown"}
                 </div>
               </div>
             </div>
@@ -251,18 +180,18 @@ export default function EditMeterReadingPage() {
                 id="reading_date"
                 name="reading_date"
                 type="date"
-                value={formData.reading_date}
+                value={formData.reading_date as string}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={saving}
               />
             </div>
 
             {/* Previous Reading (Read-only) */}
-            {reading.previous_reading !== null && (
+            {previousReading !== null && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  <strong>Previous Reading:</strong> {reading.previous_reading.toLocaleString()}
+                  <strong>Previous Reading:</strong> {previousReading.toLocaleString()}
                 </p>
               </div>
             )}
@@ -275,13 +204,13 @@ export default function EditMeterReadingPage() {
                   id="reading_value"
                   name="reading_value"
                   type="number"
-                  min={reading.previous_reading || 0}
+                  min={previousReading || 0}
                   step="0.01"
                   placeholder="e.g., 12345"
-                  value={formData.reading_value}
+                  value={formData.reading_value as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                   className="pl-9"
                 />
               </div>
@@ -297,7 +226,7 @@ export default function EditMeterReadingPage() {
                   <div>
                     <p className="text-sm text-green-800">Units Consumed</p>
                     <p className="text-2xl font-bold text-green-700">
-                      {calculatedUnits.toLocaleString()} {meterType === "electricity" ? "kWh" : meterType === "water" ? "L" : meterType === "gas" ? "m³" : "units"}
+                      {calculatedUnits.toLocaleString()} {meterType === "electricity" ? "kWh" : meterType === "water" ? "L" : meterType === "gas" ? "m3" : "units"}
                     </p>
                   </div>
                 </div>
@@ -310,9 +239,9 @@ export default function EditMeterReadingPage() {
                 id="notes"
                 name="notes"
                 placeholder="Any additional notes..."
-                value={formData.notes}
+                value={formData.notes as string}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
               />
             </div>
@@ -320,13 +249,13 @@ export default function EditMeterReadingPage() {
         </Card>
 
         <div className="flex justify-end gap-4">
-          <Link href={`/meter-readings/${params.id}`}>
-            <Button type="button" variant="outline" disabled={loading}>
+          <Link href={`/meter-readings/${id}`}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { StatCard } from "@/components/ui/stat-card"
+import { StatsGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
 import {
   CreditCard,
@@ -21,7 +21,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
-import { TenantWithContext } from "@/types/tenants.types"
+import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
 interface Payment {
   id: string
@@ -69,9 +69,9 @@ const paymentMethodLabels: Record<string, string> = {
 }
 
 export default function TenantPaymentsPage() {
+  const { tenant, tenantContext, loading: tenantLoading } = useTenantPortalData()
   const [loading, setLoading] = useState(true)
   const [payments, setPayments] = useState<Payment[]>([])
-  const [tenantInfo, setTenantInfo] = useState<TenantWithContext | null>(null)
   const [stats, setStats] = useState<PaymentStats>({
     totalPaid: 0,
     totalPaidThisYear: 0,
@@ -85,41 +85,14 @@ export default function TenantPaymentsPage() {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
 
   useEffect(() => {
+    if (tenantLoading) return
+    if (!tenant) {
+      setLoading(false)
+      return
+    }
+
     const fetchPayments = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      // Get tenant info including owner_id
-      const { data: tenant } = await supabase
-        .from("tenants")
-        .select("id, monthly_rent, owner_id, property:properties(owner_id)")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single()
-
-      if (!tenant) {
-        setLoading(false)
-        return
-      }
-
-      // Handle Supabase array join
-      const property = transformJoin(tenant.property)
-      const ownerId = property?.owner_id || tenant.owner_id
-
-      // Get workspace_id from workspaces table via owner
-      const { data: workspace } = await supabase
-        .from("workspaces")
-        .select("id")
-        .eq("owner_user_id", ownerId)
-        .single()
-
-      setTenantInfo({
-        id: tenant.id,
-        workspace_id: workspace?.id || "",
-        owner_id: ownerId,
-      })
 
       // Fetch all payments
       const { data: paymentsData } = await supabase
@@ -165,7 +138,7 @@ export default function TenantPaymentsPage() {
     }
 
     fetchPayments()
-  }, [])
+  }, [tenant, tenantLoading])
 
   const openReportDialog = (payment: Payment) => {
     setSelectedPayment(payment)
@@ -192,7 +165,7 @@ export default function TenantPaymentsPage() {
     return groups
   }, {} as Record<string, Payment[]>)
 
-  if (loading) {
+  if (tenantLoading || loading) {
     return <PageSkeleton variant="list" />
   }
 
@@ -205,32 +178,14 @@ export default function TenantPaymentsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          icon={IndianRupee}
-          label="Total Paid"
-          value={formatCurrency(stats.totalPaid)}
-          color="green"
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="This Year"
-          value={formatCurrency(stats.totalPaidThisYear)}
-          color="blue"
-        />
-        <StatCard
-          icon={Receipt}
-          label="Payments"
-          value={stats.paymentsCount}
-          color="purple"
-        />
-        <StatCard
-          icon={CreditCard}
-          label="Monthly Rent"
-          value={formatCurrency(stats.monthlyRent)}
-          color="orange"
-        />
-      </div>
+      <StatsGrid
+        stats={[
+          { icon: IndianRupee, label: "Total Paid", value: formatCurrency(stats.totalPaid), color: "green" },
+          { icon: TrendingUp, label: "This Year", value: formatCurrency(stats.totalPaidThisYear), color: "blue" },
+          { icon: Receipt, label: "Payments", value: stats.paymentsCount, color: "purple" },
+          { icon: CreditCard, label: "Monthly Rent", value: formatCurrency(stats.monthlyRent), color: "orange" },
+        ]}
+      />
 
       {/* Filter */}
       {years.length > 0 && (
@@ -354,16 +309,16 @@ export default function TenantPaymentsPage() {
       )}
 
       {/* Report Issue Dialog */}
-      {selectedPayment && tenantInfo && (
+      {selectedPayment && tenantContext && (
         <ReportIssueDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           fieldLabel={`Payment #${selectedPayment.receipt_number || 'N/A'}`}
           currentValue={`₹${selectedPayment.amount.toLocaleString("en-IN")} on ${formatDate(selectedPayment.payment_date)} via ${paymentMethodLabels[selectedPayment.payment_method] || selectedPayment.payment_method}`}
           approvalType="payment_dispute"
-          tenantId={tenantInfo.id}
-          workspaceId={tenantInfo.workspace_id}
-          ownerId={tenantInfo.owner_id}
+          tenantId={tenantContext.id}
+          workspaceId={tenantContext.workspace_id}
+          ownerId={tenantContext.owner_id}
         />
       )}
     </div>

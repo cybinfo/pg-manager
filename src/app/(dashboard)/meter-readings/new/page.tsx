@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users, Zap, Droplets, Plus } from "lucide-react"
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -367,8 +368,7 @@ export default function NewMeterReadingPage() {
         router.push("/meter-readings")
       }
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to record meter reading. Please try again.")
+      handleClientError(error, "Recording meter reading")
     } finally {
       setLoading(false)
     }

@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { withCreatedBy } from "@/lib/audit"
 
 // ============================================
@@ -308,8 +309,7 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
       setMemberCode("")
       onCheckIn()
     } catch (error) {
-      console.error("Check-in error:", error)
-      showError("Check-in failed. Please try again.")
+      handleClientError(error, "Library check-in")
     } finally {
       setLoading(false)
     }
@@ -497,8 +497,7 @@ function CheckOutButton({ attendanceId, memberName }: { attendanceId: string; me
       // Trigger page refresh
       window.location.reload()
     } catch (error) {
-      console.error("Check-out error:", error)
-      showError("Check-out failed. Please try again.")
+      handleClientError(error, "Library check-out")
     } finally {
       setLoading(false)
     }

@@ -26,26 +26,8 @@ import {
 import { logAuditEvent, logAuditEvents, createAuditEvent } from "./audit.service"
 import { sendNotification, sendNotifications } from "./notification.service"
 import { workflowLogger, extractErrorMeta } from "@/lib/logger"
-import { softDelete } from "@/lib/audit"
-import type { SoftDeletableTable } from "@/types/audit.types"
-
-/**
- * Set of table names that support soft delete.
- * Used in cascade effects to determine whether to soft-delete or hard-delete.
- * Must stay in sync with the SoftDeletableTable type in audit.types.ts.
- */
-const SOFT_DELETABLE_TABLES: ReadonlySet<string> = new Set<string>([
-  "tenants", "bills", "payments", "expenses", "refunds",
-  "complaints", "notices", "visitors", "meter_readings",
-  "exit_clearance", "properties", "rooms", "people",
-  "meters", "staff_members", "visitor_contacts",
-  "products", "daily_spend", "vendors", "bill_payments",
-  "service_providers", "service_payments",
-  "misc_transactions", "misc_transaction_categories",
-  "libraries", "library_sections", "library_seats",
-  "library_members", "library_memberships", "library_attendance",
-  "library_lockers", "library_locker_assignments", "library_payments",
-])
+import { softDelete, isSoftDeletableTable } from "@/lib/audit"
+import { entityTypeToTable as centralEntityTypeToTable } from "@/lib/entity-names"
 
 // ============================================
 // Workflow Context Management
@@ -396,9 +378,9 @@ async function applyCascadeEffect(effect: CascadeEffect): Promise<void> {
 
       case "delete": {
         const tableName = entityTypeToTable(effect.entity_type)
-        if (SOFT_DELETABLE_TABLES.has(tableName)) {
+        if (isSoftDeletableTable(tableName)) {
           // Use soft delete for auditable tables
-          await softDelete(tableName as SoftDeletableTable, effect.entity_id, "system")
+          await softDelete(tableName, effect.entity_id, "system")
         } else {
           // Hard delete only for non-auditable tables
           await supabase
@@ -417,27 +399,8 @@ async function applyCascadeEffect(effect: CascadeEffect): Promise<void> {
   }
 }
 
-function entityTypeToTable(entityType: string): string {
-  const mapping: Record<string, string> = {
-    tenant: "tenants",
-    property: "properties",
-    room: "rooms",
-    bill: "bills",
-    payment: "payments",
-    expense: "expenses",
-    complaint: "complaints",
-    notice: "notices",
-    visitor: "visitors",
-    staff: "staff_members",
-    exit_clearance: "exit_clearance",
-    approval: "approvals",
-    meter_reading: "meter_readings",
-    charge: "charges",
-    role: "roles",
-    workspace: "workspaces",
-  }
-  return mapping[entityType] || entityType
-}
+/** Delegates to centralized entity-names module */
+const entityTypeToTable = centralEntityTypeToTable
 
 // ============================================
 // Simple Operation Wrapper

@@ -6,10 +6,9 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useParams } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
+import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,80 +16,81 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 import { ArrowLeft, Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import type { Library as LibraryType } from "@/types/library.types"
 
 export default function EditLibraryPage() {
-  const router = useRouter()
   const params = useParams()
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [library, setLibrary] = useState<LibraryType | null>(null)
+  const id = params.id as string
 
-  const [formData, setFormData] = useState({
-    name: "",
-    code: "",
-    address: "",
-    city: "",
-    state: "",
-    pincode: "",
-    phone: "",
-    email: "",
-    opening_time: "06:00",
-    closing_time: "23:00",
-    has_ac: false,
-    has_wifi: true,
-    has_lockers: true,
-    has_parking: false,
-    is_active: true,
-  })
-
-  useEffect(() => {
-    async function fetchLibrary() {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("libraries")
-        .select("*")
-        .eq("id", params.id)
-        .single()
-
-      if (error || !data) {
-        showError("Library not found")
-        router.push("/library")
-        return
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    loading,
+    saving,
+  } = useFormEditPage({
+    table: "libraries",
+    id,
+    initialData: {
+      name: "",
+      code: "",
+      address: "",
+      city: "",
+      state: "",
+      pincode: "",
+      phone: "",
+      email: "",
+      opening_time: "06:00",
+      closing_time: "23:00",
+      has_ac: false as boolean,
+      has_wifi: true as boolean,
+      has_lockers: true as boolean,
+      has_parking: false as boolean,
+      is_active: true as boolean,
+    },
+    redirectTo: `/library/${id}`,
+    successMessage: "Library updated successfully!",
+    errorMessage: "Failed to update library",
+    mapToForm: (record) => ({
+      name: (record.name as string) || "",
+      code: (record.code as string) || "",
+      address: (record.address as string) || "",
+      city: (record.city as string) || "",
+      state: (record.state as string) || "",
+      pincode: (record.pincode as string) || "",
+      phone: (record.phone as string) || "",
+      email: (record.email as string) || "",
+      opening_time: (record.opening_time as string)?.slice(0, 5) || "06:00",
+      closing_time: (record.closing_time as string)?.slice(0, 5) || "23:00",
+      has_ac: (record.has_ac as boolean) || false,
+      has_wifi: (record.has_wifi as boolean) || true,
+      has_lockers: (record.has_lockers as boolean) || true,
+      has_parking: (record.has_parking as boolean) || false,
+      is_active: (record.is_active as boolean) !== false,
+    }),
+    validate: (data) => {
+      if (!data.name || !data.city) {
+        return "Please fill in required fields (Name, City)"
       }
-
-      setLibrary(data)
-      setFormData({
-        name: data.name || "",
-        code: data.code || "",
-        address: data.address || "",
-        city: data.city || "",
-        state: data.state || "",
-        pincode: data.pincode || "",
-        phone: data.phone || "",
-        email: data.email || "",
-        opening_time: data.opening_time?.slice(0, 5) || "06:00",
-        closing_time: data.closing_time?.slice(0, 5) || "23:00",
-        has_ac: data.has_ac || false,
-        has_wifi: data.has_wifi || true,
-        has_lockers: data.has_lockers || true,
-        has_parking: data.has_parking || false,
-        is_active: data.is_active !== false,
-      })
-      setLoading(false)
-    }
-
-    fetchLibrary()
-  }, [params.id, router])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }))
-  }
+      return null
+    },
+    transform: (data): Record<string, unknown> => ({
+      name: data.name,
+      code: data.code || null,
+      address: data.address || null,
+      city: data.city,
+      state: data.state || null,
+      pincode: data.pincode || null,
+      phone: data.phone || null,
+      email: data.email || null,
+      opening_time: data.opening_time || null,
+      closing_time: data.closing_time || null,
+      has_ac: data.has_ac,
+      has_wifi: data.has_wifi,
+      has_lockers: data.has_lockers,
+      has_parking: data.has_parking,
+      is_active: data.is_active,
+    }),
+  })
 
   const handleCheckboxChange = (name: string, checked: boolean) => {
     setFormData((prev) => ({
@@ -99,69 +99,15 @@ export default function EditLibraryPage() {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name || !formData.city) {
-      showError("Please fill in required fields (Name, City)")
-      return
-    }
-
-    setSaving(true)
-
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase
-        .from("libraries")
-        .update({
-          name: formData.name,
-          code: formData.code || null,
-          address: formData.address || null,
-          city: formData.city,
-          state: formData.state || null,
-          pincode: formData.pincode || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          opening_time: formData.opening_time || null,
-          closing_time: formData.closing_time || null,
-          has_ac: formData.has_ac,
-          has_wifi: formData.has_wifi,
-          has_lockers: formData.has_lockers,
-          has_parking: formData.has_parking,
-          is_active: formData.is_active,
-        })
-        .eq("id", params.id)
-
-      if (error) {
-        console.error("Error updating library:", error)
-        showError(`Failed to update library: ${error.message}`)
-        return
-      }
-
-      showSuccess("Library updated successfully!")
-      router.push(`/library/${params.id}`)
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to update library. Please try again.")
-    } finally {
-      setSaving(false)
-    }
-  }
-
   if (loading) {
     return <PageLoading message="Loading library..." />
-  }
-
-  if (!library) {
-    return null
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/library/${params.id}`}>
+        <Link href={`/library/${id}`}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -199,7 +145,7 @@ export default function EditLibraryPage() {
                   id="name"
                   name="name"
                   placeholder="e.g., City Study Library"
-                  value={formData.name}
+                  value={formData.name as string}
                   onChange={handleChange}
                   required
                   disabled={saving}
@@ -211,7 +157,7 @@ export default function EditLibraryPage() {
                   id="code"
                   name="code"
                   placeholder="e.g., CSL"
-                  value={formData.code}
+                  value={formData.code as string}
                   onChange={handleChange}
                   disabled={saving}
                   maxLength={10}
@@ -232,7 +178,7 @@ export default function EditLibraryPage() {
                     id="address"
                     name="address"
                     placeholder="e.g., 123, Main Street"
-                    value={formData.address}
+                    value={formData.address as string}
                     onChange={handleChange}
                     disabled={saving}
                   />
@@ -244,7 +190,7 @@ export default function EditLibraryPage() {
                       id="city"
                       name="city"
                       placeholder="e.g., Lucknow"
-                      value={formData.city}
+                      value={formData.city as string}
                       onChange={handleChange}
                       required
                       disabled={saving}
@@ -256,7 +202,7 @@ export default function EditLibraryPage() {
                       id="state"
                       name="state"
                       placeholder="e.g., Uttar Pradesh"
-                      value={formData.state}
+                      value={formData.state as string}
                       onChange={handleChange}
                       disabled={saving}
                     />
@@ -269,7 +215,7 @@ export default function EditLibraryPage() {
                       id="pincode"
                       name="pincode"
                       placeholder="e.g., 226001"
-                      value={formData.pincode}
+                      value={formData.pincode as string}
                       onChange={handleChange}
                       disabled={saving}
                       maxLength={6}
@@ -281,7 +227,7 @@ export default function EditLibraryPage() {
                       id="phone"
                       name="phone"
                       placeholder="e.g., 9876543210"
-                      value={formData.phone}
+                      value={formData.phone as string}
                       onChange={handleChange}
                       disabled={saving}
                       type="tel"
@@ -294,7 +240,7 @@ export default function EditLibraryPage() {
                     id="email"
                     name="email"
                     placeholder="e.g., library@example.com"
-                    value={formData.email}
+                    value={formData.email as string}
                     onChange={handleChange}
                     disabled={saving}
                     type="email"
@@ -316,7 +262,7 @@ export default function EditLibraryPage() {
                     id="opening_time"
                     name="opening_time"
                     type="time"
-                    value={formData.opening_time}
+                    value={formData.opening_time as string}
                     onChange={handleChange}
                     disabled={saving}
                   />
@@ -327,7 +273,7 @@ export default function EditLibraryPage() {
                     id="closing_time"
                     name="closing_time"
                     type="time"
-                    value={formData.closing_time}
+                    value={formData.closing_time as string}
                     onChange={handleChange}
                     disabled={saving}
                   />
@@ -342,7 +288,7 @@ export default function EditLibraryPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_ac"
-                    checked={formData.has_ac}
+                    checked={formData.has_ac as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_ac", checked as boolean)}
                     disabled={saving}
                   />
@@ -353,7 +299,7 @@ export default function EditLibraryPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_wifi"
-                    checked={formData.has_wifi}
+                    checked={formData.has_wifi as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_wifi", checked as boolean)}
                     disabled={saving}
                   />
@@ -365,7 +311,7 @@ export default function EditLibraryPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_lockers"
-                    checked={formData.has_lockers}
+                    checked={formData.has_lockers as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_lockers", checked as boolean)}
                     disabled={saving}
                   />
@@ -377,7 +323,7 @@ export default function EditLibraryPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_parking"
-                    checked={formData.has_parking}
+                    checked={formData.has_parking as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_parking", checked as boolean)}
                     disabled={saving}
                   />
@@ -394,7 +340,7 @@ export default function EditLibraryPage() {
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="is_active"
-                  checked={formData.is_active}
+                  checked={formData.is_active as boolean}
                   onCheckedChange={(checked) => handleCheckboxChange("is_active", checked as boolean)}
                   disabled={saving}
                 />
@@ -407,7 +353,7 @@ export default function EditLibraryPage() {
         </Card>
 
         <div className="flex justify-end gap-4 mt-6">
-          <Link href={`/library/${params.id}`}>
+          <Link href={`/library/${id}`}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>

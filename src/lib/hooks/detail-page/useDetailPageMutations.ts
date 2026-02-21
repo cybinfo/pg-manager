@@ -11,7 +11,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { softDelete, cascadeSoftDelete } from "@/lib/audit"
+import { softDelete, cascadeSoftDelete, isSoftDeletableTable } from "@/lib/audit"
 import type { SoftDeletableTable } from "@/types/audit.types"
 import type { DetailPageConfig } from "./types"
 
@@ -151,21 +151,13 @@ export function useDetailPageMutations<T extends object>(
           return false
         }
 
-        // Tables that support soft delete
-        const softDeletableTables: SoftDeletableTable[] = [
-          'tenants', 'bills', 'payments', 'expenses', 'refunds',
-          'complaints', 'notices', 'visitors', 'meter_readings',
-          'exit_clearance', 'properties', 'rooms', 'people', 'meters',
-          'staff_members', 'visitor_contacts'
-        ]
-
         // Soft delete cascade records first (if they support it)
         // Note: user_roles is a join table and should be hard deleted
         const softDeletableCascades = cascadeDeletes.filter(
-          (c) => softDeletableTables.includes(c.table as SoftDeletableTable)
+          (c) => isSoftDeletableTable(c.table)
         )
         const hardDeleteCascades = cascadeDeletes.filter(
-          (c) => !softDeletableTables.includes(c.table as SoftDeletableTable)
+          (c) => !isSoftDeletableTable(c.table)
         )
 
         // Cascade soft delete for supported tables
@@ -186,10 +178,10 @@ export function useDetailPageMutations<T extends object>(
         }
 
         // Check if main table supports soft delete
-        if (softDeletableTables.includes(currentConfig.table as SoftDeletableTable)) {
+        if (isSoftDeletableTable(currentConfig.table)) {
           // Soft delete main record
           const { error } = await softDelete(
-            currentConfig.table as SoftDeletableTable,
+            currentConfig.table,
             entityId,
             user.id
           )

@@ -23,44 +23,10 @@ import {
 import { PageSkeleton } from "@/components/ui/loading"
 import { ProfileFieldRow } from "@/components/portal"
 import { ReportIssueDialog, ApprovalType } from "@/components/tenant/report-issue-dialog"
-import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDistanceToNow } from "date-fns"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
-
-interface TenantProfile {
-  id: string
-  name: string
-  phone: string
-  email: string | null
-  photo_url: string | null
-  profile_photo: string | null
-  monthly_rent: number
-  check_in_date: string
-  check_out_date: string | null
-  status: string
-  police_verification_status: string
-  agreement_signed: boolean
-  notes: string | null
-  custom_fields: Record<string, unknown> | null
-  workspace_id: string
-  owner_id: string
-  property: {
-    name: string
-    address: string | null
-    city: string
-    state: string | null
-    owner_id: string
-  }
-  room: {
-    room_number: string
-    room_type: string
-    floor: number | null
-    amenities: string[] | null
-    has_ac: boolean
-    has_attached_bathroom: boolean
-  }
-}
+import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
 interface ApprovalRequest {
   id: string
@@ -73,9 +39,7 @@ interface ApprovalRequest {
 }
 
 export default function TenantProfilePage() {
-  const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState<TenantProfile | null>(null)
-  const [userEmail, setUserEmail] = useState<string>("")
+  const { tenant, tenantContext, user, loading: tenantLoading } = useTenantPortalData()
   const [requests, setRequests] = useState<ApprovalRequest[]>([])
   const [showRequests, setShowRequests] = useState(false)
 
@@ -102,53 +66,9 @@ export default function TenantProfilePage() {
   }
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      setUserEmail(user.email || "")
-
-      const { data } = await supabase
-        .from("tenants")
-        .select(`
-          *,
-          property:properties(name, address, city, state, owner_id),
-          room:rooms(room_number, room_type, floor, amenities, has_ac, has_attached_bathroom)
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single()
-
-      if (data) {
-        // Handle Supabase array joins
-        const property = transformJoin(data.property)
-        const ownerId = property?.owner_id || data.owner_id
-
-        // Fetch workspace_id from workspaces table via owner
-        const { data: workspace } = await supabase
-          .from("workspaces")
-          .select("id")
-          .eq("owner_user_id", ownerId)
-          .single()
-
-        const transformedData = {
-          ...data,
-          property,
-          room: transformJoin(data.room),
-          owner_id: ownerId,
-          workspace_id: workspace?.id || "",
-        }
-        setProfile(transformedData)
-        // Fetch approval requests
-        fetchRequests(data.id)
-      }
-      setLoading(false)
-    }
-
-    fetchProfile()
-  }, [])
+    if (tenantLoading || !tenant) return
+    fetchRequests(tenant.id)
+  }, [tenant, tenantLoading])
 
   const openReportDialog = (label: string, value: string, type: ApprovalType) => {
     setSelectedField({ label, value, type })
@@ -156,8 +76,8 @@ export default function TenantProfilePage() {
   }
 
   const handleRequestSuccess = () => {
-    if (profile) {
-      fetchRequests(profile.id)
+    if (tenant) {
+      fetchRequests(tenant.id)
     }
   }
 
@@ -194,11 +114,11 @@ export default function TenantProfilePage() {
     }
   }
 
-  if (loading) {
+  if (tenantLoading) {
     return <PageSkeleton variant="detail" />
   }
 
-  if (!profile) {
+  if (!tenant) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -207,6 +127,8 @@ export default function TenantProfilePage() {
       </div>
     )
   }
+
+  const userEmail = user?.email || ""
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -220,18 +142,18 @@ export default function TenantProfilePage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
-            <Avatar name={profile.name} src={profile.profile_photo || profile.photo_url} size="xl" className="bg-primary text-primary-foreground" />
+            <Avatar name={tenant.name} src={tenant.profile_photo || tenant.photo_url} size="xl" className="bg-primary text-primary-foreground" />
             <div className="flex-1">
-              <h2 className="text-xl font-bold">{profile.name}</h2>
+              <h2 className="text-xl font-bold">{tenant.name}</h2>
               <p className="text-muted-foreground">
-                {profile.property.name} • Room {profile.room.room_number}
+                {tenant.property?.name || "Unknown Property"} • Room {tenant.room?.room_number || "-"}
               </p>
               <div className="flex items-center gap-2 mt-2">
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
                   <CheckCircle className="h-3 w-3" />
                   Active Tenant
                 </span>
-                {profile.agreement_signed && (
+                {tenant.agreement_signed && (
                   <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
                     <FileText className="h-3 w-3" />
                     Agreement Signed
@@ -256,26 +178,26 @@ export default function TenantProfilePage() {
             <ProfileFieldRow
               icon={User}
               label="Name"
-              value={profile.name}
-              onReport={() => openReportDialog("Name", profile.name, "name_change")}
+              value={tenant.name}
+              onReport={() => openReportDialog("Name", tenant.name, "name_change")}
             />
             <ProfileFieldRow
               icon={Phone}
               label="Phone"
-              value={profile.phone}
-              onReport={() => openReportDialog("Phone Number", profile.phone, "phone_change")}
+              value={tenant.phone}
+              onReport={() => openReportDialog("Phone Number", tenant.phone, "phone_change")}
             />
             <ProfileFieldRow
               icon={Mail}
               label="Email"
-              value={userEmail || profile.email || "Not provided"}
-              onReport={() => openReportDialog("Email", userEmail || profile.email || "", "email_change")}
+              value={userEmail || tenant.email || "Not provided"}
+              onReport={() => openReportDialog("Email", userEmail || tenant.email || "", "email_change")}
             />
           </div>
 
-          {profile.custom_fields && Object.keys(profile.custom_fields).length > 0 && (
+          {tenant.custom_fields && Object.keys(tenant.custom_fields).length > 0 && (
             <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
-              {Object.entries(profile.custom_fields).map(([key, value]) => {
+              {Object.entries(tenant.custom_fields).map(([key, value]) => {
                 if (!value) return null
                 const label = key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
                 return (
@@ -315,13 +237,13 @@ export default function TenantProfilePage() {
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">Check-in Date</p>
-                <p className="font-medium">{formatDate(profile.check_in_date)}</p>
+                <p className="font-medium">{formatDate(tenant.check_in_date)}</p>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                onClick={() => openReportDialog("Check-in Date", formatDate(profile.check_in_date), "tenancy_issue")}
+                onClick={() => openReportDialog("Check-in Date", formatDate(tenant.check_in_date), "tenancy_issue")}
                 title="Report issue with check-in date"
               >
                 <Flag className="h-4 w-4" />
@@ -330,13 +252,13 @@ export default function TenantProfilePage() {
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">Monthly Rent</p>
-                <p className="font-medium text-lg">₹{profile.monthly_rent.toLocaleString("en-IN")}</p>
+                <p className="font-medium text-lg">₹{tenant.monthly_rent.toLocaleString("en-IN")}</p>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                onClick={() => openReportDialog("Monthly Rent", `₹${profile.monthly_rent.toLocaleString("en-IN")}`, "tenancy_issue")}
+                onClick={() => openReportDialog("Monthly Rent", `₹${tenant.monthly_rent.toLocaleString("en-IN")}`, "tenancy_issue")}
                 title="Report issue with monthly rent"
               >
                 <Flag className="h-4 w-4" />
@@ -345,13 +267,13 @@ export default function TenantProfilePage() {
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-sm text-muted-foreground">Police Verification</p>
               <div className="mt-1">
-                {getVerificationBadge(profile.police_verification_status)}
+                {getVerificationBadge(tenant.police_verification_status)}
               </div>
             </div>
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-sm text-muted-foreground">Agreement Status</p>
               <div className="mt-1">
-                {profile.agreement_signed ? (
+                {tenant.agreement_signed ? (
                   <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
                     <CheckCircle className="h-3 w-3" />
                     Signed
@@ -379,115 +301,117 @@ export default function TenantProfilePage() {
         <CardContent className="space-y-4">
           {/* Property */}
           <div className="p-4 border rounded-lg">
-            <h4 className="font-medium mb-2">{profile.property.name}</h4>
+            <h4 className="font-medium mb-2">{tenant.property?.name || "Unknown Property"}</h4>
             <div className="flex items-start gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
               <p>
-                {profile.property.address && `${profile.property.address}, `}
-                {profile.property.city}
-                {profile.property.state && `, ${profile.property.state}`}
+                {tenant.property?.address && `${tenant.property.address}, `}
+                {tenant.property?.city || ""}
+                {tenant.property?.state && `, ${tenant.property.state}`}
               </p>
             </div>
           </div>
 
           {/* Room */}
-          <div className="p-4 border rounded-lg">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                Room {profile.room.room_number}
-              </h4>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground capitalize">
-                  {profile.room.room_type || "Standard"}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                  onClick={() => openReportDialog(
-                    "Room Assignment",
-                    `Room ${profile.room.room_number} (${profile.room.room_type || "Standard"})`,
-                    "room_issue"
-                  )}
-                  title="Report issue with room assignment"
-                >
-                  <Flag className="h-3.5 w-3.5" />
-                </Button>
+          {tenant.room && (
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Home className="h-4 w-4" />
+                  Room {tenant.room.room_number}
+                </h4>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground capitalize">
+                    {tenant.room.room_type || "Standard"}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                    onClick={() => openReportDialog(
+                      "Room Assignment",
+                      `Room ${tenant.room!.room_number} (${tenant.room!.room_type || "Standard"})`,
+                      "room_issue"
+                    )}
+                    title="Report issue with room assignment"
+                  >
+                    <Flag className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-              {profile.room.floor !== null && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                {tenant.room.floor !== null && tenant.room.floor !== undefined && (
+                  <div className="p-2 bg-muted rounded text-center relative group">
+                    <p className="text-muted-foreground text-xs">Floor</p>
+                    <p className="font-medium">{tenant.room.floor}</p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => openReportDialog("Floor", String(tenant.room!.floor), "room_issue")}
+                      title="Report issue with floor"
+                    >
+                      <Flag className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
                 <div className="p-2 bg-muted rounded text-center relative group">
-                  <p className="text-muted-foreground text-xs">Floor</p>
-                  <p className="font-medium">{profile.room.floor}</p>
+                  <p className="text-muted-foreground text-xs">AC</p>
+                  <p className="font-medium">{tenant.room.has_ac ? "Yes" : "No"}</p>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => openReportDialog("Floor", String(profile.room.floor), "room_issue")}
-                    title="Report issue with floor"
+                    onClick={() => openReportDialog("AC Status", tenant.room!.has_ac ? "Yes" : "No", "room_issue")}
+                    title="Report issue with AC status"
                   >
                     <Flag className="h-3 w-3" />
                   </Button>
                 </div>
-              )}
-              <div className="p-2 bg-muted rounded text-center relative group">
-                <p className="text-muted-foreground text-xs">AC</p>
-                <p className="font-medium">{profile.room.has_ac ? "Yes" : "No"}</p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => openReportDialog("AC Status", profile.room.has_ac ? "Yes" : "No", "room_issue")}
-                  title="Report issue with AC status"
-                >
-                  <Flag className="h-3 w-3" />
-                </Button>
-              </div>
-              <div className="p-2 bg-muted rounded text-center relative group">
-                <p className="text-muted-foreground text-xs">Attached Bath</p>
-                <p className="font-medium">{profile.room.has_attached_bathroom ? "Yes" : "No"}</p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => openReportDialog("Attached Bathroom", profile.room.has_attached_bathroom ? "Yes" : "No", "room_issue")}
-                  title="Report issue with attached bathroom"
-                >
-                  <Flag className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-
-            {profile.room.amenities && profile.room.amenities.length > 0 && (
-              <div className="mt-4 relative group">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground mb-2">Amenities</p>
+                <div className="p-2 bg-muted rounded text-center relative group">
+                  <p className="text-muted-foreground text-xs">Attached Bath</p>
+                  <p className="font-medium">{tenant.room.has_attached_bathroom ? "Yes" : "No"}</p>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => openReportDialog("Amenities", profile.room.amenities?.join(", ") || "", "room_issue")}
-                    title="Report issue with amenities"
+                    className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => openReportDialog("Attached Bathroom", tenant.room!.has_attached_bathroom ? "Yes" : "No", "room_issue")}
+                    title="Report issue with attached bathroom"
                   >
                     <Flag className="h-3 w-3" />
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {profile.room.amenities.map((amenity) => (
-                    <span
-                      key={amenity}
-                      className="px-2 py-1 bg-primary/10 text-primary rounded text-xs"
-                    >
-                      {amenity}
-                    </span>
-                  ))}
-                </div>
               </div>
-            )}
-          </div>
+
+              {tenant.room.amenities && tenant.room.amenities.length > 0 && (
+                <div className="mt-4 relative group">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground mb-2">Amenities</p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => openReportDialog("Amenities", tenant.room!.amenities?.join(", ") || "", "room_issue")}
+                      title="Report issue with amenities"
+                    >
+                      <Flag className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {tenant.room.amenities.map((amenity) => (
+                      <span
+                        key={amenity}
+                        className="px-2 py-1 bg-primary/10 text-primary rounded text-xs"
+                      >
+                        {amenity}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -568,16 +492,16 @@ export default function TenantProfilePage() {
       </Card>
 
       {/* Report Issue Dialog */}
-      {selectedField && profile.owner_id && (
+      {selectedField && tenantContext && (
         <ReportIssueDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           fieldLabel={selectedField.label}
           currentValue={selectedField.value}
           approvalType={selectedField.type}
-          tenantId={profile.id}
-          workspaceId={profile.workspace_id}
-          ownerId={profile.owner_id}
+          tenantId={tenantContext.id}
+          workspaceId={tenantContext.workspace_id}
+          ownerId={tenantContext.owner_id}
           onSuccess={handleRequestSuccess}
         />
       )}

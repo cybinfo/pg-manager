@@ -7,10 +7,9 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,62 +17,37 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { TIME_SLOTS } from "@/types/library.types"
-import { withCreatedBy } from "@/lib/audit"
 
 export default function NewLibraryPlanPage() {
-  const router = useRouter()
-  const { user, workspaceId } = useAuthContext()
-  const [loading, setLoading] = useState(false)
-
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    hours_included: "",
-    validity_days: "30",
-    base_price: "",
-    allowed_slots: [] as string[],
-    is_active: true,
-    sort_order: "0",
-  })
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }))
-  }
-
-  const handleSlotChange = (slot: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      allowed_slots: checked
-        ? [...prev.allowed_slots, slot]
-        : prev.allowed_slots.filter((s) => s !== slot),
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name || !formData.base_price || !formData.validity_days) {
-      showError("Please fill in required fields (Name, Price, Validity)")
-      return
-    }
-
-    if (!user || !workspaceId) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    saving,
+    user, workspaceId,
+  } = useFormPage({
+    table: "library_plans",
+    initialData: {
+      name: "",
+      description: "",
+      hours_included: "",
+      validity_days: "30",
+      base_price: "",
+      allowed_slots: [] as string[],
+      is_active: true as boolean,
+      sort_order: "0",
+    },
+    redirectTo: "/library-plans",
+    successMessage: "Plan created successfully!",
+    errorMessage: "Failed to create plan",
+    validate: (data) => {
+      if (!data.name || !data.base_price || !data.validity_days) {
+        return "Please fill in required fields (Name, Price, Validity)"
+      }
+      return null
+    },
+    customSubmit: async (data, userId, supabase) => {
       // Get owner_id from workspace
       const { data: workspace } = await supabase
         .from("workspaces")
@@ -82,43 +56,42 @@ export default function NewLibraryPlanPage() {
         .single()
 
       if (!workspace) {
-        showError("Workspace not found")
-        setLoading(false)
-        return
+        throw new Error("Workspace not found")
       }
+
+      const { withCreatedBy } = await import("@/lib/audit")
 
       const planData = withCreatedBy(
         {
           owner_id: workspace.owner_user_id,
           workspace_id: workspaceId,
-          name: formData.name,
-          description: formData.description || null,
-          hours_included: formData.hours_included ? Number(formData.hours_included) : null,
-          validity_days: Number(formData.validity_days),
-          base_price: Number(formData.base_price),
-          allowed_slots: formData.allowed_slots.length > 0 ? formData.allowed_slots : null,
-          is_active: formData.is_active,
-          sort_order: Number(formData.sort_order) || 0,
+          name: data.name,
+          description: data.description || null,
+          hours_included: data.hours_included ? Number(data.hours_included) : null,
+          validity_days: Number(data.validity_days),
+          base_price: Number(data.base_price),
+          allowed_slots: (data.allowed_slots as string[]).length > 0 ? data.allowed_slots : null,
+          is_active: data.is_active,
+          sort_order: Number(data.sort_order) || 0,
         },
-        user.id
+        userId
       )
 
       const { error } = await supabase.from("library_plans").insert(planData)
 
       if (error) {
-        console.error("Error creating plan:", error)
-        showError(`Failed to create plan: ${error.message}`)
-        return
+        throw new Error(error.message)
       }
+    },
+  })
 
-      showSuccess("Plan created successfully!")
-      router.push("/library-plans")
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to create plan. Please try again.")
-    } finally {
-      setLoading(false)
-    }
+  const handleSlotChange = (slot: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      allowed_slots: checked
+        ? [...(prev.allowed_slots as string[]), slot]
+        : (prev.allowed_slots as string[]).filter((s: string) => s !== slot),
+    }))
   }
 
   return (
@@ -163,10 +136,10 @@ export default function NewLibraryPlanPage() {
                   id="name"
                   name="name"
                   placeholder="e.g., 9 Hours, Monthly"
-                  value={formData.name}
+                  value={formData.name as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -176,10 +149,10 @@ export default function NewLibraryPlanPage() {
                   name="base_price"
                   type="number"
                   placeholder="e.g., 1000"
-                  value={formData.base_price}
+                  value={formData.base_price as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                   min={0}
                   step="0.01"
                 />
@@ -192,9 +165,9 @@ export default function NewLibraryPlanPage() {
                 id="description"
                 name="description"
                 placeholder="Brief description of the plan..."
-                value={formData.description}
+                value={formData.description as string}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 rows={2}
               />
             </div>
@@ -207,9 +180,9 @@ export default function NewLibraryPlanPage() {
                   name="hours_included"
                   type="number"
                   placeholder="Leave empty for unlimited"
-                  value={formData.hours_included}
+                  value={formData.hours_included as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   min={1}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -223,10 +196,10 @@ export default function NewLibraryPlanPage() {
                   name="validity_days"
                   type="number"
                   placeholder="e.g., 30"
-                  value={formData.validity_days}
+                  value={formData.validity_days as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                   min={1}
                 />
               </div>
@@ -243,9 +216,9 @@ export default function NewLibraryPlanPage() {
                   <div key={slot.value} className="flex items-center space-x-2">
                     <Checkbox
                       id={`slot-${slot.value}`}
-                      checked={formData.allowed_slots.includes(slot.value)}
+                      checked={(formData.allowed_slots as string[]).includes(slot.value)}
                       onCheckedChange={(checked) => handleSlotChange(slot.value, checked as boolean)}
-                      disabled={loading}
+                      disabled={saving}
                     />
                     <Label htmlFor={`slot-${slot.value}`} className="cursor-pointer text-sm">
                       {slot.label}
@@ -265,18 +238,18 @@ export default function NewLibraryPlanPage() {
                     name="sort_order"
                     type="number"
                     placeholder="e.g., 0, 1, 2"
-                    value={formData.sort_order}
+                    value={formData.sort_order as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                   />
                 </div>
                 <div className="flex items-center space-x-2 pt-8">
                   <Checkbox
                     id="is_active"
-                    checked={formData.is_active}
+                    checked={formData.is_active as boolean}
                     onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked as boolean }))}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="is_active" className="cursor-pointer">
                     Plan is active
@@ -289,12 +262,12 @@ export default function NewLibraryPlanPage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href="/library-plans">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

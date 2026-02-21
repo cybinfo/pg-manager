@@ -24,6 +24,7 @@ import { formatCurrency } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { PermissionGuard } from "@/components/auth"
 
 interface Tenant {
@@ -197,8 +198,7 @@ export default function NewRefundPage() {
         router.push("/refunds")
       }
     } catch (err) {
-      console.error("Error:", err)
-      showError("An error occurred")
+      handleClientError(err, "Creating refund")
     } finally {
       setSubmitting(false)
     }

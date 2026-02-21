@@ -7,10 +7,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,8 +17,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
 import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { withCreatedBy } from "@/lib/audit"
 
 interface Library {
   id: string
@@ -28,25 +25,89 @@ interface Library {
 }
 
 export default function NewLibrarySectionPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { user, workspaceId } = useAuthContext()
-  const [loading, setLoading] = useState(false)
   const [libraries, setLibraries] = useState<Library[]>([])
   const [loadingLibraries, setLoadingLibraries] = useState(true)
 
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    saving,
+    searchParams,
+    workspaceId,
+  } = useFormPage({
+    table: "library_sections",
+    initialData: {
+      library_id: "",
+      name: "",
+      section_number: "",
+      floor: 0,
+      is_ac: false,
+      has_power_outlets: true,
+      hourly_rate: "",
+      monthly_rate: "",
+    },
+    preSelectFields: ["library"],
+    redirectTo: "/library-sections",
+    successMessage: "Section created successfully!",
+    errorMessage: "Failed to create section",
+    validate: (data) => {
+      if (!data.library_id || !data.name) {
+        return "Please select a library and enter section name"
+      }
+      return null
+    },
+    customSubmit: async (data, userId, supabase): Promise<string | void> => {
+      // Get library's owner_id
+      const { data: library } = await supabase
+        .from("libraries")
+        .select("owner_id")
+        .eq("id", data.library_id)
+        .single()
+
+      if (!library) {
+        throw new Error("Library not found")
+      }
+
+      const { withCreatedBy } = await import("@/lib/audit")
+
+      const sectionData = withCreatedBy({
+        owner_id: library.owner_id,
+        workspace_id: workspaceId,
+        library_id: data.library_id,
+        name: data.name,
+        section_number: data.section_number || null,
+        floor: data.floor || 0,
+        is_ac: data.is_ac,
+        has_power_outlets: data.has_power_outlets,
+        hourly_rate: data.hourly_rate ? Number(data.hourly_rate) : null,
+        monthly_rate: data.monthly_rate ? Number(data.monthly_rate) : null,
+      }, userId)
+
+      const { error } = await supabase.from("library_sections").insert(sectionData)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      // Redirect to library detail if came from there
+      if (data.library_id && typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search)
+        if (urlParams.get("library")) {
+          return `/library/${data.library_id}`
+        }
+      }
+    },
+  })
+
   const preselectedLibrary = searchParams.get("library")
 
-  const [formData, setFormData] = useState({
-    library_id: preselectedLibrary || "",
-    name: "",
-    section_number: "",
-    floor: 0,
-    is_ac: false,
-    has_power_outlets: true,
-    hourly_rate: "",
-    monthly_rate: "",
-  })
+  // Pre-fill library_id from URL param (mapped from "library" to "library_id")
+  useEffect(() => {
+    if (preselectedLibrary && !formData.library_id) {
+      setFormData((prev) => ({ ...prev, library_id: preselectedLibrary }))
+    }
+  }, [preselectedLibrary, formData.library_id, setFormData])
 
   useEffect(() => {
     async function fetchLibraries() {
@@ -67,87 +128,11 @@ export default function NewLibrarySectionPage() {
     fetchLibraries()
   }, [])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : type === "number" ? (value === "" ? "" : Number(value)) : value,
-    }))
-  }
-
   const handleCheckboxChange = (name: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
       [name]: checked,
     }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.library_id || !formData.name) {
-      showError("Please select a library and enter section name")
-      return
-    }
-
-    if (!user || !workspaceId) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      // Get library's owner_id
-      const { data: library } = await supabase
-        .from("libraries")
-        .select("owner_id")
-        .eq("id", formData.library_id)
-        .single()
-
-      if (!library) {
-        showError("Library not found")
-        setLoading(false)
-        return
-      }
-
-      const sectionData = withCreatedBy({
-        owner_id: library.owner_id,
-        workspace_id: workspaceId,
-        library_id: formData.library_id,
-        name: formData.name,
-        section_number: formData.section_number || null,
-        floor: formData.floor || 0,
-        is_ac: formData.is_ac,
-        has_power_outlets: formData.has_power_outlets,
-        hourly_rate: formData.hourly_rate ? Number(formData.hourly_rate) : null,
-        monthly_rate: formData.monthly_rate ? Number(formData.monthly_rate) : null,
-      }, user.id)
-
-      const { error } = await supabase.from("library_sections").insert(sectionData)
-
-      if (error) {
-        console.error("Error creating section:", error)
-        showError(`Failed to create section: ${error.message}`)
-        return
-      }
-
-      showSuccess("Section created successfully!")
-
-      if (preselectedLibrary) {
-        router.push(`/library/${preselectedLibrary}`)
-      } else {
-        router.push("/library-sections")
-      }
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to create section. Please try again.")
-    } finally {
-      setLoading(false)
-    }
   }
 
   const libraryOptions = libraries.map((lib) => ({
@@ -194,12 +179,12 @@ export default function NewLibrarySectionPage() {
               <Label>Library *</Label>
               <Combobox
                 options={libraryOptions}
-                value={formData.library_id}
+                value={formData.library_id as string}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, library_id: value }))}
                 placeholder="Select a library..."
                 searchPlaceholder="Search libraries..."
                 emptyText="No libraries found"
-                disabled={loading || loadingLibraries || !!preselectedLibrary}
+                disabled={saving || loadingLibraries || !!preselectedLibrary}
               />
             </div>
 
@@ -211,10 +196,10 @@ export default function NewLibrarySectionPage() {
                   id="name"
                   name="name"
                   placeholder="e.g., AC Hall, Silent Zone"
-                  value={formData.name}
+                  value={formData.name as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -223,9 +208,9 @@ export default function NewLibrarySectionPage() {
                   id="section_number"
                   name="section_number"
                   placeholder="e.g., A, B, C"
-                  value={formData.section_number}
+                  value={formData.section_number as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   maxLength={10}
                 />
               </div>
@@ -238,9 +223,9 @@ export default function NewLibrarySectionPage() {
                 name="floor"
                 type="number"
                 placeholder="e.g., 0, 1, 2"
-                value={formData.floor}
+                value={formData.floor as number}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 min={0}
               />
             </div>
@@ -252,9 +237,9 @@ export default function NewLibrarySectionPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="is_ac"
-                    checked={formData.is_ac}
+                    checked={formData.is_ac as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("is_ac", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="is_ac" className="cursor-pointer">
                     Air Conditioned
@@ -263,9 +248,9 @@ export default function NewLibrarySectionPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_power_outlets"
-                    checked={formData.has_power_outlets}
+                    checked={formData.has_power_outlets as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_power_outlets", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_power_outlets" className="cursor-pointer">
                     Power Outlets
@@ -285,9 +270,9 @@ export default function NewLibrarySectionPage() {
                     name="hourly_rate"
                     type="number"
                     placeholder="e.g., 50"
-                    value={formData.hourly_rate}
+                    value={formData.hourly_rate as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                     step="0.01"
                   />
@@ -299,9 +284,9 @@ export default function NewLibrarySectionPage() {
                     name="monthly_rate"
                     type="number"
                     placeholder="e.g., 1000"
-                    value={formData.monthly_rate}
+                    value={formData.monthly_rate as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                     step="0.01"
                   />
@@ -313,12 +298,12 @@ export default function NewLibrarySectionPage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href={preselectedLibrary ? `/library/${preselectedLibrary}` : "/library-sections"}>
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

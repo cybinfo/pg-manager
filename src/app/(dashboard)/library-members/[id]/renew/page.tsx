@@ -19,6 +19,7 @@ import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2, Clock, RefreshCw } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
 import { TIME_SLOTS } from "@/types/library.types"
@@ -266,8 +267,7 @@ export default function RenewLibraryMemberPage({
       showSuccess(`Subscription renewed! Added ${hoursToAdd}h to balance.`)
       router.push(`/library-members/${id}`)
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to renew subscription. Please try again.")
+      handleClientError(error, "Renewing subscription")
     } finally {
       setLoading(false)
     }

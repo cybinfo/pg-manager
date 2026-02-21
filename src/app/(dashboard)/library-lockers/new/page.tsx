@@ -7,10 +7,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,8 +17,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { withCreatedBy } from "@/lib/audit"
 
 interface Library {
   id: string
@@ -28,24 +25,87 @@ interface Library {
 }
 
 export default function NewLibraryLockerPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { user, workspaceId } = useAuthContext()
-  const [loading, setLoading] = useState(false)
   const [libraries, setLibraries] = useState<Library[]>([])
   const [loadingLibraries, setLoadingLibraries] = useState(true)
 
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    saving,
+    searchParams,
+    workspaceId,
+  } = useFormPage({
+    table: "library_lockers",
+    initialData: {
+      library_id: "",
+      locker_number: "",
+      size: "medium",
+      floor: 0,
+      section: "",
+      monthly_rent: "",
+      deposit_amount: "",
+    },
+    redirectTo: "/library-lockers",
+    successMessage: "Locker created successfully!",
+    errorMessage: "Failed to create locker",
+    validate: (data) => {
+      if (!data.library_id || !data.locker_number) {
+        return "Please fill in required fields (Library, Locker Number)"
+      }
+      return null
+    },
+    customSubmit: async (data, userId, supabase): Promise<string | void> => {
+      // Get library's owner_id
+      const { data: library } = await supabase
+        .from("libraries")
+        .select("owner_id")
+        .eq("id", data.library_id)
+        .single()
+
+      if (!library) {
+        throw new Error("Library not found")
+      }
+
+      const { withCreatedBy } = await import("@/lib/audit")
+
+      const lockerData = withCreatedBy({
+        owner_id: library.owner_id,
+        workspace_id: workspaceId,
+        library_id: data.library_id,
+        locker_number: data.locker_number,
+        size: data.size,
+        floor: data.floor || 0,
+        section: data.section || null,
+        monthly_rent: data.monthly_rent ? Number(data.monthly_rent) : null,
+        deposit_amount: data.deposit_amount ? Number(data.deposit_amount) : null,
+        status: "available",
+      }, userId)
+
+      const { error } = await supabase.from("library_lockers").insert(lockerData)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      // Redirect to library detail if came from there
+      if (data.library_id && typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search)
+        if (urlParams.get("library")) {
+          return `/library/${data.library_id}`
+        }
+      }
+    },
+  })
+
   const preselectedLibrary = searchParams.get("library")
 
-  const [formData, setFormData] = useState({
-    library_id: preselectedLibrary || "",
-    locker_number: "",
-    size: "medium",
-    floor: 0,
-    section: "",
-    monthly_rent: "",
-    deposit_amount: "",
-  })
+  // Pre-fill library_id from URL param
+  useEffect(() => {
+    if (preselectedLibrary && !formData.library_id) {
+      setFormData((prev) => ({ ...prev, library_id: preselectedLibrary }))
+    }
+  }, [preselectedLibrary, formData.library_id, setFormData])
 
   useEffect(() => {
     async function fetchLibraries() {
@@ -65,82 +125,6 @@ export default function NewLibraryLockerPage() {
 
     fetchLibraries()
   }, [])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.library_id || !formData.locker_number) {
-      showError("Please fill in required fields (Library, Locker Number)")
-      return
-    }
-
-    if (!user || !workspaceId) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      // Get library's owner_id
-      const { data: library } = await supabase
-        .from("libraries")
-        .select("owner_id")
-        .eq("id", formData.library_id)
-        .single()
-
-      if (!library) {
-        showError("Library not found")
-        setLoading(false)
-        return
-      }
-
-      const lockerData = withCreatedBy({
-        owner_id: library.owner_id,
-        workspace_id: workspaceId,
-        library_id: formData.library_id,
-        locker_number: formData.locker_number,
-        size: formData.size,
-        floor: formData.floor || 0,
-        section: formData.section || null,
-        monthly_rent: formData.monthly_rent ? Number(formData.monthly_rent) : null,
-        deposit_amount: formData.deposit_amount ? Number(formData.deposit_amount) : null,
-        status: "available",
-      }, user.id)
-
-      const { error } = await supabase.from("library_lockers").insert(lockerData)
-
-      if (error) {
-        console.error("Error creating locker:", error)
-        showError(`Failed to create locker: ${error.message}`)
-        return
-      }
-
-      showSuccess("Locker created successfully!")
-
-      if (preselectedLibrary) {
-        router.push(`/library/${preselectedLibrary}`)
-      } else {
-        router.push("/library-lockers")
-      }
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to create locker. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const libraryOptions = libraries.map((lib) => ({
     value: lib.id,
@@ -186,12 +170,12 @@ export default function NewLibraryLockerPage() {
               <Label>Library *</Label>
               <Combobox
                 options={libraryOptions}
-                value={formData.library_id}
+                value={formData.library_id as string}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, library_id: value }))}
                 placeholder="Select a library..."
                 searchPlaceholder="Search libraries..."
                 emptyText="No libraries found"
-                disabled={loading || loadingLibraries || !!preselectedLibrary}
+                disabled={saving || loadingLibraries || !!preselectedLibrary}
               />
             </div>
 
@@ -203,19 +187,19 @@ export default function NewLibraryLockerPage() {
                   id="locker_number"
                   name="locker_number"
                   placeholder="e.g., L-001"
-                  value={formData.locker_number}
+                  value={formData.locker_number as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="size">Size</Label>
                 <Select
-                  value={formData.size}
+                  value={formData.size as string}
                   onChange={handleChange}
                   name="size"
-                  disabled={loading}
+                  disabled={saving}
                   options={[
                     { value: "small", label: "Small" },
                     { value: "medium", label: "Medium" },
@@ -233,9 +217,9 @@ export default function NewLibraryLockerPage() {
                   name="floor"
                   type="number"
                   placeholder="e.g., 0, 1, 2"
-                  value={formData.floor}
+                  value={formData.floor as number}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   min={0}
                 />
               </div>
@@ -245,9 +229,9 @@ export default function NewLibraryLockerPage() {
                   id="section"
                   name="section"
                   placeholder="e.g., A, Main Hall"
-                  value={formData.section}
+                  value={formData.section as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
             </div>
@@ -263,9 +247,9 @@ export default function NewLibraryLockerPage() {
                     name="monthly_rent"
                     type="number"
                     placeholder="e.g., 200"
-                    value={formData.monthly_rent}
+                    value={formData.monthly_rent as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                     step="0.01"
                   />
@@ -277,9 +261,9 @@ export default function NewLibraryLockerPage() {
                     name="deposit_amount"
                     type="number"
                     placeholder="e.g., 500"
-                    value={formData.deposit_amount}
+                    value={formData.deposit_amount as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                     step="0.01"
                   />
@@ -291,12 +275,12 @@ export default function NewLibraryLockerPage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href={preselectedLibrary ? `/library/${preselectedLibrary}` : "/library-lockers"}>
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

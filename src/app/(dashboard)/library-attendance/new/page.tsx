@@ -7,10 +7,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,9 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
-import { withCreatedBy } from "@/lib/audit"
 import { transformJoin } from "@/lib/supabase/transforms"
 
 interface MemberOption {
@@ -48,11 +45,6 @@ interface SeatOption {
 }
 
 export default function NewLibraryAttendancePage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const preselectedMember = searchParams.get("member")
-  const { user, workspaceId } = useAuthContext()
-  const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [members, setMembers] = useState<MemberOption[]>([])
   const [libraries, setLibraries] = useState<LibraryOption[]>([])
@@ -60,13 +52,122 @@ export default function NewLibraryAttendancePage() {
   const [loadingSeats, setLoadingSeats] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberOption | null>(null)
 
-  const [formData, setFormData] = useState({
-    member_id: preselectedMember || "",
-    library_id: "",
-    seat_id: "",
-    check_in_time: new Date().toISOString().slice(0, 16), // datetime-local format
-    notes: "",
+  const {
+    formData, setFormData,
+    handleSubmit,
+    saving,
+    searchParams,
+    workspaceId,
+  } = useFormPage({
+    table: "library_attendance",
+    initialData: {
+      member_id: "",
+      library_id: "",
+      seat_id: "",
+      check_in_time: new Date().toISOString().slice(0, 16),
+      notes: "",
+    },
+    redirectTo: "/library-attendance",
+    successMessage: "Checked in successfully!",
+    errorMessage: "Failed to check in",
+    validate: (data) => {
+      if (!data.member_id) {
+        return "Please select a member"
+      }
+      if (!selectedMember) {
+        return "Member not found"
+      }
+      if (selectedMember.hours_balance <= 0) {
+        return "Member has no hours remaining. Please renew subscription first."
+      }
+      return null
+    },
+    customSubmit: async (data, userId, supabase): Promise<string | void> => {
+      if (!selectedMember) {
+        throw new Error("Member not found")
+      }
+
+      // Get owner_id from workspace
+      const { data: workspace } = await supabase
+        .from("workspaces")
+        .select("owner_user_id")
+        .eq("id", workspaceId)
+        .single()
+
+      if (!workspace) {
+        throw new Error("Workspace not found")
+      }
+
+      // Check if member already has an active check-in (no check-out)
+      const { data: activeCheckIn } = await supabase
+        .from("library_attendance")
+        .select("id")
+        .eq("member_id", data.member_id)
+        .is("check_out_time", null)
+        .is("deleted_at", null)
+        .single()
+
+      if (activeCheckIn) {
+        throw new Error("Member already has an active check-in. Please check out first.")
+      }
+
+      const { withCreatedBy } = await import("@/lib/audit")
+
+      // Create attendance record
+      const checkInTime = new Date(data.check_in_time as string).toISOString()
+      const attendanceDate = (data.check_in_time as string).split("T")[0]
+
+      const attendanceData = withCreatedBy(
+        {
+          owner_id: workspace.owner_user_id,
+          workspace_id: workspaceId,
+          member_id: data.member_id,
+          membership_id: selectedMember.current_subscription_id,
+          attendance_date: attendanceDate,
+          check_in_time: checkInTime,
+          seat_id: data.seat_id || null,
+          notes: data.notes || null,
+        },
+        userId
+      )
+
+      const { data: newAttendance, error } = await supabase
+        .from("library_attendance")
+        .insert(attendanceData)
+        .select()
+        .single()
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      // If seat was assigned, update seat status to occupied
+      if (data.seat_id) {
+        const { error: seatError } = await supabase
+          .from("library_seats")
+          .update({
+            status: "occupied",
+            current_member_id: data.member_id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", data.seat_id)
+
+        if (seatError) {
+          console.error("Error updating seat status:", seatError)
+          // Don't fail the check-in, just log the error
+        }
+      }
+
+      const selectedSeat = seats.find(s => s.id === data.seat_id)
+      const seatInfo = selectedSeat ? ` at seat ${selectedSeat.seat_number}` : ""
+      const { showSuccess } = await import("@/lib/toast-helpers")
+      showSuccess(`${selectedMember.name} checked in${seatInfo} successfully!`)
+
+      return `/library-attendance/${newAttendance.id}`
+    },
   })
+
+  const preselectedMember = searchParams.get("member")
 
   useEffect(() => {
     async function fetchData() {
@@ -113,7 +214,7 @@ export default function NewLibraryAttendancePage() {
     }
 
     fetchData()
-  }, [workspaceId, preselectedMember])
+  }, [workspaceId, preselectedMember, setFormData])
 
   // Fetch available seats for a library
   const fetchAvailableSeats = async (libraryId: string) => {
@@ -185,122 +286,6 @@ export default function NewLibraryAttendancePage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.member_id) {
-      showError("Please select a member")
-      return
-    }
-
-    if (!selectedMember) {
-      showError("Member not found")
-      return
-    }
-
-    if (selectedMember.hours_balance <= 0) {
-      showError("Member has no hours remaining. Please renew subscription first.")
-      return
-    }
-
-    if (!user || !workspaceId) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      // Get owner_id from workspace
-      const { data: workspace } = await supabase
-        .from("workspaces")
-        .select("owner_user_id")
-        .eq("id", workspaceId)
-        .single()
-
-      if (!workspace) {
-        showError("Workspace not found")
-        setLoading(false)
-        return
-      }
-
-      // Check if member already has an active check-in (no check-out)
-      const { data: activeCheckIn } = await supabase
-        .from("library_attendance")
-        .select("id")
-        .eq("member_id", formData.member_id)
-        .is("check_out_time", null)
-        .is("deleted_at", null)
-        .single()
-
-      if (activeCheckIn) {
-        showError("Member already has an active check-in. Please check out first.")
-        setLoading(false)
-        return
-      }
-
-      // Create attendance record
-      const checkInTime = new Date(formData.check_in_time).toISOString()
-      const attendanceDate = formData.check_in_time.split("T")[0]
-
-      const attendanceData = withCreatedBy(
-        {
-          owner_id: workspace.owner_user_id,
-          workspace_id: workspaceId,
-          member_id: formData.member_id,
-          membership_id: selectedMember.current_subscription_id,
-          attendance_date: attendanceDate,
-          check_in_time: checkInTime,
-          seat_id: formData.seat_id || null,
-          notes: formData.notes || null,
-        },
-        user.id
-      )
-
-      const { data: newAttendance, error } = await supabase
-        .from("library_attendance")
-        .insert(attendanceData)
-        .select()
-        .single()
-
-      if (error) {
-        console.error("Error creating attendance:", error)
-        showError(`Failed to check in: ${error.message}`)
-        return
-      }
-
-      // If seat was assigned, update seat status to occupied
-      if (formData.seat_id) {
-        const { error: seatError } = await supabase
-          .from("library_seats")
-          .update({
-            status: "occupied",
-            current_member_id: formData.member_id,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", formData.seat_id)
-
-        if (seatError) {
-          console.error("Error updating seat status:", seatError)
-          // Don't fail the check-in, just log the error
-        }
-      }
-
-      const selectedSeat = seats.find(s => s.id === formData.seat_id)
-      const seatInfo = selectedSeat ? ` at seat ${selectedSeat.seat_number}` : ""
-      showSuccess(`${selectedMember.name} checked in${seatInfo} successfully!`)
-      router.push(`/library-attendance/${newAttendance.id}`)
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to check in. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
   if (loadingData) {
     return <PageLoading message="Loading..." />
   }
@@ -350,11 +335,11 @@ export default function NewLibraryAttendancePage() {
               {members.length > 0 ? (
                 <Combobox
                   options={memberOptions}
-                  value={formData.member_id}
+                  value={formData.member_id as string}
                   onValueChange={handleMemberChange}
                   placeholder="Search for a member..."
                   emptyText="No active members found"
-                  disabled={loading}
+                  disabled={saving}
                 />
               ) : (
                 <div className="p-4 bg-muted/50 rounded-lg text-center">
@@ -424,11 +409,11 @@ export default function NewLibraryAttendancePage() {
                         value: s.id,
                         label: `${s.seat_number} - ${s.section_name}${s.is_ac ? " (AC)" : ""}${s.has_power_outlet ? " ⚡" : ""}`,
                       }))}
-                      value={formData.seat_id}
+                      value={formData.seat_id as string}
                       onValueChange={(seatId) => setFormData((prev) => ({ ...prev, seat_id: seatId }))}
                       placeholder="Select a seat..."
                       emptyText="No seats available"
-                      disabled={loading}
+                      disabled={saving}
                     />
                     <p className="text-xs text-muted-foreground">
                       {seats.length} seat{seats.length !== 1 ? "s" : ""} available
@@ -451,10 +436,10 @@ export default function NewLibraryAttendancePage() {
                 id="check_in_time"
                 name="check_in_time"
                 type="datetime-local"
-                value={formData.check_in_time}
+                value={formData.check_in_time as string}
                 onChange={(e) => setFormData((prev) => ({ ...prev, check_in_time: e.target.value }))}
                 required
-                disabled={loading}
+                disabled={saving}
               />
             </div>
 
@@ -465,9 +450,9 @@ export default function NewLibraryAttendancePage() {
                 id="notes"
                 name="notes"
                 placeholder="Any additional notes..."
-                value={formData.notes}
+                value={formData.notes as string}
                 onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                disabled={loading}
+                disabled={saving}
                 rows={2}
               />
             </div>
@@ -476,15 +461,15 @@ export default function NewLibraryAttendancePage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href="/library-attendance">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
           <Button
             type="submit"
-            disabled={loading || members.length === 0 || (selectedMember?.hours_balance ?? 0) <= 0}
+            disabled={saving || members.length === 0 || (selectedMember?.hours_balance ?? 0) <= 0}
           >
-            {loading ? (
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Checking In...

@@ -22,12 +22,14 @@ import {
   UserCheck,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { EmailInput } from "@/components/ui/form-components"
+import { handleClientError } from "@/lib/error-handler"
 import { sendInvitationEmail } from "@/lib/email"
 import { withCreatedBy, withCreatedByBatch } from "@/lib/audit"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
-import { validateIndianMobile } from "@/lib/validators"
+import { validatePhone as validateIndianMobile } from "@/lib/phone"
 
 interface Role {
   id: string
@@ -370,8 +372,7 @@ export default function NewStaffPage() {
 
       router.push("/staff")
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to add staff member. Please try again.")
+      handleClientError(error, "Adding staff member")
     } finally {
       setLoading(false)
     }
@@ -454,20 +455,15 @@ export default function NewStaffPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address *</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="staff@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    disabled={loading}
-                    className="pl-9"
-                  />
-                </div>
+                <EmailInput
+                  id="email"
+                  name="email"
+                  placeholder="staff@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
                 <p className="text-xs text-muted-foreground">
                   An invitation email will be sent to this address
                 </p>

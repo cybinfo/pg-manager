@@ -10,8 +10,8 @@
  * display-helpers handles entity data resolution with fallback chains.
  */
 
-// UTIL-003: Import phone formatter from validators for consolidation
-import { formatIndianMobile } from "./validators"
+// Phone utilities re-exported from centralized module
+import { formatPhoneDisplay } from "./phone"
 
 // ============================================
 // CURRENCY FORMATTING
@@ -185,50 +185,16 @@ export const formatMonthYear = (date: string | Date | null | undefined): string 
 }
 
 // ============================================
-// PHONE FORMATTING (UTIL-003: Consolidated with validators.ts)
+// PHONE FORMATTING (delegated to @/lib/phone)
 // ============================================
 
 /**
- * Format Indian phone number
- * UTIL-003: Delegates to formatIndianMobile for consistency
+ * Format Indian phone number for display.
+ * Re-exported from @/lib/phone for backward compatibility.
+ *
  * @example formatPhone("9876543210") => "+91 98765 43210"
  */
-export const formatPhone = (phone: string | null | undefined): string => {
-  if (!phone) return "-"
-
-  // Normalize the input: remove all non-digits first
-  const digits = phone.replace(/\D/g, "")
-
-  // Handle various formats and normalize to 10-digit form
-  let tenDigits: string | null = null
-
-  if (digits.length === 10 && /^[6-9]/.test(digits)) {
-    // Already 10 digits starting with 6-9 (valid Indian mobile)
-    tenDigits = digits
-  } else if (digits.length === 12 && digits.startsWith("91") && /^[6-9]/.test(digits.slice(2))) {
-    // 91XXXXXXXXXX format (12 digits with country code)
-    tenDigits = digits.slice(2)
-  } else if (digits.length === 11 && digits.startsWith("0") && /^[6-9]/.test(digits.slice(1))) {
-    // 0XXXXXXXXXX format (11 digits with leading zero)
-    tenDigits = digits.slice(1)
-  }
-
-  // If we extracted valid 10 digits, format them
-  if (tenDigits) {
-    return `+91 ${tenDigits.slice(0, 5)} ${tenDigits.slice(5)}`
-  }
-
-  // Fallback: try the canonical formatter
-  const formatted = formatIndianMobile(phone)
-
-  // If formatter returns something different and valid, use it
-  if (formatted && formatted !== phone) {
-    return formatted
-  }
-
-  // Return original if no formatting could be done
-  return phone
-}
+export const formatPhone = formatPhoneDisplay
 
 // ============================================
 // TEXT FORMATTING

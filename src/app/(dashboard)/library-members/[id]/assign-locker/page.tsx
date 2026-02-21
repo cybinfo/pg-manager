@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Lock, Loader2, Check, Package, AlertCircle } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
 import { Currency } from "@/components/ui/currency"
 import { withCreatedBy } from "@/lib/audit"
@@ -224,8 +225,7 @@ export default function AssignLockerToMemberPage({
       showSuccess("Locker assigned successfully!")
       router.push(`/library-members/${memberId}`)
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to assign locker. Please try again.")
+      handleClientError(error, "Assigning locker")
     } finally {
       setLoading(false)
     }

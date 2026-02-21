@@ -48,6 +48,7 @@ import {
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import {
   LIBRARY_LOCKER_STATUS_CONFIG,
   LIBRARY_LOCKER_SIZE_CONFIG,
@@ -131,8 +132,7 @@ export default function LibraryLockerDetailPage() {
       showSuccess("Locker unassigned successfully!")
       refetch()
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to unassign locker. Please try again.")
+      handleClientError(error, "Unassigning locker")
     } finally {
       setUnassigning(false)
     }

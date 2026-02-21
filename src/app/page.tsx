@@ -285,7 +285,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 relative">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, i) => (
-              <div key={i} className="text-center text-white animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
+              <div key={i} className={`text-center text-white animate-fade-in-up ${["animation-delay-0", "animation-delay-100", "animation-delay-200", "animation-delay-300"][i] || ""}`}>
                 <div className="text-3xl md:text-4xl font-bold mb-1 tabular-nums">{stat.value}</div>
                 <div className="text-teal-100 text-sm">{stat.label}</div>
               </div>

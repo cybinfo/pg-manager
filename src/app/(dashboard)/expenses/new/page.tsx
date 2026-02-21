@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,12 +12,10 @@ import {
   Loader2,
   ArrowLeft,
   Receipt,
-  Building2,
-  Calendar,
   Wallet,
   FileText,
 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
 
 interface ExpenseType {
@@ -32,149 +30,115 @@ interface Property {
 }
 
 export default function NewExpensePage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
   const [properties, setProperties] = useState<Property[]>([])
+  const [loadingData, setLoadingData] = useState(true)
 
-  const [formData, setFormData] = useState({
-    expense_type_id: "",
-    property_id: "",
-    amount: "",
-    expense_date: new Date().toISOString().split("T")[0],
-    vendor_name: "",
-    reference_number: "",
-    payment_method: "cash",
-    description: "",
-    notes: "",
+  const {
+    formData,
+    handleChange,
+    handleSubmit,
+    saving,
+    user,
+    router,
+  } = useFormPage({
+    table: "expenses",
+    initialData: {
+      expense_type_id: "",
+      property_id: "",
+      amount: "",
+      expense_date: new Date().toISOString().split("T")[0],
+      vendor_name: "",
+      reference_number: "",
+      payment_method: "cash",
+      description: "",
+      notes: "",
+    },
+    redirectTo: "/expenses",
+    successMessage: "Expense added successfully",
+    errorMessage: "Failed to add expense",
+    useCreatedBy: false, // We manually add owner_id and created_by in transform
+    addOwnerId: false,
+    validate: (data) => {
+      if (!data.expense_type_id) return "Please select an expense category"
+      if (!data.amount || Number(data.amount) <= 0) return "Please enter a valid amount"
+      if (!data.expense_date) return "Please select a date"
+      return null
+    },
+    transform: (data, userId) => ({
+      owner_id: userId,
+      created_by: userId,
+      expense_type_id: data.expense_type_id,
+      property_id: data.property_id || null,
+      amount: Number(data.amount),
+      expense_date: data.expense_date,
+      vendor_name: data.vendor_name || null,
+      reference_number: data.reference_number || null,
+      payment_method: data.payment_method,
+      description: data.description || null,
+      notes: data.notes || null,
+    }),
   })
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    const fetchData = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user: authUser } } = await supabase.auth.getUser()
 
-  const fetchData = async () => {
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+        if (!authUser) {
+          router.push("/login")
+          return
+        }
 
-      if (!user) {
-        router.push("/login")
-        return
-      }
-
-      // Fetch expense types - create defaults if none exist (owner-scoped)
-      let { data: typesData, error: typesError } = await supabase
-        .from("expense_types")
-        .select("id, name, code")
-        .eq("owner_id", user.id)
-        .eq("is_enabled", true)
-        .order("display_order")
-
-      if (typesError) {
-        console.error("Error fetching expense types:", typesError)
-      }
-
-      // If no expense types exist, create defaults
-      if (!typesData || typesData.length === 0) {
-        await (supabase.rpc as Function)("create_default_expense_types", { p_owner_id: user.id })
-
-        // Fetch again after creating defaults (owner-scoped)
-        const { data: newTypesData } = await supabase
+        // Fetch expense types - create defaults if none exist (owner-scoped)
+        let { data: typesData, error: typesError } = await supabase
           .from("expense_types")
           .select("id, name, code")
-          .eq("owner_id", user.id)
+          .eq("owner_id", authUser.id)
           .eq("is_enabled", true)
           .order("display_order")
 
-        typesData = newTypesData
+        if (typesError) {
+          console.error("Error fetching expense types:", typesError)
+        }
+
+        // If no expense types exist, create defaults
+        if (!typesData || typesData.length === 0) {
+          await (supabase.rpc as Function)("create_default_expense_types", { p_owner_id: authUser.id })
+
+          // Fetch again after creating defaults (owner-scoped)
+          const { data: newTypesData } = await supabase
+            .from("expense_types")
+            .select("id, name, code")
+            .eq("owner_id", authUser.id)
+            .eq("is_enabled", true)
+            .order("display_order")
+
+          typesData = newTypesData
+        }
+
+        setExpenseTypes(typesData || [])
+
+        // Fetch properties
+        const { data: propertiesData } = await supabase
+          .from("properties")
+          .select("id, name")
+          .order("name")
+
+        setProperties(propertiesData || [])
+      } catch (error) {
+        console.error("Error fetching data:", error)
+        showError("Failed to load form data")
+      } finally {
+        setLoadingData(false)
       }
-
-      setExpenseTypes(typesData || [])
-
-      // Fetch properties
-      const { data: propertiesData } = await supabase
-        .from("properties")
-        .select("id, name")
-        .order("name")
-
-      setProperties(propertiesData || [])
-    } catch (error) {
-      console.error("Error fetching data:", error)
-      showError("Failed to load form data")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.expense_type_id) {
-      showError("Please select an expense category")
-      return
     }
 
-    if (!formData.amount || Number(formData.amount) <= 0) {
-      showError("Please enter a valid amount")
-      return
-    }
+    fetchData()
+  }, [router])
 
-    if (!formData.expense_date) {
-      showError("Please select a date")
-      return
-    }
-
-    setSubmitting(true)
-
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push("/login")
-        return
-      }
-
-      const { error } = await supabase.from("expenses").insert({
-        owner_id: user.id,
-        created_by: user.id,
-        expense_type_id: formData.expense_type_id,
-        property_id: formData.property_id || null,
-        amount: Number(formData.amount),
-        expense_date: formData.expense_date,
-        vendor_name: formData.vendor_name || null,
-        reference_number: formData.reference_number || null,
-        payment_method: formData.payment_method,
-        description: formData.description || null,
-        notes: formData.notes || null,
-      })
-
-      if (error) {
-        console.error("Error creating expense:", error)
-        showError(`Failed to add expense: ${error.message}`)
-        return
-      }
-
-      showSuccess("Expense added successfully")
-      router.push("/expenses")
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to add expense")
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  if (loading) {
+  if (loadingData) {
     return <PageSkeleton variant="form" />
   }
 
@@ -214,7 +178,7 @@ export default function NewExpensePage() {
                 <select
                   id="expense_type_id"
                   name="expense_type_id"
-                  value={formData.expense_type_id}
+                  value={formData.expense_type_id as string}
                   onChange={handleChange}
                   required
                   className="w-full h-10 px-3 rounded-md border border-input bg-background"
@@ -233,7 +197,7 @@ export default function NewExpensePage() {
                 <select
                   id="property_id"
                   name="property_id"
-                  value={formData.property_id}
+                  value={formData.property_id as string}
                   onChange={handleChange}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background"
                 >
@@ -260,7 +224,7 @@ export default function NewExpensePage() {
                   min="0"
                   step="0.01"
                   placeholder="0.00"
-                  value={formData.amount}
+                  value={formData.amount as string}
                   onChange={handleChange}
                   required
                 />
@@ -272,7 +236,7 @@ export default function NewExpensePage() {
                   id="expense_date"
                   name="expense_date"
                   type="date"
-                  value={formData.expense_date}
+                  value={formData.expense_date as string}
                   onChange={handleChange}
                   required
                 />
@@ -285,7 +249,7 @@ export default function NewExpensePage() {
                 id="description"
                 name="description"
                 placeholder="Brief description of the expense"
-                value={formData.description}
+                value={formData.description as string}
                 onChange={handleChange}
               />
             </div>
@@ -313,7 +277,7 @@ export default function NewExpensePage() {
                   id="vendor_name"
                   name="vendor_name"
                   placeholder="Name of vendor or payee"
-                  value={formData.vendor_name}
+                  value={formData.vendor_name as string}
                   onChange={handleChange}
                 />
               </div>
@@ -324,7 +288,7 @@ export default function NewExpensePage() {
                   id="reference_number"
                   name="reference_number"
                   placeholder="Invoice or receipt number"
-                  value={formData.reference_number}
+                  value={formData.reference_number as string}
                   onChange={handleChange}
                 />
               </div>
@@ -335,7 +299,7 @@ export default function NewExpensePage() {
               <select
                 id="payment_method"
                 name="payment_method"
-                value={formData.payment_method}
+                value={formData.payment_method as string}
                 onChange={handleChange}
                 className="w-full h-10 px-3 rounded-md border border-input bg-background"
               >
@@ -367,7 +331,7 @@ export default function NewExpensePage() {
               id="notes"
               name="notes"
               placeholder="Add any additional notes here..."
-              value={formData.notes}
+              value={formData.notes as string}
               onChange={handleChange}
               rows={3}
               className="w-full px-3 py-2 rounded-md border border-input bg-background resize-none"
@@ -382,8 +346,8 @@ export default function NewExpensePage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={submitting}>
-            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          <Button type="submit" disabled={saving}>
+            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Add Expense
           </Button>
         </div>

@@ -33,6 +33,7 @@ import {
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import type { LibraryAttendance } from "@/types/library.types"
 
 export default function LibraryAttendanceDetailPage() {
@@ -131,8 +132,7 @@ export default function LibraryAttendanceDetailPage() {
       showSuccess(`Checked out successfully! Duration: ${hoursSpent.toFixed(1)} hours`)
       refetch()
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to check out. Please try again.")
+      handleClientError(error, "Checking out")
     } finally {
       setCheckingOut(false)
     }

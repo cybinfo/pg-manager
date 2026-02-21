@@ -24,6 +24,7 @@ import {
   Bell
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
 import { initiateExitClearance, ExitClearanceInput } from "@/lib/workflows/exit.workflow"
 
@@ -342,8 +343,7 @@ function InitiateCheckoutForm() {
       showSuccess("Exit clearance initiated")
       router.push(`/exit-clearance/${result.data?.clearance_id}`)
     } catch (error: unknown) {
-      console.error("Error:", error)
-      showError(error instanceof Error ? error.message : "Failed to initiate checkout")
+      handleClientError(error, "Initiating checkout")
     } finally {
       setLoading(false)
     }

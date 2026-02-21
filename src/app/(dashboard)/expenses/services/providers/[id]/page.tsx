@@ -25,6 +25,7 @@ import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -143,8 +144,7 @@ export default function ServiceProviderDetailPage({
         showError(result.error.message || "Failed to delete provider")
       }
     } catch (error) {
-      console.error("Failed to delete provider:", error)
-      showError("Failed to delete provider")
+      handleClientError(error, "Deleting provider")
     }
   }
 

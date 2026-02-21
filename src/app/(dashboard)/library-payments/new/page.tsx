@@ -7,10 +7,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,8 +18,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { withCreatedBy } from "@/lib/audit"
 import { Currency } from "@/components/ui/currency"
 
 interface Member {
@@ -34,25 +31,101 @@ interface Member {
 }
 
 export default function NewLibraryPaymentPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { user, workspaceId } = useAuthContext()
-  const [loading, setLoading] = useState(false)
   const [members, setMembers] = useState<Member[]>([])
   const [loadingMembers, setLoadingMembers] = useState(true)
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
 
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    saving,
+    searchParams,
+    workspaceId,
+  } = useFormPage({
+    table: "library_payments",
+    initialData: {
+      member_id: "",
+      payment_date: new Date().toISOString().split("T")[0],
+      amount: "",
+      payment_type: "subscription",
+      payment_method: "cash",
+      payment_reference: "",
+      notes: "",
+    },
+    redirectTo: "/library-payments",
+    successMessage: "Payment recorded!",
+    errorMessage: "Failed to record payment",
+    validate: (data) => {
+      if (!data.member_id || !data.amount) {
+        return "Please fill in required fields (Member, Amount)"
+      }
+      if (!selectedMember) {
+        return "Please select a member"
+      }
+      return null
+    },
+    customSubmit: async (data, userId, supabase): Promise<string | void> => {
+      if (!selectedMember) {
+        throw new Error("Please select a member")
+      }
+
+      // Generate receipt number
+      const { data: lastPayment } = await supabase
+        .from("library_payments")
+        .select("receipt_number")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single()
+
+      let nextNumber = 1
+      if (lastPayment?.receipt_number) {
+        const match = lastPayment.receipt_number.match(/LIB-(\d+)/)
+        if (match) nextNumber = parseInt(match[1], 10) + 1
+      }
+      const receiptNumber = `LIB-${nextNumber.toString().padStart(6, "0")}`
+
+      const { withCreatedBy } = await import("@/lib/audit")
+
+      const paymentData = withCreatedBy({
+        owner_id: selectedMember.owner_id,
+        workspace_id: selectedMember.workspace_id,
+        member_id: data.member_id,
+        receipt_number: receiptNumber,
+        payment_date: data.payment_date,
+        amount: Number(data.amount),
+        payment_type: data.payment_type,
+        payment_method: data.payment_method,
+        payment_reference: data.payment_reference || null,
+        notes: data.notes || null,
+        status: "completed",
+      }, userId)
+
+      const { error } = await supabase.from("library_payments").insert(paymentData)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      // Redirect to member detail if came from there
+      if (typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search)
+        const preselectedMember = urlParams.get("member")
+        if (preselectedMember) {
+          return `/library-members/${preselectedMember}`
+        }
+      }
+    },
+  })
+
   const preselectedMember = searchParams.get("member")
 
-  const [formData, setFormData] = useState({
-    member_id: preselectedMember || "",
-    payment_date: new Date().toISOString().split("T")[0],
-    amount: "",
-    payment_type: "subscription",
-    payment_method: "cash",
-    payment_reference: "",
-    notes: "",
-  })
+  // Pre-fill member_id from URL param
+  useEffect(() => {
+    if (preselectedMember && !formData.member_id) {
+      setFormData((prev) => ({ ...prev, member_id: preselectedMember }))
+    }
+  }, [preselectedMember, formData.member_id, setFormData])
 
   useEffect(() => {
     async function fetchMembers() {
@@ -82,90 +155,6 @@ export default function NewLibraryPaymentPage() {
     setFormData((prev) => ({ ...prev, member_id: memberId }))
     const member = members.find((m) => m.id === memberId)
     setSelectedMember(member || null)
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.member_id || !formData.amount) {
-      showError("Please fill in required fields (Member, Amount)")
-      return
-    }
-
-    if (!user || !workspaceId) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    if (!selectedMember) {
-      showError("Please select a member")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      // Generate receipt number
-      const { data: lastPayment } = await supabase
-        .from("library_payments")
-        .select("receipt_number")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single()
-
-      let nextNumber = 1
-      if (lastPayment?.receipt_number) {
-        const match = lastPayment.receipt_number.match(/LIB-(\d+)/)
-        if (match) nextNumber = parseInt(match[1], 10) + 1
-      }
-      const receiptNumber = `LIB-${nextNumber.toString().padStart(6, "0")}`
-
-      const paymentData = withCreatedBy({
-        owner_id: selectedMember.owner_id,
-        workspace_id: selectedMember.workspace_id,
-        member_id: formData.member_id,
-        receipt_number: receiptNumber,
-        payment_date: formData.payment_date,
-        amount: Number(formData.amount),
-        payment_type: formData.payment_type,
-        payment_method: formData.payment_method,
-        payment_reference: formData.payment_reference || null,
-        notes: formData.notes || null,
-        status: "completed",
-      }, user.id)
-
-      const { error } = await supabase.from("library_payments").insert(paymentData)
-
-      if (error) {
-        console.error("Error creating payment:", error)
-        showError(`Failed to record payment: ${error.message}`)
-        return
-      }
-
-      showSuccess(`Payment recorded! Receipt: ${receiptNumber}`)
-
-      if (preselectedMember) {
-        router.push(`/library-members/${preselectedMember}`)
-      } else {
-        router.push("/library-payments")
-      }
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to record payment. Please try again.")
-    } finally {
-      setLoading(false)
-    }
   }
 
   const memberOptions = members.map((m) => {
@@ -215,12 +204,12 @@ export default function NewLibraryPaymentPage() {
               <Label>Member *</Label>
               <Combobox
                 options={memberOptions}
-                value={formData.member_id}
+                value={formData.member_id as string}
                 onValueChange={handleMemberChange}
                 placeholder="Select a member..."
                 searchPlaceholder="Search members..."
                 emptyText="No members found"
-                disabled={loading || loadingMembers || !!preselectedMember}
+                disabled={saving || loadingMembers || !!preselectedMember}
               />
               {selectedMember && (
                 <p className="text-xs text-muted-foreground">
@@ -237,23 +226,23 @@ export default function NewLibraryPaymentPage() {
                   id="payment_date"
                   name="payment_date"
                   type="date"
-                  value={formData.payment_date}
+                  value={formData.payment_date as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount (₹) *</Label>
+                <Label htmlFor="amount">Amount (Rs.) *</Label>
                 <Input
                   id="amount"
                   name="amount"
                   type="number"
                   placeholder="e.g., 1000"
-                  value={formData.amount}
+                  value={formData.amount as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                   min={1}
                   step="0.01"
                 />
@@ -264,10 +253,10 @@ export default function NewLibraryPaymentPage() {
               <div className="space-y-2">
                 <Label htmlFor="payment_type">Payment Type</Label>
                 <Select
-                  value={formData.payment_type}
+                  value={formData.payment_type as string}
                   onChange={handleChange}
                   name="payment_type"
-                  disabled={loading}
+                  disabled={saving}
                   options={[
                     { value: "subscription", label: "Subscription" },
                     { value: "locker_rent", label: "Locker Rent" },
@@ -280,10 +269,10 @@ export default function NewLibraryPaymentPage() {
               <div className="space-y-2">
                 <Label htmlFor="payment_method">Payment Method</Label>
                 <Select
-                  value={formData.payment_method}
+                  value={formData.payment_method as string}
                   onChange={handleChange}
                   name="payment_method"
-                  disabled={loading}
+                  disabled={saving}
                   options={[
                     { value: "cash", label: "Cash" },
                     { value: "upi", label: "UPI" },
@@ -300,9 +289,9 @@ export default function NewLibraryPaymentPage() {
                 id="payment_reference"
                 name="payment_reference"
                 placeholder="UPI ID, Cheque No., Transaction ID..."
-                value={formData.payment_reference}
+                value={formData.payment_reference as string}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
               />
               <p className="text-xs text-muted-foreground">
                 Optional: UPI reference, cheque number, or transaction ID
@@ -315,9 +304,9 @@ export default function NewLibraryPaymentPage() {
                 id="notes"
                 name="notes"
                 placeholder="Any additional notes..."
-                value={formData.notes}
+                value={formData.notes as string}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 rows={3}
               />
             </div>
@@ -326,12 +315,12 @@ export default function NewLibraryPaymentPage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href={preselectedMember ? `/library-members/${preselectedMember}` : "/library-payments"}>
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Recording...

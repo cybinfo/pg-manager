@@ -1,17 +1,19 @@
 "use client"
 
-import { PortalStatCard, PortalStatCardProps } from "./PortalStatCard"
+/**
+ * PortalStatsGrid - Thin wrapper around the unified StatsGrid for portal pages.
+ *
+ * Maintains the portal-specific prop interface (bgColor/iconColor) while
+ * delegating to the unified StatsGrid component.
+ */
+
+import { StatsGrid } from "@/components/ui/stat-card"
+import type { PortalStatCardProps } from "./PortalStatCard"
 
 export interface PortalStatsGridProps {
   stats: PortalStatCardProps[]
 }
 
 export function PortalStatsGrid({ stats }: PortalStatsGridProps) {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {stats.map((stat, index) => (
-        <PortalStatCard key={index} {...stat} />
-      ))}
-    </div>
-  )
+  return <StatsGrid stats={stats} columns={4} />
 }

@@ -5,6 +5,8 @@
  * This ensures unified handling of created_by, deleted_at, deleted_by across the app.
  */
 
+import type { SoftDeletableTable } from "@/lib/audit/constants"
+
 // ============================================================================
 // BASE AUDIT INTERFACE
 // ============================================================================
@@ -68,44 +70,11 @@ export type WithAuditFields<T> = T & AuditableEntity
 /**
  * Entity types that support soft delete.
  * These are the tables that have deleted_at/deleted_by columns.
+ *
+ * Derived from the SOFT_DELETABLE_TABLES constant in @/lib/audit/constants.
+ * To add a new soft-deletable table, update the constant array there.
  */
-export type SoftDeletableTable =
-  | 'tenants'
-  | 'bills'
-  | 'payments'
-  | 'expenses'
-  | 'refunds'
-  | 'complaints'
-  | 'notices'
-  | 'visitors'
-  | 'meter_readings'
-  | 'exit_clearance'
-  | 'properties'
-  | 'rooms'
-  | 'people'
-  | 'meters'
-  | 'staff_members'
-  | 'visitor_contacts'
-  // Enhanced expense module tables
-  | 'products'
-  | 'daily_spend'
-  | 'vendors'
-  | 'bill_payments'
-  | 'service_providers'
-  | 'service_payments'
-  // Miscellaneous transactions
-  | 'misc_transactions'
-  | 'misc_transaction_categories'
-  // Library module tables
-  | 'libraries'
-  | 'library_sections'
-  | 'library_seats'
-  | 'library_members'
-  | 'library_memberships'
-  | 'library_attendance'
-  | 'library_lockers'
-  | 'library_locker_assignments'
-  | 'library_payments'
+export type { SoftDeletableTable }
 
 /**
  * Entity types that support created_by tracking.

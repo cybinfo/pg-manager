@@ -290,7 +290,7 @@ export default function PGManagerPage() {
 
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {steps.map((item, i) => (
-              <div key={i} className="text-center animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
+              <div key={i} className={`text-center animate-fade-in-up ${["animation-delay-0", "animation-delay-100", "animation-delay-200"][i] || ""}`}>
                 <div className="h-16 w-16 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/25">
                   {item.step}
                 </div>

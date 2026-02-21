@@ -1,6 +1,14 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+/**
+ * PortalStatCard - Thin wrapper around the unified StatCard for portal pages.
+ *
+ * Portal pages use custom bgColor/iconColor strings instead of named variants.
+ * This re-exports StatCard with a portal-specific prop interface for
+ * backwards compatibility.
+ */
+
+import { StatCard } from "@/components/ui/stat-card"
 import type { LucideIcon } from "lucide-react"
 
 export interface PortalStatCardProps {
@@ -17,25 +25,19 @@ export interface PortalStatCardProps {
 }
 
 export function PortalStatCard({
-  icon: Icon,
+  icon,
   label,
   value,
   bgColor,
   iconColor,
 }: PortalStatCardProps) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 ${bgColor} rounded-lg`}>
-            <Icon className={`h-5 w-5 ${iconColor}`} />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="font-semibold">{value}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <StatCard
+      icon={icon}
+      label={label}
+      value={value}
+      bgColor={bgColor}
+      iconColor={iconColor}
+    />
   )
 }

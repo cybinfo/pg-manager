@@ -1,15 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Home, Loader2, Building2, Info } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 
@@ -60,32 +59,71 @@ const availableAmenities = [
 ]
 
 export default function NewRoomPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProperties, setLoadingProperties] = useState(true)
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
 
-  const [formData, setFormData] = useState({
-    property_id: "",
-    room_number: "",
-    room_type: "single",
-    floor: "0",
-    rent_amount: "",
-    deposit_amount: "",
-    total_beds: "1",
-    // Amenities
-    has_ac: false,
-    has_attached_bathroom: false,
-    has_wifi: false,
-    has_tv: false,
-    has_geyser: false,
-    has_balcony: false,
-    has_wardrobe: false,
-    has_study_table: false,
-    has_refrigerator: false,
-    // Photos
-    photos: [] as string[],
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    saving,
+  } = useFormPage({
+    table: "rooms",
+    initialData: {
+      property_id: "",
+      room_number: "",
+      room_type: "single",
+      floor: "0",
+      rent_amount: "",
+      deposit_amount: "",
+      total_beds: "1",
+      // Amenities
+      has_ac: false as boolean,
+      has_attached_bathroom: false as boolean,
+      has_wifi: false as boolean,
+      has_tv: false as boolean,
+      has_geyser: false as boolean,
+      has_balcony: false as boolean,
+      has_wardrobe: false as boolean,
+      has_study_table: false as boolean,
+      has_refrigerator: false as boolean,
+      // Photos
+      photos: [] as string[],
+    },
+    redirectTo: "/rooms",
+    successMessage: "Room created successfully!",
+    errorMessage: "Failed to create room",
+    useCreatedBy: false,
+    validate: (data) => {
+      if (!data.property_id || !data.room_number || !data.rent_amount) {
+        return "Please fill in all required fields"
+      }
+      return null
+    },
+    transform: (data, userId) => {
+      // Build amenities array from checkboxes
+      const amenities = availableAmenities
+        .filter((amenity) => data[amenity.key as keyof typeof data])
+        .map((amenity) => amenity.label.split(" (")[0])
+
+      return {
+        owner_id: userId,
+        created_by: userId,
+        property_id: data.property_id,
+        room_number: data.room_number,
+        room_type: data.room_type,
+        floor: parseInt(data.floor as string) || 0,
+        rent_amount: parseFloat(data.rent_amount as string),
+        deposit_amount: parseFloat(data.deposit_amount as string) || 0,
+        total_beds: parseInt(data.total_beds as string) || 1,
+        has_ac: data.has_ac,
+        has_attached_bathroom: data.has_attached_bathroom,
+        amenities: amenities,
+        photos: (data.photos as string[]).length > 0 ? data.photos : null,
+      }
+    },
+    addOwnerId: false,
   })
 
   useEffect(() => {
@@ -101,7 +139,6 @@ export default function NewRoomPage() {
 
       if (propertiesRes.error) {
         console.error("Error fetching properties:", propertiesRes.error)
-        showError("Failed to load properties")
       } else {
         setProperties(propertiesRes.data || [])
 
@@ -132,17 +169,7 @@ export default function NewRoomPage() {
     }
 
     fetchData()
-  }, [])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
-    const newValue = type === "checkbox" ? (e.target as HTMLInputElement).checked : value
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: newValue,
-    }))
-  }
+  }, [setFormData])
 
   // Handle property selection change
   const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -170,67 +197,6 @@ export default function NewRoomPage() {
 
   // Get current room type for display
   const currentRoomType = roomTypes.find(rt => rt.code === formData.room_type)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.property_id || !formData.room_number || !formData.rent_amount) {
-      showError("Please fill in all required fields")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        showError("Session expired. Please login again.")
-        router.push("/login")
-        return
-      }
-
-      // Build amenities array from checkboxes
-      const amenities = availableAmenities
-        .filter((amenity) => formData[amenity.key as keyof typeof formData])
-        .map((amenity) => amenity.label.split(" (")[0]) // "Air Conditioned" from "Air Conditioned (AC)"
-
-      const { error } = await supabase.from("rooms").insert({
-        owner_id: user.id,
-        created_by: user.id,
-        property_id: formData.property_id,
-        room_number: formData.room_number,
-        room_type: formData.room_type,
-        floor: parseInt(formData.floor) || 0,
-        rent_amount: parseFloat(formData.rent_amount),
-        deposit_amount: parseFloat(formData.deposit_amount) || 0,
-        total_beds: parseInt(formData.total_beds) || 1,
-        has_ac: formData.has_ac,
-        has_attached_bathroom: formData.has_attached_bathroom,
-        amenities: amenities,
-        photos: formData.photos.length > 0 ? formData.photos : null,
-      })
-
-      if (error) {
-        console.error("Error creating room:", error)
-        if (error.code === "23505") {
-          showError("A room with this number already exists in this property")
-        } else {
-          throw error
-        }
-        return
-      }
-
-      showSuccess("Room created successfully!")
-      router.push("/rooms")
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to create room. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loadingProperties) {
     return <PageSkeleton variant="form" />
@@ -303,11 +269,11 @@ export default function NewRoomPage() {
               <select
                 id="property_id"
                 name="property_id"
-                value={formData.property_id}
+                value={formData.property_id as string}
                 onChange={handlePropertyChange}
                 className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 required
-                disabled={loading}
+                disabled={saving}
               >
                 {properties.map((property) => (
                   <option key={property.id} value={property.id}>
@@ -324,10 +290,10 @@ export default function NewRoomPage() {
                   id="room_number"
                   name="room_number"
                   placeholder="e.g., 101, A1, G-01"
-                  value={formData.room_number}
+                  value={formData.room_number as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -335,10 +301,10 @@ export default function NewRoomPage() {
                 <select
                   id="room_type"
                   name="room_type"
-                  value={formData.room_type}
+                  value={formData.room_type as string}
                   onChange={handleRoomTypeChange}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  disabled={loading}
+                  disabled={saving}
                 >
                   {roomTypes.filter(rt => rt.is_enabled).sort((a, b) => a.display_order - b.display_order).map((rt) => (
                     <option key={rt.code} value={rt.code}>
@@ -358,9 +324,9 @@ export default function NewRoomPage() {
                   type="number"
                   min="0"
                   placeholder="e.g., 0, 1, 2"
-                  value={formData.floor}
+                  value={formData.floor as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -371,9 +337,9 @@ export default function NewRoomPage() {
                   type="number"
                   min="1"
                   placeholder="e.g., 1, 2, 3"
-                  value={formData.total_beds}
+                  value={formData.total_beds as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                 />
                 <p className="text-xs text-muted-foreground">
                   Auto-set based on room type (adjustable)
@@ -393,7 +359,7 @@ export default function NewRoomPage() {
                 <div className="space-y-2">
                   <Label htmlFor="rent_amount">Monthly Rent *</Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rs.</span>
                     <Input
                       id="rent_amount"
                       name="rent_amount"
@@ -401,10 +367,10 @@ export default function NewRoomPage() {
                       min="0"
                       placeholder="e.g., 8000"
                       className="pl-8"
-                      value={formData.rent_amount}
+                      value={formData.rent_amount as string}
                       onChange={handleChange}
                       required
-                      disabled={loading}
+                      disabled={saving}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -414,7 +380,7 @@ export default function NewRoomPage() {
                 <div className="space-y-2">
                   <Label htmlFor="deposit_amount">Security Deposit</Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rs.</span>
                     <Input
                       id="deposit_amount"
                       name="deposit_amount"
@@ -422,9 +388,9 @@ export default function NewRoomPage() {
                       min="0"
                       placeholder="e.g., 16000"
                       className="pl-8"
-                      value={formData.deposit_amount}
+                      value={formData.deposit_amount as string}
                       onChange={handleChange}
-                      disabled={loading}
+                      disabled={saving}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -447,7 +413,7 @@ export default function NewRoomPage() {
                       name={amenity.key}
                       checked={formData[amenity.key as keyof typeof formData] as boolean}
                       onChange={handleChange}
-                      disabled={loading}
+                      disabled={saving}
                       className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />
                     <span className="text-sm">{amenity.label}</span>
@@ -462,14 +428,14 @@ export default function NewRoomPage() {
             {/* Room Photos Section */}
             <div className="border-t pt-4 mt-4">
               <PhotoGallery
-                photos={formData.photos}
+                photos={formData.photos as string[]}
                 onChange={(photos) => setFormData(prev => ({ ...prev, photos }))}
                 label="Room Photos"
                 description="Add photos of the room (up to 8 photos)"
                 maxPhotos={8}
                 bucket="room-photos"
                 folder="rooms"
-                disabled={loading}
+                disabled={saving}
               />
             </div>
           </CardContent>
@@ -477,12 +443,12 @@ export default function NewRoomPage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href="/rooms">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

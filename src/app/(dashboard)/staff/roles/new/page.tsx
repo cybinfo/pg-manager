@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,8 +13,6 @@ import {
   Shield,
   Check
 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { withCreatedBy } from "@/lib/audit"
 
 // Available permissions grouped by module
 const permissionGroups: Record<string, { label: string; permissions: { key: string; label: string }[] }> = {
@@ -122,20 +119,40 @@ const permissionGroups: Record<string, { label: string; permissions: { key: stri
 }
 
 export default function NewRolePage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-  })
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
+  const {
+    formData,
+    handleChange,
+    handleSubmit,
+    saving,
+  } = useFormPage({
+    table: "roles",
+    initialData: {
+      name: "",
+      description: "",
+    },
+    redirectTo: "/staff/roles",
+    successMessage: "Role created successfully!",
+    errorMessage: "Failed to create role",
+    validate: (data) => {
+      if (!data.name) {
+        return "Please enter a role name"
+      }
+      if (selectedPermissions.length === 0) {
+        return "Please select at least one permission"
+      }
+      return null
+    },
+    transform: (data, userId) => ({
+      owner_id: userId,
+      name: data.name,
+      description: data.description || null,
+      is_system_role: false,
+      permissions: selectedPermissions,
+    }),
+    addOwnerId: false,
+  })
 
   const togglePermission = (permission: string) => {
     setSelectedPermissions((prev) =>
@@ -171,56 +188,6 @@ export default function NewRolePage() {
 
   const clearAllPermissions = () => {
     setSelectedPermissions([])
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name) {
-      showError("Please enter a role name")
-      return
-    }
-
-    if (selectedPermissions.length === 0) {
-      showError("Please select at least one permission")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        showError("Session expired. Please login again.")
-        router.push("/login")
-        return
-      }
-
-      const { error } = await supabase.from("roles").insert(
-        withCreatedBy({
-          owner_id: user.id,
-          name: formData.name,
-          description: formData.description || null,
-          is_system_role: false,
-          permissions: selectedPermissions,
-        }, user.id)
-      )
-
-      if (error) {
-        console.error("Error creating role:", error)
-        throw error
-      }
-
-      showSuccess("Role created successfully!")
-      router.push("/staff/roles")
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to create role. Please try again.")
-    } finally {
-      setLoading(false)
-    }
   }
 
   const isGroupSelected = (groupKey: string) => {
@@ -273,10 +240,10 @@ export default function NewRolePage() {
                 id="name"
                 name="name"
                 placeholder="e.g., Receptionist, Accountant, Meter Reader"
-                value={formData.name}
+                value={formData.name as string}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={saving}
               />
             </div>
 
@@ -286,9 +253,9 @@ export default function NewRolePage() {
                 id="description"
                 name="description"
                 placeholder="Brief description of this role's responsibilities"
-                value={formData.description}
+                value={formData.description as string}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
               />
             </div>
@@ -316,7 +283,7 @@ export default function NewRolePage() {
                   variant="outline"
                   size="sm"
                   onClick={clearAllPermissions}
-                  disabled={loading}
+                  disabled={saving}
                 >
                   Clear All
                 </Button>
@@ -325,7 +292,7 @@ export default function NewRolePage() {
                   variant="outline"
                   size="sm"
                   onClick={selectAllPermissions}
-                  disabled={loading}
+                  disabled={saving}
                 >
                   Select All
                 </Button>
@@ -347,7 +314,7 @@ export default function NewRolePage() {
                           ? "bg-primary/30 border-primary"
                           : "border-input"
                       }`}
-                      disabled={loading}
+                      disabled={saving}
                     >
                       {(isGroupSelected(groupKey) || isGroupPartiallySelected(groupKey)) && (
                         <Check className="h-3 w-3" />
@@ -365,7 +332,7 @@ export default function NewRolePage() {
                           type="checkbox"
                           checked={selectedPermissions.includes(permission.key)}
                           onChange={() => togglePermission(permission.key)}
-                          disabled={loading}
+                          disabled={saving}
                           className="h-4 w-4 rounded border-input"
                         />
                         <span className="text-sm">{permission.label}</span>
@@ -381,12 +348,12 @@ export default function NewRolePage() {
         {/* Actions */}
         <div className="flex justify-end gap-4">
           <Link href="/staff/roles">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading || selectedPermissions.length === 0}>
-            {loading ? (
+          <Button type="submit" disabled={saving || selectedPermissions.length === 0}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

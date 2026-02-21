@@ -40,6 +40,7 @@ import {
   ERROR_CODES,
 } from "./types"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { normalizePhoneForComparison } from "@/lib/phone"
 import {
   ONE_DAY_MS,
   MAX_OVERDUE_PENALTY,
@@ -58,17 +59,8 @@ function daysBetween(date1: Date, date2: Date): number {
   return Math.floor(Math.abs((date2.getTime() - date1.getTime()) / ONE_DAY_MS))
 }
 
-function normalizePhone(phone: string): string {
-  if (!phone) return ""
-  const digits = phone.replace(/\D/g, "")
-  if (digits.length === 12 && digits.startsWith("91")) {
-    return digits.slice(2)
-  }
-  if (digits.length === 11 && digits.startsWith("0")) {
-    return digits.slice(1)
-  }
-  return digits.slice(-10)
-}
+// Phone normalization delegated to @/lib/phone
+const normalizePhone = normalizePhoneForComparison
 
 function getBillStatusColor(status: string): StatusColor {
   const map: Record<string, StatusColor> = {

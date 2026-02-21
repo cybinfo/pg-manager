@@ -7,9 +7,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,9 +29,7 @@ import {
   Save,
   Loader2,
 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
-import { transformJoin } from "@/lib/supabase/transforms"
 import {
   MeterType,
   MeterStatus,
@@ -39,106 +38,107 @@ import {
   METER_TYPE_CONFIG,
 } from "@/types/meters.types"
 
-// ============================================
-// Types
-// ============================================
-
-interface Meter {
-  id: string
-  owner_id: string
-  property_id: string
-  meter_number: string
-  meter_type: MeterType
-  status: MeterStatus
-  initial_reading: number
-  make: string | null
-  model: string | null
-  installation_date: string | null
-  notes: string | null
-  property: { id: string; name: string } | null
-}
-
 interface Property {
   id: string
   name: string
 }
 
-// ============================================
-// Component
-// ============================================
-
 export default function EditMeterPage() {
   const params = useParams()
-  const router = useRouter()
-  const [loadingData, setLoadingData] = useState(true)
-  const [loading, setLoading] = useState(false)
-  const [meter, setMeter] = useState<Meter | null>(null)
+  const id = params.id as string
   const [properties, setProperties] = useState<Property[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const [formData, setFormData] = useState({
-    property_id: "",
-    meter_number: "",
-    meter_type: "electricity" as MeterType,
-    status: "active" as MeterStatus,
-    initial_reading: "0",
-    make: "",
-    model: "",
-    installation_date: "",
-    notes: "",
+  const {
+    formData,
+    handleSubmit,
+    loading,
+    saving,
+    record,
+    setFormData,
+    setLoading,
+  } = useFormEditPage({
+    table: "meters",
+    id,
+    select: "*, property:properties(id, name)",
+    initialData: {
+      property_id: "",
+      meter_number: "",
+      meter_type: "electricity" as string,
+      status: "active" as string,
+      initial_reading: "0",
+      make: "",
+      model: "",
+      installation_date: "",
+      notes: "",
+    },
+    redirectTo: `/meters/${id}`,
+    successMessage: "Meter updated successfully",
+    errorMessage: "Failed to update meter",
+    mapToForm: (rec) => ({
+      property_id: (rec.property_id as string) || "",
+      meter_number: (rec.meter_number as string) || "",
+      meter_type: (rec.meter_type as string) || "electricity",
+      status: (rec.status as string) || "active",
+      initial_reading: rec.initial_reading?.toString() || "0",
+      make: (rec.make as string) || "",
+      model: (rec.model as string) || "",
+      installation_date: (rec.installation_date as string) || "",
+      notes: (rec.notes as string) || "",
+    }),
+    validate: (data) => {
+      const newErrors: Record<string, string> = {}
+      if (!data.property_id) newErrors.property_id = "Property is required"
+      if (!(data.meter_number as string).trim()) newErrors.meter_number = "Meter number is required"
+      setErrors(newErrors)
+      if (Object.keys(newErrors).length > 0) return "Please fix the errors before submitting"
+      return null
+    },
+    customSubmit: async (data, userId, recordId, supabase) => {
+      // Check for duplicate meter number (excluding current meter)
+      if (data.meter_number !== record?.meter_number) {
+        const { data: existing } = await supabase
+          .from("meters")
+          .select("id, meter_number")
+          .eq("owner_id", record?.owner_id as string)
+          .eq("meter_number", (data.meter_number as string).trim())
+          .neq("id", recordId)
+          .single()
+
+        if (existing) {
+          throw new Error(`A meter with number "${data.meter_number}" already exists`)
+        }
+      }
+
+      const { error } = await supabase
+        .from("meters")
+        .update({
+          property_id: data.property_id,
+          meter_number: (data.meter_number as string).trim(),
+          meter_type: data.meter_type,
+          status: data.status,
+          initial_reading: parseFloat(data.initial_reading as string) || 0,
+          make: (data.make as string).trim() || null,
+          model: (data.model as string).trim() || null,
+          installation_date: data.installation_date || null,
+          notes: (data.notes as string).trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", recordId)
+
+      if (error) throw new Error("Failed to update meter")
+    },
   })
 
+  // Fetch properties for dropdown
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProperties = async () => {
       const supabase = createClient()
-
-      // Fetch meter and properties in parallel
-      const [meterRes, propertiesRes] = await Promise.all([
-        supabase
-          .from("meters")
-          .select(`
-            *,
-            property:properties(id, name)
-          `)
-          .eq("id", params.id)
-          .single(),
-        supabase.from("properties").select("id, name").order("name"),
-      ])
-
-      if (meterRes.error || !meterRes.data) {
-        console.error("Error fetching meter:", meterRes.error)
-        showError("Meter not found")
-        router.push("/meters")
-        return
-      }
-
-      const meterData = {
-        ...meterRes.data,
-        property: transformJoin(meterRes.data.property),
-      } as Meter
-
-      setMeter(meterData)
-      setFormData({
-        property_id: meterData.property_id,
-        meter_number: meterData.meter_number,
-        meter_type: meterData.meter_type,
-        status: meterData.status,
-        initial_reading: meterData.initial_reading.toString(),
-        make: meterData.make || "",
-        model: meterData.model || "",
-        installation_date: meterData.installation_date || "",
-        notes: meterData.notes || "",
-      })
-
-      if (propertiesRes.data) {
-        setProperties(propertiesRes.data)
-      }
-
-      setLoadingData(false)
+      const { data } = await supabase.from("properties").select("id, name").order("name")
+      if (data) setProperties(data)
     }
-
-    fetchData()
-  }, [params.id, router])
+    fetchProperties()
+  }, [])
 
   const updateField = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -151,85 +151,11 @@ export default function EditMeterPage() {
     }
   }
 
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.property_id) {
-      newErrors.property_id = "Property is required"
-    }
-
-    if (!formData.meter_number.trim()) {
-      newErrors.meter_number = "Meter number is required"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validate() || !meter) {
-      showError("Please fix the errors before submitting")
-      return
-    }
-
-    setLoading(true)
-    const supabase = createClient()
-
-    // Check for duplicate meter number (excluding current meter)
-    if (formData.meter_number !== meter.meter_number) {
-      const { data: existing } = await supabase
-        .from("meters")
-        .select("id, meter_number")
-        .eq("owner_id", meter.owner_id)
-        .eq("meter_number", formData.meter_number.trim())
-        .neq("id", meter.id)
-        .single()
-
-      if (existing) {
-        showError(`A meter with number "${formData.meter_number}" already exists`)
-        setLoading(false)
-        return
-      }
-    }
-
-    const { error } = await supabase
-      .from("meters")
-      .update({
-        property_id: formData.property_id,
-        meter_number: formData.meter_number.trim(),
-        meter_type: formData.meter_type,
-        status: formData.status,
-        initial_reading: parseFloat(formData.initial_reading) || 0,
-        make: formData.make.trim() || null,
-        model: formData.model.trim() || null,
-        installation_date: formData.installation_date || null,
-        notes: formData.notes.trim() || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", meter.id)
-
-    if (error) {
-      console.error("Error updating meter:", error)
-      showError("Failed to update meter")
-      setLoading(false)
-      return
-    }
-
-    showSuccess("Meter updated successfully")
-    router.push(`/meters/${meter.id}`)
-  }
-
-  if (loadingData) {
+  if (loading) {
     return <PageLoading message="Loading meter details..." />
   }
 
-  if (!meter) {
-    return null
-  }
-
-  const typeConfig = METER_TYPE_CONFIG[formData.meter_type] || METER_TYPE_CONFIG.electricity
+  const typeConfig = METER_TYPE_CONFIG[formData.meter_type as MeterType] || METER_TYPE_CONFIG.electricity
   const TypeIcon = formData.meter_type === "water" ? Droplets : formData.meter_type === "gas" ? Gauge : Zap
 
   return (
@@ -238,8 +164,8 @@ export default function EditMeterPage() {
         {/* Hero Header */}
         <DetailHero
           title="Edit Meter"
-          subtitle={meter.meter_number}
-          backHref={`/meters/${meter.id}`}
+          subtitle={record?.meter_number as string}
+          backHref={`/meters/${id}`}
           backLabel="Back to Meter"
           avatar={
             <div className={`p-3 rounded-lg ${typeConfig.bgColor}`}>
@@ -258,7 +184,7 @@ export default function EditMeterPage() {
             <div className="space-y-2">
               <Label htmlFor="property_id">Property *</Label>
               <Select
-                value={formData.property_id}
+                value={formData.property_id as string}
                 onChange={(e) => updateField("property_id", e.target.value)}
                 options={[
                   { value: "", label: "Select property" },
@@ -273,7 +199,7 @@ export default function EditMeterPage() {
                 <Label htmlFor="meter_number">Meter Number *</Label>
                 <Input
                   id="meter_number"
-                  value={formData.meter_number}
+                  value={formData.meter_number as string}
                   onChange={(e) => updateField("meter_number", e.target.value)}
                   placeholder="e.g., E-001, W-101"
                   className={errors.meter_number ? "border-red-500" : ""}
@@ -284,7 +210,7 @@ export default function EditMeterPage() {
               <div className="space-y-2">
                 <Label htmlFor="meter_type">Meter Type *</Label>
                 <Select
-                  value={formData.meter_type}
+                  value={formData.meter_type as string}
                   onChange={(e) => updateField("meter_type", e.target.value)}
                   options={METER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
                 />
@@ -295,7 +221,7 @@ export default function EditMeterPage() {
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
-                  value={formData.status}
+                  value={formData.status as string}
                   onChange={(e) => updateField("status", e.target.value)}
                   options={METER_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
                 />
@@ -306,7 +232,7 @@ export default function EditMeterPage() {
                 <Input
                   id="initial_reading"
                   type="number"
-                  value={formData.initial_reading}
+                  value={formData.initial_reading as string}
                   onChange={(e) => updateField("initial_reading", e.target.value)}
                   placeholder="0"
                 />
@@ -327,7 +253,7 @@ export default function EditMeterPage() {
                 <Label htmlFor="make">Make / Manufacturer</Label>
                 <Input
                   id="make"
-                  value={formData.make}
+                  value={formData.make as string}
                   onChange={(e) => updateField("make", e.target.value)}
                   placeholder="e.g., Secure, HPL"
                 />
@@ -337,7 +263,7 @@ export default function EditMeterPage() {
                 <Label htmlFor="model">Model</Label>
                 <Input
                   id="model"
-                  value={formData.model}
+                  value={formData.model as string}
                   onChange={(e) => updateField("model", e.target.value)}
                   placeholder="e.g., Sprint 350"
                 />
@@ -349,7 +275,7 @@ export default function EditMeterPage() {
               <Input
                 id="installation_date"
                 type="date"
-                value={formData.installation_date}
+                value={formData.installation_date as string}
                 onChange={(e) => updateField("installation_date", e.target.value)}
               />
             </div>
@@ -358,7 +284,7 @@ export default function EditMeterPage() {
               <Label htmlFor="notes">Notes</Label>
               <Textarea
                 id="notes"
-                value={formData.notes}
+                value={formData.notes as string}
                 onChange={(e) => updateField("notes", e.target.value)}
                 placeholder="Any additional notes about this meter..."
                 rows={3}
@@ -369,13 +295,13 @@ export default function EditMeterPage() {
 
         {/* Submit Buttons */}
         <div className="flex justify-end gap-4">
-          <Link href={`/meters/${meter.id}`}>
+          <Link href={`/meters/${id}`}>
             <Button type="button" variant="outline">
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

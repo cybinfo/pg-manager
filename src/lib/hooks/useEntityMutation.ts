@@ -31,8 +31,8 @@ import {
 } from "@/lib/services/types"
 import { logAuditEvent, createAuditEvent, diffObjects } from "@/lib/services/audit.service"
 import { sendNotification } from "@/lib/services/notification.service"
-import { softDelete, softDeleteBatch } from "@/lib/audit"
-import type { SoftDeletableTable } from "@/types/audit.types"
+import { softDelete, softDeleteBatch, isSoftDeletableTable } from "@/lib/audit"
+import { getEntityName } from "@/lib/entity-names"
 
 // ============================================
 // Types
@@ -160,7 +160,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
 
         // Success toast
         if (!mutationOptions?.silent) {
-          showSuccess(successMessages.create || `${formatEntityName(entityType)} created successfully`)
+          showSuccess(successMessages.create || `${getEntityName(entityType)} created successfully`)
         }
 
         onSuccess?.(result, "create")
@@ -170,7 +170,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          showError(errorMessages.create || `Failed to create ${formatEntityName(entityType)}`)
+          showError(errorMessages.create || `Failed to create ${getEntityName(entityType)}`)
         }
 
         onError?.(err, "create")
@@ -239,7 +239,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
 
         // Success toast
         if (!mutationOptions?.silent) {
-          showSuccess(successMessages.update || `${formatEntityName(entityType)} updated successfully`)
+          showSuccess(successMessages.update || `${getEntityName(entityType)} updated successfully`)
         }
 
         onSuccess?.(result, "update")
@@ -249,7 +249,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          showError(errorMessages.update || `Failed to update ${formatEntityName(entityType)}`)
+          showError(errorMessages.update || `Failed to update ${getEntityName(entityType)}`)
         }
 
         onError?.(err, "update")
@@ -267,14 +267,6 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   // DELETE (Soft Delete)
   // ============================================
 
-  // Tables that support soft delete
-  const softDeletableTables: SoftDeletableTable[] = [
-    'tenants', 'bills', 'payments', 'expenses', 'refunds',
-    'complaints', 'notices', 'visitors', 'meter_readings',
-    'exit_clearance', 'properties', 'rooms', 'people', 'meters',
-    'staff_members', 'visitor_contacts'
-  ]
-
   const remove = useCallback(
     async (id: string, mutationOptions?: MutationOptions): Promise<ServiceResult<void>> => {
       setLoading(true)
@@ -288,9 +280,9 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         const { data: before } = await supabase.from(table).select("*").eq("id", id).single()
 
         // Use soft delete for supported tables, hard delete otherwise
-        if (softDeletableTables.includes(table as SoftDeletableTable)) {
+        if (isSoftDeletableTable(table)) {
           const { error: deleteError } = await softDelete(
-            table as SoftDeletableTable,
+            table,
             id,
             actorInfo.actor_id
           )
@@ -321,7 +313,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
 
         // Success toast
         if (!mutationOptions?.silent) {
-          showSuccess(successMessages.delete || `${formatEntityName(entityType)} deleted successfully`)
+          showSuccess(successMessages.delete || `${getEntityName(entityType)} deleted successfully`)
         }
 
         onSuccess?.(undefined, "delete")
@@ -331,7 +323,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          showError(errorMessages.delete || `Failed to delete ${formatEntityName(entityType)}`)
+          showError(errorMessages.delete || `Failed to delete ${getEntityName(entityType)}`)
         }
 
         onError?.(err, "delete")
@@ -386,7 +378,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         }
 
         if (!mutationOptions?.silent) {
-          showSuccess(`${results.length} ${formatEntityName(entityType)}s created successfully`)
+          showSuccess(`${results.length} ${getEntityName(entityType)}s created successfully`)
         }
 
         onSuccess?.(results, "create")
@@ -396,7 +388,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          showError(`Failed to create ${formatEntityName(entityType)}s`)
+          showError(`Failed to create ${getEntityName(entityType)}s`)
         }
 
         onError?.(err, "create")
@@ -455,7 +447,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         }
 
         if (!mutationOptions?.silent) {
-          showSuccess(`${results.length} ${formatEntityName(entityType)}s updated successfully`)
+          showSuccess(`${results.length} ${getEntityName(entityType)}s updated successfully`)
         }
 
         onSuccess?.(results, "update")
@@ -465,7 +457,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          showError(`Failed to update ${formatEntityName(entityType)}s`)
+          showError(`Failed to update ${getEntityName(entityType)}s`)
         }
 
         onError?.(err, "update")
@@ -493,9 +485,9 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         const actorInfo = getActorInfo()
 
         // Use soft delete for supported tables, hard delete otherwise
-        if (softDeletableTables.includes(table as SoftDeletableTable)) {
+        if (isSoftDeletableTable(table)) {
           const { error: deleteError } = await softDeleteBatch(
-            table as SoftDeletableTable,
+            table,
             ids,
             actorInfo.actor_id
           )
@@ -525,7 +517,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         }
 
         if (!mutationOptions?.silent) {
-          showSuccess(`${ids.length} ${formatEntityName(entityType)}s deleted successfully`)
+          showSuccess(`${ids.length} ${getEntityName(entityType)}s deleted successfully`)
         }
 
         onSuccess?.(undefined, "delete")
@@ -535,7 +527,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
-          showError(`Failed to delete ${formatEntityName(entityType)}s`)
+          showError(`Failed to delete ${getEntityName(entityType)}s`)
         }
 
         onError?.(err, "delete")
@@ -561,28 +553,3 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   }
 }
 
-// ============================================
-// Helpers
-// ============================================
-
-function formatEntityName(entityType: EntityType): string {
-  const names: Record<EntityType, string> = {
-    tenant: "Tenant",
-    property: "Property",
-    room: "Room",
-    bill: "Bill",
-    payment: "Payment",
-    expense: "Expense",
-    complaint: "Complaint",
-    notice: "Notice",
-    visitor: "Visitor",
-    staff: "Staff member",
-    exit_clearance: "Exit clearance",
-    approval: "Approval",
-    meter_reading: "Meter reading",
-    charge: "Charge",
-    role: "Role",
-    workspace: "Workspace",
-  }
-  return names[entityType] || entityType
-}

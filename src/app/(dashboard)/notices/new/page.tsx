@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,10 +18,8 @@ import {
   Wrench,
   CreditCard,
   Users,
-  Calendar,
   Library
 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
 
 interface Property {
@@ -54,8 +52,6 @@ const audiences = [
 ]
 
 export default function NewNoticePage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [properties, setProperties] = useState<Property[]>([])
   const [libraries, setLibraries] = useState<LibraryItem[]>([])
@@ -63,16 +59,49 @@ export default function NewNoticePage() {
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [selectedRooms, setSelectedRooms] = useState<string[]>([])
 
-  const [formData, setFormData] = useState({
-    entity_type: "all" as "all" | "property" | "library",
-    property_id: "",
-    library_id: "",
-    type: "general",
-    target_audience: "all",
-    title: "",
-    content: "",
-    expires_at: "",
-    is_active: true,
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    saving,
+  } = useFormPage({
+    table: "notices",
+    initialData: {
+      entity_type: "all" as string,
+      property_id: "",
+      library_id: "",
+      type: "general",
+      target_audience: "all",
+      title: "",
+      content: "",
+      expires_at: "",
+      is_active: true,
+    },
+    redirectTo: "/notices",
+    successMessage: "Notice created successfully",
+    errorMessage: "Failed to create notice",
+    useCreatedBy: false,
+    addOwnerId: false,
+    validate: (data) => {
+      if (!data.title || !data.content) return "Please fill in title and content"
+      if (data.target_audience === "specific_rooms" && selectedRooms.length === 0) {
+        return "Please select at least one room"
+      }
+      return null
+    },
+    transform: (data, userId) => ({
+      owner_id: userId,
+      created_by: userId,
+      property_id: data.entity_type === "property" ? data.property_id : null,
+      library_id: data.entity_type === "library" ? data.library_id : null,
+      type: data.type,
+      target_audience: data.target_audience,
+      target_rooms: data.target_audience === "specific_rooms" ? selectedRooms : null,
+      title: data.title,
+      content: data.content,
+      expires_at: data.expires_at || null,
+      is_active: data.is_active,
+    }),
   })
 
   useEffect(() => {
@@ -105,7 +134,8 @@ export default function NewNoticePage() {
     setSelectedRooms([])
   }, [formData.property_id, rooms])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  // Custom handleChange that resets dependent fields
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
     setFormData((prev) => {
       const newData = {
@@ -137,61 +167,6 @@ export default function NewNoticePage() {
       setSelectedRooms([])
     } else {
       setSelectedRooms(filteredRooms.map((r) => r.id))
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.title || !formData.content) {
-      showError("Please fill in title and content")
-      return
-    }
-
-    if (formData.target_audience === "specific_rooms" && selectedRooms.length === 0) {
-      showError("Please select at least one room")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        showError("Session expired. Please login again.")
-        router.push("/login")
-        return
-      }
-
-      const { error } = await supabase.from("notices").insert({
-        owner_id: user.id,
-        created_by: user.id,
-        property_id: formData.entity_type === "property" ? formData.property_id : null,
-        library_id: formData.entity_type === "library" ? formData.library_id : null,
-        type: formData.type,
-        target_audience: formData.target_audience,
-        target_rooms: formData.target_audience === "specific_rooms" ? selectedRooms : null,
-        title: formData.title,
-        content: formData.content,
-        expires_at: formData.expires_at || null,
-        is_active: formData.is_active,
-      })
-
-      if (error) {
-        console.error("Error creating notice:", error)
-        showError(`Failed to create notice: ${error.message}`)
-        return
-      }
-
-      showSuccess("Notice created successfully")
-      router.push("/notices")
-    } catch (error: any) {
-      console.error("Error:", error)
-      showError(error?.message || "Failed to create notice")
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -282,7 +257,7 @@ export default function NewNoticePage() {
                       name="entity_type"
                       value="all"
                       checked={formData.entity_type === "all"}
-                      onChange={handleChange}
+                      onChange={handleFormChange}
                       className="h-4 w-4"
                     />
                     <Users className="h-4 w-4" />
@@ -294,7 +269,7 @@ export default function NewNoticePage() {
                       name="entity_type"
                       value="property"
                       checked={formData.entity_type === "property"}
-                      onChange={handleChange}
+                      onChange={handleFormChange}
                       className="h-4 w-4"
                     />
                     <Building2 className="h-4 w-4" />
@@ -306,7 +281,7 @@ export default function NewNoticePage() {
                       name="entity_type"
                       value="library"
                       checked={formData.entity_type === "library"}
-                      onChange={handleChange}
+                      onChange={handleFormChange}
                       className="h-4 w-4"
                     />
                     <Library className="h-4 w-4" />
@@ -323,10 +298,10 @@ export default function NewNoticePage() {
                 <select
                   id="property_id"
                   name="property_id"
-                  value={formData.property_id}
-                  onChange={handleChange}
+                  value={formData.property_id as string}
+                  onChange={handleFormChange}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  disabled={loading}
+                  disabled={saving}
                   required
                 >
                   <option value="">Select Property</option>
@@ -346,10 +321,10 @@ export default function NewNoticePage() {
                 <select
                   id="library_id"
                   name="library_id"
-                  value={formData.library_id}
-                  onChange={handleChange}
+                  value={formData.library_id as string}
+                  onChange={handleFormChange}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  disabled={loading}
+                  disabled={saving}
                   required
                 >
                   <option value="">Select Library</option>
@@ -368,10 +343,10 @@ export default function NewNoticePage() {
                 <select
                   id="property_id"
                   name="property_id"
-                  value={formData.property_id}
-                  onChange={handleChange}
+                  value={formData.property_id as string}
+                  onChange={handleFormChange}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  disabled={loading}
+                  disabled={saving}
                 >
                   <option value="">All Properties</option>
                   {properties.map((property) => (
@@ -479,10 +454,10 @@ export default function NewNoticePage() {
                 id="title"
                 name="title"
                 placeholder="Notice title"
-                value={formData.title}
+                value={formData.title as string}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={saving}
               />
             </div>
 
@@ -492,10 +467,10 @@ export default function NewNoticePage() {
                 id="content"
                 name="content"
                 placeholder="Write your notice content here..."
-                value={formData.content}
+                value={formData.content as string}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={saving}
                 rows={6}
                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
               />
@@ -508,9 +483,9 @@ export default function NewNoticePage() {
                   id="expires_at"
                   name="expires_at"
                   type="date"
-                  value={formData.expires_at}
+                  value={formData.expires_at as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   min={new Date().toISOString().split("T")[0]}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -525,7 +500,7 @@ export default function NewNoticePage() {
                     type="checkbox"
                     id="is_active"
                     name="is_active"
-                    checked={formData.is_active}
+                    checked={formData.is_active as boolean}
                     onChange={handleChange}
                     className="h-4 w-4 rounded border-input"
                   />
@@ -540,12 +515,12 @@ export default function NewNoticePage() {
 
         <div className="flex justify-end gap-4">
           <Link href="/notices">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

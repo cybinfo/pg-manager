@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Lock, Loader2, Users } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
 import { Currency } from "@/components/ui/currency"
 import { withCreatedBy } from "@/lib/audit"
@@ -213,8 +214,7 @@ export default function AssignLockerPage({
       showSuccess("Locker assigned successfully!")
       router.push(`/library-lockers/${id}`)
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to assign locker. Please try again.")
+      handleClientError(error, "Assigning locker")
     } finally {
       setLoading(false)
     }

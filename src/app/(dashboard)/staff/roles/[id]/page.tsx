@@ -18,6 +18,7 @@ import {
   Lock
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 
 interface Role {
   id: string
@@ -266,8 +267,7 @@ export default function EditRolePage() {
       showSuccess("Role updated successfully!")
       router.push("/staff/roles")
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to update role. Please try again.")
+      handleClientError(error, "Updating role")
     } finally {
       setSaving(false)
     }
@@ -307,8 +307,7 @@ export default function EditRolePage() {
       showSuccess("Role deleted")
       router.push("/staff/roles")
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to delete role")
+      handleClientError(error, "Deleting role")
     } finally {
       setSaving(false)
     }

@@ -7,6 +7,7 @@ import { CreditCard, CheckCircle, IndianRupee, Calendar } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PortalStatsGrid, PortalEmptyState } from "@/components/portal"
 import { formatDate, formatCurrency } from "@/lib/format"
+import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 
 interface PaymentRecord {
   id: string
@@ -34,6 +35,7 @@ const paymentMethodLabels: Record<string, string> = {
 }
 
 export default function MemberPaymentsPage() {
+  const { member, loading: memberLoading } = useMemberPortalData()
   const [loading, setLoading] = useState(true)
   const [payments, setPayments] = useState<PaymentRecord[]>([])
   const [stats, setStats] = useState({
@@ -44,24 +46,14 @@ export default function MemberPaymentsPage() {
   })
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (memberLoading) return
+    if (!member) {
+      setLoading(false)
+      return
+    }
+
+    const fetchPayments = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      // Get member ID
-      const { data: member } = await supabase
-        .from("library_members")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single()
-
-      if (!member) {
-        setLoading(false)
-        return
-      }
 
       // Fetch all payments
       const { data: paymentsData } = await supabase
@@ -90,10 +82,10 @@ export default function MemberPaymentsPage() {
       setLoading(false)
     }
 
-    fetchData()
-  }, [])
+    fetchPayments()
+  }, [member, memberLoading])
 
-  if (loading) {
+  if (memberLoading || loading) {
     return <PageSkeleton variant="list" />
   }
 

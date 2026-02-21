@@ -6,11 +6,9 @@
 
 "use client"
 
-import { useState, useEffect, use } from "react"
-import { useRouter } from "next/navigation"
+import { use } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,20 +16,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Armchair, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
-
-interface SeatData {
-  id: string
-  section_id: string
-  seat_number: string
-  row_number: string | null
-  has_power_outlet: boolean
-  has_lamp: boolean
-  is_window_seat: boolean
-  status: string
-  section?: { id: string; name: string; library?: { id: string; name: string } | null } | null
-}
+import { transformJoin } from "@/lib/supabase/transforms"
 
 export default function EditLibrarySeatPage({
   params,
@@ -39,59 +25,53 @@ export default function EditLibrarySeatPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuthContext()
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
-  const [seat, setSeat] = useState<SeatData | null>(null)
 
-  const [formData, setFormData] = useState({
-    seat_number: "",
-    row_number: "",
-    has_power_outlet: true,
-    has_lamp: false,
-    is_window_seat: false,
-    status: "available",
-  })
-
-  useEffect(() => {
-    async function fetchSeat() {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("library_seats")
-        .select("*, section:library_sections(id, name, library:libraries(id, name))")
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
-
-      if (error || !data) {
-        showError("Seat not found")
-        router.push("/library-seats")
-        return
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    loading,
+    saving,
+    record,
+  } = useFormEditPage({
+    table: "library_seats",
+    id,
+    select: "*, section:library_sections(id, name, library:libraries(id, name))",
+    initialData: {
+      seat_number: "",
+      row_number: "",
+      has_power_outlet: true as boolean,
+      has_lamp: false as boolean,
+      is_window_seat: false as boolean,
+      status: "available",
+    },
+    redirectTo: `/library-seats/${id}`,
+    successMessage: "Seat updated successfully!",
+    errorMessage: "Failed to update seat",
+    mapToForm: (rec) => ({
+      seat_number: (rec.seat_number as string) || "",
+      row_number: (rec.row_number as string) || "",
+      has_power_outlet: (rec.has_power_outlet as boolean) ?? true,
+      has_lamp: (rec.has_lamp as boolean) ?? false,
+      is_window_seat: (rec.is_window_seat as boolean) ?? false,
+      status: (rec.status as string) || "available",
+    }),
+    validate: (data) => {
+      if (!data.seat_number) {
+        return "Please enter seat number"
       }
-
-      setSeat(data)
-      setFormData({
-        seat_number: data.seat_number || "",
-        row_number: data.row_number || "",
-        has_power_outlet: data.has_power_outlet ?? true,
-        has_lamp: data.has_lamp ?? false,
-        is_window_seat: data.is_window_seat ?? false,
-        status: data.status || "available",
-      })
-      setLoadingData(false)
-    }
-
-    fetchSeat()
-  }, [id, router])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
+      return null
+    },
+    transform: (data): Record<string, unknown> => ({
+      seat_number: data.seat_number,
+      row_number: data.row_number || null,
+      has_power_outlet: data.has_power_outlet,
+      has_lamp: data.has_lamp,
+      is_window_seat: data.is_window_seat,
+      status: data.status,
+      updated_at: new Date().toISOString(),
+    }),
+  })
 
   const handleCheckboxChange = (name: string, checked: boolean) => {
     setFormData((prev) => ({
@@ -100,62 +80,11 @@ export default function EditLibrarySeatPage({
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Get section info from record for display
+  const section = record ? transformJoin(record.section as Record<string, unknown>) as Record<string, unknown> | null : null
 
-    if (!formData.seat_number) {
-      showError("Please enter seat number")
-      return
-    }
-
-    if (!user) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const updateData = {
-        seat_number: formData.seat_number,
-        row_number: formData.row_number || null,
-        has_power_outlet: formData.has_power_outlet,
-        has_lamp: formData.has_lamp,
-        is_window_seat: formData.is_window_seat,
-        status: formData.status,
-        updated_at: new Date().toISOString(),
-      }
-
-      const { error } = await supabase
-        .from("library_seats")
-        .update(updateData)
-        .eq("id", id)
-
-      if (error) {
-        console.error("Error updating seat:", error)
-        showError(`Failed to update seat: ${error.message}`)
-        return
-      }
-
-      showSuccess("Seat updated successfully!")
-      router.push(`/library-seats/${id}`)
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to update seat. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loadingData) {
+  if (loading) {
     return <PageLoading message="Loading seat..." />
-  }
-
-  if (!seat) {
-    return null
   }
 
   return (
@@ -170,7 +99,7 @@ export default function EditLibrarySeatPage({
         <div>
           <h1 className="text-3xl font-bold">Edit Seat</h1>
           <p className="text-muted-foreground">
-            {seat.seat_number} • {seat.section?.name}
+            {formData.seat_number} • {section?.name as string}
           </p>
         </div>
       </div>
@@ -200,10 +129,10 @@ export default function EditLibrarySeatPage({
                   id="seat_number"
                   name="seat_number"
                   placeholder="e.g., A-01, 101"
-                  value={formData.seat_number}
+                  value={formData.seat_number as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -212,9 +141,9 @@ export default function EditLibrarySeatPage({
                   id="row_number"
                   name="row_number"
                   placeholder="e.g., A, B, 1"
-                  value={formData.row_number}
+                  value={formData.row_number as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   maxLength={10}
                 />
               </div>
@@ -223,10 +152,10 @@ export default function EditLibrarySeatPage({
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select
-                value={formData.status}
+                value={formData.status as string}
                 onChange={handleChange}
                 name="status"
-                disabled={loading}
+                disabled={saving}
                 options={[
                   { value: "available", label: "Available" },
                   { value: "occupied", label: "Occupied" },
@@ -243,9 +172,9 @@ export default function EditLibrarySeatPage({
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_power_outlet"
-                    checked={formData.has_power_outlet}
+                    checked={formData.has_power_outlet as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_power_outlet", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_power_outlet" className="cursor-pointer">
                     Power Outlet
@@ -254,9 +183,9 @@ export default function EditLibrarySeatPage({
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_lamp"
-                    checked={formData.has_lamp}
+                    checked={formData.has_lamp as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_lamp", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_lamp" className="cursor-pointer">
                     Desk Lamp
@@ -265,9 +194,9 @@ export default function EditLibrarySeatPage({
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="is_window_seat"
-                    checked={formData.is_window_seat}
+                    checked={formData.is_window_seat as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("is_window_seat", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="is_window_seat" className="cursor-pointer">
                     Window Seat
@@ -280,12 +209,12 @@ export default function EditLibrarySeatPage({
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href={`/library-seats/${id}`}>
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

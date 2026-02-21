@@ -37,6 +37,7 @@ import {
   IndianRupee,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
@@ -212,8 +213,7 @@ export default function ExitClearanceDetailPage() {
       showSuccess("Exit clearance completed! Room is now available.")
       router.push("/exit-clearance")
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to complete clearance"
-      showError(errorMessage)
+      handleClientError(error, "Completing clearance")
     } finally {
       setSaving(false)
     }

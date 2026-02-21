@@ -7,10 +7,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,10 +18,9 @@ import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Users, Loader2, Clock } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
-import { withCreatedBy } from "@/lib/audit"
-import { validateIndianMobile } from "@/lib/validators"
+import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { TIME_SLOTS } from "@/types/library.types"
 
 interface LibraryOption {
@@ -33,23 +31,98 @@ interface LibraryOption {
 }
 
 export default function AddToWaitlistPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const preselectedLibrary = searchParams.get("library")
-  const { user, workspaceId } = useAuthContext()
-  const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [libraries, setLibraries] = useState<LibraryOption[]>([])
 
-  const [formData, setFormData] = useState({
-    library_id: preselectedLibrary || "",
-    name: "",
-    phone: "",
-    email: "",
-    preferred_slot: "",
-    preferred_plan: "",
-    notes: "",
+  const {
+    formData, setFormData,
+    handleSubmit,
+    saving,
+    searchParams,
+    workspaceId,
+  } = useFormPage({
+    table: "library_waitlist",
+    initialData: {
+      library_id: "",
+      name: "",
+      phone: "",
+      email: "",
+      preferred_slot: "",
+      preferred_plan: "",
+      notes: "",
+    },
+    preSelectFields: ["library"],
+    redirectTo: "/library-waitlist",
+    successMessage: "Added to waitlist successfully!",
+    errorMessage: "Failed to add to waitlist",
+    validate: (data) => {
+      if (!data.library_id) return "Please select a library"
+      if (!(data.name as string).trim()) return "Please enter a name"
+      if (!(data.phone as string).trim()) return "Please enter a phone number"
+      if (!validateIndianMobile(data.phone as string)) return "Please enter a valid 10-digit mobile number"
+      return null
+    },
+    customSubmit: async (data, userId, supabase) => {
+      // Get owner_id from workspace
+      const { data: workspace } = await supabase
+        .from("workspaces")
+        .select("owner_user_id")
+        .eq("id", workspaceId)
+        .single()
+
+      if (!workspace) {
+        throw new Error("Workspace not found")
+      }
+
+      // Check if already on waitlist
+      const { data: existing } = await supabase
+        .from("library_waitlist")
+        .select("id")
+        .eq("library_id", data.library_id)
+        .eq("phone", data.phone)
+        .in("status", ["waiting", "contacted"])
+        .is("deleted_at", null)
+        .single()
+
+      if (existing) {
+        throw new Error("This person is already on the waitlist for this library")
+      }
+
+      const { withCreatedBy } = await import("@/lib/audit")
+
+      // Create waitlist entry
+      const waitlistData = withCreatedBy(
+        {
+          owner_id: workspace.owner_user_id,
+          workspace_id: workspaceId,
+          library_id: data.library_id,
+          name: (data.name as string).trim(),
+          phone: (data.phone as string).trim(),
+          email: (data.email as string).trim() || null,
+          preferred_slot: data.preferred_slot || null,
+          preferred_plan: data.preferred_plan || null,
+          notes: (data.notes as string).trim() || null,
+          status: "waiting",
+        },
+        userId
+      )
+
+      const { error } = await supabase.from("library_waitlist").insert(waitlistData)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+    },
   })
+
+  const preselectedLibrary = searchParams.get("library")
+
+  // Pre-fill library_id from URL param
+  useEffect(() => {
+    if (preselectedLibrary && !formData.library_id) {
+      setFormData((prev) => ({ ...prev, library_id: preselectedLibrary }))
+    }
+  }, [preselectedLibrary, formData.library_id, setFormData])
 
   useEffect(() => {
     async function fetchData() {
@@ -69,104 +142,6 @@ export default function AddToWaitlistPage() {
 
     fetchData()
   }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.library_id) {
-      showError("Please select a library")
-      return
-    }
-
-    if (!formData.name.trim()) {
-      showError("Please enter a name")
-      return
-    }
-
-    if (!formData.phone.trim()) {
-      showError("Please enter a phone number")
-      return
-    }
-
-    if (!validateIndianMobile(formData.phone)) {
-      showError("Please enter a valid 10-digit mobile number")
-      return
-    }
-
-    if (!user || !workspaceId) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      // Get owner_id from workspace
-      const { data: workspace } = await supabase
-        .from("workspaces")
-        .select("owner_user_id")
-        .eq("id", workspaceId)
-        .single()
-
-      if (!workspace) {
-        showError("Workspace not found")
-        setLoading(false)
-        return
-      }
-
-      // Check if already on waitlist
-      const { data: existing } = await supabase
-        .from("library_waitlist")
-        .select("id")
-        .eq("library_id", formData.library_id)
-        .eq("phone", formData.phone)
-        .in("status", ["waiting", "contacted"])
-        .is("deleted_at", null)
-        .single()
-
-      if (existing) {
-        showError("This person is already on the waitlist for this library")
-        setLoading(false)
-        return
-      }
-
-      // Create waitlist entry
-      const waitlistData = withCreatedBy(
-        {
-          owner_id: workspace.owner_user_id,
-          workspace_id: workspaceId,
-          library_id: formData.library_id,
-          name: formData.name.trim(),
-          phone: formData.phone.trim(),
-          email: formData.email.trim() || null,
-          preferred_slot: formData.preferred_slot || null,
-          preferred_plan: formData.preferred_plan || null,
-          notes: formData.notes.trim() || null,
-          status: "waiting",
-        },
-        user.id
-      )
-
-      const { error } = await supabase.from("library_waitlist").insert(waitlistData)
-
-      if (error) {
-        console.error("Error adding to waitlist:", error)
-        showError(`Failed to add to waitlist: ${error.message}`)
-        return
-      }
-
-      showSuccess("Added to waitlist successfully!")
-      router.push("/library-waitlist")
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to add to waitlist. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loadingData) {
     return <PageLoading message="Loading..." />
@@ -221,11 +196,11 @@ export default function AddToWaitlistPage() {
               <Label htmlFor="library_id">Library *</Label>
               <Combobox
                 options={libraryOptions}
-                value={formData.library_id}
+                value={formData.library_id as string}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, library_id: value }))}
                 placeholder="Select a library..."
                 emptyText="No libraries found"
-                disabled={loading}
+                disabled={saving}
               />
             </div>
 
@@ -235,10 +210,10 @@ export default function AddToWaitlistPage() {
                 <Label htmlFor="name">Name *</Label>
                 <Input
                   id="name"
-                  value={formData.name}
+                  value={formData.name as string}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Full name"
-                  disabled={loading}
+                  disabled={saving}
                   required
                 />
               </div>
@@ -246,10 +221,10 @@ export default function AddToWaitlistPage() {
                 <Label htmlFor="phone">Phone *</Label>
                 <Input
                   id="phone"
-                  value={formData.phone}
+                  value={formData.phone as string}
                   onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                   placeholder="10-digit mobile"
-                  disabled={loading}
+                  disabled={saving}
                   required
                 />
               </div>
@@ -260,10 +235,10 @@ export default function AddToWaitlistPage() {
               <Input
                 id="email"
                 type="email"
-                value={formData.email}
+                value={formData.email as string}
                 onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                 placeholder="email@example.com"
-                disabled={loading}
+                disabled={saving}
               />
             </div>
 
@@ -277,20 +252,20 @@ export default function AddToWaitlistPage() {
                 <div className="space-y-2">
                   <Label htmlFor="preferred_slot">Preferred Time Slot</Label>
                   <Select
-                    value={formData.preferred_slot}
+                    value={formData.preferred_slot as string}
                     onChange={(e) => setFormData((prev) => ({ ...prev, preferred_slot: e.target.value }))}
                     options={slotOptions}
-                    disabled={loading}
+                    disabled={saving}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="preferred_plan">Preferred Plan</Label>
                   <Input
                     id="preferred_plan"
-                    value={formData.preferred_plan}
+                    value={formData.preferred_plan as string}
                     onChange={(e) => setFormData((prev) => ({ ...prev, preferred_plan: e.target.value }))}
                     placeholder="e.g., 9 Hours"
-                    disabled={loading}
+                    disabled={saving}
                   />
                 </div>
               </div>
@@ -301,11 +276,11 @@ export default function AddToWaitlistPage() {
               <Label htmlFor="notes">Notes (Optional)</Label>
               <Textarea
                 id="notes"
-                value={formData.notes}
+                value={formData.notes as string}
                 onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                 placeholder="Any additional information..."
                 rows={3}
-                disabled={loading}
+                disabled={saving}
               />
             </div>
           </CardContent>
@@ -313,12 +288,12 @@ export default function AddToWaitlistPage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href="/library-waitlist">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Adding...

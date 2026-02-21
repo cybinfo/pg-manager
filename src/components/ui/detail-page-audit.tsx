@@ -139,6 +139,9 @@ export function DetailPageAudit({
 /**
  * Entity type mapping for audit_events table.
  * Use these constants to ensure consistency.
+ *
+ * For display names (e.g. "Tenant", "Bill"), use getEntityName()
+ * from "@/lib/entity-names" instead.
  */
 export const AUDIT_ENTITY_TYPES = {
   tenant: "tenant",

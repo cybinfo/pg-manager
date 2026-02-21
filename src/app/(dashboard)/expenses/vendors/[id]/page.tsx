@@ -28,6 +28,7 @@ import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -156,8 +157,7 @@ export default function VendorDetailPage({
         showError(result.error.message || "Failed to delete vendor")
       }
     } catch (error) {
-      console.error("Failed to delete vendor:", error)
-      showError("Failed to delete vendor")
+      handleClientError(error, "Deleting vendor")
     }
   }
 

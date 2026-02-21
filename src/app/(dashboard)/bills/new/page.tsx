@@ -24,6 +24,7 @@ import {
   Check
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency } from "@/lib/format"
 import { withCreatedBy } from "@/lib/audit"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -437,8 +438,7 @@ function NewBillContent() {
       showSuccess("Bill generated successfully!")
       router.push(`/bills/${billData.id}`)
     } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to generate bill")
+      handleClientError(error, "Generating bill")
     } finally {
       setLoading(false)
     }

@@ -29,7 +29,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
-import { DetailSection, InfoRow, DetailPageAudit, AUDIT_ENTITY_TYPES } from "@/components/ui"
+import { DetailSection, InfoRow, DetailPageAudit } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"

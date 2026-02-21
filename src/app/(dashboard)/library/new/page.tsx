@@ -7,115 +7,80 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { withCreatedBy } from "@/lib/audit"
 
 export default function NewLibraryPage() {
-  const router = useRouter()
-  const { user, workspaceId } = useAuthContext()
-  const [loading, setLoading] = useState(false)
-
-  const [formData, setFormData] = useState({
-    name: "",
-    code: "",
-    address: "",
-    city: "",
-    state: "Uttar Pradesh",
-    pincode: "",
-    phone: "",
-    email: "",
-    opening_time: "06:00",
-    closing_time: "23:00",
-    has_ac: false,
-    has_wifi: true,
-    has_lockers: true,
-    has_parking: false,
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    saving,
+    workspaceId,
+  } = useFormPage({
+    table: "libraries",
+    initialData: {
+      name: "",
+      code: "",
+      address: "",
+      city: "",
+      state: "Uttar Pradesh",
+      pincode: "",
+      phone: "",
+      email: "",
+      opening_time: "06:00",
+      closing_time: "23:00",
+      has_ac: false as boolean,
+      has_wifi: true as boolean,
+      has_lockers: true as boolean,
+      has_parking: false as boolean,
+    },
+    redirectTo: "/library",
+    successMessage: "Library created successfully!",
+    errorMessage: "Failed to create library",
+    validate: (data) => {
+      if (!data.name || !data.city) {
+        return "Please fill in required fields (Name, City)"
+      }
+      return null
+    },
+    transform: (data, userId): Record<string, unknown> => ({
+      owner_id: userId,
+      workspace_id: workspaceId,
+      name: data.name,
+      code: data.code || null,
+      address: data.address || null,
+      city: data.city,
+      state: data.state || null,
+      pincode: data.pincode || null,
+      phone: data.phone || null,
+      email: data.email || null,
+      opening_time: data.opening_time || null,
+      closing_time: data.closing_time || null,
+      has_ac: data.has_ac,
+      has_wifi: data.has_wifi,
+      has_lockers: data.has_lockers,
+      has_parking: data.has_parking,
+      settings: {
+        time_slots: ["Morning", "Evening", "Night", "24 Hours"],
+        default_hours_per_month: 9,
+        grace_period_minutes: 15,
+      },
+    }),
+    addOwnerId: false,
   })
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }))
-  }
 
   const handleCheckboxChange = (name: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
       [name]: checked,
     }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name || !formData.city) {
-      showError("Please fill in required fields (Name, City)")
-      return
-    }
-
-    if (!user || !workspaceId) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const libraryData = withCreatedBy({
-        owner_id: user.id,
-        workspace_id: workspaceId,
-        name: formData.name,
-        code: formData.code || null,
-        address: formData.address || null,
-        city: formData.city,
-        state: formData.state || null,
-        pincode: formData.pincode || null,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        opening_time: formData.opening_time || null,
-        closing_time: formData.closing_time || null,
-        has_ac: formData.has_ac,
-        has_wifi: formData.has_wifi,
-        has_lockers: formData.has_lockers,
-        has_parking: formData.has_parking,
-        settings: {
-          time_slots: ["Morning", "Evening", "Night", "24 Hours"],
-          default_hours_per_month: 9,
-          grace_period_minutes: 15,
-        },
-      }, user.id)
-
-      const { error } = await supabase.from("libraries").insert(libraryData)
-
-      if (error) {
-        console.error("Error creating library:", error)
-        showError(`Failed to create library: ${error.message}`)
-        return
-      }
-
-      showSuccess("Library created successfully!")
-      router.push("/library")
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to create library. Please try again.")
-    } finally {
-      setLoading(false)
-    }
   }
 
   return (
@@ -160,10 +125,10 @@ export default function NewLibraryPage() {
                   id="name"
                   name="name"
                   placeholder="e.g., City Study Library"
-                  value={formData.name}
+                  value={formData.name as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -172,9 +137,9 @@ export default function NewLibraryPage() {
                   id="code"
                   name="code"
                   placeholder="e.g., CSL"
-                  value={formData.code}
+                  value={formData.code as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   maxLength={10}
                 />
                 <p className="text-xs text-muted-foreground">Used for member codes</p>
@@ -194,9 +159,9 @@ export default function NewLibraryPage() {
                     id="address"
                     name="address"
                     placeholder="e.g., 123, Main Street, Near Railway Station"
-                    value={formData.address}
+                    value={formData.address as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -206,10 +171,10 @@ export default function NewLibraryPage() {
                       id="city"
                       name="city"
                       placeholder="e.g., Lucknow"
-                      value={formData.city}
+                      value={formData.city as string}
                       onChange={handleChange}
                       required
-                      disabled={loading}
+                      disabled={saving}
                     />
                   </div>
                   <div className="space-y-2">
@@ -218,9 +183,9 @@ export default function NewLibraryPage() {
                       id="state"
                       name="state"
                       placeholder="e.g., Uttar Pradesh"
-                      value={formData.state}
+                      value={formData.state as string}
                       onChange={handleChange}
-                      disabled={loading}
+                      disabled={saving}
                     />
                   </div>
                 </div>
@@ -231,9 +196,9 @@ export default function NewLibraryPage() {
                       id="pincode"
                       name="pincode"
                       placeholder="e.g., 226001"
-                      value={formData.pincode}
+                      value={formData.pincode as string}
                       onChange={handleChange}
-                      disabled={loading}
+                      disabled={saving}
                       maxLength={6}
                     />
                   </div>
@@ -243,9 +208,9 @@ export default function NewLibraryPage() {
                       id="phone"
                       name="phone"
                       placeholder="e.g., 9876543210"
-                      value={formData.phone}
+                      value={formData.phone as string}
                       onChange={handleChange}
-                      disabled={loading}
+                      disabled={saving}
                       type="tel"
                     />
                   </div>
@@ -266,9 +231,9 @@ export default function NewLibraryPage() {
                     id="opening_time"
                     name="opening_time"
                     type="time"
-                    value={formData.opening_time}
+                    value={formData.opening_time as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                   />
                 </div>
                 <div className="space-y-2">
@@ -277,9 +242,9 @@ export default function NewLibraryPage() {
                     id="closing_time"
                     name="closing_time"
                     type="time"
-                    value={formData.closing_time}
+                    value={formData.closing_time as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                   />
                 </div>
               </div>
@@ -292,9 +257,9 @@ export default function NewLibraryPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_ac"
-                    checked={formData.has_ac}
+                    checked={formData.has_ac as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_ac", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_ac" className="flex items-center gap-2 cursor-pointer">
                     Air Conditioning
@@ -303,9 +268,9 @@ export default function NewLibraryPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_wifi"
-                    checked={formData.has_wifi}
+                    checked={formData.has_wifi as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_wifi", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_wifi" className="flex items-center gap-2 cursor-pointer">
                     <Wifi className="h-4 w-4" />
@@ -315,9 +280,9 @@ export default function NewLibraryPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_lockers"
-                    checked={formData.has_lockers}
+                    checked={formData.has_lockers as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_lockers", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_lockers" className="flex items-center gap-2 cursor-pointer">
                     <Lock className="h-4 w-4" />
@@ -327,9 +292,9 @@ export default function NewLibraryPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_parking"
-                    checked={formData.has_parking}
+                    checked={formData.has_parking as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_parking", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_parking" className="flex items-center gap-2 cursor-pointer">
                     <Car className="h-4 w-4" />
@@ -343,12 +308,12 @@ export default function NewLibraryPage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href="/library">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

@@ -6,11 +6,9 @@
 
 "use client"
 
-import { useState, useEffect, use } from "react"
-import { useRouter } from "next/navigation"
+import { use } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,21 +16,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
-
-interface PlanData {
-  id: string
-  name: string
-  description: string | null
-  hours_included: number | null
-  validity_days: number
-  base_price: number
-  allowed_slots: string[] | null
-  is_active: boolean
-  sort_order: number
-}
 
 export default function EditLibraryPlanPage({
   params,
@@ -40,130 +25,70 @@ export default function EditLibraryPlanPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuthContext()
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
-  const [plan, setPlan] = useState<PlanData | null>(null)
 
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    hours_included: "",
-    validity_days: "30",
-    base_price: "",
-    allowed_slots: [] as string[],
-    is_active: true,
-    sort_order: "0",
-  })
-
-  useEffect(() => {
-    async function fetchPlan() {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("library_plans")
-        .select("*")
-        .eq("id", id)
-        .single()
-
-      if (error || !data) {
-        showError("Plan not found")
-        router.push("/library-plans")
-        return
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    loading,
+    saving,
+    record,
+  } = useFormEditPage({
+    table: "library_plans",
+    id,
+    initialData: {
+      name: "",
+      description: "",
+      hours_included: "",
+      validity_days: "30",
+      base_price: "",
+      allowed_slots: [] as string[],
+      is_active: true as boolean,
+      sort_order: "0",
+    },
+    redirectTo: "/library-plans",
+    successMessage: "Plan updated successfully!",
+    errorMessage: "Failed to update plan",
+    mapToForm: (rec) => ({
+      name: (rec.name as string) || "",
+      description: (rec.description as string) || "",
+      hours_included: rec.hours_included?.toString() || "",
+      validity_days: rec.validity_days?.toString() || "30",
+      base_price: rec.base_price?.toString() || "",
+      allowed_slots: (rec.allowed_slots as string[]) || [],
+      is_active: (rec.is_active as boolean) ?? true,
+      sort_order: rec.sort_order?.toString() || "0",
+    }),
+    validate: (data) => {
+      if (!data.name || !data.base_price || !data.validity_days) {
+        return "Please fill in required fields (Name, Price, Validity)"
       }
-
-      setPlan(data)
-      setFormData({
-        name: data.name || "",
-        description: data.description || "",
-        hours_included: data.hours_included?.toString() || "",
-        validity_days: data.validity_days?.toString() || "30",
-        base_price: data.base_price?.toString() || "",
-        allowed_slots: data.allowed_slots || [],
-        is_active: data.is_active ?? true,
-        sort_order: data.sort_order?.toString() || "0",
-      })
-      setLoadingData(false)
-    }
-
-    fetchPlan()
-  }, [id, router])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }))
-  }
+      return null
+    },
+    transform: (data): Record<string, unknown> => ({
+      name: data.name,
+      description: data.description || null,
+      hours_included: data.hours_included ? Number(data.hours_included) : null,
+      validity_days: Number(data.validity_days),
+      base_price: Number(data.base_price),
+      allowed_slots: (data.allowed_slots as string[]).length > 0 ? data.allowed_slots : null,
+      is_active: data.is_active,
+      sort_order: Number(data.sort_order) || 0,
+      updated_at: new Date().toISOString(),
+    }),
+  })
 
   const handleSlotChange = (slot: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
       allowed_slots: checked
-        ? [...prev.allowed_slots, slot]
-        : prev.allowed_slots.filter((s) => s !== slot),
+        ? [...(prev.allowed_slots as string[]), slot]
+        : (prev.allowed_slots as string[]).filter((s) => s !== slot),
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name || !formData.base_price || !formData.validity_days) {
-      showError("Please fill in required fields (Name, Price, Validity)")
-      return
-    }
-
-    if (!user) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const updateData = {
-        name: formData.name,
-        description: formData.description || null,
-        hours_included: formData.hours_included ? Number(formData.hours_included) : null,
-        validity_days: Number(formData.validity_days),
-        base_price: Number(formData.base_price),
-        allowed_slots: formData.allowed_slots.length > 0 ? formData.allowed_slots : null,
-        is_active: formData.is_active,
-        sort_order: Number(formData.sort_order) || 0,
-        updated_at: new Date().toISOString(),
-      }
-
-      const { error } = await supabase
-        .from("library_plans")
-        .update(updateData)
-        .eq("id", id)
-
-      if (error) {
-        console.error("Error updating plan:", error)
-        showError(`Failed to update plan: ${error.message}`)
-        return
-      }
-
-      showSuccess("Plan updated successfully!")
-      router.push("/library-plans")
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to update plan. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loadingData) {
+  if (loading) {
     return <PageLoading message="Loading plan..." />
-  }
-
-  if (!plan) {
-    return null
   }
 
   return (
@@ -178,7 +103,7 @@ export default function EditLibraryPlanPage({
         <div>
           <h1 className="text-3xl font-bold">Edit Plan</h1>
           <p className="text-muted-foreground">
-            {plan.name}
+            {record?.name as string}
           </p>
         </div>
       </div>
@@ -208,23 +133,23 @@ export default function EditLibraryPlanPage({
                   id="name"
                   name="name"
                   placeholder="e.g., 9 Hours, Monthly"
-                  value={formData.name}
+                  value={formData.name as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="base_price">Price (₹) *</Label>
+                <Label htmlFor="base_price">Price (Rs.) *</Label>
                 <Input
                   id="base_price"
                   name="base_price"
                   type="number"
                   placeholder="e.g., 1000"
-                  value={formData.base_price}
+                  value={formData.base_price as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                   min={0}
                   step="0.01"
                 />
@@ -237,9 +162,9 @@ export default function EditLibraryPlanPage({
                 id="description"
                 name="description"
                 placeholder="Brief description of the plan..."
-                value={formData.description}
+                value={formData.description as string}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 rows={2}
               />
             </div>
@@ -252,9 +177,9 @@ export default function EditLibraryPlanPage({
                   name="hours_included"
                   type="number"
                   placeholder="Leave empty for unlimited"
-                  value={formData.hours_included}
+                  value={formData.hours_included as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   min={1}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -268,10 +193,10 @@ export default function EditLibraryPlanPage({
                   name="validity_days"
                   type="number"
                   placeholder="e.g., 30"
-                  value={formData.validity_days}
+                  value={formData.validity_days as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                   min={1}
                 />
               </div>
@@ -288,9 +213,9 @@ export default function EditLibraryPlanPage({
                   <div key={slot.value} className="flex items-center space-x-2">
                     <Checkbox
                       id={`slot-${slot.value}`}
-                      checked={formData.allowed_slots.includes(slot.value)}
+                      checked={(formData.allowed_slots as string[]).includes(slot.value)}
                       onCheckedChange={(checked) => handleSlotChange(slot.value, checked as boolean)}
-                      disabled={loading}
+                      disabled={saving}
                     />
                     <Label htmlFor={`slot-${slot.value}`} className="cursor-pointer text-sm">
                       {slot.label}
@@ -310,18 +235,18 @@ export default function EditLibraryPlanPage({
                     name="sort_order"
                     type="number"
                     placeholder="e.g., 0, 1, 2"
-                    value={formData.sort_order}
+                    value={formData.sort_order as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                   />
                 </div>
                 <div className="flex items-center space-x-2 pt-8">
                   <Checkbox
                     id="is_active"
-                    checked={formData.is_active}
+                    checked={formData.is_active as boolean}
                     onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked as boolean }))}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="is_active" className="cursor-pointer">
                     Plan is active
@@ -334,12 +259,12 @@ export default function EditLibraryPlanPage({
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href="/library-plans">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

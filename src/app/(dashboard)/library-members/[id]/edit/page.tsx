@@ -6,11 +6,9 @@
 
 "use client"
 
-import { useState, useEffect, use } from "react"
-import { useRouter } from "next/navigation"
+import { use } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,23 +16,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Users, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
-
-interface MemberData {
-  id: string
-  name: string
-  phone: string | null
-  email: string | null
-  member_code: string | null
-  id_proof_type: string | null
-  id_proof_number: string | null
-  preferred_slot: string | null
-  notes: string | null
-  status: string
-  library?: { id: string; name: string } | null
-}
+import { transformJoin } from "@/lib/supabase/transforms"
 
 export default function EditLibraryMemberPage({
   params,
@@ -42,122 +26,66 @@ export default function EditLibraryMemberPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuthContext()
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
-  const [member, setMember] = useState<MemberData | null>(null)
 
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    id_proof_type: "aadhar",
-    id_proof_number: "",
-    preferred_slot: "Morning",
-    notes: "",
-    status: "active",
+  const {
+    formData,
+    handleChange,
+    handleSubmit,
+    loading,
+    saving,
+    record,
+  } = useFormEditPage({
+    table: "library_members",
+    id,
+    select: "*, library:libraries(id, name)",
+    initialData: {
+      name: "",
+      phone: "",
+      email: "",
+      id_proof_type: "aadhar",
+      id_proof_number: "",
+      preferred_slot: "Morning",
+      notes: "",
+      status: "active",
+    },
+    redirectTo: `/library-members/${id}`,
+    successMessage: "Member updated successfully!",
+    errorMessage: "Failed to update member",
+    mapToForm: (rec) => ({
+      name: (rec.name as string) || "",
+      phone: (rec.phone as string) || "",
+      email: (rec.email as string) || "",
+      id_proof_type: (rec.id_proof_type as string) || "aadhar",
+      id_proof_number: (rec.id_proof_number as string) || "",
+      preferred_slot: (rec.preferred_slot as string) || "Morning",
+      notes: (rec.notes as string) || "",
+      status: (rec.status as string) || "active",
+    }),
+    validate: (data) => {
+      if (!data.name || !data.phone) {
+        return "Please fill in required fields (Name, Phone)"
+      }
+      return null
+    },
+    transform: (data): Record<string, unknown> => ({
+      name: data.name,
+      phone: data.phone || null,
+      email: data.email || null,
+      id_proof_type: data.id_proof_type || null,
+      id_proof_number: data.id_proof_number || null,
+      preferred_slot: data.preferred_slot || null,
+      notes: data.notes || null,
+      status: data.status,
+      updated_at: new Date().toISOString(),
+    }),
   })
 
-  useEffect(() => {
-    async function fetchMember() {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("library_members")
-        .select("*, library:libraries(id, name)")
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
+  // Get library name from record for display
+  const library = record ? transformJoin(record.library as Record<string, unknown>) as Record<string, unknown> | null : null
+  const memberCode = record?.member_code as string
 
-      if (error || !data) {
-        showError("Member not found")
-        router.push("/library-members")
-        return
-      }
-
-      setMember(data)
-      setFormData({
-        name: data.name || "",
-        phone: data.phone || "",
-        email: data.email || "",
-        id_proof_type: data.id_proof_type || "aadhar",
-        id_proof_number: data.id_proof_number || "",
-        preferred_slot: data.preferred_slot || "Morning",
-        notes: data.notes || "",
-        status: data.status || "active",
-      })
-      setLoadingData(false)
-    }
-
-    fetchMember()
-  }, [id, router])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name || !formData.phone) {
-      showError("Please fill in required fields (Name, Phone)")
-      return
-    }
-
-    if (!user) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const updateData = {
-        name: formData.name,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        id_proof_type: formData.id_proof_type || null,
-        id_proof_number: formData.id_proof_number || null,
-        preferred_slot: formData.preferred_slot || null,
-        notes: formData.notes || null,
-        status: formData.status,
-        updated_at: new Date().toISOString(),
-      }
-
-      const { error } = await supabase
-        .from("library_members")
-        .update(updateData)
-        .eq("id", id)
-
-      if (error) {
-        console.error("Error updating member:", error)
-        showError(`Failed to update member: ${error.message}`)
-        return
-      }
-
-      showSuccess("Member updated successfully!")
-      router.push(`/library-members/${id}`)
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to update member. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loadingData) {
+  if (loading) {
     return <PageLoading message="Loading member..." />
-  }
-
-  if (!member) {
-    return null
   }
 
   return (
@@ -172,7 +100,7 @@ export default function EditLibraryMemberPage({
         <div>
           <h1 className="text-3xl font-bold">Edit Member</h1>
           <p className="text-muted-foreground">
-            {member.member_code} • {member.library?.name}
+            {memberCode} • {library?.name as string}
           </p>
         </div>
       </div>
@@ -202,10 +130,10 @@ export default function EditLibraryMemberPage({
                   id="name"
                   name="name"
                   placeholder="e.g., Rahul Sharma"
-                  value={formData.name}
+                  value={formData.name as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -214,10 +142,10 @@ export default function EditLibraryMemberPage({
                   id="phone"
                   name="phone"
                   placeholder="e.g., 9876543210"
-                  value={formData.phone}
+                  value={formData.phone as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                   type="tel"
                   maxLength={10}
                 />
@@ -230,9 +158,9 @@ export default function EditLibraryMemberPage({
                 id="email"
                 name="email"
                 placeholder="e.g., rahul@example.com"
-                value={formData.email}
+                value={formData.email as string}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 type="email"
               />
             </div>
@@ -242,10 +170,10 @@ export default function EditLibraryMemberPage({
               <div className="space-y-2">
                 <Label htmlFor="id_proof_type">ID Proof Type</Label>
                 <Select
-                  value={formData.id_proof_type}
+                  value={formData.id_proof_type as string}
                   onChange={handleChange}
                   name="id_proof_type"
-                  disabled={loading}
+                  disabled={saving}
                   options={[
                     { value: "aadhar", label: "Aadhaar Card" },
                     { value: "pan", label: "PAN Card" },
@@ -261,9 +189,9 @@ export default function EditLibraryMemberPage({
                   id="id_proof_number"
                   name="id_proof_number"
                   placeholder="e.g., XXXX-XXXX-XXXX"
-                  value={formData.id_proof_number}
+                  value={formData.id_proof_number as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
             </div>
@@ -273,10 +201,10 @@ export default function EditLibraryMemberPage({
               <div className="space-y-2">
                 <Label htmlFor="preferred_slot">Preferred Time Slot</Label>
                 <Select
-                  value={formData.preferred_slot}
+                  value={formData.preferred_slot as string}
                   onChange={handleChange}
                   name="preferred_slot"
-                  disabled={loading}
+                  disabled={saving}
                   options={TIME_SLOTS.map((slot) => ({
                     value: slot.value,
                     label: slot.label,
@@ -286,10 +214,10 @@ export default function EditLibraryMemberPage({
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
-                  value={formData.status}
+                  value={formData.status as string}
                   onChange={handleChange}
                   name="status"
-                  disabled={loading}
+                  disabled={saving}
                   options={[
                     { value: "active", label: "Active" },
                     { value: "expired", label: "Expired" },
@@ -307,9 +235,9 @@ export default function EditLibraryMemberPage({
                 id="notes"
                 name="notes"
                 placeholder="Any additional notes..."
-                value={formData.notes}
+                value={formData.notes as string}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 rows={3}
               />
             </div>
@@ -318,12 +246,12 @@ export default function EditLibraryMemberPage({
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href={`/library-members/${id}`}>
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

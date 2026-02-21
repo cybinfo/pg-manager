@@ -1,19 +1,16 @@
 "use client"
 
 /**
- * QuickStatsGrid Component
+ * QuickStatsGrid, InlineStats, and SummaryCard Components
  *
- * Displays a grid of stat cards, commonly used in detail pages.
- * Eliminates 12+ duplicate InfoCard grid patterns.
+ * These are convenience wrappers around the unified StatCard/StatsGrid system
+ * with additional variant-based color support and specialized layouts.
  *
- * @example
- * <QuickStatsGrid
- *   stats={[
- *     { label: "Total Rent", value: "₹5,000", icon: CreditCard },
- *     { label: "Balance", value: "₹2,000", icon: Wallet, variant: "warning" },
- *     { label: "Status", value: "Active", icon: Check, variant: "success" },
- *   ]}
- * />
+ * - QuickStatsGrid: Grid of stat cards with variant colors + size options
+ * - InlineStats: Horizontal inline stats with separators
+ * - SummaryCard: Large card with optional breakdown rows
+ *
+ * For simple stat card grids, prefer using StatsGrid from stat-card.tsx directly.
  */
 
 import { type LucideIcon } from "lucide-react"
@@ -111,9 +108,15 @@ const columnClasses = {
 }
 
 // ============================================================================
-// COMPONENT
+// QUICK STATS GRID
 // ============================================================================
 
+/**
+ * Grid of stat cards with semantic variant colors and configurable sizes.
+ *
+ * Use this when you need semantic color variants (success/warning/error)
+ * or size control. For simple icon+label+value cards, prefer StatsGrid.
+ */
 export function QuickStatsGrid({
   stats,
   columns = 4,
@@ -163,7 +166,7 @@ export function QuickStatsGrid({
 }
 
 // ============================================================================
-// INLINE STATS VARIANT
+// INLINE STATS
 // ============================================================================
 
 interface InlineStatsProps {
@@ -173,16 +176,8 @@ interface InlineStatsProps {
 }
 
 /**
- * Inline stats display (horizontal, no cards)
- *
- * @example
- * <InlineStats
- *   stats={[
- *     { label: "Total", value: "₹5,000" },
- *     { label: "Paid", value: "₹3,000", variant: "success" },
- *     { label: "Due", value: "₹2,000", variant: "warning" },
- *   ]}
- * />
+ * Inline stats display (horizontal, no cards).
+ * Good for compact stat summaries inside other cards/sections.
  */
 export function InlineStats({ stats, className, separator = true }: InlineStatsProps) {
   return (
@@ -211,7 +206,7 @@ export function InlineStats({ stats, className, separator = true }: InlineStatsP
 }
 
 // ============================================================================
-// SUMMARY CARD VARIANT
+// SUMMARY CARD
 // ============================================================================
 
 interface SummaryCardProps {
@@ -234,20 +229,8 @@ interface SummaryCardProps {
 }
 
 /**
- * Larger summary card with optional breakdown
- *
- * @example
- * <SummaryCard
- *   title="Total Revenue"
- *   value="₹50,000"
- *   sublabel="This month"
- *   icon={TrendingUp}
- *   variant="success"
- *   stats={[
- *     { label: "Rent", value: "₹45,000" },
- *     { label: "Other", value: "₹5,000" },
- *   ]}
- * />
+ * Larger summary card with optional breakdown rows.
+ * Good for report overview cards that show a main value + supporting stats.
  */
 export function SummaryCard({
   title,

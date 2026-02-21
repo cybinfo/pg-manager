@@ -1,3 +1,11 @@
+/**
+ * Email Sending Infrastructure
+ *
+ * Handles email transport via Resend. Template generation (subjects + bodies)
+ * is centralized in @/lib/templates/email.ts, consumed here via
+ * @/lib/email-templates (backward compat shim) and @/lib/templates.
+ */
+
 import { Resend } from "resend"
 import {
   paymentReminderTemplate,
@@ -10,6 +18,7 @@ import {
   libraryExpiringMembershipTemplate,
   libraryExpiredMembershipTemplate,
 } from "./email-templates"
+import { emailSubjects, emailBodyTemplates } from "@/lib/templates"
 import { logger, extractErrorMeta } from "@/lib/logger"
 
 const emailLogger = logger.child("email")
@@ -150,7 +159,7 @@ export async function sendPaymentReminder(
     const { data: result, error } = await client.emails.send({
       from: FROM_EMAIL,
       to: data.to,
-      subject: `Rent Reminder - ${data.propertyName}`,
+      subject: emailSubjects.paymentReminder(data),
       html: paymentReminderTemplate(data),
     })
 
@@ -174,7 +183,7 @@ export async function sendOverdueAlert(
     const { data: result, error } = await client.emails.send({
       from: FROM_EMAIL,
       to: data.to,
-      subject: `Payment Overdue - Action Required`,
+      subject: emailSubjects.overdueAlert(),
       html: overdueAlertTemplate(data),
     })
 
@@ -198,7 +207,7 @@ export async function sendPaymentReceipt(
     const { data: result, error } = await client.emails.send({
       from: FROM_EMAIL,
       to: data.to,
-      subject: `Payment Receipt - ${data.receiptNumber}`,
+      subject: emailSubjects.paymentReceipt(data),
       html: paymentReceiptTemplate(data),
     })
 
@@ -219,11 +228,10 @@ export async function sendInvitationEmail(
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
     const client = getResendClient()
-    const roleLabel = data.contextType === "staff" ? "Staff" : "Tenant"
     const { data: result, error } = await client.emails.send({
       from: FROM_EMAIL,
       to: data.to,
-      subject: `You're invited to join ${data.workspaceName} as ${roleLabel} - ManageKar`,
+      subject: emailSubjects.invitation(data),
       html: invitationEmailTemplate(data),
     })
 
@@ -249,29 +257,8 @@ export async function sendTestEmail(
     const { error } = await client.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "ManageKar - Test Email",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #14B8A6, #10B981); padding: 20px; border-radius: 8px 8px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">ManageKar</h1>
-          </div>
-          <div style="padding: 30px; background: #f9fafb; border-radius: 0 0 8px 8px;">
-            <h2 style="color: #111827; margin-top: 0;">Test Email Successful!</h2>
-            <p style="color: #6b7280; line-height: 1.6;">
-              Hi ${ownerName},<br><br>
-              This is a test email from ManageKar to confirm your email notification settings are working correctly.
-            </p>
-            <p style="color: #6b7280; line-height: 1.6;">
-              You will receive payment reminders and alerts at this email address when enabled.
-            </p>
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                This email was sent from ManageKar - Smart PG Management Software
-              </p>
-            </div>
-          </div>
-        </div>
-      `,
+      subject: emailSubjects.testEmail(),
+      html: emailBodyTemplates.testEmail({ ownerName }),
     })
 
     if (error) {
@@ -293,7 +280,7 @@ export async function sendVerificationEmail(
     const { data: result, error } = await client.emails.send({
       from: FROM_EMAIL,
       to: data.to,
-      subject: "Verify your email - ManageKar",
+      subject: emailSubjects.emailVerification(),
       html: emailVerificationTemplate(data),
     })
 
@@ -315,15 +302,10 @@ export async function sendDailySummary(
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
     const client = getResendClient()
-    const dateStr = data.date.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })
     const { data: result, error } = await client.emails.send({
       from: FROM_EMAIL,
       to: data.to,
-      subject: `Daily Summary for ${dateStr} - ${data.businessName || "ManageKar"}`,
+      subject: emailSubjects.dailySummary(data),
       html: dailySummaryTemplate(data),
     })
 
@@ -350,7 +332,7 @@ export async function sendLibraryLowHoursWarning(
     const { data: result, error } = await client.emails.send({
       from: FROM_EMAIL,
       to: data.to,
-      subject: `Low Hours Alert - ${data.libraryName}`,
+      subject: emailSubjects.libraryLowHours(data),
       html: libraryLowHoursTemplate(data),
     })
 
@@ -375,7 +357,7 @@ export async function sendLibraryExpiringMembership(
     const { data: result, error } = await client.emails.send({
       from: FROM_EMAIL,
       to: data.to,
-      subject: `Membership Expiring Soon - ${data.libraryName}`,
+      subject: emailSubjects.libraryExpiringMembership(data),
       html: libraryExpiringMembershipTemplate(data),
     })
 
@@ -400,7 +382,7 @@ export async function sendLibraryExpiredMembership(
     const { data: result, error } = await client.emails.send({
       from: FROM_EMAIL,
       to: data.to,
-      subject: `Membership Expired - ${data.libraryName}`,
+      subject: emailSubjects.libraryExpiredMembership(data),
       html: libraryExpiredMembershipTemplate(data),
     })
 

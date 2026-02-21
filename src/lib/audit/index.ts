@@ -4,6 +4,12 @@
  * Import from "@/lib/audit" for all audit-related functionality.
  */
 
+// Constants (single source of truth for soft-deletable tables)
+export {
+  SOFT_DELETABLE_TABLES,
+  isSoftDeletableTable,
+} from "./constants"
+
 // Utilities
 export {
   withCreatedBy,

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
-import { StatCard } from "@/components/ui/stat-card"
+import { StatsGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
 import {
   FileText,
@@ -19,10 +19,9 @@ import {
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
-import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency, formatMonthYear } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { TenantWithContext } from "@/types/tenants.types"
+import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
 interface Bill {
   id: string
@@ -59,9 +58,9 @@ const statusIconConfig: Record<string, { icon: typeof CheckCircle; className: st
 }
 
 export default function TenantBillsPage() {
+  const { tenant, tenantContext, loading: tenantLoading } = useTenantPortalData()
   const [loading, setLoading] = useState(true)
   const [bills, setBills] = useState<Bill[]>([])
-  const [tenantInfo, setTenantInfo] = useState<TenantWithContext | null>(null)
   const [stats, setStats] = useState<BillStats>({
     totalBilled: 0,
     totalPaid: 0,
@@ -75,41 +74,14 @@ export default function TenantBillsPage() {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null)
 
   useEffect(() => {
+    if (tenantLoading) return
+    if (!tenant) {
+      setLoading(false)
+      return
+    }
+
     const fetchBills = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      // Get tenant info including owner_id
-      const { data: tenant } = await supabase
-        .from("tenants")
-        .select("id, owner_id, property:properties(owner_id)")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single()
-
-      if (!tenant) {
-        setLoading(false)
-        return
-      }
-
-      // Handle Supabase array join
-      const property = transformJoin(tenant.property)
-      const ownerId = property?.owner_id || tenant.owner_id
-
-      // Get workspace_id from workspaces table via owner
-      const { data: workspace } = await supabase
-        .from("workspaces")
-        .select("id")
-        .eq("owner_user_id", ownerId)
-        .single()
-
-      setTenantInfo({
-        id: tenant.id,
-        workspace_id: workspace?.id || "",
-        owner_id: ownerId,
-      })
 
       // Fetch all bills
       const { data: billsData } = await supabase
@@ -150,7 +122,7 @@ export default function TenantBillsPage() {
     }
 
     fetchBills()
-  }, [])
+  }, [tenant, tenantLoading])
 
   const openReportDialog = (bill: Bill) => {
     setSelectedBill(bill)
@@ -182,7 +154,7 @@ export default function TenantBillsPage() {
     return groups
   }, {} as Record<string, Bill[]>)
 
-  if (loading) {
+  if (tenantLoading || loading) {
     return <PageSkeleton variant="list" />
   }
 
@@ -195,32 +167,14 @@ export default function TenantBillsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          icon={IndianRupee}
-          label="Total Billed"
-          value={formatCurrency(stats.totalBilled)}
-          color="blue"
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="Total Paid"
-          value={formatCurrency(stats.totalPaid)}
-          color="green"
-        />
-        <StatCard
-          icon={AlertCircle}
-          label="Balance Due"
-          value={formatCurrency(stats.totalDue)}
-          color="red"
-        />
-        <StatCard
-          icon={Receipt}
-          label="Total Bills"
-          value={stats.billsCount}
-          color="purple"
-        />
-      </div>
+      <StatsGrid
+        stats={[
+          { icon: IndianRupee, label: "Total Billed", value: formatCurrency(stats.totalBilled), color: "blue" },
+          { icon: TrendingUp, label: "Total Paid", value: formatCurrency(stats.totalPaid), color: "green" },
+          { icon: AlertCircle, label: "Balance Due", value: formatCurrency(stats.totalDue), color: "red" },
+          { icon: Receipt, label: "Total Bills", value: stats.billsCount, color: "purple" },
+        ]}
+      />
 
       {/* Filter */}
       {years.length > 0 && (
@@ -364,16 +318,16 @@ export default function TenantBillsPage() {
       )}
 
       {/* Report Issue Dialog */}
-      {selectedBill && tenantInfo && (
+      {selectedBill && tenantContext && (
         <ReportIssueDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           fieldLabel={`Bill #${selectedBill.bill_number || 'N/A'}`}
           currentValue={`${formatCurrency(selectedBill.total_amount)} for ${formatBillMonth(selectedBill.for_month)}`}
           approvalType="bill_dispute"
-          tenantId={tenantInfo.id}
-          workspaceId={tenantInfo.workspace_id}
-          ownerId={tenantInfo.owner_id}
+          tenantId={tenantContext.id}
+          workspaceId={tenantContext.workspace_id}
+          ownerId={tenantContext.owner_id}
         />
       )}
     </div>

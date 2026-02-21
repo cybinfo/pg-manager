@@ -20,40 +20,10 @@ import {
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PortalStatsGrid, QuickActionLink } from "@/components/portal"
-import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
+import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 
-interface MemberData {
-  id: string
-  name: string
-  phone: string | null
-  email: string | null
-  member_code: string | null
-  hours_balance: number
-  hours_used: number
-  preferred_slot: string | null
-  join_date: string
-  expiry_date: string | null
-  status: string
-  library: {
-    id: string
-    name: string
-    phone: string | null
-    opening_time: string | null
-    closing_time: string | null
-  } | null
-  current_subscription: {
-    id: string
-    plan_name: string
-    hours_included: number | null
-    hours_remaining: number | null
-    end_date: string
-    status: string
-  } | null
-}
-
-interface DashboardData {
-  member: MemberData | null
+interface DashboardExtra {
   recentAttendance: Array<{
     id: string
     attendance_date: string
@@ -74,9 +44,9 @@ interface DashboardData {
 }
 
 export default function MemberHomePage() {
+  const { member, loading: memberLoading } = useMemberPortalData()
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<DashboardData>({
-    member: null,
+  const [extra, setExtra] = useState<DashboardExtra>({
     recentAttendance: [],
     recentPayments: [],
     totalPaid: 0,
@@ -85,56 +55,20 @@ export default function MemberHomePage() {
   })
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (memberLoading) return
+    if (!member) {
+      setLoading(false)
+      return
+    }
+
+    const fetchDashboardData = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      // Fetch member data
-      const { data: memberData, error } = await supabase
-        .from("library_members")
-        .select(`
-          id,
-          name,
-          phone,
-          email,
-          member_code,
-          hours_balance,
-          hours_used,
-          preferred_slot,
-          join_date,
-          expiry_date,
-          status,
-          library:libraries(id, name, phone, opening_time, closing_time),
-          current_subscription:library_memberships!library_members_current_subscription_id_fkey(
-            id, plan_name, hours_included, hours_remaining, end_date, status
-          )
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single()
-
-      if (error || !memberData) {
-        setLoading(false)
-        return
-      }
-
-      // Transform joins
-      const library = transformJoin(memberData.library)
-      const currentSubscription = transformJoin(memberData.current_subscription)
-
-      const normalizedMember: MemberData = {
-        ...memberData,
-        library,
-        current_subscription: currentSubscription,
-      }
 
       // Fetch recent attendance
       const { data: attendance } = await supabase
         .from("library_attendance")
         .select("id, attendance_date, check_in_time, check_out_time, hours_spent")
-        .eq("member_id", memberData.id)
+        .eq("member_id", member.id)
         .is("deleted_at", null)
         .order("check_in_time", { ascending: false })
         .limit(5)
@@ -143,7 +77,7 @@ export default function MemberHomePage() {
       const { data: payments } = await supabase
         .from("library_payments")
         .select("id, amount, payment_date, payment_type, payment_method")
-        .eq("member_id", memberData.id)
+        .eq("member_id", member.id)
         .is("deleted_at", null)
         .order("payment_date", { ascending: false })
         .limit(3)
@@ -152,7 +86,7 @@ export default function MemberHomePage() {
       const { data: allPayments } = await supabase
         .from("library_payments")
         .select("amount")
-        .eq("member_id", memberData.id)
+        .eq("member_id", member.id)
         .is("deleted_at", null)
 
       const totalPaid = allPayments?.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0) || 0
@@ -166,7 +100,7 @@ export default function MemberHomePage() {
       const { data: monthAttendance } = await supabase
         .from("library_attendance")
         .select("hours_spent")
-        .eq("member_id", memberData.id)
+        .eq("member_id", member.id)
         .is("deleted_at", null)
         .gte("attendance_date", monthStartStr.split("T")[0])
 
@@ -176,8 +110,7 @@ export default function MemberHomePage() {
       ) || 0
       const visitsThisMonth = monthAttendance?.length || 0
 
-      setData({
-        member: normalizedMember,
+      setExtra({
         recentAttendance: attendance || [],
         recentPayments: payments || [],
         totalPaid,
@@ -187,14 +120,14 @@ export default function MemberHomePage() {
       setLoading(false)
     }
 
-    fetchData()
-  }, [])
+    fetchDashboardData()
+  }, [member, memberLoading])
 
-  if (loading) {
+  if (memberLoading || loading) {
     return <PageSkeleton variant="detail" />
   }
 
-  if (!data.member) {
+  if (!member) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -204,7 +137,6 @@ export default function MemberHomePage() {
     )
   }
 
-  const { member } = data
   const subscription = member.current_subscription
   const hoursPercentUsed = subscription?.hours_included
     ? ((subscription.hours_included - (member.hours_balance || 0)) / subscription.hours_included) * 100
@@ -271,21 +203,21 @@ export default function MemberHomePage() {
           {
             icon: Clock,
             label: "This Month",
-            value: `${data.totalHoursThisMonth.toFixed(1)}h`,
+            value: `${extra.totalHoursThisMonth.toFixed(1)}h`,
             bgColor: "bg-emerald-50",
             iconColor: "text-emerald-600",
           },
           {
             icon: Calendar,
             label: "Visits",
-            value: data.visitsThisMonth,
+            value: extra.visitsThisMonth,
             bgColor: "bg-sky-50",
             iconColor: "text-sky-600",
           },
           {
             icon: CreditCard,
             label: "Total Paid",
-            value: formatCurrency(data.totalPaid),
+            value: formatCurrency(extra.totalPaid),
             bgColor: "bg-violet-50",
             iconColor: "text-violet-600",
           },
@@ -411,11 +343,11 @@ export default function MemberHomePage() {
           </Link>
         </CardHeader>
         <CardContent>
-          {data.recentAttendance.length === 0 ? (
+          {extra.recentAttendance.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No attendance records yet</p>
           ) : (
             <div className="space-y-3">
-              {data.recentAttendance.map((att) => (
+              {extra.recentAttendance.map((att) => (
                 <div
                   key={att.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/50"

@@ -1,16 +1,10 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import {
-  Home,
-  User,
-  CreditCard,
-  Clock,
-  BookOpen,
-  QrCode,
-} from "lucide-react"
+import { BookOpen } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { PortalLayout, PortalNavItem } from "@/components/portal"
+import { PortalLayout } from "@/components/portal"
+import { LIBRARY_MEMBER_NAVIGATION } from "@/lib/navigation/config"
 
 interface MemberPortalInfo {
   id: string
@@ -23,14 +17,6 @@ interface MemberPortalInfo {
     name: string
   } | null
 }
-
-const navigation: PortalNavItem[] = [
-  { name: "Home", href: "/member", icon: Home },
-  { name: "My Profile", href: "/member/profile", icon: User },
-  { name: "Attendance", href: "/member/attendance", icon: Clock },
-  { name: "Payments", href: "/member/payments", icon: CreditCard },
-  { name: "My QR Code", href: "/member/qr", icon: QrCode },
-]
 
 export default function MemberLayout({
   children,
@@ -106,7 +92,7 @@ export default function MemberLayout({
       brandIconColor="text-purple-600"
       icon={BookOpen}
       portalName="Member Portal"
-      navItems={navigation}
+      navItems={LIBRARY_MEMBER_NAVIGATION}
       entityInfoRenderer={renderEntityInfo}
       onAuthCheck={handleAuthCheck}
       logTag="MemberLayout"

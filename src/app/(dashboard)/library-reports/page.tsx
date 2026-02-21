@@ -2,13 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   LineChart,
   Line,
-  PieChart,
-  Pie,
   BarChart,
   Bar,
   XAxis,
@@ -16,7 +12,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Cell,
 } from "recharts"
 import { PageSkeleton } from "@/components/ui/loading"
 import {
@@ -28,20 +23,33 @@ import {
   TrendingDown,
   AlertCircle,
   CheckCircle,
-  Download,
-  BarChart3,
   Armchair,
   UserPlus,
   UserMinus,
   Calendar,
   Timer,
 } from "lucide-react"
-import { PageHeader } from "@/components/ui/page-header"
-import { DateRangePicker, DateRange } from "@/components/ui/date-range-picker"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { useDemoMode } from "@/lib/demo-mode"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { showError } from "@/lib/toast-helpers"
+import {
+  KPICard,
+  QuickInsights,
+  SummaryStatCard,
+  ReportChartCard,
+  PaymentMethodsChart,
+  ReportPageHeader,
+  StatusBreakdownCard,
+  useReportDateRange,
+  formatCurrency,
+  calculateGrowth,
+  buildPaymentMethodBreakdown,
+  CHART_COLORS,
+  MONTH_NAMES,
+  DAY_NAMES,
+  exportCSV,
+} from "@/components/reports"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface LibraryOption {
   id: string
@@ -55,14 +63,12 @@ interface LibraryReportData {
   availableSeats: number
   utilizationRate: number
   currentlyCheckedIn: number
-
   // Members
   totalMembers: number
   activeMembers: number
   expiredMembers: number
   newMembersThisMonth: number
   churnsThisMonth: number
-
   // Revenue
   totalRevenueThisMonth: number
   totalRevenueLastMonth: number
@@ -70,66 +76,25 @@ interface LibraryReportData {
   subscriptionRevenue: number
   lockerRevenue: number
   otherRevenue: number
-
   // Hours
   totalHoursUsed: number
   avgHoursPerMember: number
   hoursRemaining: number
-
   // Attendance
   totalCheckInsThisMonth: number
   avgDailyCheckIns: number
   peakHour: string
   peakDay: string
-
   // Monthly trends
-  monthlyRevenue: {
-    month: string
-    revenue: number
-    members: number
-  }[]
-
+  monthlyRevenue: { month: string; revenue: number; members: number }[]
   // Payment methods
-  paymentMethods: {
-    name: string
-    value: number
-    count: number
-  }[]
-
+  paymentMethods: { name: string; value: number; count: number }[]
   // Time slot distribution
-  timeSlotDistribution: {
-    slot: string
-    count: number
-    percentage: number
-  }[]
-
+  timeSlotDistribution: { slot: string; count: number; percentage: number }[]
   // Daily attendance (last 7 days)
-  dailyAttendance: {
-    date: string
-    checkIns: number
-  }[]
-
+  dailyAttendance: { date: string; checkIns: number }[]
   // Library-wise stats
-  libraryStats: {
-    id: string
-    name: string
-    totalSeats: number
-    activeMembers: number
-    revenue: number
-    checkIns: number
-  }[]
-}
-
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-
-const CHART_COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]
-
-// Default date range: This month
-function getDefaultDateRange(): DateRange {
-  const now = new Date()
-  const start = new Date(now.getFullYear(), now.getMonth(), 1)
-  return { from: start, to: now, label: "This month" }
+  libraryStats: { id: string; name: string; totalSeats: number; activeMembers: number; revenue: number; checkIns: number }[]
 }
 
 export default function LibraryReportsPage() {
@@ -137,24 +102,18 @@ export default function LibraryReportsPage() {
   const [libraries, setLibraries] = useState<LibraryOption[]>([])
   const [selectedLibrary, setSelectedLibrary] = useState<string>("all")
   const [reportData, setReportData] = useState<LibraryReportData | null>(null)
-  const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange)
+  const { dateRange, setDateRange, startDate, endDate, lastMonthStart, lastMonthEnd } = useReportDateRange()
   const { canPerformAction, getDemoMessage } = useDemoMode()
 
   useEffect(() => {
     fetchReportData()
   }, [selectedLibrary, dateRange])
 
-  const getDateRange = () => {
-    return { startDate: dateRange.from, endDate: dateRange.to }
-  }
-
   const fetchReportData = async () => {
     setLoading(true)
     const supabase = createClient()
 
     try {
-      const { startDate, endDate } = getDateRange()
-
       // Fetch all required data in parallel
       const [
         librariesRes,
@@ -197,12 +156,8 @@ export default function LibraryReportsPage() {
       const filterByLibrary = (items: any[], libraryIdField: string = "library_id") => {
         if (selectedLibrary === "all") return items
         return items.filter((item) => {
-          if (libraryIdField === "section.library_id") {
-            return item.section?.library_id === selectedLibrary
-          }
-          if (libraryIdField === "member.library_id") {
-            return item.member?.library_id === selectedLibrary
-          }
+          if (libraryIdField === "section.library_id") return item.section?.library_id === selectedLibrary
+          if (libraryIdField === "member.library_id") return item.member?.library_id === selectedLibrary
           return item[libraryIdField] === selectedLibrary
         })
       }
@@ -212,25 +167,20 @@ export default function LibraryReportsPage() {
       const filteredPayments = filterByLibrary(paymentsData, "member.library_id")
       const filteredAttendance = filterByLibrary(attendanceData, "member.library_id")
 
-      // Date calculations
       const now = new Date()
-      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
 
-      // Utilization calculations
+      // Utilization
       const totalSeats = filteredSeats.length
       const occupiedSeats = filteredSeats.filter((s) => s.status === "occupied").length
       const availableSeats = filteredSeats.filter((s) => s.status === "available").length
       const utilizationRate = totalSeats > 0 ? (occupiedSeats / totalSeats) * 100 : 0
 
-      // Currently checked in (attendance with no check_out_time today)
       const today = new Date().toISOString().split("T")[0]
       const currentlyCheckedIn = filteredAttendance.filter(
         (a) => a.attendance_date === today && !a.check_out_time
       ).length
 
-      // Member calculations
+      // Members
       const totalMembers = filteredMembers.length
       const activeMembers = filteredMembers.filter((m) => m.status === "active").length
       const expiredMembers = filteredMembers.filter((m) => m.status === "expired").length
@@ -244,7 +194,7 @@ export default function LibraryReportsPage() {
         return expiry >= startDate && expiry <= endDate && m.status === "expired"
       }).length
 
-      // Revenue calculations
+      // Revenue
       const periodPayments = filteredPayments.filter((p) => {
         const paymentDate = new Date(p.payment_date)
         return paymentDate >= startDate && paymentDate <= endDate
@@ -253,12 +203,9 @@ export default function LibraryReportsPage() {
         const paymentDate = new Date(p.payment_date)
         return paymentDate >= lastMonthStart && paymentDate <= lastMonthEnd
       })
-
       const totalRevenueThisMonth = periodPayments.reduce((sum, p) => sum + Number(p.amount), 0)
       const totalRevenueLastMonth = lastMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0)
-      const revenueGrowth = totalRevenueLastMonth > 0
-        ? ((totalRevenueThisMonth - totalRevenueLastMonth) / totalRevenueLastMonth) * 100
-        : 0
+      const revenueGrowth = calculateGrowth(totalRevenueThisMonth, totalRevenueLastMonth)
 
       const subscriptionRevenue = periodPayments
         .filter((p) => p.payment_type === "subscription")
@@ -270,14 +217,14 @@ export default function LibraryReportsPage() {
         .filter((p) => p.payment_type !== "subscription" && p.payment_type !== "locker_rent" && p.payment_type !== "locker_deposit")
         .reduce((sum, p) => sum + Number(p.amount), 0)
 
-      // Hours calculations
+      // Hours
       const totalHoursUsed = filteredMembers.reduce((sum, m) => sum + Number(m.hours_used || 0), 0)
       const hoursRemaining = filteredMembers
         .filter((m) => m.status === "active")
         .reduce((sum, m) => sum + Number(m.hours_balance || 0), 0)
       const avgHoursPerMember = activeMembers > 0 ? totalHoursUsed / activeMembers : 0
 
-      // Attendance calculations
+      // Attendance
       const periodAttendance = filteredAttendance.filter((a) => {
         const date = new Date(a.attendance_date)
         return date >= startDate && date <= endDate
@@ -286,7 +233,7 @@ export default function LibraryReportsPage() {
       const daysInPeriod = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1
       const avgDailyCheckIns = totalCheckInsThisMonth / daysInPeriod
 
-      // Peak hour calculation
+      // Peak hour
       const hourCounts: Record<number, number> = {}
       periodAttendance.forEach((a) => {
         const hour = new Date(a.check_in_time).getHours()
@@ -298,7 +245,7 @@ export default function LibraryReportsPage() {
       ).hour
       const peakHour = peakHourNum >= 12 ? `${peakHourNum - 12 || 12} PM` : `${peakHourNum || 12} AM`
 
-      // Peak day calculation
+      // Peak day
       const dayCounts: Record<number, number> = {}
       periodAttendance.forEach((a) => {
         const day = new Date(a.attendance_date).getDay()
@@ -308,7 +255,7 @@ export default function LibraryReportsPage() {
         (max, [day, count]) => (count > max.count ? { day: Number(day), count } : max),
         { day: 0, count: 0 }
       ).day
-      const peakDay = dayNames[peakDayNum]
+      const peakDay = DAY_NAMES[peakDayNum]
 
       // Monthly revenue trend (last 6 months)
       const monthlyRevenue = []
@@ -324,38 +271,14 @@ export default function LibraryReportsPage() {
           return createdAt >= monthStart && createdAt <= monthEnd
         }).length
         monthlyRevenue.push({
-          month: monthNames[monthStart.getMonth()],
+          month: MONTH_NAMES[monthStart.getMonth()],
           revenue: monthPayments.reduce((sum, p) => sum + Number(p.amount), 0),
           members: monthNewMembers,
         })
       }
 
       // Payment method breakdown
-      const methodCounts: Record<string, { count: number; amount: number }> = {}
-      periodPayments.forEach((p) => {
-        const method = p.payment_method || "other"
-        if (!methodCounts[method]) {
-          methodCounts[method] = { count: 0, amount: 0 }
-        }
-        methodCounts[method].count++
-        methodCounts[method].amount += Number(p.amount)
-      })
-
-      const methodLabels: Record<string, string> = {
-        cash: "Cash",
-        upi: "UPI",
-        bank_transfer: "Bank Transfer",
-        cheque: "Cheque",
-        card: "Card",
-        paytm: "Paytm",
-        other: "Other",
-      }
-
-      const paymentMethods = Object.entries(methodCounts).map(([method, data]) => ({
-        name: methodLabels[method] || method,
-        value: data.amount,
-        count: data.count,
-      }))
+      const paymentMethods = buildPaymentMethodBreakdown(periodPayments)
 
       // Time slot distribution
       const slotCounts: Record<string, number> = {}
@@ -363,7 +286,7 @@ export default function LibraryReportsPage() {
         const slot = m.preferred_slot || "Not Set"
         slotCounts[slot] = (slotCounts[slot] || 0) + 1
       })
-      const totalSlotCount = Object.values(slotCounts).reduce((a, b) => a + b, 0)
+      const totalSlotCount = Object.values(slotCounts).reduce((a: number, b: number) => a + b, 0)
       const timeSlotDistribution = Object.entries(slotCounts).map(([slot, count]) => ({
         slot,
         count,
@@ -378,7 +301,7 @@ export default function LibraryReportsPage() {
         const dateStr = date.toISOString().split("T")[0]
         const dayCheckIns = filteredAttendance.filter((a) => a.attendance_date === dateStr).length
         dailyAttendance.push({
-          date: dayNames[date.getDay()],
+          date: DAY_NAMES[date.getDay()],
           checkIns: dayCheckIns,
         })
       }
@@ -409,34 +332,13 @@ export default function LibraryReportsPage() {
       })
 
       setReportData({
-        totalSeats,
-        occupiedSeats,
-        availableSeats,
-        utilizationRate,
-        currentlyCheckedIn,
-        totalMembers,
-        activeMembers,
-        expiredMembers,
-        newMembersThisMonth,
-        churnsThisMonth,
-        totalRevenueThisMonth,
-        totalRevenueLastMonth,
-        revenueGrowth,
-        subscriptionRevenue,
-        lockerRevenue,
-        otherRevenue,
-        totalHoursUsed,
-        avgHoursPerMember,
-        hoursRemaining,
-        totalCheckInsThisMonth,
-        avgDailyCheckIns,
-        peakHour,
-        peakDay,
-        monthlyRevenue,
-        paymentMethods,
-        timeSlotDistribution,
-        dailyAttendance,
-        libraryStats,
+        totalSeats, occupiedSeats, availableSeats, utilizationRate, currentlyCheckedIn,
+        totalMembers, activeMembers, expiredMembers, newMembersThisMonth, churnsThisMonth,
+        totalRevenueThisMonth, totalRevenueLastMonth, revenueGrowth,
+        subscriptionRevenue, lockerRevenue, otherRevenue,
+        totalHoursUsed, avgHoursPerMember, hoursRemaining,
+        totalCheckInsThisMonth, avgDailyCheckIns, peakHour, peakDay,
+        monthlyRevenue, paymentMethods, timeSlotDistribution, dailyAttendance, libraryStats,
       })
     } catch (error) {
       console.error("Error fetching library report data:", error)
@@ -445,21 +347,16 @@ export default function LibraryReportsPage() {
     }
   }
 
-  const exportToCSV = (type: string) => {
+  const handleExportCSV = (type: string) => {
     if (!reportData) return
 
-    if (!canPerformAction("export_data")) {
-      showError(getDemoMessage("export_data"))
-      return
-    }
-
-    let csvContent = ""
+    const rows: (string | number)[][] = []
     let filename = ""
 
     switch (type) {
       case "summary":
         filename = "library-summary-report.csv"
-        csvContent = [
+        rows.push(
           ["Metric", "Value"],
           ["Total Seats", reportData.totalSeats],
           ["Occupied Seats", reportData.occupiedSeats],
@@ -467,57 +364,35 @@ export default function LibraryReportsPage() {
           ["Utilization Rate", `${reportData.utilizationRate.toFixed(1)}%`],
           ["Active Members", reportData.activeMembers],
           ["New Members (Period)", reportData.newMembersThisMonth],
-          ["Revenue (Period)", `₹${reportData.totalRevenueThisMonth.toLocaleString("en-IN")}`],
+          ["Revenue (Period)", `\u20B9${reportData.totalRevenueThisMonth.toLocaleString("en-IN")}`],
           ["Total Hours Used", reportData.totalHoursUsed.toFixed(1)],
           ["Total Check-ins (Period)", reportData.totalCheckInsThisMonth],
-        ].map((row) => row.join(",")).join("\n")
+        )
         break
-
       case "libraries":
         filename = "library-performance-report.csv"
-        csvContent = [
+        rows.push(
           ["Library", "Total Seats", "Active Members", "Revenue", "Check-ins"],
           ...reportData.libraryStats.map((l) => [
-            l.name,
-            l.totalSeats,
-            l.activeMembers,
-            `₹${l.revenue.toLocaleString("en-IN")}`,
-            l.checkIns,
+            l.name, l.totalSeats, l.activeMembers,
+            `\u20B9${l.revenue.toLocaleString("en-IN")}`, l.checkIns,
           ]),
-        ].map((row) => row.join(",")).join("\n")
+        )
         break
-
       case "revenue":
         filename = "library-revenue-report.csv"
-        csvContent = [
+        rows.push(
           ["Month", "Revenue", "New Members"],
           ...reportData.monthlyRevenue.map((m) => [
-            m.month,
-            `₹${m.revenue.toLocaleString("en-IN")}`,
-            m.members,
+            m.month, `\u20B9${m.revenue.toLocaleString("en-IN")}`, m.members,
           ]),
-        ].map((row) => row.join(",")).join("\n")
+        )
         break
-
       default:
         return
     }
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const link = document.createElement("a")
-    link.href = URL.createObjectURL(blob)
-    link.download = filename
-    link.click()
-  }
-
-  const formatCurrency = (amount: number) => {
-    if (amount >= 10000000) {
-      return `₹${(amount / 10000000).toFixed(2)} Cr`
-    }
-    if (amount >= 100000) {
-      return `₹${(amount / 100000).toFixed(2)} L`
-    }
-    return `₹${amount.toLocaleString("en-IN")}`
+    exportCSV(rows, filename, canPerformAction, getDemoMessage)
   }
 
   if (loading) {
@@ -536,308 +411,157 @@ export default function LibraryReportsPage() {
     <FeatureGuard feature="library">
       <PermissionGuard permission="library.view">
         <div className="space-y-6">
-          <PageHeader
+          <ReportPageHeader
             title="Library Reports"
             description="Insights and analytics for your study library"
-            icon={BarChart3}
-            breadcrumbs={[{ label: "Library Reports" }]}
-            actions={
-              <div className="flex items-center gap-2 flex-wrap">
-                <DateRangePicker
-                  value={dateRange}
-                  onChange={setDateRange}
-                />
-                <select
-                  value={selectedLibrary}
-                  onChange={(e) => setSelectedLibrary(e.target.value)}
-                  className="h-10 px-3 rounded-md border border-input bg-white text-sm"
-                >
-                  <option value="all">All Libraries</option>
-                  {libraries.map((library) => (
-                    <option key={library.id} value={library.id}>
-                      {library.name}
-                    </option>
-                  ))}
-                </select>
-                <Button variant="outline" onClick={() => exportToCSV("summary")}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              </div>
-            }
+            breadcrumbLabel="Library Reports"
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            filterOptions={libraries}
+            filterValue={selectedLibrary}
+            onFilterChange={setSelectedLibrary}
+            filterAllLabel="All Libraries"
+            onExport={() => handleExportCSV("summary")}
           />
 
           {/* KPI Cards - Row 1 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Utilization Rate */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Seat Utilization</p>
-                    <p className="text-2xl font-bold">{reportData.utilizationRate.toFixed(1)}%</p>
-                    <p className="text-xs text-muted-foreground">
-                      {reportData.occupiedSeats}/{reportData.totalSeats} seats
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-full ${reportData.utilizationRate >= 80 ? "bg-green-100" : reportData.utilizationRate >= 50 ? "bg-yellow-100" : "bg-red-100"}`}>
-                    <Armchair className={`h-5 w-5 ${reportData.utilizationRate >= 80 ? "text-green-600" : reportData.utilizationRate >= 50 ? "text-yellow-600" : "text-red-600"}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Revenue */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Revenue</p>
-                    <p className="text-2xl font-bold">{formatCurrency(reportData.totalRevenueThisMonth)}</p>
-                    <div className={`flex items-center text-xs ${reportData.revenueGrowth >= 0 ? "text-green-600" : "text-red-600"}`}>
-                      {reportData.revenueGrowth >= 0 ? (
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 mr-1" />
-                      )}
-                      {Math.abs(reportData.revenueGrowth).toFixed(1)}% vs last month
-                    </div>
-                  </div>
-                  <div className="p-3 rounded-full bg-green-100">
-                    <IndianRupee className="h-5 w-5 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Active Members */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Active Members</p>
-                    <p className="text-2xl font-bold">{reportData.activeMembers}</p>
-                    <p className="text-xs text-green-600">
-                      +{reportData.newMembersThisMonth} new
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-blue-100">
-                    <Users className="h-5 w-5 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Currently Checked In */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Studying Now</p>
-                    <p className="text-2xl font-bold">{reportData.currentlyCheckedIn}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {reportData.availableSeats} seats free
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-indigo-100">
-                    <Library className="h-5 w-5 text-indigo-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <KPICard
+              title="Seat Utilization"
+              value={`${reportData.utilizationRate.toFixed(1)}%`}
+              subtitle={`${reportData.occupiedSeats}/${reportData.totalSeats} seats`}
+              icon={Armchair}
+              iconColor={reportData.utilizationRate >= 80 ? "green" : reportData.utilizationRate >= 50 ? "amber" : "red"}
+            />
+            <KPICard
+              title="Revenue"
+              value={formatCurrency(reportData.totalRevenueThisMonth)}
+              icon={IndianRupee}
+              iconColor="green"
+              trend={{
+                value: reportData.revenueGrowth,
+                isPositive: reportData.revenueGrowth >= 0,
+                label: "vs last month",
+              }}
+            />
+            <KPICard
+              title="Active Members"
+              value={reportData.activeMembers}
+              subtitle={`+${reportData.newMembersThisMonth} new`}
+              icon={Users}
+              iconColor="blue"
+            />
+            <KPICard
+              title="Studying Now"
+              value={reportData.currentlyCheckedIn}
+              subtitle={`${reportData.availableSeats} seats free`}
+              icon={Library}
+              iconColor="purple"
+            />
           </div>
 
           {/* KPI Cards - Row 2 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Total Hours Used */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Hours Consumed</p>
-                    <p className="text-2xl font-bold">{reportData.totalHoursUsed.toFixed(0)}h</p>
-                    <p className="text-xs text-muted-foreground">
-                      Avg {reportData.avgHoursPerMember.toFixed(1)}h/member
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-purple-100">
-                    <Timer className="h-5 w-5 text-purple-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Check-ins */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Check-ins</p>
-                    <p className="text-2xl font-bold">{reportData.totalCheckInsThisMonth}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Avg {reportData.avgDailyCheckIns.toFixed(1)}/day
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-amber-100">
-                    <Clock className="h-5 w-5 text-amber-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Peak Time */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Peak Hour</p>
-                    <p className="text-2xl font-bold">{reportData.peakHour}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Busiest: {reportData.peakDay}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-rose-100">
-                    <Calendar className="h-5 w-5 text-rose-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Hours Remaining */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Hours Balance</p>
-                    <p className="text-2xl font-bold">{reportData.hoursRemaining.toFixed(0)}h</p>
-                    <p className="text-xs text-muted-foreground">
-                      Active members
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-full bg-teal-100">
-                    <CheckCircle className="h-5 w-5 text-teal-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <KPICard
+              title="Hours Consumed"
+              value={`${reportData.totalHoursUsed.toFixed(0)}h`}
+              subtitle={`Avg ${reportData.avgHoursPerMember.toFixed(1)}h/member`}
+              icon={Timer}
+              iconColor="purple"
+            />
+            <KPICard
+              title="Check-ins"
+              value={reportData.totalCheckInsThisMonth}
+              subtitle={`Avg ${reportData.avgDailyCheckIns.toFixed(1)}/day`}
+              icon={Clock}
+              iconColor="amber"
+            />
+            <KPICard
+              title="Peak Hour"
+              value={reportData.peakHour}
+              subtitle={`Busiest: ${reportData.peakDay}`}
+              icon={Calendar}
+              iconColor="rose"
+            />
+            <KPICard
+              title="Hours Balance"
+              value={`${reportData.hoursRemaining.toFixed(0)}h`}
+              subtitle="Active members"
+              icon={CheckCircle}
+              iconColor="green"
+            />
           </div>
 
           {/* Charts Row */}
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Revenue Trend Chart */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Revenue Trend</CardTitle>
-                    <CardDescription>Revenue & new members (Last 6 months)</CardDescription>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => exportToCSV("revenue")}>
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={reportData.monthlyRevenue}>
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis
-                      yAxisId="left"
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
-                    />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-                    <Tooltip
-                      formatter={(value, name) => [
-                        name === "revenue" ? `₹${Number(value).toLocaleString("en-IN")}` : value,
-                        name === "revenue" ? "Revenue" : "New Members",
-                      ]}
-                    />
-                    <Legend />
-                    <Line
-                      yAxisId="left"
-                      type="monotone"
-                      dataKey="revenue"
-                      name="Revenue"
-                      stroke="#6366F1"
-                      strokeWidth={2}
-                      dot={{ fill: "#6366F1", strokeWidth: 2 }}
-                    />
-                    <Bar
-                      yAxisId="right"
-                      dataKey="members"
-                      name="New Members"
-                      fill="#10B981"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            {/* Revenue Trend Chart (Library-specific with dual axis) */}
+            <ReportChartCard
+              title="Revenue Trend"
+              description="Revenue & new members (Last 6 months)"
+              onExport={() => handleExportCSV("revenue")}
+            >
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={reportData.monthlyRevenue}>
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis
+                    yAxisId="left"
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value: number) => `\u20B9${(value / 1000).toFixed(0)}k`}
+                  />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      name === "revenue" ? `\u20B9${Number(value).toLocaleString("en-IN")}` : value,
+                      name === "revenue" ? "Revenue" : "New Members",
+                    ]}
+                  />
+                  <Legend />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="revenue"
+                    name="Revenue"
+                    stroke="#6366F1"
+                    strokeWidth={2}
+                    dot={{ fill: "#6366F1", strokeWidth: 2 }}
+                  />
+                  <Bar
+                    yAxisId="right"
+                    dataKey="members"
+                    name="New Members"
+                    fill="#10B981"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </ReportChartCard>
 
-            {/* Payment Methods Pie Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Payment Methods</CardTitle>
-                <CardDescription>Breakdown by payment type</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {reportData.paymentMethods.length === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                    No payments in selected period
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={reportData.paymentMethods}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={2}
-                        label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                        labelLine={false}
-                      >
-                        {reportData.paymentMethods.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
+            <PaymentMethodsChart
+              data={reportData.paymentMethods}
+              colors={["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]}
+            />
           </div>
 
           {/* Daily Attendance & Time Slots */}
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Daily Attendance Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Daily Attendance</CardTitle>
-                <CardDescription>Check-ins over the last 7 days</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={reportData.dailyAttendance}>
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Bar dataKey="checkIns" name="Check-ins" fill="#6366F1" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <ReportChartCard
+              title="Daily Attendance"
+              description="Check-ins over the last 7 days"
+            >
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={reportData.dailyAttendance}>
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="checkIns" name="Check-ins" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ReportChartCard>
 
             {/* Time Slot Distribution */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Time Slot Preferences</CardTitle>
-                <CardDescription>Member distribution by preferred slot</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -866,111 +590,76 @@ export default function LibraryReportsPage() {
           </div>
 
           {/* Revenue Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Revenue Breakdown</CardTitle>
-              <CardDescription>Revenue by category</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="p-4 bg-indigo-50 rounded-lg">
-                  <p className="text-sm text-indigo-600 font-medium">Subscriptions</p>
-                  <p className="text-2xl font-bold text-indigo-700">{formatCurrency(reportData.subscriptionRevenue)}</p>
-                  <p className="text-xs text-indigo-500">
-                    {reportData.totalRevenueThisMonth > 0
-                      ? ((reportData.subscriptionRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
-                      : 0}%
-                  </p>
-                </div>
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-purple-600 font-medium">Lockers</p>
-                  <p className="text-2xl font-bold text-purple-700">{formatCurrency(reportData.lockerRevenue)}</p>
-                  <p className="text-xs text-purple-500">
-                    {reportData.totalRevenueThisMonth > 0
-                      ? ((reportData.lockerRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
-                      : 0}%
-                  </p>
-                </div>
-                <div className="p-4 bg-amber-50 rounded-lg">
-                  <p className="text-sm text-amber-600 font-medium">Other</p>
-                  <p className="text-2xl font-bold text-amber-700">{formatCurrency(reportData.otherRevenue)}</p>
-                  <p className="text-xs text-amber-500">
-                    {reportData.totalRevenueThisMonth > 0
-                      ? ((reportData.otherRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
-                      : 0}%
-                  </p>
-                </div>
+          <ReportChartCard
+            title="Revenue Breakdown"
+            description="Revenue by category"
+          >
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-4 bg-indigo-50 rounded-lg">
+                <p className="text-sm text-indigo-600 font-medium">Subscriptions</p>
+                <p className="text-2xl font-bold text-indigo-700">{formatCurrency(reportData.subscriptionRevenue)}</p>
+                <p className="text-xs text-indigo-500">
+                  {reportData.totalRevenueThisMonth > 0
+                    ? ((reportData.subscriptionRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
+                    : 0}%
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-4 bg-purple-50 rounded-lg">
+                <p className="text-sm text-purple-600 font-medium">Lockers</p>
+                <p className="text-2xl font-bold text-purple-700">{formatCurrency(reportData.lockerRevenue)}</p>
+                <p className="text-xs text-purple-500">
+                  {reportData.totalRevenueThisMonth > 0
+                    ? ((reportData.lockerRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
+                    : 0}%
+                </p>
+              </div>
+              <div className="p-4 bg-amber-50 rounded-lg">
+                <p className="text-sm text-amber-600 font-medium">Other</p>
+                <p className="text-2xl font-bold text-amber-700">{formatCurrency(reportData.otherRevenue)}</p>
+                <p className="text-xs text-amber-500">
+                  {reportData.totalRevenueThisMonth > 0
+                    ? ((reportData.otherRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
+                    : 0}%
+                </p>
+              </div>
+            </div>
+          </ReportChartCard>
 
           {/* Library Performance */}
           {reportData.libraryStats.length > 0 && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Library Performance</CardTitle>
-                    <CardDescription>Comparison across libraries</CardDescription>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => exportToCSV("libraries")}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={reportData.libraryStats}>
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(value, name) => [
-                      name === "revenue" ? formatCurrency(Number(value)) : value,
-                      name === "revenue" ? "Revenue" : name === "activeMembers" ? "Active Members" : "Check-ins"
-                    ]} />
-                    <Legend />
-                    <Bar dataKey="revenue" name="Revenue" fill="#6366F1" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <ReportChartCard
+              title="Library Performance"
+              description="Comparison across libraries"
+              onExport={() => handleExportCSV("libraries")}
+              exportLabel="Export"
+            >
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={reportData.libraryStats}>
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(value: number) => `\u20B9${(value / 1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(value, name) => [
+                    name === "revenue" ? formatCurrency(Number(value)) : value,
+                    name === "revenue" ? "Revenue" : name === "activeMembers" ? "Active Members" : "Check-ins"
+                  ]} />
+                  <Legend />
+                  <Bar dataKey="revenue" name="Revenue" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ReportChartCard>
           )}
 
           {/* Member Stats */}
           <div className="grid md:grid-cols-3 gap-6">
-            {/* Member Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Member Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                      <span className="text-sm">Active</span>
-                    </div>
-                    <span className="font-medium">{reportData.activeMembers}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                      <span className="text-sm">Expired</span>
-                    </div>
-                    <span className="font-medium">{reportData.expiredMembers}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500" />
-                      <span className="text-sm">Total</span>
-                    </div>
-                    <span className="font-medium">{reportData.totalMembers}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <StatusBreakdownCard
+              title="Member Status"
+              items={[
+                { label: "Active", value: reportData.activeMembers, color: "#22c55e" },
+                { label: "Expired", value: reportData.expiredMembers, color: "#eab308" },
+                { label: "Total", value: reportData.totalMembers, color: "#3b82f6" },
+              ]}
+            />
 
-            {/* Member Flow */}
+            {/* Member Flow - unique to library */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Member Flow</CardTitle>
@@ -1002,101 +691,61 @@ export default function LibraryReportsPage() {
               </CardContent>
             </Card>
 
-            {/* Seat Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Seat Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500" />
-                      <span className="text-sm">Occupied</span>
-                    </div>
-                    <span className="font-medium">{reportData.occupiedSeats}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                      <span className="text-sm">Available</span>
-                    </div>
-                    <span className="font-medium">{reportData.availableSeats}</span>
-                  </div>
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <span className="text-sm font-medium">Total Seats</span>
-                    <span className="font-bold">{reportData.totalSeats}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <StatusBreakdownCard
+              title="Seat Status"
+              items={[
+                { label: "Occupied", value: reportData.occupiedSeats, color: "#ef4444" },
+                { label: "Available", value: reportData.availableSeats, color: "#22c55e" },
+              ]}
+              summary={{ label: "Total Seats", value: reportData.totalSeats }}
+            />
           </div>
 
           {/* Quick Insights */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Insights</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                {reportData.utilizationRate < 50 && (
-                  <div className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg">
-                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-yellow-800">Low Utilization</p>
-                      <p className="text-sm text-yellow-700">
-                        Only {reportData.utilizationRate.toFixed(1)}% seats utilized. Consider marketing or promotions.
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {reportData.revenueGrowth > 10 && (
-                  <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
-                    <TrendingUp className="h-5 w-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-green-800">Revenue Growing</p>
-                      <p className="text-sm text-green-700">
-                        Revenue increased by {reportData.revenueGrowth.toFixed(1)}% compared to last month!
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {reportData.newMembersThisMonth > reportData.churnsThisMonth && (
-                  <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                    <Users className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-blue-800">Positive Member Growth</p>
-                      <p className="text-sm text-blue-700">
-                        Net gain of {reportData.newMembersThisMonth - reportData.churnsThisMonth} members this period.
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {reportData.expiredMembers > 0 && (
-                  <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
-                    <Clock className="h-5 w-5 text-orange-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-orange-800">Expired Memberships</p>
-                      <p className="text-sm text-orange-700">
-                        {reportData.expiredMembers} members with expired subscriptions. Consider renewal reminders.
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {reportData.utilizationRate >= 90 && (
-                  <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-green-800">High Utilization</p>
-                      <p className="text-sm text-green-700">
-                        Excellent! {reportData.utilizationRate.toFixed(1)}% utilization. Consider expanding capacity.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <QuickInsights
+            insights={[
+              {
+                id: "low-utilization",
+                title: "Low Utilization",
+                message: `Only ${reportData.utilizationRate.toFixed(1)}% seats utilized. Consider marketing or promotions.`,
+                icon: AlertCircle,
+                type: "warning",
+                condition: reportData.utilizationRate < 50,
+              },
+              {
+                id: "revenue-growing",
+                title: "Revenue Growing",
+                message: `Revenue increased by ${reportData.revenueGrowth.toFixed(1)}% compared to last month!`,
+                icon: TrendingUp,
+                type: "success",
+                condition: reportData.revenueGrowth > 10,
+              },
+              {
+                id: "positive-member-growth",
+                title: "Positive Member Growth",
+                message: `Net gain of ${reportData.newMembersThisMonth - reportData.churnsThisMonth} members this period.`,
+                icon: Users,
+                type: "info",
+                condition: reportData.newMembersThisMonth > reportData.churnsThisMonth,
+              },
+              {
+                id: "expired-memberships",
+                title: "Expired Memberships",
+                message: `${reportData.expiredMembers} members with expired subscriptions. Consider renewal reminders.`,
+                icon: Clock,
+                type: "warning",
+                condition: reportData.expiredMembers > 0,
+              },
+              {
+                id: "high-utilization",
+                title: "High Utilization",
+                message: `Excellent! ${reportData.utilizationRate.toFixed(1)}% utilization. Consider expanding capacity.`,
+                icon: CheckCircle,
+                type: "success",
+                condition: reportData.utilizationRate >= 90,
+              },
+            ]}
+          />
         </div>
       </PermissionGuard>
     </FeatureGuard>

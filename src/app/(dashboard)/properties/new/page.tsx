@@ -1,98 +1,68 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Building2, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { showDetailedError } from "@/lib/error-utils"
 
 // Shared form components
 import { PropertyAddressInput, CoverImageUpload, PhotoGallery } from "@/components/forms"
 
 export default function NewPropertyPage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-
-  const [formData, setFormData] = useState({
-    name: "",
-    address_line1: "",
-    address_line2: "",
-    city: "",
-    state: "",
-    pincode: "",
-    manager_name: "",
-    manager_phone: "",
-    cover_image: "",
-    photos: [] as string[],
-  })
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name || !formData.city) {
-      showError("Please fill in required fields")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        showError("Session expired. Please login again.")
-        router.push("/login")
-        return
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    saving,
+  } = useFormPage({
+    table: "properties",
+    initialData: {
+      name: "",
+      address_line1: "",
+      address_line2: "",
+      city: "",
+      state: "",
+      pincode: "",
+      manager_name: "",
+      manager_phone: "",
+      cover_image: "",
+      photos: [] as string[],
+    },
+    redirectTo: "/properties",
+    successMessage: "Property created successfully!",
+    errorMessage: "Failed to create property",
+    useCreatedBy: false,
+    validate: (data) => {
+      if (!data.name || !data.city) {
+        return "Please fill in required fields"
       }
-
+      return null
+    },
+    transform: (data, userId) => {
       // Combine address lines into single address field
-      const fullAddress = [formData.address_line1, formData.address_line2]
+      const fullAddress = [data.address_line1, data.address_line2]
         .filter(Boolean)
         .join(", ")
 
-      const { error } = await supabase.from("properties").insert({
-        owner_id: user.id,
-        created_by: user.id,
-        name: formData.name,
+      return {
+        owner_id: userId,
+        created_by: userId,
+        name: data.name,
         address: fullAddress || null,
-        city: formData.city,
-        state: formData.state || null,
-        pincode: formData.pincode || null,
-        manager_name: formData.manager_name || null,
-        manager_phone: formData.manager_phone || null,
-        cover_image: formData.cover_image || null,
-        photos: formData.photos.length > 0 ? formData.photos : null,
-      })
-
-      if (error) {
-        console.error("Error creating property:", error)
-        showError(`Database error: ${error.message}`)
-        return
+        city: data.city,
+        state: data.state || null,
+        pincode: data.pincode || null,
+        manager_name: data.manager_name || null,
+        manager_phone: data.manager_phone || null,
+        cover_image: data.cover_image || null,
+        photos: (data.photos as string[]).length > 0 ? data.photos : null,
       }
-
-      showSuccess("Property created successfully!")
-      router.push("/properties")
-    } catch (error: any) {
-      console.error("Error:", error)
-      showError(error?.message || "Failed to create property. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+    addOwnerId: false,
+  })
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -134,45 +104,45 @@ export default function NewPropertyPage() {
                 id="name"
                 name="name"
                 placeholder="e.g., Sunrise PG, Main Building"
-                value={formData.name}
+                value={formData.name as string}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={saving}
               />
             </div>
 
             {/* Address Section - Using shared component */}
             <PropertyAddressInput
-              line1={formData.address_line1}
-              line2={formData.address_line2}
-              city={formData.city}
-              state={formData.state}
-              pincode={formData.pincode}
+              line1={formData.address_line1 as string}
+              line2={formData.address_line2 as string}
+              city={formData.city as string}
+              state={formData.state as string}
+              pincode={formData.pincode as string}
               onChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
-              disabled={loading}
+              disabled={saving}
             />
 
             {/* Property Photos Section - Using shared components */}
             <div className="border-t pt-4 mt-4 space-y-4">
               <CoverImageUpload
-                value={formData.cover_image}
+                value={formData.cover_image as string}
                 onChange={(url) => setFormData(prev => ({ ...prev, cover_image: url }))}
                 label="Cover Image"
                 description="Main photo shown in property listings"
                 bucket="property-photos"
                 folder="covers"
-                disabled={loading}
+                disabled={saving}
               />
 
               <PhotoGallery
-                photos={formData.photos}
+                photos={formData.photos as string[]}
                 onChange={(photos) => setFormData(prev => ({ ...prev, photos }))}
                 label="Gallery Photos"
                 description="Additional photos of the property (up to 10)"
                 maxPhotos={10}
                 bucket="property-photos"
                 folder="gallery"
-                disabled={loading}
+                disabled={saving}
               />
             </div>
 
@@ -185,9 +155,9 @@ export default function NewPropertyPage() {
                     id="manager_name"
                     name="manager_name"
                     placeholder="e.g., Ramesh Kumar"
-                    value={formData.manager_name}
+                    value={formData.manager_name as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                   />
                 </div>
                 <div className="space-y-2">
@@ -196,9 +166,9 @@ export default function NewPropertyPage() {
                     id="manager_phone"
                     name="manager_phone"
                     placeholder="e.g., 9876543210"
-                    value={formData.manager_phone}
+                    value={formData.manager_phone as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     type="tel"
                   />
                 </div>
@@ -209,12 +179,12 @@ export default function NewPropertyPage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href="/properties">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

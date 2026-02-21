@@ -58,6 +58,7 @@ import {
 } from "lucide-react"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist, LibraryWaitlistStatus } from "@/types/library.types"
 import type { DetailPageConfig } from "@/lib/hooks/useDetailPage"
@@ -115,7 +116,7 @@ export default function WaitlistDetailPage({
       showSuccess(`Status updated to ${LIBRARY_WAITLIST_STATUS_CONFIG[newStatus].label}`)
       refetch()
     } catch (err) {
-      showError("Failed to update status")
+      handleClientError(err, "Updating waitlist status")
     } finally {
       setUpdating(false)
     }
@@ -147,7 +148,7 @@ export default function WaitlistDetailPage({
       setContactNotes("")
       refetch()
     } catch (err) {
-      showError("Failed to update")
+      handleClientError(err, "Updating waitlist notes")
     } finally {
       setUpdating(false)
     }

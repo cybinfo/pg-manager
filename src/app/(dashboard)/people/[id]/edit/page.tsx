@@ -25,7 +25,6 @@ import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import {
   User,
   Phone,
-  Mail,
   MapPin,
   Building2,
   CreditCard,
@@ -38,7 +37,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
-import { Select } from "@/components/ui/form-components"
+import { Select, EmailInput } from "@/components/ui/form-components"
 import {
   PersonFormData,
   EmergencyContact,
@@ -48,7 +47,8 @@ import {
   INDIAN_STATES,
   RELATIONS,
 } from "@/types/people.types"
-import { validateIndianMobile, validateAadhaar, validatePAN } from "@/lib/validators"
+import { validatePhone as validateIndianMobile } from "@/lib/phone"
+import { validateAadhaar, validatePAN } from "@/lib/validators"
 import { IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT, ID_DOCUMENT_TYPES } from "@/components/forms"
 
 export default function EditPersonPage() {
@@ -396,17 +396,12 @@ export default function EditPersonPage() {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => updateField("email", e.target.value)}
-                  placeholder="email@example.com"
-                  className="pl-10"
-                />
-              </div>
+              <EmailInput
+                id="email"
+                value={formData.email}
+                onChange={(e) => updateField("email", e.target.value)}
+                placeholder="email@example.com"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

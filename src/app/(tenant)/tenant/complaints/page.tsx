@@ -22,8 +22,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { TenantWithContext } from "@/types/tenants.types"
+import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
 interface Complaint {
   id: string
@@ -53,10 +52,10 @@ const categoryLabels: Record<string, string> = Object.fromEntries(
 )
 
 export default function TenantComplaintsPage() {
+  const { tenant, tenantContext, user, loading: tenantLoading } = useTenantPortalData()
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [complaints, setComplaints] = useState<Complaint[]>([])
-  const [tenantInfo, setTenantInfo] = useState<TenantWithContext | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     category: "other",
@@ -65,63 +64,34 @@ export default function TenantComplaintsPage() {
   })
 
   useEffect(() => {
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) return
-
-    // Get tenant info
-    const { data: tenant } = await supabase
-      .from("tenants")
-      .select("id, owner_id, property_id, room_id, property:properties(owner_id)")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .single()
-
-    if (!tenant) {
+    if (tenantLoading) return
+    if (!tenant || !tenantContext) {
       setLoading(false)
       return
     }
 
-    // Handle Supabase array join
-    const property = transformJoin(tenant.property)
-    const ownerId = property?.owner_id || tenant.owner_id
+    const fetchComplaints = async () => {
+      const supabase = createClient()
 
-    // Get workspace_id from workspaces table via owner
-    const { data: workspace } = await supabase
-      .from("workspaces")
-      .select("id")
-      .eq("owner_user_id", ownerId)
-      .single()
+      // Fetch complaints
+      const { data: complaintsData } = await supabase
+        .from("complaints")
+        .select("*")
+        .eq("tenant_id", tenant.id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
 
-    setTenantInfo({
-      id: tenant.id,
-      workspace_id: workspace?.id || "",
-      owner_id: ownerId,
-      property_id: tenant.property_id,
-      room_id: tenant.room_id,
-    })
+      setComplaints(complaintsData || [])
+      setLoading(false)
+    }
 
-    // Fetch complaints
-    const { data: complaintsData } = await supabase
-      .from("complaints")
-      .select("*")
-      .eq("tenant_id", tenant.id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-
-    setComplaints(complaintsData || [])
-    setLoading(false)
-  }
+    fetchComplaints()
+  }, [tenant, tenantContext, tenantLoading])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!tenantInfo || !formData.title) {
+    if (!tenantContext || !formData.title) {
       showError("Please fill in all required fields")
       return
     }
@@ -130,13 +100,12 @@ export default function TenantComplaintsPage() {
 
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
 
       // Get owner_id from property
       const { data: property } = await supabase
         .from("properties")
         .select("owner_id")
-        .eq("id", tenantInfo.property_id)
+        .eq("id", tenantContext.property_id)
         .single()
 
       if (!property) {
@@ -148,9 +117,9 @@ export default function TenantComplaintsPage() {
         .from("complaints")
         .insert({
           owner_id: property.owner_id,
-          tenant_id: tenantInfo.id,
-          property_id: tenantInfo.property_id,
-          room_id: tenantInfo.room_id,
+          tenant_id: tenantContext.id,
+          property_id: tenantContext.property_id,
+          room_id: tenantContext.room_id,
           category: formData.category,
           title: formData.title,
           description: formData.description || null,
@@ -182,7 +151,7 @@ export default function TenantComplaintsPage() {
     c.status === "resolved" || c.status === "closed"
   )
 
-  if (loading) {
+  if (tenantLoading || loading) {
     return <PageSkeleton variant="list" />
   }
 

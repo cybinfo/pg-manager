@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Invitation, Role, CONTEXT_TYPE_CONFIG } from '@/lib/auth/types'
 import { withCreatedBy } from '@/lib/audit'
-import { Mail, Phone, Send, Loader2, UserPlus } from 'lucide-react'
+import { Phone, Send, Loader2, UserPlus } from 'lucide-react'
+import { EmailInput } from '@/components/ui/form-components'
 import { showSuccess, showError } from '@/lib/toast-helpers'
 
 // ============================================
@@ -161,18 +162,13 @@ export function InvitationForm({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="email@example.com"
-                  className="pl-10"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  disabled={isLoading}
-                />
-              </div>
+              <EmailInput
+                id="email"
+                placeholder="email@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                disabled={isLoading}
+              />
             </div>
 
             <div className="space-y-2">

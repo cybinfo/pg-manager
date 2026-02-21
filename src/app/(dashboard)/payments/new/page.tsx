@@ -12,6 +12,7 @@ import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
@@ -278,8 +279,7 @@ function NewPaymentForm() {
       setLoading(false)
       router.push("/payments")
     } catch (error: unknown) {
-      console.error("Error:", error)
-      showError(error instanceof Error ? error.message : "Failed to record payment. Please try again.")
+      handleClientError(error, "Recording payment")
       setLoading(false)
     }
   }

@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar } from "@/components/ui/avatar"
 import {
@@ -19,131 +17,10 @@ import {
 import { PageSkeleton } from "@/components/ui/loading"
 import { ProfileFieldRow } from "@/components/portal"
 import { formatDate } from "@/lib/format"
-
-interface MemberProfile {
-  id: string
-  name: string
-  phone: string | null
-  email: string | null
-  member_code: string | null
-  hours_balance: number
-  hours_used: number
-  preferred_slot: string | null
-  join_date: string
-  expiry_date: string | null
-  status: string
-  id_proof_type: string | null
-  id_proof_number: string | null
-  notes: string | null
-  library: {
-    name: string
-    phone: string | null
-    address: string | null
-    city: string | null
-    opening_time: string | null
-    closing_time: string | null
-  } | null
-  assigned_seat: {
-    seat_number: string
-    section: {
-      name: string
-    } | null
-  } | null
-  locker: {
-    locker_number: string
-  } | null
-  current_subscription: {
-    plan_name: string
-    hours_included: number | null
-    start_date: string
-    end_date: string
-    status: string
-  } | null
-  person: {
-    name: string
-    photo_url: string | null
-  } | null
-}
+import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 
 export default function MemberProfilePage() {
-  const [loading, setLoading] = useState(true)
-  const [member, setMember] = useState<MemberProfile | null>(null)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      const { data: memberData } = await supabase
-        .from("library_members")
-        .select(`
-          id,
-          name,
-          phone,
-          email,
-          member_code,
-          hours_balance,
-          hours_used,
-          preferred_slot,
-          join_date,
-          expiry_date,
-          status,
-          id_proof_type,
-          id_proof_number,
-          notes,
-          library:libraries(name, phone, address, city, opening_time, closing_time),
-          assigned_seat:library_seats(seat_number, section:library_sections(name)),
-          locker:library_lockers(locker_number),
-          current_subscription:library_memberships!library_members_current_subscription_id_fkey(
-            plan_name, hours_included, start_date, end_date, status
-          ),
-          person:people(name, photo_url)
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single()
-
-      if (memberData) {
-        // Transform joins
-        const library = Array.isArray(memberData.library)
-          ? memberData.library[0]
-          : memberData.library
-        const assignedSeat = Array.isArray(memberData.assigned_seat)
-          ? memberData.assigned_seat[0]
-          : memberData.assigned_seat
-        const locker = Array.isArray(memberData.locker)
-          ? memberData.locker[0]
-          : memberData.locker
-        const subscription = Array.isArray(memberData.current_subscription)
-          ? memberData.current_subscription[0]
-          : memberData.current_subscription
-        const person = Array.isArray(memberData.person)
-          ? memberData.person[0]
-          : memberData.person
-
-        // Transform nested seat section
-        if (assignedSeat && assignedSeat.section) {
-          assignedSeat.section = Array.isArray(assignedSeat.section)
-            ? assignedSeat.section[0]
-            : assignedSeat.section
-        }
-
-        setMember({
-          ...memberData,
-          library,
-          assigned_seat: assignedSeat,
-          locker,
-          current_subscription: subscription,
-          person,
-        })
-      }
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [])
+  const { member, loading } = useMemberPortalData()
 
   if (loading) {
     return <PageSkeleton variant="detail" />
@@ -260,7 +137,7 @@ export default function MemberProfilePage() {
               <ProfileFieldRow
                 icon={Clock}
                 label="Timing"
-                value={`${member.library.opening_time || "?"} - ${member.library.closing_time || "?"}`}
+                value={`${member.library!.opening_time || "?"} - ${member.library!.closing_time || "?"}`}
               />
             )}
           </CardContent>

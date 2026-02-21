@@ -1,30 +1,23 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useState, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useDetailPage, TENANT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Tenant, TenantStay, RoomTransfer } from "@/types/tenants.types"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   DetailHero,
   InfoCard,
   DetailSection,
   InfoRow,
-  DetailListSection,
   DetailPageTemplate,
 } from "@/components/ui"
-import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
-import { Select, FormField } from "@/components/ui/form-components"
 import {
-  Loader2,
   User,
   Phone,
   Mail,
@@ -34,31 +27,32 @@ import {
   IndianRupee,
   Pencil,
   Shield,
-  MapPin,
-  Users,
-  FileText,
   CreditCard,
-  AlertCircle,
-  CheckCircle,
   Clock,
   LogOut,
   Bell,
   ArrowRightLeft,
   History,
-  Plus,
   Trash2,
   Gauge,
-  ExternalLink,
-  Briefcase,
-  Heart,
-  Undo2,
+  FileText,
 } from "lucide-react"
 import { PrintButton } from "@/components/ui/print-button"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { formatDate, formatCurrency } from "@/lib/format"
+import { formatDate } from "@/lib/format"
 import { useAuth } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
+
+import {
+  RoomTransferModal,
+  NoticePeriodDialog,
+  NoticePeriodSection,
+  PersonalInfoSection,
+  FinancialSections,
+  StayHistorySections,
+} from "./_components"
+import type { TransferRoom } from "./_components"
 
 // Types for related data
 interface Payment {
@@ -88,15 +82,6 @@ interface Bill {
   status: string
 }
 
-interface Room {
-  id: string
-  room_number: string
-  rent_amount: number
-  property_id: string
-  total_beds: number
-  occupied_beds: number
-}
-
 export default function TenantDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -119,21 +104,10 @@ export default function TenantDetailPage() {
   // Action state
   const [actionLoading, setActionLoading] = useState(false)
   const [showTransferModal, setShowTransferModal] = useState(false)
-  const [availableRooms, setAvailableRooms] = useState<Room[]>([])
-  const [transferData, setTransferData] = useState({
-    to_room_id: "",
-    new_rent: "",
-    reason: "",
-    notes: "",
-  })
+  const [availableRooms, setAvailableRooms] = useState<TransferRoom[]>([])
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showNoticeDialog, setShowNoticeDialog] = useState(false)
   const [showCancelNoticeDialog, setShowCancelNoticeDialog] = useState(false)
-  const [noticeData, setNoticeData] = useState({
-    notice_date: "",
-    expected_exit_date: "",
-    notice_notes: "",
-  })
 
   // Get related data from hook
   const payments = (related.payments || []) as Payment[]
@@ -145,35 +119,23 @@ export default function TenantDetailPage() {
   // Computed values
   const totalDues = useMemo(() => charges.reduce((sum, c) => sum + c.amount, 0), [charges])
 
-  const openNoticeDialog = () => {
-    const today = new Date().toISOString().split("T")[0]
-    const defaultExitDate = new Date()
-    defaultExitDate.setDate(defaultExitDate.getDate() + 30)
-    setNoticeData({
-      notice_date: today,
-      expected_exit_date: defaultExitDate.toISOString().split("T")[0],
-      notice_notes: "",
-    })
-    setShowNoticeDialog(true)
-  }
-
-  const handlePutOnNotice = async () => {
-    if (!tenant || !noticeData.expected_exit_date || !noticeData.notice_date) {
+  const handlePutOnNotice = async (data: { notice_date: string; expected_exit_date: string; notice_notes: string }) => {
+    if (!tenant || !data.expected_exit_date || !data.notice_date) {
       showError("Please fill in all required fields")
       return
     }
 
     setActionLoading(true)
-    const noticeDate = new Date(noticeData.notice_date)
+    const noticeDate = new Date(data.notice_date)
     const noteDateStr = noticeDate.toLocaleDateString("en-IN")
 
     const success = await updateFields({
       status: "notice_period",
-      notice_date: noticeData.notice_date,
-      expected_exit_date: noticeData.expected_exit_date,
+      notice_date: data.notice_date,
+      expected_exit_date: data.expected_exit_date,
       notes: tenant.notes
-        ? `${tenant.notes}\n\n[Notice Period - ${noteDateStr}]: ${noticeData.notice_notes || "Put on notice"}`
-        : `[Notice Period - ${noteDateStr}]: ${noticeData.notice_notes || "Put on notice"}`
+        ? `${tenant.notes}\n\n[Notice Period - ${noteDateStr}]: ${data.notice_notes || "Put on notice"}`
+        : `[Notice Period - ${noteDateStr}]: ${data.notice_notes || "Put on notice"}`
     })
 
     if (success) {
@@ -226,82 +188,11 @@ export default function TenantDetailPage() {
       .order("room_number")
 
     if (roomsData) {
-      const available = roomsData.filter((r: Room) => r.occupied_beds < r.total_beds)
+      const available = roomsData.filter((r: TransferRoom) => r.occupied_beds < r.total_beds)
       setAvailableRooms(available)
     }
 
-    setTransferData({ to_room_id: "", new_rent: "", reason: "", notes: "" })
     setShowTransferModal(true)
-  }
-
-  const handleRoomTransfer = async () => {
-    if (!tenant || !transferData.to_room_id) {
-      showError("Please select a room")
-      return
-    }
-
-    setActionLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    try {
-      const selectedRoom = availableRooms.find((r) => r.id === transferData.to_room_id)
-      if (!selectedRoom) return
-
-      const newRent = parseFloat(transferData.new_rent) || selectedRoom.rent_amount
-
-      // Create transfer record
-      await supabase.from("room_transfers").insert({
-        owner_id: user.id,
-        tenant_id: tenant.id,
-        from_property_id: tenant.property?.id,
-        from_room_id: tenant.room?.id,
-        to_property_id: selectedRoom.property_id,
-        to_room_id: selectedRoom.id,
-        transfer_date: new Date().toISOString().split("T")[0],
-        reason: transferData.reason || null,
-        notes: transferData.notes || null,
-        old_rent: tenant.monthly_rent,
-        new_rent: newRent,
-      })
-
-      // Update current stay
-      await supabase
-        .from("tenant_stays")
-        .update({ status: "transferred", exit_date: new Date().toISOString().split("T")[0], exit_reason: "transferred" })
-        .eq("tenant_id", tenant.id)
-        .eq("status", "active")
-
-      // Create new stay
-      const stayNumber = stays.length > 0 ? Math.max(...stays.map((s) => s.stay_number)) + 1 : 1
-      await supabase.from("tenant_stays").insert({
-        owner_id: user.id,
-        tenant_id: tenant.id,
-        property_id: selectedRoom.property_id,
-        room_id: selectedRoom.id,
-        join_date: new Date().toISOString().split("T")[0],
-        monthly_rent: newRent,
-        security_deposit: tenant.security_deposit,
-        status: "active",
-        stay_number: stayNumber,
-      })
-
-      // Update tenant record
-      await supabase
-        .from("tenants")
-        .update({ property_id: selectedRoom.property_id, room_id: selectedRoom.id, monthly_rent: newRent })
-        .eq("id", tenant.id)
-
-      showSuccess("Room transfer completed!")
-      setShowTransferModal(false)
-      window.location.reload()
-    } catch (error) {
-      console.error("Error transferring room:", error)
-      showError("Failed to transfer room")
-    } finally {
-      setActionLoading(false)
-    }
   }
 
   if (loading) {
@@ -383,7 +274,7 @@ export default function TenantDetailPage() {
                   <ArrowRightLeft className="mr-2 h-4 w-4" />
                   Transfer
                 </Button>
-                <Button variant="gradient" size="sm" onClick={openNoticeDialog} disabled={actionLoading}>
+                <Button variant="gradient" size="sm" onClick={() => setShowNoticeDialog(true)} disabled={actionLoading}>
                   <Bell className="mr-2 h-4 w-4" />
                   Put on Notice
                 </Button>
@@ -489,324 +380,23 @@ export default function TenantDetailPage() {
 
         {/* Notice Period Section - Only shown when tenant is on notice */}
         {tenant.status === "notice_period" && (
-          <DetailSection
-            title="Notice Period"
-            description="Tenant has given notice to vacate"
-            icon={Bell}
-            actions={
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowCancelNoticeDialog(true)}
-                disabled={actionLoading}
-              >
-                <Undo2 className="mr-1 h-3 w-3" />
-                Cancel Notice
-              </Button>
-            }
-          >
-            <InfoRow
-              label="Notice Given"
-              value={tenant.notice_date ? formatDate(tenant.notice_date) : "Not recorded"}
-              icon={Calendar}
-            />
-            <InfoRow
-              label="Expected Exit"
-              value={
-                tenant.expected_exit_date ? (
-                  <span className="text-amber-600 font-medium">{formatDate(tenant.expected_exit_date)}</span>
-                ) : (
-                  "Not set"
-                )
-              }
-              icon={LogOut}
-            />
-            {tenant.notice_date && tenant.expected_exit_date && (
-              <InfoRow
-                label="Days Remaining"
-                value={(() => {
-                  const today = new Date()
-                  const exitDate = new Date(tenant.expected_exit_date)
-                  const diffTime = exitDate.getTime() - today.getTime()
-                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-                  if (diffDays < 0) {
-                    return <span className="text-rose-600 font-medium">Overdue by {Math.abs(diffDays)} days</span>
-                  } else if (diffDays === 0) {
-                    return <span className="text-amber-600 font-medium">Today</span>
-                  } else {
-                    return <span className="text-amber-600 font-medium">{diffDays} days</span>
-                  }
-                })()}
-                icon={Clock}
-              />
-            )}
-          </DetailSection>
-        )}
-
-        {/* Personal Information (from People module - read only) */}
-        <DetailSection
-          title="Personal Information"
-          description="From People module"
-          icon={User}
-          actions={
-            tenant.person_id && (
-              <Link href={`/people/${tenant.person_id}/edit`}>
-                <Button variant="outline" size="sm">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Edit in People
-                </Button>
-              </Link>
-            )
-          }
-        >
-          <InfoRow
-            label="Phone"
-            value={
-              <a href={`tel:${tenant.person?.phone || tenant.phone}`} className="text-teal-600 hover:underline">
-                {tenant.person?.phone || tenant.phone}
-              </a>
-            }
-            icon={Phone}
-          />
-          {(tenant.person?.email || tenant.email) && (
-            <InfoRow
-              label="Email"
-              value={
-                <a href={`mailto:${tenant.person?.email || tenant.email}`} className="text-teal-600 hover:underline">
-                  {tenant.person?.email || tenant.email}
-                </a>
-              }
-              icon={Mail}
-            />
-          )}
-          {tenant.person?.date_of_birth && (
-            <InfoRow label="Date of Birth" value={formatDate(tenant.person.date_of_birth)} icon={Calendar} />
-          )}
-          {tenant.person?.gender && (
-            <InfoRow label="Gender" value={tenant.person.gender} />
-          )}
-          {(tenant.person?.occupation || tenant.person?.company_name) && (
-            <InfoRow
-              label="Occupation"
-              value={[tenant.person?.occupation, tenant.person?.company_name].filter(Boolean).join(" at ")}
-              icon={Briefcase}
-            />
-          )}
-          {tenant.person?.blood_group && (
-            <InfoRow label="Blood Group" value={tenant.person.blood_group} icon={Heart} />
-          )}
-          {tenant.person?.permanent_address && (
-            <InfoRow
-              label="Permanent Address"
-              value={[
-                tenant.person.permanent_address,
-                tenant.person.permanent_city,
-                tenant.person.permanent_state,
-                tenant.person.permanent_pincode
-              ].filter(Boolean).join(", ")}
-              icon={MapPin}
-            />
-          )}
-          {tenant.person?.aadhaar_number && (
-            <InfoRow label="Aadhaar" value={`XXXX-XXXX-${tenant.person.aadhaar_number.slice(-4)}`} icon={Shield} />
-          )}
-          {tenant.person?.pan_number && (
-            <InfoRow label="PAN" value={tenant.person.pan_number} icon={FileText} />
-          )}
-          {tenant.person?.is_verified && (
-            <InfoRow
-              label="Verification"
-              value={
-                <span className="flex items-center gap-1 text-emerald-600">
-                  <CheckCircle className="h-4 w-4" /> Verified
-                </span>
-              }
-            />
-          )}
-        </DetailSection>
-
-        {/* Emergency Contacts (from People) */}
-        {tenant.person?.emergency_contacts && tenant.person.emergency_contacts.length > 0 && (
-          <DetailListSection
-            title="Emergency Contacts"
-            description="From People module"
-            icon={Users}
-            items={tenant.person.emergency_contacts}
-            keyExtractor={(contact, idx) => `emergency-${idx}-${contact.phone}`}
-            renderItem={(contact) => (
-              <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
-                <div>
-                  <p className="font-medium">{contact.name}</p>
-                  <p className="text-xs text-muted-foreground">{contact.relation}</p>
-                </div>
-                <a href={`tel:${contact.phone}`} className="text-teal-600 hover:underline text-sm">
-                  {contact.phone}
-                </a>
-              </div>
-            )}
-            initialLimit={3}
-            viewAllMode="expand"
-            emptyText="No emergency contacts"
-            actions={
-              tenant.person_id && (
-                <Link href={`/people/${tenant.person_id}/edit`}>
-                  <Button variant="ghost" size="sm">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
-                </Link>
-              )
-            }
+          <NoticePeriodSection
+            noticeDate={tenant.notice_date}
+            expectedExitDate={tenant.expected_exit_date}
+            actionLoading={actionLoading}
+            onCancelNotice={() => setShowCancelNoticeDialog(true)}
           />
         )}
 
-        {/* Guardian Contacts (tenant-specific, legacy) */}
-        {tenant.guardian_contacts && tenant.guardian_contacts.length > 0 && (
-          <DetailListSection
-            title="Guardian Contacts"
-            description="Tenant-specific contacts"
-            icon={Users}
-            items={tenant.guardian_contacts}
-            keyExtractor={(guardian, idx) => `guardian-${idx}-${guardian.phone}`}
-            renderItem={(guardian) => (
-              <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
-                <div>
-                  <p className="font-medium">{guardian.name}</p>
-                  <p className="text-xs text-muted-foreground">{guardian.relation}</p>
-                </div>
-                <a href={`tel:${guardian.phone}`} className="text-teal-600 hover:underline text-sm">
-                  {guardian.phone}
-                </a>
-              </div>
-            )}
-            initialLimit={3}
-            viewAllMode="expand"
-            emptyText="No guardian contacts"
-          />
-        )}
+        {/* Personal Info, Emergency Contacts, Guardian Contacts, Verification */}
+        <PersonalInfoSection tenant={tenant} />
 
-        {/* Tenancy Verification Status */}
-        <DetailSection title="Verification Status" description="Tenancy verification" icon={Shield}>
-          <InfoRow
-            label="Police Verification"
-            value={<StatusBadge status={tenant.police_verification_status === "verified" ? "verified" : tenant.police_verification_status === "submitted" ? "pending" : "unverified"} size="sm" />}
-            icon={Shield}
-          />
-          <InfoRow
-            label="Agreement"
-            value={
-              tenant.agreement_signed ? (
-                <span className="flex items-center gap-1 text-emerald-600">
-                  <CheckCircle className="h-4 w-4" /> Signed
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-amber-600">
-                  <AlertCircle className="h-4 w-4" /> Pending
-                </span>
-              )
-            }
-            icon={FileText}
-          />
-        </DetailSection>
-
-        {/* Pending Dues */}
-        <DetailListSection
-          title="Pending Dues"
-          description="Outstanding payments"
-          icon={AlertCircle}
-          items={charges}
-          keyExtractor={(charge, _idx) => charge.id}
-          renderItem={(charge) => (
-            <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
-              <div>
-                <p className="font-medium">{charge.charge_type?.name || "Charge"}</p>
-                <p className="text-xs text-muted-foreground">{charge.for_period}</p>
-              </div>
-              <div className="text-right">
-                <Currency amount={charge.amount} className="text-rose-600 font-semibold" />
-                <p className="text-xs text-muted-foreground">Due: {formatDate(charge.due_date)}</p>
-              </div>
-            </div>
-          )}
-          initialLimit={5}
-          viewAllHref={`/tenants/${tenant.id}/bills`}
-          viewAllMode="auto"
-          emptyIcon={CheckCircle}
-          emptyText="No pending dues"
-          actions={
-            <div className="flex gap-2">
-              <Link href={`/tenants/${tenant.id}/bills`}>
-                <Button variant="outline" size="sm">
-                  <FileText className="mr-1 h-3 w-3" />
-                  All Bills
-                </Button>
-              </Link>
-              <Link href={`/payments/new?tenant=${tenant.id}`}>
-                <Button size="sm" variant="gradient">
-                  <Plus className="mr-1 h-3 w-3" />
-                  Record Payment
-                </Button>
-              </Link>
-            </div>
-          }
-        />
-
-        {/* Recent Payments */}
-        <DetailListSection
-          title="Recent Payments"
-          description="Transaction history"
-          icon={CreditCard}
-          items={payments}
-          keyExtractor={(payment, _idx) => payment.id}
-          renderItem={(payment) => (
-            <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
-              <div>
-                <p className="font-medium">{payment.charge_type?.name || "Payment"}</p>
-                <p className="text-xs text-muted-foreground">
-                  {payment.for_period || formatDate(payment.payment_date)}
-                </p>
-              </div>
-              <div className="text-right">
-                <Currency amount={payment.amount} className="text-emerald-600 font-semibold" />
-                <p className="text-xs text-muted-foreground capitalize">{payment.payment_method}</p>
-              </div>
-            </div>
-          )}
-          initialLimit={5}
-          viewAllHref={`/tenants/${tenant.id}/payments`}
-          viewAllMode="auto"
-          emptyIcon={CreditCard}
-          emptyText="No payments recorded"
-        />
-
-        {/* Recent Bills */}
-        <DetailListSection
-          title="Recent Bills"
-          description="Latest billing activity"
-          icon={FileText}
-          items={bills}
-          keyExtractor={(bill, _idx) => bill.id}
-          renderItem={(bill) => (
-            <Link href={`/bills/${bill.id}`}>
-              <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0 hover:bg-muted/50 transition-colors rounded px-1 -mx-1">
-                <div>
-                  <p className="font-medium">{bill.bill_number}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(bill.bill_date)}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold">{formatCurrency(bill.total_amount)}</p>
-                  {bill.balance_due > 0 && (
-                    <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
-                  )}
-                </div>
-              </div>
-            </Link>
-          )}
-          initialLimit={5}
-          viewAllHref={`/tenants/${tenant.id}/bills`}
-          viewAllMode="auto"
-          emptyIcon={FileText}
-          emptyText="No bills generated"
+        {/* Financial: Dues, Payments, Bills */}
+        <FinancialSections
+          tenantId={tenant.id}
+          charges={charges}
+          payments={payments}
+          bills={bills}
         />
 
         {/* Notes */}
@@ -816,173 +406,19 @@ export default function TenantDetailPage() {
           </DetailSection>
         )}
 
-        {/* Stay History */}
-        {stays.length > 0 && (
-          <DetailListSection
-            title="Stay History"
-            description="All tenures at your properties"
-            icon={History}
-            items={stays}
-            keyExtractor={(stay, _idx) => stay.id}
-            renderItem={(stay) => (
-              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg mb-2 last:mb-0">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Stay #{stay.stay_number}</span>
-                    <StatusBadge
-                      status={stay.status === "active" ? "active" : stay.status === "transferred" ? "info" : "muted"}
-                      label={stay.status === "active" ? "Current" : stay.status === "transferred" ? "Transferred" : "Completed"}
-                      size="sm"
-                      dot
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {stay.property?.name} - Room {stay.room?.room_number}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDate(stay.join_date)} {stay.exit_date && `→ ${formatDate(stay.exit_date)}`}
-                  </p>
-                </div>
-                <Currency amount={stay.monthly_rent} className="font-semibold" />
-              </div>
-            )}
-            initialLimit={3}
-            viewAllMode="expand"
-            emptyText="No stay history"
-          />
-        )}
-
-        {/* Room Transfer History */}
-        {transfers.length > 0 && (
-          <DetailListSection
-            title="Room Transfers"
-            description="History of room changes"
-            icon={ArrowRightLeft}
-            items={transfers}
-            keyExtractor={(transfer, _idx) => transfer.id}
-            renderItem={(transfer) => (
-              <div className="p-3 bg-slate-50 rounded-lg mb-2 last:mb-0">
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="font-medium">
-                    {transfer.from_property?.name} Room {transfer.from_room?.room_number}
-                  </span>
-                  <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">
-                    {transfer.to_property?.name} Room {transfer.to_room?.room_number}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatDate(transfer.transfer_date)}
-                  {transfer.reason && ` • ${transfer.reason}`}
-                </p>
-                {transfer.old_rent !== transfer.new_rent && (
-                  <p className="text-xs mt-1">
-                    <span className="text-muted-foreground">Rent:</span>{" "}
-                    <span className="line-through text-muted-foreground">
-                      <Currency amount={transfer.old_rent} />
-                    </span>{" "}
-                    <Currency amount={transfer.new_rent} className="text-emerald-600" />
-                  </p>
-                )}
-              </div>
-            )}
-            initialLimit={3}
-            viewAllMode="expand"
-            emptyText="No room transfers"
-          />
-        )}
+        {/* Stay History & Transfer History */}
+        <StayHistorySections stays={stays} transfers={transfers} />
 
       </DetailPageTemplate>
 
       {/* Room Transfer Modal */}
       {showTransferModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
-          <Card className="w-full max-w-md animate-scale-in">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ArrowRightLeft className="h-5 w-5" />
-                Transfer Room
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">Move {tenant.name} to a different room</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-3 bg-slate-50 rounded-lg text-sm">
-                <p className="text-muted-foreground">Current Room</p>
-                <p className="font-medium">{tenant.property?.name} - Room {tenant.room?.room_number}</p>
-                <p className="text-muted-foreground">Rent: <Currency amount={tenant.monthly_rent} /></p>
-              </div>
-
-              <FormField label="New Room" required>
-                <Select
-                  value={transferData.to_room_id}
-                  onChange={(e) => {
-                    const room = availableRooms.find((r) => r.id === e.target.value)
-                    setTransferData({
-                      ...transferData,
-                      to_room_id: e.target.value,
-                      new_rent: room ? room.rent_amount.toString() : "",
-                    })
-                  }}
-                  options={availableRooms.map((room) => ({
-                    value: room.id,
-                    label: `Room ${room.room_number} (${room.occupied_beds}/${room.total_beds} beds) - ₹${room.rent_amount}`,
-                  }))}
-                  placeholder="Select a room"
-                />
-              </FormField>
-
-              <FormField label="New Rent (₹)" hint="Leave blank to use room's default rent">
-                <Input
-                  type="number"
-                  value={transferData.new_rent}
-                  onChange={(e) => setTransferData({ ...transferData, new_rent: e.target.value })}
-                  placeholder="Leave blank for default"
-                />
-              </FormField>
-
-              <FormField label="Reason">
-                <Select
-                  value={transferData.reason}
-                  onChange={(e) => setTransferData({ ...transferData, reason: e.target.value })}
-                  options={[
-                    { value: "upgrade", label: "Upgrade" },
-                    { value: "downgrade", label: "Downgrade" },
-                    { value: "request", label: "Tenant Request" },
-                    { value: "maintenance", label: "Maintenance" },
-                    { value: "other", label: "Other" },
-                  ]}
-                  placeholder="Select reason"
-                />
-              </FormField>
-
-              <FormField label="Notes">
-                <Input
-                  value={transferData.notes}
-                  onChange={(e) => setTransferData({ ...transferData, notes: e.target.value })}
-                  placeholder="Additional notes"
-                />
-              </FormField>
-            </CardContent>
-            <div className="flex justify-end gap-2 p-4 pt-0">
-              <Button variant="outline" onClick={() => setShowTransferModal(false)} disabled={actionLoading}>
-                Cancel
-              </Button>
-              <Button variant="gradient" onClick={handleRoomTransfer} disabled={actionLoading || !transferData.to_room_id}>
-                {actionLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Transferring...
-                  </>
-                ) : (
-                  <>
-                    <ArrowRightLeft className="mr-2 h-4 w-4" />
-                    Transfer
-                  </>
-                )}
-              </Button>
-            </div>
-          </Card>
-        </div>
+        <RoomTransferModal
+          tenant={tenant}
+          stays={stays}
+          availableRooms={availableRooms}
+          onClose={() => setShowTransferModal(false)}
+        />
       )}
 
       {/* Delete Confirmation Dialog */}
@@ -999,108 +435,12 @@ export default function TenantDetailPage() {
 
       {/* Notice Period Dialog */}
       {showNoticeDialog && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
-          <Card className="w-full max-w-md animate-scale-in">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-amber-500" />
-                Put on Notice Period
-              </CardTitle>
-              <CardDescription>
-                Set an expected exit date for {tenant.name}. This will move them to &ldquo;Notice Period&rdquo; status.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-                <p className="text-amber-800">
-                  <strong>Note:</strong> This action will change the tenant&apos;s status to &ldquo;Notice Period&rdquo;.
-                  You can later initiate the checkout process when they&apos;re ready to leave.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="notice_date">Notice Given Date *</Label>
-                  <Input
-                    id="notice_date"
-                    type="date"
-                    value={noticeData.notice_date}
-                    onChange={(e) => {
-                      const newNoticeDate = e.target.value
-                      const exitDate = new Date(newNoticeDate)
-                      exitDate.setDate(exitDate.getDate() + 30)
-                      setNoticeData({
-                        ...noticeData,
-                        notice_date: newNoticeDate,
-                        expected_exit_date: exitDate.toISOString().split("T")[0]
-                      })
-                    }}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    When did/will the tenant give notice?
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="expected_exit_date">Expected Exit Date *</Label>
-                  <Input
-                    id="expected_exit_date"
-                    type="date"
-                    value={noticeData.expected_exit_date}
-                    onChange={(e) => setNoticeData({ ...noticeData, expected_exit_date: e.target.value })}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Last day of stay
-                  </p>
-                </div>
-              </div>
-
-              {noticeData.notice_date && noticeData.expected_exit_date && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                  <p className="text-blue-800">
-                    <strong>Notice Period:</strong>{" "}
-                    {Math.ceil((new Date(noticeData.expected_exit_date).getTime() - new Date(noticeData.notice_date).getTime()) / (1000 * 60 * 60 * 24))} days
-                    {" "}(from {new Date(noticeData.notice_date).toLocaleDateString("en-IN")} to {new Date(noticeData.expected_exit_date).toLocaleDateString("en-IN")})
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="notice_notes">Reason / Notes (Optional)</Label>
-                <Input
-                  id="notice_notes"
-                  value={noticeData.notice_notes}
-                  onChange={(e) => setNoticeData({ ...noticeData, notice_notes: e.target.value })}
-                  placeholder="e.g., Job relocation, personal reasons..."
-                />
-              </div>
-            </CardContent>
-            <div className="flex justify-end gap-2 p-4 pt-0">
-              <Button variant="outline" onClick={() => setShowNoticeDialog(false)} disabled={actionLoading}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handlePutOnNotice}
-                disabled={actionLoading || !noticeData.expected_exit_date}
-                className="bg-amber-500 hover:bg-amber-600 text-white"
-              >
-                {actionLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Bell className="mr-2 h-4 w-4" />
-                    Put on Notice
-                  </>
-                )}
-              </Button>
-            </div>
-          </Card>
-        </div>
+        <NoticePeriodDialog
+          tenantName={tenant.name}
+          loading={actionLoading}
+          onClose={() => setShowNoticeDialog(false)}
+          onSubmit={handlePutOnNotice}
+        />
       )}
 
       {/* Cancel Notice Confirmation Dialog */}

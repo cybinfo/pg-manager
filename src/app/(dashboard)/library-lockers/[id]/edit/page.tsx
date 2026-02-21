@@ -6,32 +6,17 @@
 
 "use client"
 
-import { useState, useEffect, use } from "react"
-import { useRouter } from "next/navigation"
+import { use } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
-
-interface LockerData {
-  id: string
-  library_id: string
-  locker_number: string
-  size: string
-  floor: number
-  section: string | null
-  monthly_rent: number | null
-  deposit_amount: number | null
-  status: string
-  library?: { id: string; name: string } | null
-}
+import { transformJoin } from "@/lib/supabase/transforms"
 
 export default function EditLibraryLockerPage({
   params,
@@ -39,119 +24,62 @@ export default function EditLibraryLockerPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuthContext()
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
-  const [locker, setLocker] = useState<LockerData | null>(null)
 
-  const [formData, setFormData] = useState({
-    locker_number: "",
-    size: "medium",
-    floor: 0,
-    section: "",
-    monthly_rent: "",
-    deposit_amount: "",
-    status: "available",
+  const {
+    formData,
+    handleChange,
+    handleSubmit,
+    loading,
+    saving,
+    record,
+  } = useFormEditPage({
+    table: "library_lockers",
+    id,
+    select: "*, library:libraries(id, name)",
+    initialData: {
+      locker_number: "",
+      size: "medium",
+      floor: 0 as number,
+      section: "",
+      monthly_rent: "",
+      deposit_amount: "",
+      status: "available",
+    },
+    redirectTo: `/library-lockers/${id}`,
+    successMessage: "Locker updated successfully!",
+    errorMessage: "Failed to update locker",
+    mapToForm: (rec) => ({
+      locker_number: (rec.locker_number as string) || "",
+      size: (rec.size as string) || "medium",
+      floor: (rec.floor as number) || 0,
+      section: (rec.section as string) || "",
+      monthly_rent: rec.monthly_rent?.toString() || "",
+      deposit_amount: rec.deposit_amount?.toString() || "",
+      status: (rec.status as string) || "available",
+    }),
+    validate: (data) => {
+      if (!data.locker_number) {
+        return "Please enter locker number"
+      }
+      return null
+    },
+    transform: (data): Record<string, unknown> => ({
+      locker_number: data.locker_number,
+      size: data.size,
+      floor: data.floor || 0,
+      section: data.section || null,
+      monthly_rent: data.monthly_rent ? Number(data.monthly_rent) : null,
+      deposit_amount: data.deposit_amount ? Number(data.deposit_amount) : null,
+      status: data.status,
+      updated_at: new Date().toISOString(),
+    }),
   })
 
-  useEffect(() => {
-    async function fetchLocker() {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("library_lockers")
-        .select("*, library:libraries(id, name)")
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
+  // Get library name from record for display
+  const library = record ? transformJoin(record.library as Record<string, unknown>) as Record<string, unknown> | null : null
 
-      if (error || !data) {
-        showError("Locker not found")
-        router.push("/library-lockers")
-        return
-      }
-
-      setLocker(data)
-      setFormData({
-        locker_number: data.locker_number || "",
-        size: data.size || "medium",
-        floor: data.floor || 0,
-        section: data.section || "",
-        monthly_rent: data.monthly_rent?.toString() || "",
-        deposit_amount: data.deposit_amount?.toString() || "",
-        status: data.status || "available",
-      })
-      setLoadingData(false)
-    }
-
-    fetchLocker()
-  }, [id, router])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.locker_number) {
-      showError("Please enter locker number")
-      return
-    }
-
-    if (!user) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const updateData = {
-        locker_number: formData.locker_number,
-        size: formData.size,
-        floor: formData.floor || 0,
-        section: formData.section || null,
-        monthly_rent: formData.monthly_rent ? Number(formData.monthly_rent) : null,
-        deposit_amount: formData.deposit_amount ? Number(formData.deposit_amount) : null,
-        status: formData.status,
-        updated_at: new Date().toISOString(),
-      }
-
-      const { error } = await supabase
-        .from("library_lockers")
-        .update(updateData)
-        .eq("id", id)
-
-      if (error) {
-        console.error("Error updating locker:", error)
-        showError(`Failed to update locker: ${error.message}`)
-        return
-      }
-
-      showSuccess("Locker updated successfully!")
-      router.push(`/library-lockers/${id}`)
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to update locker. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loadingData) {
+  if (loading) {
     return <PageLoading message="Loading locker..." />
-  }
-
-  if (!locker) {
-    return null
   }
 
   return (
@@ -166,7 +94,7 @@ export default function EditLibraryLockerPage({
         <div>
           <h1 className="text-3xl font-bold">Edit Locker</h1>
           <p className="text-muted-foreground">
-            #{locker.locker_number} • {locker.library?.name}
+            #{formData.locker_number} • {library?.name as string}
           </p>
         </div>
       </div>
@@ -196,19 +124,19 @@ export default function EditLibraryLockerPage({
                   id="locker_number"
                   name="locker_number"
                   placeholder="e.g., L-001"
-                  value={formData.locker_number}
+                  value={formData.locker_number as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="size">Size</Label>
                 <Select
-                  value={formData.size}
+                  value={formData.size as string}
                   onChange={handleChange}
                   name="size"
-                  disabled={loading}
+                  disabled={saving}
                   options={[
                     { value: "small", label: "Small" },
                     { value: "medium", label: "Medium" },
@@ -226,9 +154,9 @@ export default function EditLibraryLockerPage({
                   name="floor"
                   type="number"
                   placeholder="e.g., 0, 1, 2"
-                  value={formData.floor}
+                  value={formData.floor as number}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   min={0}
                 />
               </div>
@@ -238,9 +166,9 @@ export default function EditLibraryLockerPage({
                   id="section"
                   name="section"
                   placeholder="e.g., A, Main Hall"
-                  value={formData.section}
+                  value={formData.section as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
             </div>
@@ -248,10 +176,10 @@ export default function EditLibraryLockerPage({
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select
-                value={formData.status}
+                value={formData.status as string}
                 onChange={handleChange}
                 name="status"
-                disabled={loading}
+                disabled={saving}
                 options={[
                   { value: "available", label: "Available" },
                   { value: "occupied", label: "Occupied" },
@@ -265,29 +193,29 @@ export default function EditLibraryLockerPage({
               <h3 className="font-medium mb-3">Pricing</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="monthly_rent">Monthly Rent (₹)</Label>
+                  <Label htmlFor="monthly_rent">Monthly Rent (Rs.)</Label>
                   <Input
                     id="monthly_rent"
                     name="monthly_rent"
                     type="number"
                     placeholder="e.g., 200"
-                    value={formData.monthly_rent}
+                    value={formData.monthly_rent as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                     step="0.01"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="deposit_amount">Deposit Amount (₹)</Label>
+                  <Label htmlFor="deposit_amount">Deposit Amount (Rs.)</Label>
                   <Input
                     id="deposit_amount"
                     name="deposit_amount"
                     type="number"
                     placeholder="e.g., 500"
-                    value={formData.deposit_amount}
+                    value={formData.deposit_amount as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                     step="0.01"
                   />
@@ -299,12 +227,12 @@ export default function EditLibraryLockerPage({
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href={`/library-lockers/${id}`}>
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

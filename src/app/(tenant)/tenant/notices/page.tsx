@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { formatDate, formatTimeAgo } from "@/lib/format"
+import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
 interface Notice {
   id: string
@@ -49,28 +50,19 @@ const typeConfig: Record<string, { label: string; color: string; bgColor: string
 }
 
 export default function TenantNoticesPage() {
+  const { tenant, loading: tenantLoading } = useTenantPortalData()
   const [loading, setLoading] = useState(true)
   const [notices, setNotices] = useState<Notice[]>([])
 
   useEffect(() => {
+    if (tenantLoading) return
+    if (!tenant) {
+      setLoading(false)
+      return
+    }
+
     const fetchNotices = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      // Get tenant's property
-      const { data: tenant } = await supabase
-        .from("tenants")
-        .select("property_id, room_id")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single()
-
-      if (!tenant) {
-        setLoading(false)
-        return
-      }
 
       // Fetch active notices for tenant's property
       const now = new Date().toISOString()
@@ -97,7 +89,7 @@ export default function TenantNoticesPage() {
         if (notice.target_audience === "all") return true
         if (notice.target_audience === "tenants_only") return true
         if (notice.target_audience === "specific_rooms") {
-          return notice.target_rooms?.includes(tenant.room_id)
+          return notice.target_rooms?.includes(tenant.room_id as string)
         }
         return true
       })
@@ -117,7 +109,7 @@ export default function TenantNoticesPage() {
     }
 
     fetchNotices()
-  }, [])
+  }, [tenant, tenantLoading])
 
 
   const isNew = (dateString: string) => {
@@ -127,7 +119,7 @@ export default function TenantNoticesPage() {
     return diffHours < 24
   }
 
-  if (loading) {
+  if (tenantLoading || loading) {
     return <PageSkeleton variant="list" />
   }
 

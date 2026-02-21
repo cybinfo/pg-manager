@@ -25,6 +25,7 @@ import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -102,8 +103,7 @@ export default function BillPaymentDetailPage({
         showError(result.error.message || "Failed to delete bill")
       }
     } catch (error) {
-      console.error("Failed to delete bill:", error)
-      showError("Failed to delete bill")
+      handleClientError(error, "Deleting bill")
     }
   }
 
@@ -138,8 +138,7 @@ export default function BillPaymentDetailPage({
           : null
       )
     } catch (error) {
-      console.error("Failed to update bill:", error)
-      showError("Failed to update bill")
+      handleClientError(error, "Updating bill")
     }
   }
 

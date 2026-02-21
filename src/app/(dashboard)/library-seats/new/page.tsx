@@ -7,10 +7,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,8 +17,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
 import { ArrowLeft, Armchair, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { withCreatedBy } from "@/lib/audit"
 
 interface Section {
   id: string
@@ -28,23 +25,86 @@ interface Section {
 }
 
 export default function NewLibrarySeatPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { user, workspaceId } = useAuthContext()
-  const [loading, setLoading] = useState(false)
   const [sections, setSections] = useState<Section[]>([])
   const [loadingSections, setLoadingSections] = useState(true)
 
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    saving,
+    searchParams,
+    workspaceId,
+  } = useFormPage({
+    table: "library_seats",
+    initialData: {
+      section_id: "",
+      seat_number: "",
+      row_number: "",
+      has_power_outlet: true as boolean,
+      has_lamp: false as boolean,
+      is_window_seat: false as boolean,
+    },
+    preSelectFields: ["section"],
+    redirectTo: "/library-seats",
+    successMessage: "Seat created successfully!",
+    errorMessage: "Failed to create seat",
+    validate: (data) => {
+      if (!data.section_id || !data.seat_number) {
+        return "Please fill in required fields (Section, Seat Number)"
+      }
+      return null
+    },
+    customSubmit: async (data, userId, supabase): Promise<string | void> => {
+      // Get section's owner_id and workspace_id
+      const { data: section } = await supabase
+        .from("library_sections")
+        .select("owner_id, workspace_id")
+        .eq("id", data.section_id)
+        .single()
+
+      if (!section) {
+        throw new Error("Section not found")
+      }
+
+      const { withCreatedBy } = await import("@/lib/audit")
+
+      const seatData = withCreatedBy({
+        owner_id: section.owner_id,
+        workspace_id: section.workspace_id,
+        section_id: data.section_id,
+        seat_number: data.seat_number,
+        row_number: data.row_number || null,
+        has_power_outlet: data.has_power_outlet,
+        has_lamp: data.has_lamp,
+        is_window_seat: data.is_window_seat,
+        status: "available",
+      }, userId)
+
+      const { error } = await supabase.from("library_seats").insert(seatData)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      // Redirect to section detail if came from there
+      if (data.section_id && typeof window !== "undefined") {
+        const urlParams = new URLSearchParams(window.location.search)
+        if (urlParams.get("section")) {
+          return `/library-sections/${data.section_id}`
+        }
+      }
+    },
+  })
+
   const preselectedSection = searchParams.get("section")
 
-  const [formData, setFormData] = useState({
-    section_id: preselectedSection || "",
-    seat_number: "",
-    row_number: "",
-    has_power_outlet: true,
-    has_lamp: false,
-    is_window_seat: false,
-  })
+  // Pre-fill section_id from URL param (mapped from "section" to "section_id")
+  useEffect(() => {
+    if (preselectedSection && !formData.section_id) {
+      setFormData((prev) => ({ ...prev, section_id: preselectedSection }))
+    }
+  }, [preselectedSection, formData.section_id, setFormData])
 
   useEffect(() => {
     async function fetchSections() {
@@ -65,86 +125,11 @@ export default function NewLibrarySeatPage() {
     fetchSections()
   }, [])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }))
-  }
-
   const handleCheckboxChange = (name: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
       [name]: checked,
     }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.section_id || !formData.seat_number) {
-      showError("Please fill in required fields (Section, Seat Number)")
-      return
-    }
-
-    if (!user || !workspaceId) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      // Get section's owner_id and workspace_id
-      const { data: section } = await supabase
-        .from("library_sections")
-        .select("owner_id, workspace_id")
-        .eq("id", formData.section_id)
-        .single()
-
-      if (!section) {
-        showError("Section not found")
-        setLoading(false)
-        return
-      }
-
-      const seatData = withCreatedBy({
-        owner_id: section.owner_id,
-        workspace_id: section.workspace_id,
-        section_id: formData.section_id,
-        seat_number: formData.seat_number,
-        row_number: formData.row_number || null,
-        has_power_outlet: formData.has_power_outlet,
-        has_lamp: formData.has_lamp,
-        is_window_seat: formData.is_window_seat,
-        status: "available",
-      }, user.id)
-
-      const { error } = await supabase.from("library_seats").insert(seatData)
-
-      if (error) {
-        console.error("Error creating seat:", error)
-        showError(`Failed to create seat: ${error.message}`)
-        return
-      }
-
-      showSuccess("Seat created successfully!")
-
-      if (preselectedSection) {
-        router.push(`/library-sections/${preselectedSection}`)
-      } else {
-        router.push("/library-seats")
-      }
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to create seat. Please try again.")
-    } finally {
-      setLoading(false)
-    }
   }
 
   const sectionOptions = sections.map((sec) => ({
@@ -191,12 +176,12 @@ export default function NewLibrarySeatPage() {
               <Label>Section *</Label>
               <Combobox
                 options={sectionOptions}
-                value={formData.section_id}
+                value={formData.section_id as string}
                 onValueChange={(value) => setFormData((prev) => ({ ...prev, section_id: value }))}
                 placeholder="Select a section..."
                 searchPlaceholder="Search sections..."
                 emptyText="No sections found"
-                disabled={loading || loadingSections || !!preselectedSection}
+                disabled={saving || loadingSections || !!preselectedSection}
               />
             </div>
 
@@ -208,10 +193,10 @@ export default function NewLibrarySeatPage() {
                   id="seat_number"
                   name="seat_number"
                   placeholder="e.g., A-01, 101"
-                  value={formData.seat_number}
+                  value={formData.seat_number as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -220,9 +205,9 @@ export default function NewLibrarySeatPage() {
                   id="row_number"
                   name="row_number"
                   placeholder="e.g., A, B, 1"
-                  value={formData.row_number}
+                  value={formData.row_number as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   maxLength={10}
                 />
               </div>
@@ -235,9 +220,9 @@ export default function NewLibrarySeatPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_power_outlet"
-                    checked={formData.has_power_outlet}
+                    checked={formData.has_power_outlet as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_power_outlet", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_power_outlet" className="cursor-pointer">
                     Power Outlet
@@ -246,9 +231,9 @@ export default function NewLibrarySeatPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_lamp"
-                    checked={formData.has_lamp}
+                    checked={formData.has_lamp as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_lamp", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_lamp" className="cursor-pointer">
                     Desk Lamp
@@ -257,9 +242,9 @@ export default function NewLibrarySeatPage() {
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="is_window_seat"
-                    checked={formData.is_window_seat}
+                    checked={formData.is_window_seat as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("is_window_seat", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="is_window_seat" className="cursor-pointer">
                     Window Seat
@@ -272,12 +257,12 @@ export default function NewLibrarySeatPage() {
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href={preselectedSection ? `/library-sections/${preselectedSection}` : "/library-seats"}>
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

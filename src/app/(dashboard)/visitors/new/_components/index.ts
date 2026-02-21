@@ -1,3 +1,6 @@
 export { VisitorTypeSelector } from "./VisitorTypeSelector"
 export { VisitorTypeFields } from "./VisitorTypeFields"
 export { OvernightStaySection } from "./OvernightStaySection"
+export { PersonStepCard } from "./PersonStepCard"
+export { VisitDetailsCard } from "./VisitDetailsCard"
+export { useVisitorForm } from "./useVisitorForm"

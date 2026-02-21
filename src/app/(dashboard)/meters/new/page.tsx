@@ -7,9 +7,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,7 +28,7 @@ import {
   Save,
   Loader2,
 } from "lucide-react"
-import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
+import { showWarning } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 import {
   MeterType,
@@ -58,31 +58,130 @@ interface Room {
 // ============================================
 
 export default function NewMeterPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const preselectedPropertyId = searchParams.get("property_id")
-  const preselectedRoomId = searchParams.get("room_id")
-
-  const [loading, setLoading] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const [formData, setFormData] = useState({
-    property_id: preselectedPropertyId || "",
-    meter_number: "",
-    meter_type: "electricity" as MeterType,
-    initial_reading: "0",
-    make: "",
-    model: "",
-    installation_date: "",
-    notes: "",
-    // Assignment options
-    assign_to_room: !!preselectedRoomId,
-    room_id: preselectedRoomId || "",
-    assignment_reason: "initial" as AssignmentReason,
+  const {
+    formData, setFormData,
+    handleSubmit,
+    saving,
+    searchParams,
+  } = useFormPage({
+    table: "meters",
+    initialData: {
+      property_id: "",
+      meter_number: "",
+      meter_type: "electricity" as string,
+      initial_reading: "0",
+      make: "",
+      model: "",
+      installation_date: "",
+      notes: "",
+      // Assignment options
+      assign_to_room: false as boolean,
+      room_id: "",
+      assignment_reason: "initial" as string,
+    },
+    redirectTo: "/meters",
+    successMessage: "Meter created successfully",
+    errorMessage: "Failed to create meter",
+    validate: (data) => {
+      const newErrors: Record<string, string> = {}
+
+      if (!data.property_id) {
+        newErrors.property_id = "Property is required"
+      }
+
+      if (!(data.meter_number as string).trim()) {
+        newErrors.meter_number = "Meter number is required"
+      }
+
+      if (data.assign_to_room && !data.room_id) {
+        newErrors.room_id = "Please select a room to assign"
+      }
+
+      setErrors(newErrors)
+      if (Object.keys(newErrors).length > 0) {
+        return "Please fix the errors before submitting"
+      }
+      return null
+    },
+    customSubmit: async (data, userId, supabase): Promise<string | void> => {
+      // Check for duplicate meter number
+      const { data: existing } = await supabase
+        .from("meters")
+        .select("id, meter_number")
+        .eq("owner_id", userId)
+        .eq("meter_number", (data.meter_number as string).trim())
+        .single()
+
+      if (existing) {
+        throw new Error(`A meter with number "${data.meter_number}" already exists`)
+      }
+
+      // Create the meter
+      const { data: meterData, error: meterError } = await supabase
+        .from("meters")
+        .insert({
+          owner_id: userId,
+          created_by: userId,
+          property_id: data.property_id,
+          meter_number: (data.meter_number as string).trim(),
+          meter_type: data.meter_type,
+          initial_reading: parseFloat(data.initial_reading as string) || 0,
+          make: (data.make as string).trim() || null,
+          model: (data.model as string).trim() || null,
+          installation_date: data.installation_date || null,
+          notes: (data.notes as string).trim() || null,
+          status: "active",
+        })
+        .select()
+        .single()
+
+      if (meterError) {
+        throw new Error("Failed to create meter")
+      }
+
+      // If assigning to room, create assignment
+      if (data.assign_to_room && data.room_id) {
+        const { error: assignError } = await supabase
+          .from("meter_assignments")
+          .insert({
+            owner_id: userId,
+            meter_id: meterData.id,
+            room_id: data.room_id,
+            start_date: new Date().toISOString().split("T")[0],
+            start_reading: parseFloat(data.initial_reading as string) || 0,
+            reason: data.assignment_reason,
+          })
+
+        if (assignError) {
+          console.error("Error assigning meter:", assignError)
+          showWarning("Meter created but failed to assign to room")
+        }
+      }
+
+      return `/meters/${meterData.id}`
+    },
   })
+
+  const preselectedPropertyId = searchParams.get("property_id")
+  const preselectedRoomId = searchParams.get("room_id")
+
+  // Pre-fill from URL params
+  useEffect(() => {
+    const updates: Record<string, unknown> = {}
+    if (preselectedPropertyId && !formData.property_id) updates.property_id = preselectedPropertyId
+    if (preselectedRoomId && !formData.room_id) {
+      updates.room_id = preselectedRoomId
+      updates.assign_to_room = true
+    }
+    if (Object.keys(updates).length > 0) {
+      setFormData((prev) => ({ ...prev, ...updates }))
+    }
+  }, [preselectedPropertyId, preselectedRoomId, formData.property_id, formData.room_id, setFormData])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -107,7 +206,7 @@ export default function NewMeterPage() {
     }
 
     fetchData()
-  }, [preselectedPropertyId])
+  }, [preselectedPropertyId, setFormData])
 
   // Filter rooms when property changes
   useEffect(() => {
@@ -121,7 +220,7 @@ export default function NewMeterPage() {
     } else {
       setFilteredRooms([])
     }
-  }, [formData.property_id, rooms, formData.room_id])
+  }, [formData.property_id, rooms, formData.room_id, setFormData])
 
   const updateField = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -134,110 +233,7 @@ export default function NewMeterPage() {
     }
   }
 
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.property_id) {
-      newErrors.property_id = "Property is required"
-    }
-
-    if (!formData.meter_number.trim()) {
-      newErrors.meter_number = "Meter number is required"
-    }
-
-    if (formData.assign_to_room && !formData.room_id) {
-      newErrors.room_id = "Please select a room to assign"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validate()) {
-      showError("Please fix the errors before submitting")
-      return
-    }
-
-    setLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      showError("Session expired. Please log in again.")
-      setLoading(false)
-      return
-    }
-
-    // Check for duplicate meter number
-    const { data: existing } = await supabase
-      .from("meters")
-      .select("id, meter_number")
-      .eq("owner_id", user.id)
-      .eq("meter_number", formData.meter_number.trim())
-      .single()
-
-    if (existing) {
-      showError(`A meter with number "${formData.meter_number}" already exists`)
-      setLoading(false)
-      return
-    }
-
-    // Create the meter
-    const { data: meterData, error: meterError } = await supabase
-      .from("meters")
-      .insert({
-        owner_id: user.id,
-        created_by: user.id,
-        property_id: formData.property_id,
-        meter_number: formData.meter_number.trim(),
-        meter_type: formData.meter_type,
-        initial_reading: parseFloat(formData.initial_reading) || 0,
-        make: formData.make.trim() || null,
-        model: formData.model.trim() || null,
-        installation_date: formData.installation_date || null,
-        notes: formData.notes.trim() || null,
-        status: "active",
-      })
-      .select()
-      .single()
-
-    if (meterError) {
-      console.error("Error creating meter:", meterError)
-      showError("Failed to create meter")
-      setLoading(false)
-      return
-    }
-
-    // If assigning to room, create assignment
-    if (formData.assign_to_room && formData.room_id) {
-      const { error: assignError } = await supabase
-        .from("meter_assignments")
-        .insert({
-          owner_id: user.id,
-          meter_id: meterData.id,
-          room_id: formData.room_id,
-          start_date: new Date().toISOString().split("T")[0],
-          start_reading: parseFloat(formData.initial_reading) || 0,
-          reason: formData.assignment_reason,
-        })
-
-      if (assignError) {
-        console.error("Error assigning meter:", assignError)
-        showWarning("Meter created but failed to assign to room")
-      } else {
-        showSuccess("Meter created and assigned to room")
-      }
-    } else {
-      showSuccess("Meter created successfully")
-    }
-
-    router.push(`/meters/${meterData.id}`)
-  }
-
-  const typeConfig = METER_TYPE_CONFIG[formData.meter_type] || METER_TYPE_CONFIG.electricity
+  const typeConfig = METER_TYPE_CONFIG[formData.meter_type as MeterType] || METER_TYPE_CONFIG.electricity
   const TypeIcon = formData.meter_type === "water" ? Droplets : formData.meter_type === "gas" ? Gauge : Zap
 
   return (
@@ -266,7 +262,7 @@ export default function NewMeterPage() {
             <div className="space-y-2">
               <Label htmlFor="property_id">Property *</Label>
               <Select
-                value={formData.property_id}
+                value={formData.property_id as string}
                 onChange={(e) => updateField("property_id", e.target.value)}
                 options={[
                   { value: "", label: "Select property" },
@@ -281,7 +277,7 @@ export default function NewMeterPage() {
                 <Label htmlFor="meter_number">Meter Number *</Label>
                 <Input
                   id="meter_number"
-                  value={formData.meter_number}
+                  value={formData.meter_number as string}
                   onChange={(e) => updateField("meter_number", e.target.value)}
                   placeholder="e.g., E-001, W-101"
                   className={errors.meter_number ? "border-red-500" : ""}
@@ -292,7 +288,7 @@ export default function NewMeterPage() {
               <div className="space-y-2">
                 <Label htmlFor="meter_type">Meter Type *</Label>
                 <Select
-                  value={formData.meter_type}
+                  value={formData.meter_type as string}
                   onChange={(e) => updateField("meter_type", e.target.value)}
                   options={METER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
                 />
@@ -304,7 +300,7 @@ export default function NewMeterPage() {
               <Input
                 id="initial_reading"
                 type="number"
-                value={formData.initial_reading}
+                value={formData.initial_reading as string}
                 onChange={(e) => updateField("initial_reading", e.target.value)}
                 placeholder="0"
               />
@@ -327,7 +323,7 @@ export default function NewMeterPage() {
                 <Label htmlFor="make">Make / Manufacturer</Label>
                 <Input
                   id="make"
-                  value={formData.make}
+                  value={formData.make as string}
                   onChange={(e) => updateField("make", e.target.value)}
                   placeholder="e.g., Secure, HPL"
                 />
@@ -337,7 +333,7 @@ export default function NewMeterPage() {
                 <Label htmlFor="model">Model</Label>
                 <Input
                   id="model"
-                  value={formData.model}
+                  value={formData.model as string}
                   onChange={(e) => updateField("model", e.target.value)}
                   placeholder="e.g., Sprint 350"
                 />
@@ -349,7 +345,7 @@ export default function NewMeterPage() {
               <Input
                 id="installation_date"
                 type="date"
-                value={formData.installation_date}
+                value={formData.installation_date as string}
                 onChange={(e) => updateField("installation_date", e.target.value)}
               />
             </div>
@@ -358,7 +354,7 @@ export default function NewMeterPage() {
               <Label htmlFor="notes">Notes</Label>
               <Textarea
                 id="notes"
-                value={formData.notes}
+                value={formData.notes as string}
                 onChange={(e) => updateField("notes", e.target.value)}
                 placeholder="Any additional notes about this meter..."
                 rows={3}
@@ -378,7 +374,7 @@ export default function NewMeterPage() {
               <input
                 id="assign_to_room"
                 type="checkbox"
-                checked={formData.assign_to_room}
+                checked={formData.assign_to_room as boolean}
                 onChange={(e) => updateField("assign_to_room", e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300"
               />
@@ -392,7 +388,7 @@ export default function NewMeterPage() {
                 <div className="space-y-2">
                   <Label htmlFor="room_id">Room *</Label>
                   <Select
-                    value={formData.room_id}
+                    value={formData.room_id as string}
                     onChange={(e) => updateField("room_id", e.target.value)}
                     options={[
                       { value: "", label: filteredRooms.length === 0 ? "No rooms available" : "Select room" },
@@ -406,7 +402,7 @@ export default function NewMeterPage() {
                 <div className="space-y-2">
                   <Label htmlFor="assignment_reason">Assignment Reason</Label>
                   <Select
-                    value={formData.assignment_reason}
+                    value={formData.assignment_reason as string}
                     onChange={(e) => updateField("assignment_reason", e.target.value)}
                     options={ASSIGNMENT_REASONS.map((r) => ({ value: r.value, label: r.label }))}
                   />
@@ -423,8 +419,8 @@ export default function NewMeterPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Creating...

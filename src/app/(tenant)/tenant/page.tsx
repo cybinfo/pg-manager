@@ -20,8 +20,8 @@ import {
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PortalStatsGrid, QuickActionLink, PaymentListItem } from "@/components/portal"
-import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency } from "@/lib/format"
+import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
 interface TenantFeatures {
   view_bills: boolean
@@ -43,81 +43,29 @@ const defaultTenantFeatures: TenantFeatures = {
   update_profile: true,
 }
 
-interface TenantData {
-  id: string
-  name: string
-  phone: string
-  monthly_rent: number
-  check_in_date: string
-  status: string
-  property_id: string
-  property: {
-    name: string
-    address: string | null
-    city: string
-    tenant_features: TenantFeatures | null
-  }
-  room: {
-    room_number: string
-    room_type: string
-    amenities: string[] | null
-  }
-}
-
-interface DashboardData {
-  tenant: TenantData | null
-  recentPayments: any[]
-  openComplaints: number
-  unreadNotices: number
-  totalPaid: number
-}
-
 export default function TenantHomePage() {
+  const { tenant, loading: tenantLoading } = useTenantPortalData()
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<DashboardData>({
-    tenant: null,
-    recentPayments: [],
-    openComplaints: 0,
-    unreadNotices: 0,
-    totalPaid: 0,
-  })
+  const [recentPayments, setRecentPayments] = useState<any[]>([])
+  const [openComplaints, setOpenComplaints] = useState(0)
+  const [unreadNotices, setUnreadNotices] = useState(0)
+  const [totalPaid, setTotalPaid] = useState(0)
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (tenantLoading) return
+    if (!tenant) {
+      setLoading(false)
+      return
+    }
+
+    const fetchDashboardData = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      // Fetch tenant data with property features
-      const { data: tenantData } = await supabase
-        .from("tenants")
-        .select(`
-          *,
-          property:properties(name, address, city, tenant_features),
-          room:rooms(room_number, room_type, amenities)
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single()
-
-      if (!tenantData) {
-        setLoading(false)
-        return
-      }
-
-      // Transform Supabase join arrays to objects (Supabase returns joins as arrays)
-      const normalizedTenant = {
-        ...tenantData,
-        property: transformJoin(tenantData.property),
-        room: transformJoin(tenantData.room),
-      }
 
       // Fetch recent payments
       const { data: payments } = await supabase
         .from("payments")
         .select("id, amount, payment_date, payment_method, for_period")
-        .eq("tenant_id", tenantData.id)
+        .eq("tenant_id", tenant.id)
         .is("deleted_at", null)
         .order("payment_date", { ascending: false })
         .limit(3)
@@ -126,7 +74,7 @@ export default function TenantHomePage() {
       const { count: complaintsCount } = await supabase
         .from("complaints")
         .select("id", { count: "exact", head: true })
-        .eq("tenant_id", tenantData.id)
+        .eq("tenant_id", tenant.id)
         .is("deleted_at", null)
         .in("status", ["open", "acknowledged", "in_progress"])
 
@@ -134,7 +82,7 @@ export default function TenantHomePage() {
       const { count: noticesCount } = await supabase
         .from("notices")
         .select("id", { count: "exact", head: true })
-        .eq("property_id", tenantData.property_id)
+        .eq("property_id", tenant.property_id)
         .is("deleted_at", null)
         .eq("is_active", true)
 
@@ -143,38 +91,35 @@ export default function TenantHomePage() {
       const { data: yearPayments } = await supabase
         .from("payments")
         .select("amount")
-        .eq("tenant_id", tenantData.id)
+        .eq("tenant_id", tenant.id)
         .is("deleted_at", null)
         .gte("payment_date", yearStart)
 
-      const totalPaid = yearPayments?.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0) || 0
+      const totalPaidAmount = yearPayments?.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0) || 0
 
-      setData({
-        tenant: normalizedTenant as TenantData,
-        recentPayments: payments || [],
-        openComplaints: complaintsCount || 0,
-        unreadNotices: noticesCount || 0,
-        totalPaid,
-      })
+      setRecentPayments(payments || [])
+      setOpenComplaints(complaintsCount || 0)
+      setUnreadNotices(noticesCount || 0)
+      setTotalPaid(totalPaidAmount)
       setLoading(false)
     }
 
-    fetchData()
-  }, [])
+    fetchDashboardData()
+  }, [tenant, tenantLoading])
 
 
   const getDaysStayed = () => {
-    if (!data.tenant?.check_in_date) return 0
-    const checkIn = new Date(data.tenant.check_in_date)
+    if (!tenant?.check_in_date) return 0
+    const checkIn = new Date(tenant.check_in_date)
     const now = new Date()
     return Math.floor((now.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
   }
 
-  if (loading) {
+  if (tenantLoading || loading) {
     return <PageSkeleton variant="detail" />
   }
 
-  if (!data.tenant) {
+  if (!tenant) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -186,14 +131,14 @@ export default function TenantHomePage() {
 
   const features: TenantFeatures = {
     ...defaultTenantFeatures,
-    ...(data.tenant?.property?.tenant_features || {}),
+    ...(tenant?.property?.tenant_features || {}),
   }
 
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold">Welcome, {data.tenant.name.split(" ")[0]}!</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">Welcome, {tenant.name.split(" ")[0]}!</h1>
         <p className="text-muted-foreground">Here&apos;s your tenancy overview</p>
       </div>
 
@@ -203,14 +148,14 @@ export default function TenantHomePage() {
           {
             icon: Home,
             label: "Room",
-            value: data.tenant.room?.room_number || "-",
+            value: tenant.room?.room_number || "-",
             bgColor: "bg-primary/10",
             iconColor: "text-primary",
           },
           {
             icon: IndianRupee,
             label: "Monthly Rent",
-            value: formatCurrency(data.tenant.monthly_rent),
+            value: formatCurrency(tenant.monthly_rent),
             bgColor: "bg-emerald-50",
             iconColor: "text-emerald-600",
           },
@@ -224,7 +169,7 @@ export default function TenantHomePage() {
           {
             icon: CreditCard,
             label: "Paid This Year",
-            value: formatCurrency(data.totalPaid),
+            value: formatCurrency(totalPaid),
             bgColor: "bg-violet-50",
             iconColor: "text-violet-600",
           },
@@ -242,25 +187,25 @@ export default function TenantHomePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="font-semibold text-lg">{data.tenant.property?.name || "Unknown Property"}</p>
+              <p className="font-semibold text-lg">{tenant.property?.name || "Unknown Property"}</p>
               <p className="text-sm text-muted-foreground">
-                {data.tenant.property?.address && `${data.tenant.property.address}, `}
-                {data.tenant.property?.city || ""}
+                {tenant.property?.address && `${tenant.property.address}, `}
+                {tenant.property?.city || ""}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Room Number</p>
-                <p className="font-medium">{data.tenant.room?.room_number || "-"}</p>
+                <p className="font-medium">{tenant.room?.room_number || "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Room Type</p>
-                <p className="font-medium capitalize">{data.tenant.room?.room_type || "Standard"}</p>
+                <p className="font-medium capitalize">{tenant.room?.room_type || "Standard"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Check-in Date</p>
-                <p className="font-medium">{formatDate(data.tenant.check_in_date)}</p>
+                <p className="font-medium">{formatDate(tenant.check_in_date)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Status</p>
@@ -271,11 +216,11 @@ export default function TenantHomePage() {
               </div>
             </div>
 
-            {data.tenant.room?.amenities && data.tenant.room.amenities.length > 0 && (
+            {tenant.room?.amenities && tenant.room.amenities.length > 0 && (
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Amenities</p>
                 <div className="flex flex-wrap gap-2">
-                  {data.tenant.room.amenities.map((amenity: string) => (
+                  {tenant.room.amenities.map((amenity: string) => (
                     <span
                       key={amenity}
                       className="px-2 py-1 bg-muted rounded text-xs"
@@ -312,8 +257,8 @@ export default function TenantHomePage() {
                 icon={MessageSquare}
                 title="Submit Complaint"
                 description={
-                  data.openComplaints > 0
-                    ? `${data.openComplaints} open complaint${data.openComplaints > 1 ? "s" : ""}`
+                  openComplaints > 0
+                    ? `${openComplaints} open complaint${openComplaints > 1 ? "s" : ""}`
                     : "Report an issue"
                 }
                 bgColor="bg-amber-50"
@@ -327,8 +272,8 @@ export default function TenantHomePage() {
                 icon={Bell}
                 title="View Notices"
                 description={
-                  data.unreadNotices > 0
-                    ? `${data.unreadNotices} active notice${data.unreadNotices > 1 ? "s" : ""}`
+                  unreadNotices > 0
+                    ? `${unreadNotices} active notice${unreadNotices > 1 ? "s" : ""}`
                     : "No new notices"
                 }
                 bgColor="bg-sky-50"
@@ -366,11 +311,11 @@ export default function TenantHomePage() {
             </Link>
           </CardHeader>
           <CardContent>
-            {data.recentPayments.length === 0 ? (
+            {recentPayments.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No payments recorded yet</p>
             ) : (
               <div className="space-y-3">
-                {data.recentPayments.map((payment) => (
+                {recentPayments.map((payment) => (
                   <PaymentListItem
                     key={payment.id}
                     amount={payment.amount}

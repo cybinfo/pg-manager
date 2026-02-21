@@ -6,32 +6,17 @@
 
 "use client"
 
-import { useState, useEffect, use } from "react"
-import { useRouter } from "next/navigation"
+import { use } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
-
-interface SectionData {
-  id: string
-  library_id: string
-  name: string
-  section_number: string | null
-  floor: number
-  is_ac: boolean
-  has_power_outlets: boolean
-  hourly_rate: number | null
-  monthly_rate: number | null
-  library?: { id: string; name: string } | null
-}
+import { transformJoin } from "@/lib/supabase/transforms"
 
 export default function EditLibrarySectionPage({
   params,
@@ -39,61 +24,56 @@ export default function EditLibrarySectionPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuthContext()
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
-  const [section, setSection] = useState<SectionData | null>(null)
 
-  const [formData, setFormData] = useState({
-    name: "",
-    section_number: "",
-    floor: 0,
-    is_ac: false,
-    has_power_outlets: true,
-    hourly_rate: "",
-    monthly_rate: "",
-  })
-
-  useEffect(() => {
-    async function fetchSection() {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("library_sections")
-        .select("*, library:libraries(id, name)")
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
-
-      if (error || !data) {
-        showError("Section not found")
-        router.push("/library-sections")
-        return
+  const {
+    formData, setFormData,
+    handleChange,
+    handleSubmit,
+    loading,
+    saving,
+    record,
+  } = useFormEditPage({
+    table: "library_sections",
+    id,
+    select: "*, library:libraries(id, name)",
+    initialData: {
+      name: "",
+      section_number: "",
+      floor: 0 as number,
+      is_ac: false as boolean,
+      has_power_outlets: true as boolean,
+      hourly_rate: "",
+      monthly_rate: "",
+    },
+    redirectTo: `/library-sections/${id}`,
+    successMessage: "Section updated successfully!",
+    errorMessage: "Failed to update section",
+    mapToForm: (rec) => ({
+      name: (rec.name as string) || "",
+      section_number: (rec.section_number as string) || "",
+      floor: (rec.floor as number) || 0,
+      is_ac: (rec.is_ac as boolean) || false,
+      has_power_outlets: (rec.has_power_outlets as boolean) ?? true,
+      hourly_rate: rec.hourly_rate?.toString() || "",
+      monthly_rate: rec.monthly_rate?.toString() || "",
+    }),
+    validate: (data) => {
+      if (!data.name) {
+        return "Please enter section name"
       }
-
-      setSection(data)
-      setFormData({
-        name: data.name || "",
-        section_number: data.section_number || "",
-        floor: data.floor || 0,
-        is_ac: data.is_ac || false,
-        has_power_outlets: data.has_power_outlets ?? true,
-        hourly_rate: data.hourly_rate?.toString() || "",
-        monthly_rate: data.monthly_rate?.toString() || "",
-      })
-      setLoadingData(false)
-    }
-
-    fetchSection()
-  }, [id, router])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : type === "number" ? (value === "" ? "" : Number(value)) : value,
-    }))
-  }
+      return null
+    },
+    transform: (data): Record<string, unknown> => ({
+      name: data.name,
+      section_number: data.section_number || null,
+      floor: data.floor || 0,
+      is_ac: data.is_ac,
+      has_power_outlets: data.has_power_outlets,
+      hourly_rate: data.hourly_rate ? Number(data.hourly_rate) : null,
+      monthly_rate: data.monthly_rate ? Number(data.monthly_rate) : null,
+      updated_at: new Date().toISOString(),
+    }),
+  })
 
   const handleCheckboxChange = (name: string, checked: boolean) => {
     setFormData((prev) => ({
@@ -102,63 +82,11 @@ export default function EditLibrarySectionPage({
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Get library name from record for display
+  const library = record ? transformJoin(record.library as Record<string, unknown>) as Record<string, unknown> | null : null
 
-    if (!formData.name) {
-      showError("Please enter section name")
-      return
-    }
-
-    if (!user) {
-      showError("Session expired. Please login again.")
-      router.push("/login")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const updateData = {
-        name: formData.name,
-        section_number: formData.section_number || null,
-        floor: formData.floor || 0,
-        is_ac: formData.is_ac,
-        has_power_outlets: formData.has_power_outlets,
-        hourly_rate: formData.hourly_rate ? Number(formData.hourly_rate) : null,
-        monthly_rate: formData.monthly_rate ? Number(formData.monthly_rate) : null,
-        updated_at: new Date().toISOString(),
-      }
-
-      const { error } = await supabase
-        .from("library_sections")
-        .update(updateData)
-        .eq("id", id)
-
-      if (error) {
-        console.error("Error updating section:", error)
-        showError(`Failed to update section: ${error.message}`)
-        return
-      }
-
-      showSuccess("Section updated successfully!")
-      router.push(`/library-sections/${id}`)
-    } catch (error) {
-      console.error("Error:", error)
-      showError("Failed to update section. Please try again.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loadingData) {
+  if (loading) {
     return <PageLoading message="Loading section..." />
-  }
-
-  if (!section) {
-    return null
   }
 
   return (
@@ -173,7 +101,7 @@ export default function EditLibrarySectionPage({
         <div>
           <h1 className="text-3xl font-bold">Edit Section</h1>
           <p className="text-muted-foreground">
-            {section.library?.name} • {section.name}
+            {library?.name as string} • {formData.name}
           </p>
         </div>
       </div>
@@ -203,10 +131,10 @@ export default function EditLibrarySectionPage({
                   id="name"
                   name="name"
                   placeholder="e.g., AC Hall, Silent Zone"
-                  value={formData.name}
+                  value={formData.name as string}
                   onChange={handleChange}
                   required
-                  disabled={loading}
+                  disabled={saving}
                 />
               </div>
               <div className="space-y-2">
@@ -215,9 +143,9 @@ export default function EditLibrarySectionPage({
                   id="section_number"
                   name="section_number"
                   placeholder="e.g., A, B, C"
-                  value={formData.section_number}
+                  value={formData.section_number as string}
                   onChange={handleChange}
-                  disabled={loading}
+                  disabled={saving}
                   maxLength={10}
                 />
               </div>
@@ -230,9 +158,9 @@ export default function EditLibrarySectionPage({
                 name="floor"
                 type="number"
                 placeholder="e.g., 0, 1, 2"
-                value={formData.floor}
+                value={formData.floor as number}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 min={0}
               />
             </div>
@@ -244,9 +172,9 @@ export default function EditLibrarySectionPage({
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="is_ac"
-                    checked={formData.is_ac}
+                    checked={formData.is_ac as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("is_ac", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="is_ac" className="cursor-pointer">
                     Air Conditioned
@@ -255,9 +183,9 @@ export default function EditLibrarySectionPage({
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_power_outlets"
-                    checked={formData.has_power_outlets}
+                    checked={formData.has_power_outlets as boolean}
                     onCheckedChange={(checked) => handleCheckboxChange("has_power_outlets", checked as boolean)}
-                    disabled={loading}
+                    disabled={saving}
                   />
                   <Label htmlFor="has_power_outlets" className="cursor-pointer">
                     Power Outlets
@@ -271,29 +199,29 @@ export default function EditLibrarySectionPage({
               <h3 className="font-medium mb-3">Pricing (Optional)</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="hourly_rate">Hourly Rate (₹)</Label>
+                  <Label htmlFor="hourly_rate">Hourly Rate (Rs.)</Label>
                   <Input
                     id="hourly_rate"
                     name="hourly_rate"
                     type="number"
                     placeholder="e.g., 50"
-                    value={formData.hourly_rate}
+                    value={formData.hourly_rate as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                     step="0.01"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="monthly_rate">Monthly Rate (₹)</Label>
+                  <Label htmlFor="monthly_rate">Monthly Rate (Rs.)</Label>
                   <Input
                     id="monthly_rate"
                     name="monthly_rate"
                     type="number"
                     placeholder="e.g., 1000"
-                    value={formData.monthly_rate}
+                    value={formData.monthly_rate as string}
                     onChange={handleChange}
-                    disabled={loading}
+                    disabled={saving}
                     min={0}
                     step="0.01"
                   />
@@ -305,12 +233,12 @@ export default function EditLibrarySectionPage({
 
         <div className="flex justify-end gap-4 mt-6">
           <Link href={`/library-sections/${id}`}>
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

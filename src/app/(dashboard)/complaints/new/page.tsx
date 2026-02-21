@@ -1,16 +1,15 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle, Library } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
 
 interface Property {
@@ -76,11 +75,6 @@ const priorities = [
 ]
 
 function NewComplaintForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const preselectedTenantId = searchParams.get("tenant")
-
-  const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [properties, setProperties] = useState<Property[]>([])
   const [libraries, setLibraries] = useState<LibraryItem[]>([])
@@ -91,18 +85,81 @@ function NewComplaintForm() {
   const [filteredTenants, setFilteredTenants] = useState<Tenant[]>([])
   const [filteredMembers, setFilteredMembers] = useState<LibraryMember[]>([])
 
-  const [formData, setFormData] = useState({
-    entity_type: "property" as "property" | "library",
-    property_id: "",
-    library_id: "",
-    room_id: "",
-    tenant_id: preselectedTenantId || "",
-    member_id: "",
-    category: "other",
-    priority: "medium",
-    title: "",
-    description: "",
+  const {
+    formData, setFormData,
+    handleSubmit,
+    saving,
+    searchParams,
+  } = useFormPage({
+    table: "complaints",
+    initialData: {
+      entity_type: "property" as string,
+      property_id: "",
+      library_id: "",
+      room_id: "",
+      tenant_id: "",
+      member_id: "",
+      category: "other",
+      priority: "medium",
+      title: "",
+      description: "",
+    },
+    redirectTo: "/complaints",
+    successMessage: "Complaint logged successfully",
+    errorMessage: "Failed to create complaint",
+    useCreatedBy: false,
+    validate: (data) => {
+      const hasLocation = data.entity_type === "property" ? data.property_id : data.library_id
+      if (!hasLocation || !data.title || !data.category) {
+        return "Please fill in all required fields"
+      }
+      return null
+    },
+    transform: (data, userId) => ({
+      owner_id: userId,
+      property_id: data.entity_type === "property" ? data.property_id : null,
+      library_id: data.entity_type === "library" ? data.library_id : null,
+      room_id: data.room_id || null,
+      tenant_id: data.tenant_id || null,
+      category: data.category,
+      priority: data.priority,
+      title: data.title,
+      description: data.description || null,
+      status: "open",
+      created_by: userId,
+    }),
+    addOwnerId: false,
   })
+
+  const preselectedTenantId = searchParams.get("tenant")
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value }
+
+      // Reset dependent fields
+      if (name === "entity_type") {
+        newData.property_id = ""
+        newData.library_id = ""
+        newData.room_id = ""
+        newData.tenant_id = ""
+        newData.member_id = ""
+      }
+      if (name === "property_id") {
+        newData.room_id = ""
+        newData.tenant_id = ""
+      }
+      if (name === "library_id") {
+        newData.member_id = ""
+      }
+      if (name === "room_id") {
+        newData.tenant_id = ""
+      }
+
+      return newData
+    })
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -143,6 +200,7 @@ function NewComplaintForm() {
           if (tenant) {
             setFormData((prev) => ({
               ...prev,
+              tenant_id: preselectedTenantId,
               property_id: tenant.property_id,
               room_id: tenant.room_id,
             }))
@@ -154,7 +212,7 @@ function NewComplaintForm() {
     }
 
     fetchData()
-  }, [preselectedTenantId])
+  }, [preselectedTenantId, setFormData])
 
   // Filter rooms when property changes
   useEffect(() => {
@@ -175,85 +233,6 @@ function NewComplaintForm() {
       setFilteredTenants(tenants.filter((t) => t.property_id === formData.property_id))
     }
   }, [formData.room_id, formData.property_id, tenants])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => {
-      const newData = { ...prev, [name]: value }
-
-      // Reset dependent fields
-      if (name === "entity_type") {
-        newData.property_id = ""
-        newData.library_id = ""
-        newData.room_id = ""
-        newData.tenant_id = ""
-        newData.member_id = ""
-      }
-      if (name === "property_id") {
-        newData.room_id = ""
-        newData.tenant_id = ""
-      }
-      if (name === "library_id") {
-        newData.member_id = ""
-      }
-      if (name === "room_id") {
-        newData.tenant_id = ""
-      }
-
-      return newData
-    })
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const hasLocation = formData.entity_type === "property" ? formData.property_id : formData.library_id
-    if (!hasLocation || !formData.title || !formData.category) {
-      showError("Please fill in all required fields")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        showError("Session expired. Please login again.")
-        router.push("/login")
-        return
-      }
-
-      const { error } = await supabase.from("complaints").insert({
-        owner_id: user.id,
-        property_id: formData.entity_type === "property" ? formData.property_id : null,
-        library_id: formData.entity_type === "library" ? formData.library_id : null,
-        room_id: formData.room_id || null,
-        tenant_id: formData.tenant_id || null,
-        category: formData.category,
-        priority: formData.priority,
-        title: formData.title,
-        description: formData.description || null,
-        status: "open",
-        created_by: user.id,
-      })
-
-      if (error) {
-        console.error("Error creating complaint:", error)
-        showError(`Failed to create complaint: ${error.message}`)
-        return
-      }
-
-      showSuccess("Complaint logged successfully")
-      router.push("/complaints")
-    } catch (error: any) {
-      console.error("Error:", error)
-      showError(error?.message || "Failed to create complaint")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loadingData) {
     return <PageSkeleton variant="form" />
@@ -372,11 +351,11 @@ function NewComplaintForm() {
                     <select
                       id="property_id"
                       name="property_id"
-                      value={formData.property_id}
+                      value={formData.property_id as string}
                       onChange={handleChange}
                       className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                       required
-                      disabled={loading}
+                      disabled={saving}
                     >
                       <option value="">Select property</option>
                       {properties.map((property) => (
@@ -391,10 +370,10 @@ function NewComplaintForm() {
                     <select
                       id="room_id"
                       name="room_id"
-                      value={formData.room_id}
+                      value={formData.room_id as string}
                       onChange={handleChange}
                       className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                      disabled={loading || !formData.property_id}
+                      disabled={saving || !formData.property_id}
                     >
                       <option value="">Select room</option>
                       {filteredRooms.map((room) => (
@@ -411,10 +390,10 @@ function NewComplaintForm() {
                   <select
                     id="tenant_id"
                     name="tenant_id"
-                    value={formData.tenant_id}
+                    value={formData.tenant_id as string}
                     onChange={handleChange}
                     className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    disabled={loading}
+                    disabled={saving}
                   >
                     <option value="">Select tenant</option>
                     {filteredTenants.map((tenant) => (
@@ -435,11 +414,11 @@ function NewComplaintForm() {
                   <select
                     id="library_id"
                     name="library_id"
-                    value={formData.library_id}
+                    value={formData.library_id as string}
                     onChange={handleChange}
                     className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                     required
-                    disabled={loading}
+                    disabled={saving}
                   >
                     <option value="">Select library</option>
                     {libraries.map((library) => (
@@ -455,10 +434,10 @@ function NewComplaintForm() {
                   <select
                     id="member_id"
                     name="member_id"
-                    value={formData.member_id}
+                    value={formData.member_id as string}
                     onChange={handleChange}
                     className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    disabled={loading}
+                    disabled={saving}
                   >
                     <option value="">Select member</option>
                     {libraryMembers.map((member) => (
@@ -493,11 +472,11 @@ function NewComplaintForm() {
                 <select
                   id="category"
                   name="category"
-                  value={formData.category}
+                  value={formData.category as string}
                   onChange={handleChange}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   required
-                  disabled={loading}
+                  disabled={saving}
                 >
                   {categories.map((cat) => (
                     <option key={cat.value} value={cat.value}>
@@ -511,11 +490,11 @@ function NewComplaintForm() {
                 <select
                   id="priority"
                   name="priority"
-                  value={formData.priority}
+                  value={formData.priority as string}
                   onChange={handleChange}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   required
-                  disabled={loading}
+                  disabled={saving}
                 >
                   {priorities.map((p) => (
                     <option key={p.value} value={p.value}>
@@ -532,10 +511,10 @@ function NewComplaintForm() {
                 id="title"
                 name="title"
                 placeholder="Brief description of the issue"
-                value={formData.title}
+                value={formData.title as string}
                 onChange={handleChange}
                 required
-                disabled={loading}
+                disabled={saving}
               />
             </div>
 
@@ -545,9 +524,9 @@ function NewComplaintForm() {
                 id="description"
                 name="description"
                 placeholder="Provide more details about the issue..."
-                value={formData.description}
+                value={formData.description as string}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={saving}
                 rows={4}
                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
               />
@@ -569,12 +548,12 @@ function NewComplaintForm() {
 
         <div className="flex justify-end gap-4">
           <Link href="/complaints">
-            <Button type="button" variant="outline" disabled={loading}>
+            <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button type="submit" disabled={saving}>
+            {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Submitting...

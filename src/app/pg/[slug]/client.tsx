@@ -50,7 +50,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
-import { validateIndianMobile } from "@/lib/validators"
+import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import type { PropertyWebsite } from "./page"
 
 // ============================================================================

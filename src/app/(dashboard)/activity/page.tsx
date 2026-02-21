@@ -28,6 +28,7 @@ import {
 } from "lucide-react"
 import { formatDistanceToNow, format } from "date-fns"
 import { showError } from "@/lib/toast-helpers"
+import { getEntityName } from "@/lib/entity-names"
 
 interface AuditEvent {
   id: string
@@ -50,20 +51,21 @@ const ACTION_CONFIG: Record<string, { label: string; variant: "default" | "secon
   view: { label: "Viewed", variant: "outline", icon: Eye },
 }
 
-const ENTITY_CONFIG: Record<string, { label: string; icon: typeof User }> = {
-  tenant: { label: "Tenant", icon: User },
-  tenants: { label: "Tenant", icon: User },
-  property: { label: "Property", icon: Building2 },
-  properties: { label: "Property", icon: Building2 },
-  room: { label: "Room", icon: Building2 },
-  rooms: { label: "Room", icon: Building2 },
-  bill: { label: "Bill", icon: Receipt },
-  bills: { label: "Bill", icon: Receipt },
-  payment: { label: "Payment", icon: CreditCard },
-  payments: { label: "Payment", icon: CreditCard },
-  staff: { label: "Staff", icon: Users },
-  role: { label: "Role", icon: Users },
-  roles: { label: "Role", icon: Users },
+const ENTITY_ICONS: Record<string, typeof User> = {
+  tenant: User,
+  tenants: User,
+  property: Building2,
+  properties: Building2,
+  room: Building2,
+  rooms: Building2,
+  bill: Receipt,
+  bills: Receipt,
+  payment: CreditCard,
+  payments: CreditCard,
+  staff: Users,
+  staff_members: Users,
+  role: Users,
+  roles: Users,
 }
 
 export default function ActivityLogPage() {
@@ -125,12 +127,12 @@ export default function ActivityLogPage() {
       type: "select",
       placeholder: "All Types",
       options: [
-        { value: "tenant", label: "Tenants" },
-        { value: "property", label: "Properties" },
-        { value: "room", label: "Rooms" },
-        { value: "bill", label: "Bills" },
-        { value: "payment", label: "Payments" },
-        { value: "staff", label: "Staff" },
+        { value: "tenant", label: getEntityName("tenant", true) },
+        { value: "property", label: getEntityName("property", true) },
+        { value: "room", label: getEntityName("room", true) },
+        { value: "bill", label: getEntityName("bill", true) },
+        { value: "payment", label: getEntityName("payment", true) },
+        { value: "staff", label: getEntityName("staff", true) },
       ],
     },
     createDateRangeFilter("date", "Date"),
@@ -218,15 +220,15 @@ export default function ActivityLogPage() {
       width: "primary",
       render: (event) => {
         const entityKey = event.entity_type.toLowerCase()
-        const config = ENTITY_CONFIG[entityKey] || { label: event.entity_type, icon: Activity }
-        const Icon = config.icon
+        const Icon = ENTITY_ICONS[entityKey] || Activity
+        const label = getEntityName(entityKey)
         return (
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-muted">
               <Icon className="h-4 w-4 text-muted-foreground" />
             </div>
             <div>
-              <div className="font-medium">{config.label}</div>
+              <div className="font-medium">{label}</div>
               <div className="text-xs text-muted-foreground font-mono">
                 {event.entity_id.slice(0, 8)}...
               </div>

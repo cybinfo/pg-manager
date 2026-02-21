@@ -11,20 +11,8 @@ import {
   CommandItem,
   CommandSeparator,
 } from "@/components/ui/command"
-import {
-  LayoutDashboard,
-  Building2,
-  Home,
-  Users,
-  Receipt,
-  CreditCard,
-  TrendingDown,
-  FileText,
-  UserCog,
-  Library,
-  Clock,
-  Plus,
-} from "lucide-react"
+import { Plus } from "lucide-react"
+import { DASHBOARD_NAVIGATION } from "@/lib/navigation/config"
 
 type CommandPaletteItem = {
   name: string
@@ -33,20 +21,61 @@ type CommandPaletteItem = {
   keywords: string[]
 }
 
-const NAVIGATION_ITEMS: CommandPaletteItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, keywords: ["home", "overview"] },
-  { name: "Properties", href: "/properties", icon: Building2, keywords: ["building", "pg"] },
-  { name: "Rooms", href: "/rooms", icon: Home, keywords: ["bed", "accommodation"] },
-  { name: "Tenants", href: "/tenants", icon: Users, keywords: ["resident", "guest"] },
-  { name: "Bills", href: "/bills", icon: Receipt, keywords: ["invoice", "billing"] },
-  { name: "Payments", href: "/payments", icon: CreditCard, keywords: ["money", "transaction"] },
-  { name: "Expenses", href: "/expenses", icon: TrendingDown, keywords: ["cost", "spending"] },
-  { name: "Reports", href: "/reports", icon: FileText, keywords: ["analytics", "stats"] },
-  { name: "Staff", href: "/staff", icon: UserCog, keywords: ["employee", "team"] },
-  { name: "Libraries", href: "/library", icon: Library, keywords: ["study", "reading"] },
-  { name: "Library Members", href: "/library-members", icon: Users, keywords: ["student", "member"] },
-  { name: "Library Attendance", href: "/library-attendance", icon: Clock, keywords: ["checkin", "checkout"] },
-]
+/**
+ * Keywords map for enhancing search on navigation items.
+ * Keyed by href path. Items not in this map get default keywords
+ * derived from their name.
+ */
+const KEYWORDS_BY_HREF: Record<string, string[]> = {
+  "/dashboard": ["home", "overview", "summary", "metrics"],
+  "/properties": ["building", "pg", "hostel", "property"],
+  "/rooms": ["bed", "accommodation", "room"],
+  "/tenants": ["resident", "guest", "tenant", "occupant"],
+  "/people": ["contact", "person", "identity"],
+  "/bills": ["invoice", "billing", "charges"],
+  "/payments": ["money", "transaction", "pay"],
+  "/refunds": ["return", "money back", "refund"],
+  "/expenses": ["cost", "spending", "expense"],
+  "/expenses/daily-spend": ["daily", "cost", "spending"],
+  "/expenses/products": ["items", "goods", "inventory"],
+  "/expenses/vendors": ["supplier", "vendor", "shop"],
+  "/expenses/bills": ["utility", "electricity", "water", "bill"],
+  "/expenses/services/providers": ["service", "provider", "contractor"],
+  "/expenses/services": ["maintenance", "repair", "service"],
+  "/meter-readings": ["utility", "electricity", "water", "consumption", "reading"],
+  "/meters": ["utility", "meter", "gauge"],
+  "/exit-clearance": ["checkout", "leave", "exit", "departure"],
+  "/visitors": ["visitor", "guest", "entry"],
+  "/inquiries": ["inquiry", "lead", "prospect"],
+  "/complaints": ["issue", "problem", "complaint", "grievance"],
+  "/notices": ["announcement", "notice", "alert", "notification"],
+  "/reports": ["analytics", "stats", "report", "chart"],
+  "/activity": ["audit", "log", "history", "activity"],
+  "/architecture": ["map", "layout", "floor plan", "2d"],
+  "/approvals": ["approve", "request", "pending", "approval"],
+  "/staff": ["employee", "team", "staff", "role"],
+  "/library": ["study", "reading room", "library"],
+  "/library-sections": ["section", "hall", "area", "zone"],
+  "/library-seats": ["seat", "desk", "chair", "position"],
+  "/library-members": ["student", "member", "subscriber"],
+  "/library-waitlist": ["waitlist", "queue", "waiting"],
+  "/library-attendance": ["checkin", "checkout", "attendance", "hours"],
+  "/library-lockers": ["locker", "storage", "cabinet"],
+  "/library-payments": ["subscription", "payment", "fee", "library"],
+  "/library-reports": ["analytics", "stats", "library", "report"],
+  "/library-plans": ["plan", "subscription", "pricing", "package"],
+}
+
+/**
+ * Navigation items generated dynamically from DASHBOARD_NAVIGATION config.
+ * This ensures the command palette always stays in sync with the sidebar navigation.
+ */
+const NAVIGATION_ITEMS: CommandPaletteItem[] = DASHBOARD_NAVIGATION.map((navItem) => ({
+  name: navItem.name,
+  href: navItem.href,
+  icon: navItem.icon,
+  keywords: KEYWORDS_BY_HREF[navItem.href] || navItem.name.toLowerCase().split(" "),
+}))
 
 const ACTION_ITEMS: CommandPaletteItem[] = [
   { name: "New Tenant", href: "/tenants/new", icon: Plus, keywords: ["add", "create", "tenant"] },

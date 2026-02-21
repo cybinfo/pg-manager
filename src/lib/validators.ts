@@ -1,69 +1,10 @@
 /**
  * Indian Phone Number Validator
- * Handles +91, 91, 0, or direct 10-digit formats
- * Indian mobile numbers start with 6-9
+ *
+ * Re-exported from @/lib/phone for backward compatibility.
+ * New code should import directly from @/lib/phone.
  */
-
-// Regex for Indian mobile: Optional +91/91/0 prefix + 10 digits starting with 6-9
-const INDIAN_MOBILE_REGEX = /^(?:\+?91|0)?([6-9]\d{9})$/
-
-/**
- * Validates an Indian mobile number
- * @param phone - Phone number to validate
- * @returns Object with isValid flag, normalized number, and error message
- */
-export function validateIndianMobile(phone: string): {
-  isValid: boolean
-  normalized: string | null
-  error: string | null
-} {
-  if (!phone || typeof phone !== 'string') {
-    return { isValid: false, normalized: null, error: "Phone number is required" }
-  }
-
-  // Remove all spaces, dashes, and dots
-  const cleaned = phone.replace(/[\s\-\.]/g, '')
-
-  // Check against regex
-  const match = cleaned.match(INDIAN_MOBILE_REGEX)
-
-  if (!match) {
-    // Provide specific error messages
-    if (cleaned.length < 10) {
-      return { isValid: false, normalized: null, error: "Phone number must be at least 10 digits" }
-    }
-    if (cleaned.length > 13) {
-      return { isValid: false, normalized: null, error: "Phone number is too long" }
-    }
-    const firstDigit = cleaned.replace(/^(?:\+?91|0)/, '')[0]
-    if (firstDigit && !['6', '7', '8', '9'].includes(firstDigit)) {
-      return { isValid: false, normalized: null, error: "Indian mobile numbers must start with 6, 7, 8, or 9" }
-    }
-    return { isValid: false, normalized: null, error: "Invalid Indian mobile number format" }
-  }
-
-  // Return normalized format: +91XXXXXXXXXX
-  const normalized = `+91${match[1]}`
-
-  return { isValid: true, normalized, error: null }
-}
-
-/**
- * Formats an Indian mobile number for display
- * @param phone - Normalized phone number (+91XXXXXXXXXX)
- * @returns Formatted string like +91 98765 43210
- */
-export function formatIndianMobile(phone: string): string {
-  if (!phone) return ''
-
-  // Remove +91 prefix for formatting
-  const digits = phone.replace(/^\+91/, '')
-
-  if (digits.length !== 10) return phone
-
-  // Format as: +91 XXXXX XXXXX
-  return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`
-}
+export { validateIndianMobile, formatIndianMobile } from "./phone"
 
 /**
  * Email Validator
