@@ -58,18 +58,6 @@ global.Headers = MockHeaders
 
 // Mock NextResponse for API testing
 jest.mock('next/server', () => {
-  class MockHeaders {
-    constructor(init = {}) {
-      this._headers = new Map(Object.entries(init))
-    }
-    get(name) {
-      return this._headers.get(name) || null
-    }
-    set(name, value) {
-      this._headers.set(name, value)
-    }
-  }
-
   class MockNextResponse {
     constructor(body, init = {}) {
       this._body = body

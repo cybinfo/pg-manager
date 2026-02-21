@@ -21,6 +21,7 @@ import {
 import { buildWelcomeNotification, buildBillNotification } from "@/lib/services/notification.service"
 import { createAuditEvent } from "@/lib/services/audit.service"
 import { formatCurrency } from "@/lib/format"
+import { softDelete } from "@/lib/audit"
 
 // ============================================
 // Types
@@ -355,10 +356,9 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         })
       },
       rollback: async (context, input, stepResult) => {
-        const supabase = createClient()
         const tenant = stepResult as Record<string, unknown>
         if (tenant?.id) {
-          await supabase.from("tenants").delete().eq("id", tenant.id)
+          await softDelete("tenants", tenant.id as string, context.actor_id || "system")
         }
       },
     },
@@ -630,15 +630,11 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           total_amount: totalAmount,
         })
       },
-      // Rollback: Delete the generated bill
+      // Rollback: Soft delete the generated bill
       rollback: async (context, input, stepResult) => {
         const result = stepResult as { bill_id?: string }
         if (!result?.bill_id) return
-        const supabase = createClient()
-        await supabase
-          .from("bills")
-          .delete()
-          .eq("id", result.bill_id)
+        await softDelete("bills", result.bill_id, context.actor_id || "system")
           .catch((err: unknown) => console.warn("[TenantCreate] Rollback bill failed:", err))
       },
       optional: true, // Initial bill generation is optional

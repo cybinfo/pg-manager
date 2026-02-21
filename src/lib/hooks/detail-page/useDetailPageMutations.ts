@@ -1,0 +1,238 @@
+/**
+ * useDetailPageMutations Hook
+ *
+ * Handles create, update, delete (soft delete), and cascade delete operations
+ * for detail pages. This is an internal sub-hook composed by the main useDetailPage.
+ */
+
+"use client"
+
+import { useState, useCallback, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+import { showSuccess, showError } from "@/lib/toast-helpers"
+import { softDelete, cascadeSoftDelete } from "@/lib/audit"
+import type { SoftDeletableTable } from "@/types/audit.types"
+import type { DetailPageConfig } from "./types"
+
+interface UseDetailPageMutationsOptions<T> {
+  config: DetailPageConfig<T>
+  id: string | string[] | undefined
+  data: T | null
+  setData: React.Dispatch<React.SetStateAction<T | null>>
+}
+
+interface UseDetailPageMutationsReturn {
+  updateField: (field: string, value: unknown) => Promise<boolean>
+  updateFields: (updates: Record<string, unknown>) => Promise<boolean>
+  deleteRecord: (options?: { confirm?: boolean; cascadeDeletes?: { table: string; foreignKey: string }[] }) => Promise<boolean>
+  isDeleting: boolean
+  isSaving: boolean
+}
+
+export function useDetailPageMutations<T extends object>(
+  options: UseDetailPageMutationsOptions<T>
+): UseDetailPageMutationsReturn {
+  const { config, id, data, setData } = options
+
+  const router = useRouter()
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Refs to prevent stale closures
+  const configRef = useRef(config)
+
+  // Update ref when config changes
+  useEffect(() => {
+    configRef.current = config
+  }, [config])
+
+  // Update single field
+  const updateField = useCallback(
+    async (field: string, value: unknown): Promise<boolean> => {
+      if (!data || !id) return false
+
+      const currentConfig = configRef.current
+      const entityId = Array.isArray(id) ? id[0] : id
+      setIsSaving(true)
+
+      try {
+        const supabase = createClient()
+
+        const { error: updateError } = await supabase
+          .from(currentConfig.table)
+          .update({ [field]: value })
+          .eq("id", entityId)
+
+        if (updateError) {
+          throw updateError
+        }
+
+        // Update local state optimistically
+        setData((prev) => (prev ? { ...prev, [field]: value } : null))
+        showSuccess("Updated successfully")
+        return true
+      } catch (err) {
+        console.error(`[useDetailPage] Error updating ${field}:`, err)
+        showError("Failed to update")
+        return false
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    [data, id, setData]
+  )
+
+  // Update multiple fields
+  const updateFields = useCallback(
+    async (updates: Record<string, unknown>): Promise<boolean> => {
+      if (!data || !id) return false
+
+      const currentConfig = configRef.current
+      const entityId = Array.isArray(id) ? id[0] : id
+      setIsSaving(true)
+
+      try {
+        const supabase = createClient()
+
+        const { error: updateError } = await supabase
+          .from(currentConfig.table)
+          .update(updates)
+          .eq("id", entityId)
+
+        if (updateError) {
+          throw updateError
+        }
+
+        // Update local state optimistically
+        setData((prev) => (prev ? { ...prev, ...updates } : null))
+        showSuccess("Updated successfully")
+        return true
+      } catch (err) {
+        console.error(`[useDetailPage] Error updating fields:`, err)
+        showError("Failed to update")
+        return false
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    [data, id, setData]
+  )
+
+  // Delete record (soft delete)
+  const deleteRecord = useCallback(
+    async (deleteOptions?: {
+      confirm?: boolean
+      cascadeDeletes?: { table: string; foreignKey: string }[]
+    }): Promise<boolean> => {
+      if (!data || !id) return false
+
+      const { confirm = true, cascadeDeletes = [] } = deleteOptions || {}
+      const currentConfig = configRef.current
+      const entityId = Array.isArray(id) ? id[0] : id
+
+      // Show confirmation if needed
+      if (confirm) {
+        const confirmed = window.confirm(
+          "Are you sure you want to delete this item? This action will archive the record."
+        )
+        if (!confirmed) return false
+      }
+
+      setIsDeleting(true)
+
+      try {
+        const supabase = createClient()
+
+        // Get current user for audit trail
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          showError("Session expired. Please log in again.")
+          return false
+        }
+
+        // Tables that support soft delete
+        const softDeletableTables: SoftDeletableTable[] = [
+          'tenants', 'bills', 'payments', 'expenses', 'refunds',
+          'complaints', 'notices', 'visitors', 'meter_readings',
+          'exit_clearance', 'properties', 'rooms', 'people', 'meters',
+          'staff_members', 'visitor_contacts'
+        ]
+
+        // Soft delete cascade records first (if they support it)
+        // Note: user_roles is a join table and should be hard deleted
+        const softDeletableCascades = cascadeDeletes.filter(
+          (c) => softDeletableTables.includes(c.table as SoftDeletableTable)
+        )
+        const hardDeleteCascades = cascadeDeletes.filter(
+          (c) => !softDeletableTables.includes(c.table as SoftDeletableTable)
+        )
+
+        // Cascade soft delete for supported tables
+        if (softDeletableCascades.length > 0) {
+          const cascadeConfigs = softDeletableCascades.map((c) => ({
+            table: c.table as SoftDeletableTable,
+            foreignKey: c.foreignKey,
+          }))
+          const { errors } = await cascadeSoftDelete(entityId, user.id, cascadeConfigs)
+          if (errors.length > 0) {
+            console.error("[useDetailPage] Cascade soft delete errors:", errors)
+          }
+        }
+
+        // Hard delete for join tables that don't support soft delete
+        for (const cascade of hardDeleteCascades) {
+          await supabase.from(cascade.table).delete().eq(cascade.foreignKey, entityId)
+        }
+
+        // Check if main table supports soft delete
+        if (softDeletableTables.includes(currentConfig.table as SoftDeletableTable)) {
+          // Soft delete main record
+          const { error } = await softDelete(
+            currentConfig.table as SoftDeletableTable,
+            entityId,
+            user.id
+          )
+
+          if (error) {
+            throw error
+          }
+        } else {
+          // Fall back to hard delete for tables that don't support soft delete
+          const { error: deleteError } = await supabase
+            .from(currentConfig.table)
+            .delete()
+            .eq("id", entityId)
+
+          if (deleteError) {
+            throw deleteError
+          }
+        }
+
+        showSuccess("Deleted successfully")
+
+        // Redirect after deletion
+        if (currentConfig.redirectOnNotFound) {
+          router.push(currentConfig.redirectOnNotFound)
+        }
+
+        return true
+      } catch (err) {
+        console.error(`[useDetailPage] Error deleting:`, err)
+        showError("Failed to delete")
+        return false
+      } finally {
+        setIsDeleting(false)
+      }
+    },
+    [data, id, router]
+  )
+
+  return {
+    updateField,
+    updateFields,
+    deleteRecord,
+    isDeleting,
+    isSaving,
+  }
+}

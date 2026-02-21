@@ -49,6 +49,8 @@ interface ComboboxProps {
   popoverWidth?: "trigger" | "auto" | string
   /** Allow clearing the selection */
   clearable?: boolean
+  /** Error message to display below the combobox */
+  error?: string
 }
 
 /**
@@ -67,6 +69,7 @@ export function Combobox({
   className,
   popoverWidth = "trigger",
   clearable = false,
+  error,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -89,73 +92,77 @@ export function Combobox({
       : popoverWidth
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            "w-full justify-between font-normal",
-            !value && "text-muted-foreground",
-            className
-          )}
-          disabled={disabled || loading}
-        >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading...
-            </span>
-          ) : selectedOption ? (
-            <span className="flex items-center gap-2 truncate">
-              {selectedOption.icon}
-              {selectedOption.label}
-            </span>
-          ) : (
-            placeholder
-          )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className={cn("p-0", popoverWidthClass)}>
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
-            <CommandEmpty>{emptyText}</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.label} // Search by label
-                  onSelect={() => handleSelect(option.value)}
-                  disabled={option.disabled}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === option.value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {option.icon}
-                    <div className="flex-1 min-w-0">
-                      <span className="truncate">{option.label}</span>
-                      {option.description && (
-                        <span className="text-xs text-muted-foreground block truncate">
-                          {option.description}
-                        </span>
+    <div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-full justify-between font-normal",
+              !value && "text-muted-foreground",
+              error && "border-destructive",
+              className
+            )}
+            disabled={disabled || loading}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2" role="status" aria-live="polite">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                Loading...
+              </span>
+            ) : selectedOption ? (
+              <span className="flex items-center gap-2 truncate">
+                {selectedOption.icon}
+                {selectedOption.label}
+              </span>
+            ) : (
+              placeholder
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className={cn("p-0", popoverWidthClass)} aria-busy={loading}>
+          <Command>
+            <CommandInput placeholder={searchPlaceholder} />
+            <CommandList>
+              <CommandEmpty>{emptyText}</CommandEmpty>
+              <CommandGroup>
+                {options.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.label} // Search by label
+                    onSelect={() => handleSelect(option.value)}
+                    disabled={option.disabled}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === option.value ? "opacity-100" : "opacity-0"
                       )}
+                    />
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      {option.icon}
+                      <div className="flex-1 min-w-0">
+                        <span className="truncate">{option.label}</span>
+                        {option.description && (
+                          <span className="text-xs text-muted-foreground block truncate">
+                            {option.description}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {error && <p className="text-sm text-destructive mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -238,8 +245,8 @@ export function MultiCombobox({
           disabled={disabled || loading}
         >
           {loading ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="flex items-center gap-2" role="status" aria-live="polite">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               Loading...
             </span>
           ) : (
@@ -419,8 +426,9 @@ export function AsyncCombobox<T>({
           />
           <CommandList>
             {loading ? (
-              <div className="flex items-center justify-center py-6">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="flex items-center justify-center py-6" role="status" aria-live="polite">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                <span className="sr-only">Loading results...</span>
               </div>
             ) : query.length < minChars ? (
               <div className="py-6 text-center text-sm text-muted-foreground">

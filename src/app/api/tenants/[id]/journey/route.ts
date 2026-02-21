@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server"
+import { z } from "zod"
 import { getTenantJourney } from "@/lib/services/journey.service"
 import { EventCategoryType, EventCategory } from "@/types/journey.types"
 import { validateTenantRequest } from "@/lib/api-middleware"
@@ -9,21 +10,77 @@ import {
   internalError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { validateQuery } from "@/lib/validation"
 import { apiLogger } from "@/lib/logger"
 
 // Valid category values for input validation
 const VALID_CATEGORIES: Set<string> = new Set(Object.values(EventCategory))
 
+// Zod schema for journey query parameters
+const JourneyQuerySchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((val: string | undefined) => (val ? parseInt(val, 10) : 50))
+    .pipe(z.number().int().min(1, "Limit must be at least 1").max(100, "Limit must be at most 100")),
+  offset: z
+    .string()
+    .optional()
+    .transform((val: string | undefined) => (val ? parseInt(val, 10) : 0))
+    .pipe(z.number().int().min(0, "Offset must be non-negative")),
+  categories: z
+    .string()
+    .optional()
+    .refine(
+      (val: string | undefined) => {
+        if (!val) return true
+        const cats = val.split(",").map((c: string) => c.trim().toLowerCase())
+        return cats.every((c: string) => VALID_CATEGORIES.has(c))
+      },
+      {
+        message: `Invalid categories. Valid values are: ${Array.from(VALID_CATEGORIES).join(", ")}`,
+      }
+    ),
+  from: z
+    .string()
+    .optional()
+    .refine(
+      (val: string | undefined) => {
+        if (!val) return true
+        const date = new Date(val)
+        return !isNaN(date.getTime()) && /^\d{4}-\d{2}-\d{2}/.test(val)
+      },
+      { message: "Invalid 'from' date format. Use ISO 8601 format (YYYY-MM-DD)" }
+    ),
+  to: z
+    .string()
+    .optional()
+    .refine(
+      (val: string | undefined) => {
+        if (!val) return true
+        const date = new Date(val)
+        return !isNaN(date.getTime()) && /^\d{4}-\d{2}-\d{2}/.test(val)
+      },
+      { message: "Invalid 'to' date format. Use ISO 8601 format (YYYY-MM-DD)" }
+    ),
+  analytics: z.string().optional(),
+  financial: z.string().optional(),
+  insights: z.string().optional(),
+  visitors: z.string().optional(),
+}).refine(
+  (data) => {
+    if (data.from && data.to) {
+      return new Date(data.from) <= new Date(data.to)
+    }
+    return true
+  },
+  { message: "'from' date must be before or equal to 'to' date" }
+)
+
 // Helper to validate UUID format
 function isValidUUID(str: string): boolean {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
   return uuidRegex.test(str)
-}
-
-// Helper to validate date format (ISO 8601)
-function isValidISODate(str: string): boolean {
-  const date = new Date(str)
-  return !isNaN(date.getTime()) && str.match(/^\d{4}-\d{2}-\d{2}/) !== null
 }
 
 /**
@@ -47,69 +104,37 @@ export async function GET(
     const { success, response, tenant } = await validateTenantRequest(request, tenantId)
     if (!success || !tenant) return response!
 
-    // Parse and validate query parameters
-    const searchParams = request.nextUrl.searchParams
-
     // Validate tenant ID format
     if (!isValidUUID(tenantId)) {
       return badRequest("Invalid tenant ID format")
     }
 
-    // Validate and parse limit (1-100)
-    const limitParam = searchParams.get("limit")
-    const limit = limitParam ? parseInt(limitParam, 10) : 50
-    if (isNaN(limit) || limit < 1 || limit > 100) {
-      return badRequest("Limit must be a number between 1 and 100")
-    }
+    // Validate query parameters with Zod schema
+    const queryValidation = validateQuery(JourneyQuerySchema, request.nextUrl.searchParams)
+    if (!queryValidation.success) return queryValidation.response
 
-    // Validate and parse offset (>= 0)
-    const offsetParam = searchParams.get("offset")
-    const offset = offsetParam ? parseInt(offsetParam, 10) : 0
-    if (isNaN(offset) || offset < 0) {
-      return badRequest("Offset must be a non-negative number")
-    }
+    const queryData = queryValidation.data
+    const limit = queryData.limit
+    const offset = queryData.offset
 
-    // Validate and parse categories
-    const categoriesParam = searchParams.get("categories")
+    // Parse categories from validated string
     let categories: EventCategoryType[] | undefined
-
-    if (categoriesParam) {
-      const categoryList = categoriesParam.split(",").map(c => c.trim().toLowerCase())
-      const invalidCategories = categoryList.filter(c => !VALID_CATEGORIES.has(c))
-
-      if (invalidCategories.length > 0) {
-        return badRequest(`Invalid categories: ${invalidCategories.join(", ")}. Valid values are: ${Array.from(VALID_CATEGORIES).join(", ")}`)
-      }
-
-      categories = categoryList as EventCategoryType[]
+    if (queryData.categories) {
+      categories = queryData.categories.split(",").map((c: string) => c.trim().toLowerCase()) as EventCategoryType[]
     }
 
-    // Validate date parameters
-    const dateFrom = searchParams.get("from") || undefined
-    const dateTo = searchParams.get("to") || undefined
-
-    if (dateFrom && !isValidISODate(dateFrom)) {
-      return badRequest("Invalid 'from' date format. Use ISO 8601 format (YYYY-MM-DD)")
-    }
-
-    if (dateTo && !isValidISODate(dateTo)) {
-      return badRequest("Invalid 'to' date format. Use ISO 8601 format (YYYY-MM-DD)")
-    }
-
-    if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
-      return badRequest("'from' date must be before or equal to 'to' date")
-    }
-
-    const includeAnalytics = searchParams.get("analytics") !== "false"
-    const includeFinancial = searchParams.get("financial") !== "false"
-    const includeInsights = searchParams.get("insights") !== "false"
-    const includeVisitors = searchParams.get("visitors") !== "false"
+    const dateFrom = queryData.from || undefined
+    const dateTo = queryData.to || undefined
+    const includeAnalytics = queryData.analytics !== "false"
+    const includeFinancial = queryData.financial !== "false"
+    const includeInsights = queryData.insights !== "false"
+    const includeVisitors = queryData.visitors !== "false"
 
     // Fetch journey data (use tenant's owner_id as workspace_id for proper data access)
     const result = await getTenantJourney({
       tenant_id: tenantId,
       workspace_id: tenant.owner_id,
-      events_limit: limit, // Already validated to be 1-100
+      events_limit: limit,
       events_offset: offset,
       event_categories: categories,
       date_from: dateFrom,

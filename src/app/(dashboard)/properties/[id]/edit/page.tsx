@@ -5,33 +5,20 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
   Building2,
   Loader2,
   Globe,
-  ExternalLink,
-  Copy,
-  CheckCircle,
-  X,
-  Plus,
-  Sparkles,
   Users,
-  FileText,
-  CreditCard,
-  MessageSquare,
-  Bell,
-  UserPlus,
-  Download,
-  UserCog
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 
-// Shared form components
-import { PropertyAddressInput, CoverImageUpload, PhotoGallery } from "@/components/forms"
+import {
+  PropertyDetailsTab,
+  TenantPortalTab,
+  WebsiteSettingsTab,
+} from "./_components"
 
 interface WebsiteConfig {
   tagline: string
@@ -71,29 +58,12 @@ const defaultTenantFeatures: TenantFeatures = {
   update_profile: true,
 }
 
-const tenantFeatureOptions = [
-  { key: "view_bills", label: "View Bills", desc: "Allow tenants to see their bills", icon: FileText },
-  { key: "view_payments", label: "View Payments", desc: "Allow tenants to see payment history", icon: CreditCard },
-  { key: "submit_complaints", label: "Submit Complaints", desc: "Allow tenants to raise complaints", icon: MessageSquare },
-  { key: "view_notices", label: "View Notices", desc: "Allow tenants to see property announcements", icon: Bell },
-  { key: "request_visitors", label: "Request Visitors", desc: "Allow tenants to pre-register visitors", icon: UserPlus },
-  { key: "download_receipts", label: "Download Receipts", desc: "Allow tenants to download payment PDFs", icon: Download },
-  { key: "update_profile", label: "Update Profile", desc: "Allow tenants to edit their own details", icon: UserCog },
-]
-
-const defaultAmenities = [
-  "WiFi", "Parking", "Food", "CCTV", "Power Backup",
-  "Water Supply", "Laundry", "Housekeeping", "Security",
-  "AC Rooms", "Gym", "TV Room", "Study Room", "Terrace Access"
-]
-
 export default function EditPropertyPage() {
   const params = useParams()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [activeTab, setActiveTab] = useState<"details" | "website" | "tenant">("details")
-  const [copied, setCopied] = useState(false)
   const [tenantFeatures, setTenantFeatures] = useState<TenantFeatures>(defaultTenantFeatures)
 
   const [formData, setFormData] = useState({
@@ -130,8 +100,6 @@ export default function EditPropertyPage() {
       show_contact_form: true,
     } as WebsiteConfig,
   })
-
-  const [newLandmark, setNewLandmark] = useState("")
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -221,46 +189,6 @@ export default function EditPropertyPage() {
         },
       }))
     }
-  }
-
-  const toggleAmenity = (amenity: string) => {
-    const current = websiteData.website_config.amenities
-    const updated = current.includes(amenity)
-      ? current.filter((a) => a !== amenity)
-      : [...current, amenity]
-    handleWebsiteChange("amenities", updated)
-  }
-
-  const addLandmark = () => {
-    if (newLandmark.trim()) {
-      handleWebsiteChange("nearby_landmarks", [
-        ...websiteData.website_config.nearby_landmarks,
-        newLandmark.trim(),
-      ])
-      setNewLandmark("")
-    }
-  }
-
-  const removeLandmark = (index: number) => {
-    const updated = websiteData.website_config.nearby_landmarks.filter((_, i) => i !== index)
-    handleWebsiteChange("nearby_landmarks", updated)
-  }
-
-  const generateSlug = () => {
-    const slug = formData.name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "")
-      .replace(/\s+/g, "-")
-      .slice(0, 50)
-    handleWebsiteChange("website_slug", slug)
-  }
-
-  const copyWebsiteUrl = () => {
-    const url = `${window.location.origin}/pg/${websiteData.website_slug}`
-    navigator.clipboard.writeText(url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-    showSuccess("Website URL copied!")
   }
 
   const handleTenantFeatureChange = (key: keyof TenantFeatures, value: boolean) => {
@@ -407,503 +335,30 @@ export default function EditPropertyPage() {
       <form onSubmit={handleSubmit}>
         {/* Property Details Tab */}
         {activeTab === "details" && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Building2 className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Property Details</CardTitle>
-                  <CardDescription>Update the property information</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Property Name *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  placeholder="e.g., Sunrise PG, Main Building"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              {/* Address Section - Using shared component */}
-              <PropertyAddressInput
-                line1={formData.address_line1}
-                line2={formData.address_line2}
-                city={formData.city}
-                state={formData.state}
-                pincode={formData.pincode}
-                onChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
-                disabled={loading}
-              />
-
-              {/* Property Photos Section - Using shared components */}
-              <div className="border-t pt-4 mt-4 space-y-4">
-                <CoverImageUpload
-                  value={formData.cover_image}
-                  onChange={(url) => setFormData(prev => ({ ...prev, cover_image: url }))}
-                  label="Cover Image"
-                  description="Main photo shown in property listings"
-                  bucket="property-photos"
-                  folder="covers"
-                  disabled={loading}
-                />
-
-                <PhotoGallery
-                  photos={formData.photos}
-                  onChange={(photos) => setFormData(prev => ({ ...prev, photos }))}
-                  label="Gallery Photos"
-                  description="Additional photos of the property (up to 10)"
-                  maxPhotos={10}
-                  bucket="property-photos"
-                  folder="gallery"
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="border-t pt-4 mt-4">
-                <h3 className="font-medium mb-3">Property Manager (Optional)</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="manager_name">Manager Name</Label>
-                    <Input
-                      id="manager_name"
-                      name="manager_name"
-                      placeholder="e.g., Ramesh Kumar"
-                      value={formData.manager_name}
-                      onChange={handleChange}
-                      disabled={loading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="manager_phone">Manager Phone</Label>
-                    <Input
-                      id="manager_phone"
-                      name="manager_phone"
-                      placeholder="e.g., 9876543210"
-                      value={formData.manager_phone}
-                      onChange={handleChange}
-                      disabled={loading}
-                      type="tel"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PropertyDetailsTab
+            formData={formData}
+            onChange={handleChange}
+            setFormData={setFormData}
+            loading={loading}
+          />
         )}
 
         {/* Tenant Portal Tab */}
         {activeTab === "tenant" && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-violet-100 rounded-lg">
-                  <Users className="h-5 w-5 text-violet-600" />
-                </div>
-                <div>
-                  <CardTitle>Tenant Portal Features</CardTitle>
-                  <CardDescription>
-                    Control what features tenants can access when they login to their portal for this property
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {tenantFeatureOptions.map((option) => (
-                  <div
-                    key={option.key}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-muted rounded-lg">
-                        <option.icon className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{option.label}</p>
-                        <p className="text-sm text-muted-foreground">{option.desc}</p>
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={tenantFeatures[option.key as keyof TenantFeatures]}
-                        onChange={(e) =>
-                          handleTenantFeatureChange(option.key as keyof TenantFeatures, e.target.checked)
-                        }
-                        className="sr-only peer"
-                        disabled={loading}
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500 peer-disabled:opacity-50"></div>
-                    </label>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-800">
-                  <strong>Note:</strong> These settings apply to all tenants of this property.
-                  When a tenant logs into the tenant portal, they will only see the features enabled above.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <TenantPortalTab
+            tenantFeatures={tenantFeatures}
+            onFeatureChange={handleTenantFeatureChange}
+            loading={loading}
+          />
         )}
 
         {/* Website Settings Tab */}
         {activeTab === "website" && (
-          <div className="space-y-6">
-            {/* Enable Website Card */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
-                      <Globe className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">Public PG Website</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Get a beautiful website to showcase your PG
-                      </p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={websiteData.website_enabled}
-                      onChange={(e) => handleWebsiteChange("website_enabled", e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-                    <span className="ml-3 text-sm font-medium">
-                      {websiteData.website_enabled ? "Enabled" : "Disabled"}
-                    </span>
-                  </label>
-                </div>
-
-                {websiteData.website_enabled && websiteData.website_slug && (
-                  <div className="mt-4 p-4 bg-teal-50 rounded-lg">
-                    <Label className="text-teal-700">Your Website URL</Label>
-                    <div className="flex items-center gap-2 mt-2">
-                      <code className="flex-1 px-3 py-2 bg-white rounded border text-sm">
-                        {typeof window !== "undefined" ? window.location.origin : ""}/pg/{websiteData.website_slug}
-                      </code>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={copyWebsiteUrl}
-                      >
-                        {copied ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Link
-                        href={`/pg/${websiteData.website_slug}`}
-                        target="_blank"
-                      >
-                        <Button type="button" variant="outline" size="icon">
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {websiteData.website_enabled && (
-              <>
-                {/* URL Settings */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">URL Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Website Slug</Label>
-                      <div className="flex gap-2">
-                        <div className="flex-1 flex items-center">
-                          <span className="px-3 py-2 bg-muted rounded-l-md border border-r-0 text-sm text-muted-foreground">
-                            /pg/
-                          </span>
-                          <Input
-                            value={websiteData.website_slug}
-                            onChange={(e) =>
-                              handleWebsiteChange(
-                                "website_slug",
-                                e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
-                              )
-                            }
-                            placeholder="your-pg-name"
-                            className="rounded-l-none"
-                          />
-                        </div>
-                        <Button type="button" variant="outline" onClick={generateSlug}>
-                          <Sparkles className="h-4 w-4 mr-1" />
-                          Generate
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Use lowercase letters, numbers, and hyphens only
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Basic Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Basic Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Property Type</Label>
-                        <select
-                          className="w-full h-10 px-3 rounded-md border bg-background"
-                          value={websiteData.website_config.property_type}
-                          onChange={(e) => handleWebsiteChange("property_type", e.target.value)}
-                        >
-                          <option value="pg">PG (Paying Guest)</option>
-                          <option value="hostel">Hostel</option>
-                          <option value="coliving">Co-Living Space</option>
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Established Year</Label>
-                        <Input
-                          type="number"
-                          placeholder="e.g., 2020"
-                          value={websiteData.website_config.established_year}
-                          onChange={(e) => handleWebsiteChange("established_year", e.target.value)}
-                          min="1990"
-                          max={new Date().getFullYear()}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Tagline</Label>
-                      <Input
-                        placeholder="e.g., Your Home Away From Home"
-                        value={websiteData.website_config.tagline}
-                        onChange={(e) => handleWebsiteChange("tagline", e.target.value)}
-                        maxLength={100}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Description</Label>
-                      <textarea
-                        className="w-full min-h-[120px] px-3 py-2 rounded-md border bg-background resize-none"
-                        placeholder="Tell potential tenants about your PG - facilities, environment, what makes it special..."
-                        value={websiteData.website_config.description}
-                        onChange={(e) => handleWebsiteChange("description", e.target.value)}
-                        maxLength={1000}
-                      />
-                      <p className="text-xs text-muted-foreground text-right">
-                        {websiteData.website_config.description.length}/1000
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Cover Photo */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Cover Photo</CardTitle>
-                    <CardDescription>
-                      Add a URL to your PG&apos;s main photo (upload to Imgur, Google Drive, etc.)
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="https://example.com/your-pg-photo.jpg"
-                        value={websiteData.website_config.cover_photo_url}
-                        onChange={(e) => handleWebsiteChange("cover_photo_url", e.target.value)}
-                      />
-                      {websiteData.website_config.cover_photo_url && (
-                        <div className="mt-3 rounded-lg overflow-hidden border">
-                          <img
-                            src={websiteData.website_config.cover_photo_url}
-                            alt="Cover preview"
-                            className="w-full h-48 object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = "none"
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Amenities */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Amenities</CardTitle>
-                    <CardDescription>Select the facilities available at your PG</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {defaultAmenities.map((amenity) => (
-                        <button
-                          key={amenity}
-                          type="button"
-                          onClick={() => toggleAmenity(amenity)}
-                          className={`px-4 py-2 rounded-full border transition-colors ${
-                            websiteData.website_config.amenities.includes(amenity)
-                              ? "bg-teal-500 text-white border-teal-500"
-                              : "bg-background hover:bg-muted"
-                          }`}
-                        >
-                          {amenity}
-                        </button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* House Rules */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">House Rules</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <textarea
-                      className="w-full min-h-[100px] px-3 py-2 rounded-md border bg-background resize-none"
-                      placeholder="1. No smoking inside premises&#10;2. Visitors allowed till 8 PM&#10;3. Maintain silence after 10 PM"
-                      value={websiteData.website_config.house_rules}
-                      onChange={(e) => handleWebsiteChange("house_rules", e.target.value)}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Location */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Location Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Google Maps URL</Label>
-                      <Input
-                        placeholder="https://maps.google.com/..."
-                        value={websiteData.website_config.google_maps_url}
-                        onChange={(e) => handleWebsiteChange("google_maps_url", e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Nearby Landmarks</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="e.g., Metro Station - 500m"
-                          value={newLandmark}
-                          onChange={(e) => setNewLandmark(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addLandmark())}
-                        />
-                        <Button type="button" variant="outline" onClick={addLandmark}>
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      {websiteData.website_config.nearby_landmarks.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {websiteData.website_config.nearby_landmarks.map((landmark, i) => (
-                            <span
-                              key={i}
-                              className="inline-flex items-center gap-1 px-3 py-1 bg-muted rounded-full text-sm"
-                            >
-                              {landmark}
-                              <button
-                                type="button"
-                                onClick={() => removeLandmark(i)}
-                                className="hover:text-destructive"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Contact Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Contact Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>WhatsApp Number</Label>
-                        <Input
-                          type="tel"
-                          placeholder="e.g., 9876543210"
-                          value={websiteData.website_config.contact_whatsapp}
-                          onChange={(e) => handleWebsiteChange("contact_whatsapp", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input
-                          type="email"
-                          placeholder="contact@yourpg.com"
-                          value={websiteData.website_config.contact_email}
-                          onChange={(e) => handleWebsiteChange("contact_email", e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Display Options */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Display Options</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {[
-                      { key: "show_rooms", label: "Show Rooms Section", desc: "Display available rooms on website" },
-                      { key: "show_pricing", label: "Show Pricing", desc: "Display room prices publicly" },
-                      { key: "show_contact_form", label: "Show Contact Form", desc: "Allow inquiries via form" },
-                    ].map((option) => (
-                      <div key={option.key} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{option.label}</p>
-                          <p className="text-sm text-muted-foreground">{option.desc}</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={websiteData.website_config[option.key as keyof WebsiteConfig] as boolean}
-                            onChange={(e) => handleWebsiteChange(option.key, e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-                        </label>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </>
-            )}
-          </div>
+          <WebsiteSettingsTab
+            websiteData={websiteData}
+            onWebsiteChange={handleWebsiteChange}
+            propertyName={formData.name}
+          />
         )}
 
         <div className="flex justify-end gap-4 mt-6">

@@ -4,11 +4,16 @@
  * Centralized helpers for resolving display names, avatars, and other UI values
  * from entity data with proper fallback chains.
  *
+ * NOTE: This module handles entity-level display resolution (names, avatars,
+ * phone numbers, locations) from joined/nested data structures. For raw value
+ * formatting (currency, dates, text truncation, filenames), see `@/lib/format`
+ * instead.
+ *
  * @example
  * import { getDisplayName, getAvatarUrl } from "@/lib/display-helpers"
  *
- * const name = getDisplayName(tenant) // Uses person.name → tenant.name → "Unknown"
- * const avatar = getAvatarUrl(tenant) // Uses person.photo_url → photo_url → profile_photo
+ * const name = getDisplayName(tenant) // Uses person.name -> tenant.name -> "Unknown"
+ * const avatar = getAvatarUrl(tenant) // Uses person.photo_url -> photo_url -> profile_photo
  */
 
 // ============================================================================

@@ -11,6 +11,14 @@
     {
       "path": "/api/cron/expire-library-memberships",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/library-notifications",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/daily-summaries",
+      "schedule": "0 7 * * *"
     }
   ]
 }

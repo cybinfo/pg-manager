@@ -12,6 +12,9 @@
 
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin, transformArrayJoins } from "@/lib/supabase/transforms"
+import { logger, extractErrorMeta } from "@/lib/logger"
+
+const journeyLogger = logger.child("journey")
 import {
   TenantJourneyData,
   JourneyEvent,
@@ -195,7 +198,7 @@ export async function getTenantJourney(
       generated_at: new Date().toISOString(),
     })
   } catch (error) {
-    console.error("[JourneyService] Error fetching tenant journey:", error)
+    journeyLogger.error("Error fetching tenant journey", extractErrorMeta(error))
     return createErrorResult(
       createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Failed to fetch tenant journey", { error })
     )
@@ -307,7 +310,7 @@ async function fetchTenantStays(supabase: ReturnType<typeof createClient>, tenan
     .order("stay_number", { ascending: true })
 
   if (error) {
-    console.warn("[JourneyService] Error fetching tenant stays:", error)
+    journeyLogger.warn("Error fetching tenant stays", extractErrorMeta(error))
     return []
   }
 
@@ -326,7 +329,7 @@ async function fetchBills(supabase: ReturnType<typeof createClient>, tenant_id: 
     .order("bill_date", { ascending: false })
 
   if (error) {
-    console.warn("[JourneyService] Error fetching bills:", error)
+    journeyLogger.warn("Error fetching bills", extractErrorMeta(error))
     return []
   }
 
@@ -346,7 +349,7 @@ async function fetchPayments(supabase: ReturnType<typeof createClient>, tenant_i
     .order("payment_date", { ascending: false })
 
   if (error) {
-    console.warn("[JourneyService] Error fetching payments:", error)
+    journeyLogger.warn("Error fetching payments", extractErrorMeta(error))
     return []
   }
 
@@ -365,7 +368,7 @@ async function fetchCharges(supabase: ReturnType<typeof createClient>, tenant_id
     .order("created_at", { ascending: false })
 
   if (error) {
-    console.warn("[JourneyService] Error fetching charges:", error)
+    journeyLogger.warn("Error fetching charges", extractErrorMeta(error))
     return []
   }
 
@@ -384,7 +387,7 @@ async function fetchComplaints(supabase: ReturnType<typeof createClient>, tenant
     .order("created_at", { ascending: false })
 
   if (error) {
-    console.warn("[JourneyService] Error fetching complaints:", error)
+    journeyLogger.warn("Error fetching complaints", extractErrorMeta(error))
     return []
   }
 
@@ -405,7 +408,7 @@ async function fetchRoomTransfers(supabase: ReturnType<typeof createClient>, ten
     .order("transfer_date", { ascending: false })
 
   if (error) {
-    console.warn("[JourneyService] Error fetching room transfers:", error)
+    journeyLogger.warn("Error fetching room transfers", extractErrorMeta(error))
     return []
   }
 
@@ -427,7 +430,7 @@ async function fetchExitClearances(supabase: ReturnType<typeof createClient>, te
     .order("created_at", { ascending: false })
 
   if (error) {
-    console.warn("[JourneyService] Error fetching exit clearances:", error)
+    journeyLogger.warn("Error fetching exit clearances", extractErrorMeta(error))
     return []
   }
 
@@ -445,7 +448,7 @@ async function fetchRefunds(supabase: ReturnType<typeof createClient>, tenant_id
     .order("created_at", { ascending: false })
 
   if (error) {
-    console.warn("[JourneyService] Error fetching refunds:", error)
+    journeyLogger.warn("Error fetching refunds", extractErrorMeta(error))
     return []
   }
 
@@ -464,7 +467,7 @@ async function fetchTenantVisitors(supabase: ReturnType<typeof createClient>, te
     .limit(50)
 
   if (error) {
-    console.warn("[JourneyService] Error fetching visitors:", error)
+    journeyLogger.warn("Error fetching visitors", extractErrorMeta(error))
     return []
   }
 
@@ -493,7 +496,7 @@ async function fetchMeterReadings(supabase: ReturnType<typeof createClient>, ten
     .limit(20)
 
   if (error) {
-    console.warn("[JourneyService] Error fetching meter readings:", error)
+    journeyLogger.warn("Error fetching meter readings", extractErrorMeta(error))
     return []
   }
 
@@ -906,10 +909,29 @@ async function calculateAnalytics(
     supabase.from("visitors").select("id").eq("tenant_id", tenant_id),
   ])
 
-  const stays = staysResult.data || []
-  const bills = billsResult.data || []
-  const payments = paymentsResult.data || []
-  const complaints = complaintsResult.data || []
+  if (staysResult.error) {
+    journeyLogger.warn("Error fetching analytics stays", extractErrorMeta(staysResult.error))
+  }
+  if (billsResult.error) {
+    journeyLogger.warn("Error fetching analytics bills", extractErrorMeta(billsResult.error))
+  }
+  if (paymentsResult.error) {
+    journeyLogger.warn("Error fetching analytics payments", extractErrorMeta(paymentsResult.error))
+  }
+  if (complaintsResult.error) {
+    journeyLogger.warn("Error fetching analytics complaints", extractErrorMeta(complaintsResult.error))
+  }
+  if (transfersResult.error) {
+    journeyLogger.warn("Error fetching analytics transfers", extractErrorMeta(transfersResult.error))
+  }
+  if (visitorsResult.error) {
+    journeyLogger.warn("Error fetching analytics visitors", extractErrorMeta(visitorsResult.error))
+  }
+
+  const safeStays = staysResult.data || []
+  const safeBills = billsResult.data || []
+  const safePayments = paymentsResult.data || []
+  const safeComplaints = complaintsResult.data || []
 
   // Calculate stay duration
   const checkInDate = tenant.check_in_date ? new Date(tenant.check_in_date) : new Date()
@@ -917,7 +939,7 @@ async function calculateAnalytics(
   const totalStayDays = daysBetween(checkInDate, today)
 
   // Calculate payment metrics
-  const billsPaid = bills.filter((b: { status: string }) => b.status === "paid")
+  const billsPaid = safeBills.filter((b: { status: string }) => b.status === "paid")
   const totalBillsPaid = billsPaid.length
 
   // Calculate bills paid on time vs late
@@ -926,14 +948,14 @@ async function calculateAnalytics(
   let totalDaysToPaySum = 0
   let paidBillsWithDates = 0
 
-  for (const bill of bills) {
+  for (const bill of safeBills) {
     if (bill.status !== "paid") continue
 
     const billDate = new Date(bill.created_at || bill.bill_date)
     const dueDate = new Date(bill.due_date)
 
     // Find the payment closest to this bill
-    const relevantPayments = payments.filter((p: { payment_date?: string; created_at: string }) => {
+    const relevantPayments = safePayments.filter((p: { payment_date?: string; created_at: string }) => {
       const payDate = new Date(p.payment_date || p.created_at)
       return payDate >= billDate
     }).sort((a: { created_at: string }, b: { created_at: string }) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
@@ -958,8 +980,8 @@ async function calculateAnalytics(
 
   // Calculate average stay duration
   let avgStayDuration = totalStayDays
-  if (stays.length > 0) {
-    const stayDurations = stays.map((s: { join_date: string; exit_date?: string }) => {
+  if (safeStays.length > 0) {
+    const stayDurations = safeStays.map((s: { join_date: string; exit_date?: string }) => {
       const start = new Date(s.join_date)
       const end = s.exit_date ? new Date(s.exit_date) : today
       return daysBetween(start, end)
@@ -970,17 +992,17 @@ async function calculateAnalytics(
   return {
     total_stay_days: totalStayDays,
     current_stay_days: totalStayDays,
-    total_stays: stays.length || 1,
+    total_stays: safeStays.length || 1,
     average_stay_duration: avgStayDuration,
-    total_revenue: payments.reduce((sum: number, p: { amount?: number }) => sum + (p.amount || 0), 0),
-    total_payments: payments.length,
-    total_bills_generated: bills.length,
+    total_revenue: safePayments.reduce((sum: number, p: { amount?: number }) => sum + (p.amount || 0), 0),
+    total_payments: safePayments.length,
+    total_bills_generated: safeBills.length,
     total_bills_paid: totalBillsPaid,
     bills_paid_on_time: billsPaidOnTime,
     bills_paid_late: billsPaidLate,
     average_days_to_pay: averageDaysToPay,
-    total_complaints: complaints.length,
-    complaints_resolved: complaints.filter((c: { status: string }) => c.status === "resolved" || c.status === "closed").length,
+    total_complaints: safeComplaints.length,
+    complaints_resolved: safeComplaints.filter((c: { status: string }) => c.status === "resolved" || c.status === "closed").length,
     total_room_transfers: transfersResult.data?.length || 0,
     total_visitors: visitorsResult.data?.length || 0,
     documents_submitted: 0,
@@ -1006,18 +1028,31 @@ async function calculateFinancialSummary(
     supabase.from("refunds").select("*").eq("tenant_id", tenant_id),
   ])
 
-  const bills = billsResult.data || []
-  const payments = transformArrayJoins(paymentsResult.data || [], ["charge_type"])
-  const charges = transformArrayJoins(chargesResult.data || [], ["charge_type"])
-  const refunds = refundsResult.data || []
+  if (billsResult.error) {
+    journeyLogger.warn("Error fetching financial bills", extractErrorMeta(billsResult.error))
+  }
+  if (paymentsResult.error) {
+    journeyLogger.warn("Error fetching financial payments", extractErrorMeta(paymentsResult.error))
+  }
+  if (chargesResult.error) {
+    journeyLogger.warn("Error fetching financial charges", extractErrorMeta(chargesResult.error))
+  }
+  if (refundsResult.error) {
+    journeyLogger.warn("Error fetching financial refunds", extractErrorMeta(refundsResult.error))
+  }
+
+  const safeBills = billsResult.data || []
+  const safePayments = transformArrayJoins(paymentsResult.data || [], ["charge_type"])
+  const safeCharges = transformArrayJoins(chargesResult.data || [], ["charge_type"])
+  const safeRefunds = refundsResult.data || []
 
   // Calculate totals
-  const totalBilled = bills.reduce((sum: number, b: { total_amount?: number }) => sum + (b.total_amount || 0), 0)
-  const totalPaid = payments.reduce((sum: number, p: { amount?: number }) => sum + (p.amount || 0), 0)
-  const totalOutstanding = bills
+  const totalBilled = safeBills.reduce((sum: number, b: { total_amount?: number }) => sum + (b.total_amount || 0), 0)
+  const totalPaid = safePayments.reduce((sum: number, p: { amount?: number }) => sum + (p.amount || 0), 0)
+  const totalOutstanding = safeBills
     .filter((b: { status: string }) => b.status !== "paid" && b.status !== "cancelled" && b.status !== "waived")
     .reduce((sum: number, b: { balance_due?: number }) => sum + (b.balance_due || 0), 0)
-  const totalOverdue = bills
+  const totalOverdue = safeBills
     .filter((b: { status: string }) => b.status === "overdue")
     .reduce((sum: number, b: { balance_due?: number }) => sum + (b.balance_due || 0), 0)
 
@@ -1029,7 +1064,7 @@ async function calculateFinancialSummary(
   }
   const chargeTypeMap = new Map<string, { name: string; billed: number; paid: number }>()
 
-  for (const charge of charges as ChargeWithType[]) {
+  for (const charge of safeCharges as ChargeWithType[]) {
     const typeCode = charge.charge_type?.code || "other"
     const typeName = charge.charge_type?.name || "Other"
     const existing = chargeTypeMap.get(typeCode) || { name: typeName, billed: 0, paid: 0 }
@@ -1047,7 +1082,7 @@ async function calculateFinancialSummary(
   }))
 
   // Find next due
-  const pendingBills = bills
+  const pendingBills = safeBills
     .filter((b: { status: string }) => b.status === "pending" || b.status === "partial")
     .sort((a: { due_date: string }, b: { due_date: string }) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
 
@@ -1063,10 +1098,10 @@ async function calculateFinancialSummary(
     total_outstanding: totalOutstanding,
     total_overdue: totalOverdue,
     breakdown,
-    total_refunds_processed: refunds
+    total_refunds_processed: safeRefunds
       .filter((r: { status: string }) => r.status === "completed")
       .reduce((sum: number, r: { amount?: number }) => sum + (r.amount || 0), 0),
-    pending_refunds: refunds
+    pending_refunds: safeRefunds
       .filter((r: { status: string }) => r.status === "pending" || r.status === "processing")
       .reduce((sum: number, r: { amount?: number }) => sum + (r.amount || 0), 0),
     current_monthly_rent: tenant.monthly_rent || 0,
@@ -1291,7 +1326,7 @@ async function findLinkedVisitors(
   const normalizedPhones = tenantPhones.map(normalizePhone).filter(Boolean)
 
   // 1. Find visitors who visited THIS tenant
-  const { data: linkedVisitors } = await supabase
+  const { data: linkedVisitors, error: linkedVisitorsError } = await supabase
     .from("visitors")
     .select(`
       id, visitor_name, visitor_phone, relation, check_in_time, check_in_date
@@ -1299,6 +1334,11 @@ async function findLinkedVisitors(
     .eq("tenant_id", tenant_id)
     .order("check_in_time", { ascending: false })
     .limit(50)
+
+  if (linkedVisitorsError) {
+    journeyLogger.warn("Error fetching linked visitors", extractErrorMeta(linkedVisitorsError))
+  }
+  const safeLinkedVisitors = linkedVisitors || []
 
   // 2. Find if this tenant was a visitor before joining
   interface VisitorRecord {
@@ -1312,7 +1352,7 @@ async function findLinkedVisitors(
   const checkInDate = tenant.check_in_date
   if (!checkInDate || normalizedPhones.length === 0) {
     return {
-      linked: (linkedVisitors || []).map((v: VisitorRecord) => ({
+      linked: safeLinkedVisitors.map((v: VisitorRecord) => ({
         visitor_id: v.id,
         visitor_name: v.visitor_name,
         visit_date: v.check_in_date || v.check_in_time,
@@ -1323,7 +1363,7 @@ async function findLinkedVisitors(
     }
   }
 
-  const { data: preTenantVisits } = await supabase
+  const { data: preTenantVisits, error: preTenantError } = await supabase
     .from("visitors")
     .select(`
       id, visitor_name, visitor_phone, check_in_time, check_in_date,
@@ -1334,8 +1374,13 @@ async function findLinkedVisitors(
     .order("check_in_time", { ascending: false })
     .limit(100)
 
+  if (preTenantError) {
+    journeyLogger.warn("Error fetching pre-tenant visits", extractErrorMeta(preTenantError))
+  }
+  const safePreTenantVisits = preTenantVisits || []
+
   // Filter pre-tenant visits by phone match
-  const matchedPreTenantVisits = (preTenantVisits || [])
+  const matchedPreTenantVisits = safePreTenantVisits
     .filter((v: any) => {
       if (!v.visitor_phone) return false
       const normalizedVisitorPhone = normalizePhone(v.visitor_phone)
@@ -1355,7 +1400,7 @@ async function findLinkedVisitors(
     })
 
   return {
-    linked: (linkedVisitors || []).map((v: VisitorRecord) => ({
+    linked: safeLinkedVisitors.map((v: VisitorRecord) => ({
       visitor_id: v.id,
       visitor_name: v.visitor_name,
       visit_date: v.check_in_date || v.check_in_time,
@@ -1385,6 +1430,15 @@ export async function getEventCategoryCounts(
     supabase.from("visitors").select("id", { count: "exact", head: true }).eq("tenant_id", tenant_id),
     supabase.from("refunds").select("id", { count: "exact", head: true }).eq("tenant_id", tenant_id),
   ])
+
+  if (stays.error) journeyLogger.warn("Error counting stays", extractErrorMeta(stays.error))
+  if (bills.error) journeyLogger.warn("Error counting bills", extractErrorMeta(bills.error))
+  if (payments.error) journeyLogger.warn("Error counting payments", extractErrorMeta(payments.error))
+  if (complaints.error) journeyLogger.warn("Error counting complaints", extractErrorMeta(complaints.error))
+  if (transfers.error) journeyLogger.warn("Error counting transfers", extractErrorMeta(transfers.error))
+  if (exits.error) journeyLogger.warn("Error counting exits", extractErrorMeta(exits.error))
+  if (visitors.error) journeyLogger.warn("Error counting visitors", extractErrorMeta(visitors.error))
+  if (refunds.error) journeyLogger.warn("Error counting refunds", extractErrorMeta(refunds.error))
 
   return {
     [EventCategory.ONBOARDING]: stays.count || 0,

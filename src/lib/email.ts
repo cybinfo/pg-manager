@@ -10,6 +10,9 @@ import {
   libraryExpiringMembershipTemplate,
   libraryExpiredMembershipTemplate,
 } from "./email-templates"
+import { logger, extractErrorMeta } from "@/lib/logger"
+
+const emailLogger = logger.child("email")
 
 // Lazy initialization of Resend client
 let resend: Resend | null = null
@@ -152,13 +155,13 @@ export async function sendPaymentReminder(
     })
 
     if (error) {
-      console.error("Failed to send payment reminder:", error)
+      emailLogger.error("Failed to send payment reminder", extractErrorMeta(error))
       return { success: false, error: error.message }
     }
 
     return { success: true, id: result?.id }
   } catch (err) {
-    console.error("Error sending payment reminder:", err)
+    emailLogger.error("Error sending payment reminder", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }
@@ -176,13 +179,13 @@ export async function sendOverdueAlert(
     })
 
     if (error) {
-      console.error("Failed to send overdue alert:", error)
+      emailLogger.error("Failed to send overdue alert", extractErrorMeta(error))
       return { success: false, error: error.message }
     }
 
     return { success: true, id: result?.id }
   } catch (err) {
-    console.error("Error sending overdue alert:", err)
+    emailLogger.error("Error sending overdue alert", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }
@@ -200,13 +203,13 @@ export async function sendPaymentReceipt(
     })
 
     if (error) {
-      console.error("Failed to send payment receipt:", error)
+      emailLogger.error("Failed to send payment receipt", extractErrorMeta(error))
       return { success: false, error: error.message }
     }
 
     return { success: true, id: result?.id }
   } catch (err) {
-    console.error("Error sending payment receipt:", err)
+    emailLogger.error("Error sending payment receipt", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }
@@ -225,13 +228,13 @@ export async function sendInvitationEmail(
     })
 
     if (error) {
-      console.error("Failed to send invitation email:", error)
+      emailLogger.error("Failed to send invitation email", extractErrorMeta(error))
       return { success: false, error: error.message }
     }
 
     return { success: true, id: result?.id }
   } catch (err) {
-    console.error("Error sending invitation email:", err)
+    emailLogger.error("Error sending invitation email", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }
@@ -295,13 +298,13 @@ export async function sendVerificationEmail(
     })
 
     if (error) {
-      console.error("Failed to send verification email:", error)
+      emailLogger.error("Failed to send verification email", extractErrorMeta(error))
       return { success: false, error: error.message }
     }
 
     return { success: true, id: result?.id }
   } catch (err) {
-    console.error("Error sending verification email:", err)
+    emailLogger.error("Error sending verification email", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }
@@ -325,13 +328,13 @@ export async function sendDailySummary(
     })
 
     if (error) {
-      console.error("Failed to send daily summary:", error)
+      emailLogger.error("Failed to send daily summary", extractErrorMeta(error))
       return { success: false, error: error.message }
     }
 
     return { success: true, id: result?.id }
   } catch (err) {
-    console.error("Error sending daily summary:", err)
+    emailLogger.error("Error sending daily summary", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }
@@ -352,13 +355,13 @@ export async function sendLibraryLowHoursWarning(
     })
 
     if (error) {
-      console.error("Failed to send low hours warning:", error)
+      emailLogger.error("Failed to send low hours warning", extractErrorMeta(error))
       return { success: false, error: error.message }
     }
 
     return { success: true, id: result?.id }
   } catch (err) {
-    console.error("Error sending low hours warning:", err)
+    emailLogger.error("Error sending low hours warning", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }
@@ -377,13 +380,13 @@ export async function sendLibraryExpiringMembership(
     })
 
     if (error) {
-      console.error("Failed to send expiring membership notification:", error)
+      emailLogger.error("Failed to send expiring membership notification", extractErrorMeta(error))
       return { success: false, error: error.message }
     }
 
     return { success: true, id: result?.id }
   } catch (err) {
-    console.error("Error sending expiring membership notification:", err)
+    emailLogger.error("Error sending expiring membership notification", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }
@@ -402,13 +405,13 @@ export async function sendLibraryExpiredMembership(
     })
 
     if (error) {
-      console.error("Failed to send expired membership notification:", error)
+      emailLogger.error("Failed to send expired membership notification", extractErrorMeta(error))
       return { success: false, error: error.message }
     }
 
     return { success: true, id: result?.id }
   } catch (err) {
-    console.error("Error sending expired membership notification:", err)
+    emailLogger.error("Error sending expired membership notification", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }

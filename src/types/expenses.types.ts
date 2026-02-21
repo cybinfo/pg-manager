@@ -1,7 +1,12 @@
 /**
- * Expenses Management Types
+ * Expenses Management Types (Basic)
  *
- * Types for expenses, expense types, and related data.
+ * Core types for expenses, expense types, and related data.
+ * These cover the original expense module (general expenses with status tracking).
+ *
+ * For the enhanced expense system (daily spend, vendors, bill payments,
+ * service providers, budgets, kitchen wastage, misc transactions, and
+ * India-specific features like UPI/TDS/GST), see `./expense-enhanced.types.ts`.
  */
 
 // ============================================================================

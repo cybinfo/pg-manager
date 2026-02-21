@@ -1,27 +1,28 @@
 import { NextRequest } from "next/server"
-import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { sendVerificationEmail } from "@/lib/email"
 import crypto from "crypto"
+import { z } from "zod"
 import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 import { validateCsrf } from "@/lib/csrf"
 import {
   apiSuccess,
   apiError,
-  badRequest,
   unauthorized,
   forbidden,
   internalError,
   csrfError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { validateBody } from "@/lib/validation"
 import { authLogger, extractErrorMeta } from "@/lib/logger"
+import { getAdminSupabaseClient } from "@/lib/api-middleware"
 
-// Service role client for database operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const SendVerificationSchema = z.object({
+  userId: z.string().uuid("Invalid user ID format"),
+  email: z.string().email("Invalid email format"),
+  userName: z.string().min(1, "User name must not be empty").optional(),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,11 +56,10 @@ export async function POST(request: NextRequest) {
       return unauthorized("Authentication required to request verification email")
     }
 
-    const { userId, email, userName } = await request.json()
-
-    if (!userId || !email) {
-      return badRequest("Missing required fields: userId and email are required")
-    }
+    const body = await request.json()
+    const validation = validateBody(SendVerificationSchema, body)
+    if (!validation.success) return validation.response
+    const { userId, email, userName } = validation.data
 
     // SEC-015: Validate that the authenticated user is requesting their own verification
     // Users can only request verification emails for their own account
@@ -71,6 +71,9 @@ export async function POST(request: NextRequest) {
     if (currentUser.email !== email) {
       return forbidden("Email does not match your account")
     }
+
+    // Service role client for database operations (validated env vars)
+    const supabaseAdmin = getAdminSupabaseClient()
 
     // Generate a secure random token
     const token = crypto.randomBytes(32).toString("hex")

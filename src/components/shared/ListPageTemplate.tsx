@@ -4,7 +4,11 @@
  * Centralized template for all list pages. Eliminates ~1600 lines of duplicate code.
  * Provides: Header, Metrics, Filters, Grouping, DataTable, Empty State
  *
+ * Supports both flat props (original API) and grouped config objects (new API).
+ * Both styles are fully backward compatible.
+ *
  * @example
+ * // Original flat props style (still fully supported):
  * <ListPageTemplate
  *   title="Tenants"
  *   description="Manage all your tenants"
@@ -18,6 +22,20 @@
  *   createHref="/tenants/new"
  *   createLabel="Add Tenant"
  *   detailHref={(item) => `/tenants/${item.id}`}
+ * />
+ *
+ * @example
+ * // New grouped props style:
+ * <ListPageTemplate
+ *   title="Tenants"
+ *   description="Manage all your tenants"
+ *   icon={Users}
+ *   permissions={{ view: "tenants.view", create: "tenants.create", edit: "tenants.update" }}
+ *   config={TENANT_LIST_CONFIG}
+ *   columns={tenantColumns}
+ *   actions={{ createHref: "/tenants/new", createLabel: "Add Tenant", detailHref: (t) => `/tenants/${t.id}` }}
+ *   emptyState={{ title: "No tenants yet", description: "Add your first tenant" }}
+ *   inlineEdit={{ enabled: true }}
  * />
  */
 
@@ -34,6 +52,7 @@ import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { FeatureFlagKey } from "@/lib/features"
 import { PageLoader } from "@/components/ui/page-loader"
+import { ErrorState } from "@/components/ui/empty-state"
 import { Pagination } from "@/components/ui/pagination"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ColumnManager, type ColumnVisibilityConfig } from "@/components/ui/column-manager"
@@ -55,26 +74,147 @@ import type { FilterGroup } from "@/types/table-features.types"
 import { createEmptyFilterGroup, hasActiveAdvancedFilters } from "@/types/table-features.types"
 
 // ============================================
-// Types
+// Internal Types
 // ============================================
 
+/**
+ * Generic row type for list page data.
+ *
+ * Column<T> and MetricConfig<T> use T in both covariant and contravariant
+ * positions (e.g., `render: (row: T) => ReactNode`), making them invariant.
+ * This means Column<Tenant> is NOT assignable to Column<Record<string, unknown>>
+ * in TypeScript's strict type system.
+ *
+ * Since all ~30 consumer pages pass domain-specific types (Column<Tenant>,
+ * Column<Bill>, etc.) without explicit generic annotation, and TypeScript
+ * cannot infer the generic from JSX props with invariant type parameters,
+ * we use this flexible row type at the component boundary. The generic
+ * `ListPageTemplateProps<T>` interface is still available for consumers
+ * who want explicit type safety by specifying `<ListPageTemplate<Tenant> ...>`.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ListPageTemplateProps {
+type FlexibleRow = any
+
+/**
+ * Extended column type that includes groupable metadata.
+ * Consumer pages may define columns with these extra properties
+ * to enable auto-derived group-by options.
+ */
+interface GroupableColumnExtension {
+  groupable?: boolean
+  groupKey?: string
+  groupLabel?: string
+}
+
+// ============================================
+// Grouped Config Types (New API)
+// ============================================
+
+/**
+ * Permission configuration for the list page.
+ * Groups all permission-related props into a single object.
+ */
+export interface ListPagePermissions {
+  /** Permission required to view this page (e.g., "tenants.view") */
+  view: string
+  /** Permission required to create new items (e.g., "tenants.create") */
+  create?: string
+  /** Permission required to edit items (e.g., "tenants.update") */
+  edit?: string
+  /** Permission required to delete items (e.g., "tenants.delete") */
+  delete?: string
+  /** Feature flag that must be enabled for this page */
+  feature?: FeatureFlagKey
+}
+
+/**
+ * Action configuration for the list page.
+ * Groups create button, detail navigation, row click, and header actions.
+ *
+ * @typeParam T - The data row type. Defaults to Record<string, unknown>.
+ */
+export interface ListPageActions<T extends Record<string, unknown> = Record<string, unknown>> {
+  /** URL for the "create new" button */
+  createHref?: string
+  /** Label for the "create new" button (default: "Add New") */
+  createLabel?: string
+  /** Function to generate detail page URL from a row item */
+  detailHref?: (item: T) => string
+  /** Callback when a row is clicked */
+  onRowClick?: (item: T) => void
+  /** Additional action buttons rendered in the page header */
+  headerActions?: React.ReactNode
+}
+
+/**
+ * Empty state configuration for when no data is present.
+ */
+export interface ListPageEmptyState {
+  /** Icon to show in empty state (defaults to the page icon) */
+  icon?: LucideIcon
+  /** Title text for empty state */
+  title?: string
+  /** Description text for empty state */
+  description?: string
+}
+
+/**
+ * Inline editing configuration.
+ */
+export interface ListPageInlineEditConfig {
+  /** Enable inline editing for editable columns */
+  enabled?: boolean
+  /** Permission required to edit (e.g., "tenants.update"). Defaults to derived from view permission */
+  permission?: string
+  /** Custom callback for row updates. If not provided, uses default Supabase update */
+  onRowUpdate?: (id: string, updates: Record<string, unknown>) => Promise<boolean>
+}
+
+// ============================================
+// Component Props (Supports Both Flat & Grouped)
+// ============================================
+
+/**
+ * Props for ListPageTemplate component.
+ *
+ * The generic type parameter `T` represents the shape of each data row.
+ * When using the new grouped `actions` prop, specify `T` explicitly for
+ * type-safe callbacks:
+ *
+ * ```tsx
+ * <ListPageTemplate<Tenant>
+ *   actions={{ detailHref: (t) => `/tenants/${t.id}` }}
+ *   ...
+ * />
+ * ```
+ *
+ * For the original flat props API, explicit generic annotation is not required.
+ *
+ * Both flat props (original API) and grouped config objects (new API)
+ * are supported. Flat props take precedence when both are provided.
+ */
+export interface ListPageTemplateProps<T extends Record<string, unknown> = Record<string, unknown>> {
   // Page info
   title: string
   description: string
   icon: LucideIcon
-  permission: string
-  feature?: FeatureFlagKey // Optional feature flag
   breadcrumbs?: { label: string; href?: string }[]
 
-  // Saved Views
-  tableKey?: string // Unique key for this table (e.g., "tenants", "payments")
-  enableSavedViews?: boolean // Default: true when tableKey is provided
+  // --- Permission props (flat style, original API) ---
+  /** @deprecated Use `permissions.view` instead. Still fully supported for backward compatibility. */
+  permission?: string
+  /** @deprecated Use `permissions.feature` instead. Still fully supported for backward compatibility. */
+  feature?: FeatureFlagKey
 
-  // Data config - accepts any config type
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  config: ListPageConfig<any>
+  // --- Permission props (grouped style, new API) ---
+  permissions?: ListPagePermissions
+
+  // Saved Views
+  tableKey?: string
+  enableSavedViews?: boolean
+
+  // Data config
+  config: ListPageConfig<T>
 
   // Filters
   filters?: FilterConfig[]
@@ -82,66 +222,84 @@ export interface ListPageTemplateProps {
 
   // Advanced Filters
   advancedFilterColumns?: FilterableColumn[]
-  enableAdvancedFilters?: boolean // Default: false
+  enableAdvancedFilters?: boolean
 
   // Grouping
   groupByOptions?: GroupByOption[]
 
-  // Metrics - accepts any metrics type
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  metrics?: MetricConfig<any>[]
+  // Metrics
+  metrics?: MetricConfig<T>[]
 
-  // Table - accepts any column type
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  columns: Column<any>[]
+  // Table
+  columns: Column<T>[]
   searchPlaceholder?: string
 
   // Column Management
-  enableColumnManager?: boolean // Default: false
+  enableColumnManager?: boolean
 
-  // Actions
+  // --- Action props (flat style, original API) ---
+  /** @deprecated Use `actions.createHref` instead. Still fully supported for backward compatibility. */
   createHref?: string
+  /** @deprecated Use `actions.createLabel` instead. Still fully supported for backward compatibility. */
   createLabel?: string
+  /** @deprecated Use `permissions.create` instead. Still fully supported for backward compatibility. */
   createPermission?: string
+  /** @deprecated Use `actions.headerActions` instead. Still fully supported for backward compatibility. */
   headerActions?: React.ReactNode
+  /** @deprecated Use `actions.detailHref` instead. Still fully supported for backward compatibility. */
+  detailHref?: (item: T) => string
+  /** @deprecated Use `actions.onRowClick` instead. Still fully supported for backward compatibility. */
+  onRowClick?: (item: T) => void
 
-  // Navigation
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  detailHref?: (item: any) => string
+  // --- Action props (grouped style, new API) ---
+  actions?: ListPageActions<T>
 
-  // Empty state
+  // --- Empty state props (flat style, original API) ---
+  /** @deprecated Use `emptyState.icon` instead. Still fully supported for backward compatibility. */
   emptyIcon?: LucideIcon
+  /** @deprecated Use `emptyState.title` instead. Still fully supported for backward compatibility. */
   emptyTitle?: string
+  /** @deprecated Use `emptyState.description` instead. Still fully supported for backward compatibility. */
   emptyDescription?: string
 
-  // Callbacks
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onRowClick?: (item: any) => void
+  // --- Empty state props (grouped style, new API) ---
+  emptyState?: ListPageEmptyState
 
-  // ============================================
-  // Inline Editing Options
-  // ============================================
-  /** Enable inline editing for editable columns */
+  // --- Inline edit props (flat style, original API) ---
+  /** @deprecated Use `inlineEdit.enabled` instead. Still fully supported for backward compatibility. */
   enableInlineEdit?: boolean
-  /** Permission required to edit (e.g., "tenants.update"). Defaults to derived from permission prop */
+  /** @deprecated Use `inlineEdit.permission` or `permissions.edit` instead. Still fully supported for backward compatibility. */
   editPermission?: string
-  /** Custom callback for row updates. If not provided, uses default Supabase update */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /** @deprecated Use `inlineEdit.onRowUpdate` instead. Still fully supported for backward compatibility. */
   onRowUpdate?: (id: string, updates: Record<string, unknown>) => Promise<boolean>
+
+  // --- Inline edit props (grouped style, new API) ---
+  inlineEdit?: ListPageInlineEditConfig
 }
 
 // ============================================
 // Component
 // ============================================
 
+/**
+ * The component implementation uses FlexibleRow internally to handle the
+ * TypeScript variance limitation where Column<SpecificType> is not assignable
+ * to Column<Record<string, unknown>>. The exported ListPageTemplateProps<T>
+ * interface provides proper generics for consumers who specify T explicitly.
+ */
 export function ListPageTemplate({
   // Page info
   title,
   description,
   icon: Icon,
-  permission,
-  feature,
   breadcrumbs,
+
+  // Permission (flat - original)
+  permission: flatPermission,
+  feature: flatFeature,
+
+  // Permission (grouped - new)
+  permissions,
 
   // Saved Views
   tableKey,
@@ -171,28 +329,53 @@ export function ListPageTemplate({
   // Column Management
   enableColumnManager = false,
 
-  // Actions
-  createHref,
-  createLabel = "Add New",
-  createPermission,
-  headerActions,
+  // Actions (flat - original)
+  createHref: flatCreateHref,
+  createLabel: flatCreateLabel,
+  createPermission: flatCreatePermission,
+  headerActions: flatHeaderActions,
+  detailHref: flatDetailHref,
+  onRowClick: flatOnRowClick,
 
-  // Navigation
-  detailHref,
+  // Actions (grouped - new)
+  actions,
 
-  // Empty state
-  emptyIcon: EmptyIcon,
-  emptyTitle = `No ${title.toLowerCase()} yet`,
-  emptyDescription = `Add your first ${title.toLowerCase().slice(0, -1)} to get started`,
+  // Empty state (flat - original)
+  emptyIcon: flatEmptyIcon,
+  emptyTitle: flatEmptyTitle,
+  emptyDescription: flatEmptyDescription,
 
-  // Callbacks
-  onRowClick,
+  // Empty state (grouped - new)
+  emptyState,
 
-  // Inline Editing
-  enableInlineEdit = false,
-  editPermission,
-  onRowUpdate,
-}: ListPageTemplateProps) {
+  // Inline Editing (flat - original)
+  enableInlineEdit: flatEnableInlineEdit,
+  editPermission: flatEditPermission,
+  onRowUpdate: flatOnRowUpdate,
+
+  // Inline Editing (grouped - new)
+  inlineEdit,
+}: ListPageTemplateProps<FlexibleRow>) {
+  // ============================================
+  // Resolve flat + grouped props (flat props take precedence for backward compat)
+  // ============================================
+  const permission = flatPermission || permissions?.view || ""
+  const feature = flatFeature || permissions?.feature
+  const createHref = flatCreateHref ?? actions?.createHref
+  const createLabel = flatCreateLabel ?? actions?.createLabel ?? "Add New"
+  const createPermission = flatCreatePermission ?? permissions?.create
+  const headerActions = flatHeaderActions ?? actions?.headerActions
+  const detailHref = flatDetailHref ?? actions?.detailHref
+  const onRowClick = flatOnRowClick ?? actions?.onRowClick
+
+  const EmptyIcon = flatEmptyIcon ?? emptyState?.icon
+  const emptyTitle = flatEmptyTitle ?? emptyState?.title ?? `No ${title.toLowerCase()} yet`
+  const emptyDescription = flatEmptyDescription ?? emptyState?.description ?? `Add your first ${title.toLowerCase().slice(0, -1)} to get started`
+
+  const enableInlineEdit = flatEnableInlineEdit ?? inlineEdit?.enabled ?? false
+  const editPermission = flatEditPermission ?? inlineEdit?.permission ?? permissions?.edit
+  const onRowUpdate = flatOnRowUpdate ?? inlineEdit?.onRowUpdate
+
   // Track if initial load is complete (to avoid unmounting DataTable during search)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
 
@@ -211,6 +394,8 @@ export function ListPageTemplate({
     data,
     filteredData,
     loading,
+    error,
+    refetch,
     filters,
     setFilter,
     clearFilters,
@@ -236,8 +421,7 @@ export function ListPageTemplate({
     resetColumnVisibility,
     getViewConfig,
     applyViewConfig,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } = useListPage<any>({
+  } = useListPage<FlexibleRow>({
     config,
     filters: hookFilterConfigs || filterConfigs.map((f) => ({
       id: f.id,
@@ -288,8 +472,7 @@ export function ListPageTemplate({
   )
 
   // Enhance columns with inline edit capability
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const enhancedColumns: Column<any>[] = useMemo(() => {
+  const enhancedColumns: Column<FlexibleRow>[] = useMemo(() => {
     if (!canEdit) return columns
 
     return columns.map((col) => {
@@ -299,8 +482,7 @@ export function ListPageTemplate({
       // Create enhanced column with InlineEditCell wrapper
       return {
         ...col,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        render: (row: any) => {
+        render: (row: FlexibleRow) => {
           const fieldName = col.editField || col.key
           const value = row[col.key]
 
@@ -324,6 +506,19 @@ export function ListPageTemplate({
 
   // Group dropdown state
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false)
+
+  // Handle Escape key to close group dropdown
+  useEffect(() => {
+    if (!groupDropdownOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        setGroupDropdownOpen(false)
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [groupDropdownOpen])
 
   // Build metrics items for MetricsBar
   const metricsItems = useMemo(() => {
@@ -357,25 +552,20 @@ export function ListPageTemplate({
     return columns.map((col) => ({
       key: col.key,
       header: col.header,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      canHide: (col as any).canHide !== false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      defaultVisible: (col as any).defaultVisible !== false,
+      canHide: col.canHide !== false,
+      defaultVisible: col.defaultVisible !== false,
     }))
   }, [columns])
 
   // Derive groupable columns from columns if no explicit groupByOptions provided
   const finalGroupByOptions = useMemo(() => {
     if (groupByOptions.length > 0) return groupByOptions
-    // Auto-derive from columns with groupable: true
+    // Auto-derive from columns with groupable: true (extended column properties)
     return columns
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((col) => (col as any).groupable === true)
-      .map((col) => ({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        value: (col as any).groupKey || col.key,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        label: (col as any).groupLabel || col.header,
+      .filter((col: Column<FlexibleRow> & GroupableColumnExtension) => col.groupable === true)
+      .map((col: Column<FlexibleRow> & GroupableColumnExtension) => ({
+        value: col.groupKey || col.key,
+        label: col.groupLabel || col.header,
       }))
   }, [groupByOptions, columns])
 
@@ -390,6 +580,11 @@ export function ListPageTemplate({
   // After that, keep DataTable mounted to preserve search focus
   if (loading && !initialLoadComplete) {
     return <PageLoader />
+  }
+
+  // Show error state if data failed to load
+  if (error && !initialLoadComplete) {
+    return <ErrorState message="Failed to load data. Please try again." onRetry={refetch} />
   }
 
   // Render content
@@ -481,6 +676,8 @@ export function ListPageTemplate({
             <div className="relative">
               <button
                 onClick={() => setGroupDropdownOpen(!groupDropdownOpen)}
+                aria-expanded={groupDropdownOpen}
+                aria-haspopup="true"
                 className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-slate-50"
               >
                 <Layers className="h-4 w-4 text-muted-foreground" />

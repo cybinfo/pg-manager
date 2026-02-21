@@ -57,61 +57,7 @@ import { ContextSwitcher, SessionTimeout } from "@/components/auth"
 import { DemoModeProvider, DemoBanner, DemoWatermark } from "@/lib/demo-mode"
 import { useFeatures } from "@/lib/features/use-features"
 import { FeatureFlagKey } from "@/lib/features"
-
-// Path-to-permission mapping for route-level access control
-// This ensures direct URL access is also protected
-const pathPermissions: Record<string, string> = {
-  "/properties": "properties.view",
-  "/rooms": "rooms.view",
-  "/tenants": "tenants.view",
-  "/people": "tenants.view",
-  "/bills": "bills.view",
-  "/payments": "payments.view",
-  "/refunds": "payments.view",
-  "/expenses": "expenses.view",
-  "/meter-readings": "meter_readings.view",
-  "/meters": "meters.view",
-  "/exit-clearance": "exit_clearance.initiate",
-  "/visitors": "visitors.view",
-  "/complaints": "complaints.view",
-  "/notices": "notices.view",
-  "/reports": "reports.view",
-  "/architecture": "properties.view",
-  "/approvals": "tenants.view",
-  "/staff": "staff.view",
-  // Library permissions
-  "/library": "library.view",
-  "/library-sections": "library_sections.view",
-  "/library-seats": "library_seats.view",
-  "/library-members": "library_members.view",
-  "/library-attendance": "library_attendance.view",
-  "/library-lockers": "library_lockers.view",
-  "/library-payments": "library_payments.view",
-  "/library-plans": "library.view",
-}
-
-// Path-to-feature mapping for feature-gated routes
-const pathFeatures: Record<string, FeatureFlagKey> = {
-  "/expenses": "expenses",
-  "/meter-readings": "meterReadings",
-  "/exit-clearance": "exitClearance",
-  "/visitors": "visitors",
-  "/complaints": "complaints",
-  "/notices": "notices",
-  "/reports": "reports",
-  "/activity": "activityLog",
-  "/architecture": "architectureView",
-  "/approvals": "approvals",
-  // Library feature flag
-  "/library": "library",
-  "/library-sections": "library",
-  "/library-seats": "library",
-  "/library-members": "library",
-  "/library-attendance": "library",
-  "/library-lockers": "library",
-  "/library-payments": "library",
-  "/library-plans": "library",
-}
+import { getPathPermissions, getPathFeatures } from "@/lib/navigation/config"
 
 // Navigation item type with optional children for sub-menus
 type NavItem = {
@@ -210,6 +156,11 @@ const navigation: NavItem[] = [
   { name: "Activity Log", href: "/activity", icon: Activity, permission: null, feature: "activityLog" },
   { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", feature: null },
 ]
+
+// Derive path-to-permission and path-to-feature maps from the navigation array
+// This is the single source of truth - no need to maintain separate hardcoded maps
+const pathPermissions = getPathPermissions(navigation)
+const pathFeatures = getPathFeatures(navigation)
 
 // Mobile bottom nav items (5 most used)
 const mobileNavItems = [

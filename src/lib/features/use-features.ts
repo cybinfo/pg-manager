@@ -8,6 +8,9 @@ import {
   getDefaultFeatureFlags,
   isFeatureEnabled,
 } from "./index"
+import { logger, extractErrorMeta } from "@/lib/logger"
+
+const featureLogger = logger.child("features")
 
 // AUTH-016: Add feature flags caching to prevent multiple Supabase calls
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
@@ -90,7 +93,7 @@ export function useFeatures() {
           setFlags(result)
         }
       } catch (error) {
-        console.error("Error fetching feature flags:", error)
+        featureLogger.error("Error fetching feature flags", extractErrorMeta(error))
         fetchPromise = null
       } finally {
         setLoading(false)
@@ -143,7 +146,7 @@ export function useFeatureManagement() {
           }
         }
       } catch (error) {
-        console.error("Error fetching feature flags:", error)
+        featureLogger.error("Error fetching feature flags", extractErrorMeta(error))
       } finally {
         setLoading(false)
       }
@@ -184,7 +187,7 @@ export function useFeatureManagement() {
 
       return true
     } catch (error) {
-      console.error("Error saving feature flags:", error)
+      featureLogger.error("Error saving feature flags", extractErrorMeta(error))
       return false
     } finally {
       setSaving(false)

@@ -53,6 +53,7 @@ export function PhoneEntry({
           value={value.number}
           onChange={(e) => onChange("number", e.target.value)}
           disabled={disabled}
+          aria-label="Phone number"
         />
         {loading && (
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -65,6 +66,7 @@ export function PhoneEntry({
           onChange={(e) => onChange("is_whatsapp", e.target.checked)}
           className="h-4 w-4"
           disabled={disabled}
+          aria-label="WhatsApp enabled"
         />
         WhatsApp
       </label>
@@ -76,6 +78,7 @@ export function PhoneEntry({
           onChange={() => onChange("is_primary", true)}
           className="h-4 w-4"
           disabled={disabled}
+          aria-label="Set as primary phone number"
         />
         Primary
       </label>

@@ -11,6 +11,7 @@ import {
   TENANT_PERMISSIONS,
   isValidPermission,
 } from './types'
+import { authLogger, extractErrorMeta } from '@/lib/logger'
 import {
   getSession as getSessionUtil,
   signOut as signOutUtil,
@@ -136,11 +137,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return data as ContextWithDetails[]
       }
       // UTIL-002: Log unexpected response format
-      console.warn('[Auth] fetchContexts: unexpected response format', { data })
+      authLogger.warn("fetchContexts: unexpected response format", { data })
       return []
     } catch (err) {
       // UTIL-002: Log fetch errors for debugging (was silent before)
-      console.error('[Auth] fetchContexts failed:', err)
+      authLogger.error("fetchContexts failed", extractErrorMeta(err))
       return []
     }
   }, [])
@@ -165,14 +166,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       // UTIL-002: Log when profile not found (vs. fetch error)
       if (Array.isArray(data) && data.length === 0) {
-        console.warn('[Auth] fetchProfile: no profile found for user', { userId })
+        authLogger.warn("fetchProfile: no profile found for user", { userId })
       } else {
-        console.warn('[Auth] fetchProfile: unexpected response format', { data })
+        authLogger.warn("fetchProfile: unexpected response format", { data })
       }
       return null
     } catch (err) {
       // UTIL-002: Log fetch errors for debugging (was silent before)
-      console.error('[Auth] fetchProfile failed:', err)
+      authLogger.error("fetchProfile failed", extractErrorMeta(err))
       return null
     }
   }, [])
@@ -184,7 +185,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Get current session for token using centralized utility
     const sessionResult = await getSessionUtil()
     if (sessionResult.error || !sessionResult.session?.access_token) {
-      console.warn('[Auth] Cannot refresh contexts: no valid session')
+      authLogger.warn("Cannot refresh contexts: no valid session")
       return
     }
 
@@ -208,13 +209,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const switchContext = useCallback(async (contextId: string): Promise<boolean> => {
     // Validate user is authenticated
     if (!user) {
-      console.warn('[Auth] Cannot switch context: user not authenticated')
+      authLogger.warn("Cannot switch context: user not authenticated")
       return false
     }
 
     // Validate contextId is provided
     if (!contextId || typeof contextId !== 'string') {
-      console.warn('[Auth] Cannot switch context: invalid contextId')
+      authLogger.warn("Cannot switch context: invalid contextId")
       return false
     }
 
@@ -222,14 +223,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // The contexts array contains only contexts the user has been granted access to
     const targetContext = contexts.find(c => c.context_id === contextId)
     if (!targetContext) {
-      console.warn(`[Auth] Cannot switch context: user does not have access to context ${contextId}`)
+      authLogger.warn("Cannot switch context: user does not have access to context", { contextId })
       // Context not in user's available contexts - they don't have access
       return false
     }
 
     // AUTH-006: Verify the target workspace is active
     if (!targetContext.workspace_id) {
-      console.warn('[Auth] Cannot switch context: target context has no workspace')
+      authLogger.warn("Cannot switch context: target context has no workspace")
       return false
     }
 
@@ -242,7 +243,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       if (error) {
-        console.error('[Auth] Error switching context:', error)
+        authLogger.error("Error switching context", extractErrorMeta(error))
         // AUTH-006: If server rejects, refresh contexts as user may have lost access
         await refreshContexts()
         return false
@@ -255,7 +256,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setStoredContextId(contextId)
       return true
     } catch (err) {
-      console.error('[Auth] Exception switching context:', err)
+      authLogger.error("Exception switching context", extractErrorMeta(err))
       return false
     }
   }, [user, contexts, currentContext, supabase, refreshContexts])
@@ -268,7 +269,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       p_context_id: contextId,
     })
     if (error) {
-      console.error('[Auth] Error setting default context:', error)
+      authLogger.error("Error setting default context", extractErrorMeta(error))
       return false
     }
     await refreshContexts()
@@ -308,7 +309,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // AUTH-015: Validate permission in development to catch typos early
     if (process.env.NODE_ENV === 'development' && typeof permission === 'string') {
       if (!isValidPermission(permission)) {
-        console.warn(`[Auth] Invalid permission: "${permission}". This will fail silently in production.`)
+        authLogger.warn("Invalid permission (will fail silently in production)", { permission })
       }
     }
     // Platform Admin (Super User) - Full access to everything
@@ -346,7 +347,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const result = await signOutUtil()
 
     if (!result.success) {
-      console.error('[Auth] Logout failed:', result.error?.message)
+      authLogger.error("Logout failed", { errorMessage: result.error?.message })
       // Even if sign out fails server-side, clear local state
     }
 
@@ -387,11 +388,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return data.length > 0
       }
       // UTIL-002: Log unexpected response format
-      console.warn('[Auth] checkPlatformAdmin: unexpected response format', { data })
+      authLogger.warn("checkPlatformAdmin: unexpected response format", { data })
       return false
     } catch (err) {
       // UTIL-002: Log fetch errors for debugging (was silent before)
-      console.error('[Auth] checkPlatformAdmin failed:', err)
+      authLogger.error("checkPlatformAdmin failed", extractErrorMeta(err))
       return false
     }
   }, [])
@@ -399,13 +400,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Load user data
   const loadUserData = useCallback(async (sessionUser: User, accessToken: string) => {
     try {
-      console.log('[Auth] fetchProfile...')
+      authLogger.debug("fetchProfile...")
       const userProfile = await fetchProfile(sessionUser.id, accessToken)
-      console.log('[Auth] fetchContexts...')
+      authLogger.debug("fetchContexts...")
       const userContexts = await fetchContexts(sessionUser.id, accessToken)
-      console.log('[Auth] checkPlatformAdmin...')
+      authLogger.debug("checkPlatformAdmin...")
       const isAdmin = await checkPlatformAdmin(sessionUser.id, accessToken)
-      console.log('[Auth] All data fetched')
+      authLogger.debug("All data fetched")
 
       if (!mountedRef.current) return
 
@@ -435,7 +436,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setStoredContextId(initialContext.context_id)
       }
     } catch (err) {
-      console.error('[Auth] Error loading user data:', err)
+      authLogger.error("Error loading user data", extractErrorMeta(err))
       // Continue with partial data rather than failing completely
     }
   }, [fetchProfile, fetchContexts, checkPlatformAdmin])
@@ -478,13 +479,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // NEW APPROACH: Don't call getSession() which hangs.
     // Instead, rely entirely on onAuthStateChange which fires reliably.
 
-    console.log('[Auth] Setting up auth listener...')
+    authLogger.debug("Setting up auth listener...")
     initializingRef.current = true
 
     // CQ-010: Set a timeout - if no auth event fires within timeout, assume not logged in
     const authTimeout = setTimeout(() => {
       if (!globalAuthState.initialized && mountedRef.current) {
-        console.log('[Auth] Auth timeout - assuming not logged in')
+        authLogger.debug("Auth timeout - assuming not logged in")
         globalAuthState.initialized = true
         initializingRef.current = false
         setIsLoading(false)
@@ -493,7 +494,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Listen for auth state changes - this is the PRIMARY way to get session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] Auth state change:', event, session?.user?.email || 'no user')
+      authLogger.debug("Auth state change", { event, email: session?.user?.email || "no user" })
 
       if (!mountedRef.current) return
 
@@ -513,9 +514,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Load user data if not already loaded for this user
         if (!globalAuthState.initialized || globalAuthState.user?.id !== session.user.id) {
-          console.log('[Auth] Loading user data...')
+          authLogger.debug("Loading user data...")
           await loadUserData(session.user, session.access_token)
-          console.log('[Auth] User data loaded')
+          authLogger.debug("User data loaded")
         }
 
         globalAuthState.initialized = true
@@ -523,7 +524,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (mountedRef.current) {
           setIsLoading(false)
         }
-        console.log('[Auth] Init complete')
+        authLogger.debug("Init complete")
       } else if (event === 'SIGNED_OUT') {
         // ONLY process if user explicitly logged out via our logout() function
         if (globalAuthState.explicitLogout) {
@@ -543,7 +544,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Ignore spurious SIGNED_OUT events from Supabase
       } else if (event === 'INITIAL_SESSION' && !session) {
         // No session on initial load - user not logged in
-        console.log('[Auth] No session on initial load')
+        authLogger.debug("No session on initial load")
         globalAuthState.initialized = true
         initializingRef.current = false
         if (mountedRef.current) {

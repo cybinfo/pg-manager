@@ -24,6 +24,7 @@ import {
   Wallet,
   TrendingDown,
   Gauge,
+  TrendingUp,
   UserMinus,
   UserPlus,
   MessageSquare,
@@ -31,6 +32,7 @@ import {
   FileText,
   Activity,
   Grid3X3,
+  Layers,
   ClipboardCheck,
   UserCog,
   MoreHorizontal,
@@ -99,7 +101,7 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", feature: "expenses" },
   { name: "Service Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", feature: "expenses" },
   { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", feature: "expenses" },
-  { name: "Meter Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
+  { name: "Meter Readings", href: "/meter-readings", icon: TrendingUp, permission: "meter_readings.view", feature: "meterReadings" },
   { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", feature: null },
   { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
   { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
@@ -113,7 +115,7 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", feature: null },
   // Library Module (feature-flagged)
   { name: "Library", href: "/library", icon: Library, permission: "library.view", feature: "library", dividerBefore: true },
-  { name: "Sections", href: "/library-sections", icon: Grid3X3, permission: "library_sections.view", feature: "library" },
+  { name: "Sections", href: "/library-sections", icon: Layers, permission: "library_sections.view", feature: "library" },
   { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", feature: "library" },
   { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
   { name: "Waitlist", href: "/library-waitlist", icon: ListOrdered, permission: "library_waitlist.view", feature: "library" },
@@ -200,6 +202,61 @@ export function filterNavigation(
 }
 
 // ============================================================================
+// PATH-TO-PERMISSION/FEATURE DERIVATION
+// ============================================================================
+
+interface NavItemWithChildren {
+  href: string
+  permission: string | null
+  feature: FeatureFlagKey | null
+  children?: NavItemWithChildren[]
+}
+
+/**
+ * Derive a path-to-permission map from a navigation array.
+ * Works with both flat NavItem[] and nested items with children.
+ * Items with null permission are excluded (no permission required).
+ */
+export function getPathPermissions(items: NavItemWithChildren[]): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const item of items) {
+    if (item.permission && item.href) {
+      map[item.href] = item.permission
+    }
+    if (item.children) {
+      for (const child of item.children) {
+        if (child.permission && child.href) {
+          map[child.href] = child.permission
+        }
+      }
+    }
+  }
+  return map
+}
+
+/**
+ * Derive a path-to-feature map from a navigation array.
+ * Works with both flat NavItem[] and nested items with children.
+ * Items with null feature are excluded (always enabled).
+ */
+export function getPathFeatures(items: NavItemWithChildren[]): Record<string, FeatureFlagKey> {
+  const map: Record<string, FeatureFlagKey> = {}
+  for (const item of items) {
+    if (item.feature && item.href) {
+      map[item.href] = item.feature
+    }
+    if (item.children) {
+      for (const child of item.children) {
+        if (child.feature && child.href) {
+          map[child.href] = child.feature
+        }
+      }
+    }
+  }
+  return map
+}
+
+// ============================================================================
 // ROUTE METADATA
 // ============================================================================
 
@@ -233,7 +290,7 @@ export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   "/payments": { path: "/payments", permission: "payments.view", feature: null, title: "Payments", icon: CreditCard },
   "/refunds": { path: "/refunds", permission: "payments.view", feature: null, title: "Refunds", icon: Wallet },
   "/expenses": { path: "/expenses", permission: "expenses.view", feature: "expenses", title: "Expenses", icon: TrendingDown },
-  "/meter-readings": { path: "/meter-readings", permission: "meter_readings.view", feature: "meterReadings", title: "Meter Readings", icon: Gauge },
+  "/meter-readings": { path: "/meter-readings", permission: "meter_readings.view", feature: "meterReadings", title: "Meter Readings", icon: TrendingUp },
   "/meters": { path: "/meters", permission: "meters.view", feature: null, title: "Meters", icon: Gauge },
   "/exit-clearance": { path: "/exit-clearance", permission: "exit_clearance.initiate", feature: "exitClearance", title: "Exit Clearance", icon: UserMinus },
   "/visitors": { path: "/visitors", permission: "visitors.view", feature: "visitors", title: "Visitors", icon: UserPlus },
@@ -247,7 +304,7 @@ export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   "/inquiries": { path: "/inquiries", permission: "tenants.view", feature: null, title: "Inquiries", icon: Inbox },
   // Library Module
   "/library": { path: "/library", permission: "library.view", feature: "library", title: "Library", icon: Library },
-  "/library-sections": { path: "/library-sections", permission: "library_sections.view", feature: "library", title: "Sections", icon: Grid3X3 },
+  "/library-sections": { path: "/library-sections", permission: "library_sections.view", feature: "library", title: "Sections", icon: Layers },
   "/library-members": { path: "/library-members", permission: "library_members.view", feature: "library", title: "Members", icon: Users },
   "/library-waitlist": { path: "/library-waitlist", permission: "library_waitlist.view", feature: "library", title: "Waitlist", icon: ListOrdered },
   "/library-attendance": { path: "/library-attendance", permission: "library_attendance.view", feature: "library", title: "Attendance", icon: Clock },

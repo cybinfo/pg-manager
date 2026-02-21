@@ -120,8 +120,20 @@ export async function checkAdminRateLimit(request: Request): Promise<RateLimitCh
  * if (!success) return response!
  */
 export function validateCronSecret(request: Request): CronValidationResult {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret) {
+    return {
+      success: false,
+      response: apiError(
+        ErrorCodes.INTERNAL_ERROR,
+        "CRON_SECRET environment variable is not configured",
+        { status: 500 }
+      ),
+    }
+  }
+
   const authHeader = request.headers.get("authorization")
-  const expectedSecret = `Bearer ${process.env.CRON_SECRET}`
+  const expectedSecret = `Bearer ${cronSecret}`
 
   if (!timingSafeEqual(authHeader, expectedSecret)) {
     return {
@@ -178,10 +190,12 @@ export async function validateCronRequest(request: Request): Promise<{
  * const { data } = await supabase.from("tenants").select("*")
  */
 export function getAdminSupabaseClient(): SupabaseClient {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are required")
+  }
+  return createClient(supabaseUrl, serviceRoleKey)
 }
 
 // ============================================================================

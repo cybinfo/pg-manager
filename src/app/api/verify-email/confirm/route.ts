@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { z } from "zod"
 import { authLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 import { authLogger, extractErrorMeta } from "@/lib/logger"
 import { validateCsrf } from "@/lib/csrf"
@@ -11,13 +11,13 @@ import {
   csrfError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { validateBody } from "@/lib/validation"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { getAdminSupabaseClient } from "@/lib/api-middleware"
 
-// Service role client for database operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const ConfirmVerificationSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,11 +43,13 @@ export async function POST(request: NextRequest) {
       return csrfError(csrfResult.error || "CSRF validation failed")
     }
 
-    const { token } = await request.json()
+    const body = await request.json()
+    const validation = validateBody(ConfirmVerificationSchema, body)
+    if (!validation.success) return validation.response
+    const { token } = validation.data
 
-    if (!token) {
-      return badRequest("Missing token")
-    }
+    // Service role client for database operations (validated env vars)
+    const supabaseAdmin = getAdminSupabaseClient()
 
     // Verify the token
     const { data, error } = await supabaseAdmin.rpc("verify_token", {

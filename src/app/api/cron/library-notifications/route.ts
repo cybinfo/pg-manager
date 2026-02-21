@@ -13,6 +13,7 @@ import { validateCronRequest } from "@/lib/api-middleware"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { apiSuccess, internalError } from "@/lib/api-response"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { SYSTEM_ACTOR_ID } from "@/lib/constants"
 import {
   sendLibraryLowHoursWarning,
   sendLibraryExpiringMembership,
@@ -242,7 +243,7 @@ export async function GET(request: Request) {
           action: "library_notifications_sent",
           entity_type: "library_member",
           entity_id: null,
-          actor_id: null,
+          actor_id: SYSTEM_ACTOR_ID,
           metadata: {
             low_hours_warnings: results.lowHoursWarnings,
             expiring_notifications: results.expiringNotifications,

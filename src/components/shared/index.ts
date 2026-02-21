@@ -5,4 +5,10 @@
  */
 
 export { ListPageTemplate } from "./ListPageTemplate"
-export type { ListPageTemplateProps } from "./ListPageTemplate"
+export type {
+  ListPageTemplateProps,
+  ListPagePermissions,
+  ListPageActions,
+  ListPageEmptyState,
+  ListPageInlineEditConfig,
+} from "./ListPageTemplate"

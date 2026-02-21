@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
-import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
+import { z } from "zod"
 import { sensitiveLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
 import { apiLogger, extractErrorMeta } from "@/lib/logger"
 import { validateCsrf } from "@/lib/csrf"
@@ -14,25 +14,15 @@ import {
   csrfError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { validateBody } from "@/lib/validation"
 import { validateEmail } from "@/lib/validators"
+import { getAdminSupabaseClient } from "@/lib/api-middleware"
 
-// Create admin client with service role key
-function getAdminClient() {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!serviceRoleKey) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for admin operations")
-  }
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceRoleKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  )
-}
+const UpdateUserEmailSchema = z.object({
+  userId: z.string().uuid("Invalid user ID format"),
+  newEmail: z.string().email("Invalid email format"),
+  tenantId: z.string().uuid("Invalid tenant ID format").optional(),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,14 +56,13 @@ export async function POST(request: NextRequest) {
       return unauthorized("Authentication required")
     }
 
-    const { userId, newEmail, tenantId } = await request.json()
+    const body = await request.json()
+    const validation = validateBody(UpdateUserEmailSchema, body)
+    if (!validation.success) return validation.response
+    const { userId, newEmail, tenantId } = validation.data
 
-    if (!userId || !newEmail) {
-      return badRequest("userId and newEmail are required")
-    }
-
-    // SECURITY: Get admin client after auth check
-    const supabaseAdmin = getAdminClient()
+    // SECURITY: Get admin client after auth check (validated env vars)
+    const supabaseAdmin = getAdminSupabaseClient()
 
     // SECURITY: Verify requester has permission to update this user's email
     // Must be either: 1) Platform admin, or 2) Owner of the tenant record

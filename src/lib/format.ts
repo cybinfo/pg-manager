@@ -1,8 +1,13 @@
 /**
  * Formatting Utilities
  *
- * Centralized formatting functions for currency, dates, and other values.
- * Use these throughout the application for consistent display.
+ * Centralized formatting functions for currency, dates, text, and filenames.
+ * Use these throughout the application for consistent display of raw values.
+ *
+ * NOTE: For entity-level display resolution (e.g., resolving a tenant's name
+ * from person.name with fallbacks, or getting avatar URLs from joined data),
+ * see `@/lib/display-helpers` instead. This module handles raw value formatting;
+ * display-helpers handles entity data resolution with fallback chains.
  */
 
 // UTIL-003: Import phone formatter from validators for consolidation

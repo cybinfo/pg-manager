@@ -32,3 +32,10 @@ export * from "./useGroupedByMonth"
 
 // Detail page hooks
 export * from "./useInlineEdit"
+export * from "./useDetailPage"
+export * from "./useEntityMutation"
+// useTableViews re-exports SortConfig and TableViewConfig which conflict with useListPage
+// Export only the hook and unique types
+export { useTableViews } from "./useTableViews"
+export type { TableView, UseTableViewsOptions, UseTableViewsReturn } from "./useTableViews"
+export * from "./useSidebarOrder"

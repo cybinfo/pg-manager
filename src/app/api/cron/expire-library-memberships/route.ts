@@ -54,6 +54,30 @@ export async function GET(request: Request) {
     let membersUpdated = 0
     const errors: { membership_id: string; error: string }[] = []
 
+    // Batch query: find which members have other active memberships (not in the expired set)
+    // This eliminates N+1 queries inside the loop
+    const expiredIds = (expiredMemberships || []).map((m: { id: string }) => m.id)
+    const memberIdsFromExpired = (expiredMemberships || []).map((m: { member_id: string }) => m.member_id)
+
+    let membersWithOtherActiveMap = new Map<string, string>() // member_id -> first other active membership id
+    if (memberIdsFromExpired.length > 0) {
+      const { data: otherActiveMemberships } = await supabaseAdmin
+        .from("library_memberships")
+        .select("id, member_id")
+        .in("member_id", memberIdsFromExpired)
+        .eq("status", "active")
+        .not("id", "in", `(${expiredIds.join(",")})`)
+
+      if (otherActiveMemberships) {
+        for (const m of otherActiveMemberships) {
+          // Store the first active membership id per member (for switching current subscription)
+          if (!membersWithOtherActiveMap.has(m.member_id)) {
+            membersWithOtherActiveMap.set(m.member_id, m.id)
+          }
+        }
+      }
+    }
+
     // Process each expired membership
     for (const membership of expiredMemberships || []) {
       try {
@@ -83,16 +107,10 @@ export async function GET(request: Request) {
 
         // If this was the member's current subscription, update member status
         if (member && member.current_subscription_id === membership.id) {
-          // Check if member has another active membership
-          const { data: otherActiveMemberships } = await supabaseAdmin
-            .from("library_memberships")
-            .select("id")
-            .eq("member_id", membership.member_id)
-            .eq("status", "active")
-            .neq("id", membership.id)
-            .limit(1)
+          // Use batched result instead of individual query
+          const otherActiveMembershipId = membersWithOtherActiveMap.get(membership.member_id)
 
-          if (!otherActiveMemberships || otherActiveMemberships.length === 0) {
+          if (!otherActiveMembershipId) {
             // No other active memberships - expire the member
             const { error: memberUpdateError } = await supabaseAdmin
               .from("library_members")
@@ -138,18 +156,17 @@ export async function GET(request: Request) {
             }
           } else {
             // Set the next active membership as current
-            const nextMembership = otherActiveMemberships[0]
             await supabaseAdmin
               .from("library_members")
               .update({
-                current_subscription_id: nextMembership.id,
+                current_subscription_id: otherActiveMembershipId,
                 updated_at: new Date().toISOString(),
               })
               .eq("id", membership.member_id)
 
             cronLogger.debug("Switched to next active membership", {
               memberId: membership.member_id,
-              newMembershipId: nextMembership.id,
+              newMembershipId: otherActiveMembershipId,
             })
           }
         }
@@ -176,16 +193,22 @@ export async function GET(request: Request) {
     if (!staleMemberError && staleMembers && staleMembers.length > 0) {
       cronLogger.info("Found stale active members", { count: staleMembers.length })
 
-      for (const member of staleMembers) {
-        // Check if they have any active memberships
-        const { data: activeMemberships } = await supabaseAdmin
-          .from("library_memberships")
-          .select("id")
-          .eq("member_id", member.id)
-          .eq("status", "active")
-          .limit(1)
+      // Batch query: find which stale members have any active memberships
+      // This eliminates N+1 queries inside the loop
+      const staleMemberIds = staleMembers.map((m: { id: string }) => m.id)
+      const { data: staleMembersWithActive } = await supabaseAdmin
+        .from("library_memberships")
+        .select("member_id")
+        .in("member_id", staleMemberIds)
+        .eq("status", "active")
 
-        if (!activeMemberships || activeMemberships.length === 0) {
+      const staleMembersWithActiveSet = new Set(
+        staleMembersWithActive?.map((m: { member_id: string }) => m.member_id) || []
+      )
+
+      for (const member of staleMembers) {
+        // Use batched result instead of individual query
+        if (!staleMembersWithActiveSet.has(member.id)) {
           const { error: updateError } = await supabaseAdmin
             .from("library_members")
             .update({

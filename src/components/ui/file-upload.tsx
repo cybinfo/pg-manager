@@ -193,6 +193,16 @@ export function FileUpload({
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
+        role="button"
+        aria-label={`Upload file${multiple ? 's' : ''}`}
+        aria-describedby="file-upload-helper-text"
+        tabIndex={disabled ? -1 : 0}
+        onKeyDown={(e) => {
+          if ((e.key === "Enter" || e.key === " ") && !disabled && !uploading) {
+            e.preventDefault()
+            inputRef.current?.click()
+          }
+        }}
         className={cn(
           "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
           dragOver && !disabled
@@ -232,8 +242,8 @@ export function FileUpload({
             >
               Browse Files
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Max {maxSize}MB per file
+            <p id="file-upload-helper-text" className="text-xs text-muted-foreground">
+              {accept === "image/*" ? "Accepted: images" : `Accepted: ${accept}`}. Max {maxSize}MB per file
             </p>
           </div>
         )}

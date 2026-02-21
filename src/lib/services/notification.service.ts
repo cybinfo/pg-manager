@@ -16,6 +16,9 @@ import {
   createServiceError,
   ERROR_CODES,
 } from "./types"
+import { logger, extractErrorMeta } from "@/lib/logger"
+
+const notificationLogger = logger.child("notification")
 
 // ============================================
 // Notification Templates
@@ -119,6 +122,7 @@ export async function sendNotification(payload: NotificationPayload): Promise<Se
   try {
     const template = NOTIFICATION_TEMPLATES[payload.type](payload.data)
     const results: string[] = []
+    const failedChannels: string[] = []
 
     // Queue notifications for each channel
     for (const channel of payload.channels) {
@@ -128,17 +132,38 @@ export async function sendNotification(payload: NotificationPayload): Promise<Se
       })
       if (result.success && result.data) {
         results.push(result.data)
+      } else {
+        failedChannels.push(channel)
       }
     }
 
     // Create in-app notification record
     if (payload.channels.includes("in_app")) {
-      await createInAppNotification(payload, template)
+      const inAppResult = await createInAppNotification(payload, template)
+      if (!inAppResult.success) {
+        failedChannels.push("in_app_record")
+      }
+    }
+
+    // If all channels failed, return error
+    if (results.length === 0 && failedChannels.length > 0) {
+      return createErrorResult(
+        createServiceError(
+          ERROR_CODES.UNKNOWN_ERROR,
+          "All notification channels failed",
+          { failedChannels, type: payload.type }
+        )
+      )
+    }
+
+    // If some channels failed, return success with partial failure info in the data
+    if (failedChannels.length > 0) {
+      notificationLogger.warn("Some notification channels failed", { failedChannels, type: payload.type })
     }
 
     return createSuccessResult(results.join(","))
   } catch (err) {
-    console.error("[NotificationService] Exception sending notification:", err)
+    notificationLogger.error("Exception sending notification", extractErrorMeta(err))
     return createErrorResult(
       createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Exception sending notification", undefined, err)
     )
@@ -178,16 +203,18 @@ async function queueNotification(
       .single()
 
     if (error) {
-      // If notification_queue table doesn't exist, log and continue
-      // This allows graceful degradation
-      console.warn("[NotificationService] Queue insert failed (table may not exist):", error.message)
-      return createSuccessResult("queued-fallback")
+      notificationLogger.warn("Queue insert failed", { channel, errorMessage: error.message })
+      return createErrorResult(
+        createServiceError(ERROR_CODES.UNKNOWN_ERROR, `Queue insert failed for channel ${channel}`, { errorMessage: error.message })
+      )
     }
 
     return createSuccessResult(data.id)
   } catch (err) {
-    console.warn("[NotificationService] Queue exception:", err)
-    return createSuccessResult("queued-fallback")
+    notificationLogger.error("Queue exception", { channel, ...extractErrorMeta(err) })
+    return createErrorResult(
+      createServiceError(ERROR_CODES.UNKNOWN_ERROR, `Queue exception for channel ${channel}`, undefined, err)
+    )
   }
 }
 
@@ -218,14 +245,18 @@ async function createInAppNotification(
       .single()
 
     if (error) {
-      console.warn("[NotificationService] In-app notification failed:", error.message)
-      return createSuccessResult("inapp-fallback")
+      notificationLogger.warn("In-app notification failed", { errorMessage: error.message })
+      return createErrorResult(
+        createServiceError(ERROR_CODES.UNKNOWN_ERROR, "In-app notification insert failed", { errorMessage: error.message })
+      )
     }
 
     return createSuccessResult(data.id)
   } catch (err) {
-    console.warn("[NotificationService] In-app exception:", err)
-    return createSuccessResult("inapp-fallback")
+    notificationLogger.error("In-app exception", extractErrorMeta(err))
+    return createErrorResult(
+      createServiceError(ERROR_CODES.UNKNOWN_ERROR, "In-app notification exception", undefined, err)
+    )
   }
 }
 
@@ -235,12 +266,36 @@ async function createInAppNotification(
 
 export async function sendNotifications(payloads: NotificationPayload[]): Promise<ServiceResult<string[]>> {
   const results: string[] = []
+  const failures: { type: string; error?: string }[] = []
 
   for (const payload of payloads) {
     const result = await sendNotification(payload)
     if (result.success && result.data) {
       results.push(result.data)
+    } else {
+      failures.push({ type: payload.type, error: result.error?.message })
     }
+  }
+
+  // If all notifications failed, return error
+  if (results.length === 0 && failures.length > 0) {
+    notificationLogger.error("All batch notifications failed", { failureCount: failures.length, failures })
+    return createErrorResult(
+      createServiceError(
+        ERROR_CODES.UNKNOWN_ERROR,
+        `All ${failures.length} notification(s) failed to send`,
+        { failures }
+      )
+    )
+  }
+
+  // If some notifications failed, log warning but return success with sent results
+  if (failures.length > 0) {
+    notificationLogger.warn("Some batch notifications failed", {
+      sentCount: results.length,
+      failureCount: failures.length,
+      failures,
+    })
   }
 
   return createSuccessResult(results)

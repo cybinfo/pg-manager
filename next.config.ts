@@ -31,12 +31,15 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=(self), interest-cohort=()",
   },
   {
-    // Content Security Policy - allows inline scripts/styles for Next.js compatibility
-    // Customize based on your CDN, analytics, and third-party needs
+    // Content Security Policy
+    // Note: 'unsafe-inline' is required in script-src for Next.js hydration scripts.
+    // 'unsafe-eval' has been removed as it is NOT needed by Next.js in production
+    // and significantly weakens XSS protection by allowing eval()/Function() calls.
+    // 'unsafe-inline' in style-src is needed for CSS-in-JS and Tailwind.
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",

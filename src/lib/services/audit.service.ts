@@ -16,6 +16,9 @@ import {
   createServiceError,
   ERROR_CODES,
 } from "./types"
+import { logger, extractErrorMeta } from "@/lib/logger"
+
+const auditLogger = logger.child("audit")
 
 // ============================================
 // Audit Event Creation
@@ -44,7 +47,7 @@ export async function logAuditEvent(event: AuditEvent): Promise<ServiceResult<st
       .single()
 
     if (error) {
-      console.error("[AuditService] Failed to log audit event:", error)
+      auditLogger.error("Failed to log audit event", extractErrorMeta(error))
       return createErrorResult(
         createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Failed to log audit event", { error })
       )
@@ -52,7 +55,7 @@ export async function logAuditEvent(event: AuditEvent): Promise<ServiceResult<st
 
     return createSuccessResult(data.id)
   } catch (err) {
-    console.error("[AuditService] Exception logging audit event:", err)
+    auditLogger.error("Exception logging audit event", extractErrorMeta(err))
     return createErrorResult(
       createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Exception logging audit event", undefined, err)
     )
@@ -91,7 +94,7 @@ export async function logAuditEvents(events: AuditEvent[]): Promise<ServiceResul
       .select("id")
 
     if (error) {
-      console.error("[AuditService] Failed to log batch audit events:", error)
+      auditLogger.error("Failed to log batch audit events", extractErrorMeta(error))
       return createErrorResult(
         createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Failed to log batch audit events", { error })
       )
@@ -99,7 +102,7 @@ export async function logAuditEvents(events: AuditEvent[]): Promise<ServiceResul
 
     return createSuccessResult(data.map((d: { id: string }) => d.id))
   } catch (err) {
-    console.error("[AuditService] Exception logging batch audit events:", err)
+    auditLogger.error("Exception logging batch audit events", extractErrorMeta(err))
     return createErrorResult(
       createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Exception logging batch audit events", undefined, err)
     )
@@ -237,7 +240,7 @@ export async function queryAuditEvents(options: AuditQueryOptions): Promise<Serv
     const { data, error } = await query
 
     if (error) {
-      console.error("[AuditService] Failed to query audit events:", error)
+      auditLogger.error("Failed to query audit events", extractErrorMeta(error))
       return createErrorResult(
         createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Failed to query audit events", { error })
       )
@@ -245,7 +248,7 @@ export async function queryAuditEvents(options: AuditQueryOptions): Promise<Serv
 
     return createSuccessResult(data as AuditEvent[])
   } catch (err) {
-    console.error("[AuditService] Exception querying audit events:", err)
+    auditLogger.error("Exception querying audit events", extractErrorMeta(err))
     return createErrorResult(
       createServiceError(ERROR_CODES.UNKNOWN_ERROR, "Exception querying audit events", undefined, err)
     )

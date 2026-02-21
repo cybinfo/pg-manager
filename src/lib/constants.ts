@@ -20,6 +20,13 @@ export const ONE_HOUR_MS = 60 * 60 * 1000
 export const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 // ============================================
+// System Actor Constants
+// ============================================
+
+/** UUID used as actor_id for system/cron operations (no real user context) */
+export const SYSTEM_ACTOR_ID = "00000000-0000-0000-0000-000000000000"
+
+// ============================================
 // Auth & Session Constants
 // ============================================
 

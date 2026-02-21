@@ -235,28 +235,9 @@ export function DetailSection({
 }
 
 // ============================================
-// Info Row - Key-value row for detail sections
+// Info Row - Re-exported from ./info-row
 // ============================================
-interface InfoRowProps {
-  label: string
-  value: React.ReactNode
-  icon?: LucideIcon
-  className?: string
-}
-
-export function InfoRow({ label, value, icon: Icon, className }: InfoRowProps) {
-  return (
-    <div className={cn("flex items-start justify-between py-2.5 border-b border-dashed last:border-0", className)}>
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        {Icon && <Icon className="h-4 w-4" />}
-        {label}
-      </div>
-      <div className="text-sm font-medium text-right">
-        {value || <span className="text-muted-foreground">-</span>}
-      </div>
-    </div>
-  )
-}
+export { InfoRow } from "./info-row"
 
 // ============================================
 // Action Menu - Dropdown menu for actions
@@ -277,6 +258,20 @@ interface ActionMenuProps {
 
 export function ActionMenu({ items, className }: ActionMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement>(null)
+
+  // Handle Escape key to close the menu
+  React.useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen])
 
   return (
     <div className={cn("relative", className)}>
@@ -284,6 +279,8 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
         <MoreVertical className="h-4 w-4" />
       </Button>
@@ -294,7 +291,7 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-full mt-1 w-48 bg-white border rounded-lg shadow-lg z-20 py-1 animate-fade-in">
+          <div ref={menuRef} role="menu" className="absolute right-0 top-full mt-1 w-48 bg-white border rounded-lg shadow-lg z-20 py-1 animate-fade-in">
             {items.map((item, index) => {
               const Icon = item.icon
               const content = (
@@ -309,6 +306,7 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
                   <Link
                     key={index}
                     href={item.href}
+                    role="menuitem"
                     className={cn(
                       "block px-3 py-2 text-sm hover:bg-slate-50 transition-colors",
                       item.variant === "danger" && "text-rose-600 hover:bg-rose-50",
@@ -324,6 +322,7 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
               return (
                 <button
                   key={index}
+                  role="menuitem"
                   onClick={() => {
                     item.onClick?.()
                     setIsOpen(false)

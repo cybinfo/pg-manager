@@ -24,6 +24,7 @@ import {
 import { buildPaymentNotification } from "@/lib/services/notification.service"
 import { createAuditEvent } from "@/lib/services/audit.service"
 import { formatCurrency } from "@/lib/format"
+import { softDelete } from "@/lib/audit"
 
 // ============================================
 // Types
@@ -195,10 +196,9 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
         return createSuccessResult(payment)
       },
       rollback: async (context, input, stepResult) => {
-        const supabase = createClient()
         const payment = stepResult as Record<string, unknown>
         if (payment?.id) {
-          await supabase.from("payments").delete().eq("id", payment.id)
+          await softDelete("payments", payment.id as string, context.actor_id || "system")
         }
       },
     },

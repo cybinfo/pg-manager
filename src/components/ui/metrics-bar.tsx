@@ -111,6 +111,8 @@ export function MetricsBarCompact({ items, className }: MetricsBarProps) {
         "flex flex-wrap items-center gap-4 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-lg border",
         className
       )}
+      role="group"
+      aria-label="Key metrics"
     >
       {items.map((item, index) => (
         <div
@@ -119,6 +121,7 @@ export function MetricsBarCompact({ items, className }: MetricsBarProps) {
             "flex items-center gap-2",
             index !== items.length - 1 && "pr-4 border-r"
           )}
+          aria-label={`${item.label}: ${item.value}`}
         >
           <span className="text-xs text-muted-foreground">{item.label}:</span>
           <span className={cn(

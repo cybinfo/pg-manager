@@ -25,6 +25,27 @@ import {
 } from "./types"
 import { logAuditEvent, logAuditEvents, createAuditEvent } from "./audit.service"
 import { sendNotification, sendNotifications } from "./notification.service"
+import { workflowLogger, extractErrorMeta } from "@/lib/logger"
+import { softDelete } from "@/lib/audit"
+import type { SoftDeletableTable } from "@/types/audit.types"
+
+/**
+ * Set of table names that support soft delete.
+ * Used in cascade effects to determine whether to soft-delete or hard-delete.
+ * Must stay in sync with the SoftDeletableTable type in audit.types.ts.
+ */
+const SOFT_DELETABLE_TABLES: ReadonlySet<string> = new Set<string>([
+  "tenants", "bills", "payments", "expenses", "refunds",
+  "complaints", "notices", "visitors", "meter_readings",
+  "exit_clearance", "properties", "rooms", "people",
+  "meters", "staff_members", "visitor_contacts",
+  "products", "daily_spend", "vendors", "bill_payments",
+  "service_providers", "service_payments",
+  "misc_transactions", "misc_transaction_categories",
+  "libraries", "library_sections", "library_seats",
+  "library_members", "library_memberships", "library_attendance",
+  "library_lockers", "library_locker_assignments", "library_payments",
+])
 
 // ============================================
 // Workflow Context Management
@@ -139,7 +160,7 @@ async function checkIdempotency(
 
     if (error) {
       // If RPC doesn't exist, fall back gracefully (no idempotency check)
-      console.warn('[Workflow] Idempotency check failed (RPC may not exist):', error.message)
+      workflowLogger.warn("Idempotency check failed (RPC may not exist)", { errorMessage: error.message })
       return { isDuplicate: false, cachedResult: null }
     }
 
@@ -150,7 +171,7 @@ async function checkIdempotency(
 
     return { isDuplicate: false, cachedResult: null }
   } catch (err) {
-    console.warn('[Workflow] Idempotency check error:', err)
+    workflowLogger.warn("Idempotency check error", extractErrorMeta(err))
     return { isDuplicate: false, cachedResult: null }
   }
 }
@@ -175,7 +196,7 @@ async function storeIdempotencyResult(
     })
   } catch (err) {
     // Non-fatal - just log and continue
-    console.warn('[Workflow] Failed to store idempotency result:', err)
+    workflowLogger.warn("Failed to store idempotency result", extractErrorMeta(err))
   }
 }
 
@@ -196,7 +217,7 @@ export async function executeWorkflow<TInput, TOutput>(
   if (options?.idempotency_key) {
     const { isDuplicate, cachedResult } = await checkIdempotency(options.idempotency_key, actorId)
     if (isDuplicate && cachedResult) {
-      console.log(`[Workflow] Returning cached result for idempotency key: ${options.idempotency_key}`)
+      workflowLogger.info("Returning cached result for idempotency key", { idempotencyKey: options.idempotency_key })
       return cachedResult as WorkflowResult<TOutput>
     }
   }
@@ -217,7 +238,7 @@ export async function executeWorkflow<TInput, TOutput>(
   let auditEventIds: string[] = []
   let notificationIds: string[] = []
 
-  console.log(`[Workflow] Starting: ${definition.name} (${context.workflow_id})`)
+  workflowLogger.info("Starting workflow", { name: definition.name, workflowId: context.workflow_id })
 
   // Execute each step
   for (const stepDef of definition.steps) {
@@ -233,14 +254,14 @@ export async function executeWorkflow<TInput, TOutput>(
         errors.push(stepResult.error!)
 
         // Rollback completed steps
-        console.log(`[Workflow] Step "${stepDef.name}" failed, rolling back...`)
+        workflowLogger.info("Step failed, rolling back", { step: stepDef.name })
         for (const completed of completedSteps.reverse()) {
           if (completed.step.rollback) {
             try {
               await completed.step.rollback(context, input, completed.result)
-              console.log(`[Workflow] Rolled back step: ${completed.step.name}`)
+              workflowLogger.info("Rolled back step", { step: completed.step.name })
             } catch (rollbackErr) {
-              console.error(`[Workflow] Rollback failed for ${completed.step.name}:`, rollbackErr)
+              workflowLogger.error("Rollback failed", { step: completed.step.name, ...extractErrorMeta(rollbackErr) })
             }
           }
         }
@@ -254,7 +275,7 @@ export async function executeWorkflow<TInput, TOutput>(
         }
       } else {
         // BL-004: Track failed optional steps instead of silently continuing
-        console.warn(`[Workflow] Optional step "${stepDef.name}" failed:`, stepResult.error)
+        workflowLogger.warn("Optional step failed", { step: stepDef.name, error: stepResult.error })
         failedOptionalSteps.push({
           step_name: stepDef.name,
           error: stepResult.error!,
@@ -306,7 +327,7 @@ export async function executeWorkflow<TInput, TOutput>(
       }
     )
     await logAuditEvent(failedStepsAudit)
-    console.warn(`[Workflow] ${failedOptionalSteps.length} optional step(s) failed in ${definition.name}`)
+    workflowLogger.warn("Optional steps failed", { count: failedOptionalSteps.length, workflow: definition.name })
   }
 
   // Send notifications
@@ -320,7 +341,7 @@ export async function executeWorkflow<TInput, TOutput>(
     }
   }
 
-  console.log(`[Workflow] Completed: ${definition.name} (${context.workflow_id})`)
+  workflowLogger.info("Completed workflow", { name: definition.name, workflowId: context.workflow_id })
 
   const result: WorkflowResult<TOutput> = {
     success: true,
@@ -344,7 +365,7 @@ export async function executeWorkflow<TInput, TOutput>(
       result,
       actorId,
       workspaceId
-    ).catch(err => console.warn('[Workflow] Idempotency store failed:', err))
+    ).catch(err => workflowLogger.warn("Idempotency store failed", extractErrorMeta(err)))
   }
 
   return result
@@ -373,18 +394,26 @@ async function applyCascadeEffect(effect: CascadeEffect): Promise<void> {
           .eq("id", effect.entity_id)
         break
 
-      case "delete":
-        await supabase
-          .from(entityTypeToTable(effect.entity_type))
-          .delete()
-          .eq("id", effect.entity_id)
+      case "delete": {
+        const tableName = entityTypeToTable(effect.entity_type)
+        if (SOFT_DELETABLE_TABLES.has(tableName)) {
+          // Use soft delete for auditable tables
+          await softDelete(tableName as SoftDeletableTable, effect.entity_id, "system")
+        } else {
+          // Hard delete only for non-auditable tables
+          await supabase
+            .from(tableName)
+            .delete()
+            .eq("id", effect.entity_id)
+        }
         break
+      }
 
       default:
-        console.log(`[Workflow] Cascade action "${effect.action}" not implemented`)
+        workflowLogger.info("Cascade action not implemented", { action: effect.action })
     }
   } catch (err) {
-    console.error(`[Workflow] Cascade effect failed:`, err)
+    workflowLogger.error("Cascade effect failed", extractErrorMeta(err))
   }
 }
 

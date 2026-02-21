@@ -2,6 +2,7 @@ import { validateCronRequest } from "@/lib/api-middleware"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { apiSuccess, internalError } from "@/lib/api-response"
+import { SYSTEM_ACTOR_ID } from "@/lib/constants"
 
 interface AutoBillingSettings {
   enabled: boolean
@@ -188,7 +189,6 @@ export async function GET(request: Request) {
           })
 
           // Create bill
-          // Note: created_by is null for system-generated bills (cron job)
           const { error: billError } = await supabaseAdmin.from("bills").insert({
             owner_id: ownerId,
             tenant_id: tenant.id,
@@ -207,7 +207,7 @@ export async function GET(request: Request) {
             line_items: lineItems,
             is_auto_generated: true,
             generated_at: new Date().toISOString(),
-            created_by: null, // System-generated bill (no user context in cron)
+            created_by: SYSTEM_ACTOR_ID,
           })
 
           if (billError) {

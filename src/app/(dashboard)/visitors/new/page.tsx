@@ -13,26 +13,12 @@ import {
   ArrowLeft,
   UserPlus,
   Loader2,
-  Users,
   Building2,
-  Moon,
-  IndianRupee,
-  Calendar,
-  FileText,
-  Briefcase,
   Search,
-  User,
-  Wrench,
-  Phone,
-  Car,
-  CreditCard,
-  MessageSquare,
   Star,
-  Clock,
   X,
-  Check,
-  AlertCircle,
-  UserCheck,
+  Car,
+  MessageSquare,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PageLoader } from "@/components/ui/page-loader"
@@ -41,15 +27,14 @@ import { PersonSearchResult } from "@/types/people.types"
 import {
   VisitorType,
   VisitorContactSearchResult,
-  VISITOR_TYPE_LABELS,
-  VISITOR_TYPE_DESCRIPTIONS,
-  SERVICE_TYPES,
-  ID_TYPES,
-  VISITOR_RELATIONS,
   EnquirySource,
-  ENQUIRY_SOURCE_LABELS,
 } from "@/types/visitors.types"
-import { formatDate } from "@/lib/format"
+
+import {
+  VisitorTypeSelector,
+  VisitorTypeFields,
+  OvernightStaySection,
+} from "./_components"
 
 interface Property {
   id: string
@@ -80,18 +65,18 @@ interface RawTenant {
   room: { room_number: string }[] | null
 }
 
-const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
-  tenant_visitor: <Users className="h-5 w-5" />,
-  enquiry: <Search className="h-5 w-5" />,
-  service_provider: <Wrench className="h-5 w-5" />,
-  general: <User className="h-5 w-5" />,
-}
-
 const VISITOR_TYPE_COLORS: Record<VisitorType, string> = {
   tenant_visitor: "bg-blue-100 text-blue-700 border-blue-300",
   enquiry: "bg-purple-100 text-purple-700 border-purple-300",
   service_provider: "bg-orange-100 text-orange-700 border-orange-300",
   general: "bg-slate-100 text-slate-700 border-slate-300",
+}
+
+const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
+  tenant_visitor: <span />,
+  enquiry: <span />,
+  service_provider: <span />,
+  general: <span />,
 }
 
 export default function NewVisitorPage() {
@@ -678,8 +663,6 @@ export default function NewVisitorPage() {
               </div>
             )}
 
-            {/* Person info is now shown in PersonSelector with showDetailedInfo */}
-
             {/* Legacy contact display (if selected via old method) */}
             {selectedContact && !selectedPerson && (
               <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-green-200">
@@ -710,48 +693,11 @@ export default function NewVisitorPage() {
         </Card>
 
         {/* Visitor Type Selection */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Visitor Type</CardTitle>
-                <CardDescription>Select the type of visitor</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              {(Object.keys(VISITOR_TYPE_LABELS) as VisitorType[]).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => handleVisitorTypeChange(type)}
-                  disabled={!!selectedContact && selectedContact.visitor_type !== type}
-                  className={`p-4 rounded-lg border-2 transition-all text-left ${
-                    formData.visitor_type === type
-                      ? VISITOR_TYPE_COLORS[type] + " border-current"
-                      : "border-gray-200 hover:border-gray-300"
-                  } ${selectedContact && selectedContact.visitor_type !== type ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      formData.visitor_type === type ? "bg-white/50" : "bg-gray-100"
-                    }`}>
-                      {VISITOR_TYPE_ICONS[type]}
-                    </div>
-                    <div>
-                      <div className="font-medium">{VISITOR_TYPE_LABELS[type]}</div>
-                      <div className="text-xs opacity-75">{VISITOR_TYPE_DESCRIPTIONS[type]}</div>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <VisitorTypeSelector
+          selectedType={formData.visitor_type}
+          onTypeChange={handleVisitorTypeChange}
+          selectedContact={selectedContact}
+        />
 
         {/* Property Selection */}
         <Card>
@@ -842,258 +788,17 @@ export default function NewVisitorPage() {
           </CardContent>
         </Card>
 
-        {/* Tenant Selection - Only for tenant_visitor */}
-        {formData.visitor_type === "tenant_visitor" && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <CardTitle>Visiting Tenant</CardTitle>
-                  <CardDescription>Who is this visitor here to see?</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="tenant_id">Tenant *</Label>
-                <select
-                  id="tenant_id"
-                  name="tenant_id"
-                  value={formData.tenant_id}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  required
-                  disabled={loading || filteredTenants.length === 0}
-                >
-                  {filteredTenants.length === 0 ? (
-                    <option value="">No tenants in this property</option>
-                  ) : (
-                    filteredTenants.map((tenant) => (
-                      <option key={tenant.id} value={tenant.id}>
-                        {tenant.name} (Room {tenant.room?.room_number})
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="relation">Relation</Label>
-                <select
-                  id="relation"
-                  name="relation"
-                  value={formData.relation}
-                  onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  disabled={loading}
-                >
-                  <option value="">Select relation</option>
-                  {VISITOR_RELATIONS.map((rel) => (
-                    <option key={rel} value={rel}>{rel}</option>
-                  ))}
-                </select>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Service Provider Fields */}
-        {formData.visitor_type === "service_provider" && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Wrench className="h-5 w-5 text-orange-600" />
-                </div>
-                <div>
-                  <CardTitle>Service Details</CardTitle>
-                  <CardDescription>
-                    Service info from People module (or enter manually if needed)
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Show service info from person if available */}
-              {selectedPerson && (selectedPerson.occupation || selectedPerson.company_name) && (
-                <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <div className="text-sm text-orange-700">
-                    <strong>From People:</strong>{" "}
-                    {selectedPerson.occupation && <span>{selectedPerson.occupation}</span>}
-                    {selectedPerson.company_name && <span> at {selectedPerson.company_name}</span>}
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="service_type">
-                    Service Type {!selectedPerson?.occupation && "*"}
-                  </Label>
-                  <select
-                    id="service_type"
-                    name="service_type"
-                    value={formData.service_type}
-                    onChange={handleChange}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    disabled={loading || !!selectedPerson?.occupation}
-                  >
-                    <option value="">
-                      {selectedPerson?.occupation || "Select service type"}
-                    </option>
-                    {!selectedPerson?.occupation && SERVICE_TYPES.map((type) => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                  {selectedPerson?.occupation && (
-                    <p className="text-xs text-muted-foreground">
-                      Using occupation from People module
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="company_name">
-                    <Briefcase className="h-4 w-4 inline mr-1" />
-                    Company Name
-                  </Label>
-                  <Input
-                    id="company_name"
-                    name="company_name"
-                    placeholder={selectedPerson?.company_name || "e.g., XYZ Services"}
-                    value={selectedPerson?.company_name || formData.company_name}
-                    onChange={handleChange}
-                    disabled={loading || !!selectedPerson?.company_name}
-                  />
-                  {selectedPerson?.company_name && (
-                    <p className="text-xs text-muted-foreground">
-                      Using company from People module
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Enquiry Fields */}
-        {formData.visitor_type === "enquiry" && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Search className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <CardTitle>Enquiry Details</CardTitle>
-                  <CardDescription>Information about the prospective tenant</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="enquiry_source">How did they find you?</Label>
-                  <select
-                    id="enquiry_source"
-                    name="enquiry_source"
-                    value={formData.enquiry_source}
-                    onChange={handleChange}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    disabled={loading}
-                  >
-                    <option value="">Select source</option>
-                    {(Object.keys(ENQUIRY_SOURCE_LABELS) as EnquirySource[]).map((source) => (
-                      <option key={source} value={source}>{ENQUIRY_SOURCE_LABELS[source]}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="follow_up_date">
-                    <Calendar className="h-4 w-4 inline mr-1" />
-                    Follow-up Date
-                  </Label>
-                  <Input
-                    id="follow_up_date"
-                    name="follow_up_date"
-                    type="date"
-                    value={formData.follow_up_date}
-                    onChange={handleChange}
-                    disabled={loading}
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
-              </div>
-
-              {filteredRooms.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Rooms Interested In</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {filteredRooms.map((room) => (
-                      <button
-                        key={room.id}
-                        type="button"
-                        onClick={() => handleRoomsInterestedChange(room.id)}
-                        className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
-                          formData.rooms_interested.includes(room.id)
-                            ? "bg-purple-100 text-purple-700 border-purple-300"
-                            : "bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        Room {room.room_number}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* General Visitor Fields */}
-        {formData.visitor_type === "general" && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg">
-                  <User className="h-5 w-5 text-slate-600" />
-                </div>
-                <div>
-                  <CardTitle>Visit Details</CardTitle>
-                  <CardDescription>Additional information about the visit</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="host_name">Meeting With (Host Name)</Label>
-                  <Input
-                    id="host_name"
-                    name="host_name"
-                    placeholder="e.g., Manager's name"
-                    value={formData.host_name}
-                    onChange={handleChange}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    name="department"
-                    placeholder="e.g., Administration"
-                    value={formData.department}
-                    onChange={handleChange}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Visitor Type-Specific Fields */}
+        <VisitorTypeFields
+          visitorType={formData.visitor_type}
+          formData={formData}
+          onChange={handleChange}
+          onRoomsInterestedChange={handleRoomsInterestedChange}
+          filteredTenants={filteredTenants}
+          filteredRooms={filteredRooms}
+          selectedPerson={selectedPerson}
+          loading={loading}
+        />
 
         {/* Notes - Available for all types */}
         <Card>
@@ -1123,133 +828,12 @@ export default function NewVisitorPage() {
 
         {/* Overnight Stay - For tenant_visitor and general */}
         {(formData.visitor_type === "tenant_visitor" || formData.visitor_type === "general") && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Moon className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <CardTitle>Overnight Stay</CardTitle>
-                  <CardDescription>Is this visitor staying overnight?</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2">
-                <input
-                  id="is_overnight"
-                  name="is_overnight"
-                  type="checkbox"
-                  checked={formData.is_overnight}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="is_overnight" className="font-normal cursor-pointer">
-                  This is an overnight stay
-                </Label>
-              </div>
-
-              {formData.is_overnight && (
-                <div className="space-y-4 pt-2 border-t">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="num_nights">Number of Nights *</Label>
-                      <Input
-                        id="num_nights"
-                        name="num_nights"
-                        type="number"
-                        min="1"
-                        max="365"
-                        value={formData.num_nights}
-                        onChange={handleChange}
-                        disabled={loading}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="charge_per_night">Charge per Night</Label>
-                      <div className="relative">
-                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="charge_per_night"
-                          name="charge_per_night"
-                          type="number"
-                          min="0"
-                          placeholder="e.g., 200"
-                          value={formData.charge_per_night}
-                          onChange={handleChange}
-                          disabled={loading}
-                          className="pl-9"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="expected_checkout_date">Expected Checkout Date</Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="expected_checkout_date"
-                        name="expected_checkout_date"
-                        type="date"
-                        value={formData.expected_checkout_date}
-                        onChange={handleChange}
-                        disabled={loading}
-                        className="pl-9"
-                        min={new Date().toISOString().split("T")[0]}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Auto-calculated if not specified based on number of nights
-                    </p>
-                  </div>
-
-                  {totalCharge > 0 && formData.visitor_type === "tenant_visitor" && formData.tenant_id && (
-                    <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm text-muted-foreground">Total Charge</span>
-                        <span className="text-xl font-bold text-purple-600">
-                          ₹{totalCharge.toLocaleString("en-IN")}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        {formData.num_nights} night{parseInt(formData.num_nights) > 1 ? "s" : ""} × ₹{parseFloat(formData.charge_per_night).toLocaleString("en-IN")}/night
-                      </p>
-
-                      <div className="pt-3 border-t border-purple-200">
-                        <div className="flex items-center gap-2">
-                          <input
-                            id="create_bill"
-                            name="create_bill"
-                            type="checkbox"
-                            checked={formData.create_bill}
-                            onChange={handleChange}
-                            disabled={loading}
-                            className="h-4 w-4 rounded border-gray-300"
-                          />
-                          <Label htmlFor="create_bill" className="font-normal cursor-pointer flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-purple-600" />
-                            Create bill for tenant
-                          </Label>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 ml-6">
-                          Bill will be created for the visiting tenant with visitor stay charges
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {!formData.charge_per_night && (
-                    <p className="text-xs text-muted-foreground">
-                      Leave charge empty if no fee for overnight stays
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <OvernightStaySection
+            formData={formData}
+            totalCharge={totalCharge}
+            onChange={handleChange}
+            loading={loading}
+          />
         )}
 
         <div className="flex justify-end gap-4">
