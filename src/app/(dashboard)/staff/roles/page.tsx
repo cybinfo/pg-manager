@@ -16,6 +16,7 @@ import {
   Lock
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 interface Role {
   id: string
@@ -46,6 +47,7 @@ const permissionGroups = {
 }
 
 export default function RolesPage() {
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [roles, setRoles] = useState<Role[]>([])
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -89,7 +91,7 @@ export default function RolesPage() {
     setLoading(false)
   }
 
-  const handleDelete = async (role: Role) => {
+  const handleDelete = (role: Role) => {
     if (role.is_system_role) {
       showError("Cannot delete system roles")
       return
@@ -100,26 +102,29 @@ export default function RolesPage() {
       return
     }
 
-    if (!confirm(`Are you sure you want to delete the "${role.name}" role?`)) {
-      return
-    }
+    confirm({
+      title: "Delete Role",
+      description: `Are you sure you want to delete the "${role.name}" role?`,
+      destructive: true,
+      onConfirm: async () => {
+        setDeleting(role.id)
+        const supabase = createClient()
 
-    setDeleting(role.id)
-    const supabase = createClient()
+        const { error } = await supabase
+          .from("roles")
+          .delete()
+          .eq("id", role.id)
 
-    const { error } = await supabase
-      .from("roles")
-      .delete()
-      .eq("id", role.id)
+        if (error) {
+          showError("Failed to delete role")
+        } else {
+          showSuccess("Role deleted")
+          setRoles(roles.filter((r) => r.id !== role.id))
+        }
 
-    if (error) {
-      showError("Failed to delete role")
-    } else {
-      showSuccess("Role deleted")
-      setRoles(roles.filter((r) => r.id !== role.id))
-    }
-
-    setDeleting(null)
+        setDeleting(null)
+      },
+    })
   }
 
   const countPermissions = (permissions: string[] | null) => {
@@ -140,6 +145,7 @@ export default function RolesPage() {
 
   return (
     <div className="space-y-6">
+      {ConfirmDialogElement}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">

@@ -1,11 +1,9 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, ToggleLeft } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import {
   FeatureFlagKey,
   FeatureFlags,
@@ -21,7 +19,7 @@ interface FeatureSettingsProps {
 }
 
 export function FeatureSettings({ featureFlags, setFeatureFlags, config }: FeatureSettingsProps) {
-  const [saving, setSaving] = useState(false)
+  const { saving, save } = useSettingsMutation({ configId: config?.id })
 
   const toggleFeatureFlag = (feature: FeatureFlagKey) => {
     setFeatureFlags({
@@ -31,27 +29,10 @@ export function FeatureSettings({ featureFlags, setFeatureFlags, config }: Featu
   }
 
   const saveFeatureFlags = async () => {
-    if (!config) return
-
-    setSaving(true)
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase
-        .from("owner_config")
-        .update({
-          feature_flags: featureFlags,
-        })
-        .eq("id", config.id)
-
-      if (error) throw error
-
-      showSuccess("Feature settings saved")
-    } catch (error) {
-      showError("Failed to save feature settings")
-    } finally {
-      setSaving(false)
-    }
+    await save(
+      { feature_flags: featureFlags },
+      { successMessage: "Feature settings saved", errorMessage: "Failed to save feature settings" }
+    )
   }
 
   return (

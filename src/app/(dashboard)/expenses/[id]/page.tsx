@@ -29,14 +29,7 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
-
-const paymentMethodLabels: Record<string, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  bank_transfer: "Bank Transfer",
-  card: "Card",
-  cheque: "Cheque",
-}
+import { PAYMENT_METHODS } from "@/lib/status"
 
 export default function ExpenseDetailPage() {
   const params = useParams()
@@ -155,7 +148,7 @@ export default function ExpenseDetailPage() {
         >
           <InfoRow
             label="Payment Method"
-            value={paymentMethodLabels[expense.payment_method || ""] || expense.payment_method || "N/A"}
+            value={PAYMENT_METHODS[expense.payment_method || ""] || expense.payment_method || "N/A"}
           />
           {expense.vendor_name && (
             <InfoRow

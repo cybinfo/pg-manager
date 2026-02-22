@@ -22,9 +22,12 @@ export const EXIT_CLEARANCE_STATUS: Record<string, StatusConfig> = {
 export const PAYMENT_METHODS: Record<string, string> = {
   cash: "Cash",
   upi: "UPI",
+  paytm: "Paytm",
   bank_transfer: "Bank Transfer",
   cheque: "Cheque",
   card: "Card",
+  dd: "Demand Draft",
+  credit: "Credit",
   other: "Other",
 }
 

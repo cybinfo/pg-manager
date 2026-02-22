@@ -23,6 +23,7 @@ import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate, formatCurrency, formatMonthYear } from "@/lib/format"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 interface Payment {
   id: string
@@ -59,14 +60,6 @@ interface PaymentStats {
   totalPaidThisYear: number
   paymentsCount: number
   monthlyRent: number
-}
-
-const paymentMethodLabels: Record<string, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  bank_transfer: "Bank Transfer",
-  cheque: "Cheque",
-  card: "Card",
 }
 
 export default function TenantPaymentsPage() {
@@ -238,7 +231,7 @@ export default function TenantPaymentsPage() {
                                 {formatDate(payment.payment_date)}
                               </span>
                               <span className="capitalize">
-                                {paymentMethodLabels[payment.payment_method] || payment.payment_method}
+                                {PAYMENT_METHODS[payment.payment_method] || payment.payment_method}
                               </span>
                               {payment.reference_number && (
                                 <span>Ref: {payment.reference_number}</span>
@@ -311,7 +304,7 @@ export default function TenantPaymentsPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           fieldLabel={`Payment #${selectedPayment.receipt_number || 'N/A'}`}
-          currentValue={`${formatCurrency(selectedPayment.amount)} on ${formatDate(selectedPayment.payment_date)} via ${paymentMethodLabels[selectedPayment.payment_method] || selectedPayment.payment_method}`}
+          currentValue={`${formatCurrency(selectedPayment.amount)} on ${formatDate(selectedPayment.payment_date)} via ${PAYMENT_METHODS[selectedPayment.payment_method] || selectedPayment.payment_method}`}
           approvalType="payment_dispute"
           tenantId={tenantContext.id}
           workspaceId={tenantContext.workspace_id}

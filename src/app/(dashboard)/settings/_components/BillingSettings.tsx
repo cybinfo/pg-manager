@@ -12,7 +12,9 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { formatCurrency } from "@/lib/format"
+import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import {
   ChargeType,
   UtilityRate,
@@ -55,7 +57,9 @@ export function BillingSettings({
   setConfig,
   propertyTypePricing,
 }: BillingSettingsProps) {
-  const [saving, setSaving] = useState(false)
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
+  const { saving, save: saveOwnerConfig } = useSettingsMutation({ configId: config?.id, setConfig })
+  const [savingCharge, setSavingCharge] = useState(false)
   const [savingUtilityRates, setSavingUtilityRates] = useState(false)
   const [newChargeType, setNewChargeType] = useState({ name: "", code: "" })
   const [showAddCharge, setShowAddCharge] = useState(false)
@@ -84,7 +88,7 @@ export function BillingSettings({
       return
     }
 
-    setSaving(true)
+    setSavingCharge(true)
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -113,66 +117,44 @@ export function BillingSettings({
     } catch (error: any) {
       showError(error.message || "Failed to add charge type")
     } finally {
-      setSaving(false)
+      setSavingCharge(false)
     }
   }
 
-  const deleteChargeType = async (chargeType: ChargeType) => {
+  const deleteChargeType = (chargeType: ChargeType) => {
     if (chargeType.category !== "custom") {
       showError("Cannot delete system charge types")
       return
     }
 
-    if (!confirm(`Delete "${chargeType.name}"? This cannot be undone.`)) return
+    confirm({
+      title: "Delete Charge Type",
+      description: `Delete "${chargeType.name}"? This cannot be undone.`,
+      destructive: true,
+      onConfirm: async () => {
+        const supabase = createClient()
 
-    const supabase = createClient()
+        const { error } = await supabase
+          .from("charge_types")
+          .delete()
+          .eq("id", chargeType.id)
 
-    const { error } = await supabase
-      .from("charge_types")
-      .delete()
-      .eq("id", chargeType.id)
+        if (error) {
+          showError("Failed to delete charge type")
+          return
+        }
 
-    if (error) {
-      showError("Failed to delete charge type")
-      return
-    }
-
-    setChargeTypes(chargeTypes.filter((ct) => ct.id !== chargeType.id))
-    showSuccess("Charge type deleted")
+        setChargeTypes(chargeTypes.filter((ct) => ct.id !== chargeType.id))
+        showSuccess("Charge type deleted")
+      },
+    })
   }
 
   const saveBillingCycleMode = async () => {
-    setSaving(true)
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Not authenticated")
-
-      const updateData = { billing_cycle_mode: billingCycleMode }
-
-      if (config) {
-        const { error } = await supabase
-          .from("owner_config")
-          .update(updateData)
-          .eq("id", config.id)
-        if (error) throw error
-      } else {
-        const { data, error } = await supabase
-          .from("owner_config")
-          .insert(withCreatedBy({ owner_id: user.id, ...updateData }, user.id))
-          .select()
-          .single()
-        if (error) throw error
-        setConfig(data)
-      }
-
-      showSuccess("Billing cycle mode saved")
-    } catch (error) {
-      console.error("Save error:", error)
-      showError("Failed to save billing cycle mode")
-    } finally {
-      setSaving(false)
-    }
+    await saveOwnerConfig(
+      { billing_cycle_mode: billingCycleMode },
+      { successMessage: "Billing cycle mode saved", errorMessage: "Failed to save billing cycle mode" }
+    )
   }
 
   const updateUtilityRate = (id: string, field: keyof UtilityRate, value: string | number) => {
@@ -211,48 +193,15 @@ export function BillingSettings({
   }
 
   const saveAutoBillingSettings = async () => {
-    setSaving(true)
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Not authenticated")
-
-      if (config) {
-        const { error } = await supabase
-          .from("owner_config")
-          .update({
-            auto_billing_settings: autoBillingSettings,
-          })
-          .eq("id", config.id)
-
-        if (error) throw error
-      } else {
-        const { data, error } = await supabase
-          .from("owner_config")
-          .insert(
-            withCreatedBy({
-              owner_id: user.id,
-              auto_billing_settings: autoBillingSettings,
-            }, user.id)
-          )
-          .select()
-          .single()
-
-        if (error) throw error
-        setConfig(data)
-      }
-
-      showSuccess("Auto billing settings saved")
-    } catch (error) {
-      console.error("Save error:", error)
-      showError("Failed to save auto billing settings")
-    } finally {
-      setSaving(false)
-    }
+    await saveOwnerConfig(
+      { auto_billing_settings: autoBillingSettings },
+      { successMessage: "Auto billing settings saved", errorMessage: "Failed to save auto billing settings" }
+    )
   }
 
   return (
     <div className="grid gap-6 max-w-2xl">
+      {ConfirmDialogElement}
       {/* Billing Cycle Mode */}
       <Card>
         <CardHeader>
@@ -470,8 +419,8 @@ export function BillingSettings({
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={addChargeType} disabled={saving}>
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
+                <Button size="sm" onClick={addChargeType} disabled={savingCharge}>
+                  {savingCharge ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add"}
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => setShowAddCharge(false)}>
                   Cancel

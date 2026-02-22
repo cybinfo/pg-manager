@@ -35,6 +35,7 @@ import {
   Edit,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PermissionGate } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
@@ -63,6 +64,8 @@ export default function StaffDetailPage() {
     config: STAFF_DETAIL_CONFIG,
     id: params.id as string,
   })
+
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
   // Additional state for role management and form editing
   const [allRoles, setAllRoles] = useState<Role[]>([])
@@ -190,25 +193,30 @@ export default function StaffDetailPage() {
     setRoleLoading(false)
   }
 
-  const handleRemoveRole = async (roleId: string) => {
-    if (!confirm("Remove this role assignment?")) return
+  const handleRemoveRole = (roleId: string) => {
+    confirm({
+      title: "Remove Role",
+      description: "Remove this role assignment?",
+      destructive: true,
+      onConfirm: async () => {
+        setRoleLoading(true)
+        const supabase = createClient()
 
-    setRoleLoading(true)
-    const supabase = createClient()
+        const { error } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("id", roleId)
 
-    const { error } = await supabase
-      .from("user_roles")
-      .delete()
-      .eq("id", roleId)
+        if (error) {
+          showError("Failed to remove role")
+        } else {
+          showSuccess("Role removed")
+          refetch()
+        }
 
-    if (error) {
-      showError("Failed to remove role")
-    } else {
-      showSuccess("Role removed")
-      refetch()
-    }
-
-    setRoleLoading(false)
+        setRoleLoading(false)
+      },
+    })
   }
 
   const handleDelete = async () => {
@@ -230,6 +238,7 @@ export default function StaffDetailPage() {
 
   return (
     <div className="space-y-6">
+      {ConfirmDialogElement}
       {/* Hero Header */}
       <DetailHero
         title={staff.name}

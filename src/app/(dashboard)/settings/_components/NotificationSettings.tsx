@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Mail, Bell, Send, MailCheck, Phone } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { sendTestEmail } from "@/lib/email"
+import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import { NotificationSettings as NotificationSettingsType, OwnerConfig, Owner } from "@/types/settings.types"
 
 interface NotificationSettingsProps {
@@ -23,31 +23,14 @@ export function NotificationSettings({
   config,
   owner,
 }: NotificationSettingsProps) {
-  const [saving, setSaving] = useState(false)
+  const { saving, save } = useSettingsMutation({ configId: config?.id })
   const [sendingTestEmail, setSendingTestEmail] = useState(false)
 
   const saveNotificationSettings = async () => {
-    if (!config) return
-
-    setSaving(true)
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase
-        .from("owner_config")
-        .update({
-          notification_settings: notificationSettings,
-        })
-        .eq("id", config.id)
-
-      if (error) throw error
-
-      showSuccess("Notification settings saved")
-    } catch (error) {
-      showError("Failed to save notification settings")
-    } finally {
-      setSaving(false)
-    }
+    await save(
+      { notification_settings: notificationSettings },
+      { successMessage: "Notification settings saved", errorMessage: "Failed to save notification settings" }
+    )
   }
 
   const handleSendTestEmail = async () => {

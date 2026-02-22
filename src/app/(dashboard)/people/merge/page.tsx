@@ -34,6 +34,7 @@ import {
   Calendar,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PermissionGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { Person } from "@/types/people.types"
@@ -49,6 +50,7 @@ export default function PersonMergePage() {
   const searchParams = useSearchParams()
   const preselectedId = searchParams.get("id")
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [merging, setMerging] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -155,7 +157,7 @@ export default function PersonMergePage() {
   }
 
   // Perform merge
-  const handleMerge = async () => {
+  const handleMerge = () => {
     if (!primaryPerson || !secondaryPerson) {
       showError("Select both persons to merge")
       return
@@ -166,37 +168,40 @@ export default function PersonMergePage() {
       return
     }
 
-    const confirmed = window.confirm(
-      `Are you sure you want to merge "${secondaryPerson.name}" into "${primaryPerson.name}"?\n\n` +
-      `This will:\n` +
-      `- Move all ${secondaryPerson.tenant_count || 0} tenant records to "${primaryPerson.name}"\n` +
-      `- Move all ${secondaryPerson.staff_count || 0} staff records to "${primaryPerson.name}"\n` +
-      `- Move all ${secondaryPerson.visitor_count || 0} visitor records to "${primaryPerson.name}"\n` +
-      `- Delete "${secondaryPerson.name}" permanently\n\n` +
-      `This action cannot be undone.`
-    )
+    confirm({
+      title: "Merge People",
+      description:
+        `Are you sure you want to merge "${secondaryPerson.name}" into "${primaryPerson.name}"?\n\n` +
+        `This will:\n` +
+        `- Move all ${secondaryPerson.tenant_count || 0} tenant records to "${primaryPerson.name}"\n` +
+        `- Move all ${secondaryPerson.staff_count || 0} staff records to "${primaryPerson.name}"\n` +
+        `- Move all ${secondaryPerson.visitor_count || 0} visitor records to "${primaryPerson.name}"\n` +
+        `- Delete "${secondaryPerson.name}" permanently\n\n` +
+        `This action cannot be undone.`,
+      destructive: false,
+      confirmText: "Merge",
+      onConfirm: async () => {
+        setMerging(true)
+        const supabase = createClient()
 
-    if (!confirmed) return
+        const { data, error } = await supabase.rpc("merge_persons", {
+          p_primary_id: primaryPerson.id,
+          p_secondary_id: secondaryPerson.id,
+        })
 
-    setMerging(true)
-    const supabase = createClient()
+        if (error) {
+          console.error("Merge error:", error)
+          showError(`Merge failed: ${error.message}`)
+          setMerging(false)
+          return
+        }
 
-    const { data, error } = await supabase.rpc("merge_persons", {
-      p_primary_id: primaryPerson.id,
-      p_secondary_id: secondaryPerson.id,
+        showSuccess(
+          `Merged successfully! ${data.total_references_updated} records updated.`
+        )
+        router.push(`/people/${primaryPerson.id}`)
+      },
     })
-
-    if (error) {
-      console.error("Merge error:", error)
-      showError(`Merge failed: ${error.message}`)
-      setMerging(false)
-      return
-    }
-
-    showSuccess(
-      `Merged successfully! ${data.total_references_updated} records updated.`
-    )
-    router.push(`/people/${primaryPerson.id}`)
   }
 
   if (loading) {
@@ -206,6 +211,7 @@ export default function PersonMergePage() {
   return (
     <PermissionGuard permission="tenants.update">
       <div className="space-y-6">
+        {ConfirmDialogElement}
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link href="/people">

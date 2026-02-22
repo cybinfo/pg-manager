@@ -19,22 +19,14 @@
  */
 
 import { formatCurrency, formatDate } from "@/lib/format"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 // ============================================================================
 // HELPER
 // ============================================================================
 
-/** Payment method display names used in WhatsApp messages */
-const paymentMethodLabels: Record<string, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  bank_transfer: "Bank Transfer",
-  cheque: "Cheque",
-  card: "Card",
-}
-
 export function getPaymentMethodLabel(method: string): string {
-  return paymentMethodLabels[method] || method
+  return PAYMENT_METHODS[method] || method
 }
 
 // ============================================================================

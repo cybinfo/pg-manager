@@ -9,6 +9,7 @@ import { PortalEmptyState } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 interface PaymentRecord {
   id: string
@@ -26,13 +27,6 @@ const paymentTypeLabels: Record<string, string> = {
   locker_deposit: "Locker Deposit",
   fine: "Fine",
   other: "Other",
-}
-
-const paymentMethodLabels: Record<string, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  card: "Card",
-  bank_transfer: "Bank Transfer",
 }
 
 export default function MemberPaymentsPage() {
@@ -151,7 +145,7 @@ export default function MemberPaymentsPage() {
                         {paymentTypeLabels[payment.payment_type] || payment.payment_type}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {formatDate(payment.payment_date)} • {paymentMethodLabels[payment.payment_method] || payment.payment_method}
+                        {formatDate(payment.payment_date)} • {PAYMENT_METHODS[payment.payment_method] || payment.payment_method}
                       </p>
                       {payment.receipt_number && (
                         <p className="text-xs text-muted-foreground font-mono">

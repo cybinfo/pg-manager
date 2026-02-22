@@ -1,14 +1,12 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Check, UtensilsCrossed } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { FoodSettings as FoodSettingsType, OwnerConfig } from "@/types/settings.types"
+import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
+import { FoodSettings as FoodSettingsType } from "@/types/settings.types"
 
 interface FoodSettingsProps {
   foodSettings: FoodSettingsType
@@ -17,24 +15,13 @@ interface FoodSettingsProps {
 }
 
 export function FoodSettings({ foodSettings, setFoodSettings, configId }: FoodSettingsProps) {
-  const [saving, setSaving] = useState(false)
+  const { saving, save } = useSettingsMutation({ configId })
 
   const saveFoodSettings = async () => {
-    setSaving(true)
-    try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from("owner_config")
-        .update({ food_settings: foodSettings })
-        .eq("id", configId)
-
-      if (error) throw error
-      showSuccess("Food settings saved!")
-    } catch (error) {
-      showError("Failed to save food settings")
-    } finally {
-      setSaving(false)
-    }
+    await save(
+      { food_settings: foodSettings },
+      { successMessage: "Food settings saved!", errorMessage: "Failed to save food settings" }
+    )
   }
 
   return (

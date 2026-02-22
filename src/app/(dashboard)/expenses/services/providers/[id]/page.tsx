@@ -26,6 +26,7 @@ import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -49,6 +50,7 @@ export default function ServiceProviderDetailPage({
   const router = useRouter()
   const { user } = useAuth()
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [provider, setProvider] = useState<ServiceProvider | null>(null)
   const [recentPayments, setRecentPayments] = useState<ServicePayment[]>([])
@@ -127,25 +129,27 @@ export default function ServiceProviderDetailPage({
     loadData()
   }, [id])
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!user?.id) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${provider?.name}"? This action cannot be undone.`
-    )
-    if (!confirmed) return
-
-    try {
-      const result = await softDelete("service_providers", id, user.id)
-      if (!result.error) {
-        showSuccess("Provider deleted successfully")
-        router.push("/expenses/services/providers")
-      } else {
-        showError(result.error.message || "Failed to delete provider")
-      }
-    } catch (error) {
-      handleClientError(error, "Deleting provider")
-    }
+    confirm({
+      title: "Delete Provider",
+      description: `Are you sure you want to delete "${provider?.name}"? This action cannot be undone.`,
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("service_providers", id, user.id)
+          if (!result.error) {
+            showSuccess("Provider deleted successfully")
+            router.push("/expenses/services/providers")
+          } else {
+            showError(result.error.message || "Failed to delete provider")
+          }
+        } catch (error) {
+          handleClientError(error, "Deleting provider")
+        }
+      },
+    })
   }
 
   if (loading) return <PageLoading />
@@ -169,6 +173,7 @@ export default function ServiceProviderDetailPage({
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="container py-6">
+          {ConfirmDialogElement}
           {/* Back Link */}
           <Link
             href="/expenses/services/providers"

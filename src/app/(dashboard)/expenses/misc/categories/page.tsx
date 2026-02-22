@@ -23,6 +23,7 @@ import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -50,6 +51,7 @@ export default function MiscCategoriesPage() {
   const { user } = useAuth()
   const { workspaceId } = useAuthContext()
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [categories, setCategories] = useState<MiscTransactionCategory[]>([])
 
@@ -163,26 +165,28 @@ export default function MiscCategoriesPage() {
     }
   }
 
-  const handleDelete = async (category: MiscTransactionCategory) => {
+  const handleDelete = (category: MiscTransactionCategory) => {
     if (!user?.id) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${category.name}"? This action cannot be undone.`
-    )
-    if (!confirmed) return
-
-    try {
-      const result = await softDelete("misc_transaction_categories", category.id, user.id)
-      if (!result.error) {
-        showSuccess("Category deleted")
-        loadCategories()
-      } else {
-        showError(result.error.message || "Failed to delete")
-      }
-    } catch (error) {
-      console.error("Failed to delete:", error)
-      showError("Failed to delete")
-    }
+    confirm({
+      title: "Delete Category",
+      description: `Are you sure you want to delete "${category.name}"? This action cannot be undone.`,
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("misc_transaction_categories", category.id, user.id)
+          if (!result.error) {
+            showSuccess("Category deleted")
+            loadCategories()
+          } else {
+            showError(result.error.message || "Failed to delete")
+          }
+        } catch (error) {
+          console.error("Failed to delete:", error)
+          showError("Failed to delete")
+        }
+      },
+    })
   }
 
   const handleToggleActive = async (category: MiscTransactionCategory) => {
@@ -236,6 +240,7 @@ export default function MiscCategoriesPage() {
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="space-y-6">
+          {ConfirmDialogElement}
           {/* Back Link */}
           <Link
             href="/expenses/misc"

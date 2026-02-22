@@ -29,6 +29,7 @@ import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -52,6 +53,7 @@ export default function VendorDetailPage({
   const router = useRouter()
   const { user } = useAuth()
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [vendor, setVendor] = useState<Vendor | null>(null)
   const [recentPayments, setRecentPayments] = useState<BillPayment[]>([])
@@ -140,25 +142,27 @@ export default function VendorDetailPage({
     loadData()
   }, [id])
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!user?.id) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${vendor?.name}"? This action cannot be undone.`
-    )
-    if (!confirmed) return
-
-    try {
-      const result = await softDelete("vendors", id, user.id)
-      if (!result.error) {
-        showSuccess("Vendor deleted successfully")
-        router.push("/expenses/vendors")
-      } else {
-        showError(result.error.message || "Failed to delete vendor")
-      }
-    } catch (error) {
-      handleClientError(error, "Deleting vendor")
-    }
+    confirm({
+      title: "Delete Vendor",
+      description: `Are you sure you want to delete "${vendor?.name}"? This action cannot be undone.`,
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("vendors", id, user.id)
+          if (!result.error) {
+            showSuccess("Vendor deleted successfully")
+            router.push("/expenses/vendors")
+          } else {
+            showError(result.error.message || "Failed to delete vendor")
+          }
+        } catch (error) {
+          handleClientError(error, "Deleting vendor")
+        }
+      },
+    })
   }
 
   if (loading) return <PageLoading />
@@ -182,6 +186,7 @@ export default function VendorDetailPage({
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="container py-6">
+          {ConfirmDialogElement}
           {/* Back Link */}
           <Link
             href="/expenses/vendors"

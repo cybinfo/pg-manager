@@ -1,13 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Check } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import { OwnerConfig } from "@/types/settings.types"
 
 interface DefaultSettingsProps {
@@ -26,33 +24,19 @@ interface DefaultSettingsProps {
 }
 
 export function DefaultSettings({ configForm, setConfigForm, config, setConfig }: DefaultSettingsProps) {
-  const [saving, setSaving] = useState(false)
+  const { saving, save } = useSettingsMutation({ configId: config?.id, setConfig })
 
   const saveConfig = async () => {
     if (!config) return
-
-    setSaving(true)
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase
-        .from("owner_config")
-        .update({
-          default_notice_period: configForm.default_notice_period,
-          default_rent_due_day: configForm.default_rent_due_day,
-          default_grace_period: configForm.default_grace_period,
-        })
-        .eq("id", config.id)
-
-      if (error) throw error
-
-      setConfig({ ...config, ...configForm })
-      showSuccess("Settings updated successfully")
-    } catch (error) {
-      showError("Failed to update settings")
-    } finally {
-      setSaving(false)
-    }
+    const ok = await save(
+      {
+        default_notice_period: configForm.default_notice_period,
+        default_rent_due_day: configForm.default_rent_due_day,
+        default_grace_period: configForm.default_grace_period,
+      },
+      { successMessage: "Settings updated successfully", errorMessage: "Failed to update settings" }
+    )
+    if (ok) setConfig({ ...config, ...configForm })
   }
 
   return (

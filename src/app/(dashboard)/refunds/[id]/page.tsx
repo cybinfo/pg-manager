@@ -23,6 +23,8 @@ import { TableBadge } from "@/components/ui/data-table"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PAYMENT_METHODS } from "@/lib/status"
 import {
   Wallet,
   User,
@@ -76,16 +78,11 @@ const refundTypeLabels: Record<string, string> = {
   other: "Other",
 }
 
-const paymentModeLabels: Record<string, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  bank_transfer: "Bank Transfer",
-  cheque: "Cheque",
-}
-
 export default function RefundDetailPage() {
   const params = useParams()
   const [editing, setEditing] = useState(false)
+
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
   const [formData, setFormData] = useState({
     status: "",
@@ -141,9 +138,15 @@ export default function RefundDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this refund record?")) return
-    await deleteRecord({ confirm: false })
+  const handleDelete = () => {
+    confirm({
+      title: "Delete Refund",
+      description: "Are you sure you want to delete this refund record?",
+      destructive: true,
+      onConfirm: async () => {
+        await deleteRecord({ confirm: false })
+      },
+    })
   }
 
   const getPaymentModeIcon = (mode: string) => {
@@ -169,6 +172,7 @@ export default function RefundDetailPage() {
   return (
     <PermissionGuard permission="payments.view">
       <div className="space-y-6">
+        {ConfirmDialogElement}
         {/* Hero Header */}
         <DetailHero
           title="Refund Details"
@@ -325,7 +329,7 @@ export default function RefundDetailPage() {
                   value={
                     <span className="flex items-center gap-2">
                       {getPaymentModeIcon(refund.payment_mode)}
-                      {paymentModeLabels[refund.payment_mode] || refund.payment_mode}
+                      {PAYMENT_METHODS[refund.payment_mode] || refund.payment_mode}
                     </span>
                   }
                 />

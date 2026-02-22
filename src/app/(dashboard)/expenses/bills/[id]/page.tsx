@@ -26,6 +26,8 @@ import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -49,6 +51,7 @@ export default function BillPaymentDetailPage({
   const router = useRouter()
   const { user } = useAuth()
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [bill, setBill] = useState<BillPayment | null>(null)
 
@@ -86,25 +89,27 @@ export default function BillPaymentDetailPage({
     loadData()
   }, [id])
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!user?.id) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete this bill? This action cannot be undone.`
-    )
-    if (!confirmed) return
-
-    try {
-      const result = await softDelete("bill_payments", id, user.id)
-      if (!result.error) {
-        showSuccess("Bill deleted successfully")
-        router.push("/expenses/bills")
-      } else {
-        showError(result.error.message || "Failed to delete bill")
-      }
-    } catch (error) {
-      handleClientError(error, "Deleting bill")
-    }
+    confirm({
+      title: "Delete Bill",
+      description: "Are you sure you want to delete this bill? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("bill_payments", id, user.id)
+          if (!result.error) {
+            showSuccess("Bill deleted successfully")
+            router.push("/expenses/bills")
+          } else {
+            showError(result.error.message || "Failed to delete bill")
+          }
+        } catch (error) {
+          handleClientError(error, "Deleting bill")
+        }
+      },
+    })
   }
 
   // Record quick payment
@@ -170,20 +175,12 @@ export default function BillPaymentDetailPage({
   const balanceDue = bill.bill_amount - (bill.paid_amount || 0)
   const isOverdue = bill.due_date && new Date(bill.due_date) < new Date() && bill.status !== "paid"
 
-  const paymentModeLabels: Record<string, string> = {
-    cash: "Cash",
-    upi: "UPI",
-    card: "Card",
-    bank_transfer: "Bank Transfer",
-    cheque: "Cheque",
-    dd: "Demand Draft",
-    credit: "Credit",
-  }
 
   return (
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="container py-6">
+          {ConfirmDialogElement}
           {/* Back Link */}
           <Link
             href="/expenses/bills"
@@ -328,7 +325,7 @@ export default function BillPaymentDetailPage({
                 label="Payment Mode"
                 value={
                   bill.payment_mode
-                    ? paymentModeLabels[bill.payment_mode] || bill.payment_mode
+                    ? PAYMENT_METHODS[bill.payment_mode] || bill.payment_mode
                     : "—"
                 }
               />

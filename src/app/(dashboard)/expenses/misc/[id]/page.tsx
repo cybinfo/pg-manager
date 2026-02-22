@@ -26,6 +26,8 @@ import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -45,6 +47,7 @@ export default function MiscTransactionDetailPage({
   const router = useRouter()
   const { user } = useAuth()
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [transaction, setTransaction] = useState<MiscTransaction | null>(null)
 
@@ -80,26 +83,28 @@ export default function MiscTransactionDetailPage({
     loadData()
   }, [id])
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!user?.id) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete this transaction? This action cannot be undone.`
-    )
-    if (!confirmed) return
-
-    try {
-      const result = await softDelete("misc_transactions", id, user.id)
-      if (!result.error) {
-        showSuccess("Transaction deleted")
-        router.push("/expenses/misc")
-      } else {
-        showError(result.error.message || "Failed to delete")
-      }
-    } catch (error) {
-      console.error("Failed to delete:", error)
-      showError("Failed to delete")
-    }
+    confirm({
+      title: "Delete Transaction",
+      description: "Are you sure you want to delete this transaction? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("misc_transactions", id, user.id)
+          if (!result.error) {
+            showSuccess("Transaction deleted")
+            router.push("/expenses/misc")
+          } else {
+            showError(result.error.message || "Failed to delete")
+          }
+        } catch (error) {
+          console.error("Failed to delete:", error)
+          showError("Failed to delete")
+        }
+      },
+    })
   }
 
   if (loading) return <PageLoading />
@@ -121,20 +126,12 @@ export default function MiscTransactionDetailPage({
 
   const isMoneyIn = transaction.transaction_type === "in"
 
-  const paymentModeLabels: Record<string, string> = {
-    cash: "Cash",
-    upi: "UPI",
-    paytm: "Paytm",
-    bank_transfer: "Bank Transfer",
-    card: "Card",
-    cheque: "Cheque",
-    other: "Other",
-  }
 
   return (
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="container py-6 max-w-4xl mx-auto">
+          {ConfirmDialogElement}
           {/* Back Link */}
           <Link
             href="/expenses/misc"
@@ -169,7 +166,7 @@ export default function MiscTransactionDetailPage({
                     <TableBadge variant="muted">{transaction.category.name}</TableBadge>
                   )}
                   <TableBadge variant="muted">
-                    {paymentModeLabels[transaction.payment_mode] || transaction.payment_mode}
+                    {PAYMENT_METHODS[transaction.payment_mode] || transaction.payment_mode}
                   </TableBadge>
                 </div>
               </div>
@@ -234,7 +231,7 @@ export default function MiscTransactionDetailPage({
             <DetailSection title="Payment Details" icon={CreditCard}>
               <InfoRow
                 label="Payment Mode"
-                value={paymentModeLabels[transaction.payment_mode] || transaction.payment_mode}
+                value={PAYMENT_METHODS[transaction.payment_mode] || transaction.payment_mode}
               />
               <InfoRow label="Reference" value={transaction.payment_reference || "—"} />
             </DetailSection>

@@ -48,6 +48,7 @@ import {
   Trash2,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete, cascadeSoftDelete } from "@/lib/audit"
@@ -132,6 +133,8 @@ export default function PersonDetailPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [visitHistory, setVisitHistory] = useState<PersonVisitHistory[]>([])
+
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
   const {
     data: person,
@@ -338,7 +341,7 @@ export default function PersonDetailPage() {
   }
 
   // Handle delete person
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!person || !user) return
 
     if (summary.is_current_tenant) {
@@ -360,54 +363,55 @@ export default function PersonDetailPage() {
       ? `\n\nThe following related records will also be archived:\n- ${deleteDetails.join("\n- ")}`
       : ""
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${person.name}"?\n\nThis action will archive the record.${detailsText}`
-    )
+    confirm({
+      title: "Delete Person",
+      description: `Are you sure you want to delete "${person.name}"?\n\nThis action will archive the record.${detailsText}`,
+      destructive: true,
+      onConfirm: async () => {
+        const supabase = createClient()
 
-    if (!confirmed) return
+        try {
+          // Soft delete related records first using cascade
+          const cascadeConfigs: { table: "tenants" | "staff_members" | "visitor_contacts"; foreignKey: string }[] = [
+            { table: "visitor_contacts", foreignKey: "person_id" },
+          ]
 
-    const supabase = createClient()
+          if (staffHistory.length > 0) {
+            cascadeConfigs.push({ table: "staff_members", foreignKey: "person_id" })
+          }
+          if (tenantHistory.length > 0) {
+            cascadeConfigs.push({ table: "tenants", foreignKey: "person_id" })
+          }
 
-    try {
-      // Soft delete related records first using cascade
-      const cascadeConfigs: { table: "tenants" | "staff_members" | "visitor_contacts"; foreignKey: string }[] = [
-        { table: "visitor_contacts", foreignKey: "person_id" },
-      ]
+          // Cascade soft delete related records
+          const { errors: cascadeErrors } = await cascadeSoftDelete(
+            person.id,
+            user.id,
+            cascadeConfigs
+          )
 
-      if (staffHistory.length > 0) {
-        cascadeConfigs.push({ table: "staff_members", foreignKey: "person_id" })
-      }
-      if (tenantHistory.length > 0) {
-        cascadeConfigs.push({ table: "tenants", foreignKey: "person_id" })
-      }
+          if (cascadeErrors.length > 0) {
+            console.error("Cascade soft delete errors:", cascadeErrors)
+          }
 
-      // Cascade soft delete related records
-      const { errors: cascadeErrors } = await cascadeSoftDelete(
-        person.id,
-        user.id,
-        cascadeConfigs
-      )
+          // Hard delete person_roles (join table, not auditable per user request)
+          await supabase.from("person_roles").delete().eq("person_id", person.id)
 
-      if (cascadeErrors.length > 0) {
-        console.error("Cascade soft delete errors:", cascadeErrors)
-      }
+          // Soft delete the person
+          const { error } = await softDelete("people", person.id, user.id)
 
-      // Hard delete person_roles (join table, not auditable per user request)
-      await supabase.from("person_roles").delete().eq("person_id", person.id)
+          if (error) {
+            showError("Failed to delete person")
+            return
+          }
 
-      // Soft delete the person
-      const { error } = await softDelete("people", person.id, user.id)
-
-      if (error) {
-        showError("Failed to delete person")
-        return
-      }
-
-      showSuccess("Person deleted successfully")
-      router.push("/people")
-    } catch {
-      showError("Failed to delete person")
-    }
+          showSuccess("Person deleted successfully")
+          router.push("/people")
+        } catch {
+          showError("Failed to delete person")
+        }
+      },
+    })
   }
 
   if (loading) {
@@ -435,6 +439,7 @@ export default function PersonDetailPage() {
   return (
     <PermissionGuard permission="tenants.view">
       <div className="space-y-6 animate-fade-in-up">
+        {ConfirmDialogElement}
         {/* Hero Section */}
         <DetailHero
           title={person.name}

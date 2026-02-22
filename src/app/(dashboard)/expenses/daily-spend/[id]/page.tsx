@@ -26,6 +26,8 @@ import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -51,6 +53,7 @@ export default function DailySpendDetailPage({
   const router = useRouter()
   const { user } = useAuth()
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [entry, setEntry] = useState<DailySpend | null>(null)
 
@@ -91,26 +94,28 @@ export default function DailySpendDetailPage({
     loadData()
   }, [id])
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!user?.id) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete this expense entry? This action cannot be undone.`
-    )
-    if (!confirmed) return
-
-    try {
-      const result = await softDelete("daily_spend", id, user.id)
-      if (!result.error) {
-        showSuccess("Entry deleted successfully")
-        router.push("/expenses/daily-spend")
-      } else {
-        showError(result.error.message || "Failed to delete entry")
-      }
-    } catch (error) {
-      console.error("Failed to delete entry:", error)
-      showError("Failed to delete entry")
-    }
+    confirm({
+      title: "Delete Expense Entry",
+      description: "Are you sure you want to delete this expense entry? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("daily_spend", id, user.id)
+          if (!result.error) {
+            showSuccess("Entry deleted successfully")
+            router.push("/expenses/daily-spend")
+          } else {
+            showError(result.error.message || "Failed to delete entry")
+          }
+        } catch (error) {
+          console.error("Failed to delete entry:", error)
+          showError("Failed to delete entry")
+        }
+      },
+    })
   }
 
   if (loading) return <PageLoading />
@@ -126,21 +131,13 @@ export default function DailySpendDetailPage({
     )
   }
 
-  const paymentModeLabels: Record<string, string> = {
-    cash: "Cash",
-    upi: "UPI",
-    card: "Card",
-    bank_transfer: "Bank Transfer",
-    credit: "Credit",
-    cheque: "Cheque",
-    dd: "Demand Draft",
-  }
-  const paymentModeLabel = paymentModeLabels[entry.payment_mode] || entry.payment_mode
+  const paymentModeLabel = PAYMENT_METHODS[entry.payment_mode] || entry.payment_mode
 
   return (
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="space-y-6">
+          {ConfirmDialogElement}
           {/* Hero Section - Using centralized DetailHero */}
           <DetailHero
             title={entry.product?.name || entry.product_name}

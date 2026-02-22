@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 interface Role {
   id: string
@@ -136,6 +137,7 @@ const permissionGroups: Record<string, { label: string; permissions: { key: stri
 export default function EditRolePage() {
   const params = useParams()
   const router = useRouter()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [role, setRole] = useState<Role | null>(null)
@@ -273,7 +275,7 @@ export default function EditRolePage() {
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!role) return
 
     if (role.is_system_role) {
@@ -286,31 +288,34 @@ export default function EditRolePage() {
       return
     }
 
-    if (!confirm(`Are you sure you want to delete the "${role.name}" role? This action cannot be undone.`)) {
-      return
-    }
+    confirm({
+      title: "Delete Role",
+      description: `Are you sure you want to delete the "${role.name}" role? This action cannot be undone.`,
+      destructive: true,
+      onConfirm: async () => {
+        setSaving(true)
 
-    setSaving(true)
+        try {
+          const supabase = createClient()
 
-    try {
-      const supabase = createClient()
+          const { error } = await supabase
+            .from("roles")
+            .delete()
+            .eq("id", role.id)
 
-      const { error } = await supabase
-        .from("roles")
-        .delete()
-        .eq("id", role.id)
+          if (error) {
+            throw error
+          }
 
-      if (error) {
-        throw error
-      }
-
-      showSuccess("Role deleted")
-      router.push("/staff/roles")
-    } catch (error) {
-      handleClientError(error, "Deleting role")
-    } finally {
-      setSaving(false)
-    }
+          showSuccess("Role deleted")
+          router.push("/staff/roles")
+        } catch (error) {
+          handleClientError(error, "Deleting role")
+        } finally {
+          setSaving(false)
+        }
+      },
+    })
   }
 
   const isGroupSelected = (groupKey: string) => {
@@ -342,6 +347,7 @@ export default function EditRolePage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
+      {ConfirmDialogElement}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">

@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Plus, Trash2, Home, Bed } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { ConfigurableRoomType, OwnerConfig } from "@/types/settings.types"
 
 interface RoomTypeSettingsProps {
@@ -24,7 +24,8 @@ export function RoomTypeSettings({
   config,
   setConfig,
 }: RoomTypeSettingsProps) {
-  const [saving, setSaving] = useState(false)
+  const { saving, save } = useSettingsMutation({ configId: config?.id, setConfig })
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [showAddRoomType, setShowAddRoomType] = useState(false)
   const [newRoomType, setNewRoomType] = useState({ name: "", code: "", default_rent: 5000, default_deposit: 5000 })
 
@@ -51,8 +52,12 @@ export function RoomTypeSettings({
   }
 
   const deleteRoomType = (code: string) => {
-    if (!confirm("Delete this room type? Make sure no rooms are using it.")) return
-    setConfigurableRoomTypes(configurableRoomTypes.filter(rt => rt.code !== code))
+    confirm({
+      title: "Delete Room Type",
+      description: "Delete this room type? Make sure no rooms are using it.",
+      destructive: true,
+      onConfirm: () => setConfigurableRoomTypes(configurableRoomTypes.filter(rt => rt.code !== code)),
+    })
   }
 
   const toggleRoomType = (code: string) => {
@@ -68,37 +73,10 @@ export function RoomTypeSettings({
   }
 
   const saveConfigurableRoomTypes = async () => {
-    setSaving(true)
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Not authenticated")
-
-      const updateData = { room_types: configurableRoomTypes }
-
-      if (config) {
-        const { error } = await supabase
-          .from("owner_config")
-          .update(updateData)
-          .eq("id", config.id)
-        if (error) throw error
-      } else {
-        const { data, error } = await supabase
-          .from("owner_config")
-          .insert(withCreatedBy({ owner_id: user.id, ...updateData }, user.id))
-          .select()
-          .single()
-        if (error) throw error
-        setConfig(data)
-      }
-
-      showSuccess("Room types saved")
-    } catch (error) {
-      console.error("Save error:", error)
-      showError("Failed to save room types")
-    } finally {
-      setSaving(false)
-    }
+    await save(
+      { room_types: configurableRoomTypes },
+      { successMessage: "Room types saved", errorMessage: "Failed to save room types" }
+    )
   }
 
   return (
@@ -282,6 +260,7 @@ export function RoomTypeSettings({
           </p>
         </CardContent>
       </Card>
+      {ConfirmDialogElement}
     </div>
   )
 }

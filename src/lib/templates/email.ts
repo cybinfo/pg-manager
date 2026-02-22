@@ -13,6 +13,7 @@
  */
 
 import { formatCurrency } from "@/lib/format"
+import { PAYMENT_METHODS } from "@/lib/status"
 import { getEntityName } from "@/lib/entity-names"
 import { CONTACT } from "@/lib/constants/contact"
 
@@ -345,14 +346,6 @@ export const emailBodyTemplates = {
   },
 
   paymentReceipt: (data: PaymentReceiptBody): string => {
-    const paymentMethodLabels: Record<string, string> = {
-      cash: "Cash",
-      upi: "UPI",
-      bank_transfer: "Bank Transfer",
-      cheque: "Cheque",
-      card: "Card",
-    }
-
     const content = `
     <div style="text-align: center; margin-bottom: 24px;">
       <div style="display: inline-block; background: #D1FAE5; color: #059669; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
@@ -390,7 +383,7 @@ export const emailBodyTemplates = {
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Payment Method</td>
-          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${paymentMethodLabels[data.paymentMethod] || data.paymentMethod}</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${PAYMENT_METHODS[data.paymentMethod] || data.paymentMethod}</td>
         </tr>
         ${data.forPeriod ? `
         <tr>

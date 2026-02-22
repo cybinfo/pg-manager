@@ -36,6 +36,7 @@ import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 // Extended Payment type with owner info
 interface PaymentWithOwner extends Payment {
@@ -44,14 +45,6 @@ interface PaymentWithOwner extends Payment {
     name: string
     phone: string | null
   }
-}
-
-const paymentMethodLabels: Record<string, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  bank_transfer: "Bank Transfer",
-  cheque: "Cheque",
-  card: "Card",
 }
 
 export default function PaymentReceiptPage() {
@@ -353,7 +346,7 @@ export default function PaymentReceiptPage() {
             <div>
               <span className="text-muted-foreground">Payment Method:</span>
               <span className="ml-2 font-medium">
-                {paymentMethodLabels[payment.payment_method] || payment.payment_method}
+                {PAYMENT_METHODS[payment.payment_method] || payment.payment_method}
               </span>
             </div>
             {payment.transaction_reference && (

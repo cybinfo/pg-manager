@@ -20,6 +20,7 @@ import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess } from "@/lib/toast-helpers"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 // ============================================
 // Types
@@ -40,14 +41,6 @@ interface Expense {
   created_at: string
   expense_month?: string
   expense_year?: string
-}
-
-const paymentMethodLabels: Record<string, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  bank_transfer: "Bank",
-  card: "Card",
-  cheque: "Cheque",
 }
 
 // ============================================
@@ -90,7 +83,7 @@ const columns: Column<Expense>[] = [
       </span>
     ),
   },
-  badgeColumn("payment_method", "Method", paymentMethodLabels, {
+  badgeColumn("payment_method", "Method", PAYMENT_METHODS, {
     hideOnMobile: true,
     defaultVariant: "muted",
   }),
@@ -287,7 +280,7 @@ function ExportButton({ expenses }: { expenses: Expense[] }) {
       e.vendor_name || "",
       e.property?.name || "All Properties",
       e.amount,
-      paymentMethodLabels[e.payment_method] || e.payment_method,
+      PAYMENT_METHODS[e.payment_method] || e.payment_method,
       e.reference_number || "",
     ])
 

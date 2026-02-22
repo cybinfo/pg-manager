@@ -20,6 +20,7 @@ import * as React from "react"
 import { Pencil, Trash2, MoreHorizontal, Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth/auth-context"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,6 +86,7 @@ export function TableRowActions<T>({
   size = "sm",
 }: TableRowActionsProps<T>) {
   const { hasPermission } = useAuth()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
   // Check permissions
   const canEdit = onEdit && (!editPermission || hasPermission(editPermission))
@@ -99,9 +101,14 @@ export function TableRowActions<T>({
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (confirmDelete) {
-      if (window.confirm(deleteConfirmMessage)) {
-        onDelete?.(row)
-      }
+      confirm({
+        title: "Delete Item",
+        description: deleteConfirmMessage,
+        destructive: true,
+        onConfirm: () => {
+          onDelete?.(row)
+        },
+      })
     } else {
       onDelete?.(row)
     }
@@ -121,6 +128,7 @@ export function TableRowActions<T>({
   if (asDropdown) {
     return (
       <div className={cn("flex justify-end", className)} onClick={(e) => e.stopPropagation()}>
+        {ConfirmDialogElement}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -167,6 +175,7 @@ export function TableRowActions<T>({
       className={cn("flex items-center justify-end gap-1", className)}
       onClick={(e) => e.stopPropagation()}
     >
+      {ConfirmDialogElement}
       {canView && (
         <Button
           variant="ghost"

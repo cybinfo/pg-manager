@@ -9,6 +9,7 @@ import { Loader2, Plus, Trash2, IndianRupee } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { ExpenseType } from "@/types/settings.types"
 
 interface ExpenseTypeSettingsProps {
@@ -17,6 +18,7 @@ interface ExpenseTypeSettingsProps {
 }
 
 export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTypeSettingsProps) {
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [saving, setSaving] = useState(false)
   const [newExpenseType, setNewExpenseType] = useState({ name: "", code: "" })
   const [showAddExpense, setShowAddExpense] = useState(false)
@@ -77,27 +79,33 @@ export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTy
     }
   }
 
-  const deleteExpenseType = async (expenseType: ExpenseType) => {
-    if (!confirm(`Delete "${expenseType.name}"? This cannot be undone.`)) return
+  const deleteExpenseType = (expenseType: ExpenseType) => {
+    confirm({
+      title: "Delete Expense Category",
+      description: `Delete "${expenseType.name}"? This cannot be undone.`,
+      destructive: true,
+      onConfirm: async () => {
+        const supabase = createClient()
 
-    const supabase = createClient()
+        const { error } = await supabase
+          .from("expense_types")
+          .delete()
+          .eq("id", expenseType.id)
 
-    const { error } = await supabase
-      .from("expense_types")
-      .delete()
-      .eq("id", expenseType.id)
+        if (error) {
+          showError("Failed to delete expense category. It may be in use.")
+          return
+        }
 
-    if (error) {
-      showError("Failed to delete expense category. It may be in use.")
-      return
-    }
-
-    setExpenseTypes(expenseTypes.filter((et) => et.id !== expenseType.id))
-    showSuccess("Expense category deleted")
+        setExpenseTypes(expenseTypes.filter((et) => et.id !== expenseType.id))
+        showSuccess("Expense category deleted")
+      },
+    })
   }
 
   return (
     <div className="grid gap-6 max-w-2xl">
+      {ConfirmDialogElement}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">

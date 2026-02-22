@@ -26,6 +26,8 @@ import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -49,6 +51,7 @@ export default function ServicePaymentDetailPage({
   const router = useRouter()
   const { user } = useAuth()
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [payment, setPayment] = useState<ServicePayment | null>(null)
 
@@ -86,25 +89,27 @@ export default function ServicePaymentDetailPage({
     loadData()
   }, [id])
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!user?.id) return
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete this service payment? This action cannot be undone.`
-    )
-    if (!confirmed) return
-
-    try {
-      const result = await softDelete("service_payments", id, user.id)
-      if (!result.error) {
-        showSuccess("Service payment deleted")
-        router.push("/expenses/services")
-      } else {
-        showError(result.error.message || "Failed to delete")
-      }
-    } catch (error) {
-      handleClientError(error, "Deleting service payment")
-    }
+    confirm({
+      title: "Delete Service Payment",
+      description: "Are you sure you want to delete this service payment? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("service_payments", id, user.id)
+          if (!result.error) {
+            showSuccess("Service payment deleted")
+            router.push("/expenses/services")
+          } else {
+            showError(result.error.message || "Failed to delete")
+          }
+        } catch (error) {
+          handleClientError(error, "Deleting service payment")
+        }
+      },
+    })
   }
 
   if (loading) return <PageLoading />
@@ -130,20 +135,12 @@ export default function ServicePaymentDetailPage({
   const isWarrantyExpired = warrantyExpiry && warrantyExpiry < new Date()
   const hasWarranty = payment.warranty_months > 0
 
-  const paymentModeLabels: Record<string, string> = {
-    cash: "Cash",
-    upi: "UPI",
-    card: "Card",
-    bank_transfer: "Bank Transfer",
-    cheque: "Cheque",
-    dd: "Demand Draft",
-    credit: "Credit",
-  }
 
   return (
     <FeatureGuard feature="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="container py-6">
+          {ConfirmDialogElement}
           {/* Back Link */}
           <Link
             href="/expenses/services"
@@ -306,7 +303,7 @@ export default function ServicePaymentDetailPage({
                 label="Payment Mode"
                 value={
                   payment.payment_mode
-                    ? paymentModeLabels[payment.payment_mode] || payment.payment_mode
+                    ? PAYMENT_METHODS[payment.payment_mode] || payment.payment_mode
                     : "—"
                 }
               />
