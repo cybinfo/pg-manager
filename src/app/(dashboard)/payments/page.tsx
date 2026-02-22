@@ -14,7 +14,7 @@ import { currencyColumn, dateColumn, badgeColumn } from "@/lib/column-builders"
 import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createSumMetric, createThisMonthSumMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createSumMetric, createThisMonthSumMetric, createTopValueMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, PAYMENT_METHOD_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -218,20 +218,9 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
   createThisMonthSumMetric("amount", "payment_date", "This Month", IndianRupee),
   createSumMetric("amount", "all_time", "All Time", Wallet),
   createTotalMetric({ id: "transactions", label: "Transactions", icon: Receipt }),
-  {
-    // Custom: requires counting by group - not a simple filter
-    id: "top_method",
-    label: "Top Method",
-    icon: Banknote,
-    compute: (items) => {
-      const methodCounts = items.reduce((acc: Record<string, number>, p) => {
-        acc[p.payment_method as string] = (acc[p.payment_method as string] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-      const topMethod = Object.entries(methodCounts).sort((a, b) => b[1] - a[1])[0]
-      return topMethod ? PAYMENT_METHODS[topMethod[0]] || topMethod[0] : "—"
-    },
-  },
+  createTopValueMetric("payment_method", "top_method", "Top Method", Banknote, {
+    labelMap: PAYMENT_METHODS,
+  }),
 ]
 
 // ============================================

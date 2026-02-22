@@ -19,7 +19,7 @@ import { Column } from "@/components/ui/data-table"
 import { dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { METER_READING_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createThisMonthCountMetric, MetricConfig } from "@/lib/metric-factories"
+import { createThisMonthCountMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, METER_TYPE_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -250,28 +250,31 @@ const advancedFilterColumns: FilterableColumn[] = [
 // Metrics Configuration
 // ============================================
 
-const metrics: MetricConfig<MeterReading>[] = [
+const metrics: MetricConfig<Record<string, unknown>>[] = [
   createThisMonthCountMetric("reading_date", "This Month", Gauge, { id: "thisMonth" }),
-  {
-    id: "electricity",
-    label: "Electricity",
-    icon: Zap,
-    compute: (items) => items.filter((r) => r.charge_type?.name?.toLowerCase() === "electricity").length,
-  },
-  {
-    id: "water",
-    label: "Water",
-    icon: Droplets,
-    compute: (items) => items.filter((r) => r.charge_type?.name?.toLowerCase() === "water").length,
-  },
+  createCountMetric("electricity", "Electricity", Zap,
+    (item) => {
+      const ct = item.charge_type as { name?: string } | null
+      return ct?.name?.toLowerCase() === "electricity"
+    }
+  ),
+  createCountMetric("water", "Water", Droplets,
+    (item) => {
+      const ct = item.charge_type as { name?: string } | null
+      return ct?.name?.toLowerCase() === "water"
+    }
+  ),
   {
     id: "totalKwh",
     label: "Total kWh",
     compute: (items) => {
-      const electricityReadings = items.filter((r) => r.charge_type?.name?.toLowerCase() === "electricity")
+      const electricityReadings = items.filter((r) => {
+        const ct = r.charge_type as { name?: string } | null
+        return ct?.name?.toLowerCase() === "electricity"
+      })
       return electricityReadings
         .filter((r) => r.units_consumed)
-        .reduce((sum, r) => sum + (r.units_consumed || 0), 0)
+        .reduce((sum: number, r) => sum + (Number(r.units_consumed) || 0), 0)
         .toLocaleString()
     },
     highlight: () => true,

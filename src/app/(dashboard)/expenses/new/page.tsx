@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import {
   Loader2,
   ArrowLeft,
@@ -176,39 +177,33 @@ export default function NewExpensePage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="expense_type_id">Category *</Label>
-                <select
+                <Select
                   id="expense_type_id"
                   name="expense_type_id"
                   value={formData.expense_type_id as string}
                   onChange={handleChange}
                   required
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                >
-                  <option value="">Select category</option>
-                  {expenseTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select category"
+                  options={expenseTypes.map((type) => ({
+                    value: type.id,
+                    label: type.name,
+                  }))}
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="property_id">Property</Label>
-                <select
+                <Select
                   id="property_id"
                   name="property_id"
                   value={formData.property_id as string}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                >
-                  <option value="">All Properties (General)</option>
-                  {properties.map((prop) => (
-                    <option key={prop.id} value={prop.id}>
-                      {prop.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="All Properties (General)"
+                  options={properties.map((prop) => ({
+                    value: prop.id,
+                    label: prop.name,
+                  }))}
+                />
                 <p className="text-xs text-muted-foreground">
                   Leave empty for expenses that apply to all properties
                 </p>
@@ -297,19 +292,19 @@ export default function NewExpensePage() {
 
             <div className="space-y-2">
               <Label htmlFor="payment_method">Payment Method</Label>
-              <select
+              <Select
                 id="payment_method"
                 name="payment_method"
                 value={formData.payment_method as string}
                 onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background"
-              >
-                <option value="cash">Cash</option>
-                <option value="upi">UPI</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="card">Card</option>
-                <option value="cheque">Cheque</option>
-              </select>
+                options={[
+                  { value: "cash", label: "Cash" },
+                  { value: "upi", label: "UPI" },
+                  { value: "bank_transfer", label: "Bank Transfer" },
+                  { value: "card", label: "Card" },
+                  { value: "cheque", label: "Cheque" },
+                ]}
+              />
             </div>
           </CardContent>
         </Card>

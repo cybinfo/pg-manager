@@ -38,6 +38,7 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG } from "@/types/meters.types"
 import { ROOM_STATUS } from "@/lib/status"
+import { PermissionGate } from "@/components/auth"
 
 interface MeterReading {
   id: string
@@ -116,12 +117,14 @@ export default function RoomDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2">
-            <Link href={`/rooms/${room.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </Link>
+            <PermissionGate permission="rooms.edit" hide>
+              <Link href={`/rooms/${room.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             {availableBeds > 0 && (
               <Link href={`/tenants/new?room=${room.id}`}>
                 <Button size="sm">

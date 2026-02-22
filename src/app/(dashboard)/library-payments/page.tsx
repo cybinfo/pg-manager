@@ -11,11 +11,10 @@ import { Column, StatusDot } from "@/components/ui/data-table"
 import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createStatusMetric, createSumMetric, createTodayCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { getTodayISO } from "@/lib/date-helpers"
 import { LIBRARY_PAYMENT_METHOD_FILTER, createStatusFilter } from "@/lib/filter-presets"
-import { formatDate, formatCurrency } from "@/lib/format"
+import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { Avatar } from "@/components/ui/avatar"
 import { LIBRARY_PAYMENT_TYPE_CONFIG, LIBRARY_PAYMENT_METHOD_CONFIG, LIBRARY_PAYMENT_STATUS_CONFIG } from "@/types/library.types"
@@ -211,26 +210,9 @@ const groupByOptions: GroupByOption[] = [
 
 const metrics: MetricConfig<Record<string, unknown>>[] = [
   createTotalMetric({ label: "Total Payments", icon: Receipt }),
-  {
-    id: "total_amount",
-    label: "Total Amount",
-    icon: CreditCard,
-    compute: (items) => {
-      const total = items.reduce((sum: number, p) => sum + (Number(p.amount) || 0), 0)
-      return formatCurrency(total)
-    },
-  },
+  createSumMetric("amount", "total_amount", "Total Amount", CreditCard),
   createStatusMetric("subscription", "Subscriptions", Users, { id: "subscriptions", column: "payment_type" }),
-  {
-    // Custom: dynamic date comparison with "today"
-    id: "today",
-    label: "Today",
-    icon: Calendar,
-    compute: (items) => {
-      const today = getTodayISO()
-      return items.filter((p) => p.payment_date === today).length
-    },
-  },
+  createTodayCountMetric("payment_date", "Today", Calendar),
 ]
 
 // ============================================

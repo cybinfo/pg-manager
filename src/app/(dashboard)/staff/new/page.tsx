@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
@@ -551,22 +552,19 @@ export default function NewStaffPage() {
                     <div className="flex-1 grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs text-muted-foreground">Role</Label>
-                        <select
+                        <Select
                           value={assignment.role_id}
                           onChange={(e) => updateRoleAssignment(index, "role_id", e.target.value)}
-                          className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
                           disabled={loading}
-                        >
-                          {roles.map((role) => (
-                            <option key={role.id} value={role.id}>
-                              {role.name}
-                            </option>
-                          ))}
-                        </select>
+                          options={roles.map((role) => ({
+                            value: role.id,
+                            label: role.name,
+                          }))}
+                        />
                       </div>
                       <div>
                         <Label className="text-xs text-muted-foreground">Property (Optional)</Label>
-                        <select
+                        <Select
                           value={assignment.property_id || ""}
                           onChange={(e) =>
                             updateRoleAssignment(
@@ -575,16 +573,13 @@ export default function NewStaffPage() {
                               e.target.value || null
                             )
                           }
-                          className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
                           disabled={loading}
-                        >
-                          <option value="">All Properties</option>
-                          {properties.map((property) => (
-                            <option key={property.id} value={property.id}>
-                              {property.name}
-                            </option>
-                          ))}
-                        </select>
+                          placeholder="All Properties"
+                          options={properties.map((property) => ({
+                            value: property.id,
+                            label: property.name,
+                          }))}
+                        />
                       </div>
                     </div>
                     <Button

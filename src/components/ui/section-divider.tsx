@@ -19,14 +19,14 @@ export function SectionDivider({
     <div className={cn("relative py-4", className)}>
       <div className="flex items-center gap-3">
         {Icon && (
-          <div className="p-1.5 rounded-lg bg-slate-100">
-            <Icon className="h-4 w-4 text-slate-600" />
+          <div className="p-1.5 rounded-lg bg-muted">
+            <Icon className="h-4 w-4 text-muted-foreground" />
           </div>
         )}
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-700">{label}</span>
-            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-sm font-medium text-foreground">{label}</span>
+            <div className="flex-1 h-px bg-border" />
           </div>
           {description && (
             <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
@@ -39,7 +39,7 @@ export function SectionDivider({
 
 // Simple line divider
 export function Divider({ className }: { className?: string }) {
-  return <div className={cn("h-px bg-slate-200 my-4", className)} />
+  return <div className={cn("h-px bg-border my-4", className)} />
 }
 
 // Section wrapper with optional label
@@ -58,7 +58,7 @@ export function Section({
     <div className={cn("space-y-4", className)}>
       {title && (
         <div>
-          <h3 className="text-sm font-medium text-slate-700">{title}</h3>
+          <h3 className="text-sm font-medium text-foreground">{title}</h3>
           {description && (
             <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
           )}

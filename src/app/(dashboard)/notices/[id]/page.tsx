@@ -9,6 +9,7 @@ import { useDetailPage, NOTICE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import {
   DetailHero,
   InfoCard,
@@ -359,36 +360,33 @@ export default function NoticeDetailPage() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="property_id">Property</Label>
-            <select
+            <Select
               id="property_id"
               name="property_id"
               value={formData.property_id}
               onChange={handleChange}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
               disabled={saving}
-            >
-              <option value="">All Properties</option>
-              {properties.map((property) => (
-                <option key={property.id} value={property.id}>
-                  {property.name}
-                </option>
-              ))}
-            </select>
+              placeholder="All Properties"
+              options={properties.map((property) => ({
+                value: property.id,
+                label: property.name,
+              }))}
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Audience</Label>
-            <select
+            <Select
               name="target_audience"
               value={formData.target_audience}
               onChange={handleChange}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
               disabled={saving}
-            >
-              <option value="all">All Residents</option>
-              <option value="tenants_only">Tenants Only</option>
-              <option value="specific_rooms">Specific Rooms</option>
-            </select>
+              options={[
+                { value: "all", label: "All Residents" },
+                { value: "tenants_only", label: "Tenants Only" },
+                { value: "specific_rooms", label: "Specific Rooms" },
+              ]}
+            />
           </div>
 
           {/* Room Selection */}

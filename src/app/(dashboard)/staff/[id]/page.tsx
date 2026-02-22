@@ -9,6 +9,7 @@ import { StaffMember, UserRole, Role } from "@/types/staff.types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import {
   DetailHero,
   InfoCard,
@@ -441,31 +442,27 @@ export default function StaffDetailPage() {
             <div className="pt-4 border-t mt-4">
               <Label className="text-sm font-medium">Add New Role</Label>
               <div className="flex items-center gap-2 mt-2">
-                <select
+                <Select
                   value={newRoleAssignment.role_id}
                   onChange={(e) => setNewRoleAssignment((prev) => ({ ...prev, role_id: e.target.value }))}
-                  className="flex-1 h-9 px-3 rounded-md border border-input bg-background text-sm"
+                  className="flex-1"
                   disabled={saving}
-                >
-                  {allRoles.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-                <select
+                  options={allRoles.map((role) => ({
+                    value: role.id,
+                    label: role.name,
+                  }))}
+                />
+                <Select
                   value={newRoleAssignment.property_id}
                   onChange={(e) => setNewRoleAssignment((prev) => ({ ...prev, property_id: e.target.value }))}
-                  className="flex-1 h-9 px-3 rounded-md border border-input bg-background text-sm"
+                  className="flex-1"
                   disabled={saving}
-                >
-                  <option value="">All Properties</option>
-                  {properties.map((property) => (
-                    <option key={property.id} value={property.id}>
-                      {property.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="All Properties"
+                  options={properties.map((property) => ({
+                    value: property.id,
+                    label: property.name,
+                  }))}
+                />
                 <Button
                   type="button"
                   size="sm"

@@ -26,21 +26,6 @@ export {
   DialogDescription,
 } from "./dialog"
 
-// Alert Dialog Components (shadcn)
-export {
-  AlertDialog,
-  AlertDialogPortal,
-  AlertDialogOverlay,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from "./alert-dialog"
-
 // Dropdown Menu Components (shadcn)
 export {
   DropdownMenu,

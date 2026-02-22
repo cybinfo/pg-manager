@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
@@ -127,21 +128,18 @@ export default function NewVisitorPage() {
           <CardContent>
             <div className="space-y-2">
               <Label htmlFor="property_id">Property *</Label>
-              <select
+              <Select
                 id="property_id"
                 name="property_id"
                 value={formData.property_id}
                 onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 required
                 disabled={loading}
-              >
-                {properties.map((property) => (
-                  <option key={property.id} value={property.id}>
-                    {property.name}
-                  </option>
-                ))}
-              </select>
+                options={properties.map((property) => ({
+                  value: property.id,
+                  label: property.name,
+                }))}
+              />
             </div>
           </CardContent>
         </Card>

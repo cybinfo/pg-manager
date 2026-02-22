@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft, Users, Loader2, Building2, Home, RefreshCw,
@@ -746,19 +747,19 @@ export default function NewTenantPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="police_verification_status">Police Verification</Label>
-              <select
+              <Select
                 id="police_verification_status"
                 name="police_verification_status"
                 value={formData.police_verification_status}
                 onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 disabled={loading}
-              >
-                <option value="pending">Pending</option>
-                <option value="submitted">Submitted</option>
-                <option value="verified">Verified</option>
-                <option value="na">N/A</option>
-              </select>
+                options={[
+                  { value: "pending", label: "Pending" },
+                  { value: "submitted", label: "Submitted" },
+                  { value: "verified", label: "Verified" },
+                  { value: "na", label: "N/A" },
+                ]}
+              />
             </div>
 
             <div className="flex items-center gap-2">

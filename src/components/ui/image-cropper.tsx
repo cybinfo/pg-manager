@@ -164,7 +164,7 @@ export function ImageCropper({
       className="fixed inset-0 z-[var(--z-lightbox)] flex flex-col bg-black"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-900 text-white">
+      <div className="flex items-center justify-between px-4 py-3 bg-zinc-900 text-white">
         <button
           onClick={onClose}
           className="p-2 rounded-full hover:bg-white/10 transition-colors"
@@ -207,10 +207,10 @@ export function ImageCropper({
       </div>
 
       {/* Controls */}
-      <div className="px-4 py-4 bg-gray-900 text-white">
+      <div className="px-4 py-4 bg-zinc-900 text-white">
         {/* Zoom slider */}
         <div className="flex items-center gap-4 mb-4">
-          <ZoomOut className="h-5 w-5 text-gray-400" />
+          <ZoomOut className="h-5 w-5 text-zinc-400" />
           <input
             type="range"
             min={1}
@@ -220,7 +220,7 @@ export function ImageCropper({
             onChange={(e) => setZoom(Number(e.target.value))}
             className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
           />
-          <ZoomIn className="h-5 w-5 text-gray-400" />
+          <ZoomIn className="h-5 w-5 text-zinc-400" />
         </div>
 
         {/* Rotate button */}
@@ -235,7 +235,7 @@ export function ImageCropper({
         </div>
 
         {/* Instructions */}
-        <p className="text-center text-sm text-gray-400 mt-4">
+        <p className="text-center text-sm text-zinc-400 mt-4">
           Drag to reposition. Pinch or use slider to zoom.
         </p>
       </div>

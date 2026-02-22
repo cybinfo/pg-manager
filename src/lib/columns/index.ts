@@ -25,6 +25,7 @@ export {
   currencyColumn,
   dateColumn,
   badgeColumn,
+  personNameWithAvatarColumn,
 } from "./builders"
 
 // Generic typed column factories

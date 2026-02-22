@@ -18,7 +18,7 @@ import {
   Smartphone,
 } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
-import { statusColumn, dateColumn } from "@/lib/column-builders"
+import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { REFUND_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
@@ -26,11 +26,9 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
-import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { REFUND_STATUS } from "@/lib/status-config"
 import { numberFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
-import { PersonAvatarCell } from "@/components/ui/column-renders"
 
 // ============================================
 // Types
@@ -63,24 +61,15 @@ interface Refund {
 // ============================================
 
 const columns: Column<Refund>[] = [
-  {
+  personNameWithAvatarColumn("Tenant", {
     key: "tenant",
-    header: "Tenant",
-    width: "primary",
-    sortable: true,
+    nameField: "tenant.name",
+    personNameField: "tenant.name",
+    photoField: "tenant.photo_url",
+    subtitleField: "tenant.phone",
     sortKey: "tenant.name",
-    canHide: false,
-    render: (refund) => (
-      <div className="flex items-center gap-3">
-        <PersonAvatarCell
-          name={refund.tenant?.name || "Unknown"}
-          phone={refund.tenant?.phone}
-          photoUrl={refund.tenant?.photo_url}
-          avatarClassName="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
-        />
-      </div>
-    ),
-  },
+    avatarClassName: "bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0",
+  }) as Column<Refund>,
   {
     key: "property",
     header: "Property",

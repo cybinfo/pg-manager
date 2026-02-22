@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Check } from "lucide-react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
@@ -50,18 +51,15 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="default_rent_due_day">Rent Due Day</Label>
-              <select
+              <Select
                 id="default_rent_due_day"
-                value={configForm.default_rent_due_day}
+                value={configForm.default_rent_due_day.toString()}
                 onChange={(e) => setConfigForm({ ...configForm, default_rent_due_day: parseInt(e.target.value) })}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-              >
-                {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                  <option key={day} value={day}>
-                    {day}{day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month
-                  </option>
-                ))}
-              </select>
+                options={Array.from({ length: 28 }, (_, i) => i + 1).map((day) => ({
+                  value: day.toString(),
+                  label: `${day}${day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month`,
+                }))}
+              />
               <p className="text-xs text-muted-foreground">
                 Day when rent becomes due
               </p>
@@ -85,17 +83,17 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
 
           <div className="space-y-2">
             <Label htmlFor="default_notice_period">Notice Period (Days)</Label>
-            <select
+            <Select
               id="default_notice_period"
-              value={configForm.default_notice_period}
+              value={configForm.default_notice_period.toString()}
               onChange={(e) => setConfigForm({ ...configForm, default_notice_period: parseInt(e.target.value) })}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-            >
-              <option value={7}>7 days</option>
-              <option value={15}>15 days</option>
-              <option value={30}>30 days (1 month)</option>
-              <option value={60}>60 days (2 months)</option>
-            </select>
+              options={[
+                { value: "7", label: "7 days" },
+                { value: "15", label: "15 days" },
+                { value: "30", label: "30 days (1 month)" },
+                { value: "60", label: "60 days (2 months)" },
+              ]}
+            />
             <p className="text-xs text-muted-foreground">
               Required notice before tenant checkout
             </p>

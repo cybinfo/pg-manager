@@ -13,6 +13,7 @@ import { baseCronHandler } from "@/lib/cron-handler"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
+import { getNowISO } from "@/lib/date-helpers"
 import {
   sendLibraryLowHoursWarning,
   sendLibraryExpiringMembership,
@@ -237,6 +238,7 @@ export const GET = (request: Request) =>
             entity_type: "library_member",
             entity_id: null,
             actor_id: SYSTEM_ACTOR_ID,
+            actor_type: "system",
             metadata: {
               low_hours_warnings: results.lowHoursWarnings,
               expiring_notifications: results.expiringNotifications,
@@ -245,6 +247,7 @@ export const GET = (request: Request) =>
               errors_count: results.errors.length,
               triggered_by: "cron",
             },
+            created_at: getNowISO(),
           })
       }
 

@@ -83,13 +83,13 @@ export function DetailHero({
           {(avatar || Icon) && (
             <div className="shrink-0">
               {typeof avatar === 'string' ? (
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-teal-500/20">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-primary/20">
                   {avatar}
                 </div>
               ) : avatar ? (
                 avatar
               ) : Icon ? (
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20">
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-primary/20">
                   <Icon className="h-8 w-8 text-white" />
                 </div>
               ) : null}

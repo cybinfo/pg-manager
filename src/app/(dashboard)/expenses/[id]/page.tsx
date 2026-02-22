@@ -74,6 +74,10 @@ export default function ExpenseDetailPage() {
         subtitle={formatDate(expense.expense_date)}
         backHref={backHref}
         backLabel={backLabel}
+        breadcrumbs={[
+          { label: "Expenses", href: "/expenses" },
+          { label: "Expense Details" },
+        ]}
         avatar={
           <div className="p-3 bg-destructive/10 rounded-lg">
             <Receipt className="h-8 w-8 text-destructive" />

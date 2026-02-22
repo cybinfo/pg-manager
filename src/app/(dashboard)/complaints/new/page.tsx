@@ -8,6 +8,7 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle, Library } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -348,60 +349,51 @@ function NewComplaintForm() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="property_id">Property *</Label>
-                    <select
+                    <Select
                       id="property_id"
                       name="property_id"
                       value={formData.property_id as string}
                       onChange={handleChange}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                       required
                       disabled={saving}
-                    >
-                      <option value="">Select property</option>
-                      {properties.map((property) => (
-                        <option key={property.id} value={property.id}>
-                          {property.name}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Select property"
+                      options={properties.map((property) => ({
+                        value: property.id,
+                        label: property.name,
+                      }))}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="room_id">Room (Optional)</Label>
-                    <select
+                    <Select
                       id="room_id"
                       name="room_id"
                       value={formData.room_id as string}
                       onChange={handleChange}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                       disabled={saving || !formData.property_id}
-                    >
-                      <option value="">Select room</option>
-                      {filteredRooms.map((room) => (
-                        <option key={room.id} value={room.id}>
-                          Room {room.room_number}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Select room"
+                      options={filteredRooms.map((room) => ({
+                        value: room.id,
+                        label: `Room ${room.room_number}`,
+                      }))}
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="tenant_id">Reported By (Optional)</Label>
-                  <select
+                  <Select
                     id="tenant_id"
                     name="tenant_id"
                     value={formData.tenant_id as string}
                     onChange={handleChange}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                     disabled={saving}
-                  >
-                    <option value="">Select tenant</option>
-                    {filteredTenants.map((tenant) => (
-                      <option key={tenant.id} value={tenant.id}>
-                        {tenant.name} - Room {tenant.room?.room_number}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Select tenant"
+                    options={filteredTenants.map((tenant) => ({
+                      value: tenant.id,
+                      label: `${tenant.name} - Room ${tenant.room?.room_number}`,
+                    }))}
+                  />
                 </div>
               </>
             )}
@@ -411,41 +403,35 @@ function NewComplaintForm() {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="library_id">Library *</Label>
-                  <select
+                  <Select
                     id="library_id"
                     name="library_id"
                     value={formData.library_id as string}
                     onChange={handleChange}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                     required
                     disabled={saving}
-                  >
-                    <option value="">Select library</option>
-                    {libraries.map((library) => (
-                      <option key={library.id} value={library.id}>
-                        {library.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Select library"
+                    options={libraries.map((library) => ({
+                      value: library.id,
+                      label: library.name,
+                    }))}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="member_id">Reported By (Optional)</Label>
-                  <select
+                  <Select
                     id="member_id"
                     name="member_id"
                     value={formData.member_id as string}
                     onChange={handleChange}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                     disabled={saving}
-                  >
-                    <option value="">Select member</option>
-                    {libraryMembers.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {member.name} {member.member_code && `(${member.member_code})`}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Select member"
+                    options={libraryMembers.map((member) => ({
+                      value: member.id,
+                      label: `${member.name}${member.member_code ? ` (${member.member_code})` : ""}`,
+                    }))}
+                  />
                 </div>
               </>
             )}
@@ -469,39 +455,33 @@ function NewComplaintForm() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
-                <select
+                <Select
                   id="category"
                   name="category"
                   value={formData.category as string}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   required
                   disabled={saving}
-                >
-                  {categories.map((cat) => (
-                    <option key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </option>
-                  ))}
-                </select>
+                  options={categories.map((cat) => ({
+                    value: cat.value,
+                    label: cat.label,
+                  }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority *</Label>
-                <select
+                <Select
                   id="priority"
                   name="priority"
                   value={formData.priority as string}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   required
                   disabled={saving}
-                >
-                  {priorities.map((p) => (
-                    <option key={p.value} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
+                  options={priorities.map((p) => ({
+                    value: p.value,
+                    label: p.label,
+                  }))}
+                />
               </div>
             </div>
 

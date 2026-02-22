@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users, Zap, Droplets, Plus } from "lucide-react"
+import { Select } from "@/components/ui/form-components"
 import { showWarning } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -431,21 +432,18 @@ export default function NewMeterReadingPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="meter_id">Meter *</Label>
-              <select
+              <Select
                 id="meter_id"
                 value={formData.meter_id as string}
                 onChange={(e) => handleMeterSelect(e.target.value)}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 required
                 disabled={saving}
-              >
-                <option value="">Select a meter</option>
-                {meters.map((meter) => (
-                  <option key={meter.id} value={meter.id}>
-                    {meter.meter_number} ({meter.meter_type}) - {meter.property?.name} / Room {meter.current_assignment.room_number}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select a meter"
+                options={meters.map((meter) => ({
+                  value: meter.id,
+                  label: `${meter.meter_number} (${meter.meter_type}) - ${meter.property?.name} / Room ${meter.current_assignment.room_number}`,
+                }))}
+              />
             </div>
 
             {/* Show selected meter details */}

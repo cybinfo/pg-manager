@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Globe,
@@ -213,15 +214,15 @@ export function WebsiteSettingsTab({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Property Type</Label>
-                  <select
-                    className="w-full h-10 px-3 rounded-md border bg-background"
+                  <Select
                     value={websiteData.website_config.property_type}
                     onChange={(e) => onWebsiteChange("property_type", e.target.value)}
-                  >
-                    <option value="pg">PG (Paying Guest)</option>
-                    <option value="hostel">Hostel</option>
-                    <option value="coliving">Co-Living Space</option>
-                  </select>
+                    options={[
+                      { value: "pg", label: "PG (Paying Guest)" },
+                      { value: "hostel", label: "Hostel" },
+                      { value: "coliving", label: "Co-Living Space" },
+                    ]}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Established Year</Label>

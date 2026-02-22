@@ -10,6 +10,7 @@ import {
 } from "@/lib/api-response"
 import { validateEmail } from "@/lib/validators"
 import { withApiMiddleware, getAdminSupabaseClient } from "@/lib/api-middleware"
+import { getNowISO } from "@/lib/date-helpers"
 
 const UpdateUserEmailSchema = z.object({
   userId: z.string().uuid("Invalid user ID format"),
@@ -93,6 +94,31 @@ export async function POST(request: NextRequest) {
     // If user has owner/staff context, ONLY update tenants.email (done above)
     // Do NOT change their login credentials!
     if (hasOwnerOrStaffContext) {
+      // Audit: log tenant email update (login email unchanged)
+      const { data: actorWorkspace } = await supabaseAdmin
+        .from("workspaces")
+        .select("id")
+        .eq("owner_id", ctx.user.id)
+        .single()
+
+      if (actorWorkspace) {
+        await supabaseAdmin.from("audit_events").insert({
+          entity_type: "tenant",
+          entity_id: tenantId || userId,
+          action: "update",
+          actor_id: ctx.user.id,
+          actor_type: isPlatformAdmin ? "system" : "owner",
+          workspace_id: actorWorkspace.id,
+          metadata: {
+            operation: "email_updated",
+            new_email: newEmail,
+            login_email_updated: false,
+            reason: "user_has_owner_or_staff_context",
+          },
+          created_at: getNowISO(),
+        })
+      }
+
       return apiSuccess(
         { loginEmailUpdated: false },
         { message: "Tenant record email updated. Login email unchanged (user has owner/staff access)." }
@@ -100,6 +126,15 @@ export async function POST(request: NextRequest) {
     }
 
     // User is ONLY a tenant, safe to update login credentials
+
+    // Capture old email before update (for audit trail)
+    const { data: oldProfile } = await supabaseAdmin
+      .from("user_profiles")
+      .select("email")
+      .eq("user_id", userId)
+      .single()
+
+    const oldEmail = oldProfile?.email
 
     // Check if new email is already in use by another user
     const { data: existingUser } = await supabaseAdmin
@@ -133,6 +168,37 @@ export async function POST(request: NextRequest) {
     if (profileError) {
       apiLogger.error("Error updating user_profiles email", extractErrorMeta(profileError))
       // Don't fail completely, auth email is already updated
+    }
+
+    // Audit: log full email update (login + profile + tenant)
+    const { data: actorWs } = await supabaseAdmin
+      .from("workspaces")
+      .select("id")
+      .eq("owner_id", ctx.user.id)
+      .single()
+
+    if (actorWs) {
+      await supabaseAdmin.from("audit_events").insert({
+        entity_type: "tenant",
+        entity_id: tenantId || userId,
+        action: "update",
+        actor_id: ctx.user.id,
+        actor_type: isPlatformAdmin ? "system" : "owner",
+        workspace_id: actorWs.id,
+        changes: {
+          before: { email: oldEmail },
+          after: { email: newEmail },
+          fields_changed: ["email"],
+        },
+        metadata: {
+          operation: "email_updated",
+          old_email: oldEmail,
+          new_email: newEmail,
+          login_email_updated: true,
+          target_user_id: userId,
+        },
+        created_at: getNowISO(),
+      })
     }
 
     return apiSuccess(

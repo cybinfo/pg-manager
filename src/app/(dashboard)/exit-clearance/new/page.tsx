@@ -8,6 +8,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
@@ -404,22 +405,19 @@ function InitiateCheckoutForm() {
                   </Link>
                 </div>
               ) : (
-                <select
+                <Select
                   id="tenant_id"
                   name="tenant_id"
                   value={formData.tenant_id}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   required
                   disabled={loading}
-                >
-                  <option value="">Select a tenant</option>
-                  {tenants.map((tenant) => (
-                    <option key={tenant.id} value={tenant.id}>
-                      {tenant.name} - {tenant.property?.name || "—"}, Room {tenant.room?.room_number || "—"}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select a tenant"
+                  options={tenants.map((tenant) => ({
+                    value: tenant.id,
+                    label: `${tenant.name} - ${tenant.property?.name || "\u2014"}, Room ${tenant.room?.room_number || "\u2014"}`,
+                  }))}
+                />
               )}
             </div>
 

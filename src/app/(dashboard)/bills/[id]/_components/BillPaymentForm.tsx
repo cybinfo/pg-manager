@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { DetailSection } from "@/components/ui"
 import { CreditCard, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -117,18 +118,18 @@ export function BillPaymentForm({
           </div>
           <div>
             <Label htmlFor="payment_method">Payment Method</Label>
-            <select
+            <Select
               id="payment_method"
-              className="w-full h-10 px-3 rounded-md border bg-background"
               value={paymentData.payment_method}
               onChange={(e) => setPaymentData({ ...paymentData, payment_method: e.target.value })}
-            >
-              <option value="cash">Cash</option>
-              <option value="upi">UPI</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="cheque">Cheque</option>
-              <option value="other">Other</option>
-            </select>
+              options={[
+                { value: "cash", label: "Cash" },
+                { value: "upi", label: "UPI" },
+                { value: "bank_transfer", label: "Bank Transfer" },
+                { value: "cheque", label: "Cheque" },
+                { value: "other", label: "Other" },
+              ]}
+            />
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

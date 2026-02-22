@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { VISITOR_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createNullCheckMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createNullCheckMetric, createCountMetric, createTodayCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, VISITOR_TYPE_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -325,16 +325,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
   createCountMetric("frequent", "Frequent Visitors", Star,
     (item) => Boolean(item.is_frequent_visitor)
   ),
-  {
-    // Custom: dynamic date comparison with "today" - page totals only
-    id: "today",
-    label: "Today",
-    icon: CalendarDays,
-    compute: (items) => {
-      const today = new Date().toDateString()
-      return items.filter((v) => new Date(v.check_in_date as string).toDateString() === today).length
-    },
-  },
+  createTodayCountMetric("check_in_date", "Today", CalendarDays),
 ]
 
 // ============================================

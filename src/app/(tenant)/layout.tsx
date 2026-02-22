@@ -1,29 +1,11 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import {
-  Home,
-  User,
-  CreditCard,
-  FileText,
-  MessageSquare,
-  Bell,
-  Building2,
-  FolderOpen
-} from "lucide-react"
+import { Building2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { PortalLayout, PortalNavItem } from "@/components/portal"
+import { PortalLayout } from "@/components/portal"
+import { TENANT_NAVIGATION } from "@/lib/navigation/config"
 import { TenantPortalInfo, RawTenantPortalInfo } from "@/types/tenants.types"
-
-const navigation: PortalNavItem[] = [
-  { name: "Home", href: "/tenant", icon: Home },
-  { name: "My Profile", href: "/tenant/profile", icon: User },
-  { name: "My Bills", href: "/tenant/bills", icon: FileText },
-  { name: "Payments", href: "/tenant/payments", icon: CreditCard },
-  { name: "Documents", href: "/tenant/documents", icon: FolderOpen },
-  { name: "Complaints", href: "/tenant/complaints", icon: MessageSquare },
-  { name: "Notices", href: "/tenant/notices", icon: Bell },
-]
 
 export default function TenantLayout({
   children,
@@ -80,7 +62,7 @@ export default function TenantLayout({
       brandIconColor="text-primary"
       icon={Building2}
       portalName="Tenant Portal"
-      navItems={navigation}
+      navItems={TENANT_NAVIGATION}
       entityInfoRenderer={renderEntityInfo}
       onAuthCheck={handleAuthCheck}
       logTag="TenantLayout"

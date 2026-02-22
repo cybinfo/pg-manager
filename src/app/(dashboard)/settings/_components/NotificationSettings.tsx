@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Mail, Bell, Send, MailCheck, Phone } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -103,21 +104,18 @@ export function NotificationSettings({
 
                 <div className="space-y-2">
                   <Label htmlFor="reminder_days">Days Before Due Date</Label>
-                  <select
+                  <Select
                     id="reminder_days"
-                    value={notificationSettings.reminder_days_before}
+                    value={notificationSettings.reminder_days_before.toString()}
                     onChange={(e) => setNotificationSettings({
                       ...notificationSettings,
                       reminder_days_before: parseInt(e.target.value)
                     })}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  >
-                    {[1, 2, 3, 5, 7, 10].map((days) => (
-                      <option key={days} value={days}>
-                        {days} day{days > 1 ? "s" : ""} before
-                      </option>
-                    ))}
-                  </select>
+                    options={[1, 2, 3, 5, 7, 10].map((days) => ({
+                      value: days.toString(),
+                      label: `${days} day${days > 1 ? "s" : ""} before`,
+                    }))}
+                  />
                   <p className="text-xs text-muted-foreground">
                     Send reminder this many days before rent is due
                   </p>
@@ -175,18 +173,18 @@ export function NotificationSettings({
                 {notificationSettings.send_overdue_alerts && (
                   <div className="space-y-2">
                     <Label htmlFor="overdue_frequency">Overdue Alert Frequency</Label>
-                    <select
+                    <Select
                       id="overdue_frequency"
                       value={notificationSettings.overdue_alert_frequency}
                       onChange={(e) => setNotificationSettings({
                         ...notificationSettings,
                         overdue_alert_frequency: e.target.value as "daily" | "weekly"
                       })}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    >
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                    </select>
+                      options={[
+                        { value: "daily", label: "Daily" },
+                        { value: "weekly", label: "Weekly" },
+                      ]}
+                    />
                   </div>
                 )}
               </div>

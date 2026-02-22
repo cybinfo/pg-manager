@@ -12,3 +12,6 @@ export type { PortalEmptyStateProps } from "./PortalEmptyState"
 
 export { PaymentListItem } from "./PaymentListItem"
 export type { PaymentListItemProps } from "./PaymentListItem"
+
+export { PortalError } from "./PortalError"
+export type { PortalErrorProps } from "./PortalError"

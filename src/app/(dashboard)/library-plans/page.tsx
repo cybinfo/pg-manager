@@ -10,7 +10,7 @@ import { CreditCard, Clock, Calendar, CheckCircle } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_PLAN_LIST_CONFIG } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createBooleanMetric, createAverageMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { Currency } from "@/components/ui/currency"
@@ -152,29 +152,13 @@ const filters: FilterConfig[] = [
 const metrics: MetricConfig<Record<string, unknown>>[] = [
   createTotalMetric({ label: "Total Plans", icon: CreditCard }),
   createBooleanMetric("is_active", true, "Active", CheckCircle, { id: "active" }),
-  {
-    // Custom: average computation
-    id: "avg_hours",
-    label: "Avg Hours",
-    icon: Clock,
-    compute: (items) => {
-      const withHours = items.filter((p) => p.hours_included)
-      if (withHours.length === 0) return "\u2014"
-      const avg = withHours.reduce((sum: number, p) => sum + (Number(p.hours_included) || 0), 0) / withHours.length
-      return `${avg.toFixed(0)}h`
-    },
-  },
-  {
-    // Custom: average computation
-    id: "avg_validity",
-    label: "Avg Validity",
-    icon: Calendar,
-    compute: (items) => {
-      if (items.length === 0) return "\u2014"
-      const avg = items.reduce((sum: number, p) => sum + (Number(p.validity_days) || 0), 0) / items.length
-      return `${avg.toFixed(0)} days`
-    },
-  },
+  createAverageMetric("hours_included", "avg_hours", "Avg Hours", Clock, {
+    suffix: "h",
+    filterNulls: true,
+  }),
+  createAverageMetric("validity_days", "avg_validity", "Avg Validity", Calendar, {
+    suffix: " days",
+  }),
 ]
 
 // ============================================

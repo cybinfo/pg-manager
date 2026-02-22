@@ -15,10 +15,8 @@
 import { Users, UserCheck, UserMinus, Clock } from "lucide-react"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column, StatusDot } from "@/components/ui/data-table"
-import { Avatar, getAvatarUrl } from "@/components/ui/avatar"
-import { PersonAvatarCell } from "@/components/ui/column-renders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { statusColumn, currencyColumn, dateColumn } from "@/lib/column-builders"
+import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
@@ -73,33 +71,9 @@ interface ExtendedColumn<T> extends Column<T> {
 }
 
 const columns: ExtendedColumn<Tenant>[] = [
-  {
-    key: "name",
-    header: "Tenant",
-    width: "primary",
-    sortable: true,
-    canHide: false, // Always visible - primary identifier
-    defaultVisible: true,
-    render: (tenant) => {
-      // Use person.name (live data) with fallback to tenant.name (denormalized)
-      const displayName = tenant.person?.name || tenant.name
-      return (
-        <div className="flex items-center gap-3">
-          {/* UI-008: Use centralized avatar URL resolution */}
-          <Avatar
-            name={displayName}
-            src={getAvatarUrl(tenant)}
-            size="sm"
-            className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
-          />
-          <div className="min-w-0">
-            <div className="font-medium truncate">{displayName}</div>
-            <div className="text-xs text-muted-foreground">{tenant.phone}</div>
-          </div>
-        </div>
-      )
-    },
-  },
+  personNameWithAvatarColumn("Tenant", {
+    avatarClassName: "bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0",
+  }) as ExtendedColumn<Tenant>,
   {
     key: "property",
     header: "Property / Room",

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Home, Loader2 } from "lucide-react"
+import { Select } from "@/components/ui/form-components"
 import { PhotoGallery } from "@/components/forms"
 
 interface Property {
@@ -203,21 +204,18 @@ export default function EditRoomPage() {
             {/* Property Selection */}
             <div className="space-y-2">
               <Label htmlFor="property_id">Property *</Label>
-              <select
+              <Select
                 id="property_id"
                 name="property_id"
                 value={formData.property_id as string}
                 onChange={handleChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 required
                 disabled={saving}
-              >
-                {properties.map((property) => (
-                  <option key={property.id} value={property.id}>
-                    {property.name}
-                  </option>
-                ))}
-              </select>
+                options={properties.map((property) => ({
+                  value: property.id,
+                  label: property.name,
+                }))}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -235,26 +233,23 @@ export default function EditRoomPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="room_type">Room Type</Label>
-                <select
+                <Select
                   id="room_type"
                   name="room_type"
                   value={formData.room_type as string}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   disabled={saving}
-                >
-                  {roomTypes.filter(rt => rt.is_enabled).sort((a, b) => a.display_order - b.display_order).map((rt) => (
-                    <option key={rt.code} value={rt.code}>
-                      {rt.name}
-                    </option>
-                  ))}
-                  {/* Also include current room type even if disabled (for existing rooms) */}
-                  {!roomTypes.find(rt => rt.code === formData.room_type && rt.is_enabled) && formData.room_type && (
-                    <option value={formData.room_type as string}>
-                      {roomTypes.find(rt => rt.code === formData.room_type)?.name || formData.room_type}
-                    </option>
-                  )}
-                </select>
+                  options={[
+                    ...roomTypes.filter(rt => rt.is_enabled).sort((a, b) => a.display_order - b.display_order).map((rt) => ({
+                      value: rt.code,
+                      label: rt.name,
+                    })),
+                    // Also include current room type even if disabled (for existing rooms)
+                    ...(!roomTypes.find(rt => rt.code === formData.room_type && rt.is_enabled) && formData.room_type
+                      ? [{ value: formData.room_type as string, label: roomTypes.find(rt => rt.code === formData.room_type)?.name || (formData.room_type as string) }]
+                      : []),
+                  ]}
+                />
               </div>
             </div>
 

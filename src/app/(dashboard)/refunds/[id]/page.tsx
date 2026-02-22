@@ -23,7 +23,7 @@ import { Avatar } from "@/components/ui/avatar"
 import { TableBadge } from "@/components/ui/data-table"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, PermissionGate } from "@/components/auth"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PAYMENT_METHODS, REFUND_STATUS, REFUND_TYPE_LABELS } from "@/lib/status"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
@@ -177,6 +177,10 @@ export default function RefundDetailPage() {
           subtitle={refundTypeLabels[refund.refund_type] || refund.refund_type}
           backHref={backHref}
           backLabel={backLabel}
+          breadcrumbs={[
+            { label: "Refunds", href: "/refunds" },
+            { label: "Refund Details" },
+          ]}
           avatar={
             <div className="p-3 bg-success/10 rounded-lg">
               <Wallet className="h-8 w-8 text-success" />
@@ -192,14 +196,18 @@ export default function RefundDetailPage() {
           actions={
             !editing ? (
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-                <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
-                  {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                  Delete
-                </Button>
+                <PermissionGate permission="refunds.edit" hide>
+                  <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                </PermissionGate>
+                <PermissionGate permission="refunds.delete" hide>
+                  <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                    Delete
+                  </Button>
+                </PermissionGate>
               </div>
             ) : (
               <div className="flex gap-2">

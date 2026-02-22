@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Wrench, Briefcase, Search, Calendar, User } from "lucide-react"
 import { PersonSearchResult } from "@/types/people.types"
@@ -78,42 +79,35 @@ export function VisitorTypeFields({
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="tenant_id">Tenant *</Label>
-            <select
+            <Select
               id="tenant_id"
               name="tenant_id"
               value={formData.tenant_id}
               onChange={onChange}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
               required
               disabled={loading || filteredTenants.length === 0}
-            >
-              {filteredTenants.length === 0 ? (
-                <option value="">No tenants in this property</option>
-              ) : (
-                filteredTenants.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name} (Room {tenant.room?.room_number})
-                  </option>
-                ))
-              )}
-            </select>
+              placeholder={filteredTenants.length === 0 ? "No tenants in this property" : undefined}
+              options={filteredTenants.map((tenant) => ({
+                value: tenant.id,
+                label: `${tenant.name} (Room ${tenant.room?.room_number})`,
+              }))}
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="relation">Relation</Label>
-            <select
+            <Select
               id="relation"
               name="relation"
               value={formData.relation}
               onChange={onChange}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
               disabled={loading}
-            >
-              <option value="">Select relation</option>
-              {VISITOR_RELATIONS.map((rel) => (
-                <option key={rel} value={rel}>{rel}</option>
-              ))}
-            </select>
+              placeholder="Select relation"
+              options={VISITOR_RELATIONS.map((rel) => ({
+                value: rel,
+                label: rel,
+              }))}
+            />
           </div>
         </CardContent>
       </Card>
@@ -153,21 +147,18 @@ export function VisitorTypeFields({
               <Label htmlFor="service_type">
                 Service Type {!selectedPerson?.occupation && "*"}
               </Label>
-              <select
+              <Select
                 id="service_type"
                 name="service_type"
                 value={formData.service_type}
                 onChange={onChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 disabled={loading || !!selectedPerson?.occupation}
-              >
-                <option value="">
-                  {selectedPerson?.occupation || "Select service type"}
-                </option>
-                {!selectedPerson?.occupation && SERVICE_TYPES.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
+                placeholder={selectedPerson?.occupation || "Select service type"}
+                options={!selectedPerson?.occupation ? SERVICE_TYPES.map((type) => ({
+                  value: type,
+                  label: type,
+                })) : []}
+              />
               {selectedPerson?.occupation && (
                 <p className="text-xs text-muted-foreground">
                   Using occupation from People module
@@ -217,19 +208,18 @@ export function VisitorTypeFields({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="enquiry_source">How did they find you?</Label>
-              <select
+              <Select
                 id="enquiry_source"
                 name="enquiry_source"
                 value={formData.enquiry_source}
                 onChange={onChange}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 disabled={loading}
-              >
-                <option value="">Select source</option>
-                {(Object.keys(ENQUIRY_SOURCE_LABELS) as EnquirySource[]).map((source) => (
-                  <option key={source} value={source}>{ENQUIRY_SOURCE_LABELS[source]}</option>
-                ))}
-              </select>
+                placeholder="Select source"
+                options={(Object.keys(ENQUIRY_SOURCE_LABELS) as EnquirySource[]).map((source) => ({
+                  value: source,
+                  label: ENQUIRY_SOURCE_LABELS[source],
+                }))}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="follow_up_date">

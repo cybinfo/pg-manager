@@ -7,6 +7,7 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
@@ -296,22 +297,19 @@ export default function NewNoticePage() {
             {formData.entity_type === "property" && (
               <div className="space-y-2">
                 <Label htmlFor="property_id">Property *</Label>
-                <select
+                <Select
                   id="property_id"
                   name="property_id"
                   value={formData.property_id as string}
                   onChange={handleFormChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   disabled={saving}
                   required
-                >
-                  <option value="">Select Property</option>
-                  {properties.map((property) => (
-                    <option key={property.id} value={property.id}>
-                      {property.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select Property"
+                  options={properties.map((property) => ({
+                    value: property.id,
+                    label: property.name,
+                  }))}
+                />
               </div>
             )}
 
@@ -319,43 +317,37 @@ export default function NewNoticePage() {
             {formData.entity_type === "library" && (
               <div className="space-y-2">
                 <Label htmlFor="library_id">Library *</Label>
-                <select
+                <Select
                   id="library_id"
                   name="library_id"
                   value={formData.library_id as string}
                   onChange={handleFormChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   disabled={saving}
                   required
-                >
-                  <option value="">Select Library</option>
-                  {libraries.map((library) => (
-                    <option key={library.id} value={library.id}>
-                      {library.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select Library"
+                  options={libraries.map((library) => ({
+                    value: library.id,
+                    label: library.name,
+                  }))}
+                />
               </div>
             )}
 
             {formData.entity_type === "all" && libraries.length === 0 && (
               <div className="space-y-2">
                 <Label htmlFor="property_id">Property (Optional)</Label>
-                <select
+                <Select
                   id="property_id"
                   name="property_id"
                   value={formData.property_id as string}
                   onChange={handleFormChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   disabled={saving}
-                >
-                  <option value="">All Properties</option>
-                  {properties.map((property) => (
-                    <option key={property.id} value={property.id}>
-                      {property.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="All Properties"
+                  options={properties.map((property) => ({
+                    value: property.id,
+                    label: property.name,
+                  }))}
+                />
                 <p className="text-xs text-muted-foreground">
                   Leave empty to send to all properties
                 </p>

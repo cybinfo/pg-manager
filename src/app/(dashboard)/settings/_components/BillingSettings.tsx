@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Loader2, Save, Plus, Trash2, IndianRupee,
@@ -342,14 +343,14 @@ export function BillingSettings({
                   {/* Split By Selection */}
                   <div className="space-y-2">
                     <Label className="text-sm">Split Charges</Label>
-                    <select
+                    <Select
                       value={utility.split_by}
                       onChange={(e) => updateUtilityRate(utility.id, 'split_by', e.target.value)}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    >
-                      <option value="occupants">Per Occupant</option>
-                      <option value="room">Per Room</option>
-                    </select>
+                      options={[
+                        { value: "occupants", label: "Per Occupant" },
+                        { value: "room", label: "Per Room" },
+                      ]}
+                    />
                   </div>
                 </div>
 
@@ -572,21 +573,18 @@ export function BillingSettings({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="billing_day">Bill Generation Day</Label>
-                    <select
+                    <Select
                       id="billing_day"
-                      value={autoBillingSettings.billing_day}
+                      value={autoBillingSettings.billing_day.toString()}
                       onChange={(e) => setAutoBillingSettings({
                         ...autoBillingSettings,
                         billing_day: parseInt(e.target.value)
                       })}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    >
-                      {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                        <option key={day} value={day}>
-                          {day}{day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month
-                        </option>
-                      ))}
-                    </select>
+                      options={Array.from({ length: 28 }, (_, i) => i + 1).map((day) => ({
+                        value: day.toString(),
+                        label: `${day}${day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month`,
+                      }))}
+                    />
                     <p className="text-xs text-muted-foreground">
                       Day when bills are automatically generated
                     </p>
@@ -594,21 +592,18 @@ export function BillingSettings({
 
                   <div className="space-y-2">
                     <Label htmlFor="due_day_offset">Due Date (Days After)</Label>
-                    <select
+                    <Select
                       id="due_day_offset"
-                      value={autoBillingSettings.due_day_offset}
+                      value={autoBillingSettings.due_day_offset.toString()}
                       onChange={(e) => setAutoBillingSettings({
                         ...autoBillingSettings,
                         due_day_offset: parseInt(e.target.value)
                       })}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    >
-                      {[5, 7, 10, 15, 20, 30].map((days) => (
-                        <option key={days} value={days}>
-                          {days} days after bill date
-                        </option>
-                      ))}
-                    </select>
+                      options={[5, 7, 10, 15, 20, 30].map((days) => ({
+                        value: days.toString(),
+                        label: `${days} days after bill date`,
+                      }))}
+                    />
                     <p className="text-xs text-muted-foreground">
                       Payment due date offset from bill date
                     </p>

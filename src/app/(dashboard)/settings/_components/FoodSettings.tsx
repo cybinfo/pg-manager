@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Check, UtensilsCrossed } from "lucide-react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
@@ -122,18 +123,18 @@ export function FoodSettings({ foodSettings, setFoodSettings, configId }: FoodSe
               {/* Billing Frequency */}
               <div className="space-y-2">
                 <Label>Billing Frequency</Label>
-                <select
+                <Select
                   value={foodSettings.billing_frequency}
                   onChange={(e) => setFoodSettings({
                     ...foodSettings,
                     billing_frequency: e.target.value as "daily" | "weekly" | "monthly"
                   })}
-                  className="w-full h-10 px-3 rounded-md border bg-background"
-                >
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
+                  options={[
+                    { value: "daily", label: "Daily" },
+                    { value: "weekly", label: "Weekly" },
+                    { value: "monthly", label: "Monthly" },
+                  ]}
+                />
                 <p className="text-xs text-muted-foreground">
                   How often food charges are added to tenant bills
                 </p>

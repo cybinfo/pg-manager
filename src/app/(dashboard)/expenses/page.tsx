@@ -13,7 +13,7 @@ import { currencyColumn, dateColumn, badgeColumn } from "@/lib/column-builders"
 import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { EXPENSE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createThisMonthSumMetric, MetricConfig } from "@/lib/metric-factories"
+import { createThisMonthSumMetric, createLastMonthSumMetric, createYearToDateSumMetric, createTopValueByAmountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, PAYMENT_METHOD_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -209,53 +209,11 @@ const advancedFilterColumns: FilterableColumn[] = [
 
 const metrics: MetricConfig<Expense>[] = [
   createThisMonthSumMetric("amount", "expense_date", "This Month", TrendingDown),
-  {
-    id: "last_month",
-    label: "Last Month",
-    icon: Calendar,
-    compute: (items) => {
-      const now = new Date()
-      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
-      const lastMonthExpenses = items.filter((e) => {
-        const date = new Date(e.expense_date)
-        return date >= lastMonthStart && date <= lastMonthEnd
-      })
-      return formatCurrency(lastMonthExpenses.reduce((sum, e) => sum + Number(e.amount), 0))
-    },
-  },
-  {
-    id: "ytd",
-    label: "Year to Date",
-    icon: BarChart3,
-    compute: (items) => {
-      const now = new Date()
-      const yearStart = new Date(now.getFullYear(), 0, 1)
-      const ytdExpenses = items.filter((e) => new Date(e.expense_date) >= yearStart)
-      return formatCurrency(ytdExpenses.reduce((sum, e) => sum + Number(e.amount), 0))
-    },
-  },
-  {
-    id: "top_category",
-    label: "Top Category",
-    icon: Wallet,
-    compute: (items) => {
-      const now = new Date()
-      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      const thisMonthExpenses = items.filter((e) => new Date(e.expense_date) >= thisMonthStart)
-
-      const categoryTotals: Record<string, { name: string; total: number }> = {}
-      thisMonthExpenses.forEach((e) => {
-        const catName = e.expense_type?.name || "Unknown"
-        if (!categoryTotals[catName]) {
-          categoryTotals[catName] = { name: catName, total: 0 }
-        }
-        categoryTotals[catName].total += Number(e.amount)
-      })
-      const topCategory = Object.values(categoryTotals).sort((a, b) => b.total - a.total)[0]
-      return topCategory?.name || "—"
-    },
-  },
+  createLastMonthSumMetric("amount", "expense_date", "Last Month", Calendar),
+  createYearToDateSumMetric("amount", "expense_date", "Year to Date", BarChart3),
+  createTopValueByAmountMetric("expense_type.name", "amount", "top_category", "Top Category", Wallet, {
+    dateField: "expense_date",
+  }),
 ]
 
 // ============================================

@@ -22,7 +22,7 @@ import {
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { NOTICE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createCountMetric, createExpiringMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -270,21 +270,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     (item) => item.type === "emergency" && Boolean(item.is_active),
     { highlight: true }
   ),
-  {
-    // Custom: dynamic date comparison with "3 days from now" - page totals only
-    id: "expiring",
-    label: "Expiring Soon",
-    icon: Clock,
-    compute: (items) => {
-      const threeDays = 3 * 24 * 60 * 60 * 1000
-      const now = new Date().getTime()
-      return items.filter((n) => {
-        if (!n.expires_at || !n.is_active) return false
-        const expiresAt = new Date(n.expires_at as string).getTime()
-        return expiresAt > now && expiresAt - now < threeDays
-      }).length
-    },
-  },
+  createExpiringMetric("expires_at", 3, "Expiring Soon", Clock, { activeField: "is_active" }),
 ]
 
 // ============================================

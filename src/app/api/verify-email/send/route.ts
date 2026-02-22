@@ -10,6 +10,7 @@ import {
 import { withApiMiddleware, getAdminSupabaseClient } from "@/lib/api-middleware"
 import { authLogger, extractErrorMeta } from "@/lib/logger"
 import { CONTACT } from "@/lib/constants/contact"
+import { getNowISO } from "@/lib/date-helpers"
 
 const SendVerificationSchema = z.object({
   userId: z.string().uuid("Invalid user ID format"),
@@ -74,6 +75,30 @@ export async function POST(request: NextRequest) {
 
     if (!emailResult.success) {
       return internalError(emailResult.error || "Failed to send verification email")
+    }
+
+    // Audit: log verification email sent
+    // Look up workspace for the user (they may be an owner)
+    const { data: userWorkspace } = await supabaseAdmin
+      .from("workspaces")
+      .select("id")
+      .eq("owner_id", userId)
+      .single()
+
+    if (userWorkspace) {
+      await supabaseAdmin.from("audit_events").insert({
+        entity_type: "workspace",
+        entity_id: userId,
+        action: "create",
+        actor_id: userId,
+        actor_type: "owner",
+        workspace_id: userWorkspace.id,
+        metadata: {
+          operation: "verification_email_sent",
+          email,
+        },
+        created_at: getNowISO(),
+      })
     }
 
     return apiSuccess(undefined, { message: "Verification email sent successfully" })

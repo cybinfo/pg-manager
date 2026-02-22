@@ -25,6 +25,7 @@
 import { Hash } from "lucide-react"
 import type { MetricConfig, ServerFilter, ServerSum } from "@/lib/hooks/list-page/types"
 import { formatCurrency } from "@/lib/format"
+import { getTodayISO } from "@/lib/date-helpers"
 
 // Re-export MetricConfig for convenience
 export type { MetricConfig } from "@/lib/hooks/list-page/types"
@@ -381,6 +382,343 @@ export function createThisMonthCountMetric<T = Record<string, unknown>>(
       return items.filter(
         (item) => new Date((item as Record<string, unknown>)[dateField] as string) >= firstOfMonth
       ).length
+    },
+  }
+}
+
+// ============================================
+// createTodayCountMetric
+// ============================================
+
+/**
+ * Creates a metric that counts items from today.
+ * Uses dynamic date comparison (not expressible as a serverFilter).
+ *
+ * @param dateField - The date field to compare against today
+ * @param label     - Display label
+ * @param icon      - Lucide icon
+ *
+ * @example
+ * createTodayCountMetric("check_in_date", "Today", CalendarDays)
+ * createTodayCountMetric("payment_date", "Today", Calendar)
+ */
+export function createTodayCountMetric<T = Record<string, unknown>>(
+  dateField: string,
+  label: string,
+  icon: LucideIcon,
+  options?: { id?: string }
+): MetricConfig<T> {
+  return {
+    id: options?.id ?? "today",
+    label,
+    icon,
+    compute: (items: T[]) => {
+      const today = getTodayISO()
+      return items.filter((item) => {
+        const value = (item as Record<string, unknown>)[dateField] as string
+        // Compare ISO date prefix (YYYY-MM-DD) to handle both ISO strings and date-only strings
+        return value?.startsWith(today) || value === today
+      }).length
+    },
+  }
+}
+
+// ============================================
+// createLastMonthSumMetric
+// ============================================
+
+/**
+ * Creates a metric that sums a numeric field for the previous calendar month.
+ * Uses dynamic date filtering (not expressible as a serverFilter).
+ *
+ * @param amountField - The numeric field to sum
+ * @param dateField   - The date field to filter by last month
+ * @param label       - Display label
+ * @param icon        - Lucide icon
+ *
+ * @example
+ * createLastMonthSumMetric("amount", "expense_date", "Last Month", Calendar)
+ */
+export function createLastMonthSumMetric<T = Record<string, unknown>>(
+  amountField: string,
+  dateField: string,
+  label: string,
+  icon: LucideIcon,
+  options?: { id?: string }
+): MetricConfig<T> {
+  return {
+    id: options?.id ?? "last_month",
+    label,
+    icon,
+    compute: (items: T[]) => {
+      const now = new Date()
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
+      const lastMonthItems = items.filter((item) => {
+        const date = new Date((item as Record<string, unknown>)[dateField] as string)
+        return date >= lastMonthStart && date <= lastMonthEnd
+      })
+      const sum = lastMonthItems.reduce(
+        (acc: number, item) => acc + (Number((item as Record<string, unknown>)[amountField]) || 0), 0
+      )
+      return formatCurrency(sum)
+    },
+  }
+}
+
+// ============================================
+// createYearToDateSumMetric
+// ============================================
+
+/**
+ * Creates a metric that sums a numeric field from the start of the current year.
+ * Uses dynamic date filtering (not expressible as a serverFilter).
+ *
+ * @param amountField - The numeric field to sum
+ * @param dateField   - The date field to filter by year-to-date
+ * @param label       - Display label
+ * @param icon        - Lucide icon
+ *
+ * @example
+ * createYearToDateSumMetric("amount", "expense_date", "Year to Date", BarChart3)
+ */
+export function createYearToDateSumMetric<T = Record<string, unknown>>(
+  amountField: string,
+  dateField: string,
+  label: string,
+  icon: LucideIcon,
+  options?: { id?: string }
+): MetricConfig<T> {
+  return {
+    id: options?.id ?? "ytd",
+    label,
+    icon,
+    compute: (items: T[]) => {
+      const yearStart = new Date(new Date().getFullYear(), 0, 1)
+      const ytdItems = items.filter(
+        (item) => new Date((item as Record<string, unknown>)[dateField] as string) >= yearStart
+      )
+      const sum = ytdItems.reduce(
+        (acc: number, item) => acc + (Number((item as Record<string, unknown>)[amountField]) || 0), 0
+      )
+      return formatCurrency(sum)
+    },
+  }
+}
+
+// ============================================
+// createAverageMetric
+// ============================================
+
+/**
+ * Creates a metric that computes the average of a numeric field.
+ * Optionally filters out items where the field is null/0 before averaging.
+ *
+ * @param field   - The numeric field to average
+ * @param id      - Unique metric ID
+ * @param label   - Display label
+ * @param icon    - Lucide icon
+ * @param options - suffix (e.g., "h", " days"), filterNulls to exclude null/0 values
+ *
+ * @example
+ * createAverageMetric("hours_included", "avg_hours", "Avg Hours", Clock, { suffix: "h", filterNulls: true })
+ * createAverageMetric("validity_days", "avg_validity", "Avg Validity", Calendar, { suffix: " days" })
+ */
+export function createAverageMetric<T = Record<string, unknown>>(
+  field: string,
+  id: string,
+  label: string,
+  icon: LucideIcon,
+  options?: {
+    suffix?: string
+    filterNulls?: boolean
+    emptyValue?: string
+  }
+): MetricConfig<T> {
+  const suffix = options?.suffix ?? ""
+  const filterNulls = options?.filterNulls ?? false
+  const emptyValue = options?.emptyValue ?? "\u2014"
+
+  return {
+    id,
+    label,
+    icon,
+    compute: (items: T[]) => {
+      const eligible = filterNulls
+        ? items.filter((item) => (item as Record<string, unknown>)[field] != null && Number((item as Record<string, unknown>)[field]) !== 0)
+        : items
+      if (eligible.length === 0) return emptyValue
+      const avg = eligible.reduce(
+        (sum: number, item) => sum + (Number((item as Record<string, unknown>)[field]) || 0), 0
+      ) / eligible.length
+      return `${avg.toFixed(0)}${suffix}`
+    },
+  }
+}
+
+// ============================================
+// createTopValueMetric
+// ============================================
+
+/**
+ * Creates a metric that finds the most common value in a field.
+ * Optionally maps the value through a label dictionary.
+ *
+ * @param field    - The field to count occurrences of
+ * @param id       - Unique metric ID
+ * @param label    - Display label
+ * @param icon     - Lucide icon
+ * @param options  - labelMap for display names, emptyValue for no-data fallback
+ *
+ * @example
+ * createTopValueMetric("payment_method", "top_method", "Top Method", Banknote, {
+ *   labelMap: PAYMENT_METHODS
+ * })
+ */
+export function createTopValueMetric<T = Record<string, unknown>>(
+  field: string,
+  id: string,
+  label: string,
+  icon: LucideIcon,
+  options?: {
+    labelMap?: Record<string, string>
+    emptyValue?: string
+  }
+): MetricConfig<T> {
+  const labelMap = options?.labelMap
+  const emptyValue = options?.emptyValue ?? "\u2014"
+
+  return {
+    id,
+    label,
+    icon,
+    compute: (items: T[]) => {
+      const counts = items.reduce((acc: Record<string, number>, item) => {
+        const value = (item as Record<string, unknown>)[field] as string
+        if (value) {
+          acc[value] = (acc[value] || 0) + 1
+        }
+        return acc
+      }, {} as Record<string, number>)
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+      if (!top) return emptyValue
+      return labelMap ? (labelMap[top[0]] || top[0]) : top[0]
+    },
+  }
+}
+
+// ============================================
+// createTopValueByAmountMetric
+// ============================================
+
+/**
+ * Creates a metric that finds the value with the highest total of a numeric field.
+ * Useful for "top category by spend" type metrics.
+ * Optionally scoped to the current month.
+ *
+ * @param groupField  - The field to group by (e.g., nested "expense_type.name")
+ * @param amountField - The numeric field to sum per group
+ * @param id          - Unique metric ID
+ * @param label       - Display label
+ * @param icon        - Lucide icon
+ * @param options     - dateField to scope to current month, emptyValue fallback
+ *
+ * @example
+ * createTopValueByAmountMetric("expense_type.name", "amount", "top_category", "Top Category", Wallet, {
+ *   dateField: "expense_date"
+ * })
+ */
+export function createTopValueByAmountMetric<T = Record<string, unknown>>(
+  groupField: string,
+  amountField: string,
+  id: string,
+  label: string,
+  icon: LucideIcon,
+  options?: {
+    dateField?: string
+    emptyValue?: string
+  }
+): MetricConfig<T> {
+  const emptyValue = options?.emptyValue ?? "\u2014"
+
+  return {
+    id,
+    label,
+    icon,
+    compute: (items: T[]) => {
+      let filtered = items
+      // Optionally scope to current month
+      if (options?.dateField) {
+        const now = new Date()
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+        filtered = items.filter(
+          (item) => new Date((item as Record<string, unknown>)[options.dateField!] as string) >= thisMonthStart
+        )
+      }
+
+      const totals: Record<string, { name: string; total: number }> = {}
+      filtered.forEach((item) => {
+        // Support nested fields like "expense_type.name"
+        const parts = groupField.split(".")
+        let value: unknown = item
+        for (const part of parts) {
+          value = value != null ? (value as Record<string, unknown>)[part] : undefined
+        }
+        const name = (value as string) || "Unknown"
+        if (!totals[name]) {
+          totals[name] = { name, total: 0 }
+        }
+        totals[name].total += Number((item as Record<string, unknown>)[amountField]) || 0
+      })
+
+      const top = Object.values(totals).sort((a, b) => b.total - a.total)[0]
+      return top?.name || emptyValue
+    },
+  }
+}
+
+// ============================================
+// createExpiringMetric
+// ============================================
+
+/**
+ * Creates a metric that counts items expiring within N days.
+ * Only counts active items (via activeField) with a non-null expiry date.
+ *
+ * @param expiryField  - The date field indicating when the item expires
+ * @param withinDays   - Number of days from now to consider "expiring soon"
+ * @param label        - Display label
+ * @param icon         - Lucide icon
+ * @param options      - id, activeField to filter only active items
+ *
+ * @example
+ * createExpiringMetric("expires_at", 3, "Expiring Soon", Clock, { activeField: "is_active" })
+ */
+export function createExpiringMetric<T = Record<string, unknown>>(
+  expiryField: string,
+  withinDays: number,
+  label: string,
+  icon: LucideIcon,
+  options?: {
+    id?: string
+    activeField?: string
+  }
+): MetricConfig<T> {
+  const threshold = withinDays * 24 * 60 * 60 * 1000
+
+  return {
+    id: options?.id ?? "expiring",
+    label,
+    icon,
+    compute: (items: T[]) => {
+      const now = new Date().getTime()
+      return items.filter((item) => {
+        const record = item as Record<string, unknown>
+        if (!record[expiryField]) return false
+        if (options?.activeField && !record[options.activeField]) return false
+        const expiresAt = new Date(record[expiryField] as string).getTime()
+        return expiresAt > now && expiresAt - now < threshold
+      }).length
     },
   }
 }

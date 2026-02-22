@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
+import { Select } from "@/components/ui/form-components"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency } from "@/lib/format"
@@ -493,21 +494,18 @@ function NewPaymentForm() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="charge_type_id">Payment For</Label>
-                <select
+                <Select
                   id="charge_type_id"
                   name="charge_type_id"
                   value={formData.charge_type_id}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   disabled={loading}
-                >
-                  <option value="">Select type</option>
-                  {chargeTypes.map((ct) => (
-                    <option key={ct.id} value={ct.id}>
-                      {ct.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Select type"
+                  options={chargeTypes.map((ct) => ({
+                    value: ct.id,
+                    label: ct.name,
+                  }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="for_period">For Period</Label>
@@ -525,21 +523,21 @@ function NewPaymentForm() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="payment_method">Payment Method *</Label>
-                <select
+                <Select
                   id="payment_method"
                   name="payment_method"
                   value={formData.payment_method}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                   required
                   disabled={loading}
-                >
-                  <option value="cash">Cash</option>
-                  <option value="upi">UPI</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="cheque">Cheque</option>
-                  <option value="card">Card</option>
-                </select>
+                  options={[
+                    { value: "cash", label: "Cash" },
+                    { value: "upi", label: "UPI" },
+                    { value: "bank_transfer", label: "Bank Transfer" },
+                    { value: "cheque", label: "Cheque" },
+                    { value: "card", label: "Card" },
+                  ]}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="reference_number">Reference Number</Label>

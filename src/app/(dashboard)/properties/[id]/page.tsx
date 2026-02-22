@@ -51,6 +51,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PG_ROOM_STATUS_COLORS } from "@/lib/status"
 import { Avatar } from "@/components/ui/avatar"
+import { PermissionGate } from "@/components/auth"
 
 export default function PropertyDetailPage() {
   const params = useParams()
@@ -131,12 +132,14 @@ export default function PropertyDetailPage() {
                 </Button>
               </Link>
             )}
-            <Link href={`/properties/${property.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </Link>
+            <PermissionGate permission="properties.edit" hide>
+              <Link href={`/properties/${property.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             <Link href={`/rooms/new?property=${property.id}`}>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />

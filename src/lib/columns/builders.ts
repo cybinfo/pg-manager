@@ -5,9 +5,10 @@
  * Each builder returns a Column<Record<string, unknown>> compatible with ListPageTemplate.
  *
  * @example
- * import { statusColumn, currencyColumn, dateColumn, badgeColumn } from "@/lib/column-builders"
+ * import { statusColumn, currencyColumn, dateColumn, badgeColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
  *
  * const columns = [
+ *   personNameWithAvatarColumn("Tenant", { nameField: "name", personNameField: "person.name", photoField: "person.photo_url", subtitleField: "phone" }),
  *   statusColumn("tenant", { key: "status" }),
  *   currencyColumn("monthly_rent", "Rent"),
  *   dateColumn("check_in_date", "Since"),
@@ -327,6 +328,154 @@ export function badgeColumn(
       // Fallback
       const { TableBadge } = require("@/components/ui/data-table/TableBadge")
       return React.createElement(TableBadge, { variant: defaultVariant }, value || "\u2014")
+    },
+  }
+}
+
+// ============================================================================
+// PERSON NAME WITH AVATAR COLUMN
+// ============================================================================
+
+interface PersonNameWithAvatarColumnOptions extends BaseColumnOptions {
+  /**
+   * Primary name field on the row (denormalized copy).
+   * Used as fallback when personNameField is not available.
+   * Supports dot notation (e.g., "tenant.name").
+   * Default: "name"
+   */
+  nameField?: string
+  /**
+   * Live name field from the people table (single source of truth).
+   * Takes priority over nameField when present.
+   * Supports dot notation (e.g., "person.name").
+   * Default: "person.name"
+   */
+  personNameField?: string
+  /**
+   * Photo URL field. Supports dot notation (e.g., "person.photo_url").
+   * Default: "person.photo_url"
+   */
+  photoField?: string
+  /**
+   * Subtitle field(s) displayed below the name (e.g., phone, email, member code).
+   * Supports dot notation. When an array is provided, the first non-empty value wins.
+   * Default: "phone"
+   *
+   * @example
+   * subtitleField: "phone"                          // single field
+   * subtitleField: ["member_code", "phone"]          // fallback chain
+   */
+  subtitleField?: string | string[]
+  /**
+   * Additional CSS class for the avatar component.
+   * Default: none (uses Avatar defaults)
+   */
+  avatarClassName?: string
+}
+
+/**
+ * Resolves a dot-notation path (e.g., "person.name") to a value on the row.
+ */
+function resolveField(row: AnyRecord, path: string): unknown {
+  return path.split(".").reduce((acc: unknown, part: string) => {
+    if (acc && typeof acc === "object" && part in (acc as AnyRecord)) {
+      return (acc as AnyRecord)[part]
+    }
+    return undefined
+  }, row)
+}
+
+/**
+ * Creates a person name + avatar column for list pages.
+ *
+ * Encapsulates the common pattern of displaying a person's avatar alongside
+ * their name (with live data from the people table) and an optional subtitle.
+ *
+ * Follows the Live Person Data Pattern (CLAUDE.md 3.5): uses personNameField
+ * as the primary source of truth, falling back to nameField.
+ *
+ * @example
+ * // Tenant list — person.name with phone subtitle
+ * personNameWithAvatarColumn("Tenant")
+ *
+ * // Library member — person.name with member_code OR phone subtitle (fallback chain)
+ * personNameWithAvatarColumn("Member", { subtitleField: ["member_code", "phone"] })
+ *
+ * // Refund list — name lives under tenant.name, no person join
+ * personNameWithAvatarColumn("Tenant", {
+ *   nameField: "tenant.name",
+ *   personNameField: "tenant.person.name",
+ *   photoField: "tenant.photo_url",
+ *   subtitleField: "tenant.phone",
+ *   sortKey: "tenant.name",
+ * })
+ *
+ * // With avatar gradient and custom key
+ * personNameWithAvatarColumn("Tenant", {
+ *   avatarClassName: "bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0",
+ * })
+ */
+export function personNameWithAvatarColumn(
+  label: string,
+  options: PersonNameWithAvatarColumnOptions = {}
+): Column<AnyRecord> {
+  const {
+    key = "name",
+    header,
+    width = "primary",
+    sortable = true,
+    canHide = false,
+    defaultVisible = true,
+    nameField = "name",
+    personNameField = "person.name",
+    photoField = "person.photo_url",
+    subtitleField = "phone",
+    avatarClassName,
+    ...rest
+  } = options
+
+  return {
+    key,
+    header: header || label,
+    width,
+    sortable,
+    canHide,
+    defaultVisible,
+    ...rest,
+    render: (row: AnyRecord) => {
+      // Live Person Data Pattern: prefer person.name, fall back to denormalized name
+      const personName = resolveField(row, personNameField) as string | undefined
+      const fallbackName = resolveField(row, nameField) as string | undefined
+      const displayName = personName || fallbackName || "Unknown"
+
+      const photoUrl = resolveField(row, photoField) as string | undefined
+
+      // Resolve subtitle: support single field or fallback chain
+      let subtitle: string | undefined
+      if (subtitleField) {
+        const fields = Array.isArray(subtitleField) ? subtitleField : [subtitleField]
+        for (const f of fields) {
+          const val = resolveField(row, f) as string | undefined
+          if (val) { subtitle = val; break }
+        }
+      }
+
+      const { Avatar } = require("@/components/ui/avatar")
+
+      return React.createElement("div", { className: "flex items-center gap-3" },
+        React.createElement(Avatar, {
+          name: displayName,
+          src: photoUrl || undefined,
+          size: "sm",
+          className: avatarClassName,
+        }),
+        React.createElement("div", { className: "min-w-0" },
+          React.createElement("div", { className: "font-medium truncate" }, displayName),
+          subtitle
+            ? React.createElement("div", { className: "text-xs text-muted-foreground" }, subtitle)
+            : null
+        )
+      )
     },
   }
 }

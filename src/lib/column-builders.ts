@@ -10,4 +10,4 @@
  * import { statusColumn, currencyColumn, dateColumn, badgeColumn } from "@/lib/columns"
  */
 
-export { statusColumn, currencyColumn, dateColumn, badgeColumn } from "./columns/builders"
+export { statusColumn, currencyColumn, dateColumn, badgeColumn, personNameWithAvatarColumn } from "./columns/builders"

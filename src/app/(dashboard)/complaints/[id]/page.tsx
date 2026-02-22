@@ -9,6 +9,7 @@ import { Complaint } from "@/types/complaints.types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/form-components"
 import {
   DetailHero,
   InfoCard,
@@ -211,17 +212,14 @@ export default function ComplaintDetailPage() {
               {editing && (
                 <div className="space-y-2">
                   <Label>Change Status</Label>
-                  <select
+                  <Select
                     value={editData.status}
                     onChange={(e) => setEditData((prev) => ({ ...prev, status: e.target.value }))}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  >
-                    {statusFlow.map((status) => (
-                      <option key={status} value={status}>
-                        {statusLabels[status] || status}
-                      </option>
-                    ))}
-                  </select>
+                    options={statusFlow.map((status) => ({
+                      value: status,
+                      label: statusLabels[status] || status,
+                    }))}
+                  />
                 </div>
               )}
             </div>
@@ -271,16 +269,16 @@ export default function ComplaintDetailPage() {
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Priority</Label>
               {editing ? (
-                <select
+                <Select
                   value={editData.priority}
                   onChange={(e) => setEditData((prev) => ({ ...prev, priority: e.target.value }))}
-                  className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
-                </select>
+                  options={[
+                    { value: "low", label: "Low" },
+                    { value: "medium", label: "Medium" },
+                    { value: "high", label: "High" },
+                    { value: "urgent", label: "Urgent" },
+                  ]}
+                />
               ) : (
                 <div className="pt-1">
                   <PriorityBadge priority={complaint.priority as "low" | "medium" | "high" | "urgent"} />

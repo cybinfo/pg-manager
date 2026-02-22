@@ -8,14 +8,13 @@
 
 import { Users, Library, Clock, CreditCard } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
-import { statusColumn, dateColumn } from "@/lib/column-builders"
+import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_MEMBER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_FILTER, TIME_SLOT_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
-import { Avatar } from "@/components/ui/avatar"
 import { LIBRARY_MEMBER_STATUS_CONFIG } from "@/types/library.types"
 
 // ============================================
@@ -51,28 +50,9 @@ interface LibraryMemberItem {
 // ============================================
 
 const columns: Column<LibraryMemberItem>[] = [
-  {
-    key: "name",
-    header: "Member",
-    width: "primary",
-    sortable: true,
-    canHide: false,
-    render: (member) => {
-      const displayName = member.person?.name || member.name
-      const photoUrl = member.person?.photo_url
-      return (
-        <div className="flex items-center gap-3">
-          <Avatar name={displayName} src={photoUrl} size="sm" />
-          <div>
-            <div className="font-medium">{displayName}</div>
-            <div className="text-xs text-muted-foreground">
-              {member.member_code || member.phone || "—"}
-            </div>
-          </div>
-        </div>
-      )
-    },
-  },
+  personNameWithAvatarColumn("Member", {
+    subtitleField: ["member_code", "phone"],
+  }) as Column<LibraryMemberItem>,
   {
     key: "library.name",
     header: "Library",
