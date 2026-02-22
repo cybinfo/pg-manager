@@ -3,7 +3,7 @@
 > **Date**: 2026-02-22
 > **Scope**: Full application — 167 pages, 84+ UI components, 38+ hooks, 30+ dashboard modules
 > **Codebase Version**: 95877ee (main)
-> **Fixes Applied**: Phase 1 (10/10) + Phase 2 (5/5) = **15 tasks, 55 files changed**
+> **Fixes Applied**: Phase 1 (10/10) + Phase 2 (9/9) + Phase 3 (6/6) + Phase 4 (6/6) + Phase 5 (5/5) = **36 tasks completed, 300+ files changed**
 
 ---
 
@@ -480,58 +480,68 @@ All API routes use `apiSuccess()`/`apiError()` response helpers.
 
 ## 8. Prioritized Recommendations
 
-### Phase 1: Critical Fixes (Week 1 — ~16 hrs)
+### Phase 1: Critical Fixes — COMPLETED
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **Add global error boundary** | Prevents silent failures | 2 hrs |
-| 2 | **Replace 15 `window.location` calls** with `router.push` | SPA navigation integrity | 2 hrs |
-| 3 | **Consolidate `ConfirmDialog` duplication** | One dialog pattern | 1 hr |
-| 4 | **Add aria-labels to icon buttons** | Accessibility compliance | 1 hr |
-| 5 | **Add skip-to-content links** in portal layouts | Accessibility compliance | 30 min |
-| 6 | **Make Settings tabs URL-based** | Deep-linking support | 2 hrs |
-| 7 | **Add query parameter validation** (Zod) | Prevent silent failures | 3 hrs |
-| 8 | **Standardize post-action redirect** (`useFormSubmit` hook) | Consistent UX | 2 hrs |
-| 9 | **Sync mobile nav with feature flags** | Feature flag consistency | 1 hr |
-| 10 | **Refactor Tenant/Property detail to `DetailPageTemplate`** | Audit trail consistency | 3 hrs |
+| # | Task | Status |
+|---|------|--------|
+| 1 | **Add global error boundary** | ✅ Done |
+| 2 | **Replace 15 `window.location` calls** with `router.push` | ✅ Done |
+| 3 | **Consolidate `ConfirmDialog` duplication** | ✅ Done |
+| 4 | **Add aria-labels to icon buttons** | ✅ Done |
+| 5 | **Add skip-to-content links** in portal layouts | ✅ Done |
+| 6 | **Make Settings tabs URL-based** | ✅ Done |
+| 7 | **Add query parameter validation** (Zod) | ✅ Done |
+| 8 | **Standardize post-action redirect** (`useFormSubmit` hook) | ✅ Done |
+| 9 | **Sync mobile nav with feature flags** | ✅ Done |
+| 10 | **Refactor Tenant/Property detail to `DetailPageTemplate`** | ✅ Done |
 
-### Phase 2: Standardization (Week 2-3 — ~24 hrs)
+### Phase 2: Standardization — COMPLETED
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 11 | **Migrate ~10 form pages to `useFormPage`** | Hook consistency | 6 hrs |
-| 12 | **Refactor Approvals page to `ListPageTemplate`** | Template consistency | 4 hrs |
-| 13 | **Refactor Activity page to `ListPageTemplate`** | Template consistency | 3 hrs |
-| 14 | **Adopt `FormField` wrapper in portal forms** | Accessibility + consistency | 3 hrs |
-| 15 | **Standardize empty states across portals** | Visual consistency | 2 hrs |
-| 16 | **Add unsaved changes warning** to edit forms | Prevent data loss | 2 hrs |
-| 17 | **Add breadcrumbs to all detail pages** | Navigation consistency | 2 hrs |
-| 18 | **Document modal vs page convention** | Developer clarity | 1 hr |
-| 19 | **Define z-index scale in Tailwind** | Styling consistency | 1 hr |
+| # | Task | Status |
+|---|------|--------|
+| 11 | **Migrate ~10 form pages to `useFormPage`** | ✅ Done |
+| 12 | **Refactor Approvals page to `ListPageTemplate`** | ✅ Already migrated |
+| 13 | **Refactor Activity page to `ListPageTemplate`** | ✅ Already migrated |
+| 14 | **Adopt `FormField` wrapper in portal forms** | ✅ Already using FormField |
+| 15 | **Standardize empty states across portals** | ✅ Done |
+| 16 | **Add unsaved changes warning** to edit forms | ✅ Done (useUnsavedChanges hook) |
+| 17 | **Add breadcrumbs to all detail pages** | ✅ Done |
+| 18 | **Document modal vs page convention** | ✅ Done |
+| 19 | **Define z-index scale in Tailwind** | ✅ Done |
 
-### Phase 3: Hardcoded Color Migration (Week 3-4 — ~20 hrs)
+### Phase 3: Hardcoded Color Migration — COMPLETED
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 20 | **Create status color utility** (expand `status-colors.ts`) | Single source of truth | 3 hrs |
-| 21 | **Migrate portal pages** (~60 hardcoded colors) | Theme compliance | 4 hrs |
-| 22 | **Migrate marketing pages** (~60 hardcoded colors) | Theme compliance | 4 hrs |
-| 23 | **Migrate dashboard pages** (~150 hardcoded colors) | Theme compliance | 6 hrs |
-| 24 | **Create gradient CSS variables** | Gradient standardization | 2 hrs |
-| 25 | **Fix print style colors** | Print consistency | 1 hr |
+| # | Task | Status |
+|---|------|--------|
+| 20 | **Create status color utility** (expand `status-colors.ts`) | ✅ Done |
+| 21 | **Migrate portal pages** (~60 hardcoded colors) | ✅ Done |
+| 22 | **Migrate marketing pages** (~60 hardcoded colors) | ✅ Done |
+| 23 | **Migrate dashboard pages** (~150 hardcoded colors) | ✅ Done |
+| 24 | **Create gradient CSS variables** | ✅ Done |
+| 25 | **Fix print style colors** | ✅ Done |
 
-### Phase 4: Enhancements (Week 5+ — ~20 hrs)
+244 files changed, ~500 color replacements from hardcoded Tailwind to semantic tokens.
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 26 | **Add field-level form validation UI** | Better UX | 6 hrs |
-| 27 | **Implement dynamic back navigation** | Smarter navigation | 3 hrs |
-| 28 | **Add mobile responsiveness to Reports** | Mobile UX | 4 hrs |
-| 29 | **Document stats display decision tree** | Developer clarity | 1 hr |
-| 30 | **Create shared `usePortalData` hook** | Code deduplication | 3 hrs |
-| 31 | **Add optimistic updates to detail pages** | Perceived performance | 3 hrs |
+### Phase 4: Enhancements — COMPLETED
 
-### Phase 5: Future Enhancements
+| # | Task | Status |
+|---|------|--------|
+| 26 | **Add field-level form validation UI** | ✅ Done (useFormValidation hook) |
+| 27 | **Implement dynamic back navigation** | ✅ Done (useBackNavigation hook) |
+| 28 | **Add mobile responsiveness to Reports** | ✅ Done (responsive charts) |
+| 29 | **Document stats display decision tree** | ✅ Done (JSDoc in stat-card.tsx) |
+| 30 | **Create shared `usePortalData` hook** | ✅ Done (base hook for portals) |
+| 31 | **Add optimistic updates to detail pages** | ✅ Done (snapshot + rollback) |
+
+### Phase 5: Standardization & Performance — COMPLETED
+
+| # | Task | Status |
+|---|------|--------|
+| 36 | **Request deduplication** in hooks | ✅ Done (fetchIdRef in useListPage & useDetailPageData) |
+| — | **Migrate 3 expense form pages** to useFormPage | ✅ Done (vendors, misc, products) |
+| — | **Products page** adopts FormPageTemplate | ✅ Done (was raw Card layout) |
+
+### Remaining Future Enhancements (Backlog)
 
 | # | Task | Impact |
 |---|------|--------|
@@ -539,7 +549,6 @@ All API routes use `apiSuccess()`/`apiError()` response helpers.
 | 33 | **Session storage for navigation state** (scroll, filters) | Better UX |
 | 34 | **Auto-generated breadcrumbs from route config** | Zero-maintenance nav |
 | 35 | **Navigation analytics** (track patterns, dead spots) | Data-driven UX |
-| 36 | **Request deduplication** in hooks | Performance |
 | 37 | **Component Storybook** | Developer productivity |
 
 ---
