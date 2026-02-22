@@ -29,6 +29,8 @@ import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { REFUND_STATUS } from "@/lib/status-config"
+import { numberFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import { PersonAvatarCell } from "@/components/ui/column-renders"
 
 // ============================================
 // Types
@@ -70,20 +72,12 @@ const columns: Column<Refund>[] = [
     canHide: false,
     render: (refund) => (
       <div className="flex items-center gap-3">
-        <Avatar
+        <PersonAvatarCell
           name={refund.tenant?.name || "Unknown"}
-          src={refund.tenant?.photo_url}
-          size="sm"
-          className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
+          phone={refund.tenant?.phone}
+          photoUrl={refund.tenant?.photo_url}
+          avatarClassName="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
         />
-        <div className="min-w-0">
-          {refund.tenant ? (
-            <TenantLink id={refund.tenant.id} name={refund.tenant.name} showIcon={false} />
-          ) : (
-            <span className="text-muted-foreground">Unknown</span>
-          )}
-          <div className="text-xs text-muted-foreground">{refund.tenant?.phone}</div>
-        </div>
       </div>
     ),
   },
@@ -279,55 +273,27 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 const advancedFilterColumns: FilterableColumn[] = [
-  {
-    key: "amount",
-    header: "Amount",
-    filterType: "number",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "status",
-    header: "Status",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "pending", label: "Pending" },
-      { value: "processing", label: "Processing" },
-      { value: "completed", label: "Completed" },
-      { value: "failed", label: "Failed" },
-      { value: "cancelled", label: "Cancelled" },
-    ],
-  },
-  {
-    key: "refund_type",
-    header: "Type",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "deposit_refund", label: "Deposit Refund" },
-      { value: "overpayment", label: "Overpayment" },
-      { value: "adjustment", label: "Adjustment" },
-      { value: "other", label: "Other" },
-    ],
-  },
-  {
-    key: "payment_mode",
-    header: "Payment Mode",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "cash", label: "Cash" },
-      { value: "upi", label: "UPI" },
-      { value: "bank_transfer", label: "Bank Transfer" },
-      { value: "cheque", label: "Cheque" },
-    ],
-  },
-  {
-    key: "refund_date",
-    header: "Refund Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
+  numberFilterColumn("amount", "Amount"),
+  statusFilterColumn([
+    { value: "pending", label: "Pending" },
+    { value: "processing", label: "Processing" },
+    { value: "completed", label: "Completed" },
+    { value: "failed", label: "Failed" },
+    { value: "cancelled", label: "Cancelled" },
+  ]),
+  selectFilterColumn("refund_type", "Type", [
+    { value: "deposit_refund", label: "Deposit Refund" },
+    { value: "overpayment", label: "Overpayment" },
+    { value: "adjustment", label: "Adjustment" },
+    { value: "other", label: "Other" },
+  ]),
+  selectFilterColumn("payment_mode", "Payment Mode", [
+    { value: "cash", label: "Cash" },
+    { value: "upi", label: "UPI" },
+    { value: "bank_transfer", label: "Bank Transfer" },
+    { value: "cheque", label: "Cheque" },
+  ]),
+  dateFilterColumn("refund_date", "Refund Date"),
 ]
 
 // ============================================

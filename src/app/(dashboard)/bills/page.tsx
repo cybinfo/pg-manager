@@ -19,6 +19,7 @@ import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/li
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { textFilterColumn, statusFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 
 // ============================================
 // Types
@@ -197,48 +198,17 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 const advancedFilterColumns: FilterableColumn[] = [
-  {
-    key: "bill_number",
-    header: "Bill Number",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "starts"],
-  },
-  {
-    key: "status",
-    header: "Status",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "pending", label: "Pending" },
-      { value: "partial", label: "Partial" },
-      { value: "paid", label: "Paid" },
-      { value: "overdue", label: "Overdue" },
-    ],
-  },
-  {
-    key: "total_amount",
-    header: "Total Amount",
-    filterType: "number",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "balance_due",
-    header: "Balance Due",
-    filterType: "number",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "bill_date",
-    header: "Bill Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "due_date",
-    header: "Due Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
+  textFilterColumn("bill_number", "Bill Number"),
+  statusFilterColumn([
+    { value: "pending", label: "Pending" },
+    { value: "partial", label: "Partial" },
+    { value: "paid", label: "Paid" },
+    { value: "overdue", label: "Overdue" },
+  ]),
+  numberFilterColumn("total_amount", "Total Amount"),
+  numberFilterColumn("balance_due", "Balance Due"),
+  dateFilterColumn("bill_date", "Bill Date"),
+  dateFilterColumn("due_date", "Due Date"),
 ]
 
 // ============================================

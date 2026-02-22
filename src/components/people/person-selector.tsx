@@ -372,17 +372,19 @@ export function PersonSelector({
 
     // Person-specific: tag filtering
     applyExtraFilters: (query, extra) => {
-      if (extra.filterTags && extra.filterTags.length > 0) {
-        return query.overlaps("tags", extra.filterTags)
+      const filterTags = extra.filterTags as string[] | undefined
+      if (filterTags && filterTags.length > 0) {
+        return query.overlaps("tags", filterTags)
       }
       return query
     },
 
     // Person-specific: exclude tags client-side
     clientFilter: (items, extra) => {
-      if (extra.excludeTags && extra.excludeTags.length > 0) {
+      const excludeTags = extra.excludeTags as string[] | undefined
+      if (excludeTags && excludeTags.length > 0) {
         return items.filter(
-          (p: PersonSearchResult) => !p.tags?.some((t: string) => extra.excludeTags.includes(t))
+          (p: PersonSearchResult) => !p.tags?.some((t: string) => excludeTags.includes(t))
         )
       }
       return items

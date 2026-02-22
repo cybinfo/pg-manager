@@ -34,6 +34,7 @@ import { createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { Avatar } from "@/components/ui/avatar"
 import { formatDate } from "@/lib/format"
+import { PERSON_TAG_COLORS } from "@/lib/status-config"
 import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 
@@ -62,14 +63,8 @@ interface Person {
 // Tag Badge Component
 // ============================================
 
-const TAG_COLORS: Record<string, string> = {
-  tenant: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-  staff: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  visitor: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
-  service_provider: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
-  frequent: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-  vip: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
-}
+// Use centralized configs from status-config.ts
+const TAG_COLORS = PERSON_TAG_COLORS
 
 const TAG_ICONS: Record<string, React.ReactNode> = {
   tenant: <Home className="h-3 w-3" />,

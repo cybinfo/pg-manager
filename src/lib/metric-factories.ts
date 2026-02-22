@@ -306,3 +306,81 @@ export function createCountMetric(
     format: options?.format,
   }
 }
+
+// ============================================
+// createThisMonthSumMetric
+// ============================================
+
+/**
+ * Creates a metric that sums a numeric field for the current month.
+ * Uses dynamic date filtering (not expressible as a serverFilter).
+ *
+ * @param amountField - The numeric field to sum
+ * @param dateField   - The date field to filter by current month
+ * @param label       - Display label
+ * @param icon        - Lucide icon
+ *
+ * @example
+ * createThisMonthSumMetric("amount", "payment_date", "This Month", IndianRupee)
+ * createThisMonthSumMetric("amount", "expense_date", "This Month", TrendingDown)
+ */
+export function createThisMonthSumMetric<T = Record<string, unknown>>(
+  amountField: string,
+  dateField: string,
+  label: string,
+  icon: LucideIcon,
+  options?: { id?: string }
+): MetricConfig<T> {
+  return {
+    id: options?.id ?? "this_month",
+    label,
+    icon,
+    compute: (items: T[]) => {
+      const now = new Date()
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const thisMonthItems = items.filter(
+        (item) => new Date((item as Record<string, unknown>)[dateField] as string) >= firstOfMonth
+      )
+      const sum = thisMonthItems.reduce(
+        (acc: number, item) => acc + (Number((item as Record<string, unknown>)[amountField]) || 0), 0
+      )
+      return formatCurrency(sum)
+    },
+  }
+}
+
+// ============================================
+// createThisMonthCountMetric
+// ============================================
+
+/**
+ * Creates a metric that counts items for the current month.
+ * Uses dynamic date filtering (not expressible as a serverFilter).
+ *
+ * @param dateField - The date field to filter by current month
+ * @param label     - Display label
+ * @param icon      - Lucide icon
+ *
+ * @example
+ * createThisMonthCountMetric("reading_date", "This Month", Gauge)
+ * createThisMonthCountMetric("created_at", "New This Month", Plus)
+ */
+export function createThisMonthCountMetric<T = Record<string, unknown>>(
+  dateField: string,
+  label: string,
+  icon: LucideIcon,
+  options?: { id?: string }
+): MetricConfig<T> {
+  return {
+    id: options?.id ?? "this_month",
+    label,
+    icon,
+    compute: (items: T[]) => {
+      const now = new Date()
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      return items.filter(
+        (item) => new Date((item as Record<string, unknown>)[dateField] as string) >= firstOfMonth
+      ).length
+    },
+  }
+}

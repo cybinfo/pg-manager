@@ -109,13 +109,10 @@ export interface EntitySelectorConfig<T extends { id: string }> {
   /** Custom function to apply additional filters to the search query */
   applyExtraFilters?: (
     query: ReturnType<ReturnType<typeof createClient>["from"]>["select"],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    extra: Record<string, any>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ) => any
+        extra: Record<string, unknown>
+    ) => ReturnType<ReturnType<typeof createClient>["from"]>["select"]
   /** Custom post-fetch filter applied client-side */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  clientFilter?: (items: T[], extra: Record<string, any>) => T[]
+    clientFilter?: (items: T[], extra: Record<string, unknown>) => T[]
 
   /** Empty state message when no results and no search */
   emptyMessage?: string
@@ -154,8 +151,7 @@ export interface EntitySelectorProps<T extends { id: string }> {
   /** Pre-fill search with this value */
   initialSearch?: string
   /** Extra data passed to applyExtraFilters and clientFilter */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  extraFilterData?: Record<string, any>
+    extraFilterData?: Record<string, unknown>
 }
 
 // ============================================================================
@@ -225,8 +221,7 @@ export function EntitySelector<T extends { id: string }>({
     setLoading(true)
     const supabase = createClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let queryBuilder: any = supabase
+        let queryBuilder = supabase
       .from(config.table)
       .select(config.select)
       .eq(config.scopeColumn, scopeId)

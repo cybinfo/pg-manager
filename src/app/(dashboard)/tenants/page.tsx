@@ -16,6 +16,7 @@ import { Users, UserCheck, UserMinus, Clock } from "lucide-react"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { Avatar, getAvatarUrl } from "@/components/ui/avatar"
+import { PersonAvatarCell } from "@/components/ui/column-renders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { statusColumn, currencyColumn, dateColumn } from "@/lib/column-builders"
 import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -25,6 +26,7 @@ import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/li
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
+import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn, booleanFilterColumn } from "@/lib/advanced-filter-builders"
 
 // ============================================
 // Types
@@ -275,94 +277,28 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 const advancedFilterColumns: FilterableColumn[] = [
-  {
-    key: "name",
-    header: "Tenant Name",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "neq", "starts", "ends"],
-  },
-  {
-    key: "email",
-    header: "Email",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "neq", "starts", "is_null", "is_not_null"],
-  },
-  {
-    key: "phone",
-    header: "Phone",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "starts"],
-  },
-  {
-    key: "status",
-    header: "Status",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "active", label: "Active" },
-      { value: "notice_period", label: "Notice Period" },
-      { value: "checked_out", label: "Moved Out" },
-    ],
-  },
-  {
-    key: "monthly_rent",
-    header: "Monthly Rent",
-    filterType: "number",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "security_deposit",
-    header: "Security Deposit",
-    filterType: "number",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "check_in_date",
-    header: "Check-in Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "check_out_date",
-    header: "Check-out Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between", "is_null", "is_not_null"],
-  },
-  {
-    key: "notice_date",
-    header: "Notice Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between", "is_null", "is_not_null"],
-  },
-  {
-    key: "police_verification_status",
-    header: "Police Verification",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "pending", label: "Pending" },
-      { value: "submitted", label: "Submitted" },
-      { value: "verified", label: "Verified" },
-      { value: "rejected", label: "Rejected" },
-      { value: "not_required", label: "Not Required" },
-    ],
-  },
-  {
-    key: "agreement_signed",
-    header: "Agreement Signed",
-    filterType: "select",
-    filterOperators: ["eq"],
-    filterOptions: [
-      { value: "true", label: "Yes" },
-      { value: "false", label: "No" },
-    ],
-  },
-  {
-    key: "created_at",
-    header: "Added On",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
+  textFilterColumn("name", "Tenant Name", ["contains", "eq", "neq", "starts", "ends"]),
+  textFilterColumn("email", "Email", ["contains", "eq", "neq", "starts", "is_null", "is_not_null"]),
+  textFilterColumn("phone", "Phone"),
+  statusFilterColumn([
+    { value: "active", label: "Active" },
+    { value: "notice_period", label: "Notice Period" },
+    { value: "checked_out", label: "Moved Out" },
+  ]),
+  numberFilterColumn("monthly_rent", "Monthly Rent"),
+  numberFilterColumn("security_deposit", "Security Deposit"),
+  dateFilterColumn("check_in_date", "Check-in Date"),
+  dateFilterColumn("check_out_date", "Check-out Date", ["is_null", "is_not_null"]),
+  dateFilterColumn("notice_date", "Notice Date", ["is_null", "is_not_null"]),
+  selectFilterColumn("police_verification_status", "Police Verification", [
+    { value: "pending", label: "Pending" },
+    { value: "submitted", label: "Submitted" },
+    { value: "verified", label: "Verified" },
+    { value: "rejected", label: "Rejected" },
+    { value: "not_required", label: "Not Required" },
+  ]),
+  booleanFilterColumn("agreement_signed", "Agreement Signed"),
+  dateFilterColumn("created_at", "Added On"),
 ]
 
 // ============================================

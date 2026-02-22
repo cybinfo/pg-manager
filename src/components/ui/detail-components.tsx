@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { StatusBadge } from "@/components/ui/status-badge"
+import { StatusBadge, type StatusBadgeProps } from "@/components/ui/status-badge"
 import { ArrowLeft, LucideIcon, ChevronRight, MoreVertical, Edit, Trash2 } from "lucide-react"
 
 // ============================================
@@ -71,7 +71,7 @@ export function DetailHero({
               <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
               {status && (
                 typeof status === 'string' ? (
-                  <StatusBadge status={status as any} label={statusLabel} />
+                  <StatusBadge status={status as StatusBadgeProps["status"]} label={statusLabel} />
                 ) : (
                   status
                 )

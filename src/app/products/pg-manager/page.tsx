@@ -1,3 +1,17 @@
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "PG Manager - Complete PG & Hostel Management Software | ManageKar",
+  description: "Manage your PG, hostel or paying guest accommodation with ease. Tenant management, billing, staff roles, meter readings & more.",
+  openGraph: {
+    title: "PG Manager - Complete PG & Hostel Management Software",
+    description: "Manage your PG, hostel or paying guest accommodation with ease. Tenant management, billing, staff roles, meter readings & more.",
+    url: "https://managekar.com/products/pg-manager",
+    siteName: "ManageKar",
+    type: "website",
+  },
+}
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

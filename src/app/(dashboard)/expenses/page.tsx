@@ -13,7 +13,7 @@ import { currencyColumn, dateColumn, badgeColumn } from "@/lib/column-builders"
 import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { EXPENSE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { MetricConfig } from "@/lib/metric-factories"
+import { createThisMonthSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, PAYMENT_METHOD_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -214,17 +214,7 @@ const advancedFilterColumns: FilterableColumn[] = [
 // ============================================
 
 const metrics: MetricConfig<Expense>[] = [
-  {
-    id: "this_month",
-    label: "This Month",
-    icon: TrendingDown,
-    compute: (items) => {
-      const now = new Date()
-      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      const thisMonthExpenses = items.filter((e) => new Date(e.expense_date) >= thisMonthStart)
-      return formatCurrency(thisMonthExpenses.reduce((sum, e) => sum + Number(e.amount), 0))
-    },
-  },
+  createThisMonthSumMetric("amount", "expense_date", "This Month", TrendingDown),
   {
     id: "last_month",
     label: "Last Month",

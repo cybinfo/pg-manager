@@ -1,0 +1,39 @@
+/**
+ * Status Configuration Module
+ *
+ * Re-exports all status configs from their respective modules.
+ * Import from "@/lib/status" or "@/lib/status-config" (backward compat).
+ */
+
+// Types
+export type { StatusDotVariant, StatusVariant, StatusConfig, StatusConfigWithIcon } from "./shared"
+
+// Shared
+export { ACTIVE_STATUS, VISITOR_STATUS, getStatusConfig, getStatusInfo } from "./shared"
+export { INQUIRY_STATUS_LABELS, INQUIRY_SOURCE_LABELS, INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_COLORS } from "./shared"
+
+// Tenant & Approval
+export { TENANT_STATUS, APPROVAL_STATUS, APPROVAL_TYPE_LABELS, APPROVAL_PRIORITY } from "./tenant"
+
+// Complaint
+export { COMPLAINT_STATUS, COMPLAINT_PRIORITY, COMPLAINT_CATEGORIES } from "./complaint"
+
+// Billing & Related
+export {
+  REFUND_STATUS, EXIT_CLEARANCE_STATUS, PAYMENT_METHODS,
+  DOCUMENT_STATUS, POLICE_VERIFICATION_STATUS,
+  REFUND_TYPE_LABELS, REFUND_STATUS_LABELS,
+  NOTICE_TYPES, NOTICE_AUDIENCES, NOTICE_TYPE_LABELS,
+  NOTICE_TYPE_CONFIG, METER_READING_TYPE_CONFIG,
+  METER_TYPES, METER_STATUS_LABELS, METER_TYPE_LABELS,
+  PERSON_TAG_COLORS, PERSON_TAG_ICONS,
+  KITCHEN_WASTAGE_REASON_LABELS, BILL_PAYMENT_STATUS_LABELS,
+} from "./billing"
+
+// Library
+export {
+  LIBRARY_SEAT_STATUS_LABELS, LIBRARY_MEMBER_STATUS_LABELS,
+  LIBRARY_MEMBERSHIP_STATUS_LABELS, LIBRARY_LOCKER_STATUS_LABELS,
+  LIBRARY_LOCKER_SIZE_LABELS, LIBRARY_PAYMENT_TYPE_LABELS,
+  LIBRARY_PAYMENT_STATUS_LABELS, LIBRARY_PAYMENT_METHOD_LABELS,
+} from "./library"

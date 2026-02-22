@@ -19,12 +19,13 @@ import { Column } from "@/components/ui/data-table"
 import { dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { METER_READING_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { MetricConfig } from "@/lib/metric-factories"
+import { createThisMonthCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, METER_TYPE_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { formatDate } from "@/lib/format"
+import { METER_READING_TYPE_CONFIG } from "@/lib/status-config"
 
 // ============================================
 // Types
@@ -53,10 +54,11 @@ interface MeterReading {
 // Meter Type Configuration
 // ============================================
 
+// Use centralized config from status-config.ts
 const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: string; bgColor: string; unit: string }> = {
-  electricity: { label: "Electricity", icon: Zap, color: "text-yellow-700 dark:text-yellow-300", bgColor: "bg-yellow-100 dark:bg-yellow-900", unit: "kWh" },
-  water: { label: "Water", icon: Droplets, color: "text-blue-700 dark:text-blue-300", bgColor: "bg-blue-100 dark:bg-blue-900", unit: "L" },
-  gas: { label: "Gas", icon: Gauge, color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-100 dark:bg-orange-900", unit: "m³" },
+  electricity: { ...METER_READING_TYPE_CONFIG.electricity, icon: Zap },
+  water: { ...METER_READING_TYPE_CONFIG.water, icon: Droplets },
+  gas: { ...METER_READING_TYPE_CONFIG.gas, icon: Gauge },
 }
 
 // ============================================
@@ -254,18 +256,7 @@ const advancedFilterColumns: FilterableColumn[] = [
 // ============================================
 
 const metrics: MetricConfig<MeterReading>[] = [
-  {
-    id: "thisMonth",
-    label: "This Month",
-    icon: Gauge,
-    compute: (items) => {
-      const now = new Date()
-      return items.filter((r) => {
-        const readingDate = new Date(r.reading_date)
-        return readingDate.getMonth() === now.getMonth() && readingDate.getFullYear() === now.getFullYear()
-      }).length
-    },
-  },
+  createThisMonthCountMetric("reading_date", "This Month", Gauge, { id: "thisMonth" }),
   {
     id: "electricity",
     label: "Electricity",

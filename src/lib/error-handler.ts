@@ -28,9 +28,9 @@
  * ```
  */
 
-import { showError, toast } from "@/lib/toast-helpers"
+import { showError, showSuccess, toast } from "@/lib/toast-helpers"
 import { logger } from "@/lib/logger"
-import { TOAST_DURATION_DEFAULT_MS, TOAST_DURATION_ERROR_MS, TOAST_MAX_WIDTH_PX } from "@/lib/constants"
+import { TOAST_DURATION_ERROR_MS, TOAST_MAX_WIDTH_PX } from "@/lib/constants"
 
 // ============================================================================
 // TYPES
@@ -302,10 +302,7 @@ export function showDetailedSuccess(
   operation: string,
   details?: string
 ): void {
-  toast.success(`Success: ${operation}`, {
-    description: details,
-    duration: TOAST_DURATION_DEFAULT_MS,
-  })
+  showSuccess(`Success: ${operation}`, details)
 }
 
 /**

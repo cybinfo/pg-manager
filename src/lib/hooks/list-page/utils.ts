@@ -7,6 +7,28 @@
 
 import type { ServerFilter, FilterConfig, ListPageConfig } from "./types"
 
+
+/**
+ * Represents a Supabase/PostgREST query builder with chainable filter methods.
+ */
+interface PostgrestQueryChain {
+  eq: (column: string, value: unknown) => PostgrestQueryChain
+  neq: (column: string, value: unknown) => PostgrestQueryChain
+  in: (column: string, values: unknown[]) => PostgrestQueryChain
+  not: (column: string, operator: string, value: unknown) => PostgrestQueryChain
+  contains: (column: string, value: unknown[]) => PostgrestQueryChain
+  gt: (column: string, value: unknown) => PostgrestQueryChain
+  gte: (column: string, value: unknown) => PostgrestQueryChain
+  lt: (column: string, value: unknown) => PostgrestQueryChain
+  lte: (column: string, value: unknown) => PostgrestQueryChain
+  is: (column: string, value: null) => PostgrestQueryChain
+  or: (conditions: string) => PostgrestQueryChain
+  order: (column: string, options?: { ascending?: boolean }) => PostgrestQueryChain
+  limit: (count: number) => PostgrestQueryChain
+  range: (from: number, to: number) => PostgrestQueryChain
+  select: (columns?: string) => PostgrestQueryChain
+}
+
 // ============================================
 // Nested Value Access
 // ============================================
@@ -35,8 +57,7 @@ export function getNestedValue(obj: Record<string, unknown>, path: string): unkn
  * Apply a server filter to a Supabase query builder.
  * Centralizes operator handling for consistent filter application.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function applyServerFilter(query: any, filter: ServerFilter) {
+export function applyServerFilter(query: PostgrestQueryChain, filter: ServerFilter): PostgrestQueryChain {
   const { column, operator, value } = filter
 
   switch (operator) {
@@ -78,15 +99,13 @@ export function applyServerFilter(query: any, filter: ServerFilter) {
  * This is the shared filter logic used by fetchData, fetchServerCounts,
  * fetchServerSums, and fetchGroupCounts.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function applyBaseFiltersToQuery<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  query: any,
+    query: PostgrestQueryChain,
   config: ListPageConfig<T>,
   filterConfigs: FilterConfig[],
   currentFilters: Record<string, string>,
   currentSearchQuery: string
-) {
+): PostgrestQueryChain {
   // Filter out soft-deleted records by default
   if (!config.includeSoftDeleted) {
     query = query.is("deleted_at", null)

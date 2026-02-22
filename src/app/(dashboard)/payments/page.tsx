@@ -14,7 +14,7 @@ import { currencyColumn, dateColumn, badgeColumn } from "@/lib/column-builders"
 import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createSumMetric, createThisMonthSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, PAYMENT_METHOD_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -23,6 +23,8 @@ import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PAYMENT_METHODS } from "@/lib/status-config"
+import { textFilterColumn, selectFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import { NullDisplay } from "@/components/ui/null-display"
 
 // ============================================
 // Types
@@ -102,7 +104,7 @@ const columns: Column<Payment>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: false,
-    render: (payment) => payment.receipt_number || <span className="text-muted-foreground">—</span>,
+    render: (payment) => payment.receipt_number || <NullDisplay />,
   },
   {
     key: "reference_number",
@@ -111,7 +113,7 @@ const columns: Column<Payment>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: false,
-    render: (payment) => payment.reference_number || payment.transaction_reference || <span className="text-muted-foreground">—</span>,
+    render: (payment) => payment.reference_number || payment.transaction_reference || <NullDisplay />,
   },
   {
     key: "for_period",
@@ -122,7 +124,7 @@ const columns: Column<Payment>[] = [
     defaultVisible: false,
     editable: true,
     editType: "text",
-    render: (payment) => payment.for_period || <span className="text-muted-foreground">—</span>,
+    render: (payment) => payment.for_period || <NullDisplay />,
   },
   {
     key: "bill",
@@ -132,7 +134,7 @@ const columns: Column<Payment>[] = [
     defaultVisible: false,
     render: (payment) => payment.bill ? (
       <span className="text-blue-600">{payment.bill.bill_number}</span>
-    ) : <span className="text-muted-foreground">—</span>,
+    ) : <NullDisplay />,
   },
   {
     key: "charge_type",
@@ -142,7 +144,7 @@ const columns: Column<Payment>[] = [
     sortKey: "charge_type.name",
     canHide: true,
     defaultVisible: false,
-    render: (payment) => payment.charge_type?.name || <span className="text-muted-foreground">—</span>,
+    render: (payment) => payment.charge_type?.name || <NullDisplay />,
   },
   {
     key: "tenant_phone",
@@ -162,7 +164,7 @@ const columns: Column<Payment>[] = [
     editType: "text",
     render: (payment) => payment.notes ? (
       <span className="truncate max-w-[150px]" title={payment.notes}>{payment.notes}</span>
-    ) : <span className="text-muted-foreground">—</span>,
+    ) : <NullDisplay />,
   },
   dateColumn("created_at", "Recorded On", { defaultVisible: false }),
 ]
@@ -196,37 +198,16 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 const advancedFilterColumns: FilterableColumn[] = [
-  {
-    key: "amount",
-    header: "Amount",
-    filterType: "number",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "payment_method",
-    header: "Payment Method",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "cash", label: "Cash" },
-      { value: "upi", label: "UPI" },
-      { value: "bank_transfer", label: "Bank Transfer" },
-      { value: "cheque", label: "Cheque" },
-      { value: "card", label: "Card" },
-    ],
-  },
-  {
-    key: "payment_date",
-    header: "Payment Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "reference_number",
-    header: "Reference Number",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "starts"],
-  },
+  numberFilterColumn("amount", "Amount"),
+  selectFilterColumn("payment_method", "Payment Method", [
+    { value: "cash", label: "Cash" },
+    { value: "upi", label: "UPI" },
+    { value: "bank_transfer", label: "Bank Transfer" },
+    { value: "cheque", label: "Cheque" },
+    { value: "card", label: "Card" },
+  ], ["eq", "neq", "in", "not_in"]),
+  dateFilterColumn("payment_date", "Payment Date"),
+  textFilterColumn("reference_number", "Reference Number"),
 ]
 
 // ============================================
@@ -234,18 +215,7 @@ const advancedFilterColumns: FilterableColumn[] = [
 // ============================================
 
 const metrics: MetricConfig<Record<string, unknown>>[] = [
-  {
-    // Custom: dynamic date filtering not expressible as serverFilter
-    id: "this_month",
-    label: "This Month",
-    icon: IndianRupee,
-    compute: (items) => {
-      const now = new Date()
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      const thisMonthPayments = items.filter((p) => new Date(p.payment_date as string) >= firstOfMonth)
-      return formatCurrency(thisMonthPayments.reduce((sum: number, p) => sum + Number(p.amount), 0))
-    },
-  },
+  createThisMonthSumMetric("amount", "payment_date", "This Month", IndianRupee),
   createSumMetric("amount", "all_time", "All Time", Wallet),
   createTotalMetric({ id: "transactions", label: "Transactions", icon: Receipt }),
   {

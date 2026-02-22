@@ -27,6 +27,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { Avatar } from "@/components/ui/avatar"
+import { PersonAvatarCell } from "@/components/ui/column-renders"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { formatDate } from "@/lib/format"
 

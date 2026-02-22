@@ -1,0 +1,8 @@
+export { HeroSection } from "./HeroSection"
+export { StatsSection } from "./StatsSection"
+export { ProductsSection } from "./ProductsSection"
+export { WhySection } from "./WhySection"
+export { TrustedBySection } from "./TrustedBySection"
+export { TestimonialsSection } from "./TestimonialsSection"
+export { PricingTeaserSection } from "./PricingTeaserSection"
+export { CTASection } from "./CTASection"

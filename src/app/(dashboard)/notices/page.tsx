@@ -28,6 +28,8 @@ import { PROPERTY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatTimeAgo } from "@/lib/format"
+import { NOTICE_TYPE_CONFIG, NOTICE_AUDIENCES } from "@/lib/status-config"
+import { textFilterColumn, selectFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 
 // ============================================
 // Types
@@ -54,18 +56,14 @@ interface Notice {
 // Type Configuration
 // ============================================
 
+// Use centralized configs from status-config.ts
 const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: typeof Megaphone }> = {
-  general: { label: "General", color: "text-blue-700", bgColor: "bg-blue-100", icon: Megaphone },
-  maintenance: { label: "Maintenance", color: "text-orange-700", bgColor: "bg-orange-100", icon: Wrench },
-  payment_reminder: { label: "Payment Reminder", color: "text-green-700", bgColor: "bg-green-100", icon: CreditCard },
-  emergency: { label: "Emergency", color: "text-red-700", bgColor: "bg-red-100", icon: AlertTriangle },
+  general: { ...NOTICE_TYPE_CONFIG.general, icon: Megaphone },
+  maintenance: { ...NOTICE_TYPE_CONFIG.maintenance, icon: Wrench },
+  payment_reminder: { ...NOTICE_TYPE_CONFIG.payment_reminder, icon: CreditCard },
+  emergency: { ...NOTICE_TYPE_CONFIG.emergency, icon: AlertTriangle },
 }
-
-const audienceLabels: Record<string, string> = {
-  all: "All Residents",
-  tenants_only: "Tenants Only",
-  specific_rooms: "Specific Rooms",
-}
+const audienceLabels = NOTICE_AUDIENCES
 
 // ============================================
 // Column Definitions
@@ -243,51 +241,20 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 const advancedFilterColumns: FilterableColumn[] = [
-  {
-    key: "title",
-    header: "Title",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "starts"],
-  },
-  {
-    key: "type",
-    header: "Type",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "general", label: "General" },
-      { value: "maintenance", label: "Maintenance" },
-      { value: "payment_reminder", label: "Payment Reminder" },
-      { value: "emergency", label: "Emergency" },
-    ],
-  },
-  {
-    key: "is_active",
-    header: "Status",
-    filterType: "select",
-    filterOperators: ["eq", "neq"],
-    filterOptions: [
-      { value: "true", label: "Active" },
-      { value: "false", label: "Inactive" },
-    ],
-  },
-  {
-    key: "target_audience",
-    header: "Audience",
-    filterType: "select",
-    filterOperators: ["eq", "neq"],
-    filterOptions: [
-      { value: "all", label: "All Residents" },
-      { value: "tenants_only", label: "Tenants Only" },
-      { value: "specific_rooms", label: "Specific Rooms" },
-    ],
-  },
-  {
-    key: "created_at",
-    header: "Created Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
+  textFilterColumn("title", "Title"),
+  selectFilterColumn("type", "Type", [
+    { value: "general", label: "General" },
+    { value: "maintenance", label: "Maintenance" },
+    { value: "payment_reminder", label: "Payment Reminder" },
+    { value: "emergency", label: "Emergency" },
+  ]),
+  booleanFilterColumn("is_active", "Status", { trueLabel: "Active", falseLabel: "Inactive" }),
+  selectFilterColumn("target_audience", "Audience", [
+    { value: "all", label: "All Residents" },
+    { value: "tenants_only", label: "Tenants Only" },
+    { value: "specific_rooms", label: "Specific Rooms" },
+  ], ["eq", "neq"]),
+  dateFilterColumn("created_at", "Created Date"),
 ]
 
 // ============================================

@@ -1,452 +1,111 @@
 "use client"
 
+import React from "react"
 import Link from "next/link"
-import { Building2, Home, User, Gauge, FileText, CreditCard, Receipt, MessageSquare, UserCheck, Bell, LogOut } from "lucide-react"
+import {
+  Building2, Home, User, Gauge, FileText, CreditCard,
+  Receipt, MessageSquare, UserCheck, Bell, LogOut,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { LucideIcon } from "lucide-react"
 
-/**
- * Centralized Entity Link Components
- *
- * These components provide consistent, clickable links to entity detail pages
- * throughout the application. Use these instead of manually creating links
- * to ensure consistent styling and behavior.
- *
- * Features:
- * - Consistent hover styling (text-primary transition)
- * - Automatic stopPropagation for use in DataTable rows
- * - Icon + text display with size variants
- * - TypeScript interfaces for type safety
- */
-
-// Common props for all entity links
 interface BaseEntityLinkProps {
   className?: string
   size?: "sm" | "default"
   showIcon?: boolean
-  /** Set to true when used inside a clickable row (DataTable) */
   stopPropagation?: boolean
 }
 
-// =============================================================================
-// Property Link
-// =============================================================================
-interface PropertyLinkProps extends BaseEntityLinkProps {
-  id: string
-  name: string
+interface EntityLinkConfig {
+  icon: LucideIcon
+  urlPattern: (id: string) => string
+  iconExtraClasses?: string
+  textExtraClasses?: string
 }
 
-export function PropertyLink({
-  id,
-  name,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: PropertyLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/properties/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <Building2 className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{name}</span>
-    </Link>
-  )
+function createEntityLink(config: EntityLinkConfig) {
+  const Component = React.memo(function EntityLink({
+    id, displayText, className, size = "default", showIcon = true, stopPropagation = true,
+  }: BaseEntityLinkProps & { id: string; displayText: string }) {
+    const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
+    const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
+    return (
+      <Link
+        href={config.urlPattern(id)}
+        onClick={stopPropagation ? (e: React.MouseEvent) => e.stopPropagation() : undefined}
+        className={cn(
+          "inline-flex items-center gap-1 hover:text-primary transition-colors",
+          sizeClasses, config.textExtraClasses ? "truncate" : undefined, className
+        )}
+      >
+        {showIcon && (
+          <config.icon className={cn(iconSize, "text-muted-foreground", config.iconExtraClasses)} />
+        )}
+        <span className={config.textExtraClasses}>{displayText}</span>
+      </Link>
+    )
+  })
+  Component.displayName = "EntityLink"
+  return Component
 }
 
-// =============================================================================
-// Room Link
-// =============================================================================
-interface RoomLinkProps extends BaseEntityLinkProps {
-  id: string
-  roomNumber: string
-  /** Optionally show "Room" prefix */
-  showPrefix?: boolean
+const GenericPropertyLink = createEntityLink({ icon: Building2, urlPattern: (id) => `/properties/${id}` })
+const GenericTenantLink = createEntityLink({ icon: User, urlPattern: (id) => `/tenants/${id}` })
+const GenericBillLink = createEntityLink({ icon: FileText, urlPattern: (id) => `/bills/${id}` })
+const GenericPaymentLink = createEntityLink({ icon: CreditCard, urlPattern: (id) => `/payments/${id}` })
+const GenericExpenseLink = createEntityLink({ icon: Receipt, urlPattern: (id) => `/expenses/${id}` })
+const GenericMeterReadingLink = createEntityLink({ icon: Gauge, urlPattern: (id) => `/meter-readings/${id}` })
+const GenericComplaintLink = createEntityLink({ icon: MessageSquare, urlPattern: (id) => `/complaints/${id}`, iconExtraClasses: "flex-shrink-0", textExtraClasses: "truncate" })
+const GenericVisitorLink = createEntityLink({ icon: UserCheck, urlPattern: (id) => `/visitors/${id}` })
+const GenericNoticeLink = createEntityLink({ icon: Bell, urlPattern: (id) => `/notices/${id}`, iconExtraClasses: "flex-shrink-0", textExtraClasses: "truncate" })
+const GenericExitClearanceLink = createEntityLink({ icon: LogOut, urlPattern: (id) => `/exit-clearance/${id}` })
+const GenericMeterLink = createEntityLink({ icon: Gauge, urlPattern: (id) => `/meters/${id}` })
+const GenericRoomLink = createEntityLink({ icon: Home, urlPattern: (id) => `/rooms/${id}` })
+
+export function PropertyLink({ id, name, ...rest }: BaseEntityLinkProps & { id: string; name: string }) {
+  return <GenericPropertyLink id={id} displayText={name} {...rest} />
 }
 
-export function RoomLink({
-  id,
-  roomNumber,
-  className,
-  size = "default",
-  showIcon = true,
-  showPrefix = true,
-  stopPropagation = true
-}: RoomLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/rooms/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <Home className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{showPrefix ? `Room ${roomNumber}` : roomNumber}</span>
-    </Link>
-  )
+export function RoomLink({ id, roomNumber, showPrefix = true, ...rest }: BaseEntityLinkProps & { id: string; roomNumber: string; showPrefix?: boolean }) {
+  return <GenericRoomLink id={id} displayText={showPrefix ? `Room ${roomNumber}` : roomNumber} {...rest} />
 }
 
-// =============================================================================
-// Tenant Link
-// =============================================================================
-interface TenantLinkProps extends BaseEntityLinkProps {
-  id: string
-  name: string
+export function TenantLink({ id, name, ...rest }: BaseEntityLinkProps & { id: string; name: string }) {
+  return <GenericTenantLink id={id} displayText={name} {...rest} />
 }
 
-export function TenantLink({
-  id,
-  name,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: TenantLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/tenants/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <User className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{name}</span>
-    </Link>
-  )
+export function BillLink({ id, billNumber, ...rest }: BaseEntityLinkProps & { id: string; billNumber: string }) {
+  return <GenericBillLink id={id} displayText={billNumber} {...rest} />
 }
 
-// =============================================================================
-// Bill Link
-// =============================================================================
-interface BillLinkProps extends BaseEntityLinkProps {
-  id: string
-  billNumber: string
+export function PaymentLink({ id, label, ...rest }: BaseEntityLinkProps & { id: string; label: string }) {
+  return <GenericPaymentLink id={id} displayText={label} {...rest} />
 }
 
-export function BillLink({
-  id,
-  billNumber,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: BillLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/bills/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <FileText className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{billNumber}</span>
-    </Link>
-  )
+export function ExpenseLink({ id, label, ...rest }: BaseEntityLinkProps & { id: string; label: string }) {
+  return <GenericExpenseLink id={id} displayText={label} {...rest} />
 }
 
-// =============================================================================
-// Payment Link
-// =============================================================================
-interface PaymentLinkProps extends BaseEntityLinkProps {
-  id: string
-  /** Display text - could be receipt number or amount */
-  label: string
+export function MeterReadingLink({ id, label, ...rest }: BaseEntityLinkProps & { id: string; label: string }) {
+  return <GenericMeterReadingLink id={id} displayText={label} {...rest} />
 }
 
-export function PaymentLink({
-  id,
-  label,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: PaymentLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/payments/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <CreditCard className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{label}</span>
-    </Link>
-  )
+export function ComplaintLink({ id, title, ...rest }: BaseEntityLinkProps & { id: string; title: string }) {
+  return <GenericComplaintLink id={id} displayText={title} {...rest} />
 }
 
-// =============================================================================
-// Expense Link
-// =============================================================================
-interface ExpenseLinkProps extends BaseEntityLinkProps {
-  id: string
-  label: string
+export function VisitorLink({ id, name, ...rest }: BaseEntityLinkProps & { id: string; name: string }) {
+  return <GenericVisitorLink id={id} displayText={name} {...rest} />
 }
 
-export function ExpenseLink({
-  id,
-  label,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: ExpenseLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/expenses/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <Receipt className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{label}</span>
-    </Link>
-  )
+export function NoticeLink({ id, title, ...rest }: BaseEntityLinkProps & { id: string; title: string }) {
+  return <GenericNoticeLink id={id} displayText={title} {...rest} />
 }
 
-// =============================================================================
-// Meter Reading Link
-// =============================================================================
-interface MeterReadingLinkProps extends BaseEntityLinkProps {
-  id: string
-  label: string
+export function ExitClearanceLink({ id, label, ...rest }: BaseEntityLinkProps & { id: string; label: string }) {
+  return <GenericExitClearanceLink id={id} displayText={label} {...rest} />
 }
 
-export function MeterReadingLink({
-  id,
-  label,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: MeterReadingLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/meter-readings/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <Gauge className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{label}</span>
-    </Link>
-  )
-}
-
-// =============================================================================
-// Complaint Link
-// =============================================================================
-interface ComplaintLinkProps extends BaseEntityLinkProps {
-  id: string
-  title: string
-}
-
-export function ComplaintLink({
-  id,
-  title,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: ComplaintLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/complaints/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors truncate",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <MessageSquare className={cn(iconSize, "text-muted-foreground flex-shrink-0")} />}
-      <span className="truncate">{title}</span>
-    </Link>
-  )
-}
-
-// =============================================================================
-// Visitor Link
-// =============================================================================
-interface VisitorLinkProps extends BaseEntityLinkProps {
-  id: string
-  name: string
-}
-
-export function VisitorLink({
-  id,
-  name,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: VisitorLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/visitors/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <UserCheck className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{name}</span>
-    </Link>
-  )
-}
-
-// =============================================================================
-// Notice Link
-// =============================================================================
-interface NoticeLinkProps extends BaseEntityLinkProps {
-  id: string
-  title: string
-}
-
-export function NoticeLink({
-  id,
-  title,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: NoticeLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/notices/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors truncate",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <Bell className={cn(iconSize, "text-muted-foreground flex-shrink-0")} />}
-      <span className="truncate">{title}</span>
-    </Link>
-  )
-}
-
-// =============================================================================
-// Exit Clearance Link
-// =============================================================================
-interface ExitClearanceLinkProps extends BaseEntityLinkProps {
-  id: string
-  label: string
-}
-
-export function ExitClearanceLink({
-  id,
-  label,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: ExitClearanceLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/exit-clearance/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <LogOut className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{label}</span>
-    </Link>
-  )
-}
-
-// =============================================================================
-// Meter Link
-// =============================================================================
-interface MeterLinkProps extends BaseEntityLinkProps {
-  id: string
-  meterNumber: string
-}
-
-export function MeterLink({
-  id,
-  meterNumber,
-  className,
-  size = "default",
-  showIcon = true,
-  stopPropagation = true
-}: MeterLinkProps) {
-  const sizeClasses = size === "sm" ? "text-xs" : "text-sm"
-  const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4"
-
-  return (
-    <Link
-      href={`/meters/${id}`}
-      onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
-      className={cn(
-        "inline-flex items-center gap-1 hover:text-primary transition-colors",
-        sizeClasses,
-        className
-      )}
-    >
-      {showIcon && <Gauge className={cn(iconSize, "text-muted-foreground")} />}
-      <span>{meterNumber}</span>
-    </Link>
-  )
+export function MeterLink({ id, meterNumber, ...rest }: BaseEntityLinkProps & { id: string; meterNumber: string }) {
+  return <GenericMeterLink id={id} displayText={meterNumber} {...rest} />
 }

@@ -1,18 +1,7 @@
-/**
- * AdvancedFilterBuilder Component
- *
- * Complex filter UI with multiple operators, AND/OR logic,
- * and support for various data types.
- *
- * State management logic lives in useFilterBuilder / useFilterRow hooks.
- * This file contains only UI rendering.
- */
-
 "use client"
 
 import * as React from "react"
-import { Plus, X, Filter, ChevronDown, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Plus, X, ChevronDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
   Popover,
@@ -33,137 +22,9 @@ import {
   operatorRequiresTwoValues,
 } from "@/types/table-features.types"
 import {
-  useFilterBuilder,
   useFilterRow,
   type FilterableColumn,
 } from "@/lib/hooks/useFilterBuilder"
-
-// ============================================
-// Re-export types so existing imports keep working
-// ============================================
-
-export type { FilterableColumn } from "@/lib/hooks/useFilterBuilder"
-
-export interface AdvancedFilterBuilderProps {
-  columns: FilterableColumn[]
-  value: FilterGroup
-  onChange: (group: FilterGroup) => void
-  className?: string
-}
-
-// ============================================
-// Main Component
-// ============================================
-
-export function AdvancedFilterBuilder({
-  columns,
-  value,
-  onChange,
-  className,
-}: AdvancedFilterBuilderProps) {
-  const [open, setOpen] = React.useState(false)
-
-  const {
-    activeFilterCount,
-    addFilter,
-    updateFilter,
-    removeFilter,
-    clearAllFilters,
-    toggleCombineMode,
-    findColumnForFilter,
-  } = useFilterBuilder({ columns, value, onChange })
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn(
-            "h-9 px-3 gap-2",
-            activeFilterCount > 0 && "border-primary text-primary",
-            className
-          )}
-        >
-          <Filter className="h-4 w-4" />
-          <span className="hidden sm:inline">Filters</span>
-          {activeFilterCount > 0 && (
-            <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-              {activeFilterCount}
-            </span>
-          )}
-        </Button>
-      </PopoverTrigger>
-
-      <PopoverContent
-        align="start"
-        className="w-[480px] p-0"
-        sideOffset={8}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Filters</span>
-          </div>
-          {value.filters.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAllFilters}
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Clear All
-            </Button>
-          )}
-        </div>
-
-        {/* Filter List */}
-        <div className="max-h-[400px] overflow-y-auto">
-          {value.filters.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground text-sm">
-              <Filter className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No filters applied</p>
-              <p className="text-xs">Add a filter to narrow down results</p>
-            </div>
-          ) : (
-            <div className="p-4 space-y-3">
-              {value.filters.map((filter, index) => (
-                <React.Fragment key={filter.id}>
-                  {/* AND/OR toggle between filters */}
-                  {index > 0 && (
-                    <CombineModeToggle
-                      mode={value.combineMode}
-                      onToggle={toggleCombineMode}
-                    />
-                  )}
-
-                  {/* Filter Row */}
-                  <FilterRow
-                    filter={filter}
-                    column={findColumnForFilter(filter)}
-                    columns={columns}
-                    onUpdate={(updates) => updateFilter(filter.id, updates)}
-                    onRemove={() => removeFilter(filter.id)}
-                  />
-                </React.Fragment>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Add Filter */}
-        <div className="border-t p-3 bg-muted/50">
-          <AddFilterDropdown
-            columns={columns}
-            onSelect={addFilter}
-          />
-        </div>
-      </PopoverContent>
-    </Popover>
-  )
-}
 
 // ============================================
 // CombineModeToggle
@@ -174,7 +35,7 @@ interface CombineModeToggleProps {
   onToggle: () => void
 }
 
-function CombineModeToggle({ mode, onToggle }: CombineModeToggleProps) {
+export function CombineModeToggle({ mode, onToggle }: CombineModeToggleProps) {
   return (
     <div className="flex items-center justify-center">
       <button
@@ -204,7 +65,7 @@ interface FilterRowProps {
   onRemove: () => void
 }
 
-function FilterRow({
+export function FilterRow({
   filter,
   column,
   columns,
@@ -471,12 +332,16 @@ function FilterValueInput({
   )
 }
 
+// ============================================
+// AddFilterDropdown
+// ============================================
+
 interface AddFilterDropdownProps {
   columns: FilterableColumn[]
   onSelect: (column: FilterableColumn) => void
 }
 
-function AddFilterDropdown({ columns, onSelect }: AddFilterDropdownProps) {
+export function AddFilterDropdown({ columns, onSelect }: AddFilterDropdownProps) {
   const [open, setOpen] = React.useState(false)
 
   if (columns.length === 0) {
@@ -490,10 +355,10 @@ function AddFilterDropdown({ columns, onSelect }: AddFilterDropdownProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full gap-2">
+        <button className="w-full inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
           <Plus className="h-4 w-4" />
           Add Filter
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-56 p-1">
         <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -516,74 +381,5 @@ function AddFilterDropdown({ columns, onSelect }: AddFilterDropdownProps) {
         ))}
       </PopoverContent>
     </Popover>
-  )
-}
-
-// ============================================
-// Compact/Inline Variant
-// ============================================
-
-export interface AdvancedFilterBuilderInlineProps {
-  columns: FilterableColumn[]
-  value: FilterGroup
-  onChange: (group: FilterGroup) => void
-  className?: string
-}
-
-/**
- * Inline variant that shows filters directly without popover
- */
-export function AdvancedFilterBuilderInline({
-  columns,
-  value,
-  onChange,
-  className,
-}: AdvancedFilterBuilderInlineProps) {
-  const {
-    addFilter,
-    updateFilter,
-    removeFilter,
-    clearAllFilters,
-    toggleCombineMode,
-    findColumnForFilter,
-  } = useFilterBuilder({ columns, value, onChange })
-
-  return (
-    <div className={cn("space-y-3", className)}>
-      {/* Filter Rows */}
-      {value.filters.map((filter, index) => (
-        <React.Fragment key={filter.id}>
-          {index > 0 && (
-            <CombineModeToggle
-              mode={value.combineMode}
-              onToggle={toggleCombineMode}
-            />
-          )}
-          <FilterRow
-            filter={filter}
-            column={findColumnForFilter(filter)}
-            columns={columns}
-            onUpdate={(updates) => updateFilter(filter.id, updates)}
-            onRemove={() => removeFilter(filter.id)}
-          />
-        </React.Fragment>
-      ))}
-
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        <AddFilterDropdown columns={columns} onSelect={addFilter} />
-        {value.filters.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearAllFilters}
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Clear All
-          </Button>
-        )}
-      </div>
-    </div>
   )
 }

@@ -19,6 +19,8 @@ import { PROPERTY_FILTER, PRIORITY_FILTER, createStatusFilter } from "@/lib/filt
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { COMPLAINT_STATUS, COMPLAINT_PRIORITY, COMPLAINT_CATEGORIES, getStatusInfo as getComplaintStatusInfo } from "@/lib/status-config"
+import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import { NullDisplay } from "@/components/ui/null-display"
 
 // ============================================
 // Types
@@ -119,7 +121,7 @@ const columns: Column<Complaint>[] = [
     defaultVisible: false,
     render: (row) => row.description ? (
       <span className="text-sm text-muted-foreground line-clamp-2">{row.description}</span>
-    ) : <span className="text-muted-foreground">—</span>,
+    ) : <NullDisplay />,
   },
   badgeColumn("priority", "Priority", COMPLAINT_PRIORITY, {
     defaultVisible: false,
@@ -151,7 +153,7 @@ const columns: Column<Complaint>[] = [
     defaultVisible: false,
     render: (row) => row.room ? (
       <RoomLink id={row.room.id} roomNumber={row.room.room_number} size="sm" />
-    ) : <span className="text-muted-foreground">—</span>,
+    ) : <NullDisplay />,
   },
   {
     key: "assigned_to",
@@ -170,7 +172,7 @@ const columns: Column<Complaint>[] = [
     sortType: "date",
     canHide: true,
     defaultVisible: false,
-    render: (row) => row.resolved_at ? formatTimeAgo(row.resolved_at) : <span className="text-muted-foreground">—</span>,
+    render: (row) => row.resolved_at ? formatTimeAgo(row.resolved_at) : <NullDisplay />,
   },
 ]
 
@@ -218,50 +220,24 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 const advancedFilterColumns: FilterableColumn[] = [
-  {
-    key: "title",
-    header: "Title",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "starts"],
-  },
-  {
-    key: "status",
-    header: "Status",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "open", label: "Open" },
-      { value: "acknowledged", label: "Acknowledged" },
-      { value: "in_progress", label: "In Progress" },
-      { value: "resolved", label: "Resolved" },
-      { value: "closed", label: "Closed" },
-    ],
-  },
-  {
-    key: "priority",
-    header: "Priority",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "urgent", label: "Urgent" },
-      { value: "high", label: "High" },
-      { value: "medium", label: "Medium" },
-      { value: "low", label: "Low" },
-    ],
-  },
-  {
-    key: "category",
-    header: "Category",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in"],
-    filterOptions: Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label })),
-  },
-  {
-    key: "created_at",
-    header: "Created Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
+  textFilterColumn("title", "Title"),
+  statusFilterColumn([
+    { value: "open", label: "Open" },
+    { value: "acknowledged", label: "Acknowledged" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "resolved", label: "Resolved" },
+    { value: "closed", label: "Closed" },
+  ]),
+  selectFilterColumn("priority", "Priority", [
+    { value: "urgent", label: "Urgent" },
+    { value: "high", label: "High" },
+    { value: "medium", label: "Medium" },
+    { value: "low", label: "Low" },
+  ], ["eq", "neq", "in", "not_in"]),
+  selectFilterColumn("category", "Category",
+    Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label }))
+  ),
+  dateFilterColumn("created_at", "Created Date"),
 ]
 
 // ============================================
