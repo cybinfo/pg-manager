@@ -60,6 +60,16 @@ const presetConfigs: Record<GridPreset, string> = {
   gallery: "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5",
 }
 
+/**
+ * Simple column class mappings for 2/3/4 column stat grids.
+ * Exported for use by StatsGrid, QuickStatsGrid, and other grid components.
+ */
+export const GRID_COLUMN_CLASSES: Record<number, string> = {
+  2: "grid-cols-2",
+  3: "grid-cols-2 md:grid-cols-3",
+  4: "grid-cols-2 md:grid-cols-4",
+}
+
 const gapClasses: Record<GapSize, string> = {
   none: "gap-0",
   sm: "gap-2",

@@ -16,7 +16,7 @@ import { DataTableRow } from "./DataTableRow"
 import { DataTableHeader } from "./DataTableHeader"
 import { DataTableGroupControls, NestedGroupRenderer } from "./DataTableGroupRenderer"
 import { DataTableSearch } from "./DataTableSearch"
-import { DataTableLoading, DataTableEmpty } from "./DataTableStates"
+import { Loader2 } from "lucide-react"
 
 // ============================================
 // Re-exports: All types, constants, and components
@@ -404,11 +404,19 @@ export function DataTable<T extends object>({
         />
 
         {/* Loading State */}
-        {loading && <DataTableLoading />}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        )}
 
         {/* Empty State */}
         {!loading && processedData.length === 0 && (
-          <DataTableEmpty>{emptyState}</DataTableEmpty>
+          <div className="py-12">
+            {emptyState || (
+              <p className="text-center text-muted-foreground">No data found</p>
+            )}
+          </div>
         )}
 
         {/* Data Rows */}

@@ -81,7 +81,7 @@ export default function MeterReadingDetailPage() {
   const router = useRouter()
   const [generating, setGenerating] = useState(false)
   const [charges, setCharges] = useState<Charge[]>([])
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const {
     data: reading,
@@ -310,7 +310,7 @@ export default function MeterReadingDetailPage() {
                 variant="destructive"
                 size="sm"
                 disabled={isDeleting}
-                onClick={() => setShowDeleteDialog(true)}
+                onClick={() => setDeleteDialogOpen(true)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
@@ -521,8 +521,8 @@ export default function MeterReadingDetailPage() {
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
         title="Delete Meter Reading"
         description="Are you sure you want to delete this meter reading? This action cannot be undone."
         confirmText="Delete"

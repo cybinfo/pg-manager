@@ -1,12 +1,6 @@
 export { PortalLayout } from "./PortalLayout"
 export type { PortalLayoutProps, PortalNavItem } from "./PortalLayout"
 
-export { PortalStatCard } from "./PortalStatCard"
-export type { PortalStatCardProps } from "./PortalStatCard"
-
-export { PortalStatsGrid } from "./PortalStatsGrid"
-export type { PortalStatsGridProps } from "./PortalStatsGrid"
-
 export { ProfileFieldRow } from "./ProfileFieldRow"
 export type { ProfileFieldRowProps } from "./ProfileFieldRow"
 

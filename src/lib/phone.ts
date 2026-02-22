@@ -223,26 +223,3 @@ export function normalizePhoneForComparison(phone: string): string {
   return digits.slice(-10)
 }
 
-// ============================================
-// LEGACY ALIASES (for backward compatibility)
-// ============================================
-
-/**
- * @deprecated Use `validatePhone` instead. Will be removed in a future version.
- */
-export const validateIndianMobile = validatePhone
-
-/**
- * @deprecated Use `formatNormalizedPhone` instead. Will be removed in a future version.
- */
-export const formatIndianMobile = formatNormalizedPhone
-
-/**
- * @deprecated Use `formatPhoneDisplay` instead. Will be removed in a future version.
- */
-export const formatPhone = formatPhoneDisplay
-
-/**
- * @deprecated Use `normalizePhone` instead. Will be removed in a future version.
- */
-export const formatPhoneNumber = normalizePhone

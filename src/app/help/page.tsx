@@ -2,7 +2,9 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Building2, ArrowLeft, Search, ChevronDown, ChevronUp, HelpCircle, Users, Home, CreditCard, Zap, Settings, MessageSquare, Shield, Smartphone } from "lucide-react"
+import { Search, ChevronDown, ChevronUp, HelpCircle, Users, Home, CreditCard, Zap, Settings, MessageSquare, Shield, Smartphone } from "lucide-react"
+import { PublicNav, PublicFooter } from "@/components/public"
+import { CONTACT } from "@/lib/constants/contact"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -130,7 +132,7 @@ const faqs: FAQ[] = [
   {
     category: "Support",
     question: "How do I get help?",
-    answer: "You can reach us via Email (support@managekar.com), WhatsApp (+91 98765 43210), or use the Contact form on our website. We typically respond within 24 hours, and WhatsApp queries are answered even faster!"
+    answer: `You can reach us via Email (${CONTACT.SUPPORT_EMAIL}), WhatsApp (${CONTACT.PHONE}), or use the Contact form on our website. We typically respond within 24 hours, and WhatsApp queries are answered even faster!`
   },
   {
     category: "Support",
@@ -173,25 +175,7 @@ export default function HelpPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
-              ManageKar
-            </span>
-          </Link>
-          <Link href="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-      </nav>
+      <PublicNav activePage="help" />
 
       {/* Hero Section */}
       <section className="relative py-16 px-4 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950">
@@ -332,7 +316,7 @@ export default function HelpPage() {
                         Contact Support
                       </Button>
                     </Link>
-                    <a href="https://wa.me/919876543210?text=Hi%20ManageKar%20Team!" target="_blank" rel="noopener noreferrer">
+                    <a href={`${CONTACT.WHATSAPP_URL}?text=Hi%20ManageKar%20Team!`} target="_blank" rel="noopener noreferrer">
                       <Button variant="outline" className="border-teal-500 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950">
                         <Smartphone className="mr-2 h-4 w-4" />
                         WhatsApp Us
@@ -409,12 +393,7 @@ export default function HelpPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 border-t">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} ManageKar. Made with ❤️ in India.</p>
-        </div>
-      </footer>
+      <PublicFooter variant="compact" />
     </div>
   )
 }

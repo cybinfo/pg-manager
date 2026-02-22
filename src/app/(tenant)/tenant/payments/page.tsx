@@ -20,7 +20,7 @@ import {
 import { PageSkeleton } from "@/components/ui/loading"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { formatDate, formatCurrency } from "@/lib/format"
+import { formatDate, formatCurrency, formatMonthYear } from "@/lib/format"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
 interface Payment {
@@ -156,8 +156,7 @@ export default function TenantPaymentsPage() {
 
   // Group payments by month
   const groupedPayments = filteredPayments.reduce((groups, payment) => {
-    const date = new Date(payment.payment_date)
-    const monthYear = date.toLocaleDateString("en-IN", { month: "long", year: "numeric" })
+    const monthYear = formatMonthYear(payment.payment_date)
     if (!groups[monthYear]) {
       groups[monthYear] = []
     }
@@ -314,7 +313,7 @@ export default function TenantPaymentsPage() {
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           fieldLabel={`Payment #${selectedPayment.receipt_number || 'N/A'}`}
-          currentValue={`₹${selectedPayment.amount.toLocaleString("en-IN")} on ${formatDate(selectedPayment.payment_date)} via ${paymentMethodLabels[selectedPayment.payment_method] || selectedPayment.payment_method}`}
+          currentValue={`${formatCurrency(selectedPayment.amount)} on ${formatDate(selectedPayment.payment_date)} via ${paymentMethodLabels[selectedPayment.payment_method] || selectedPayment.payment_method}`}
           approvalType="payment_dispute"
           tenantId={tenantContext.id}
           workspaceId={tenantContext.workspace_id}

@@ -24,6 +24,7 @@ import {
   LIBRARY_PAYMENT_TYPE_LABELS,
   LIBRARY_PAYMENT_STATUS_LABELS,
   LIBRARY_PAYMENT_METHOD_LABELS,
+  APPROVAL_TYPE_LABELS,
 } from "@/lib/status-config"
 
 // ============================================
@@ -780,4 +781,47 @@ export const LIBRARY_PLAN_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
     display_price: `₹${(item.base_price as number)?.toLocaleString("en-IN")}`,
     status_label: item.is_active ? "Active" : "Inactive",
   }),
+}
+
+// ============================================
+// WAITLIST CONFIG
+// ============================================
+
+export const LIBRARY_WAITLIST_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "library_waitlist",
+  select: `
+    *,
+    library:libraries(id, name)
+  `,
+  joinFields: ["library"],
+  searchFields: ["name", "phone", "email"],
+  defaultOrderBy: "position",
+  defaultOrderDirection: "asc",
+  defaultPageSize: 25,
+}
+
+// ============================================
+// APPROVALS CONFIG (custom page, uses computedFields)
+// ============================================
+
+export const APPROVALS_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "approvals",
+  select: `
+    *,
+    requester_tenant:tenants(id, name, phone, user_id)
+  `,
+  defaultOrderBy: "created_at",
+  defaultOrderDirection: "desc",
+  searchFields: ["title", "type"],
+  joinFields: ["requester_tenant"],
+  computedFields: (item: Record<string, unknown>) => {
+    const date = new Date(item.created_at as string)
+    return {
+      type_label: APPROVAL_TYPE_LABELS[item.type as string] || (item.type as string),
+      priority_label: (item.priority as string)?.charAt(0).toUpperCase() + (item.priority as string)?.slice(1),
+      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_year: date.getFullYear().toString(),
+      has_docs_label: (item.document_ids && (item.document_ids as string[]).length > 0) ? "With Documents" : "No Documents",
+    }
+  },
 }

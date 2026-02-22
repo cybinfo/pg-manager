@@ -19,7 +19,8 @@ import {
   User
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
-import { PortalStatsGrid, QuickActionLink, PaymentListItem } from "@/components/portal"
+import { QuickActionLink, PaymentListItem } from "@/components/portal"
+import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
@@ -143,7 +144,7 @@ export default function TenantHomePage() {
       </div>
 
       {/* Quick Stats */}
-      <PortalStatsGrid
+      <StatsGrid
         stats={[
           {
             icon: Home,

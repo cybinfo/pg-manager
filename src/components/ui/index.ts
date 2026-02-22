@@ -109,8 +109,8 @@ export {
   ToggleSwitch,
 } from "./form-components"
 
-// UI-001: Consolidated phone input components
-export { PhoneInput, SimplePhoneInput } from "./phone-input"
+// UI-001: Consolidated phone input component
+export { PhoneInput } from "./phone-input"
 
 // Combobox Components (searchable dropdowns)
 export { Combobox, MultiCombobox, AsyncCombobox } from "./combobox"
@@ -169,9 +169,6 @@ export {
   PageSkeleton,
   LoadingContent,
 } from "./loading"
-
-// Page Loader
-export { PageLoader } from "./page-loader"
 
 // File Upload Components
 export { FileUpload, ProfilePhotoUpload } from "./file-upload"

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { BrandLogo } from "@/components/ui/brand-logo"
 import {
   Building2,
   LayoutDashboard,
@@ -308,9 +309,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
-          <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
-            <Building2 className="h-6 w-6 text-white" />
-          </div>
+          <BrandLogo size="lg" hideText linkTo={null} />
           <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
         </div>
       </div>
@@ -323,9 +322,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
-          <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
-            <Building2 className="h-6 w-6 text-white" />
-          </div>
+          <BrandLogo size="lg" hideText linkTo={null} />
           <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
           <p className="text-sm text-muted-foreground">Redirecting to login...</p>
         </div>
@@ -339,9 +336,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
-          <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
-            <Building2 className="h-6 w-6 text-white" />
-          </div>
+          <BrandLogo size="lg" hideText linkTo={null} />
           <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
           <p className="text-sm text-muted-foreground">Setting up your workspace...</p>
         </div>

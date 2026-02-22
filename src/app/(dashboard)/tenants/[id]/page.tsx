@@ -103,11 +103,11 @@ export default function TenantDetailPage() {
 
   // Action state
   const [actionLoading, setActionLoading] = useState(false)
-  const [showTransferModal, setShowTransferModal] = useState(false)
+  const [transferModalOpen, setTransferModalOpen] = useState(false)
   const [availableRooms, setAvailableRooms] = useState<TransferRoom[]>([])
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showNoticeDialog, setShowNoticeDialog] = useState(false)
-  const [showCancelNoticeDialog, setShowCancelNoticeDialog] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [noticeDialogOpen, setNoticeDialogOpen] = useState(false)
+  const [cancelNoticeDialogOpen, setCancelNoticeDialogOpen] = useState(false)
 
   // Get related data from hook
   const payments = (related.payments || []) as Payment[]
@@ -140,7 +140,7 @@ export default function TenantDetailPage() {
 
     if (success) {
       showSuccess("Tenant put on notice period")
-      setShowNoticeDialog(false)
+      setNoticeDialogOpen(false)
       refetch()
     }
     setActionLoading(false)
@@ -163,7 +163,7 @@ export default function TenantDetailPage() {
 
     if (success) {
       showSuccess("Notice cancelled - tenant is now active again")
-      setShowCancelNoticeDialog(false)
+      setCancelNoticeDialogOpen(false)
       refetch()
     }
     setActionLoading(false)
@@ -192,7 +192,7 @@ export default function TenantDetailPage() {
       setAvailableRooms(available)
     }
 
-    setShowTransferModal(true)
+    setTransferModalOpen(true)
   }
 
   if (loading) {
@@ -274,7 +274,7 @@ export default function TenantDetailPage() {
                   <ArrowRightLeft className="mr-2 h-4 w-4" />
                   Transfer
                 </Button>
-                <Button variant="gradient" size="sm" onClick={() => setShowNoticeDialog(true)} disabled={actionLoading}>
+                <Button variant="gradient" size="sm" onClick={() => setNoticeDialogOpen(true)} disabled={actionLoading}>
                   <Bell className="mr-2 h-4 w-4" />
                   Put on Notice
                 </Button>
@@ -290,7 +290,7 @@ export default function TenantDetailPage() {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => setShowDeleteDialog(true)}
+                onClick={() => setDeleteDialogOpen(true)}
                 disabled={actionLoading}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -384,7 +384,7 @@ export default function TenantDetailPage() {
             noticeDate={tenant.notice_date}
             expectedExitDate={tenant.expected_exit_date}
             actionLoading={actionLoading}
-            onCancelNotice={() => setShowCancelNoticeDialog(true)}
+            onCancelNotice={() => setCancelNoticeDialogOpen(true)}
           />
         )}
 
@@ -412,19 +412,19 @@ export default function TenantDetailPage() {
       </DetailPageTemplate>
 
       {/* Room Transfer Modal */}
-      {showTransferModal && (
+      {transferModalOpen && (
         <RoomTransferModal
           tenant={tenant}
           stays={stays}
           availableRooms={availableRooms}
-          onClose={() => setShowTransferModal(false)}
+          onClose={() => setTransferModalOpen(false)}
         />
       )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
         title="Delete Tenant"
         description={`Are you sure you want to delete "${tenant?.name}"? This will permanently remove the tenant and all associated data including payment history, charges, stay history, and room transfers. This action cannot be undone.`}
         confirmText="Delete"
@@ -434,19 +434,19 @@ export default function TenantDetailPage() {
       />
 
       {/* Notice Period Dialog */}
-      {showNoticeDialog && (
+      {noticeDialogOpen && (
         <NoticePeriodDialog
           tenantName={tenant.name}
           loading={actionLoading}
-          onClose={() => setShowNoticeDialog(false)}
+          onClose={() => setNoticeDialogOpen(false)}
           onSubmit={handlePutOnNotice}
         />
       )}
 
       {/* Cancel Notice Confirmation Dialog */}
       <ConfirmDialog
-        open={showCancelNoticeDialog}
-        onOpenChange={setShowCancelNoticeDialog}
+        open={cancelNoticeDialogOpen}
+        onOpenChange={setCancelNoticeDialogOpen}
         title="Cancel Notice Period"
         description={`Are you sure you want to cancel the notice for "${tenant?.name}"? This will change their status back to "Active" and clear the expected exit date.`}
         confirmText="Cancel Notice"

@@ -29,11 +29,9 @@ import { InfoBanner } from "@/components/ui/info-banner"
 import { useDemoMode } from "@/lib/demo-mode"
 import { transformJoin } from "@/lib/supabase/transforms"
 import {
-  KPICard,
   RevenueTrendChart,
   DuesAgingCard,
   QuickInsights,
-  SummaryStatCard,
   ReportChartCard,
   PaymentMethodsChart,
   ReportPageHeader,
@@ -46,6 +44,8 @@ import {
   MONTH_NAMES,
   exportCSV,
 } from "@/components/reports"
+import { StatCard } from "@/components/ui/stat-card"
+import { SummaryCard } from "@/components/ui/quick-stats-grid"
 
 interface Property {
   id: string
@@ -446,73 +446,65 @@ export default function ReportsPage() {
 
       {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard
-          title="Occupancy Rate"
+        <StatCard
+          label="Occupancy Rate"
           value={`${reportData.occupancyRate.toFixed(1)}%`}
           subtitle={`${reportData.occupiedBeds}/${reportData.totalBeds} beds`}
           icon={Home}
-          iconColor={reportData.occupancyRate >= 80 ? "green" : reportData.occupancyRate >= 50 ? "amber" : "red"}
+          color={reportData.occupancyRate >= 80 ? "green" : reportData.occupancyRate >= 50 ? "amber" : "red"}
         />
-        <KPICard
-          title="Revenue Collected"
+        <StatCard
+          label="Revenue Collected"
           value={formatCurrency(reportData.totalCollectedThisMonth)}
+          subtitle={`${reportData.revenueGrowth >= 0 ? "+" : ""}${reportData.revenueGrowth.toFixed(1)}% vs last month`}
           icon={IndianRupee}
-          iconColor="green"
-          trend={{
-            value: reportData.revenueGrowth,
-            isPositive: reportData.revenueGrowth >= 0,
-            label: "vs last month",
-          }}
+          color="green"
         />
-        <KPICard
-          title="Total Expenses"
+        <StatCard
+          label="Total Expenses"
           value={formatCurrency(reportData.totalExpensesThisMonth)}
+          subtitle={`${reportData.expenseGrowth >= 0 ? "+" : ""}${reportData.expenseGrowth.toFixed(1)}% vs last month`}
           icon={TrendingDown}
-          iconColor="rose"
-          trend={{
-            value: reportData.expenseGrowth,
-            isPositive: reportData.expenseGrowth <= 0,
-            label: "vs last month",
-          }}
+          color="rose"
         />
-        <KPICard
-          title="Net Income"
+        <StatCard
+          label="Net Income"
           value={formatCurrency(reportData.netIncome)}
           subtitle="Revenue - Expenses"
           icon={TrendingUp}
-          iconColor={reportData.netIncome >= 0 ? "green" : "red"}
+          color={reportData.netIncome >= 0 ? "green" : "red"}
         />
       </div>
 
       {/* KPI Cards - Row 2 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard
-          title="Active Tenants"
+        <StatCard
+          label="Active Tenants"
           value={reportData.activeTenants}
           subtitle={`+${reportData.newTenantsThisMonth} new`}
           icon={Users}
-          iconColor="blue"
+          color="blue"
         />
-        <KPICard
-          title="Pending Dues"
+        <StatCard
+          label="Pending Dues"
           value={formatCurrency(reportData.totalPendingDues)}
           subtitle={`${formatCurrency(reportData.overdueAmount)} overdue`}
           icon={AlertCircle}
-          iconColor={reportData.totalPendingDues > 0 ? "red" : "green"}
+          color={reportData.totalPendingDues > 0 ? "red" : "green"}
         />
-        <KPICard
-          title="Rooms"
+        <StatCard
+          label="Rooms"
           value={reportData.totalRooms}
           subtitle={`${reportData.availableRooms} available`}
           icon={Building2}
-          iconColor="purple"
+          color="purple"
         />
-        <KPICard
-          title="Open Complaints"
+        <StatCard
+          label="Open Complaints"
           value={reportData.openComplaints}
           subtitle={`${reportData.resolvedThisMonth} resolved`}
           icon={Clock}
-          iconColor={reportData.openComplaints > 0 ? "amber" : "green"}
+          color={reportData.openComplaints > 0 ? "amber" : "green"}
         />
       </div>
 
@@ -626,20 +618,24 @@ export default function ReportsPage() {
             { label: "Maintenance", value: reportData.maintenanceRooms, color: "#eab308" },
           ]}
         />
-        <SummaryStatCard
+        <SummaryCard
           title="Tenant Overview"
+          value={reportData.activeTenants}
+          sublabel="Active tenants"
+          icon={Users}
           stats={[
-            { label: "Active", value: reportData.activeTenants },
-            { label: "On Notice", value: reportData.tenantsOnNotice, highlight: "warning" },
-            { label: "New (Period)", value: `+${reportData.newTenantsThisMonth}`, highlight: "positive" },
-            { label: "Exits (Period)", value: `-${reportData.exitsThisMonth}`, highlight: "negative" },
+            { label: "On Notice", value: reportData.tenantsOnNotice },
+            { label: "New (Period)", value: `+${reportData.newTenantsThisMonth}` },
+            { label: "Exits (Period)", value: `-${reportData.exitsThisMonth}` },
           ]}
         />
-        <SummaryStatCard
+        <SummaryCard
           title="Complaints"
+          value={reportData.openComplaints}
+          sublabel="Open complaints"
+          icon={AlertCircle}
           stats={[
-            { label: "Open", value: reportData.openComplaints, highlight: reportData.openComplaints > 0 ? "negative" : "positive" },
-            { label: "Resolved (Period)", value: reportData.resolvedThisMonth, highlight: "positive" },
+            { label: "Resolved (Period)", value: reportData.resolvedThisMonth },
             { label: "Avg. Resolution", value: reportData.avgResolutionDays > 0 ? `${reportData.avgResolutionDays.toFixed(1)} days` : "-" },
           ]}
         />

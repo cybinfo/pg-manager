@@ -4,7 +4,7 @@
  * Re-exported from @/lib/phone for backward compatibility.
  * New code should import directly from @/lib/phone.
  */
-export { validateIndianMobile, formatIndianMobile } from "./phone"
+export { validatePhone as validateIndianMobile, formatNormalizedPhone as formatIndianMobile } from "./phone"
 
 /**
  * Email Validator

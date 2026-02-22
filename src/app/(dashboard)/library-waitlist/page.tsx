@@ -7,7 +7,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { ListPageConfig } from "@/lib/hooks/useListPage"
+import { LIBRARY_WAITLIST_LIST_CONFIG } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { ListPageTemplate } from "@/components/shared"
 import { Column, StatusDot } from "@/components/ui/data-table"
@@ -18,20 +18,6 @@ import { Users, Clock, Check, Phone } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist } from "@/types/library.types"
-
-// List page configuration
-const LIBRARY_WAITLIST_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
-  table: "library_waitlist",
-  select: `
-    *,
-    library:libraries(id, name)
-  `,
-  joinFields: ["library"],
-  searchFields: ["name", "phone", "email"],
-  defaultOrderBy: "position",
-  defaultOrderDirection: "asc",
-  defaultPageSize: 25,
-}
 
 // Metric configurations
 const metrics: MetricConfig<Record<string, unknown>>[] = [
@@ -132,6 +118,7 @@ export default function LibraryWaitlistPage() {
       description="Manage prospective library members"
       icon={Users}
       permission="library_waitlist.view"
+      feature="library"
       searchPlaceholder="Search by name, phone, email..."
       onRowClick={(item) => router.push(`/library-waitlist/${item.id}`)}
       createHref="/library-waitlist/new"

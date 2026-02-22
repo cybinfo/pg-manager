@@ -9,6 +9,7 @@ import {
 } from "@/lib/api-response"
 import { withApiMiddleware, getAdminSupabaseClient } from "@/lib/api-middleware"
 import { authLogger, extractErrorMeta } from "@/lib/logger"
+import { CONTACT } from "@/lib/constants/contact"
 
 const SendVerificationSchema = z.object({
   userId: z.string().uuid("Invalid user ID format"),
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build the verification URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://managekar.com"
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || CONTACT.APP_URL
     const verificationUrl = `${baseUrl}/verify-email?token=${token}`
 
     // Send the verification email

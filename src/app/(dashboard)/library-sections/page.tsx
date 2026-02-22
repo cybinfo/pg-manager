@@ -12,7 +12,7 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_SECTION_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { LIBRARY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
+import { LIBRARY_FILTER, ACTIVE_STATUS_FILTER, LIBRARY_AC_TYPE_FILTER } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 
@@ -173,16 +173,7 @@ const columns: Column<LibrarySectionItem>[] = [
 
 const filters: FilterConfig[] = [
   LIBRARY_FILTER,
-  {
-    id: "is_ac",
-    label: "Type",
-    type: "select",
-    placeholder: "AC Filter",
-    options: [
-      { value: "true", label: "AC" },
-      { value: "false", label: "Non-AC" },
-    ],
-  },
+  LIBRARY_AC_TYPE_FILTER,
   ACTIVE_STATUS_FILTER,
 ]
 
@@ -230,6 +221,7 @@ export default function LibrarySectionsPage() {
       description="Manage sections and seating areas"
       icon={Grid3X3}
       permission="library_sections.view"
+      feature="library"
       config={LIBRARY_SECTION_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

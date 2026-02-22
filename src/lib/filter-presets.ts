@@ -94,6 +94,55 @@ export const TIME_SLOT_FILTER: FilterConfig = {
   ],
 }
 
+/**
+ * AC type filter for library sections/rooms.
+ * Used by: library-sections, library
+ */
+export const LIBRARY_AC_TYPE_FILTER: FilterConfig = {
+  id: "is_ac",
+  label: "Type",
+  type: "select",
+  placeholder: "AC Filter",
+  options: [
+    { value: "true", label: "AC" },
+    { value: "false", label: "Non-AC" },
+  ],
+}
+
+/**
+ * Library payment method filter (4 options, excludes cheque from standard).
+ * Used by: library-payments
+ */
+export const LIBRARY_PAYMENT_METHOD_FILTER: FilterConfig = {
+  id: "payment_method",
+  label: "Method",
+  type: "select",
+  placeholder: "All Methods",
+  options: [
+    { value: "cash", label: "Cash" },
+    { value: "upi", label: "UPI" },
+    { value: "card", label: "Card" },
+    { value: "bank_transfer", label: "Bank Transfer" },
+  ],
+}
+
+/**
+ * Visitor type filter.
+ * Used by: visitors
+ */
+export const VISITOR_TYPE_FILTER: FilterConfig = {
+  id: "visitor_type",
+  label: "Type",
+  type: "select",
+  placeholder: "All Types",
+  options: [
+    { value: "tenant_visitor", label: "Tenant Visitor" },
+    { value: "enquiry", label: "Enquiry" },
+    { value: "service_provider", label: "Service Provider" },
+    { value: "general", label: "General" },
+  ],
+}
+
 // ============================================
 // Shared / Cross-module Filters
 // ============================================

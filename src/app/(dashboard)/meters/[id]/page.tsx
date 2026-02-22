@@ -86,10 +86,10 @@ export default function MeterDetailPage() {
   const params = useParams()
 
   // Dialogs
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showStatusDialog, setShowStatusDialog] = useState(false)
-  const [showAssignDialog, setShowAssignDialog] = useState(false)
-  const [showEndAssignDialog, setShowEndAssignDialog] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+  const [endAssignDialogOpen, setEndAssignDialogOpen] = useState(false)
 
   // Form state
   const [newStatus, setNewStatus] = useState<MeterStatus>("faulty")
@@ -139,7 +139,7 @@ export default function MeterDetailPage() {
 
     const success = await updateField("status", newStatus)
     if (success) {
-      setShowStatusDialog(false)
+      setStatusDialogOpen(false)
       showSuccess(`Meter marked as ${METER_STATUS_CONFIG[newStatus].label}`)
     }
     setSaving(false)
@@ -173,7 +173,7 @@ export default function MeterDetailPage() {
     }
 
     showSuccess("Meter assigned to room")
-    setShowAssignDialog(false)
+    setAssignDialogOpen(false)
     refetch()
     setSaving(false)
   }
@@ -211,7 +211,7 @@ export default function MeterDetailPage() {
     }
 
     showSuccess("Assignment ended")
-    setShowEndAssignDialog(false)
+    setEndAssignDialogOpen(false)
     refetch()
     setSaving(false)
   }
@@ -245,13 +245,13 @@ export default function MeterDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             {meter.status === "active" && !currentAssignment && (
-              <Button variant="outline" size="sm" onClick={() => setShowAssignDialog(true)}>
+              <Button variant="outline" size="sm" onClick={() => setAssignDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Assign to Room
               </Button>
             )}
             {currentAssignment && (
-              <Button variant="outline" size="sm" onClick={() => setShowEndAssignDialog(true)}>
+              <Button variant="outline" size="sm" onClick={() => setEndAssignDialogOpen(true)}>
                 <XCircle className="mr-2 h-4 w-4" />
                 End Assignment
               </Button>
@@ -270,7 +270,7 @@ export default function MeterDetailPage() {
                 size="sm"
                 onClick={() => {
                   setNewStatus("faulty")
-                  setShowStatusDialog(true)
+                  setStatusDialogOpen(true)
                 }}
               >
                 <AlertTriangle className="mr-2 h-4 w-4" />
@@ -278,7 +278,7 @@ export default function MeterDetailPage() {
               </Button>
             )}
             <PermissionGate permission="meters.delete" hide>
-              <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </Button>
@@ -352,11 +352,11 @@ export default function MeterDetailPage() {
           icon={Home}
           actions={
             currentAssignment ? (
-              <Button variant="outline" size="sm" onClick={() => setShowEndAssignDialog(true)}>
+              <Button variant="outline" size="sm" onClick={() => setEndAssignDialogOpen(true)}>
                 End Assignment
               </Button>
             ) : meter.status === "active" ? (
-              <Button variant="outline" size="sm" onClick={() => setShowAssignDialog(true)}>
+              <Button variant="outline" size="sm" onClick={() => setAssignDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Assign
               </Button>
@@ -501,8 +501,8 @@ export default function MeterDetailPage() {
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
         title="Delete Meter"
         description={`Are you sure you want to delete meter ${meter.meter_number}? This action cannot be undone. All assignment history will be deleted.`}
         confirmText="Delete"
@@ -512,7 +512,7 @@ export default function MeterDetailPage() {
       />
 
       {/* Status Change Dialog */}
-      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Change Meter Status</DialogTitle>
@@ -534,7 +534,7 @@ export default function MeterDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowStatusDialog(false)}>
+            <Button variant="outline" onClick={() => setStatusDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleStatusChange} disabled={saving}>
@@ -552,7 +552,7 @@ export default function MeterDetailPage() {
       </Dialog>
 
       {/* Assign to Room Dialog */}
-      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign Meter to Room</DialogTitle>
@@ -605,7 +605,7 @@ export default function MeterDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
+            <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleAssign} disabled={saving}>
@@ -623,7 +623,7 @@ export default function MeterDetailPage() {
       </Dialog>
 
       {/* End Assignment Dialog */}
-      <Dialog open={showEndAssignDialog} onOpenChange={setShowEndAssignDialog}>
+      <Dialog open={endAssignDialogOpen} onOpenChange={setEndAssignDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>End Meter Assignment</DialogTitle>
@@ -662,7 +662,7 @@ export default function MeterDetailPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEndAssignDialog(false)}>
+            <Button variant="outline" onClick={() => setEndAssignDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleEndAssignment} disabled={saving}>

@@ -4,6 +4,7 @@ import * as React from "react"
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
+import { GRID_COLUMN_CLASSES } from "@/components/ui/responsive-grid"
 
 // ============================================================================
 // COLOR SYSTEM
@@ -182,12 +183,6 @@ export interface StatsGridProps {
   className?: string
 }
 
-const columnClasses = {
-  2: "grid-cols-2",
-  3: "grid-cols-2 md:grid-cols-3",
-  4: "grid-cols-2 md:grid-cols-4",
-}
-
 /**
  * Grid wrapper for rendering multiple StatCards in a responsive layout.
  *
@@ -201,7 +196,7 @@ const columnClasses = {
  */
 export function StatsGrid({ stats, columns = 4, className }: StatsGridProps) {
   return (
-    <div className={cn("grid gap-4", columnClasses[columns], className)}>
+    <div className={cn("grid gap-4", GRID_COLUMN_CLASSES[columns], className)}>
       {stats.map((stat, index) => (
         <StatCard key={index} {...stat} />
       ))}

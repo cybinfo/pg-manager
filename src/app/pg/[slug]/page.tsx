@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PublicPropertyPage } from "./client"
+import { CONTACT } from "@/lib/constants/contact"
 
 // ============================================================================
 // TYPES
@@ -142,7 +143,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       type: "website",
-      url: `https://managekar.com/pg/${slug}`,
+      url: `${CONTACT.APP_URL}/pg/${slug}`,
       siteName: "ManageKar",
       images: config.cover_photo_url
         ? [
@@ -163,7 +164,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       images: config.cover_photo_url ? [config.cover_photo_url] : [],
     },
     alternates: {
-      canonical: `https://managekar.com/pg/${slug}`,
+      canonical: `${CONTACT.APP_URL}/pg/${slug}`,
     },
     other: minPrice
       ? {

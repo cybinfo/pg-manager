@@ -5,16 +5,29 @@
  * Import from here instead of individual files.
  *
  * @example
+ * // Simple column builders (Record<string, any> based)
+ * import { statusColumn, currencyColumn, dateColumn, badgeColumn } from "@/lib/columns"
+ *
+ * // Generic typed column factories
  * import {
  *   createAvatarNameColumn,
  *   createCurrencyColumn,
  *   createStatusColumn,
- *   createTotalMetric,
- *   createSumMetric,
  * } from "@/lib/columns"
+ *
+ * // Metric factories
+ * import { createTotalMetric, createSumMetric } from "@/lib/columns"
  */
 
-// Column factories
+// Simple column builders (widely used across list pages)
+export {
+  statusColumn,
+  currencyColumn,
+  dateColumn,
+  badgeColumn,
+} from "./builders"
+
+// Generic typed column factories
 export {
   createAvatarNameColumn,
   createCurrencyColumn,

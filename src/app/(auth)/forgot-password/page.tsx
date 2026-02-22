@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Loader2, CheckCircle, ArrowLeft } from "lucide-react"
+import { CheckCircle, ArrowLeft } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { AuthCardLayout } from "@/components/auth/auth-card-layout"
+import { SubmitButton } from "@/components/ui/submit-button"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -75,58 +77,38 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-10 w-10 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">ManageKar</span>
-            </Link>
+    <AuthCardLayout
+      title="Reset your password"
+      description="Enter your email address and we'll send you a link to reset your password."
+    >
+      <form onSubmit={handleResetPassword}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
           </div>
-          <CardTitle>Reset your password</CardTitle>
-          <CardDescription>
-            Enter your email address and we&apos;ll send you a link to reset your password.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleResetPassword}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending reset link...
-                </>
-              ) : (
-                "Send reset link"
-              )}
-            </Button>
-            <Link
-              href="/login"
-              className="text-sm text-muted-foreground hover:text-primary inline-flex items-center gap-1"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to sign in
-            </Link>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-4">
+          <SubmitButton loading={loading} className="w-full" loadingText="Sending reset link...">
+            Send reset link
+          </SubmitButton>
+          <Link
+            href="/login"
+            className="text-sm text-muted-foreground hover:text-primary inline-flex items-center gap-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to sign in
+          </Link>
+        </CardFooter>
+      </form>
+    </AuthCardLayout>
   )
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTenantJourney } from "@/lib/services/journey.service"
 import { createContentDisposition, sanitizeFilename } from "@/lib/format"
 import { renderToBuffer } from "@react-pdf/renderer"
-import { TenantJourneyReportPDF, JourneyReportData } from "@/lib/pdf-journey-report"
+import { TenantJourneyReportPDF, JourneyReportData } from "@/lib/pdf/journey-report"
 import { validateTenantRequest } from "@/lib/api-middleware"
 import { apiLogger, extractErrorMeta } from "@/lib/logger"
 import {

@@ -14,6 +14,7 @@
 
 import { formatCurrency } from "@/lib/format"
 import { getEntityName } from "@/lib/entity-names"
+import { CONTACT } from "@/lib/constants/contact"
 
 // ============================================================================
 // HELPERS
@@ -55,7 +56,7 @@ function emailWrapper(content: string): string {
     <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
       <p style="margin: 0;">Sent via ManageKar - Smart PG Management Software</p>
       <p style="margin: 8px 0 0 0;">
-        <a href="https://managekar.com" style="color: #10B981; text-decoration: none;">managekar.com</a>
+        <a href="${CONTACT.APP_URL}" style="color: #10B981; text-decoration: none;">managekar.com</a>
       </p>
     </div>
   </div>

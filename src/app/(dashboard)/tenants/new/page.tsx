@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError, toast } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
-import { showDetailedError, debugLog } from "@/lib/error-utils"
+import { showDetailedError, debugLog } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
 import { sendInvitationEmail } from "@/lib/email"
 import { withCreatedBy } from "@/lib/audit"

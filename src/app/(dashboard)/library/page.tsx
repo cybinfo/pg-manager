@@ -307,6 +307,7 @@ export default function LibrariesPage() {
       description="Manage your study libraries and reading rooms"
       icon={Library}
       permission="library.view"
+      feature="library"
       config={LIBRARY_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

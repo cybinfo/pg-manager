@@ -1,6 +1,8 @@
 import Link from "next/link"
-import { Building2, ArrowLeft } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PublicNav, PublicFooter } from "@/components/public"
+import { CONTACT } from "@/lib/constants/contact"
 
 export const metadata = {
   title: "Privacy Policy",
@@ -10,25 +12,7 @@ export const metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
-              ManageKar
-            </span>
-          </Link>
-          <Link href="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-      </nav>
+      <PublicNav />
 
       {/* Content */}
       <main className="container mx-auto px-4 py-12 max-w-4xl">
@@ -125,7 +109,7 @@ export default function PrivacyPolicyPage() {
               <li>Lodge a complaint with a supervisory authority</li>
             </ul>
             <p className="text-muted-foreground mt-4">
-              To exercise these rights, contact us at privacy@managekar.com.
+              To exercise these rights, contact us at {CONTACT.PRIVACY_EMAIL}.
             </p>
           </section>
 
@@ -162,8 +146,8 @@ export default function PrivacyPolicyPage() {
               If you have questions about this Privacy Policy, please contact us:
             </p>
             <ul className="list-none text-muted-foreground space-y-2">
-              <li><strong>Email:</strong> privacy@managekar.com</li>
-              <li><strong>Website:</strong> https://managekar.com</li>
+              <li><strong>Email:</strong> {CONTACT.PRIVACY_EMAIL}</li>
+              <li><strong>Website:</strong> {CONTACT.APP_URL}</li>
             </ul>
           </section>
         </div>
@@ -178,12 +162,7 @@ export default function PrivacyPolicyPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 border-t mt-12">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} ManageKar. Made with ❤️ in India.</p>
-        </div>
-      </footer>
+      <PublicFooter variant="compact" />
     </div>
   )
 }

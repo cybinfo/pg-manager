@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Building2, ArrowLeft, Mail, Phone, MessageSquare, Send, Loader2, CheckCircle, MapPin } from "lucide-react"
+import { Mail, Phone, MessageSquare, Send, Loader2, CheckCircle, MapPin } from "lucide-react"
+import { PublicNav, PublicFooter } from "@/components/public"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { showSuccess } from "@/lib/toast-helpers"
+import { CONTACT } from "@/lib/constants/contact"
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false)
@@ -27,7 +29,7 @@ export default function ContactPage() {
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
     // Create mailto link as fallback
-    const mailtoLink = `mailto:support@managekar.com?subject=${encodeURIComponent(
+    const mailtoLink = `mailto:${CONTACT.SUPPORT_EMAIL}?subject=${encodeURIComponent(
       formData.subject
     )}&body=${encodeURIComponent(
       `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
@@ -46,49 +48,31 @@ export default function ContactPage() {
       icon: Mail,
       title: "Email Us",
       description: "Get a response within 24 hours",
-      value: "support@managekar.com",
-      href: "mailto:support@managekar.com",
+      value: CONTACT.SUPPORT_EMAIL,
+      href: `mailto:${CONTACT.SUPPORT_EMAIL}`,
       color: "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950",
     },
     {
       icon: Phone,
       title: "Call Us",
       description: "Mon-Sat, 10am-6pm IST",
-      value: "+91 78274 74789",
-      href: "tel:+917827474789",
+      value: CONTACT.PHONE,
+      href: `tel:+${CONTACT.PHONE_RAW}`,
       color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950",
     },
     {
       icon: MessageSquare,
       title: "WhatsApp",
       description: "Quick responses on chat",
-      value: "+91 78274 74789",
-      href: "https://wa.me/917827474789?text=Hi%20ManageKar%20Team!",
+      value: CONTACT.PHONE,
+      href: `${CONTACT.WHATSAPP_URL}?text=Hi%20ManageKar%20Team!`,
       color: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950",
     },
   ]
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
-              ManageKar
-            </span>
-          </Link>
-          <Link href="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
-      </nav>
+      <PublicNav activePage="contact" />
 
       {/* Hero Section */}
       <section className="relative py-16 px-4 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950">
@@ -286,12 +270,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 border-t mt-12">
-        <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} ManageKar. Made with ❤️ in India.</p>
-        </div>
-      </footer>
+      <PublicFooter variant="compact" />
     </div>
   )
 }

@@ -1,9 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
@@ -12,55 +10,20 @@ import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { PageSkeleton } from "@/components/ui/loading"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  ClipboardCheck, CheckCircle, XCircle, Clock, Loader2,
-  User, AlertTriangle, FileText, ChevronRight, Paperclip, ExternalLink,
+  ClipboardCheck, CheckCircle, XCircle, Clock,
+  User, AlertTriangle, FileText, ChevronRight,
   Layers, ChevronDown
 } from "lucide-react"
-import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
-import { formatDate, formatDateTime } from "@/lib/format"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import { formatDate } from "@/lib/format"
 // ARCH-001: Use centralized useListPage hook for data fetching
-import { useListPage, ListPageConfig, GroupByOption } from "@/lib/hooks/useListPage"
+import { useListPage, GroupByOption, APPROVALS_LIST_CONFIG } from "@/lib/hooks/useListPage"
 import { createStatusMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
-import { APPROVAL_STATUS, APPROVAL_PRIORITY, getStatusInfo as getApprovalStatusInfo } from "@/lib/status-config"
+import { APPROVAL_STATUS, APPROVAL_PRIORITY, APPROVAL_TYPE_LABELS, getStatusInfo as getApprovalStatusInfo } from "@/lib/status-config"
+import { ApprovalReviewDialog } from "./_components/ApprovalReviewDialog"
+import type { ApprovalData } from "./_components/ApprovalReviewDialog"
 
-interface AttachedDocument {
-  id: string
-  name: string
-  document_type: string
-  file_url: string
-}
-
-interface Approval {
-  id: string
-  type: string
-  title: string
-  description: string | null
-  payload: Record<string, string>
-  status: string
-  priority: string
-  created_at: string
-  decided_at: string | null
-  decision_notes: string | null
-  change_applied: boolean
-  document_ids: string[] | null
-  requester_tenant_id: string
-  requester_tenant: {
-    id: string
-    name: string
-    phone: string
-    user_id: string | null
-  } | null
+interface Approval extends ApprovalData {
   // Computed fields for grouping
   type_label?: string
   priority_label?: string
@@ -69,21 +32,7 @@ interface Approval {
   has_docs_label?: string
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  name_change: "Name Change",
-  address_change: "Address Change",
-  phone_change: "Phone Change",
-  email_change: "Email Change",
-  room_change: "Room Transfer",
-  complaint: "Complaint",
-  other: "Other Request",
-  bill_dispute: "Bill Dispute",
-  payment_dispute: "Payment Dispute",
-  tenancy_issue: "Tenancy Issue",
-  room_issue: "Room Issue",
-}
-
-// Uses APPROVAL_PRIORITY from status-config for priority colors
+// Uses APPROVAL_TYPE_LABELS and APPROVAL_PRIORITY from status-config
 
 // ARCH-001: Group by options for approvals (using useListPage pattern)
 const approvalGroupByOptions: GroupByOption[] = [
@@ -95,29 +44,6 @@ const approvalGroupByOptions: GroupByOption[] = [
   { value: "created_month", label: "Month" },
   { value: "created_year", label: "Year" },
 ]
-
-// ARCH-001: Centralized config for approvals list
-const APPROVAL_CONFIG: ListPageConfig<Approval> = {
-  table: "approvals",
-  select: `
-    *,
-    requester_tenant:tenants(id, name, phone, user_id)
-  `,
-  defaultOrderBy: "created_at",
-  defaultOrderDirection: "desc",
-  searchFields: ["title", "type"],
-  joinFields: ["requester_tenant"],
-  computedFields: (item: Record<string, unknown>) => {
-    const date = new Date(item.created_at as string)
-    return {
-      type_label: TYPE_LABELS[item.type as keyof typeof TYPE_LABELS] || item.type,
-      priority_label: (item.priority as string)?.charAt(0).toUpperCase() + (item.priority as string)?.slice(1),
-      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-      created_year: date.getFullYear().toString(),
-      has_docs_label: (item.document_ids && (item.document_ids as string[]).length > 0) ? "With Documents" : "No Documents",
-    }
-  },
-}
 
 // ARCH-001: Metrics config for approvals
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -141,154 +67,20 @@ export default function ApprovalsPage() {
     metricsData,
     refetch,
   } = useListPage<Approval>({
-    config: APPROVAL_CONFIG,
+    config: APPROVALS_LIST_CONFIG as unknown as import("@/lib/hooks/list-page/types").ListPageConfig<Approval>,
     groupByOptions: approvalGroupByOptions,
     metrics: approvalMetrics,
   })
 
   // Local state for custom UI elements
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null)
-  const [attachedDocs, setAttachedDocs] = useState<AttachedDocument[]>([])
-  const [loadingDocs, setLoadingDocs] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [processing, setProcessing] = useState(false)
-  const [decisionNotes, setDecisionNotes] = useState("")
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending")
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false)
-
-  const fetchAttachedDocuments = async (docIds: string[]) => {
-    if (!docIds || docIds.length === 0) {
-      setAttachedDocs([])
-      return
-    }
-
-    setLoadingDocs(true)
-    const supabase = createClient()
-
-    const { data } = await supabase
-      .from("tenant_documents")
-      .select("id, name, document_type, file_url")
-      .in("id", docIds)
-
-    setAttachedDocs(data || [])
-    setLoadingDocs(false)
-  }
 
   const openApprovalDialog = (approval: Approval) => {
     setSelectedApproval(approval)
     setDialogOpen(true)
-    if (approval.document_ids && approval.document_ids.length > 0) {
-      fetchAttachedDocuments(approval.document_ids)
-    } else {
-      setAttachedDocs([])
-    }
-  }
-
-  const handleApprove = async () => {
-    if (!selectedApproval) return
-    setProcessing(true)
-
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const { error } = await (supabase
-      .from("approvals") as ReturnType<typeof supabase.from>)
-      .update({
-        status: "approved",
-        decided_by: user?.id,
-        decided_at: new Date().toISOString(),
-        decision_notes: decisionNotes || null,
-      } as Record<string, unknown>)
-      .eq("id", selectedApproval.id)
-
-    if (error) {
-      showError("Failed to approve request")
-    } else {
-      // Try to apply the change (updates tenants + user_profiles)
-      const { error: applyError } = await (supabase.rpc as Function)("apply_approval_change", {
-        p_approval_id: selectedApproval.id
-      })
-
-      // For email changes, also update auth.users via API route
-      if (selectedApproval.type === "email_change" && selectedApproval.requester_tenant?.user_id) {
-        try {
-          const response = await fetch("/api/admin/update-user-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: selectedApproval.requester_tenant.user_id,
-              newEmail: selectedApproval.payload?.new_email,
-              tenantId: selectedApproval.requester_tenant_id,
-            }),
-          })
-
-          if (!response.ok) {
-            const data = await response.json()
-            console.error("Failed to update auth email:", data.error)
-            showWarning("Request approved but login email needs manual update in Supabase")
-          } else {
-            showSuccess("Request approved and email updated everywhere!")
-            // ARCH-001: Use centralized refetch
-            refetch()
-            setProcessing(false)
-            setDialogOpen(false)
-            setDecisionNotes("")
-            return
-          }
-        } catch (err) {
-          console.error("Error calling email update API:", err)
-          showWarning("Request approved but login email needs manual update")
-        }
-      }
-
-      if (applyError) {
-        showSuccess("Request approved (change needs manual application)")
-      } else {
-        showSuccess("Request approved and change applied!")
-      }
-
-      // ARCH-001: Use centralized refetch
-      refetch()
-    }
-
-    setProcessing(false)
-    setDialogOpen(false)
-    setDecisionNotes("")
-  }
-
-  const handleReject = async () => {
-    if (!selectedApproval) return
-    if (!decisionNotes.trim()) {
-      showError("Please provide a reason for rejection")
-      return
-    }
-
-    setProcessing(true)
-
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const { error } = await (supabase
-      .from("approvals") as ReturnType<typeof supabase.from>)
-      .update({
-        status: "rejected",
-        decided_by: user?.id,
-        decided_at: new Date().toISOString(),
-        decision_notes: decisionNotes,
-      } as Record<string, unknown>)
-      .eq("id", selectedApproval.id)
-
-    if (error) {
-      showError("Failed to reject request")
-    } else {
-      showSuccess("Request rejected")
-      // ARCH-001: Use centralized refetch
-      refetch()
-    }
-
-    setProcessing(false)
-    setDialogOpen(false)
-    setDecisionNotes("")
   }
 
   // ARCH-001: Filter approvals using memoized computation
@@ -333,7 +125,7 @@ export default function ApprovalsPage() {
           <div>
             <div className="font-medium">{approval.title}</div>
             <div className="text-xs text-muted-foreground flex items-center gap-2">
-              <span>{TYPE_LABELS[approval.type] || approval.type}</span>
+              <span>{APPROVAL_TYPE_LABELS[approval.type] || approval.type}</span>
               {approval.requester_tenant && (
                 <>
                   <span>•</span>
@@ -541,163 +333,12 @@ export default function ApprovalsPage() {
         />
 
         {/* Review Dialog */}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Review Request</DialogTitle>
-              <DialogDescription>
-                {selectedApproval?.title}
-              </DialogDescription>
-            </DialogHeader>
-
-            {selectedApproval && (
-              <div className="space-y-4">
-                {/* Request Details */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Request Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Type:</span>
-                      <span>{TYPE_LABELS[selectedApproval.type]}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Requester:</span>
-                      <span>{selectedApproval.requester_tenant?.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Submitted:</span>
-                      <span>{formatDateTime(selectedApproval.created_at)}</span>
-                    </div>
-                    {selectedApproval.description && (
-                      <div className="pt-2 border-t">
-                        <span className="text-muted-foreground">Description:</span>
-                        <p className="mt-1">{selectedApproval.description}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Payload Details */}
-                {Object.keys(selectedApproval.payload).length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Change Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm space-y-2">
-                      {Object.entries(selectedApproval.payload).map(([key, value]) => (
-                        <div key={key} className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:
-                          </span>
-                          <span className="font-medium">{value}</span>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Attached Documents */}
-                {selectedApproval.document_ids && selectedApproval.document_ids.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <Paperclip className="h-4 w-4" />
-                        Attached Documents ({selectedApproval.document_ids.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm">
-                      {loadingDocs ? (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Loading documents...
-                        </div>
-                      ) : attachedDocs.length > 0 ? (
-                        <div className="space-y-2">
-                          {attachedDocs.map((doc) => (
-                            <div key={doc.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-muted-foreground" />
-                                <span>{doc.name}</span>
-                              </div>
-                              <a
-                                href={doc.file_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline flex items-center gap-1"
-                              >
-                                View <ExternalLink className="h-3 w-3" />
-                              </a>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">Unable to load documents</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Decision Notes */}
-                {selectedApproval.status === "pending" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Decision Notes {selectedApproval.status === "pending" && "(required for rejection)"}</Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="Add notes about your decision..."
-                      value={decisionNotes}
-                      onChange={(e) => setDecisionNotes(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                {/* Previous Decision */}
-                {selectedApproval.status !== "pending" && selectedApproval.decision_notes && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Decision</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-sm">
-                      <p>{selectedApproval.decision_notes}</p>
-                      <p className="text-muted-foreground mt-2">
-                        Decided on {formatDateTime(selectedApproval.decided_at!)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            <DialogFooter>
-              {selectedApproval?.status === "pending" ? (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={handleReject}
-                    disabled={processing}
-                    className="text-rose-600"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject
-                  </Button>
-                  <Button
-                    onClick={handleApprove}
-                    disabled={processing}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
-                  </Button>
-                </>
-              ) : (
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Close
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ApprovalReviewDialog
+          approval={selectedApproval}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onActionComplete={refetch}
+        />
         </div>
       </PermissionGuard>
     </FeatureGuard>

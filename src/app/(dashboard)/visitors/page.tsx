@@ -20,7 +20,7 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { VISITOR_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createNullCheckMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { PROPERTY_FILTER, VISITOR_TYPE_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatDate } from "@/lib/format"
@@ -28,6 +28,7 @@ import {
   VisitorType,
   VISITOR_TYPE_LABELS,
   VISITOR_TYPE_COLORS,
+  VISITOR_TYPE_BADGE_COLORS,
   ENQUIRY_STATUS_LABELS,
   ENQUIRY_STATUS_COLORS,
   EnquiryStatus,
@@ -74,13 +75,6 @@ interface Visitor {
 // ============================================
 // Visitor Type Badge
 // ============================================
-
-const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-blue-100 text-blue-700",
-  enquiry: "bg-purple-100 text-purple-700",
-  service_provider: "bg-orange-100 text-orange-700",
-  general: "bg-muted text-foreground",
-}
 
 const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
   tenant_visitor: <Users className="h-3 w-3" />,
@@ -253,18 +247,7 @@ const columns: Column<Visitor>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  {
-    id: "visitor_type",
-    label: "Type",
-    type: "select",
-    placeholder: "All Types",
-    options: [
-      { value: "tenant_visitor", label: "Tenant Visitor" },
-      { value: "enquiry", label: "Enquiry" },
-      { value: "service_provider", label: "Service Provider" },
-      { value: "general", label: "General" },
-    ],
-  },
+  VISITOR_TYPE_FILTER,
   PROPERTY_FILTER,
   createStatusFilter([
     { value: "checked_in", label: "Inside" },

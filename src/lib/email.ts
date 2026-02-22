@@ -3,21 +3,10 @@
  *
  * Handles email transport via Resend. Template generation (subjects + bodies)
  * is centralized in @/lib/templates/email.ts, consumed here via
- * @/lib/email-templates (backward compat shim) and @/lib/templates.
+ * emailSubjects and emailBodyTemplates from @/lib/templates.
  */
 
 import { Resend } from "resend"
-import {
-  paymentReminderTemplate,
-  overdueAlertTemplate,
-  paymentReceiptTemplate,
-  invitationEmailTemplate,
-  emailVerificationTemplate,
-  dailySummaryTemplate,
-  libraryLowHoursTemplate,
-  libraryExpiringMembershipTemplate,
-  libraryExpiredMembershipTemplate,
-} from "./email-templates"
 import { emailSubjects, emailBodyTemplates } from "@/lib/templates"
 import { logger, extractErrorMeta } from "@/lib/logger"
 
@@ -160,7 +149,7 @@ export async function sendPaymentReminder(
       from: FROM_EMAIL,
       to: data.to,
       subject: emailSubjects.paymentReminder(data),
-      html: paymentReminderTemplate(data),
+      html: emailBodyTemplates.paymentReminder(data),
     })
 
     if (error) {
@@ -184,7 +173,7 @@ export async function sendOverdueAlert(
       from: FROM_EMAIL,
       to: data.to,
       subject: emailSubjects.overdueAlert(),
-      html: overdueAlertTemplate(data),
+      html: emailBodyTemplates.overdueAlert(data),
     })
 
     if (error) {
@@ -208,7 +197,7 @@ export async function sendPaymentReceipt(
       from: FROM_EMAIL,
       to: data.to,
       subject: emailSubjects.paymentReceipt(data),
-      html: paymentReceiptTemplate(data),
+      html: emailBodyTemplates.paymentReceipt(data),
     })
 
     if (error) {
@@ -232,7 +221,7 @@ export async function sendInvitationEmail(
       from: FROM_EMAIL,
       to: data.to,
       subject: emailSubjects.invitation(data),
-      html: invitationEmailTemplate(data),
+      html: emailBodyTemplates.invitation(data),
     })
 
     if (error) {
@@ -281,7 +270,7 @@ export async function sendVerificationEmail(
       from: FROM_EMAIL,
       to: data.to,
       subject: emailSubjects.emailVerification(),
-      html: emailVerificationTemplate(data),
+      html: emailBodyTemplates.emailVerification(data),
     })
 
     if (error) {
@@ -306,7 +295,7 @@ export async function sendDailySummary(
       from: FROM_EMAIL,
       to: data.to,
       subject: emailSubjects.dailySummary(data),
-      html: dailySummaryTemplate(data),
+      html: emailBodyTemplates.dailySummary(data),
     })
 
     if (error) {
@@ -333,7 +322,7 @@ export async function sendLibraryLowHoursWarning(
       from: FROM_EMAIL,
       to: data.to,
       subject: emailSubjects.libraryLowHours(data),
-      html: libraryLowHoursTemplate(data),
+      html: emailBodyTemplates.libraryLowHours(data),
     })
 
     if (error) {
@@ -358,7 +347,7 @@ export async function sendLibraryExpiringMembership(
       from: FROM_EMAIL,
       to: data.to,
       subject: emailSubjects.libraryExpiringMembership(data),
-      html: libraryExpiringMembershipTemplate(data),
+      html: emailBodyTemplates.libraryExpiringMembership(data),
     })
 
     if (error) {
@@ -383,7 +372,7 @@ export async function sendLibraryExpiredMembership(
       from: FROM_EMAIL,
       to: data.to,
       subject: emailSubjects.libraryExpiredMembership(data),
-      html: libraryExpiredMembershipTemplate(data),
+      html: emailBodyTemplates.libraryExpiredMembership(data),
     })
 
     if (error) {

@@ -71,7 +71,7 @@ export default function PaymentReceiptPage() {
   })
 
   const [ownerInfo, setOwnerInfo] = useState<{ business_name: string | null; name: string; phone: string | null } | null>(null)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   // Fetch owner info separately (not part of main entity)
   useEffect(() => {
@@ -208,7 +208,7 @@ export default function PaymentReceiptPage() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => setShowDeleteDialog(true)}
+                  onClick={() => setDeleteDialogOpen(true)}
                   disabled={isDeleting}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
@@ -386,8 +386,8 @@ export default function PaymentReceiptPage() {
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
         title="Delete Payment"
         description={`Are you sure you want to delete this payment of ${formatCurrency(payment?.amount || 0)}? Receipt: ${payment?.receipt_number || payment?.id.slice(0, 8).toUpperCase()}. This will permanently remove the payment record and may affect associated bill status. This action cannot be undone.`}
         confirmText="Delete"

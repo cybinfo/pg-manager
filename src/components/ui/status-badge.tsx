@@ -3,6 +3,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
+import { STATUS_DOT_COLORS } from "@/lib/status-colors"
 import {
   CheckCircle2,
   Clock,
@@ -116,23 +117,13 @@ export function StatusBadge({
   const Icon = CustomIcon || config?.icon
   const displayLabel = label || config?.label || children
 
-  const dotColors: Record<string, string> = {
-    success: "bg-emerald-500",
-    warning: "bg-amber-500",
-    error: "bg-rose-500",
-    info: "bg-sky-500",
-    muted: "bg-slate-400",
-    primary: "bg-teal-500",
-    purple: "bg-violet-500",
-  }
-
   return (
     <span
       className={cn(statusBadgeVariants({ variant: finalVariant, size, pulse }), className)}
       {...props}
     >
       {dot && (
-        <span className={cn("h-1.5 w-1.5 rounded-full", dotColors[finalVariant])} />
+        <span className={cn("h-1.5 w-1.5 rounded-full", STATUS_DOT_COLORS[finalVariant])} />
       )}
       {showIcon && Icon && !dot && (
         <Icon className={cn("h-3 w-3", status === "in_progress" && "animate-spin")} />
@@ -163,16 +154,9 @@ export function StatusIndicator({
   label?: string
   className?: string
 }) {
-  const colors = {
-    success: "bg-emerald-500",
-    warning: "bg-amber-500",
-    error: "bg-rose-500",
-    muted: "bg-slate-400",
-  }
-
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <span className={cn("h-2 w-2 rounded-full", colors[status])} />
+      <span className={cn("h-2 w-2 rounded-full", STATUS_DOT_COLORS[status])} />
       {label && <span className="text-sm">{label}</span>}
     </div>
   )

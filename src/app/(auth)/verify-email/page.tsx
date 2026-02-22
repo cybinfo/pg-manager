@@ -3,9 +3,10 @@
 import { Suspense, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Building2, CheckCircle, XCircle, Loader2, Mail } from "lucide-react"
+import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { BrandLogo } from "@/components/ui/brand-logo"
 
 type VerificationStatus = "loading" | "success" | "error" | "no-token"
 
@@ -55,14 +56,7 @@ function VerifyEmailContent() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25 group-hover:shadow-xl transition-all">
-              <Building2 className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
-              ManageKar
-            </span>
-          </Link>
+          <BrandLogo size="lg" />
         </div>
 
         <Card className="shadow-xl border-0">
@@ -185,14 +179,7 @@ function LoadingFallback() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-2">
-            <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
-              <Building2 className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
-              ManageKar
-            </span>
-          </div>
+          <BrandLogo size="lg" linkTo={null} />
         </div>
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-2">

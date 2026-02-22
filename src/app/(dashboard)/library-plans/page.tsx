@@ -189,6 +189,7 @@ export default function LibraryPlansPage() {
       description="Manage library subscription plans"
       icon={CreditCard}
       permission="library.view"
+      feature="library"
       config={LIBRARY_PLAN_LIST_CONFIG}
       filters={filters}
       metrics={metrics}

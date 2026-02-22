@@ -170,7 +170,8 @@ export default function LibrarySeatsPage() {
       title="Seats"
       description="Manage library seats and assignments"
       icon={Armchair}
-      permission="library.view"
+      permission="library_seats.view"
+      feature="library"
       config={LIBRARY_SEAT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}
@@ -180,7 +181,7 @@ export default function LibrarySeatsPage() {
       enableColumnManager={true}
       createHref="/library-seats/new"
       createLabel="Add Seat"
-      createPermission="library.create"
+      createPermission="library_seats.create"
       detailHref={(seat) => `/library-seats/${seat.id}`}
       emptyTitle="No seats found"
       emptyDescription="Add seats to your library sections"

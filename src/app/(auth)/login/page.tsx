@@ -5,13 +5,15 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getSession } from "@/lib/auth/session"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, Loader2 } from "lucide-react"
+import { CardContent, CardFooter } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { ContextPicker } from "@/components/auth/context-picker"
+import { AuthCardLayout } from "@/components/auth/auth-card-layout"
+import { BrandLogo } from "@/components/ui/brand-logo"
+import { SubmitButton } from "@/components/ui/submit-button"
 import { ContextWithDetails } from "@/lib/auth/types"
 
 type LoginStep = 'credentials' | 'context-picker'
@@ -194,12 +196,7 @@ function LoginForm() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-6">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-10 w-10 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">ManageKar</span>
-            </Link>
+            <BrandLogo />
           </div>
 
           <ContextPicker
@@ -227,83 +224,63 @@ function LoginForm() {
 
   // Show login form
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-10 w-10 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">ManageKar</span>
-            </Link>
+    <AuthCardLayout
+      title="Welcome back"
+      description="Enter your credentials to access your account"
+      headerExtra={inviteToken ? (
+        <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-sm rounded-lg">
+          Sign in to accept your invitation
+        </div>
+      ) : undefined}
+    >
+      <form onSubmit={handleLogin}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
           </div>
-          <CardTitle>Welcome back</CardTitle>
-          <CardDescription>
-            Enter your credentials to access your account
-          </CardDescription>
-          {inviteToken && (
-            <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-sm rounded-lg">
-              Sign in to accept your invitation
-            </div>
-          )}
-        </CardHeader>
-        <form onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-muted-foreground hover:text-primary"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign in"
-              )}
-            </Button>
-            <p className="text-sm text-center text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-primary hover:underline">
-                Sign up free
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link
+                href="/forgot-password"
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                Forgot password?
               </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+            </div>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-4">
+          <SubmitButton loading={loading} className="w-full" loadingText="Signing in...">
+            Sign in
+          </SubmitButton>
+          <p className="text-sm text-center text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="text-primary hover:underline">
+              Sign up free
+            </Link>
+          </p>
+        </CardFooter>
+      </form>
+    </AuthCardLayout>
   )
 }
 

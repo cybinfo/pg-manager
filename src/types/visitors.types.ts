@@ -190,6 +190,13 @@ export const VISITOR_TYPE_COLORS: Record<VisitorType, string> = {
   general: 'slate',
 }
 
+export const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
+  tenant_visitor: 'bg-blue-100 text-blue-700',
+  enquiry: 'bg-purple-100 text-purple-700',
+  service_provider: 'bg-orange-100 text-orange-700',
+  general: 'bg-muted text-foreground',
+}
+
 export const ENQUIRY_STATUS_LABELS: Record<EnquiryStatus, string> = {
   pending: 'Pending',
   follow_up: 'Follow Up',

@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreditCard, CheckCircle, IndianRupee, Calendar } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
-import { PortalStatsGrid, PortalEmptyState } from "@/components/portal"
+import { PortalEmptyState } from "@/components/portal"
+import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 
@@ -97,7 +98,7 @@ export default function MemberPaymentsPage() {
       </div>
 
       {/* Stats */}
-      <PortalStatsGrid
+      <StatsGrid
         stats={[
           {
             icon: IndianRupee,

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
-import { RentReceiptPDF, type ReceiptData } from "@/lib/pdf-receipt"
+import { RentReceiptPDF, type ReceiptData } from "@/lib/pdf/receipt"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { handlePdfGeneration, type PdfRouteConfig } from "@/lib/pdf-handler"
+import { handlePdfGeneration, type PdfRouteConfig } from "@/lib/pdf/handler"
 import type { User } from "@supabase/supabase-js"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

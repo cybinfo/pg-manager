@@ -209,6 +209,7 @@ export default function LibraryLockersPage() {
       description="Manage locker rentals and assignments"
       icon={Lock}
       permission="library_lockers.view"
+      feature="library"
       config={LIBRARY_LOCKER_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

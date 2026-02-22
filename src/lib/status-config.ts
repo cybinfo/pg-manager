@@ -109,6 +109,20 @@ export const APPROVAL_STATUS: Record<string, StatusConfig> = {
   cancelled: { label: "Cancelled", variant: "muted" },
 }
 
+export const APPROVAL_TYPE_LABELS: Record<string, string> = {
+  name_change: "Name Change",
+  address_change: "Address Change",
+  phone_change: "Phone Change",
+  email_change: "Email Change",
+  room_change: "Room Transfer",
+  complaint: "Complaint",
+  other: "Other Request",
+  bill_dispute: "Bill Dispute",
+  payment_dispute: "Payment Dispute",
+  tenancy_issue: "Tenancy Issue",
+  room_issue: "Room Issue",
+}
+
 export const APPROVAL_PRIORITY: Record<string, string> = {
   low: "bg-slate-100 text-slate-700",
   normal: "bg-blue-100 text-blue-700",
@@ -269,6 +283,19 @@ export const INQUIRY_SOURCE_LABELS: Record<string, string> = {
   website: "Website",
   whatsapp: "WhatsApp",
   phone: "Phone",
+}
+
+export const INQUIRY_STATUS_COLORS: Record<string, string> = {
+  new: "bg-blue-100 text-blue-700",
+  contacted: "bg-yellow-100 text-yellow-700",
+  converted: "bg-green-100 text-green-700",
+  closed: "bg-muted text-foreground",
+}
+
+export const INQUIRY_SOURCE_COLORS: Record<string, string> = {
+  website: "bg-purple-100 text-purple-700",
+  whatsapp: "bg-green-100 text-green-700",
+  phone: "bg-orange-100 text-orange-700",
 }
 
 // ============================================================================

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
-import { LibraryReceiptPDF, type LibraryReceiptData } from "@/lib/library-pdf-receipt"
+import { LibraryReceiptPDF, type LibraryReceiptData } from "@/lib/pdf/library-receipt"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { handlePdfGeneration, type PdfRouteConfig } from "@/lib/pdf-handler"
+import { handlePdfGeneration, type PdfRouteConfig } from "@/lib/pdf/handler"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRecord = Record<string, any>

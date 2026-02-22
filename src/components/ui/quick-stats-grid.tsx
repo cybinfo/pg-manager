@@ -16,12 +16,12 @@
 import { type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
+import { STAT_VARIANT_CLASSES, type StatVariant } from "@/lib/status-colors"
+import { GRID_COLUMN_CLASSES } from "@/components/ui/responsive-grid"
 
 // ============================================================================
 // TYPES
 // ============================================================================
-
-type StatVariant = "default" | "success" | "warning" | "error" | "info" | "muted"
 
 interface StatItem {
   /** Stat label */
@@ -49,37 +49,6 @@ interface QuickStatsGridProps {
   size?: "sm" | "md" | "lg"
 }
 
-// ============================================================================
-// VARIANT STYLES
-// ============================================================================
-
-const variantClasses: Record<StatVariant, { icon: string; value: string }> = {
-  default: {
-    icon: "text-muted-foreground",
-    value: "text-foreground",
-  },
-  success: {
-    icon: "text-green-500",
-    value: "text-green-600",
-  },
-  warning: {
-    icon: "text-yellow-500",
-    value: "text-yellow-600",
-  },
-  error: {
-    icon: "text-red-500",
-    value: "text-red-600",
-  },
-  info: {
-    icon: "text-blue-500",
-    value: "text-blue-600",
-  },
-  muted: {
-    icon: "text-muted-foreground",
-    value: "text-muted-foreground",
-  },
-}
-
 const sizeClasses = {
   sm: {
     icon: "h-4 w-4",
@@ -101,12 +70,6 @@ const sizeClasses = {
   },
 }
 
-const columnClasses = {
-  2: "grid-cols-2",
-  3: "grid-cols-2 md:grid-cols-3",
-  4: "grid-cols-2 md:grid-cols-4",
-}
-
 // ============================================================================
 // QUICK STATS GRID
 // ============================================================================
@@ -126,10 +89,10 @@ export function QuickStatsGrid({
   const sizes = sizeClasses[size]
 
   return (
-    <div className={cn("grid gap-4", columnClasses[columns], className)}>
+    <div className={cn("grid gap-4", GRID_COLUMN_CLASSES[columns], className)}>
       {stats.map((stat, index) => {
         const variant = stat.variant || "default"
-        const variantStyle = variantClasses[variant]
+        const variantStyle = STAT_VARIANT_CLASSES[variant]
         const Icon = stat.icon
 
         return (
@@ -184,7 +147,7 @@ export function InlineStats({ stats, className, separator = true }: InlineStatsP
     <div className={cn("flex items-center gap-6", className)}>
       {stats.map((stat, index) => {
         const variant = stat.variant || "default"
-        const variantStyle = variantClasses[variant]
+        const variantStyle = STAT_VARIANT_CLASSES[variant]
 
         return (
           <div
@@ -242,7 +205,7 @@ export function SummaryCard({
   onClick,
   className,
 }: SummaryCardProps) {
-  const variantStyle = variantClasses[variant]
+  const variantStyle = STAT_VARIANT_CLASSES[variant]
 
   return (
     <Card

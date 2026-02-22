@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PublicNav, PublicFooter } from "@/components/public"
 import {
   Building2,
   ArrowRight,
@@ -172,43 +173,7 @@ const trustedClients = [
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 glass-nav border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25 group-hover:shadow-xl group-hover:shadow-teal-500/30 transition-shadow">
-              <Building2 className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
-              ManageKar
-            </span>
-          </Link>
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="#products" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Products
-            </Link>
-            <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Pricing
-            </Link>
-            <Link href="/help" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Help
-            </Link>
-            <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Contact
-            </Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">Login</Button>
-            </Link>
-            <Link href="/register">
-              <Button variant="gradient" size="sm">
-                Get Started Free
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNav />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -533,65 +498,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-4 bg-foreground text-background">
-        <div className="container mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="h-9 w-9 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">ManageKar</span>
-              </div>
-              <p className="text-muted-foreground text-sm mb-3">
-                Simple management software for Indian small businesses.
-              </p>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded">PG Manager</span>
-                <span className="px-2 py-1 bg-slate-700 text-slate-400 rounded">Shop Manager</span>
-                <span className="px-2 py-1 bg-slate-700 text-slate-400 rounded">Rent Manager</span>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Products</h4>
-              <ul className="space-y-2 text-muted-foreground text-sm">
-                <li><Link href="/products/pg-manager" className="hover:text-background transition-colors">PG Manager</Link></li>
-                <li><span className="opacity-50">Shop Manager (Coming)</span></li>
-                <li><span className="opacity-50">Rent Manager (Coming)</span></li>
-                <li><span className="opacity-50">Society Manager (Coming)</span></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-muted-foreground text-sm">
-                <li><Link href="/contact" className="hover:text-background transition-colors">Contact Us</Link></li>
-                <li><Link href="/help" className="hover:text-background transition-colors">Help Center</Link></li>
-                <li><Link href="/pricing" className="hover:text-background transition-colors">Pricing</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-muted-foreground text-sm">
-                <li><Link href="/privacy" className="hover:text-background transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-background transition-colors">Terms of Service</Link></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-muted-foreground/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} ManageKar. Made with ❤️ in India.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Made with ❤️ for Indian Businesses
-            </p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

@@ -19,7 +19,8 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
-import { PortalStatsGrid, QuickActionLink } from "@/components/portal"
+import { QuickActionLink } from "@/components/portal"
+import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 
@@ -191,7 +192,7 @@ export default function MemberHomePage() {
       </Card>
 
       {/* Quick Stats */}
-      <PortalStatsGrid
+      <StatsGrid
         stats={[
           {
             icon: BookOpen,

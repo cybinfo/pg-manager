@@ -13,7 +13,7 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { PAYMENT_METHOD_FILTER, createStatusFilter } from "@/lib/filter-presets"
+import { LIBRARY_PAYMENT_METHOD_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { Avatar } from "@/components/ui/avatar"
@@ -185,12 +185,7 @@ const filters: FilterConfig[] = [
       { value: "other", label: "Other" },
     ],
   },
-  { ...PAYMENT_METHOD_FILTER, options: [
-    { value: "cash", label: "Cash" },
-    { value: "upi", label: "UPI" },
-    { value: "card", label: "Card" },
-    { value: "bank_transfer", label: "Bank Transfer" },
-  ]},
+  LIBRARY_PAYMENT_METHOD_FILTER,
   createStatusFilter([
     { value: "completed", label: "Completed" },
     { value: "pending", label: "Pending" },
@@ -249,6 +244,7 @@ export default function LibraryPaymentsPage() {
       description="Track subscription and locker payments"
       icon={CreditCard}
       permission="library_payments.view"
+      feature="library"
       config={LIBRARY_PAYMENT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

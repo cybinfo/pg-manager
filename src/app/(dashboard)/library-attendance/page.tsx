@@ -11,6 +11,7 @@ import Link from "next/link"
 import { Clock, Users, Armchair, LogIn, LogOut, RefreshCw, QrCode } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
+import { FeatureGuard } from "@/components/auth"
 import { LIBRARY_ATTENDANCE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
@@ -579,6 +580,7 @@ export default function LibraryAttendancePage() {
   const handleRefresh = () => setRefreshKey((k) => k + 1)
 
   return (
+    <FeatureGuard feature="library">
     <div>
       {/* Quick Check-In */}
       <QuickCheckIn onCheckIn={handleRefresh} />
@@ -594,6 +596,7 @@ export default function LibraryAttendancePage() {
         description="Check-in and check-out records"
         icon={Clock}
         permission="library_attendance.view"
+        feature="library"
         config={LIBRARY_ATTENDANCE_LIST_CONFIG}
         filters={filters}
         groupByOptions={groupByOptions}
@@ -606,5 +609,6 @@ export default function LibraryAttendancePage() {
         emptyDescription="Check in members to start tracking attendance"
       />
     </div>
+    </FeatureGuard>
   )
 }

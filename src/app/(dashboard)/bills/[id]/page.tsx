@@ -73,8 +73,8 @@ export default function BillDetailPage() {
     id: billId,
   })
 
-  const [showPaymentForm, setShowPaymentForm] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [paymentFormOpen, setPaymentFormOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const payments = (related.payments || []) as Payment[]
 
@@ -163,7 +163,7 @@ ManageKar`
               Share via WhatsApp
             </Button>
             {bill.status !== "paid" && (
-              <Button size="sm" onClick={() => setShowPaymentForm(!showPaymentForm)}>
+              <Button size="sm" onClick={() => setPaymentFormOpen(!paymentFormOpen)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Record Payment
               </Button>
@@ -172,7 +172,7 @@ ManageKar`
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() => setShowDeleteDialog(true)}
+                onClick={() => setDeleteDialogOpen(true)}
                 disabled={isDeleting}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -184,13 +184,13 @@ ManageKar`
       />
 
       {/* Payment Form */}
-      {showPaymentForm && (
+      {paymentFormOpen && (
         <BillPaymentForm
           billId={bill.id}
           tenantId={bill.tenant?.id}
           propertyId={bill.property?.id}
           balanceDue={bill.balance_due}
-          onClose={() => setShowPaymentForm(false)}
+          onClose={() => setPaymentFormOpen(false)}
           onPaymentRecorded={refetch}
         />
       )}
@@ -237,8 +237,8 @@ ManageKar`
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
         title="Delete Bill"
         description={`Are you sure you want to delete bill "${bill.bill_number}"? This will permanently remove the bill and unlink any associated payments. This action cannot be undone.`}
         confirmText="Delete"

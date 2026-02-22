@@ -33,9 +33,7 @@ import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { useDemoMode } from "@/lib/demo-mode"
 import { transformJoin } from "@/lib/supabase/transforms"
 import {
-  KPICard,
   QuickInsights,
-  SummaryStatCard,
   ReportChartCard,
   PaymentMethodsChart,
   ReportPageHeader,
@@ -49,6 +47,7 @@ import {
   DAY_NAMES,
   exportCSV,
 } from "@/components/reports"
+import { StatCard } from "@/components/ui/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface LibraryOption {
@@ -426,69 +425,65 @@ export default function LibraryReportsPage() {
 
           {/* KPI Cards - Row 1 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KPICard
-              title="Seat Utilization"
+            <StatCard
+              label="Seat Utilization"
               value={`${reportData.utilizationRate.toFixed(1)}%`}
               subtitle={`${reportData.occupiedSeats}/${reportData.totalSeats} seats`}
               icon={Armchair}
-              iconColor={reportData.utilizationRate >= 80 ? "green" : reportData.utilizationRate >= 50 ? "amber" : "red"}
+              color={reportData.utilizationRate >= 80 ? "green" : reportData.utilizationRate >= 50 ? "amber" : "red"}
             />
-            <KPICard
-              title="Revenue"
+            <StatCard
+              label="Revenue"
               value={formatCurrency(reportData.totalRevenueThisMonth)}
+              subtitle={`${reportData.revenueGrowth >= 0 ? "+" : ""}${reportData.revenueGrowth.toFixed(1)}% vs last month`}
               icon={IndianRupee}
-              iconColor="green"
-              trend={{
-                value: reportData.revenueGrowth,
-                isPositive: reportData.revenueGrowth >= 0,
-                label: "vs last month",
-              }}
+              color="green"
             />
-            <KPICard
-              title="Active Members"
+            <StatCard
+              label="Active Members"
               value={reportData.activeMembers}
               subtitle={`+${reportData.newMembersThisMonth} new`}
               icon={Users}
-              iconColor="blue"
+              color="blue"
             />
-            <KPICard
-              title="Studying Now"
+            <StatCard
+              label="Studying Now"
               value={reportData.currentlyCheckedIn}
               subtitle={`${reportData.availableSeats} seats free`}
               icon={Library}
-              iconColor="purple"
+              color="purple"
             />
           </div>
 
           {/* KPI Cards - Row 2 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KPICard
-              title="Hours Consumed"
+            <StatCard
+              label="Hours Consumed"
               value={`${reportData.totalHoursUsed.toFixed(0)}h`}
               subtitle={`Avg ${reportData.avgHoursPerMember.toFixed(1)}h/member`}
               icon={Timer}
-              iconColor="purple"
+              color="purple"
             />
-            <KPICard
-              title="Check-ins"
+            <StatCard
+              label="Check-ins"
               value={reportData.totalCheckInsThisMonth}
               subtitle={`Avg ${reportData.avgDailyCheckIns.toFixed(1)}/day`}
               icon={Clock}
-              iconColor="amber"
+              color="amber"
             />
-            <KPICard
-              title="Peak Hour"
+            <StatCard
+              label="Peak Hour"
               value={reportData.peakHour}
               subtitle={`Busiest: ${reportData.peakDay}`}
               icon={Calendar}
-              iconColor="rose"
+              color="rose"
             />
-            <KPICard
-              title="Hours Balance"
+            <StatCard
+              label="Hours Balance"
               value={`${reportData.hoursRemaining.toFixed(0)}h`}
               subtitle="Active members"
               icon={CheckCircle}
-              iconColor="green"
+              color="green"
             />
           </div>
 

@@ -17,6 +17,7 @@ import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/li
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDate, formatPhone } from "@/lib/format"
+import { INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_COLORS } from "@/lib/status-config"
 
 // ============================================
 // Types
@@ -45,27 +46,14 @@ interface Inquiry {
 // Status Badges
 // ============================================
 
-const STATUS_COLORS: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
-  contacted: "bg-yellow-100 text-yellow-700",
-  converted: "bg-green-100 text-green-700",
-  closed: "bg-muted text-foreground",
-}
-
-const SOURCE_COLORS: Record<string, string> = {
-  website: "bg-purple-100 text-purple-700",
-  whatsapp: "bg-green-100 text-green-700",
-  phone: "bg-orange-100 text-orange-700",
-}
-
 const StatusBadge = ({ status, label }: { status: string; label: string }) => (
-  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[status] || STATUS_COLORS.new}`}>
+  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${INQUIRY_STATUS_COLORS[status] || INQUIRY_STATUS_COLORS.new}`}>
     {label}
   </span>
 )
 
 const SourceBadge = ({ source, label }: { source: string; label: string }) => (
-  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${SOURCE_COLORS[source] || SOURCE_COLORS.website}`}>
+  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${INQUIRY_SOURCE_COLORS[source] || INQUIRY_SOURCE_COLORS.website}`}>
     {label}
   </span>
 )

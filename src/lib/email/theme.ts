@@ -14,11 +14,13 @@
 // BRAND INFO
 // ============================================================================
 
+import { CONTACT } from "@/lib/constants/contact"
+
 export const emailBrand = {
-  name: "ManageKar",
+  name: CONTACT.APP_NAME,
   tagline: "Smart PG Management",
-  website: "https://managekar.com",
-  footerText: "Sent via ManageKar - Smart PG Management Software",
+  website: CONTACT.APP_URL,
+  footerText: `Sent via ${CONTACT.APP_NAME} - Smart PG Management Software`,
 } as const
 
 // ============================================================================

@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PublicNav, PublicFooter } from "@/components/public"
 import {
   Building2,
   CheckCircle,
@@ -153,43 +154,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 glass-nav border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25 group-hover:shadow-xl group-hover:shadow-teal-500/30 transition-shadow">
-              <Building2 className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">
-              ManageKar
-            </span>
-          </Link>
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/#products" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Products
-            </Link>
-            <Link href="/pricing" className="text-sm text-foreground font-medium">
-              Pricing
-            </Link>
-            <Link href="/help" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Help
-            </Link>
-            <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Contact
-            </Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">Login</Button>
-            </Link>
-            <Link href="/register">
-              <Button variant="gradient" size="sm">
-                Get Started Free
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNav activePage="pricing" />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 md:py-24">
@@ -385,27 +350,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-4 bg-foreground text-background">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                <Building2 className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-bold">ManageKar</span>
-            </div>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <Link href="/privacy" className="hover:text-background transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-background transition-colors">Terms</Link>
-              <Link href="/contact" className="hover:text-background transition-colors">Contact</Link>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} ManageKar
-            </p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   )
 }

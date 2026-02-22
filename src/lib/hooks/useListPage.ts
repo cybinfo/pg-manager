@@ -84,6 +84,8 @@ export {
   LIBRARY_LOCKER_LIST_CONFIG,
   LIBRARY_PAYMENT_LIST_CONFIG,
   LIBRARY_PLAN_LIST_CONFIG,
+  LIBRARY_WAITLIST_LIST_CONFIG,
+  APPROVALS_LIST_CONFIG,
 } from "./list-page/configs"
 
 // Import types for use in this file

@@ -224,6 +224,12 @@ export const PERMISSIONS = {
   LIBRARY_EDIT: 'library.edit',
   LIBRARY_DELETE: 'library.delete',
 
+  // Library Seats
+  LIBRARY_SEATS_VIEW: 'library_seats.view',
+  LIBRARY_SEATS_CREATE: 'library_seats.create',
+  LIBRARY_SEATS_EDIT: 'library_seats.edit',
+  LIBRARY_SEATS_DELETE: 'library_seats.delete',
+
   // Library Sections
   LIBRARY_SECTIONS_VIEW: 'library_sections.view',
   LIBRARY_SECTIONS_CREATE: 'library_sections.create',

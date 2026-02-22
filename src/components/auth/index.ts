@@ -37,3 +37,6 @@ export { EmailVerificationCard } from './email-verification-card'
 // Feature Gates
 export { FeatureGate, useFeatureCheck } from './feature-gate'
 export { FeatureGuard } from './feature-guard'
+
+// Auth Card Layout (shared layout for auth pages)
+export { AuthCardLayout } from './auth-card-layout'
