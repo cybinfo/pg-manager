@@ -2,26 +2,28 @@
  * New Product Page
  *
  * Form to create a new product in the Product Master.
+ * Uses useFormPage hook + FormPageTemplate for consistent layout.
  */
 
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Package, ArrowLeft } from "lucide-react"
+import { Package } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
-import { withCreatedBy } from "@/lib/audit"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
-import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Input, Label, Select, FormField } from "@/components/ui"
+import {
+  FormPageTemplate,
+  FormGrid,
+  FormField,
+  Input,
+  Select,
+  Label,
+} from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
-import Link from "next/link"
 
-import type { ProductFormData, ProductCategory } from "@/types/expense-enhanced.types"
+import type { ProductCategory } from "@/types/expense-enhanced.types"
 
 // Common units for kitchen items
 const UNIT_OPTIONS = [
@@ -38,20 +40,48 @@ const UNIT_OPTIONS = [
 ]
 
 export default function NewProductPage() {
-  const router = useRouter()
-  const { user, workspaceId } = useAuthContext()
-
-  const [loading, setLoading] = useState(false)
+  const { workspaceId } = useAuthContext()
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
 
-  const [formData, setFormData] = useState<ProductFormData>({
-    name: "",
-    name_hi: "",
-    category_id: "",
-    default_unit: "Kg",
-    default_rate: undefined,
-    is_active: true,
+  const {
+    formData,
+    setFormData,
+    handleSubmit,
+    saving,
+    user,
+    router,
+  } = useFormPage({
+    table: "products",
+    initialData: {
+      name: "",
+      name_hi: "",
+      category_id: "",
+      default_unit: "Kg",
+      default_rate: undefined as number | undefined,
+      is_active: true as boolean,
+    },
+    redirectTo: "/expenses/products",
+    addOwnerId: false,
+    selectAfterInsert: true,
+    successMessage: "Product created successfully",
+    errorMessage: "Failed to create product",
+    validate: (data) => {
+      if (!data.name || !String(data.name).trim()) return "Product name is required"
+      return null
+    },
+    transform: (data) => ({
+      workspace_id: workspaceId,
+      name: String(data.name).trim(),
+      name_hi: data.name_hi ? String(data.name_hi).trim() : null,
+      category_id: data.category_id || null,
+      default_unit: data.default_unit || null,
+      default_rate: data.default_rate || null,
+      is_active: data.is_active ?? true,
+    }),
+    onSuccess: (data) => {
+      if (data?.id) return `/expenses/products/${data.id}`
+    },
   })
 
   // Load categories
@@ -69,7 +99,6 @@ export default function NewProductPage() {
 
       if (error) {
         console.error("Failed to load categories:", error)
-        showError("Failed to load categories")
       } else {
         setCategories(data || [])
 
@@ -93,7 +122,6 @@ export default function NewProductPage() {
       if (error) {
         console.error("Failed to seed categories:", error)
       } else {
-        // Reload categories after seeding
         const { data } = await supabase
           .from("product_categories")
           .select("*")
@@ -106,203 +134,115 @@ export default function NewProductPage() {
     }
 
     loadCategories()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, user?.id])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name.trim()) {
-      showError("Product name is required")
-      return
-    }
-
-    if (!workspaceId || !user?.id) {
-      showError("Session error. Please refresh the page.")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const productData = withCreatedBy(
-        {
-          workspace_id: workspaceId,
-          name: formData.name.trim(),
-          name_hi: formData.name_hi?.trim() || null,
-          category_id: formData.category_id || null,
-          default_unit: formData.default_unit || null,
-          default_rate: formData.default_rate || null,
-          is_active: formData.is_active ?? true,
-        },
-        user.id
-      )
-
-      const { data, error } = await supabase
-        .from("products")
-        .insert(productData)
-        .select()
-        .single()
-
-      if (error) {
-        if (error.code === "23505") {
-          showError("A product with this name already exists")
-        } else {
-          throw error
-        }
-        return
-      }
-
-      showSuccess("Product created successfully")
-      router.push(`/expenses/products/${data.id}`)
-    } catch (error) {
-      console.error("Failed to create product:", error)
-      showError("Failed to create product")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loadingCategories) {
     return <PageLoading />
   }
 
   return (
-    <FeatureGuard feature="expenses">
-      <PermissionGuard permission="expenses.create">
-        <div className="max-w-2xl mx-auto py-6">
-          {/* Back Link */}
-          <Link
-            href="/expenses/products"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Products
-          </Link>
+    <FormPageTemplate
+      title="New Product"
+      description="Add a new item to your product master"
+      icon={Package}
+      iconColor="blue"
+      backHref="/expenses/products"
+      backLabel="Back to Products"
+      onSubmit={handleSubmit}
+      onCancel={() => router.push("/expenses/products")}
+      submitLabel="Create Product"
+      loading={saving}
+      loadingLabel="Creating..."
+      permission="expenses.create"
+      feature="expenses"
+    >
+      {/* Product Name */}
+      <FormField label="Product Name" required>
+        <Input
+          value={formData.name}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, name: e.target.value }))
+          }
+          placeholder="e.g., Tomato, Rice, Milk"
+          autoFocus
+        />
+      </FormField>
 
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Package className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle>New Product</CardTitle>
-                    <CardDescription>
-                      Add a new item to your product master
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
+      {/* Hindi Name */}
+      <FormField label="Hindi Name" hint="Optional - helps with voice entry">
+        <Input
+          value={formData.name_hi || ""}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, name_hi: e.target.value }))
+          }
+          placeholder="e.g., टमाटर, चावल, दूध"
+        />
+      </FormField>
 
-              <CardContent className="space-y-6">
-                {/* Product Name */}
-                <FormField label="Product Name" required>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                    placeholder="e.g., Tomato, Rice, Milk"
-                    autoFocus
-                  />
-                </FormField>
+      {/* Category */}
+      <FormField label="Category">
+        <Select
+          value={formData.category_id || ""}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, category_id: e.target.value }))
+          }
+          options={[
+            { value: "", label: "Select category" },
+            ...categories.map((cat) => ({
+              value: cat.id,
+              label: cat.name_hi ? `${cat.name} (${cat.name_hi})` : cat.name,
+            })),
+          ]}
+        />
+      </FormField>
 
-                {/* Hindi Name */}
-                <FormField label="Hindi Name" hint="Optional - helps with voice entry">
-                  <Input
-                    value={formData.name_hi || ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, name_hi: e.target.value }))
-                    }
-                    placeholder="e.g., टमाटर, चावल, दूध"
-                  />
-                </FormField>
+      <FormGrid cols={2}>
+        {/* Default Unit */}
+        <FormField label="Default Unit">
+          <Select
+            value={formData.default_unit || ""}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, default_unit: e.target.value }))
+            }
+            options={[
+              { value: "", label: "Select unit" },
+              ...UNIT_OPTIONS,
+            ]}
+          />
+        </FormField>
 
-                {/* Category */}
-                <FormField label="Category">
-                  <Select
-                    value={formData.category_id || ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, category_id: e.target.value }))
-                    }
-                    options={[
-                      { value: "", label: "Select category" },
-                      ...categories.map((cat) => ({
-                        value: cat.id,
-                        label: cat.name_hi ? `${cat.name} (${cat.name_hi})` : cat.name,
-                      })),
-                    ]}
-                  />
-                </FormField>
+        {/* Default Rate */}
+        <FormField label="Default Rate" hint="per unit">
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={formData.default_rate || ""}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                default_rate: e.target.value ? parseFloat(e.target.value) : undefined,
+              }))
+            }
+            placeholder="0.00"
+          />
+        </FormField>
+      </FormGrid>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Default Unit */}
-                  <FormField label="Default Unit">
-                    <Select
-                      value={formData.default_unit || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, default_unit: e.target.value }))
-                      }
-                      options={[
-                        { value: "", label: "Select unit" },
-                        ...UNIT_OPTIONS,
-                      ]}
-                    />
-                  </FormField>
-
-                  {/* Default Rate */}
-                  <FormField label="Default Rate" hint="₹ per unit">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.default_rate || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          default_rate: e.target.value ? parseFloat(e.target.value) : undefined,
-                        }))
-                      }
-                      placeholder="0.00"
-                    />
-                  </FormField>
-                </div>
-
-                {/* Active Status */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="is_active"
-                    checked={formData.is_active}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
-                    }
-                    className="h-4 w-4 rounded border-border"
-                  />
-                  <Label htmlFor="is_active">Active (available for selection)</Label>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/expenses/products")}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create Product"}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </PermissionGuard>
-    </FeatureGuard>
+      {/* Active Status */}
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="is_active"
+          checked={formData.is_active}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
+          }
+          className="h-4 w-4 rounded border-border"
+        />
+        <Label htmlFor="is_active">Active (available for selection)</Label>
+      </div>
+    </FormPageTemplate>
   )
 }

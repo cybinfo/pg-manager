@@ -2,18 +2,16 @@
  * New Vendor Page
  *
  * Form to create a new vendor/supplier.
- * Uses FormPageTemplate for consistent layout.
+ * Uses useFormPage hook + FormPageTemplate for consistent layout.
  */
 
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { Building2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
-import { withCreatedBy } from "@/lib/audit"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 
 import {
   FormPageTemplate,
@@ -26,31 +24,67 @@ import {
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
-import type { BillCategory, VendorFormData } from "@/types/expense-enhanced.types"
+import type { BillCategory } from "@/types/expense-enhanced.types"
 
 export default function NewVendorPage() {
-  const router = useRouter()
-  const { user, workspaceId } = useAuthContext()
-
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
+  const { workspaceId } = useAuthContext()
   const [categories, setCategories] = useState<BillCategory[]>([])
+  const [loadingData, setLoadingData] = useState(true)
 
-  const [formData, setFormData] = useState<VendorFormData>({
-    name: "",
-    category_id: "",
-    contact_name: "",
-    phone: "",
-    email: "",
-    address: "",
-    gstin: "",
-    pan: "",
-    upi_id: "",
-    bank_name: "",
-    bank_account: "",
-    bank_ifsc: "",
-    is_active: true,
-    notes: "",
+  const {
+    formData,
+    setFormData,
+    handleSubmit,
+    saving,
+    user,
+    router,
+  } = useFormPage({
+    table: "vendors",
+    initialData: {
+      name: "",
+      category_id: "",
+      contact_name: "",
+      phone: "",
+      email: "",
+      address: "",
+      gstin: "",
+      pan: "",
+      upi_id: "",
+      bank_name: "",
+      bank_account: "",
+      bank_ifsc: "",
+      is_active: true as boolean,
+      notes: "",
+    },
+    redirectTo: "/expenses/vendors",
+    addOwnerId: false,
+    selectAfterInsert: true,
+    successMessage: "Vendor created successfully",
+    errorMessage: "Failed to create vendor",
+    validate: (data) => {
+      if (!data.name || !String(data.name).trim()) return "Vendor name is required"
+      return null
+    },
+    transform: (data) => ({
+      workspace_id: workspaceId,
+      name: String(data.name).trim(),
+      category_id: data.category_id || null,
+      contact_name: data.contact_name ? String(data.contact_name).trim() : null,
+      phone: data.phone ? String(data.phone).trim() : null,
+      email: data.email ? String(data.email).trim() : null,
+      address: data.address ? String(data.address).trim() : null,
+      gstin: data.gstin ? String(data.gstin).trim().toUpperCase() : null,
+      pan: data.pan ? String(data.pan).trim().toUpperCase() : null,
+      upi_id: data.upi_id ? String(data.upi_id).trim() : null,
+      bank_name: data.bank_name ? String(data.bank_name).trim() : null,
+      bank_account: data.bank_account ? String(data.bank_account).trim() : null,
+      bank_ifsc: data.bank_ifsc ? String(data.bank_ifsc).trim().toUpperCase() : null,
+      is_active: data.is_active ?? true,
+      notes: data.notes ? String(data.notes).trim() : null,
+    }),
+    onSuccess: (data) => {
+      if (data?.id) return `/expenses/vendors/${data.id}`
+    },
   })
 
   // Load categories
@@ -60,7 +94,6 @@ export default function NewVendorPage() {
 
       const supabase = createClient()
 
-      // Load bill categories
       const { data, error } = await supabase
         .from("bill_categories")
         .select("*")
@@ -104,71 +137,8 @@ export default function NewVendorPage() {
     }
 
     loadCategories()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, user?.id])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!formData.name.trim()) {
-      showError("Vendor name is required")
-      return
-    }
-
-    if (!workspaceId || !user?.id) {
-      showError("Session error. Please refresh the page.")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const vendorData = withCreatedBy(
-        {
-          workspace_id: workspaceId,
-          name: formData.name.trim(),
-          category_id: formData.category_id || null,
-          contact_name: formData.contact_name?.trim() || null,
-          phone: formData.phone?.trim() || null,
-          email: formData.email?.trim() || null,
-          address: formData.address?.trim() || null,
-          gstin: formData.gstin?.trim().toUpperCase() || null,
-          pan: formData.pan?.trim().toUpperCase() || null,
-          upi_id: formData.upi_id?.trim() || null,
-          bank_name: formData.bank_name?.trim() || null,
-          bank_account: formData.bank_account?.trim() || null,
-          bank_ifsc: formData.bank_ifsc?.trim().toUpperCase() || null,
-          is_active: formData.is_active ?? true,
-          notes: formData.notes?.trim() || null,
-        },
-        user.id
-      )
-
-      const { data, error } = await supabase
-        .from("vendors")
-        .insert(vendorData)
-        .select()
-        .single()
-
-      if (error) {
-        if (error.code === "23505") {
-          showError("A vendor with this name already exists")
-        } else {
-          throw error
-        }
-        return
-      }
-
-      showSuccess("Vendor created successfully")
-      router.push(`/expenses/vendors/${data.id}`)
-    } catch (error) {
-      console.error("Failed to create vendor:", error)
-      showError("Failed to create vendor")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loadingData) {
     return <PageLoading />
@@ -185,7 +155,7 @@ export default function NewVendorPage() {
       onSubmit={handleSubmit}
       onCancel={() => router.push("/expenses/vendors")}
       submitLabel="Create Vendor"
-      loading={loading}
+      loading={saving}
       loadingLabel="Creating..."
       permission="expenses.create"
       feature="expenses"

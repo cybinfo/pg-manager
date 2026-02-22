@@ -1,16 +1,16 @@
 /**
  * New Miscellaneous Transaction Page
+ *
+ * Uses useFormPage hook + FormPageTemplate for consistent layout.
  */
 
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
-import { withCreatedBy } from "@/lib/audit"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useFormPage } from "@/lib/hooks/useFormPage"
 
 import {
   FormPageTemplate,
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
-import type { MiscTransactionCategory, MiscTransactionFormData, MiscPaymentMode } from "@/types/expense-enhanced.types"
+import type { MiscTransactionCategory, MiscPaymentMode } from "@/types/expense-enhanced.types"
 
 const PAYMENT_MODE_OPTIONS = [
   { value: "cash", label: "Cash" },
@@ -36,23 +36,60 @@ const PAYMENT_MODE_OPTIONS = [
 ]
 
 export default function NewMiscTransactionPage() {
-  const router = useRouter()
-  const { user, workspaceId } = useAuthContext()
-
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
+  const { workspaceId } = useAuthContext()
   const [categories, setCategories] = useState<MiscTransactionCategory[]>([])
+  const [loadingData, setLoadingData] = useState(true)
 
-  const [formData, setFormData] = useState<MiscTransactionFormData>({
-    transaction_type: "in",
-    category_id: "",
-    person_name: "",
-    description: "",
-    amount: 0,
-    transaction_date: new Date().toISOString().split("T")[0],
-    payment_mode: "cash",
-    payment_reference: "",
-    notes: "",
+  const {
+    formData,
+    setFormData,
+    handleSubmit,
+    saving,
+    router,
+  } = useFormPage({
+    table: "misc_transactions",
+    initialData: {
+      transaction_type: "in",
+      category_id: "",
+      person_name: "",
+      description: "",
+      amount: 0,
+      transaction_date: new Date().toISOString().split("T")[0],
+      payment_mode: "cash",
+      payment_reference: "",
+      notes: "",
+    },
+    redirectTo: "/expenses/misc",
+    addOwnerId: false,
+    selectAfterInsert: true,
+    successMessage: "Transaction recorded",
+    errorMessage: "Failed to create transaction",
+    validate: (data) => {
+      if (data.amount <= 0) return "Amount must be greater than 0"
+      if (!data.person_name?.trim() && !data.description?.trim()) {
+        return "Please enter person name or description"
+      }
+      return null
+    },
+    transform: (data) => {
+      const selectedCategory = categories.find((c: MiscTransactionCategory) => c.id === data.category_id)
+      return {
+        workspace_id: workspaceId,
+        transaction_type: data.transaction_type,
+        category_id: data.category_id || null,
+        category_name: selectedCategory?.name || null,
+        person_name: data.person_name?.trim() || null,
+        description: data.description?.trim() || null,
+        amount: data.amount,
+        transaction_date: data.transaction_date,
+        payment_mode: data.payment_mode || "cash",
+        payment_reference: data.payment_reference?.trim() || null,
+        notes: data.notes?.trim() || null,
+      }
+    },
+    onSuccess: (data) => {
+      if (data?.id) return `/expenses/misc/${data.id}`
+    },
   })
 
   // Load categories
@@ -79,76 +116,13 @@ export default function NewMiscTransactionPage() {
     }
 
     loadCategories()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId])
 
   // Filter categories based on transaction type
   const filteredCategories = categories.filter(
     (cat) => cat.default_type === "both" || cat.default_type === formData.transaction_type
   )
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (formData.amount <= 0) {
-      showError("Amount must be greater than 0")
-      return
-    }
-
-    if (!formData.person_name?.trim() && !formData.description?.trim()) {
-      showError("Please enter person name or description")
-      return
-    }
-
-    if (!workspaceId || !user?.id) {
-      showError("Session error. Please refresh the page.")
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const supabase = createClient()
-
-      const selectedCategory = categories.find((c) => c.id === formData.category_id)
-
-      const transactionData = withCreatedBy(
-        {
-          workspace_id: workspaceId,
-          transaction_type: formData.transaction_type,
-          category_id: formData.category_id || null,
-          category_name: selectedCategory?.name || null,
-          person_name: formData.person_name?.trim() || null,
-          description: formData.description?.trim() || null,
-          amount: formData.amount,
-          transaction_date: formData.transaction_date,
-          payment_mode: formData.payment_mode || "cash",
-          payment_reference: formData.payment_reference?.trim() || null,
-          notes: formData.notes?.trim() || null,
-        },
-        user.id
-      )
-
-      const { data, error } = await supabase
-        .from("misc_transactions")
-        .insert(transactionData)
-        .select()
-        .single()
-
-      if (error) throw error
-
-      showSuccess(
-        formData.transaction_type === "in"
-          ? "Money In recorded"
-          : "Money Out recorded"
-      )
-      router.push(`/expenses/misc/${data.id}`)
-    } catch (error) {
-      console.error("Failed to create transaction:", error)
-      showError("Failed to create transaction")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (loadingData) {
     return <PageLoading />
@@ -165,7 +139,7 @@ export default function NewMiscTransactionPage() {
       onSubmit={handleSubmit}
       onCancel={() => router.push("/expenses/misc")}
       submitLabel={formData.transaction_type === "in" ? "Record Money In" : "Record Money Out"}
-      loading={loading}
+      loading={saving}
       loadingLabel="Saving..."
       permission="expenses.create"
       feature="expenses"

@@ -187,6 +187,8 @@ export function useListPage<T extends object>(
   const fetchServerCountsRef = useRef<any>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fetchServerSumsRef = useRef<any>(null)
+  // Request deduplication counter — stale requests bail out
+  const fetchIdRef = useRef(0)
 
   // ============================================
   // Data Fetching
@@ -210,6 +212,10 @@ export function useListPage<T extends object>(
     const currentSearchQuery = fetchSearchQuery ?? filtersHook.searchQuery
     const currentSort = fetchSort ?? filtersHook.sortConfigRef.current
     const currentAdvancedFilters = fetchAdvancedFilters ?? filtersHook.advancedFiltersRef.current
+
+    // Request deduplication: newer requests supersede older ones
+    const currentFetchId = ++fetchIdRef.current
+
     setLoading(true)
     setError(null)
 
@@ -254,6 +260,9 @@ export function useListPage<T extends object>(
       }
 
       const { data: rawData, error: fetchError, count } = await query
+
+      // Bail out if a newer request has been started (deduplication)
+      if (currentFetchId !== fetchIdRef.current) return
 
       if (fetchError) {
         throw fetchError

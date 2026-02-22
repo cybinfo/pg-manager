@@ -40,9 +40,10 @@ export function useDetailPageData<T extends object>(
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  // Refs to prevent stale closures
+  // Refs to prevent stale closures and request deduplication
   const configRef = useRef(config)
   const initialFetchDone = useRef(false)
+  const fetchIdRef = useRef(0) // Monotonic counter for request deduplication
 
   // Update ref when config changes
   useEffect(() => {
@@ -58,6 +59,10 @@ export function useDetailPageData<T extends object>(
 
     const currentConfig = configRef.current
     const entityId = Array.isArray(id) ? id[0] : id
+
+    // Request deduplication: increment counter, stale requests bail out
+    const currentFetchId = ++fetchIdRef.current
+
     setLoading(true)
     setError(null)
 
@@ -70,6 +75,9 @@ export function useDetailPageData<T extends object>(
         .select(currentConfig.select)
         .eq("id", entityId)
         .single()
+
+      // Bail out if a newer request has been started
+      if (currentFetchId !== fetchIdRef.current) return
 
       if (fetchError) {
         if (fetchError.code === "PGRST116") {
@@ -195,6 +203,8 @@ export function useDetailPageData<T extends object>(
         })
 
         await Promise.all(relatedPromises)
+        // Bail out if a newer request has been started
+        if (currentFetchId !== fetchIdRef.current) return
         setRelated(relatedResults)
       }
     } catch (err) {
