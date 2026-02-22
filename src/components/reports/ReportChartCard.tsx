@@ -47,7 +47,7 @@ export function ReportChartCard({
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 sm:p-6">
         {isEmpty ? (
           <div
             className="flex items-center justify-center text-muted-foreground"

@@ -424,7 +424,7 @@ export default function LibraryReportsPage() {
           />
 
           {/* KPI Cards - Row 1 */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             <StatCard
               label="Seat Utilization"
               value={`${reportData.utilizationRate.toFixed(1)}%`}
@@ -456,7 +456,7 @@ export default function LibraryReportsPage() {
           </div>
 
           {/* KPI Cards - Row 2 */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             <StatCard
               label="Hours Consumed"
               value={`${reportData.totalHoursUsed.toFixed(0)}h`}
@@ -495,40 +495,48 @@ export default function LibraryReportsPage() {
               description="Revenue & new members (Last 6 months)"
               onExport={() => handleExportCSV("revenue")}
             >
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={reportData.monthlyRevenue}>
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis
-                    yAxisId="left"
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value: number) => `\u20B9${(value / 1000).toFixed(0)}k`}
-                  />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-                  <Tooltip
-                    formatter={(value, name) => [
-                      name === "revenue" ? `\u20B9${Number(value).toLocaleString("en-IN")}` : value,
-                      name === "revenue" ? "Revenue" : "New Members",
-                    ]}
-                  />
-                  <Legend />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="revenue"
-                    name="Revenue"
-                    stroke="#6366F1"
-                    strokeWidth={2}
-                    dot={{ fill: "#6366F1", strokeWidth: 2 }}
-                  />
-                  <Bar
-                    yAxisId="right"
-                    dataKey="members"
-                    name="New Members"
-                    fill="#10B981"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <div className="h-[200px] sm:h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={reportData.monthlyRevenue}>
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis
+                      yAxisId="left"
+                      tick={{ fontSize: 12 }}
+                      width={70}
+                      tickFormatter={(value: number) => {
+                        if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
+                        if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
+                        if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
+                        return `\u20B9${value}`
+                      }}
+                    />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        name === "revenue" ? `\u20B9${Number(value).toLocaleString("en-IN")}` : value,
+                        name === "revenue" ? "Revenue" : "New Members",
+                      ]}
+                    />
+                    <Legend />
+                    <Line
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="revenue"
+                      name="Revenue"
+                      stroke="#6366F1"
+                      strokeWidth={2}
+                      dot={{ fill: "#6366F1", strokeWidth: 2 }}
+                    />
+                    <Bar
+                      yAxisId="right"
+                      dataKey="members"
+                      name="New Members"
+                      fill="#10B981"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             </ReportChartCard>
 
             <PaymentMethodsChart
@@ -543,14 +551,16 @@ export default function LibraryReportsPage() {
               title="Daily Attendance"
               description="Check-ins over the last 7 days"
             >
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={reportData.dailyAttendance}>
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Bar dataKey="checkIns" name="Check-ins" fill="#6366F1" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="h-[180px] sm:h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={reportData.dailyAttendance}>
+                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Bar dataKey="checkIns" name="Check-ins" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </ReportChartCard>
 
             {/* Time Slot Distribution */}
@@ -628,18 +638,25 @@ export default function LibraryReportsPage() {
               onExport={() => handleExportCSV("libraries")}
               exportLabel="Export"
             >
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={reportData.libraryStats}>
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(value: number) => `\u20B9${(value / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(value, name) => [
-                    name === "revenue" ? formatCurrency(Number(value)) : value,
-                    name === "revenue" ? "Revenue" : name === "activeMembers" ? "Active Members" : "Check-ins"
-                  ]} />
-                  <Legend />
-                  <Bar dataKey="revenue" name="Revenue" fill="#6366F1" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="h-[200px] sm:h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={reportData.libraryStats} margin={{ bottom: 20 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" />
+                    <YAxis tick={{ fontSize: 12 }} width={70} tickFormatter={(value: number) => {
+                      if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
+                      if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
+                      if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
+                      return `\u20B9${value}`
+                    }} />
+                    <Tooltip formatter={(value, name) => [
+                      name === "revenue" ? formatCurrency(Number(value)) : value,
+                      name === "revenue" ? "Revenue" : name === "activeMembers" ? "Active Members" : "Check-ins"
+                    ]} />
+                    <Legend />
+                    <Bar dataKey="revenue" name="Revenue" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </ReportChartCard>
           )}
 

@@ -1,5 +1,28 @@
 "use client"
 
+/**
+ * Stats Display System — Decision Tree
+ *
+ * The codebase has 4 stats components. Choose based on context:
+ *
+ * ┌─ List page header KPIs?
+ * │  → MetricsBar (metrics-bar.tsx)
+ * │    Horizontal strip, auto-filters on click, used by ListPageTemplate
+ * │
+ * ├─ Detail page info cards?
+ * │  → InfoCard (detail-components.tsx)
+ * │    Colored border variants (success/warning/error), optional link
+ * │
+ * ├─ Need semantic color variants (success/warning/error) or size control?
+ * │  → QuickStatsGrid (quick-stats-grid.tsx)
+ * │    Also exports InlineStats (horizontal, no cards) and SummaryCard (large with breakdown)
+ * │
+ * └─ Default: simple icon + label + value grid
+ *    → StatCard / StatsGrid (this file)
+ *      Named color palette (blue/green/red/amber/purple/teal/orange/rose/slate)
+ *      Also exports StatItem (inline, no card wrapper)
+ */
+
 import * as React from "react"
 import { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"

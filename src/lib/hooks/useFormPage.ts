@@ -56,6 +56,7 @@ import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { useUnsavedChanges } from "./useUnsavedChanges"
+import { useFormValidation, type ValidationSchema } from "./useFormValidation"
 
 // ============================================================================
 // TYPES
@@ -111,6 +112,18 @@ export interface UseFormPageOptions<T extends FormData> {
    * Return a string error message to abort, or null/undefined to proceed.
    */
   validate?: (data: T) => string | null | undefined
+  /**
+   * Field-level validation schema. When provided, enables inline error
+   * display via the `errors` return value. Validated on submit and
+   * optionally on blur via `validateField`.
+   *
+   * @example
+   * validationSchema: {
+   *   name: (v) => !String(v).trim() ? { isValid: false, error: "Name is required" } : null,
+   *   amount: (v) => validatePositiveAmount(v, "Amount"),
+   * }
+   */
+  validationSchema?: ValidationSchema<T>
   /**
    * Optional callback invoked after a successful insert.
    * Receives the inserted data (if .select() was used) and user ID.
@@ -172,6 +185,12 @@ export interface UseFormPageReturn<T extends FormData> {
   searchParams: ReturnType<typeof useSearchParams>
   /** Next.js router for manual navigation */
   router: ReturnType<typeof useRouter>
+  /** Field-level validation errors (only populated when validationSchema is provided) */
+  errors: Partial<Record<keyof T, string>>
+  /** Validate a single field (call on blur). Only works when validationSchema is provided. */
+  validateField: (field: keyof T) => boolean
+  /** Clear all validation errors */
+  clearErrors: () => void
 }
 
 // ============================================================================
@@ -192,6 +211,7 @@ export function useFormPage<T extends FormData>(
     useCreatedBy = true,
     addOwnerId = true,
     validate,
+    validationSchema,
     onSuccess,
     customSubmit,
     selectAfterInsert = false,
@@ -227,6 +247,16 @@ export function useFormPage<T extends FormData>(
   // ---- Unsaved Changes Warning ----
   useUnsavedChanges(isDirty)
 
+  // ---- Field-Level Validation ----
+  const emptySchema = useMemo(() => ({} as ValidationSchema<T>), [])
+  const {
+    errors: fieldErrors,
+    validateField: validateSingleField,
+    validateAll,
+    clearErrors,
+    clearFieldError,
+  } = useFormValidation(validationSchema || emptySchema, formData)
+
   // ---- Change Handlers ----
 
   const handleChange = useCallback(
@@ -245,8 +275,13 @@ export function useFormPage<T extends FormData>(
         setIsDirty(JSON.stringify(next) !== JSON.stringify(initialDataRef.current))
         return next
       })
+
+      // Clear field error on change for immediate feedback
+      if (validationSchema && name in (validationSchema as Record<string, unknown>)) {
+        clearFieldError(name as keyof T)
+      }
     },
-    []
+    [validationSchema, clearFieldError]
   )
 
   const setField = useCallback(<K extends keyof T>(name: K, value: T[K]) => {
@@ -278,7 +313,16 @@ export function useFormPage<T extends FormData>(
         return
       }
 
-      // Custom validation
+      // Field-level validation (runs first for inline errors)
+      if (validationSchema) {
+        const schemaValid = validateAll(formData)
+        if (!schemaValid) {
+          showError("Please fix the errors in the form")
+          return
+        }
+      }
+
+      // Custom validation (legacy callback)
       if (validate) {
         const validationError = validate(formData)
         if (validationError) {
@@ -371,6 +415,8 @@ export function useFormPage<T extends FormData>(
       useCreatedBy,
       addOwnerId,
       validate,
+      validationSchema,
+      validateAll,
       onSuccess,
       customSubmit,
       selectAfterInsert,
@@ -394,6 +440,9 @@ export function useFormPage<T extends FormData>(
     workspaceId,
     searchParams,
     router,
+    errors: fieldErrors,
+    validateField: validateSingleField,
+    clearErrors,
   }
 }
 
@@ -431,6 +480,8 @@ export interface UseFormEditPageOptions<T extends FormData> {
    * Return a string error message to abort, or null/undefined to proceed.
    */
   validate?: (data: T) => string | null | undefined
+  /** Field-level validation schema (same as useFormPage) */
+  validationSchema?: ValidationSchema<T>
   /**
    * Redirect URL when the record is not found.
    * Defaults to redirectTo parent path.
@@ -473,6 +524,12 @@ export interface UseFormEditPageReturn<T extends FormData> {
   router: ReturnType<typeof useRouter>
   /** The raw record fetched from the database */
   record: Record<string, unknown> | null
+  /** Field-level validation errors */
+  errors: Partial<Record<keyof T, string>>
+  /** Validate a single field (call on blur) */
+  validateField: (field: keyof T) => boolean
+  /** Clear all validation errors */
+  clearErrors: () => void
 }
 
 // ============================================================================
@@ -493,6 +550,7 @@ export function useFormEditPage<T extends FormData>(
     successMessage = "Updated successfully",
     errorMessage = "Failed to update",
     validate,
+    validationSchema,
     notFoundRedirect,
     customSubmit,
   } = options
@@ -511,6 +569,17 @@ export function useFormEditPage<T extends FormData>(
 
   // ---- Unsaved Changes Warning ----
   useUnsavedChanges(isDirty)
+
+  // ---- Field-Level Validation ----
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const emptySchemaEdit = useMemo(() => ({} as ValidationSchema<T>), [])
+  const {
+    errors: fieldErrors,
+    validateField: validateSingleField,
+    validateAll,
+    clearErrors,
+    clearFieldError,
+  } = useFormValidation(validationSchema || emptySchemaEdit, formData)
 
   // ---- Fetch record on mount ----
 
@@ -564,8 +633,13 @@ export function useFormEditPage<T extends FormData>(
         setIsDirty(JSON.stringify(next) !== JSON.stringify(loadedFormDataRef.current))
         return next
       })
+
+      // Clear field error on change
+      if (validationSchema && name in (validationSchema as Record<string, unknown>)) {
+        clearFieldError(name as keyof T)
+      }
     },
-    []
+    [validationSchema, clearFieldError]
   )
 
   const setField = useCallback(<K extends keyof T>(name: K, value: T[K]) => {
@@ -596,6 +670,16 @@ export function useFormEditPage<T extends FormData>(
         return
       }
 
+      // Field-level validation
+      if (validationSchema) {
+        const schemaValid = validateAll(formData)
+        if (!schemaValid) {
+          showError("Please fix the errors in the form")
+          return
+        }
+      }
+
+      // Custom validation (legacy callback)
       if (validate) {
         const validationError = validate(formData)
         if (validationError) {
@@ -647,7 +731,7 @@ export function useFormEditPage<T extends FormData>(
         setSaving(false)
       }
     },
-    [user, formData, table, id, redirectTo, transform, successMessage, errorMessage, validate, customSubmit, router]
+    [user, formData, table, id, redirectTo, transform, successMessage, errorMessage, validate, validationSchema, validateAll, customSubmit, router]
   )
 
   return {
@@ -666,5 +750,8 @@ export function useFormEditPage<T extends FormData>(
     workspaceId,
     router,
     record,
+    errors: fieldErrors,
+    validateField: validateSingleField,
+    clearErrors,
   }
 }

@@ -50,38 +50,46 @@ export function RevenueTrendChart({
           )}
         </div>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-            <YAxis
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}k`}
-            />
-            <Tooltip
-              formatter={(value) => [formatCurrency(Number(value)), ""]}
-              labelStyle={{ fontWeight: "bold" }}
-            />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="collected"
-              name="Collected"
-              stroke="#10B981"
-              strokeWidth={2}
-              dot={{ fill: "#10B981", strokeWidth: 2 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="billed"
-              name="Billed"
-              stroke="#6366F1"
-              strokeWidth={2}
-              dot={{ fill: "#6366F1", strokeWidth: 2 }}
-              strokeDasharray="5 5"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      <CardContent className="p-3 sm:p-6">
+        <div className="h-[200px] sm:h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data}>
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis
+                tick={{ fontSize: 12 }}
+                width={70}
+                tickFormatter={(value: number) => {
+                  if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`
+                  if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`
+                  if (value >= 1000) return `₹${(value / 1000).toFixed(0)}k`
+                  return `₹${value}`
+                }}
+              />
+              <Tooltip
+                formatter={(value) => [formatCurrency(Number(value)), ""]}
+                labelStyle={{ fontWeight: "bold" }}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="collected"
+                name="Collected"
+                stroke="#10B981"
+                strokeWidth={2}
+                dot={{ fill: "#10B981", strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="billed"
+                name="Billed"
+                stroke="#6366F1"
+                strokeWidth={2}
+                dot={{ fill: "#6366F1", strokeWidth: 2 }}
+                strokeDasharray="5 5"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )

@@ -39,29 +39,31 @@ export function PaymentMethodsChart({
       isEmpty={data.length === 0}
       emptyMessage="No payments in selected period"
     >
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            innerRadius={60}
-            outerRadius={100}
-            paddingAngle={2}
-            label={({ name, percent }) =>
-              `${name || ""} ${(((percent as number) || 0) * 100).toFixed(0)}%`
-            }
-            labelLine={false}
-          >
-            {data.map((_entry, index) => (
-              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-        </PieChart>
-      </ResponsiveContainer>
+      <div className="h-[200px] sm:h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={100}
+              paddingAngle={2}
+              label={({ name, percent }) =>
+                `${name || ""} ${(((percent as number) || 0) * 100).toFixed(0)}%`
+              }
+              labelLine={false}
+            >
+              {data.map((_entry, index) => (
+                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
     </ReportChartCard>
   )
 }

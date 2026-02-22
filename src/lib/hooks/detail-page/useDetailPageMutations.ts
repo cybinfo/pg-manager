@@ -47,13 +47,19 @@ export function useDetailPageMutations<T extends object>(
     configRef.current = config
   }, [config])
 
-  // Update single field
+  // Update single field (optimistic with rollback)
   const updateField = useCallback(
     async (field: string, value: unknown): Promise<boolean> => {
       if (!data || !id) return false
 
       const currentConfig = configRef.current
       const entityId = Array.isArray(id) ? id[0] : id
+
+      // Save snapshot for rollback
+      const snapshot = { ...data }
+
+      // Optimistic: update UI immediately
+      setData((prev) => (prev ? { ...prev, [field]: value } : null))
       setIsSaving(true)
 
       try {
@@ -68,13 +74,13 @@ export function useDetailPageMutations<T extends object>(
           throw updateError
         }
 
-        // Update local state optimistically
-        setData((prev) => (prev ? { ...prev, [field]: value } : null))
         showSuccess("Updated successfully")
         return true
       } catch (err) {
+        // Rollback to snapshot on failure
+        setData(snapshot)
         console.error(`[useDetailPage] Error updating ${field}:`, err)
-        showError("Failed to update")
+        showError("Failed to update — changes reverted")
         return false
       } finally {
         setIsSaving(false)
@@ -83,13 +89,19 @@ export function useDetailPageMutations<T extends object>(
     [data, id, setData]
   )
 
-  // Update multiple fields
+  // Update multiple fields (optimistic with rollback)
   const updateFields = useCallback(
     async (updates: Record<string, unknown>): Promise<boolean> => {
       if (!data || !id) return false
 
       const currentConfig = configRef.current
       const entityId = Array.isArray(id) ? id[0] : id
+
+      // Save snapshot for rollback
+      const snapshot = { ...data }
+
+      // Optimistic: update UI immediately
+      setData((prev) => (prev ? { ...prev, ...updates } : null))
       setIsSaving(true)
 
       try {
@@ -104,13 +116,13 @@ export function useDetailPageMutations<T extends object>(
           throw updateError
         }
 
-        // Update local state optimistically
-        setData((prev) => (prev ? { ...prev, ...updates } : null))
         showSuccess("Updated successfully")
         return true
       } catch (err) {
+        // Rollback to snapshot on failure
+        setData(snapshot)
         console.error(`[useDetailPage] Error updating fields:`, err)
-        showError("Failed to update")
+        showError("Failed to update — changes reverted")
         return false
       } finally {
         setIsSaving(false)

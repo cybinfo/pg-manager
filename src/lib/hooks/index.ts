@@ -27,6 +27,9 @@ export * from "./useTimer"
 export * from "./useDialogState"
 export * from "./useDeleteConfirmation"
 
+// Portal base hook
+export * from "./usePortalData"
+
 // Tenant Portal hooks
 export * from "./useTenant"
 export * from "./useTenantPortalData"

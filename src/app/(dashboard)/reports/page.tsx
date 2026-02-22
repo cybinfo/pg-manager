@@ -445,7 +445,7 @@ export default function ReportsPage() {
       </InfoBanner>
 
       {/* KPI Cards - Row 1 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         <StatCard
           label="Occupancy Rate"
           value={`${reportData.occupancyRate.toFixed(1)}%`}
@@ -477,7 +477,7 @@ export default function ReportsPage() {
       </div>
 
       {/* KPI Cards - Row 2 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         <StatCard
           label="Active Tenants"
           value={reportData.activeTenants}
@@ -524,18 +524,25 @@ export default function ReportsPage() {
           title="Expenses by Category"
           description="Top expense categories for the period"
         >
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={reportData.expensesByCategory} layout="vertical">
-              <XAxis type="number" tickFormatter={(value: number) => `\u20B9${(value / 1000).toFixed(0)}k`} />
-              <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
-              <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-              <Bar dataKey="value" fill="#F43F5E" radius={[0, 4, 4, 0]}>
-                {reportData.expensesByCategory.map((_entry, index) => (
-                  <Cell key={`cell-${index}`} fill={CHART_COLORS[(index + 3) % CHART_COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-[200px] sm:h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={reportData.expensesByCategory} layout="vertical">
+                <XAxis type="number" tickFormatter={(value: number) => {
+                  if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
+                  if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
+                  if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
+                  return `\u20B9${value}`
+                }} />
+                <YAxis type="category" dataKey="name" width={70} tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                <Bar dataKey="value" fill="#F43F5E" radius={[0, 4, 4, 0]}>
+                  {reportData.expensesByCategory.map((_entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CHART_COLORS[(index + 3) % CHART_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </ReportChartCard>
       )}
 
@@ -552,29 +559,31 @@ export default function ReportsPage() {
           title="Collection Status"
           description="Bills by payment status"
         >
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart
-              data={[
-                { name: "Paid", value: reportData.collectionEfficiency.onTime, fill: "#10B981" },
-                { name: "Late (1-30d)", value: reportData.collectionEfficiency.late, fill: "#F59E0B" },
-                { name: "Overdue (30d+)", value: reportData.collectionEfficiency.overdue, fill: "#EF4444" },
-              ]}
-              layout="vertical"
-            >
-              <XAxis type="number" tick={{ fontSize: 12 }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
-              <Tooltip />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                {[
-                  { name: "Paid", fill: "#10B981" },
-                  { name: "Late (1-30d)", fill: "#F59E0B" },
-                  { name: "Overdue (30d+)", fill: "#EF4444" },
-                ].map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-[180px] sm:h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={[
+                  { name: "Paid", value: reportData.collectionEfficiency.onTime, fill: "#10B981" },
+                  { name: "Late (1-30d)", value: reportData.collectionEfficiency.late, fill: "#F59E0B" },
+                  { name: "Overdue (30d+)", value: reportData.collectionEfficiency.overdue, fill: "#EF4444" },
+                ]}
+                layout="vertical"
+              >
+                <XAxis type="number" tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={70} />
+                <Tooltip />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  {[
+                    { name: "Paid", fill: "#10B981" },
+                    { name: "Late (1-30d)", fill: "#F59E0B" },
+                    { name: "Overdue (30d+)", fill: "#EF4444" },
+                  ].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
           <div className="mt-4 pt-4 border-t">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Total Bills</span>
@@ -596,16 +605,23 @@ export default function ReportsPage() {
         emptyMessage="No properties found"
         height={128}
       >
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={reportData.propertyStats}>
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} tickFormatter={(value: number) => `\u20B9${(value / 1000).toFixed(0)}k`} />
-            <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-            <Legend />
-            <Bar dataKey="revenue" name="Revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="pendingDues" name="Pending Dues" fill="#EF4444" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="h-[200px] sm:h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={reportData.propertyStats} margin={{ bottom: 20 }}>
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" />
+              <YAxis tick={{ fontSize: 12 }} width={70} tickFormatter={(value: number) => {
+                if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
+                if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
+                if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
+                return `\u20B9${value}`
+              }} />
+              <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+              <Legend />
+              <Bar dataKey="revenue" name="Revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="pendingDues" name="Pending Dues" fill="#EF4444" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </ReportChartCard>
 
       {/* Additional Stats */}

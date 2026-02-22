@@ -5,6 +5,8 @@
  * Handles auth check, tenant lookup, property/room details,
  * and owner/workspace context resolution.
  *
+ * Built on the shared usePortalData base hook for common portal patterns.
+ *
  * Eliminates duplicated data fetching across 6 tenant portal pages:
  * - tenant/page.tsx (dashboard)
  * - tenant/bills/page.tsx
@@ -22,11 +24,11 @@
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
 import { TenantWithContext } from "@/types/tenants.types"
 import type { User } from "@supabase/supabase-js"
+import { usePortalData } from "./usePortalData"
 
 // ============================================================================
 // TYPES
@@ -93,89 +95,96 @@ export interface UseTenantPortalDataReturn {
 }
 
 // ============================================================================
+// CONFIG
+// ============================================================================
+
+const TENANT_PORTAL_CONFIG = {
+  table: "tenants" as const,
+  select: `
+    *,
+    property:properties(name, address, city, state, owner_id, tenant_features),
+    room:rooms(room_number, room_type, floor, amenities, has_ac, has_attached_bathroom)
+  `,
+  joinFields: ["property", "room"],
+  statusFilter: { column: "status", value: "active" },
+  errorContext: "tenant portal",
+  postTransform: (data: Record<string, unknown>): TenantPortalTenant => {
+    return data as unknown as TenantPortalTenant
+  },
+}
+
+// ============================================================================
 // HOOK
 // ============================================================================
 
 export function useTenantPortalData(): UseTenantPortalDataReturn {
-  const [tenant, setTenant] = useState<TenantPortalTenant | null>(null)
+  const {
+    data: tenant,
+    rawData,
+    user,
+    loading: baseLoading,
+    error,
+    refresh,
+  } = usePortalData<TenantPortalTenant>(TENANT_PORTAL_CONFIG)
+
   const [tenantContext, setTenantContext] = useState<TenantWithContext | null>(null)
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [contextLoading, setContextLoading] = useState(false)
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const supabase = createClient()
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-
-      if (!authUser) {
-        setLoading(false)
-        setError("Not authenticated")
-        return
-      }
-
-      setUser(authUser)
-
-      // Fetch tenant with property and room details
-      const { data: tenantData, error: tenantError } = await supabase
-        .from("tenants")
-        .select(`
-          *,
-          property:properties(name, address, city, state, owner_id, tenant_features),
-          room:rooms(room_number, room_type, floor, amenities, has_ac, has_attached_bathroom)
-        `)
-        .eq("user_id", authUser.id)
-        .eq("status", "active")
-        .single()
-
-      if (tenantError || !tenantData) {
-        setTenant(null)
-        setTenantContext(null)
-        setLoading(false)
-        return
-      }
-
-      // Transform Supabase joins
-      const property = transformJoin(tenantData.property)
-      const room = transformJoin(tenantData.room)
-
-      const normalizedTenant: TenantPortalTenant = {
-        ...tenantData,
-        property,
-        room,
-      }
-
-      setTenant(normalizedTenant)
-
-      // Resolve owner and workspace context
-      const ownerId = property?.owner_id || tenantData.owner_id
-      const { data: workspace } = await supabase
-        .from("workspaces")
-        .select("id")
-        .eq("owner_user_id", ownerId)
-        .single()
-
-      setTenantContext({
-        id: tenantData.id,
-        workspace_id: workspace?.id || "",
-        owner_id: ownerId,
-        property_id: tenantData.property_id,
-        room_id: tenantData.room_id,
-      })
-    } catch (err) {
-      console.error("Error fetching tenant portal data:", err)
-      setError(err instanceof Error ? err.message : "Failed to load tenant data")
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
+  // Resolve owner and workspace context after tenant data is fetched
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    if (!rawData) {
+      setTenantContext(null)
+      return
+    }
+
+    let cancelled = false
+
+    const resolveContext = async () => {
+      setContextLoading(true)
+      try {
+        const property = rawData.property as TenantPortalTenant["property"]
+        const ownerId = property?.owner_id || (rawData.owner_id as string)
+
+        const supabase = createClient()
+        const { data: workspace } = await supabase
+          .from("workspaces")
+          .select("id")
+          .eq("owner_user_id", ownerId)
+          .single()
+
+        if (!cancelled) {
+          setTenantContext({
+            id: rawData.id as string,
+            workspace_id: workspace?.id || "",
+            owner_id: ownerId,
+            property_id: rawData.property_id as string,
+            room_id: rawData.room_id as string | undefined,
+          })
+        }
+      } catch (err) {
+        console.error("Error resolving tenant context:", err)
+        if (!cancelled) {
+          setTenantContext(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setContextLoading(false)
+        }
+      }
+    }
+
+    resolveContext()
+
+    return () => {
+      cancelled = true
+    }
+  }, [rawData])
+
+  // Combined loading: base query + context resolution
+  const loading = useMemo(
+    () => baseLoading || contextLoading,
+    [baseLoading, contextLoading]
+  )
 
   return {
     tenant,
@@ -183,6 +192,6 @@ export function useTenantPortalData(): UseTenantPortalDataReturn {
     user,
     loading,
     error,
-    refresh: fetchData,
+    refresh,
   }
 }

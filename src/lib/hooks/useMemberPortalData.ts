@@ -5,6 +5,8 @@
  * Handles auth check, member lookup, library details,
  * and current subscription resolution.
  *
+ * Built on the shared usePortalData base hook for common portal patterns.
+ *
  * Eliminates duplicated data fetching across 4 member portal pages:
  * - member/page.tsx (dashboard)
  * - member/profile/page.tsx
@@ -20,10 +22,8 @@
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
 import type { User } from "@supabase/supabase-js"
+import { usePortalData } from "./usePortalData"
 
 // ============================================================================
 // TYPES
@@ -106,106 +106,76 @@ export interface UseMemberPortalDataReturn {
 }
 
 // ============================================================================
+// CONFIG
+// ============================================================================
+
+/**
+ * Post-transform for member data.
+ * Handles the nested assigned_seat.section join that the base hook's
+ * flat joinFields cannot normalize automatically.
+ */
+function transformMemberData(data: Record<string, unknown>): MemberPortalMember {
+  // Handle assigned_seat with nested section join
+  let assignedSeat = data.assigned_seat as MemberPortalSeat | null
+  if (assignedSeat && assignedSeat.section) {
+    assignedSeat = {
+      ...assignedSeat,
+      section: Array.isArray(assignedSeat.section)
+        ? assignedSeat.section[0] || null
+        : assignedSeat.section,
+    }
+  }
+
+  return {
+    ...(data as unknown as MemberPortalMember),
+    assigned_seat: assignedSeat,
+  }
+}
+
+const MEMBER_PORTAL_CONFIG = {
+  table: "library_members" as const,
+  select: `
+    id,
+    name,
+    phone,
+    email,
+    member_code,
+    hours_balance,
+    hours_used,
+    preferred_slot,
+    join_date,
+    expiry_date,
+    status,
+    id_proof_type,
+    id_proof_number,
+    notes,
+    library_id,
+    library:libraries(id, name, phone, address, city, opening_time, closing_time),
+    assigned_seat:library_seats(seat_number, section:library_sections(name)),
+    locker:library_lockers(locker_number),
+    current_subscription:library_memberships!library_members_current_subscription_id_fkey(
+      id, plan_name, hours_included, hours_remaining, start_date, end_date, status
+    ),
+    person:people(name, photo_url)
+  `,
+  joinFields: ["library", "current_subscription", "person", "locker", "assigned_seat"],
+  statusFilter: { column: "status", value: "active" },
+  errorContext: "member portal",
+  postTransform: transformMemberData,
+}
+
+// ============================================================================
 // HOOK
 // ============================================================================
 
 export function useMemberPortalData(): UseMemberPortalDataReturn {
-  const [member, setMember] = useState<MemberPortalMember | null>(null)
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const supabase = createClient()
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-
-      if (!authUser) {
-        setLoading(false)
-        setError("Not authenticated")
-        return
-      }
-
-      setUser(authUser)
-
-      // Fetch member with all related data
-      const { data: memberData, error: memberError } = await supabase
-        .from("library_members")
-        .select(`
-          id,
-          name,
-          phone,
-          email,
-          member_code,
-          hours_balance,
-          hours_used,
-          preferred_slot,
-          join_date,
-          expiry_date,
-          status,
-          id_proof_type,
-          id_proof_number,
-          notes,
-          library_id,
-          library:libraries(id, name, phone, address, city, opening_time, closing_time),
-          assigned_seat:library_seats(seat_number, section:library_sections(name)),
-          locker:library_lockers(locker_number),
-          current_subscription:library_memberships!library_members_current_subscription_id_fkey(
-            id, plan_name, hours_included, hours_remaining, start_date, end_date, status
-          ),
-          person:people(name, photo_url)
-        `)
-        .eq("user_id", authUser.id)
-        .eq("status", "active")
-        .single()
-
-      if (memberError || !memberData) {
-        setMember(null)
-        setLoading(false)
-        return
-      }
-
-      // Transform all joins (Supabase may return arrays for single relations)
-      const library = transformJoin(memberData.library) as MemberPortalLibrary | null
-      const currentSubscription = transformJoin(memberData.current_subscription) as MemberPortalMembership | null
-      const person = transformJoin(memberData.person) as MemberPortalPerson | null
-      const locker = transformJoin(memberData.locker) as MemberPortalLocker | null
-
-      // Handle assigned_seat with nested section join
-      let assignedSeat = transformJoin(memberData.assigned_seat) as MemberPortalSeat | null
-      if (assignedSeat && assignedSeat.section) {
-        assignedSeat = {
-          ...assignedSeat,
-          section: Array.isArray(assignedSeat.section)
-            ? assignedSeat.section[0] || null
-            : assignedSeat.section,
-        }
-      }
-
-      const normalizedMember: MemberPortalMember = {
-        ...memberData,
-        library,
-        current_subscription: currentSubscription,
-        assigned_seat: assignedSeat,
-        locker,
-        person,
-      }
-
-      setMember(normalizedMember)
-    } catch (err) {
-      console.error("Error fetching member portal data:", err)
-      setError(err instanceof Error ? err.message : "Failed to load member data")
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
+  const {
+    data: member,
+    user,
+    loading,
+    error,
+    refresh,
+  } = usePortalData<MemberPortalMember>(MEMBER_PORTAL_CONFIG)
 
   return {
     member,
@@ -214,6 +184,6 @@ export function useMemberPortalData(): UseMemberPortalDataReturn {
     user,
     loading,
     error,
-    refresh: fetchData,
+    refresh,
   }
 }
