@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useParams } from "next/navigation"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import Link from "next/link"
 import { useDetailPage, REFUND_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
@@ -80,6 +81,7 @@ export default function RefundDetailPage() {
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/refunds", defaultLabel: "All Refunds" })
   const [formData, setFormData] = useState({
     status: "",
     refund_date: "",
@@ -173,8 +175,8 @@ export default function RefundDetailPage() {
         <DetailHero
           title="Refund Details"
           subtitle={refundTypeLabels[refund.refund_type] || refund.refund_type}
-          backHref="/refunds"
-          backLabel="All Refunds"
+          backHref={backHref}
+          backLabel={backLabel}
           avatar={
             <div className="p-3 bg-success/10 rounded-lg">
               <Wallet className="h-8 w-8 text-success" />

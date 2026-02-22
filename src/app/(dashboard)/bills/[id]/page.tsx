@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, BILL_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Bill, BillLineItem } from "@/types/bills.types"
 import { Button } from "@/components/ui/button"
@@ -74,6 +75,8 @@ export default function BillDetailPage() {
 
   const payments = (related.payments || []) as Payment[]
 
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/bills", defaultLabel: "All Bills" })
+
   const handleWhatsAppShare = () => {
     if (!bill || !bill.tenant?.phone) {
       showError("Tenant phone number not available")
@@ -143,8 +146,8 @@ ManageKar`
       <DetailHero
         title={bill.bill_number}
         subtitle={`Bill for ${bill.for_month}`}
-        backHref="/bills"
-        backLabel="All Bills"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Bills", href: "/bills" },
           { label: bill.bill_number || "Details" },

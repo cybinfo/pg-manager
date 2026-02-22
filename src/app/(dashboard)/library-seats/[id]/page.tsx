@@ -29,6 +29,7 @@ import {
   Square,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { LIBRARY_SEAT_STATUS_CONFIG } from "@/types/library.types"
 import type { LibrarySeat } from "@/types/library.types"
 
@@ -42,6 +43,8 @@ export default function LibrarySeatDetailPage() {
     config: LIBRARY_SEAT_DETAIL_CONFIG,
     id: params.id as string,
   })
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-seats", defaultLabel: "All Seats" })
 
   if (loading) {
     return <PageLoading message="Loading seat details..." />
@@ -70,8 +73,8 @@ export default function LibrarySeatDetailPage() {
             )}
           </div>
         }
-        backHref="/library-seats"
-        backLabel="All Seats"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Library Seats", href: "/library-seats" },
           { label: `Seat ${seat.seat_number}` },

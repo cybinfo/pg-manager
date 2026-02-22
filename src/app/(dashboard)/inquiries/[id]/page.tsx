@@ -47,6 +47,7 @@ import { generateWhatsAppLink } from "@/lib/notifications"
 import { PermissionGate } from "@/components/auth"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { INQUIRY_STATUS_LABELS, INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_LABELS } from "@/lib/status"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 // ============================================
 // Types
@@ -101,6 +102,7 @@ const StatusBadge = ({ status }: { status: string }) => (
 
 export default function InquiryDetailPage() {
   const params = useParams()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/inquiries", defaultLabel: "All Inquiries" })
   const [editing, setEditing] = useState(false)
   const [editData, setEditData] = useState({
     status: "",
@@ -161,8 +163,8 @@ export default function InquiryDetailPage() {
       <DetailHero
         title={inquiry.name}
         subtitle={`Inquiry from ${sourceLabels[inquiry.source]}`}
-        backHref="/inquiries"
-        backLabel="All Inquiries"
+        backHref={backHref}
+        backLabel={backLabel}
         avatar={
           <div className="p-3 bg-primary/10 rounded-lg">
             <Inbox className="h-8 w-8 text-primary" />

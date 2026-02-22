@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useParams } from "next/navigation"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import Link from "next/link"
 import { useDetailPage, COMPLAINT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Complaint } from "@/types/complaints.types"
@@ -69,6 +70,7 @@ export default function ComplaintDetailPage() {
     config: COMPLAINT_DETAIL_CONFIG,
     id: params.id as string,
   })
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/complaints", defaultLabel: "All Complaints" })
 
   // Initialize edit data when complaint loads
   if (complaint && !editData.status) {
@@ -126,8 +128,8 @@ export default function ComplaintDetailPage() {
       <DetailHero
         title={complaint.title}
         subtitle={categoryLabels[complaint.category] || complaint.category}
-        backHref="/complaints"
-        backLabel="All Complaints"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Complaints", href: "/complaints" },
           { label: complaint.title || "Details" },

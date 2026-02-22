@@ -5,6 +5,8 @@
  * meter assignments, and related interfaces.
  */
 
+import { Zap, Droplets, Gauge, Flame, type LucideIcon } from "lucide-react"
+
 // ============================================================================
 // ENUMS AND CONSTANTS
 // ============================================================================
@@ -57,6 +59,19 @@ export const METER_TYPE_CONFIG = {
     bgColor: "bg-warning/10",
   },
 } as const
+
+/** Full meter type config with actual Lucide icon components for use in UI */
+export const METER_TYPE_ICON_CONFIG: Record<MeterType, {
+  label: string
+  unit: string
+  icon: LucideIcon
+  color: string
+  bgColor: string
+}> = {
+  electricity: { label: "Electricity", unit: "kWh", icon: Zap, color: "text-warning", bgColor: "bg-warning/10" },
+  water: { label: "Water", unit: "L", icon: Droplets, color: "text-info", bgColor: "bg-info/10" },
+  gas: { label: "Gas", unit: "m³", icon: Flame, color: "text-warning", bgColor: "bg-warning/10" },
+}
 
 export const METER_STATUS_CONFIG = {
   active: {

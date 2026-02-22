@@ -25,7 +25,7 @@ import { PROPERTY_FILTER, METER_TYPE_FILTER, createDateRangeFilter } from "@/lib
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { formatDate } from "@/lib/format"
-import { METER_READING_TYPE_CONFIG } from "@/lib/status-config"
+import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 
 // ============================================
 // Types
@@ -54,12 +54,7 @@ interface MeterReading {
 // Meter Type Configuration
 // ============================================
 
-// Use centralized config from status-config.ts
-const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: string; bgColor: string; unit: string }> = {
-  electricity: { ...METER_READING_TYPE_CONFIG.electricity, icon: Zap },
-  water: { ...METER_READING_TYPE_CONFIG.water, icon: Droplets },
-  gas: { ...METER_READING_TYPE_CONFIG.gas, icon: Gauge },
-}
+const meterTypeConfig: Record<string, typeof METER_TYPE_ICON_CONFIG[keyof typeof METER_TYPE_ICON_CONFIG]> = METER_TYPE_ICON_CONFIG
 
 // ============================================
 // Column Definitions

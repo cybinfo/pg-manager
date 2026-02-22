@@ -50,10 +50,12 @@ import {
   getDaysStayed,
 } from "@/types/exit-clearance.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function ExitClearanceDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/exit-clearance", defaultLabel: "All Exit Clearances" })
   const [saving, setSaving] = useState(false)
   const [formInitialized, setFormInitialized] = useState(false)
 
@@ -237,8 +239,8 @@ export default function ExitClearanceDetailPage() {
       <DetailHero
         title="Exit Clearance"
         subtitle={clearance.tenant?.name || "Unknown Tenant"}
-        backHref="/exit-clearance"
-        backLabel="All Exit Clearances"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Exit Clearance", href: "/exit-clearance" },
           { label: clearance.tenant?.name || "Details" },

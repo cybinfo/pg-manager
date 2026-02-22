@@ -32,6 +32,7 @@ import {
   Download,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import {
   LIBRARY_PAYMENT_TYPE_CONFIG,
   LIBRARY_PAYMENT_METHOD_CONFIG,
@@ -49,6 +50,8 @@ export default function LibraryPaymentDetailPage() {
     config: LIBRARY_PAYMENT_DETAIL_CONFIG,
     id: params.id as string,
   })
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-payments", defaultLabel: "All Payments" })
 
   if (loading) {
     return <PageLoading message="Loading payment details..." />
@@ -83,8 +86,8 @@ export default function LibraryPaymentDetailPage() {
             </span>
           </div>
         }
-        backHref="/library-payments"
-        backLabel="All Payments"
+        backHref={backHref}
+        backLabel={backLabel}
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className="p-3 bg-success/10 rounded-xl">

@@ -5,4 +5,4 @@
  */
 
 export { PersonSelector } from "./person-selector"
-export { PersonCard } from "./person-card"
+export { PersonCard, TagBadge } from "./person-card"

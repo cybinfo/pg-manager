@@ -56,6 +56,7 @@ import {
   ENQUIRY_STATUS_LABELS,
   ENQUIRY_SOURCE_LABELS,
 } from "@/types/visitors.types"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 interface VisitHistoryEntry {
   id: string
@@ -90,6 +91,7 @@ const VisitorTypeBadge = ({ type }: { type: VisitorType }) => (
 export default function VisitorDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/visitors", defaultLabel: "All Visitors" })
 
   // Use the centralized hook for main data fetching
   const {
@@ -244,8 +246,8 @@ export default function VisitorDetailPage() {
             </span>
           </div>
         }
-        backHref="/visitors"
-        backLabel="All Visitors"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Visitors", href: "/visitors" },
           { label: displayName || "Details" },

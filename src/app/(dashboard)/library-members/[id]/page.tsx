@@ -38,6 +38,7 @@ import {
 } from "lucide-react"
 import { MemberHoursCard, MemberQRCode } from "@/components/library"
 import { formatDate } from "@/lib/format"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { LIBRARY_MEMBER_STATUS_CONFIG, LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
 import type {
   LibraryMember,
@@ -58,6 +59,8 @@ export default function LibraryMemberDetailPage() {
     config: LIBRARY_MEMBER_DETAIL_CONFIG,
     id: params.id as string,
   })
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-members", defaultLabel: "All Members" })
 
   if (loading) {
     return <PageLoading message="Loading member details..." />
@@ -102,8 +105,8 @@ export default function LibraryMemberDetailPage() {
             )}
           </div>
         }
-        backHref="/library-members"
-        backLabel="All Members"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Library Members", href: "/library-members" },
           { label: displayName || "Details" },

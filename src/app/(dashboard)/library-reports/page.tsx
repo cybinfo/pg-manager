@@ -496,14 +496,14 @@ export default function LibraryReportsPage() {
               description="Revenue & new members (Last 6 months)"
               onExport={() => handleExportCSV("revenue")}
             >
-              <div className="h-[200px] sm:h-[300px]">
+              <div className="h-[250px] sm:h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={reportData.monthlyRevenue}>
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                     <YAxis
                       yAxisId="left"
-                      tick={{ fontSize: 12 }}
-                      width={70}
+                      tick={{ fontSize: 11 }}
+                      width={55}
                       tickFormatter={(value: number) => {
                         if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
                         if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
@@ -511,7 +511,7 @@ export default function LibraryReportsPage() {
                         return `\u20B9${value}`
                       }}
                     />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
                     <Tooltip
                       formatter={(value, name) => [
                         name === "revenue" ? formatCurrency(Number(value)) : value,
@@ -552,11 +552,11 @@ export default function LibraryReportsPage() {
               title="Daily Attendance"
               description="Check-ins over the last 7 days"
             >
-              <div className="h-[180px] sm:h-[250px]">
+              <div className="h-[220px] sm:h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={reportData.dailyAttendance}>
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
                     <Bar dataKey="checkIns" name="Check-ins" fill="#6366F1" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -600,20 +600,20 @@ export default function LibraryReportsPage() {
             title="Revenue Breakdown"
             description="Revenue by category"
           >
-            <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-indigo-50 rounded-lg">
-                <p className="text-sm text-indigo-600 font-medium">Subscriptions</p>
-                <p className="text-2xl font-bold text-indigo-700">{formatCurrency(reportData.subscriptionRevenue)}</p>
-                <p className="text-xs text-indigo-500">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-indigo-50 dark:bg-indigo-950/30 rounded-lg">
+                <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium">Subscriptions</p>
+                <p className="text-lg sm:text-2xl font-bold text-indigo-700 dark:text-indigo-300">{formatCurrency(reportData.subscriptionRevenue)}</p>
+                <p className="text-xs text-indigo-500 dark:text-indigo-400/80">
                   {reportData.totalRevenueThisMonth > 0
                     ? ((reportData.subscriptionRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
                     : 0}%
                 </p>
               </div>
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <p className="text-sm text-purple-600 font-medium">Lockers</p>
-                <p className="text-2xl font-bold text-purple-700">{formatCurrency(reportData.lockerRevenue)}</p>
-                <p className="text-xs text-purple-500">
+              <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
+                <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Lockers</p>
+                <p className="text-lg sm:text-2xl font-bold text-purple-700 dark:text-purple-300">{formatCurrency(reportData.lockerRevenue)}</p>
+                <p className="text-xs text-purple-500 dark:text-purple-400/80">
                   {reportData.totalRevenueThisMonth > 0
                     ? ((reportData.lockerRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
                     : 0}%
@@ -621,7 +621,7 @@ export default function LibraryReportsPage() {
               </div>
               <div className="p-4 bg-warning/10 rounded-lg">
                 <p className="text-sm text-warning font-medium">Other</p>
-                <p className="text-2xl font-bold text-warning">{formatCurrency(reportData.otherRevenue)}</p>
+                <p className="text-lg sm:text-2xl font-bold text-warning">{formatCurrency(reportData.otherRevenue)}</p>
                 <p className="text-xs text-warning/80">
                   {reportData.totalRevenueThisMonth > 0
                     ? ((reportData.otherRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
@@ -639,11 +639,11 @@ export default function LibraryReportsPage() {
               onExport={() => handleExportCSV("libraries")}
               exportLabel="Export"
             >
-              <div className="h-[200px] sm:h-[300px]">
+              <div className="h-[250px] sm:h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={reportData.libraryStats} margin={{ bottom: 20 }}>
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" />
-                    <YAxis tick={{ fontSize: 12 }} width={70} tickFormatter={(value: number) => {
+                  <BarChart data={reportData.libraryStats} margin={{ bottom: 30 }}>
+                    <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" />
+                    <YAxis tick={{ fontSize: 11 }} width={55} tickFormatter={(value: number) => {
                       if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
                       if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
                       if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`

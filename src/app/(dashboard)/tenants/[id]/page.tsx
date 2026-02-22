@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, TENANT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Tenant, TenantStay, RoomTransfer } from "@/types/tenants.types"
 import { Button } from "@/components/ui/button"
@@ -104,6 +105,7 @@ export default function TenantDetailPage() {
   // Action state
   const [actionLoading, setActionLoading] = useState(false)
   const [transferModalOpen, setTransferModalOpen] = useState(false)
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/tenants", defaultLabel: "All Tenants" })
   const [availableRooms, setAvailableRooms] = useState<TransferRoom[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [noticeDialogOpen, setNoticeDialogOpen] = useState(false)
@@ -233,8 +235,8 @@ export default function TenantDetailPage() {
             )}
           </div>
         }
-        backHref="/tenants"
-        backLabel="All Tenants"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Tenants", href: "/tenants" },
           { label: tenant.person?.name || tenant.name || "Details" },

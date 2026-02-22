@@ -68,6 +68,7 @@ import {
   AssignmentReason,
 } from "@/types/meters.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 // ============================================
 // Icon mapping
@@ -85,6 +86,7 @@ const meterTypeIcons: Record<MeterType, typeof Zap> = {
 
 export default function MeterDetailPage() {
   const params = useParams()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meters", defaultLabel: "All Meters" })
 
   // Dialogs
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -235,8 +237,8 @@ export default function MeterDetailPage() {
       <DetailHero
         title={meter.meter_number}
         subtitle={typeConfig.label}
-        backHref="/meters"
-        backLabel="All Meters"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Meters", href: "/meters" },
           { label: meter.meter_number || "Details" },

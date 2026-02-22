@@ -38,6 +38,7 @@ import {
   CreditCard,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { OCCUPANCY_STATUS_COLORS } from "@/lib/status"
 import type {
   Library as LibraryType,
@@ -58,6 +59,8 @@ export default function LibraryDetailPage() {
     config: LIBRARY_DETAIL_CONFIG,
     id: params.id as string,
   })
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library", defaultLabel: "All Libraries" })
 
   if (loading) {
     return <PageLoading message="Loading library details..." />
@@ -97,8 +100,8 @@ export default function LibraryDetailPage() {
             )}
           </div>
         }
-        backHref="/library"
-        backLabel="All Libraries"
+        backHref={backHref}
+        backLabel={backLabel}
         status={library.is_active ? "active" : "inactive"}
         avatar={
           <div className="p-3 bg-primary/10 rounded-lg">

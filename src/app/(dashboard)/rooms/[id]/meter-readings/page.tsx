@@ -10,7 +10,8 @@ import { DataTable, Column } from "@/components/ui/data-table"
 import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
-import { Gauge, Plus, ArrowLeft, Home, Zap, Droplets, Calendar } from "lucide-react"
+import { Gauge, Plus, ArrowLeft, Home, Calendar } from "lucide-react"
+import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 import { formatDate } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 
@@ -31,11 +32,7 @@ interface Room {
   property: { id: string; name: string } | null
 }
 
-const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string; unit: string }> = {
-  electricity: { icon: Zap, color: "text-warning", bgColor: "bg-warning/10", unit: "kWh" },
-  water: { icon: Droplets, color: "text-info", bgColor: "bg-info/10", unit: "L" },
-  gas: { icon: Gauge, color: "text-warning", bgColor: "bg-warning/10", unit: "m³" },
-}
+const meterTypeConfig: Record<string, typeof METER_TYPE_ICON_CONFIG[keyof typeof METER_TYPE_ICON_CONFIG]> = METER_TYPE_ICON_CONFIG
 
 export default function RoomMeterReadingsPage() {
   const params = useParams()

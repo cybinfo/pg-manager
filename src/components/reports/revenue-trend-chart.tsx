@@ -52,13 +52,13 @@ export function RevenueTrendChart({
         </div>
       </CardHeader>
       <CardContent className="p-3 sm:p-6">
-        <div className="h-[200px] sm:h-[300px]">
+        <div className="h-[250px] sm:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
               <YAxis
-                tick={{ fontSize: 12 }}
-                width={70}
+                tick={{ fontSize: 11 }}
+                width={55}
                 tickFormatter={(value: number) => {
                   if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`
                   if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`

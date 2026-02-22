@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, PAYMENT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Payment } from "@/types/payments.types"
 import { Button } from "@/components/ui/button"
@@ -67,6 +68,8 @@ export default function PaymentReceiptPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   // Fetch owner info separately (not part of main entity)
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/payments", defaultLabel: "All Payments" })
   useEffect(() => {
     const fetchOwnerInfo = async () => {
       const supabase = createClient()
@@ -162,8 +165,8 @@ export default function PaymentReceiptPage() {
         <DetailHero
           title="Payment Receipt"
           subtitle={`Receipt #${payment.receipt_number || payment.id.slice(0, 8).toUpperCase()}`}
-          backHref="/payments"
-          backLabel="All Payments"
+          backHref={backHref}
+          backLabel={backLabel}
           breadcrumbs={[
             { label: "Payments", href: "/payments" },
             { label: payment.receipt_number || payment.id.slice(0, 8).toUpperCase() || "Details" },

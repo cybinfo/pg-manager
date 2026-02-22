@@ -40,6 +40,7 @@ import { PermissionGate } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 interface Property {
   id: string
@@ -49,6 +50,7 @@ interface Property {
 export default function StaffDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/staff", defaultLabel: "All Staff" })
 
   // Use the centralized hook for main data fetching
   const {
@@ -243,8 +245,8 @@ export default function StaffDetailPage() {
       <DetailHero
         title={staff.name}
         subtitle={staff.email}
-        backHref="/staff"
-        backLabel="All Staff"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Staff", href: "/staff" },
           { label: staff.name || "Details" },

@@ -30,9 +30,11 @@ import {
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { PAYMENT_METHODS } from "@/lib/status"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function ExpenseDetailPage() {
   const params = useParams()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/expenses", defaultLabel: "All Expenses" })
 
   // Use centralized hook for data fetching
   const {
@@ -70,8 +72,8 @@ export default function ExpenseDetailPage() {
       <DetailHero
         title={expense.expense_type?.name || "Expense"}
         subtitle={formatDate(expense.expense_date)}
-        backHref="/expenses"
-        backLabel="All Expenses"
+        backHref={backHref}
+        backLabel={backLabel}
         avatar={
           <div className="p-3 bg-destructive/10 rounded-lg">
             <Receipt className="h-8 w-8 text-destructive" />

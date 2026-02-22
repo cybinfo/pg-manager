@@ -29,6 +29,7 @@ import {
   Lightbulb,
 } from "lucide-react"
 import { OCCUPANCY_STATUS_COLORS } from "@/lib/status"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import type { LibrarySection, LibrarySeat } from "@/types/library.types"
 
 export default function LibrarySectionDetailPage() {
@@ -42,6 +43,8 @@ export default function LibrarySectionDetailPage() {
     config: LIBRARY_SECTION_DETAIL_CONFIG,
     id: params.id as string,
   })
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-sections", defaultLabel: "All Sections" })
 
   if (loading) {
     return <PageLoading message="Loading section details..." />
@@ -87,8 +90,8 @@ export default function LibrarySectionDetailPage() {
             </span>
           </div>
         }
-        backHref="/library-sections"
-        backLabel="All Sections"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Library Sections", href: "/library-sections" },
           { label: section.name || "Details" },

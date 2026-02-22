@@ -36,6 +36,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getNowISO } from "@/lib/date-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import type { LibraryAttendance } from "@/types/library.types"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function LibraryAttendanceDetailPage() {
   const params = useParams()
@@ -49,6 +50,8 @@ export default function LibraryAttendanceDetailPage() {
     config: LIBRARY_ATTENDANCE_DETAIL_CONFIG,
     id: params.id as string,
   })
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-attendance", defaultLabel: "All Attendance" })
 
   const handleCheckOut = async () => {
     if (!attendance) return
@@ -185,8 +188,8 @@ export default function LibraryAttendanceDetailPage() {
             )}
           </div>
         }
-        backHref="/library-attendance"
-        backLabel="All Attendance"
+        backHref={backHref}
+        backLabel={backLabel}
         status={isActive ? "success" : "muted"}
         avatar={
           <Avatar name={displayName} src={photoUrl} size="xl" />

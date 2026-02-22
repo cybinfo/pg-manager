@@ -524,16 +524,16 @@ export default function ReportsPage() {
           title="Expenses by Category"
           description="Top expense categories for the period"
         >
-          <div className="h-[200px] sm:h-[300px]">
+          <div className="h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={reportData.expensesByCategory} layout="vertical">
-                <XAxis type="number" tickFormatter={(value: number) => {
+                <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(value: number) => {
                   if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
                   if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
                   if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
                   return `\u20B9${value}`
                 }} />
-                <YAxis type="category" dataKey="name" width={70} tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                 <Bar dataKey="value" fill="#F43F5E" radius={[0, 4, 4, 0]}>
                   {reportData.expensesByCategory.map((_entry, index) => (
@@ -559,7 +559,7 @@ export default function ReportsPage() {
           title="Collection Status"
           description="Bills by payment status"
         >
-          <div className="h-[180px] sm:h-[250px]">
+          <div className="h-[220px] sm:h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
@@ -569,8 +569,8 @@ export default function ReportsPage() {
                 ]}
                 layout="vertical"
               >
-                <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={70} />
+                <XAxis type="number" tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={60} />
                 <Tooltip />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                   {[
@@ -605,11 +605,11 @@ export default function ReportsPage() {
         emptyMessage="No properties found"
         height={128}
       >
-        <div className="h-[200px] sm:h-[300px]">
+        <div className="h-[250px] sm:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={reportData.propertyStats} margin={{ bottom: 20 }}>
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" />
-              <YAxis tick={{ fontSize: 12 }} width={70} tickFormatter={(value: number) => {
+            <BarChart data={reportData.propertyStats} margin={{ bottom: 30 }}>
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11 }} width={55} tickFormatter={(value: number) => {
                 if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
                 if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
                 if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`

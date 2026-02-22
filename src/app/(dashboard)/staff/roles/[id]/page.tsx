@@ -20,6 +20,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PERMISSION_GROUPS as permissionGroups } from "@/lib/auth/permission-groups"
 
 interface Role {
   id: string
@@ -28,110 +29,6 @@ interface Role {
   is_system_role: boolean
   permissions: string[]
   created_at: string
-}
-
-// Available permissions grouped by module
-const permissionGroups: Record<string, { label: string; permissions: { key: string; label: string }[] }> = {
-  properties: {
-    label: "Properties",
-    permissions: [
-      { key: "properties.view", label: "View properties" },
-      { key: "properties.create", label: "Create properties" },
-      { key: "properties.edit", label: "Edit properties" },
-      { key: "properties.delete", label: "Delete properties" },
-    ],
-  },
-  rooms: {
-    label: "Rooms",
-    permissions: [
-      { key: "rooms.view", label: "View rooms" },
-      { key: "rooms.create", label: "Create rooms" },
-      { key: "rooms.edit", label: "Edit rooms" },
-      { key: "rooms.delete", label: "Delete rooms" },
-    ],
-  },
-  tenants: {
-    label: "Tenants",
-    permissions: [
-      { key: "tenants.view", label: "View tenants" },
-      { key: "tenants.create", label: "Add tenants" },
-      { key: "tenants.edit", label: "Edit tenants" },
-      { key: "tenants.delete", label: "Remove tenants" },
-    ],
-  },
-  payments: {
-    label: "Payments",
-    permissions: [
-      { key: "payments.view", label: "View payments" },
-      { key: "payments.create", label: "Record payments" },
-      { key: "payments.edit", label: "Edit payments" },
-      { key: "payments.delete", label: "Delete payments" },
-    ],
-  },
-  meter_readings: {
-    label: "Meter Readings",
-    permissions: [
-      { key: "meter_readings.view", label: "View readings" },
-      { key: "meter_readings.create", label: "Record readings" },
-      { key: "meter_readings.edit", label: "Edit readings" },
-    ],
-  },
-  complaints: {
-    label: "Complaints",
-    permissions: [
-      { key: "complaints.view", label: "View complaints" },
-      { key: "complaints.create", label: "Submit complaints" },
-      { key: "complaints.edit", label: "Edit complaints" },
-      { key: "complaints.resolve", label: "Resolve complaints" },
-    ],
-  },
-  notices: {
-    label: "Notices",
-    permissions: [
-      { key: "notices.view", label: "View notices" },
-      { key: "notices.create", label: "Create notices" },
-      { key: "notices.edit", label: "Edit notices" },
-      { key: "notices.delete", label: "Delete notices" },
-    ],
-  },
-  visitors: {
-    label: "Visitors",
-    permissions: [
-      { key: "visitors.view", label: "View visitors" },
-      { key: "visitors.create", label: "Check-in visitors" },
-    ],
-  },
-  reports: {
-    label: "Reports",
-    permissions: [
-      { key: "reports.view", label: "View reports" },
-      { key: "reports.export", label: "Export reports" },
-    ],
-  },
-  exit_clearance: {
-    label: "Exit Clearance",
-    permissions: [
-      { key: "exit_clearance.initiate", label: "Initiate clearance" },
-      { key: "exit_clearance.process", label: "Process clearance" },
-      { key: "exit_clearance.approve", label: "Approve clearance" },
-    ],
-  },
-  staff: {
-    label: "Staff Management",
-    permissions: [
-      { key: "staff.view", label: "View staff" },
-      { key: "staff.create", label: "Add staff" },
-      { key: "staff.edit", label: "Edit staff" },
-      { key: "staff.delete", label: "Remove staff" },
-    ],
-  },
-  settings: {
-    label: "Settings",
-    permissions: [
-      { key: "settings.view", label: "View settings" },
-      { key: "settings.edit", label: "Edit settings" },
-    ],
-  },
 }
 
 export default function EditRolePage() {

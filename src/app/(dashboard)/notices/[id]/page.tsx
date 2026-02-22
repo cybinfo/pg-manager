@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, NOTICE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -62,6 +63,7 @@ export default function NoticeDetailPage() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [properties, setProperties] = useState<Property[]>([])
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/notices", defaultLabel: "All Notices" })
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [selectedRooms, setSelectedRooms] = useState<string[]>([])
@@ -235,8 +237,8 @@ export default function NoticeDetailPage() {
       <DetailHero
         title="Edit Notice"
         subtitle={typeConfig?.label || formData.type}
-        backHref="/notices"
-        backLabel="All Notices"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Notices", href: "/notices" },
           { label: notice.title || "Edit Notice" },

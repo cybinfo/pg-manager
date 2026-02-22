@@ -54,12 +54,14 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete, cascadeSoftDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { PermissionGuard, PermissionGate } from "@/components/auth"
+import { TagBadge } from "@/components/people"
 import {
   Person,
   PersonTenantHistory,
   PersonVisitHistory,
   GENDER_LABELS,
 } from "@/types/people.types"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 // Types for related data
 interface PersonStaffHistory {
@@ -95,42 +97,13 @@ interface TimelineEvent {
 }
 
 // ============================================
-// Tag Badge Component
-// ============================================
-
-const TAG_COLORS: Record<string, string> = {
-  tenant: "bg-info/10 text-info",
-  staff: "bg-success/10 text-success",
-  visitor: "bg-purple-100 text-purple-700",
-  service_provider: "bg-warning/10 text-warning",
-  frequent: "bg-warning/10 text-warning",
-  vip: "bg-warning/10 text-warning",
-  blocked: "bg-destructive/10 text-destructive",
-  verified: "bg-success/10 text-success",
-}
-
-const TAG_ICONS: Record<string, React.ReactNode> = {
-  tenant: <Home className="h-3 w-3" />,
-  staff: <Briefcase className="h-3 w-3" />,
-  visitor: <UserCircle className="h-3 w-3" />,
-  service_provider: <Wrench className="h-3 w-3" />,
-  frequent: <Star className="h-3 w-3" />,
-}
-
-const TagBadge = ({ tag }: { tag: string }) => (
-  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${TAG_COLORS[tag] || "bg-muted text-foreground"}`}>
-    {TAG_ICONS[tag]}
-    {tag.replace("_", " ")}
-  </span>
-)
-
-// ============================================
 // Page Component
 // ============================================
 
 export default function PersonDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/people", defaultLabel: "People" })
   const { user } = useAuth()
   const [visitHistory, setVisitHistory] = useState<PersonVisitHistory[]>([])
 
@@ -454,8 +427,8 @@ export default function PersonDetailPage() {
               )}
             </div>
           }
-          backHref="/people"
-          backLabel="People"
+          backHref={backHref}
+          backLabel={backLabel}
           status={getStatus()}
           statusLabel={getStatusLabel()}
           avatar={<Avatar name={person.name} src={person.photo_url} size="xl" clickable />}

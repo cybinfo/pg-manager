@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation"
 import Link from "next/link"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, ROOM_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Room, RoomTenant, RoomMeterAssignment, RoomComplaint } from "@/types/rooms.types"
 import { Button } from "@/components/ui/button"
@@ -29,11 +30,10 @@ import {
   Bath,
   Layers,
   Gauge,
-  Zap,
-  Droplets,
   Calendar,
   MessageSquare,
 } from "lucide-react"
+import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG } from "@/types/meters.types"
@@ -51,11 +51,7 @@ interface MeterReading {
   } | null
 }
 
-const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string }> = {
-  electricity: { icon: Zap, color: "text-warning", bgColor: "bg-warning/10" },
-  water: { icon: Droplets, color: "text-info", bgColor: "bg-info/10" },
-  gas: { icon: Gauge, color: "text-warning", bgColor: "bg-warning/10" },
-}
+const meterTypeConfig: Record<string, typeof METER_TYPE_ICON_CONFIG[keyof typeof METER_TYPE_ICON_CONFIG]> = METER_TYPE_ICON_CONFIG
 
 export default function RoomDetailPage() {
   const params = useParams()
@@ -74,6 +70,8 @@ export default function RoomDetailPage() {
   const handleStatusChange = async (newStatus: string) => {
     await updateField("status", newStatus)
   }
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/rooms", defaultLabel: "All Rooms" })
 
   if (loading) {
     return <PageLoading message="Loading room details..." />
@@ -104,8 +102,8 @@ export default function RoomDetailPage() {
             </Link>
           )
         }
-        backHref="/rooms"
-        backLabel="All Rooms"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Rooms", href: "/rooms" },
           { label: `Room ${room.room_number}` },

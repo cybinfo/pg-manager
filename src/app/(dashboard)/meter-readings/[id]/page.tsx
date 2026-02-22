@@ -21,9 +21,6 @@ import {
   Building2,
   Home,
   Calendar,
-  Zap,
-  Droplets,
-  Flame,
   Pencil,
   Trash2,
   Calculator,
@@ -38,11 +35,13 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react"
+import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 interface MeterReading {
   id: string
@@ -70,15 +69,12 @@ interface Charge {
   tenant: { id: string; name: string } | null
 }
 
-const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: string; bgColor: string; unit: string }> = {
-  electricity: { label: "Electricity", icon: Zap, color: "text-warning", bgColor: "bg-warning/10", unit: "kWh" },
-  water: { label: "Water", icon: Droplets, color: "text-info", bgColor: "bg-info/10", unit: "L" },
-  gas: { label: "Gas", icon: Flame, color: "text-warning", bgColor: "bg-warning/10", unit: "m³" },
-}
+const meterTypeConfig: Record<string, typeof METER_TYPE_ICON_CONFIG[keyof typeof METER_TYPE_ICON_CONFIG]> = METER_TYPE_ICON_CONFIG
 
 export default function MeterReadingDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meter-readings", defaultLabel: "All Readings" })
   const [generating, setGenerating] = useState(false)
   const [charges, setCharges] = useState<Charge[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -290,8 +286,8 @@ export default function MeterReadingDetailPage() {
             )}
           </div>
         }
-        backHref="/meter-readings"
-        backLabel="All Readings"
+        backHref={backHref}
+        backLabel={backLabel}
         avatar={
           <div className={`p-3 rounded-lg ${config.bgColor}`}>
             <Icon className={`h-8 w-8 ${config.color}`} />

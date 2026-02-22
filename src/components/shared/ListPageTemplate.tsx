@@ -43,6 +43,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { usePathname, useSearchParams } from "next/navigation"
 import { LucideIcon, Plus, Layers, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
@@ -67,6 +68,7 @@ import {
   TableViewConfig,
 } from "@/lib/hooks/useListPage"
 import { useTableViews } from "@/lib/hooks/useTableViews"
+import { buildDetailHref } from "@/lib/hooks/useBackNavigation"
 import { useInlineEdit } from "@/lib/hooks/useInlineEdit"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { SavedViewSelector } from "@/components/ui/saved-view-selector"
@@ -365,8 +367,15 @@ export function ListPageTemplate({
   const createLabel = flatCreateLabel ?? actions?.createLabel ?? "Add New"
   const createPermission = flatCreatePermission ?? permissions?.create
   const headerActions = flatHeaderActions ?? actions?.headerActions
-  const detailHref = flatDetailHref ?? actions?.detailHref
+  const baseDetailHref = flatDetailHref ?? actions?.detailHref
   const onRowClick = flatOnRowClick ?? actions?.onRowClick
+
+  // Wrap detailHref to append `from` query param for back navigation
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const detailHref = baseDetailHref
+    ? (item: FlexibleRow) => buildDetailHref(baseDetailHref(item), pathname, searchParams.toString() || undefined)
+    : undefined
 
   const EmptyIcon = flatEmptyIcon ?? emptyState?.icon
   const emptyTitle = flatEmptyTitle ?? emptyState?.title ?? `No ${title.toLowerCase()} yet`

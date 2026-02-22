@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation"
 import Link from "next/link"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, PROPERTY_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import {
   Property,
@@ -63,6 +64,8 @@ export default function PropertyDetailPage() {
     id: params.id as string,
   })
 
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/properties", defaultLabel: "All Properties" })
+
   if (loading) {
     return <PageLoading message="Loading property details..." />
   }
@@ -105,8 +108,8 @@ export default function PropertyDetailPage() {
             )}
           </div>
         }
-        backHref="/properties"
-        backLabel="All Properties"
+        backHref={backHref}
+        backLabel={backLabel}
         breadcrumbs={[
           { label: "Properties", href: "/properties" },
           { label: property.name || "Details" },

@@ -39,7 +39,7 @@ export function PaymentMethodsChart({
       isEmpty={data.length === 0}
       emptyMessage="No payments in selected period"
     >
-      <div className="h-[200px] sm:h-[300px]">
+      <div className="h-[250px] sm:h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -48,8 +48,8 @@ export function PaymentMethodsChart({
               nameKey="name"
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={100}
+              innerRadius={50}
+              outerRadius={85}
               paddingAngle={2}
               label={({ name, percent }) =>
                 `${name || ""} ${(((percent as number) || 0) * 100).toFixed(0)}%`

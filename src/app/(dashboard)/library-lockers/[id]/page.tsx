@@ -55,6 +55,7 @@ import {
 } from "@/types/library.types"
 import type { LibraryLocker, LibraryLockerAssignment } from "@/types/library.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function LibraryLockerDetailPage() {
   const params = useParams()
@@ -72,6 +73,8 @@ export default function LibraryLockerDetailPage() {
     config: LIBRARY_LOCKER_DETAIL_CONFIG,
     id: params.id as string,
   })
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-lockers", defaultLabel: "All Lockers" })
 
   const handleUnassign = async () => {
     if (!locker?.current_member_id) return
@@ -175,8 +178,8 @@ export default function LibraryLockerDetailPage() {
             </span>
           </div>
         }
-        backHref="/library-lockers"
-        backLabel="All Lockers"
+        backHref={backHref}
+        backLabel={backLabel}
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className={`p-3 rounded-xl ${

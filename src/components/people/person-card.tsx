@@ -58,7 +58,7 @@ const TAG_ICONS: Record<string, React.ReactNode> = {
   verified: <BadgeCheck className="h-3 w-3" />,
 }
 
-const TagBadge = ({ tag }: { tag: string }) => (
+export const TagBadge = ({ tag }: { tag: string }) => (
   <span
     className={cn(
       "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",

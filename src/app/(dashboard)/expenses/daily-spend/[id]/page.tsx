@@ -43,6 +43,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { NotFoundState } from "@/components/ui/empty-state"
 
 import type { DailySpend } from "@/types/expense-enhanced.types"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function DailySpendDetailPage({
   params,
@@ -54,6 +55,7 @@ export default function DailySpendDetailPage({
   const { user } = useAuth()
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/expenses/daily-spend", defaultLabel: "Back to Daily Spend" })
   const [loading, setLoading] = useState(true)
   const [entry, setEntry] = useState<DailySpend | null>(null)
 
@@ -125,8 +127,8 @@ export default function DailySpendDetailPage({
       <NotFoundState
         title="Entry not found"
         description="The expense entry you're looking for doesn't exist or has been deleted."
-        backHref="/expenses/daily-spend"
-        backLabel="Back to Daily Spend"
+        backHref={backHref}
+        backLabel={backLabel}
       />
     )
   }
@@ -142,8 +144,8 @@ export default function DailySpendDetailPage({
           <DetailHero
             title={entry.product?.name || entry.product_name}
             subtitle={entry.product?.name_hi}
-            backHref="/expenses/daily-spend"
-            backLabel="Back to Daily Spend"
+            backHref={backHref}
+            backLabel={backLabel}
             avatar={
               <div className="p-3 bg-warning/10 rounded-lg">
                 <ShoppingBag className="h-8 w-8 text-warning" />

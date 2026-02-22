@@ -63,6 +63,7 @@ import { handleClientError } from "@/lib/error-handler"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist, LibraryWaitlistStatus } from "@/types/library.types"
 import type { DetailPageConfig } from "@/lib/hooks/useDetailPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 // Detail page configuration
 const LIBRARY_WAITLIST_DETAIL_CONFIG: DetailPageConfig<LibraryWaitlist> = {
@@ -94,6 +95,8 @@ export default function WaitlistDetailPage({
     config: LIBRARY_WAITLIST_DETAIL_CONFIG,
     id,
   })
+
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-waitlist", defaultLabel: "All Waitlist" })
 
   const updateStatus = async (newStatus: LibraryWaitlistStatus) => {
     if (!entry) return
@@ -203,8 +206,8 @@ export default function WaitlistDetailPage({
             )}
           </div>
         }
-        backHref="/library-waitlist"
-        backLabel="All Waitlist"
+        backHref={backHref}
+        backLabel={backLabel}
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className={`p-3 rounded-xl ${
