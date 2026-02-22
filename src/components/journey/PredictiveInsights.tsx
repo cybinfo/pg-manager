@@ -78,7 +78,7 @@ export function PredictiveInsights({ insights, className }: PredictiveInsightsPr
       {insights.recommendations.length > 0 && (
         <div className="bg-card rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Lightbulb className="w-5 h-5 text-amber-500" />
+            <Lightbulb className="w-5 h-5 text-warning" />
             <h3 className="font-semibold text-foreground">Recommendations</h3>
             <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
               {insights.recommendations.length}
@@ -161,9 +161,9 @@ function ScoreCard({
   const TrendIcon = trend === "improving" ? TrendingUp : trend === "declining" ? TrendingDown : Minus
   const trendColor =
     trend === "improving"
-      ? "text-emerald-500"
+      ? "text-success"
       : trend === "declining"
-      ? "text-rose-500"
+      ? "text-destructive"
       : "text-muted-foreground"
 
   // For churn risk, lower is better
@@ -248,26 +248,26 @@ function SatisfactionCard({ level, factors }: SatisfactionCardProps) {
     high: {
       icon: CheckCircle,
       label: "High Satisfaction",
-      color: "text-emerald-600",
-      bg: "bg-emerald-50 dark:bg-emerald-950",
-      border: "border-emerald-200 dark:border-emerald-800",
-      iconBg: "bg-emerald-100 dark:bg-emerald-900",
+      color: "text-success",
+      bg: "bg-success/5",
+      border: "border-success/20",
+      iconBg: "bg-success/10",
     },
     medium: {
       icon: Minus,
       label: "Medium Satisfaction",
-      color: "text-amber-600",
-      bg: "bg-amber-50 dark:bg-amber-950",
-      border: "border-amber-200 dark:border-amber-800",
-      iconBg: "bg-amber-100 dark:bg-amber-900",
+      color: "text-warning",
+      bg: "bg-warning/5",
+      border: "border-warning/20",
+      iconBg: "bg-warning/10",
     },
     low: {
       icon: AlertCircle,
       label: "Low Satisfaction",
-      color: "text-rose-600",
-      bg: "bg-rose-50 dark:bg-rose-950",
-      border: "border-rose-200 dark:border-rose-800",
-      iconBg: "bg-rose-100 dark:bg-rose-900",
+      color: "text-destructive",
+      bg: "bg-destructive/5",
+      border: "border-destructive/20",
+      iconBg: "bg-destructive/10",
     },
   }
 
@@ -290,7 +290,7 @@ function SatisfactionCard({ level, factors }: SatisfactionCardProps) {
         <div className="space-y-1">
           {factors.map((factor, i) => (
             <div key={i} className="flex items-center gap-2 text-sm text-foreground">
-              <CheckCircle className="w-3 h-3 text-emerald-500" />
+              <CheckCircle className="w-3 h-3 text-success" />
               {factor}
             </div>
           ))}
@@ -310,11 +310,11 @@ interface AlertsSectionProps {
 
 function AlertsSection({ alerts }: AlertsSectionProps) {
   return (
-    <div className="bg-rose-50 dark:bg-rose-950 rounded-xl border border-rose-200 dark:border-rose-800 p-4">
+    <div className="bg-destructive/5 rounded-xl border border-destructive/20 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle className="w-5 h-5 text-rose-500" />
-        <h3 className="font-semibold text-rose-700 dark:text-rose-300">Active Alerts</h3>
-        <span className="text-xs text-rose-600 bg-rose-100 dark:bg-rose-900 px-2 py-0.5 rounded-full">
+        <AlertTriangle className="w-5 h-5 text-destructive" />
+        <h3 className="font-semibold text-destructive">Active Alerts</h3>
+        <span className="text-xs text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
           {alerts.length}
         </span>
       </div>
@@ -339,9 +339,9 @@ interface AlertCardProps {
 function AlertCard({ alert }: AlertCardProps) {
   const severityConfig = {
     low: { bg: "bg-muted", text: "text-foreground", icon: Info },
-    medium: { bg: "bg-amber-100 dark:bg-amber-900", text: "text-amber-700 dark:text-amber-300", icon: AlertCircle },
-    high: { bg: "bg-rose-100 dark:bg-rose-900", text: "text-rose-700 dark:text-rose-300", icon: AlertTriangle },
-    critical: { bg: "bg-rose-200 dark:bg-rose-900", text: "text-rose-800 dark:text-rose-200", icon: Zap },
+    medium: { bg: "bg-warning/10", text: "text-warning", icon: AlertCircle },
+    high: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertTriangle },
+    critical: { bg: "bg-destructive/15", text: "text-destructive", icon: Zap },
   }
 
   const config = severityConfig[alert.severity]
@@ -375,8 +375,8 @@ interface RecommendationCardProps {
 
 function RecommendationCard({ recommendation }: RecommendationCardProps) {
   const priorityConfig = {
-    high: { dot: "bg-rose-500", text: "text-rose-600" },
-    medium: { dot: "bg-amber-500", text: "text-amber-600" },
+    high: { dot: "bg-destructive", text: "text-destructive" },
+    medium: { dot: "bg-warning", text: "text-warning" },
     low: { dot: "bg-muted-foreground", text: "text-muted-foreground" },
   }
 
@@ -408,7 +408,7 @@ function RecommendationCard({ recommendation }: RecommendationCardProps) {
       </div>
       {recommendation.action_url && (
         <Link href={recommendation.action_url}>
-          <Button variant="ghost" size="sm" className="shrink-0 text-xs text-teal-600">
+          <Button variant="ghost" size="sm" className="shrink-0 text-xs text-primary">
             Action
           </Button>
         </Link>
@@ -425,40 +425,40 @@ function getPaymentColorScheme(level: string): ColorScheme {
   switch (level) {
     case "excellent":
       return {
-        bg: "bg-emerald-50 dark:bg-emerald-950",
-        border: "border-emerald-200 dark:border-emerald-800",
-        text: "text-emerald-600",
-        scoreText: "text-emerald-600",
-        progressBg: "bg-emerald-200 dark:bg-emerald-800",
-        progressFill: "bg-emerald-500",
+        bg: "bg-success/5",
+        border: "border-success/20",
+        text: "text-success",
+        scoreText: "text-success",
+        progressBg: "bg-success/20",
+        progressFill: "bg-success",
       }
     case "good":
       return {
-        bg: "bg-teal-50 dark:bg-teal-950",
-        border: "border-teal-200 dark:border-teal-800",
-        text: "text-teal-600",
-        scoreText: "text-teal-600",
-        progressBg: "bg-teal-200 dark:bg-teal-800",
-        progressFill: "bg-teal-500",
+        bg: "bg-primary/5",
+        border: "border-primary/20",
+        text: "text-primary",
+        scoreText: "text-primary",
+        progressBg: "bg-primary/20",
+        progressFill: "bg-primary",
       }
     case "fair":
       return {
-        bg: "bg-amber-50 dark:bg-amber-950",
-        border: "border-amber-200 dark:border-amber-800",
-        text: "text-amber-600",
-        scoreText: "text-amber-600",
-        progressBg: "bg-amber-200 dark:bg-amber-800",
-        progressFill: "bg-amber-500",
+        bg: "bg-warning/5",
+        border: "border-warning/20",
+        text: "text-warning",
+        scoreText: "text-warning",
+        progressBg: "bg-warning/20",
+        progressFill: "bg-warning",
       }
     case "poor":
     case "critical":
       return {
-        bg: "bg-rose-50 dark:bg-rose-950",
-        border: "border-rose-200 dark:border-rose-800",
-        text: "text-rose-600",
-        scoreText: "text-rose-600",
-        progressBg: "bg-rose-200 dark:bg-rose-800",
-        progressFill: "bg-rose-500",
+        bg: "bg-destructive/5",
+        border: "border-destructive/20",
+        text: "text-destructive",
+        scoreText: "text-destructive",
+        progressBg: "bg-destructive/20",
+        progressFill: "bg-destructive",
       }
     default:
       return {
@@ -477,31 +477,31 @@ function getChurnColorScheme(level: string): ColorScheme {
   switch (level) {
     case "low":
       return {
-        bg: "bg-emerald-50 dark:bg-emerald-950",
-        border: "border-emerald-200 dark:border-emerald-800",
-        text: "text-emerald-600",
-        scoreText: "text-emerald-600",
-        progressBg: "bg-emerald-200 dark:bg-emerald-800",
-        progressFill: "bg-emerald-500",
+        bg: "bg-success/5",
+        border: "border-success/20",
+        text: "text-success",
+        scoreText: "text-success",
+        progressBg: "bg-success/20",
+        progressFill: "bg-success",
       }
     case "medium":
       return {
-        bg: "bg-amber-50 dark:bg-amber-950",
-        border: "border-amber-200 dark:border-amber-800",
-        text: "text-amber-600",
-        scoreText: "text-amber-600",
-        progressBg: "bg-amber-200 dark:bg-amber-800",
-        progressFill: "bg-amber-500",
+        bg: "bg-warning/5",
+        border: "border-warning/20",
+        text: "text-warning",
+        scoreText: "text-warning",
+        progressBg: "bg-warning/20",
+        progressFill: "bg-warning",
       }
     case "high":
     case "critical":
       return {
-        bg: "bg-rose-50 dark:bg-rose-950",
-        border: "border-rose-200 dark:border-rose-800",
-        text: "text-rose-600",
-        scoreText: "text-rose-600",
-        progressBg: "bg-rose-200 dark:bg-rose-800",
-        progressFill: "bg-rose-500",
+        bg: "bg-destructive/5",
+        border: "border-destructive/20",
+        text: "text-destructive",
+        scoreText: "text-destructive",
+        progressBg: "bg-destructive/20",
+        progressFill: "bg-destructive",
       }
     default:
       return {
@@ -529,10 +529,10 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
     <div className={cn("bg-card rounded-lg border border-border p-4", className)}>
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-medium text-foreground flex items-center gap-2">
-          <Brain className="w-4 h-4 text-violet-500" />
+          <Brain className="w-4 h-4 text-primary" />
           AI Insights
         </h4>
-        <span className="text-xs text-violet-600 bg-violet-100 dark:bg-violet-900 px-2 py-0.5 rounded-full">
+        <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
           Beta
         </span>
       </div>
@@ -553,8 +553,8 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
               <div
                 className={cn(
                   "h-full rounded-full",
-                  insights.payment_reliability_score >= 70 ? "bg-emerald-500" :
-                  insights.payment_reliability_score >= 50 ? "bg-amber-500" : "bg-rose-500"
+                  insights.payment_reliability_score >= 70 ? "bg-success" :
+                  insights.payment_reliability_score >= 50 ? "bg-warning" : "bg-destructive"
                 )}
                 style={{ width: `${insights.payment_reliability_score}%` }}
                 aria-hidden="true"
@@ -572,10 +572,10 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
           <span
             className={cn(
               "text-sm font-medium capitalize px-2 py-0.5 rounded",
-              insights.churn_risk_level === "low" && "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300",
-              insights.churn_risk_level === "medium" && "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300",
+              insights.churn_risk_level === "low" && "bg-success/10 text-success",
+              insights.churn_risk_level === "medium" && "bg-warning/10 text-warning",
               (insights.churn_risk_level === "high" || insights.churn_risk_level === "critical") &&
-                "bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300"
+                "bg-destructive/10 text-destructive"
             )}
           >
             {insights.churn_risk_level}
@@ -586,7 +586,7 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
         {insights.active_alerts.length > 0 && (
           <div className="flex items-center justify-between pt-2 border-t border-border">
             <span className="text-sm text-foreground">Active Alerts</span>
-            <span className="text-sm font-medium text-rose-600 bg-rose-100 dark:bg-rose-900 px-2 py-0.5 rounded">
+            <span className="text-sm font-medium text-destructive bg-destructive/10 px-2 py-0.5 rounded">
               {insights.active_alerts.length}
             </span>
           </div>

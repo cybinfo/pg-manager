@@ -267,8 +267,8 @@ export default function NewRolePage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Check className="h-5 w-5 text-blue-600" />
+                <div className="p-2 bg-info/10 rounded-lg">
+                  <Check className="h-5 w-5 text-info" />
                 </div>
                 <div>
                   <CardTitle>Permissions</CardTitle>

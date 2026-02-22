@@ -77,7 +77,7 @@ export default function TenantLayout({
     <PortalLayout
       portalType="tenant"
       brandGradient="from-teal-500 to-emerald-500"
-      brandIconColor="text-teal-600"
+      brandIconColor="text-primary"
       icon={Building2}
       portalName="Tenant Portal"
       navItems={navigation}

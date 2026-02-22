@@ -110,7 +110,7 @@ const columns: Column<Refund>[] = [
     defaultVisible: true,
     render: (refund) => (
       <div className="text-right">
-        <span className="font-semibold text-green-600">
+        <span className="font-semibold text-success">
           {formatCurrency(refund.amount)}
         </span>
         <div className="text-xs text-muted-foreground capitalize">

@@ -17,9 +17,9 @@ interface SummaryStatCardProps {
 }
 
 const highlightClasses = {
-  positive: "text-green-600",
-  negative: "text-red-600",
-  warning: "text-yellow-600",
+  positive: "text-success",
+  negative: "text-destructive",
+  warning: "text-warning",
   neutral: "",
 }
 

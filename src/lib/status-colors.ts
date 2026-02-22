@@ -16,12 +16,12 @@
  * Maps status variant to background color class.
  */
 export const STATUS_DOT_COLORS: Record<string, string> = {
-  success: "bg-emerald-500",
-  warning: "bg-amber-500",
-  error: "bg-rose-500",
-  info: "bg-sky-500",
-  muted: "bg-slate-400",
-  primary: "bg-teal-500",
+  success: "bg-success",
+  warning: "bg-warning",
+  error: "bg-destructive",
+  info: "bg-info",
+  muted: "bg-muted-foreground",
+  primary: "bg-primary",
   purple: "bg-violet-500",
 }
 
@@ -41,20 +41,20 @@ export const STAT_VARIANT_CLASSES: Record<StatVariant, { icon: string; value: st
     value: "text-foreground",
   },
   success: {
-    icon: "text-green-500",
-    value: "text-green-600",
+    icon: "text-success",
+    value: "text-success",
   },
   warning: {
-    icon: "text-yellow-500",
-    value: "text-yellow-600",
+    icon: "text-warning",
+    value: "text-warning",
   },
   error: {
-    icon: "text-red-500",
-    value: "text-red-600",
+    icon: "text-destructive",
+    value: "text-destructive",
   },
   info: {
-    icon: "text-blue-500",
-    value: "text-blue-600",
+    icon: "text-info",
+    value: "text-info",
   },
   muted: {
     icon: "text-muted-foreground",

@@ -26,10 +26,10 @@ const actionLabels: Record<string, string> = {
 }
 
 const actionColors: Record<string, string> = {
-  insert: "text-green-600 bg-green-50",
-  update: "text-blue-600 bg-blue-50",
-  delete: "text-red-600 bg-red-50",
-  status_change: "text-amber-600 bg-amber-50",
+  insert: "text-success bg-success/10",
+  update: "text-info bg-info/10",
+  delete: "text-destructive bg-destructive/10",
+  status_change: "text-warning bg-warning/10",
 }
 
 // ── Shared timeline rendering ──────────────────────────────────────────────

@@ -597,8 +597,8 @@ export default function NewTenantPage() {
 
             {/* Person info is now shown in PersonSelector with showDetailedInfo */}
             {selectedPerson && !selectedPerson.id_documents?.length && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-700">
+              <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                <p className="text-sm text-warning">
                   <strong>Note:</strong> This person has no ID documents on file.
                   For police verification, please add ID documents in the People module.
                 </p>

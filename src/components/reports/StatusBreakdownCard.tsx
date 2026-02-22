@@ -49,9 +49,9 @@ export function StatusBreakdownCard({ title, items, summary }: StatusBreakdownCa
               <span
                 className={`font-bold ${
                   summary.highlight === "positive"
-                    ? "text-green-600"
+                    ? "text-success"
                     : summary.highlight === "negative"
-                    ? "text-red-600"
+                    ? "text-destructive"
                     : ""
                 }`}
               >

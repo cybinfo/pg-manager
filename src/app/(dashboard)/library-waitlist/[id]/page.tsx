@@ -207,14 +207,14 @@ export default function WaitlistDetailPage({
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className={`p-3 rounded-xl ${
-            entry.status === "waiting" ? "bg-amber-100 dark:bg-amber-900" :
-            entry.status === "contacted" ? "bg-blue-100 dark:bg-blue-900" :
-            entry.status === "converted" ? "bg-green-100 dark:bg-green-900" : "bg-gray-100 dark:bg-gray-800"
+            entry.status === "waiting" ? "bg-warning/10" :
+            entry.status === "contacted" ? "bg-info/10" :
+            entry.status === "converted" ? "bg-success/10" : "bg-muted"
           }`}>
             <Users className={`h-8 w-8 ${
-              entry.status === "waiting" ? "text-amber-600" :
-              entry.status === "contacted" ? "text-blue-600" :
-              entry.status === "converted" ? "text-green-600" : "text-muted-foreground"
+              entry.status === "waiting" ? "text-warning" :
+              entry.status === "contacted" ? "text-info" :
+              entry.status === "converted" ? "text-success" : "text-muted-foreground"
             }`} />
           </div>
         }
@@ -393,13 +393,13 @@ export default function WaitlistDetailPage({
             description="Member conversion details"
             icon={Check}
           >
-            <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
-              <p className="text-sm text-green-800 dark:text-green-200 font-medium mb-2">
+            <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
+              <p className="text-sm text-success font-medium mb-2">
                 Converted to Member
               </p>
               <Link
                 href={`/library-members/${(entry.converted_member as { id: string }).id}`}
-                className="text-green-700 dark:text-green-300 hover:underline font-medium"
+                className="text-success hover:underline font-medium"
               >
                 {(entry.converted_member as { name: string }).name}
                 {(entry.converted_member as { member_code?: string }).member_code && (
@@ -409,7 +409,7 @@ export default function WaitlistDetailPage({
                 )}
               </Link>
               {entry.converted_at && (
-                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                <p className="text-xs text-success/80 mt-1">
                   Converted on {formatDate(entry.converted_at)}
                 </p>
               )}

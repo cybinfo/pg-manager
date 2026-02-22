@@ -57,7 +57,7 @@ export function ContactInfo({ tenant, userEmail, onReport }: ContactInfoProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+                    className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/5"
                     onClick={() => onReport(label, String(value), "other")}
                     title={"Report issue with " + label.toLowerCase()}
                   >

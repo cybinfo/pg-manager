@@ -57,33 +57,33 @@ export const colors = {
 // ============================================
 export const statusColors = {
   success: {
-    bg: "bg-emerald-50 dark:bg-emerald-950",
-    text: "text-emerald-700 dark:text-emerald-300",
-    dot: "bg-emerald-500",
-    border: "border-emerald-200 dark:border-emerald-800",
+    bg: "bg-success/10",
+    text: "text-success",
+    dot: "bg-success",
+    border: "border-success/20",
   },
   warning: {
-    bg: "bg-amber-50 dark:bg-amber-950",
-    text: "text-amber-700 dark:text-amber-300",
-    dot: "bg-amber-500",
-    border: "border-amber-200 dark:border-amber-800",
+    bg: "bg-warning/10",
+    text: "text-warning",
+    dot: "bg-warning",
+    border: "border-warning/20",
   },
   error: {
-    bg: "bg-rose-50 dark:bg-rose-950",
-    text: "text-rose-700 dark:text-rose-300",
-    dot: "bg-rose-500",
-    border: "border-rose-200 dark:border-rose-800",
+    bg: "bg-destructive/10",
+    text: "text-destructive",
+    dot: "bg-destructive",
+    border: "border-destructive/20",
   },
   info: {
-    bg: "bg-blue-50 dark:bg-blue-950",
-    text: "text-blue-700 dark:text-blue-300",
-    dot: "bg-blue-500",
-    border: "border-blue-200 dark:border-blue-800",
+    bg: "bg-info/10",
+    text: "text-info",
+    dot: "bg-info",
+    border: "border-info/20",
   },
   muted: {
     bg: "bg-muted",
     text: "text-muted-foreground",
-    dot: "bg-slate-400",
+    dot: "bg-muted-foreground",
     border: "border-border",
   },
 } as const
@@ -281,10 +281,21 @@ export const iconSizes = {
 
 // ============================================
 // Z-INDEX LAYERS
+// Uses CSS custom properties defined in globals.css:
+//   --z-dropdown: 40   (dropdowns, popovers, tooltips)
+//   --z-sticky: 45     (sticky headers, sidebars)
+//   --z-modal: 50      (modals, overlays, mobile nav)
+//   --z-dialog: 100    (command palette, shortcuts dialog)
+//   --z-lightbox: 150  (image lightbox, cropper)
+//   --z-toast: 200     (toast notifications)
 // ============================================
 export const zIndex = {
-  dropdown: "z-50",
-  modal: "z-50",
+  dropdown: "z-[var(--z-dropdown)]",
+  sticky: "z-[var(--z-sticky)]",
+  modal: "z-[var(--z-modal)]",
+  dialog: "z-[var(--z-dialog)]",
+  lightbox: "z-[var(--z-lightbox)]",
+  toast: "z-[var(--z-toast)]",
   overlay: "z-40",
   header: "z-30",
   sidebar: "z-20",

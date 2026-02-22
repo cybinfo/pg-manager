@@ -63,8 +63,8 @@ function VerifyEmailContent() {
           <CardHeader className="text-center pb-2">
             {status === "loading" && (
               <>
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 text-blue-600 dark:text-blue-400 animate-spin" />
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-info/10 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 text-info animate-spin" />
                 </div>
                 <CardTitle className="text-2xl">Verifying Email</CardTitle>
                 <CardDescription>Please wait while we verify your email address...</CardDescription>
@@ -73,10 +73,10 @@ function VerifyEmailContent() {
 
             {status === "success" && (
               <>
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                  <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-success/10 flex items-center justify-center">
+                  <CheckCircle className="h-8 w-8 text-success" />
                 </div>
-                <CardTitle className="text-2xl text-green-600">Email Verified!</CardTitle>
+                <CardTitle className="text-2xl text-success">Email Verified!</CardTitle>
                 <CardDescription>
                   Your email address {email && <span className="font-medium">{email}</span>} has been verified successfully.
                 </CardDescription>
@@ -85,11 +85,11 @@ function VerifyEmailContent() {
 
             {status === "error" && (
               <>
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
-                  <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <XCircle className="h-8 w-8 text-destructive" />
                 </div>
-                <CardTitle className="text-2xl text-red-600">Verification Failed</CardTitle>
-                <CardDescription className="text-red-600">
+                <CardTitle className="text-2xl text-destructive">Verification Failed</CardTitle>
+                <CardDescription className="text-destructive">
                   {errorMessage || "Unable to verify your email address."}
                 </CardDescription>
               </>
@@ -97,8 +97,8 @@ function VerifyEmailContent() {
 
             {status === "no-token" && (
               <>
-                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-                  <Mail className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+                <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-warning/10 flex items-center justify-center">
+                  <Mail className="h-8 w-8 text-warning" />
                 </div>
                 <CardTitle className="text-2xl">No Verification Token</CardTitle>
                 <CardDescription>
@@ -164,7 +164,7 @@ function VerifyEmailContent() {
         {/* Footer */}
         <p className="text-center text-sm text-muted-foreground mt-6">
           Need help?{" "}
-          <Link href="/help" className="text-teal-600 hover:underline">
+          <Link href="/help" className="text-primary hover:underline">
             Contact Support
           </Link>
         </p>
@@ -183,8 +183,8 @@ function LoadingFallback() {
         </div>
         <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 text-blue-600 dark:text-blue-400 animate-spin" />
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-info/10 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 text-info animate-spin" />
             </div>
             <CardTitle className="text-2xl">Loading...</CardTitle>
             <CardDescription>Please wait...</CardDescription>

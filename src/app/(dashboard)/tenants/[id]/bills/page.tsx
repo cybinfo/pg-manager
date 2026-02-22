@@ -94,7 +94,7 @@ export default function TenantBillsPage() {
       key: "bill_number",
       header: "Bill #",
       render: (bill) => (
-        <Link href={`/bills/${bill.id}`} className="font-medium text-teal-600 hover:underline">
+        <Link href={`/bills/${bill.id}`} className="font-medium text-primary hover:underline">
           {bill.bill_number}
         </Link>
       )
@@ -117,7 +117,7 @@ export default function TenantBillsPage() {
     {
       key: "paid_amount",
       header: "Paid",
-      render: (bill) => <Currency amount={bill.paid_amount} className="text-emerald-600" />
+      render: (bill) => <Currency amount={bill.paid_amount} className="text-success" />
     },
     {
       key: "status",

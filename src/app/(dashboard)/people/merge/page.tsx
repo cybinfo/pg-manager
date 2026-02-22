@@ -222,13 +222,13 @@ export default function PersonMergePage() {
         </div>
 
         {/* Instructions */}
-        <Card className="bg-amber-50 border-amber-200">
+        <Card className="bg-warning/10 border-warning/30">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-warning mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-amber-800">How merging works:</p>
-                <ul className="mt-1 text-amber-700 space-y-1">
+                <p className="font-medium text-warning">How merging works:</p>
+                <ul className="mt-1 text-warning/80 space-y-1">
                   <li>1. Select the <strong>primary person</strong> (the record to keep)</li>
                   <li>2. Select the <strong>duplicate person</strong> (will be deleted)</li>
                   <li>3. All tenant, staff, and visitor records from the duplicate will be moved to the primary</li>
@@ -242,12 +242,12 @@ export default function PersonMergePage() {
         {/* Selection Cards */}
         <div className="grid md:grid-cols-2 gap-6">
           {/* Primary Person */}
-          <Card className={primaryPerson ? "border-green-300 bg-green-50/50" : ""}>
+          <Card className={primaryPerson ? "border-success/30 bg-success/5" : ""}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Check className="h-5 w-5 text-green-600" />
+                    <Check className="h-5 w-5 text-success" />
                     Primary (Keep)
                   </CardTitle>
                   <CardDescription>This record will be kept</CardDescription>
@@ -280,12 +280,12 @@ export default function PersonMergePage() {
           </Card>
 
           {/* Secondary Person */}
-          <Card className={secondaryPerson ? "border-red-300 bg-red-50/50" : ""}>
+          <Card className={secondaryPerson ? "border-destructive/30 bg-destructive/5" : ""}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <X className="h-5 w-5 text-red-600" />
+                    <X className="h-5 w-5 text-destructive" />
                     Duplicate (Delete)
                   </CardTitle>
                   <CardDescription>This record will be deleted</CardDescription>
@@ -376,10 +376,10 @@ export default function PersonMergePage() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium truncate">{person.name}</span>
                             {person.is_verified && (
-                              <BadgeCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                              <BadgeCheck className="h-4 w-4 text-success flex-shrink-0" />
                             )}
                             {person.is_blocked && (
-                              <Ban className="h-4 w-4 text-red-600 flex-shrink-0" />
+                              <Ban className="h-4 w-4 text-destructive flex-shrink-0" />
                             )}
                           </div>
                           <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -426,12 +426,12 @@ export default function PersonMergePage() {
                 {/* Records to be moved */}
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div className="p-4 border rounded-lg">
-                    <Home className="h-6 w-6 mx-auto text-blue-600 mb-2" />
+                    <Home className="h-6 w-6 mx-auto text-info mb-2" />
                     <p className="text-2xl font-bold">{secondaryPerson.tenant_count || 0}</p>
                     <p className="text-sm text-muted-foreground">Tenant Records</p>
                   </div>
                   <div className="p-4 border rounded-lg">
-                    <Briefcase className="h-6 w-6 mx-auto text-green-600 mb-2" />
+                    <Briefcase className="h-6 w-6 mx-auto text-success mb-2" />
                     <p className="text-2xl font-bold">{secondaryPerson.staff_count || 0}</p>
                     <p className="text-sm text-muted-foreground">Staff Records</p>
                   </div>
@@ -448,8 +448,8 @@ export default function PersonMergePage() {
                     <thead className="bg-muted">
                       <tr>
                         <th className="p-2 text-left font-medium">Field</th>
-                        <th className="p-2 text-left font-medium text-green-700">Primary (Keep)</th>
-                        <th className="p-2 text-left font-medium text-red-700">Duplicate (Delete)</th>
+                        <th className="p-2 text-left font-medium text-success">Primary (Keep)</th>
+                        <th className="p-2 text-left font-medium text-destructive">Duplicate (Delete)</th>
                         <th className="p-2 text-left font-medium">Result</th>
                       </tr>
                     </thead>
@@ -506,7 +506,7 @@ export default function PersonMergePage() {
           <Button
             onClick={handleMerge}
             disabled={!primaryPerson || !secondaryPerson || merging}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-destructive hover:bg-destructive/90"
           >
             {merging ? (
               <>
@@ -535,8 +535,8 @@ function PersonCard({ person }: { person: PersonWithStats }) {
         <div>
           <div className="flex items-center gap-2">
             <span className="font-semibold text-lg">{person.name}</span>
-            {person.is_verified && <BadgeCheck className="h-5 w-5 text-emerald-600" />}
-            {person.is_blocked && <Ban className="h-5 w-5 text-red-600" />}
+            {person.is_verified && <BadgeCheck className="h-5 w-5 text-success" />}
+            {person.is_blocked && <Ban className="h-5 w-5 text-destructive" />}
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             {person.phone && (
@@ -571,13 +571,13 @@ function PersonCard({ person }: { person: PersonWithStats }) {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 text-center text-xs">
-        <div className="p-2 bg-blue-50 rounded">
-          <p className="font-semibold text-blue-700">{person.tenant_count || 0}</p>
-          <p className="text-blue-600">Tenants</p>
+        <div className="p-2 bg-info/10 rounded">
+          <p className="font-semibold text-info">{person.tenant_count || 0}</p>
+          <p className="text-info/80">Tenants</p>
         </div>
-        <div className="p-2 bg-green-50 rounded">
-          <p className="font-semibold text-green-700">{person.staff_count || 0}</p>
-          <p className="text-green-600">Staff</p>
+        <div className="p-2 bg-success/10 rounded">
+          <p className="font-semibold text-success">{person.staff_count || 0}</p>
+          <p className="text-success/80">Staff</p>
         </div>
         <div className="p-2 bg-purple-50 rounded">
           <p className="font-semibold text-purple-700">{person.visitor_count || 0}</p>
@@ -610,16 +610,16 @@ function MergeRow({
   const willFillFromSecondary = !primary && secondary
 
   return (
-    <tr className={willFillFromSecondary ? "bg-amber-50" : ""}>
+    <tr className={willFillFromSecondary ? "bg-warning/10" : ""}>
       <td className="p-2 font-medium">{field}</td>
       <td className="p-2">{primary || <span className="text-muted-foreground">-</span>}</td>
       <td className="p-2">{secondary || <span className="text-muted-foreground">-</span>}</td>
       <td className="p-2">
-        <span className={willFillFromSecondary ? "text-amber-700 font-medium" : ""}>
+        <span className={willFillFromSecondary ? "text-warning font-medium" : ""}>
           {result}
         </span>
         {willFillFromSecondary && (
-          <span className="ml-1 text-xs text-amber-600">(from duplicate)</span>
+          <span className="ml-1 text-xs text-warning">(from duplicate)</span>
         )}
       </td>
     </tr>

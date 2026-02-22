@@ -374,9 +374,9 @@ export default function EditPersonPage() {
                 value={formData.name}
                 onChange={(e) => updateField("name", e.target.value)}
                 placeholder="Enter full name"
-                className={errors.name ? "border-red-500" : ""}
+                className={errors.name ? "border-destructive" : ""}
               />
-              {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
 
             <div className="space-y-2">
@@ -388,10 +388,10 @@ export default function EditPersonPage() {
                   value={formData.phone}
                   onChange={(e) => updateField("phone", e.target.value)}
                   placeholder="10-digit mobile number"
-                  className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
+                  className={`pl-10 ${errors.phone ? "border-destructive" : ""}`}
                 />
               </div>
-              {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
             </div>
 
             <div className="space-y-2">
@@ -468,7 +468,7 @@ export default function EditPersonPage() {
                   disabled={loading}
                 />
                 {errors[`id_doc_${index}`] && (
-                  <p className="text-sm text-red-500 mt-1">{errors[`id_doc_${index}`]}</p>
+                  <p className="text-sm text-destructive mt-1">{errors[`id_doc_${index}`]}</p>
                 )}
               </div>
             ))}
@@ -651,7 +651,7 @@ export default function EditPersonPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => removeEmergencyContact(index)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

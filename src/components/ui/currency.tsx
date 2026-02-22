@@ -50,8 +50,8 @@ export function Currency({
     <span
       className={cn(
         "tabular-nums font-medium",
-        showSign && isPositive && "text-emerald-600",
-        showSign && isNegative && "text-rose-600",
+        showSign && isPositive && "text-success",
+        showSign && isNegative && "text-destructive",
         className
       )}
     >
@@ -81,9 +81,9 @@ export function AmountDisplay({
 }: AmountDisplayProps) {
   const variants = {
     default: "text-foreground",
-    success: "text-emerald-600",
-    warning: "text-amber-600",
-    error: "text-rose-600",
+    success: "text-success",
+    warning: "text-warning",
+    error: "text-destructive",
   }
 
   const sizes = {
@@ -145,8 +145,8 @@ export function AmountWithTrend({
         <div
           className={cn(
             "flex items-center gap-0.5 text-xs font-medium",
-            isPositive && "text-emerald-600",
-            isNegative && "text-rose-600",
+            isPositive && "text-success",
+            isNegative && "text-destructive",
             isNeutral && "text-slate-500"
           )}
         >
@@ -198,12 +198,12 @@ export function DuesSummary({
           <Currency amount={totalDues} className="text-sm font-semibold" />
         </div>
         <div>
-          <p className="text-xs text-emerald-600">Collected</p>
-          <Currency amount={collectedAmount} className="text-sm font-semibold text-emerald-600" />
+          <p className="text-xs text-success">Collected</p>
+          <Currency amount={collectedAmount} className="text-sm font-semibold text-success" />
         </div>
         <div>
-          <p className="text-xs text-amber-600">Pending</p>
-          <Currency amount={pendingAmount} className="text-sm font-semibold text-amber-600" />
+          <p className="text-xs text-warning">Pending</p>
+          <Currency amount={pendingAmount} className="text-sm font-semibold text-warning" />
         </div>
       </div>
     </div>
@@ -227,10 +227,10 @@ export function PaymentAmount({
   className,
 }: PaymentAmountProps) {
   const statusColors = {
-    paid: "text-emerald-600",
-    pending: "text-amber-600",
-    partial: "text-sky-600",
-    overdue: "text-rose-600",
+    paid: "text-success",
+    pending: "text-warning",
+    partial: "text-info",
+    overdue: "text-destructive",
   }
 
   return (
@@ -241,7 +241,7 @@ export function PaymentAmount({
       />
       {status === "partial" && paidAmount > 0 && (
         <p className="text-xs text-muted-foreground">
-          Paid: <Currency amount={paidAmount} className="text-emerald-600" />
+          Paid: <Currency amount={paidAmount} className="text-success" />
         </p>
       )}
     </div>

@@ -41,8 +41,8 @@ export const APPROVAL_TYPE_LABELS: Record<string, string> = {
 }
 
 export const APPROVAL_PRIORITY: Record<string, string> = {
-  low: "bg-slate-100 text-slate-700",
-  normal: "bg-blue-100 text-blue-700",
-  high: "bg-amber-100 text-amber-700",
-  urgent: "bg-rose-100 text-rose-700",
+  low: "bg-muted text-muted-foreground",
+  normal: "bg-info/10 text-info",
+  high: "bg-warning/10 text-warning",
+  urgent: "bg-destructive/10 text-destructive",
 }

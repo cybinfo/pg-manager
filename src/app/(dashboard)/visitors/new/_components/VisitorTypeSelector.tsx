@@ -18,9 +18,9 @@ const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
 }
 
 const VISITOR_TYPE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700",
+  tenant_visitor: "bg-info/10 text-info border-info/20",
   enquiry: "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700",
-  service_provider: "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700",
+  service_provider: "bg-warning/10 text-warning border-warning/20",
   general: "bg-muted text-foreground border-border",
 }
 

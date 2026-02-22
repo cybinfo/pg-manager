@@ -40,8 +40,7 @@ export function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightboxProps)
   // Use portal to render at document body level (above all other content)
   return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm"
-      style={{ zIndex: 99999 }}
+      className="fixed inset-0 z-[var(--z-lightbox)] flex items-center justify-center bg-black/90 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* Close button */}

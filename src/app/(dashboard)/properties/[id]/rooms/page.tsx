@@ -80,7 +80,7 @@ export default function PropertyRoomsPage() {
       key: "room_number",
       header: "Room",
       render: (room) => (
-        <Link href={`/rooms/${room.id}`} className="font-medium text-teal-600 hover:underline">
+        <Link href={`/rooms/${room.id}`} className="font-medium text-primary hover:underline">
           {room.room_number}
         </Link>
       )
@@ -99,7 +99,7 @@ export default function PropertyRoomsPage() {
       key: "occupancy",
       header: "Occupancy",
       render: (room) => (
-        <span className={room.occupied_beds >= room.total_beds ? "text-amber-600" : "text-emerald-600"}>
+        <span className={room.occupied_beds >= room.total_beds ? "text-warning" : "text-success"}>
           {room.occupied_beds}/{room.total_beds} beds
         </span>
       )

@@ -45,7 +45,7 @@ const features = [
     icon: Building2,
     title: "Multi-Property Management",
     description: "Manage multiple PGs from a single dashboard. Track rooms, beds, and occupancy across all properties with 2D architecture view.",
-    color: "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950"
+    color: "text-primary bg-primary/5"
   },
   {
     icon: Users,
@@ -69,7 +69,7 @@ const features = [
     icon: Gauge,
     title: "Meter Readings",
     description: "Track electricity, water, and gas meters. Auto-generate charges based on consumption with configurable rates and split methods.",
-    color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950"
+    color: "text-warning bg-warning/5"
   },
   {
     icon: Receipt,
@@ -93,7 +93,7 @@ const features = [
     icon: FileText,
     title: "PDF & WhatsApp Receipts",
     description: "Professional rent receipts with property details, room info, and owner contact. Download, email, or share via WhatsApp.",
-    color: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950"
+    color: "text-warning bg-warning/5"
   },
   {
     icon: TrendingDown,
@@ -172,7 +172,7 @@ export default function PGManagerPage() {
             </div>
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-100 to-emerald-100 dark:from-teal-900 dark:to-emerald-900 text-teal-700 dark:text-teal-300 text-sm font-medium mb-8 animate-fade-in-down">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-100 to-emerald-100 dark:from-teal-900 dark:to-emerald-900 text-primary text-sm font-medium mb-8 animate-fade-in-down">
               <Building2 className="h-4 w-4" />
               Complete PG & Hostel Management
             </div>
@@ -208,8 +208,8 @@ export default function PGManagerPage() {
             <div className="flex flex-wrap justify-center gap-6 animate-fade-in-up animation-delay-300">
               {highlights.map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-6 w-6 rounded-full bg-teal-100 dark:bg-teal-900 flex items-center justify-center">
-                    <item.icon className="h-3 w-3 text-teal-600 dark:text-teal-400" />
+                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                    <item.icon className="h-3 w-3 text-primary" />
                   </div>
                   {item.text}
                 </div>
@@ -286,7 +286,7 @@ export default function PGManagerPage() {
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 text-amber-700 dark:text-amber-300 text-sm font-medium mb-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 text-warning text-sm font-medium mb-4">
                 <IndianRupee className="h-4 w-4" />
                 Made for India
               </div>
@@ -301,14 +301,14 @@ export default function PGManagerPage() {
               <div className="grid grid-cols-2 gap-4">
                 {benefits.map((item, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-teal-500 shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-primary shrink-0" />
                     <span className="text-sm">{item}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950 dark:to-emerald-950 rounded-2xl p-8 border border-teal-100 dark:border-teal-800">
+            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950 dark:to-emerald-950 rounded-2xl p-8 border border-primary/20">
               <h3 className="font-semibold text-lg mb-6">Quick Setup Templates</h3>
               <div className="space-y-4">
                 {templates.map((template, i) => (
@@ -333,7 +333,7 @@ export default function PGManagerPage() {
       <section className="py-20 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 text-amber-400 text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-warning/20 text-warning text-sm font-medium mb-4">
               <Gift className="h-4 w-4" />
               Special Launch Offer
             </div>
@@ -345,9 +345,9 @@ export default function PGManagerPage() {
             </p>
           </div>
 
-          <Card className="border-2 border-teal-500/30 bg-slate-800/50 backdrop-blur">
+          <Card className="border-2 border-primary/30 bg-slate-800/50 backdrop-blur">
             <CardHeader className="text-center pb-2">
-              <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-teal-500/20 text-teal-400 text-sm font-medium mx-auto mb-4">
+              <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-primary/20 text-primary text-sm font-medium mx-auto mb-4">
                 <Star className="h-4 w-4" />
                 Free Trial
               </div>
@@ -374,7 +374,7 @@ export default function PGManagerPage() {
                   "Your Own PG Website"
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-2 text-slate-300">
-                    <CheckCircle className="h-5 w-5 text-teal-500" />
+                    <CheckCircle className="h-5 w-5 text-primary" />
                     <span>{feature}</span>
                   </div>
                 ))}
@@ -403,7 +403,7 @@ export default function PGManagerPage() {
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
             Ready to Simplify Your PG Management?
           </h2>
-          <p className="text-teal-100 mb-8 text-lg">
+          <p className="text-white/80 mb-8 text-lg">
             Join hundreds of PG owners who have streamlined their operations with ManageKar.
             Start free today, no credit card required.
           </p>

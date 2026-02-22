@@ -70,8 +70,8 @@ const columns: Column<Inquiry>[] = [
     sortable: true,
     render: (inquiry) => (
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-          <span className="text-teal-600 font-medium text-sm">
+        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <span className="text-primary font-medium text-sm">
             {inquiry.name.charAt(0).toUpperCase()}
           </span>
         </div>

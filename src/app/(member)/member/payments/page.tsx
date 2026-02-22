@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CreditCard, CheckCircle, IndianRupee, Calendar } from "lucide-react"
+import { CreditCard, CheckCircle, IndianRupee, Calendar, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PortalEmptyState } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
@@ -90,6 +90,16 @@ export default function MemberPaymentsPage() {
     return <PageSkeleton variant="list" />
   }
 
+  if (!member) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Active Membership</h2>
+        <p className="text-muted-foreground">You don&apos;t have an active library membership.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -100,34 +110,10 @@ export default function MemberPaymentsPage() {
       {/* Stats */}
       <StatsGrid
         stats={[
-          {
-            icon: IndianRupee,
-            label: "Total Paid",
-            value: formatCurrency(stats.totalPaid),
-            bgColor: "bg-emerald-50 dark:bg-emerald-950",
-            iconColor: "text-emerald-600",
-          },
-          {
-            icon: IndianRupee,
-            label: "This Year",
-            value: formatCurrency(stats.thisYearPaid),
-            bgColor: "bg-purple-50 dark:bg-purple-950",
-            iconColor: "text-purple-600",
-          },
-          {
-            icon: CreditCard,
-            label: "Payments",
-            value: stats.paymentCount,
-            bgColor: "bg-sky-50 dark:bg-sky-950",
-            iconColor: "text-sky-600",
-          },
-          {
-            icon: Calendar,
-            label: "Last Payment",
-            value: stats.lastPaymentDate ? formatDate(stats.lastPaymentDate) : "-",
-            bgColor: "bg-violet-50 dark:bg-violet-950",
-            iconColor: "text-violet-600",
-          },
+          { icon: IndianRupee, label: "Total Paid", value: formatCurrency(stats.totalPaid), color: "green" },
+          { icon: IndianRupee, label: "This Year", value: formatCurrency(stats.thisYearPaid), color: "purple" },
+          { icon: CreditCard, label: "Payments", value: stats.paymentCount, color: "blue" },
+          { icon: Calendar, label: "Last Payment", value: stats.lastPaymentDate ? formatDate(stats.lastPaymentDate) : "-", color: "purple" },
         ]}
       />
 
@@ -157,8 +143,8 @@ export default function MemberPaymentsPage() {
                   className="flex items-center justify-between p-4 rounded-lg border"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 bg-emerald-50 dark:bg-emerald-950 rounded-full">
-                      <CheckCircle className="h-5 w-5 text-emerald-600" />
+                    <div className="p-2 bg-success/10 rounded-full">
+                      <CheckCircle className="h-5 w-5 text-success" />
                     </div>
                     <div>
                       <p className="font-medium">
@@ -175,7 +161,7 @@ export default function MemberPaymentsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-semibold text-emerald-600">
+                    <p className="text-lg font-semibold text-success">
                       {formatCurrency(payment.amount)}
                     </p>
                   </div>

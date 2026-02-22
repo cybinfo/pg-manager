@@ -196,8 +196,8 @@ export default function ProductDetailPage({
           {/* Hero Section */}
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-lg bg-teal-100 flex items-center justify-center">
-                <Package className="h-6 w-6 text-teal-600" />
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Package className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">{product.name}</h1>
@@ -283,7 +283,7 @@ export default function ProductDetailPage({
                 label="Recent Trend"
                 value={
                   priceTrend !== 0 ? (
-                    <span className={priceTrend > 0 ? "text-red-600" : "text-green-600"}>
+                    <span className={priceTrend > 0 ? "text-destructive" : "text-success"}>
                       {priceTrend > 0 ? "↑" : "↓"} {Math.abs(priceTrend).toFixed(1)}%
                     </span>
                   ) : (
@@ -353,9 +353,9 @@ export default function ProductDetailPage({
                           <span
                             className={`ml-2 text-xs ${
                               Number(price.rate) > Number(priceHistory[index + 1].rate)
-                                ? "text-red-600"
+                                ? "text-destructive"
                                 : Number(price.rate) < Number(priceHistory[index + 1].rate)
-                                  ? "text-green-600"
+                                  ? "text-success"
                                   : "text-muted-foreground"
                             }`}
                           >

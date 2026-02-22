@@ -17,7 +17,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Lock, Loader2, Check, Package, AlertCircle } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
+import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
 import { Currency } from "@/components/ui/currency"
@@ -51,6 +52,10 @@ export default function AssignLockerToMemberPage({
   const { id: memberId } = use(params)
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
+  const { handleSuccess } = useFormSubmit({
+    successMessage: "Locker assigned successfully!",
+    redirectTo: `/library-members/${memberId}`,
+  })
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [member, setMember] = useState<MemberData | null>(null)
@@ -222,8 +227,7 @@ export default function AssignLockerToMemberPage({
         // Don't fail the whole operation for this
       }
 
-      showSuccess("Locker assigned successfully!")
-      router.push(`/library-members/${memberId}`)
+      handleSuccess()
     } catch (error) {
       handleClientError(error, "Assigning locker")
     } finally {
@@ -314,7 +318,7 @@ export default function AssignLockerToMemberPage({
                       <div className="flex items-center gap-2 mb-1">
                         <Package className="h-3 w-3 text-muted-foreground" />
                         <span className={`text-xs px-2 py-0.5 rounded ${
-                          locker.size === "large" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" :
+                          locker.size === "large" ? "bg-info/10 text-info" :
                           locker.size === "medium" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" :
                           "bg-muted text-muted-foreground"
                         }`}>

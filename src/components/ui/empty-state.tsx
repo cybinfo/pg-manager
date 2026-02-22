@@ -50,13 +50,13 @@ export function EmptyState({
     },
     search: {
       icon: Search,
-      iconBg: "bg-amber-50",
-      iconColor: "text-amber-400",
+      iconBg: "bg-warning/10",
+      iconColor: "text-warning",
     },
     error: {
       icon: AlertCircle,
-      iconBg: "bg-rose-50",
-      iconColor: "text-rose-400",
+      iconBg: "bg-destructive/10",
+      iconColor: "text-destructive",
     },
     minimal: {
       icon: FolderOpen,

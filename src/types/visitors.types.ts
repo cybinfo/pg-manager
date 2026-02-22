@@ -191,9 +191,9 @@ export const VISITOR_TYPE_COLORS: Record<VisitorType, string> = {
 }
 
 export const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: 'bg-blue-100 text-blue-700',
-  enquiry: 'bg-purple-100 text-purple-700',
-  service_provider: 'bg-orange-100 text-orange-700',
+  tenant_visitor: 'bg-info/10 text-info',
+  enquiry: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+  service_provider: 'bg-warning/10 text-warning',
   general: 'bg-muted text-foreground',
 }
 

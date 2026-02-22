@@ -44,7 +44,7 @@ export function NoticePeriodSection({
         label="Expected Exit"
         value={
           expectedExitDate ? (
-            <span className="text-amber-600 font-medium">{formatDate(expectedExitDate)}</span>
+            <span className="text-warning font-medium">{formatDate(expectedExitDate)}</span>
           ) : (
             "Not set"
           )
@@ -60,11 +60,11 @@ export function NoticePeriodSection({
             const diffTime = exitDate.getTime() - today.getTime()
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
             if (diffDays < 0) {
-              return <span className="text-rose-600 font-medium">Overdue by {Math.abs(diffDays)} days</span>
+              return <span className="text-destructive font-medium">Overdue by {Math.abs(diffDays)} days</span>
             } else if (diffDays === 0) {
-              return <span className="text-amber-600 font-medium">Today</span>
+              return <span className="text-warning font-medium">Today</span>
             } else {
-              return <span className="text-amber-600 font-medium">{diffDays} days</span>
+              return <span className="text-warning font-medium">{diffDays} days</span>
             }
           })()}
           icon={Clock}

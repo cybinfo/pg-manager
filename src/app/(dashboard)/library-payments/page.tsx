@@ -98,7 +98,7 @@ const columns: Column<PaymentItem>[] = [
     canHide: true,
     defaultVisible: true,
     render: (payment) => (
-      <span className="font-semibold text-green-600">
+      <span className="font-semibold text-success">
         +<Currency amount={payment.amount} />
       </span>
     ),
@@ -114,9 +114,9 @@ const columns: Column<PaymentItem>[] = [
       const config = LIBRARY_PAYMENT_TYPE_CONFIG[payment.payment_type as keyof typeof LIBRARY_PAYMENT_TYPE_CONFIG]
       return (
         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-          payment.payment_type === "subscription" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" :
+          payment.payment_type === "subscription" ? "bg-info/10 text-info" :
           payment.payment_type === "locker_rent" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" :
-          payment.payment_type === "locker_deposit" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300" :
+          payment.payment_type === "locker_deposit" ? "bg-warning/10 text-warning" :
           "bg-muted text-muted-foreground"
         }`}>
           {config?.label || payment.payment_type}

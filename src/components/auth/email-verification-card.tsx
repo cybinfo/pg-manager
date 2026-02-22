@@ -59,11 +59,11 @@ export function EmailVerificationCard({
           <div className="flex items-center gap-3">
             <div className={cn(
               "p-2 rounded-lg",
-              emailVerified ? "bg-green-100" : "bg-amber-100"
+              emailVerified ? "bg-success/10" : "bg-warning/10"
             )}>
               <Mail className={cn(
                 "h-5 w-5",
-                emailVerified ? "text-green-600" : "text-amber-600"
+                emailVerified ? "text-success" : "text-warning"
               )} />
             </div>
             <div>
@@ -73,8 +73,8 @@ export function EmailVerificationCard({
           </div>
           <Badge className={cn(
             emailVerified
-              ? "bg-green-100 text-green-700"
-              : "bg-amber-100 text-amber-700"
+              ? "bg-success/10 text-success"
+              : "bg-warning/10 text-warning"
           )}>
             {emailVerified ? (
               <span className="flex items-center gap-1">
@@ -101,7 +101,7 @@ export function EmailVerificationCard({
             )}
           </div>
           {emailVerified ? (
-            <CheckCircle className="h-5 w-5 text-green-600" />
+            <CheckCircle className="h-5 w-5 text-success" />
           ) : (
             <Button
               size="sm"

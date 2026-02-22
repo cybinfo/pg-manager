@@ -236,6 +236,10 @@ export default function StaffDetailPage() {
         subtitle={staff.email}
         backHref="/staff"
         backLabel="All Staff"
+        breadcrumbs={[
+          { label: "Staff", href: "/staff" },
+          { label: staff.name || "Details" },
+        ]}
         avatar={
           <Avatar
             name={staff.name}

@@ -386,8 +386,8 @@ function NewPaymentForm() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <FileText className="h-5 w-5 text-amber-600" />
+                <div className="p-2 bg-warning/10 rounded-lg">
+                  <FileText className="h-5 w-5 text-warning" />
                 </div>
                 <div>
                   <CardTitle>Select Bill *</CardTitle>
@@ -415,24 +415,24 @@ function NewPaymentForm() {
                   </div>
 
                   {formData.bill_id && (
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-                      <p className="text-amber-800">
+                    <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">
+                      <p className="text-warning">
                         Payment will be linked to this bill and automatically update the bill status.
                       </p>
                     </div>
                   )}
                 </>
               ) : (
-                <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
                   <div className="flex items-start gap-3">
-                    <FileText className="h-5 w-5 text-rose-600 mt-0.5" />
+                    <FileText className="h-5 w-5 text-destructive mt-0.5" />
                     <div>
-                      <h4 className="font-medium text-rose-800">No Pending Bills</h4>
-                      <p className="text-sm text-rose-700 mt-1">
+                      <h4 className="font-medium text-destructive">No Pending Bills</h4>
+                      <p className="text-sm text-destructive/80 mt-1">
                         This tenant has no pending bills. You must create a bill before recording a payment.
                       </p>
                       <Link href={`/bills/new?tenant=${selectedTenant.id}`}>
-                        <Button variant="outline" size="sm" className="mt-3 border-rose-300 text-rose-700 hover:bg-rose-100">
+                        <Button variant="outline" size="sm" className="mt-3 border-destructive/30 text-destructive hover:bg-destructive/10">
                           <FileText className="mr-2 h-4 w-4" />
                           Create Bill First
                         </Button>
@@ -449,8 +449,8 @@ function NewPaymentForm() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-success/10 rounded-lg">
+                <IndianRupee className="h-5 w-5 text-success" />
               </div>
               <div>
                 <CardTitle>Payment Details</CardTitle>

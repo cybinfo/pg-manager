@@ -72,17 +72,21 @@ export default function LibrarySeatDetailPage() {
         }
         backHref="/library-seats"
         backLabel="All Seats"
+        breadcrumbs={[
+          { label: "Library Seats", href: "/library-seats" },
+          { label: `Seat ${seat.seat_number}` },
+        ]}
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className={`p-3 rounded-xl ${
-            seat.status === "available" ? "bg-green-100 dark:bg-green-900" :
-            seat.status === "occupied" ? "bg-blue-100 dark:bg-blue-900" :
-            seat.status === "reserved" ? "bg-yellow-100 dark:bg-yellow-900" : "bg-gray-100 dark:bg-gray-800"
+            seat.status === "available" ? "bg-success/10" :
+            seat.status === "occupied" ? "bg-info/10" :
+            seat.status === "reserved" ? "bg-warning/10" : "bg-muted"
           }`}>
             <Armchair className={`h-8 w-8 ${
-              seat.status === "available" ? "text-green-600" :
-              seat.status === "occupied" ? "text-blue-600" :
-              seat.status === "reserved" ? "text-yellow-600" : "text-muted-foreground"
+              seat.status === "available" ? "text-success" :
+              seat.status === "occupied" ? "text-info" :
+              seat.status === "reserved" ? "text-warning" : "text-muted-foreground"
             }`} />
           </div>
         }

@@ -63,9 +63,9 @@ export function TenantsOnNoticeAlert() {
   if (tenantsOnNotice.length === 0) return null
 
   return (
-    <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950 mb-6">
+    <Card className="border-warning/20 bg-warning/10 mb-6">
       <CardContent className="p-4">
-        <h3 className="font-semibold mb-3 flex items-center gap-2 text-orange-800 dark:text-orange-200">
+        <h3 className="font-semibold mb-3 flex items-center gap-2 text-warning">
           <AlertCircle className="h-4 w-4" />
           Tenants on Notice Period ({tenantsOnNotice.length})
         </h3>
@@ -73,11 +73,11 @@ export function TenantsOnNoticeAlert() {
           {tenantsOnNotice.slice(0, 3).map((tenant) => (
             <div
               key={tenant.id}
-              className="flex items-center justify-between p-3 bg-card rounded-lg border border-orange-100 dark:border-orange-800"
+              className="flex items-center justify-between p-3 bg-card rounded-lg border border-warning/20"
             >
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-                  <User className="h-5 w-5 text-orange-600" />
+                <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center">
+                  <User className="h-5 w-5 text-warning" />
                 </div>
                 <div>
                   <p className="font-medium">{tenant.name}</p>

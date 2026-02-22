@@ -23,8 +23,8 @@ export function PaymentListItem({
   date,
   method,
   label,
-  statusBgColor = "bg-emerald-50",
-  statusIconColor = "text-emerald-600",
+  statusBgColor = "bg-success/10",
+  statusIconColor = "text-success",
 }: PaymentListItemProps) {
   return (
     <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">

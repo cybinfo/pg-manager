@@ -57,12 +57,12 @@ const columns: Column<LockerItem>[] = [
     render: (locker) => (
       <div className="flex items-center gap-3">
         <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-          locker.status === "available" ? "bg-green-100 dark:bg-green-900" :
-          locker.status === "occupied" ? "bg-blue-100 dark:bg-blue-900" : "bg-gray-100 dark:bg-gray-800"
+          locker.status === "available" ? "bg-success/10" :
+          locker.status === "occupied" ? "bg-info/10" : "bg-muted"
         }`}>
           <Lock className={`h-4 w-4 ${
-            locker.status === "available" ? "text-green-600" :
-            locker.status === "occupied" ? "text-blue-600" : "text-muted-foreground"
+            locker.status === "available" ? "text-success" :
+            locker.status === "occupied" ? "text-info" : "text-muted-foreground"
           }`} />
         </div>
         <div>
@@ -86,7 +86,7 @@ const columns: Column<LockerItem>[] = [
       const config = LIBRARY_LOCKER_SIZE_CONFIG[locker.size as keyof typeof LIBRARY_LOCKER_SIZE_CONFIG]
       return (
         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-          locker.size === "large" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" :
+          locker.size === "large" ? "bg-info/10 text-info" :
           locker.size === "medium" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" :
           "bg-muted text-muted-foreground"
         }`}>

@@ -218,13 +218,13 @@ export default function EditMiscTransactionPage({
           onClick={() => setFormData((prev) => ({ ...prev, transaction_type: "in", category_id: "" }))}
           className={`flex-1 p-4 rounded-lg border-2 transition-all ${
             formData.transaction_type === "in"
-              ? "border-green-500 bg-green-50 dark:bg-green-950"
+              ? "border-success bg-success/10"
               : "border-border hover:border-border"
           }`}
         >
           <div className="flex items-center justify-center gap-2">
-            <ArrowDownLeft className={`h-5 w-5 ${formData.transaction_type === "in" ? "text-green-600" : "text-muted-foreground"}`} />
-            <span className={`font-medium ${formData.transaction_type === "in" ? "text-green-700" : "text-muted-foreground"}`}>
+            <ArrowDownLeft className={`h-5 w-5 ${formData.transaction_type === "in" ? "text-success" : "text-muted-foreground"}`} />
+            <span className={`font-medium ${formData.transaction_type === "in" ? "text-success" : "text-muted-foreground"}`}>
               Money In
             </span>
           </div>
@@ -236,13 +236,13 @@ export default function EditMiscTransactionPage({
           onClick={() => setFormData((prev) => ({ ...prev, transaction_type: "out", category_id: "" }))}
           className={`flex-1 p-4 rounded-lg border-2 transition-all ${
             formData.transaction_type === "out"
-              ? "border-red-500 bg-red-50 dark:bg-red-950"
+              ? "border-destructive bg-destructive/10"
               : "border-border hover:border-border"
           }`}
         >
           <div className="flex items-center justify-center gap-2">
-            <ArrowUpRight className={`h-5 w-5 ${formData.transaction_type === "out" ? "text-red-600" : "text-muted-foreground"}`} />
-            <span className={`font-medium ${formData.transaction_type === "out" ? "text-red-700" : "text-muted-foreground"}`}>
+            <ArrowUpRight className={`h-5 w-5 ${formData.transaction_type === "out" ? "text-destructive" : "text-muted-foreground"}`} />
+            <span className={`font-medium ${formData.transaction_type === "out" ? "text-destructive" : "text-muted-foreground"}`}>
               Money Out
             </span>
           </div>

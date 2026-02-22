@@ -56,10 +56,10 @@ export const REFUND_STATUS_LABELS: Record<string, string> = {
 }
 
 export const NOTICE_TYPES: Record<string, { label: string; color: string; bgColor: string }> = {
-  general: { label: "General", color: "text-blue-700", bgColor: "bg-blue-100" },
-  maintenance: { label: "Maintenance", color: "text-orange-700", bgColor: "bg-orange-100" },
-  payment_reminder: { label: "Payment Reminder", color: "text-green-700", bgColor: "bg-green-100" },
-  emergency: { label: "Emergency", color: "text-red-700", bgColor: "bg-red-100" },
+  general: { label: "General", color: "text-info", bgColor: "bg-info/10" },
+  maintenance: { label: "Maintenance", color: "text-warning", bgColor: "bg-warning/10" },
+  payment_reminder: { label: "Payment Reminder", color: "text-success", bgColor: "bg-success/10" },
+  emergency: { label: "Emergency", color: "text-destructive", bgColor: "bg-destructive/10" },
 }
 
 export const NOTICE_AUDIENCES: Record<string, string> = {
@@ -76,9 +76,9 @@ export const NOTICE_TYPE_LABELS: Record<string, string> = {
 }
 
 export const METER_TYPES: Record<string, { label: string; color: string; bgColor: string; unit: string }> = {
-  electricity: { label: "Electricity", color: "text-yellow-700", bgColor: "bg-yellow-100", unit: "kWh" },
-  water: { label: "Water", color: "text-blue-700", bgColor: "bg-blue-100", unit: "L" },
-  gas: { label: "Gas", color: "text-orange-700", bgColor: "bg-orange-100", unit: "m³" },
+  electricity: { label: "Electricity", color: "text-warning", bgColor: "bg-warning/10", unit: "kWh" },
+  water: { label: "Water", color: "text-info", bgColor: "bg-info/10", unit: "L" },
+  gas: { label: "Gas", color: "text-warning", bgColor: "bg-warning/10", unit: "m³" },
 }
 
 export const METER_STATUS_LABELS: Record<string, string> = {
@@ -95,12 +95,12 @@ export const METER_TYPE_LABELS: Record<string, string> = {
 }
 
 export const PERSON_TAG_COLORS: Record<string, string> = {
-  tenant: "bg-blue-100 text-blue-700",
-  staff: "bg-green-100 text-green-700",
-  visitor: "bg-purple-100 text-purple-700",
-  service_provider: "bg-orange-100 text-orange-700",
-  frequent: "bg-yellow-100 text-yellow-700",
-  vip: "bg-amber-100 text-amber-700",
+  tenant: "bg-info/10 text-info",
+  staff: "bg-success/10 text-success",
+  visitor: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
+  service_provider: "bg-warning/10 text-warning",
+  frequent: "bg-warning/10 text-warning",
+  vip: "bg-warning/10 text-warning",
 }
 
 export const KITCHEN_WASTAGE_REASON_LABELS: Record<string, { label: string; labelHi: string }> = {
@@ -123,10 +123,10 @@ export const BILL_PAYMENT_STATUS_LABELS: Record<string, { label: string; labelHi
 // ============================================================================
 
 export const NOTICE_TYPE_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: string }> = {
-  general: { label: "General", color: "text-blue-700", bgColor: "bg-blue-100", icon: "Megaphone" },
-  maintenance: { label: "Maintenance", color: "text-orange-700", bgColor: "bg-orange-100", icon: "Wrench" },
-  payment_reminder: { label: "Payment Reminder", color: "text-green-700", bgColor: "bg-green-100", icon: "CreditCard" },
-  emergency: { label: "Emergency", color: "text-red-700", bgColor: "bg-red-100", icon: "AlertTriangle" },
+  general: { label: "General", color: "text-info", bgColor: "bg-info/10", icon: "Megaphone" },
+  maintenance: { label: "Maintenance", color: "text-warning", bgColor: "bg-warning/10", icon: "Wrench" },
+  payment_reminder: { label: "Payment Reminder", color: "text-success", bgColor: "bg-success/10", icon: "CreditCard" },
+  emergency: { label: "Emergency", color: "text-destructive", bgColor: "bg-destructive/10", icon: "AlertTriangle" },
 }
 
 // ============================================================================
@@ -134,9 +134,9 @@ export const NOTICE_TYPE_CONFIG: Record<string, { label: string; color: string; 
 // ============================================================================
 
 export const METER_READING_TYPE_CONFIG: Record<string, { label: string; icon: string; color: string; bgColor: string; unit: string }> = {
-  electricity: { label: "Electricity", icon: "Zap", color: "text-yellow-700 dark:text-yellow-300", bgColor: "bg-yellow-100 dark:bg-yellow-900", unit: "kWh" },
-  water: { label: "Water", icon: "Droplets", color: "text-blue-700 dark:text-blue-300", bgColor: "bg-blue-100 dark:bg-blue-900", unit: "L" },
-  gas: { label: "Gas", icon: "Gauge", color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-100 dark:bg-orange-900", unit: "m\u00b3" },
+  electricity: { label: "Electricity", icon: "Zap", color: "text-warning", bgColor: "bg-warning/10", unit: "kWh" },
+  water: { label: "Water", icon: "Droplets", color: "text-info", bgColor: "bg-info/10", unit: "L" },
+  gas: { label: "Gas", icon: "Gauge", color: "text-warning", bgColor: "bg-warning/10", unit: "m\u00b3" },
 }
 
 // ============================================================================

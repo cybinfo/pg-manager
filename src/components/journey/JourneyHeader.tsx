@@ -163,13 +163,13 @@ export function JourneyHeader({
               })}
             </span>
             <span className="text-muted-foreground/50">•</span>
-            <span className="font-medium text-teal-600">{stayDuration}</span>
+            <span className="font-medium text-primary">{stayDuration}</span>
             {journey.property && (
               <>
                 <span className="text-muted-foreground/50">•</span>
                 <Link
                   href={`/properties/${journey.property.id}`}
-                  className="hover:text-teal-600 hover:underline"
+                  className="hover:text-primary hover:underline"
                 >
                   {journey.property.name}
                 </Link>
@@ -180,7 +180,7 @@ export function JourneyHeader({
                 <span className="text-muted-foreground/50">•</span>
                 <Link
                   href={`/rooms/${journey.room.id}`}
-                  className="hover:text-teal-600 hover:underline"
+                  className="hover:text-primary hover:underline"
                 >
                   Room {journey.room.room_number}
                 </Link>
@@ -190,8 +190,8 @@ export function JourneyHeader({
 
           {/* Pre-tenant visit info */}
           {journey.pre_tenant_visits && journey.pre_tenant_visits.length > 0 && (
-            <div className="mt-2 text-sm text-violet-600 bg-violet-50 dark:bg-violet-950 px-3 py-1.5 rounded-full inline-flex items-center gap-1">
-              <span className="w-2 h-2 bg-violet-500 rounded-full" />
+            <div className="mt-2 text-sm text-primary bg-primary/10 px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+              <span className="w-2 h-2 bg-primary rounded-full" />
               Visited as prospective tenant{" "}
               {journey.pre_tenant_visits[0].days_before_joining} days before joining
             </div>

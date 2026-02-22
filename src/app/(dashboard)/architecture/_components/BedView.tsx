@@ -51,20 +51,20 @@ export function BedView({ room, tenants }: BedViewProps) {
                   className={cn(
                     "relative",
                     isOccupied
-                      ? "border-rose-200 bg-rose-50"
-                      : "border-green-200 bg-green-50 border-dashed"
+                      ? "border-destructive/20 bg-destructive/10"
+                      : "border-success/20 bg-success/10 border-dashed"
                   )}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "p-2 rounded-full",
-                        isOccupied ? "bg-rose-100 dark:bg-rose-900" : "bg-green-100 dark:bg-green-900"
+                        isOccupied ? "bg-destructive/10" : "bg-success/10"
                       )}>
                         {isOccupied ? (
-                          <User className="h-5 w-5 text-rose-600" />
+                          <User className="h-5 w-5 text-destructive" />
                         ) : (
-                          <Bed className="h-5 w-5 text-green-600" />
+                          <Bed className="h-5 w-5 text-success" />
                         )}
                       </div>
                       <div>
@@ -76,7 +76,7 @@ export function BedView({ room, tenants }: BedViewProps) {
                             {tenant.name}
                           </div>
                         ) : (
-                          <div className="text-xs text-green-600 font-medium">
+                          <div className="text-xs text-success font-medium">
                             Available
                           </div>
                         )}

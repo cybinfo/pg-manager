@@ -92,7 +92,7 @@ const columns: Column<LibrarySectionItem>[] = [
     defaultVisible: true,
     render: (section) => {
       const percent = section.occupancy_percent || 0
-      const colorClass = percent >= 80 ? "text-red-600" : percent >= 50 ? "text-yellow-600" : "text-green-600"
+      const colorClass = percent >= 80 ? "text-destructive" : percent >= 50 ? "text-warning" : "text-success"
       return <span className={`font-medium ${colorClass}`}>{percent}%</span>
     },
   },
@@ -105,7 +105,7 @@ const columns: Column<LibrarySectionItem>[] = [
     defaultVisible: true,
     render: (section) => (
       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-        section.is_ac ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" : "bg-muted text-muted-foreground"
+        section.is_ac ? "bg-info/10 text-info" : "bg-muted text-muted-foreground"
       }`}>
         {section.is_ac ? "AC" : "Non-AC"}
       </span>

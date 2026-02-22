@@ -29,9 +29,9 @@ export function InfoBanner({ children, storageKey, className, variant = "info" }
   if (dismissed) return null
 
   const variantStyles = {
-    info: "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300",
-    tip: "bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300",
-    warning: "bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300",
+    info: "bg-info/10 border-info/20 text-info",
+    tip: "bg-success/10 border-success/20 text-success",
+    warning: "bg-warning/10 border-warning/20 text-warning",
   }
 
   return (

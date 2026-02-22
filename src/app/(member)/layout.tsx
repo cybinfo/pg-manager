@@ -76,9 +76,9 @@ export default function MemberLayout({
         )}
       </div>
       {/* Hours Balance */}
-      <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
-        <p className="text-xs text-purple-600 font-medium">Hours Balance</p>
-        <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+      <div className="mt-3 p-3 bg-primary/10 rounded-lg">
+        <p className="text-xs text-primary font-medium">Hours Balance</p>
+        <p className="text-2xl font-bold text-primary">
           {member?.hours_balance?.toFixed(1) || "0.0"}h
         </p>
       </div>
@@ -89,7 +89,7 @@ export default function MemberLayout({
     <PortalLayout
       portalType="member"
       brandGradient="from-purple-500 to-indigo-500"
-      brandIconColor="text-purple-600"
+      brandIconColor="text-primary"
       icon={BookOpen}
       portalName="Member Portal"
       navItems={LIBRARY_MEMBER_NAVIGATION}

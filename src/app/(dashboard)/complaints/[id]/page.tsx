@@ -139,9 +139,13 @@ export default function ComplaintDetailPage() {
         subtitle={categoryLabels[complaint.category] || complaint.category}
         backHref="/complaints"
         backLabel="All Complaints"
+        breadcrumbs={[
+          { label: "Complaints", href: "/complaints" },
+          { label: complaint.title || "Details" },
+        ]}
         avatar={
-          <div className="p-3 bg-amber-100 rounded-lg">
-            <AlertTriangle className="h-8 w-8 text-amber-600" />
+          <div className="p-3 bg-warning/10 rounded-lg">
+            <AlertTriangle className="h-8 w-8 text-warning" />
           </div>
         }
         status={
@@ -317,7 +321,7 @@ export default function ComplaintDetailPage() {
             {complaint.resolved_at && (
               <InfoRow
                 label="Resolved"
-                value={<span className="text-green-600 flex items-center gap-1"><CheckCircle className="h-4 w-4" />{formatDateTime(complaint.resolved_at)}</span>}
+                value={<span className="text-success flex items-center gap-1"><CheckCircle className="h-4 w-4" />{formatDateTime(complaint.resolved_at)}</span>}
               />
             )}
           </DetailSection>

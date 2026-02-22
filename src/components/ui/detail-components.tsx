@@ -5,7 +5,8 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { StatusBadge, type StatusBadgeProps } from "@/components/ui/status-badge"
-import { ArrowLeft, LucideIcon, ChevronRight, MoreVertical, Edit, Trash2 } from "lucide-react"
+import { ArrowLeft, LucideIcon, ChevronRight, MoreVertical, Edit, Trash2, Home } from "lucide-react"
+import type { BreadcrumbItem } from "@/components/ui/page-header"
 
 // ============================================
 // Detail Hero - For detail page headers
@@ -15,6 +16,7 @@ interface DetailHeroProps {
   subtitle?: string | React.ReactNode
   backHref: string
   backLabel?: string
+  breadcrumbs?: BreadcrumbItem[]
   status?: string | React.ReactNode
   statusLabel?: string
   icon?: LucideIcon
@@ -29,6 +31,7 @@ export function DetailHero({
   subtitle,
   backHref,
   backLabel = "Back",
+  breadcrumbs,
   status,
   statusLabel,
   icon: Icon,
@@ -39,12 +42,40 @@ export function DetailHero({
 }: DetailHeroProps) {
   return (
     <div className={cn("space-y-4 animate-fade-in-up", className)}>
-      <Link href={backHref}>
-        <Button variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" />
-          {backLabel}
-        </Button>
-      </Link>
+      {/* Breadcrumbs (preferred) or Back button (fallback) */}
+      {breadcrumbs && breadcrumbs.length > 0 ? (
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+          >
+            <Home className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only">Dashboard</span>
+          </Link>
+          {breadcrumbs.map((item, index) => (
+            <React.Fragment key={index}>
+              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+              {item.href ? (
+                <Link
+                  href={item.href}
+                  className="hover:text-foreground transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="text-foreground font-medium">{item.label}</span>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
+      ) : (
+        <Link href={backHref}>
+          <Button variant="ghost" size="sm" className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" />
+            {backLabel}
+          </Button>
+        </Link>
+      )}
 
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex items-start gap-4">
@@ -117,17 +148,17 @@ export function InfoCard({
 }: InfoCardProps) {
   const variantStyles = {
     default: "bg-card border-border",
-    success: "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800",
-    warning: "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800",
-    error: "bg-rose-50 dark:bg-rose-950 border-rose-200 dark:border-rose-800",
+    success: "bg-success/5 border-success/20",
+    warning: "bg-warning/5 border-warning/20",
+    error: "bg-destructive/5 border-destructive/20",
     muted: "bg-muted border-border",
   }
 
   const iconColors = {
     default: "text-foreground bg-muted",
-    success: "text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900",
-    warning: "text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900",
-    error: "text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900",
+    success: "text-success bg-success/10",
+    warning: "text-warning bg-warning/10",
+    error: "text-destructive bg-destructive/10",
     muted: "text-muted-foreground bg-muted",
   }
 
@@ -309,7 +340,7 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
                     role="menuitem"
                     className={cn(
                       "block px-3 py-2 text-sm hover:bg-muted transition-colors",
-                      item.variant === "danger" && "text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950",
+                      item.variant === "danger" && "text-destructive hover:bg-destructive/5",
                       item.disabled && "opacity-50 cursor-not-allowed"
                     )}
                     onClick={() => setIsOpen(false)}
@@ -330,7 +361,7 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
                   disabled={item.disabled}
                   className={cn(
                     "w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors",
-                    item.variant === "danger" && "text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950",
+                    item.variant === "danger" && "text-destructive hover:bg-destructive/5",
                     item.disabled && "opacity-50 cursor-not-allowed"
                   )}
                 >

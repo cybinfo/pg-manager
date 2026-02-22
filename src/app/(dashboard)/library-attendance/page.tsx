@@ -7,6 +7,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Clock, Users, Armchair, LogIn, LogOut, RefreshCw, QrCode } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
@@ -157,11 +158,11 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <div className="p-1.5 bg-green-100 dark:bg-green-900 rounded-lg">
-              <Users className="h-5 w-5 text-green-600" />
+            <div className="p-1.5 bg-success/10 rounded-lg">
+              <Users className="h-5 w-5 text-success" />
             </div>
             Currently Checked In
-            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
+            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-success/10 text-success rounded-full">
               {checkedIn.length}
             </span>
           </CardTitle>
@@ -189,7 +190,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
                   <p className="text-xs text-muted-foreground">
                     {checkInTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                     {" • "}
-                    <span className="text-green-600">{hoursAgo}h</span>
+                    <span className="text-success">{hoursAgo}h</span>
                   </p>
                 </div>
                 <Button
@@ -320,8 +321,8 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
     <Card className="mb-6">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-            <LogIn className="h-5 w-5 text-green-600" />
+          <div className="p-2 bg-success/10 rounded-lg">
+            <LogIn className="h-5 w-5 text-success" />
           </div>
           <div>
             <CardTitle className="text-lg">Quick Check-In</CardTitle>
@@ -456,6 +457,7 @@ const columns: Column<AttendanceItem>[] = [
 
 function CheckOutButton({ attendanceId, memberName }: { attendanceId: string; memberName: string }) {
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleCheckOut = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -496,7 +498,7 @@ function CheckOutButton({ attendanceId, memberName }: { attendanceId: string; me
 
       showSuccess(`${memberName} checked out successfully!`)
       // Trigger page refresh
-      window.location.reload()
+      router.refresh()
     } catch (error) {
       handleClientError(error, "Library check-out")
     } finally {

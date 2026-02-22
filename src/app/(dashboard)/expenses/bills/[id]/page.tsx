@@ -196,8 +196,8 @@ export default function BillPaymentDetailPage({
           {/* Hero Section */}
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                <Receipt className="h-6 w-6 text-blue-600" />
+              <div className="h-12 w-12 rounded-lg bg-info/10 flex items-center justify-center">
+                <Receipt className="h-6 w-6 text-info" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">
@@ -303,7 +303,7 @@ export default function BillPaymentDetailPage({
                 label="Due Date"
                 value={
                   bill.due_date ? (
-                    <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+                    <span className={isOverdue ? "text-destructive font-medium" : ""}>
                       {formatDate(bill.due_date)}
                       {isOverdue && " (Overdue)"}
                     </span>

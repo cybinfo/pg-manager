@@ -132,11 +132,11 @@ interface StatusDotProps {
 
 export function StatusDot({ color, size = "sm", pulse = false, className }: StatusDotProps) {
   const colorClasses = {
-    success: "bg-emerald-500",
-    warning: "bg-amber-500",
-    error: "bg-rose-500",
-    info: "bg-sky-500",
-    primary: "bg-teal-500",
+    success: "bg-success",
+    warning: "bg-warning",
+    error: "bg-destructive",
+    info: "bg-info",
+    primary: "bg-primary",
     muted: "bg-muted-foreground",
   }
 

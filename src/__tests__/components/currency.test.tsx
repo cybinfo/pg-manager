@@ -35,13 +35,13 @@ describe('Currency Component', () => {
   it('applies success color for positive amounts with showSign', () => {
     render(<Currency amount={1000} showSign />)
     const element = screen.getByText(/\+.*₹.*1,000/)
-    expect(element).toHaveClass('text-emerald-600')
+    expect(element).toHaveClass('text-success')
   })
 
   it('applies error color for negative amounts with showSign', () => {
     render(<Currency amount={-1000} showSign />)
     const element = screen.getByText(/-₹.*1,000/)
-    expect(element).toHaveClass('text-rose-600')
+    expect(element).toHaveClass('text-destructive')
   })
 
   it('renders compact format for large numbers', () => {
@@ -70,21 +70,21 @@ describe('AmountDisplay Component', () => {
     render(<AmountDisplay label="Collected" amount={5000} variant="success" />)
 
     const amountElement = screen.getByText(/₹.*5,000/).closest('p')
-    expect(amountElement).toHaveClass('text-emerald-600')
+    expect(amountElement).toHaveClass('text-success')
   })
 
   it('applies warning variant', () => {
     render(<AmountDisplay label="Pending" amount={5000} variant="warning" />)
 
     const amountElement = screen.getByText(/₹.*5,000/).closest('p')
-    expect(amountElement).toHaveClass('text-amber-600')
+    expect(amountElement).toHaveClass('text-warning')
   })
 
   it('applies error variant', () => {
     render(<AmountDisplay label="Overdue" amount={5000} variant="error" />)
 
     const amountElement = screen.getByText(/₹.*5,000/).closest('p')
-    expect(amountElement).toHaveClass('text-rose-600')
+    expect(amountElement).toHaveClass('text-destructive')
   })
 
   it('applies size variants', () => {
@@ -176,21 +176,21 @@ describe('PaymentAmount Component', () => {
     render(<PaymentAmount amount={5000} status="paid" />)
 
     const element = screen.getByText(/₹.*5,000/)
-    expect(element).toHaveClass('text-emerald-600')
+    expect(element).toHaveClass('text-success')
   })
 
   it('renders pending status with warning color', () => {
     render(<PaymentAmount amount={5000} status="pending" />)
 
     const element = screen.getByText(/₹.*5,000/)
-    expect(element).toHaveClass('text-amber-600')
+    expect(element).toHaveClass('text-warning')
   })
 
   it('renders overdue status with error color', () => {
     render(<PaymentAmount amount={5000} status="overdue" />)
 
     const element = screen.getByText(/₹.*5,000/)
-    expect(element).toHaveClass('text-rose-600')
+    expect(element).toHaveClass('text-destructive')
   })
 
   it('renders partial status with paid amount', () => {

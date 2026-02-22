@@ -213,7 +213,7 @@ export default function ArchitecturePage() {
               variant={filter === "available" ? "secondary" : "outline"}
               size="sm"
               onClick={() => setFilter("available")}
-              className="text-green-600"
+              className="text-success"
             >
               <CheckCircle className="h-4 w-4 mr-1" />
               Available
@@ -222,7 +222,7 @@ export default function ArchitecturePage() {
               variant={filter === "occupied" ? "secondary" : "outline"}
               size="sm"
               onClick={() => setFilter("occupied")}
-              className="text-rose-600"
+              className="text-destructive"
             >
               <XCircle className="h-4 w-4 mr-1" />
               Full

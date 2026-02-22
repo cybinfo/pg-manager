@@ -172,6 +172,8 @@ interface ConfirmDialogProps {
   cancelText?: string
   loading?: boolean
   destructive?: boolean
+  /** @deprecated Use `destructive` boolean instead. Kept for backward compatibility. */
+  variant?: "default" | "destructive"
   icon?: LucideIcon
 }
 
@@ -185,15 +187,18 @@ export function ConfirmDialog({
   cancelText = "Cancel",
   loading = false,
   destructive = false,
+  variant,
   icon: Icon,
 }: ConfirmDialogProps) {
+  // Support legacy `variant` prop — `destructive` boolean takes precedence
+  const isDestructive = destructive || variant === "destructive"
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {Icon && (
-              <Icon className={cn("h-5 w-5", destructive ? "text-destructive" : "text-primary")} />
+              <Icon className={cn("h-5 w-5", isDestructive ? "text-destructive" : "text-primary")} />
             )}
             {title}
           </DialogTitle>
@@ -211,7 +216,7 @@ export function ConfirmDialog({
           </Button>
           <Button
             type="button"
-            variant={destructive ? "destructive" : "default"}
+            variant={isDestructive ? "destructive" : "default"}
             onClick={async () => {
               await onConfirm()
               onOpenChange(false)

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
+import { Select } from "@/components/ui/form-components"
 import {
   FileText,
   IndianRupee,
@@ -51,10 +52,10 @@ interface BillStats {
 }
 
 const statusIconConfig: Record<string, { icon: typeof CheckCircle; className: string }> = {
-  paid: { icon: CheckCircle, className: "text-green-600 bg-green-100" },
-  partial: { icon: Clock, className: "text-amber-600 bg-amber-100" },
-  overdue: { icon: AlertCircle, className: "text-red-600 bg-red-100" },
-  pending: { icon: Clock, className: "text-blue-600 bg-blue-100" },
+  paid: { icon: CheckCircle, className: "text-success bg-success/10" },
+  partial: { icon: Clock, className: "text-warning bg-warning/10" },
+  overdue: { icon: AlertCircle, className: "text-destructive bg-destructive/10" },
+  pending: { icon: Clock, className: "text-info bg-info/10" },
 }
 
 export default function TenantBillsPage() {
@@ -180,18 +181,15 @@ export default function TenantBillsPage() {
       {years.length > 0 && (
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <select
+          <Select
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
-            className="h-9 px-3 rounded-md border border-input bg-background text-sm"
-          >
-            <option value="all">All Years</option>
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+            aria-label="Filter by year"
+            options={[
+              { value: "all", label: "All Years" },
+              ...years.map((year) => ({ value: String(year), label: String(year) })),
+            ]}
+          />
         </div>
       )}
 
@@ -248,7 +246,7 @@ export default function TenantBillsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+                              className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/5"
                               onClick={() => openReportDialog(bill)}
                               title="Report issue with this bill"
                             >
@@ -262,11 +260,11 @@ export default function TenantBillsPage() {
                           <div className="mt-4 pt-3 border-t">
                             <div className="flex justify-between text-sm mb-1">
                               <span className="text-muted-foreground">Paid: {formatCurrency(bill.paid_amount)}</span>
-                              <span className="text-red-600 font-medium">Due: {formatCurrency(bill.balance_due)}</span>
+                              <span className="text-destructive font-medium">Due: {formatCurrency(bill.balance_due)}</span>
                             </div>
                             <div className="h-2 bg-muted rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-green-500 rounded-full"
+                                className="h-full bg-success rounded-full"
                                 style={{ width: `${(bill.paid_amount / bill.total_amount) * 100}%` }}
                               />
                             </div>
@@ -308,7 +306,7 @@ export default function TenantBillsPage() {
                 </p>
               </div>
               {stats.totalDue > 0 && (
-                <p className="font-medium text-red-600">
+                <p className="font-medium text-destructive">
                   Total Due: {formatCurrency(stats.totalDue)}
                 </p>
               )}

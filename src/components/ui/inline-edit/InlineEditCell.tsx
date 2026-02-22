@@ -220,7 +220,7 @@ export function InlineEditCell({
           className={cn(
             "h-8 text-sm rounded border border-input bg-card px-2 pr-6",
             "focus:outline-none focus:ring-1 focus:ring-ring",
-            error && "border-red-500"
+            error && "border-destructive"
           )}
         >
           <option value="">Select...</option>
@@ -245,7 +245,7 @@ export function InlineEditCell({
             }, 150)
           }}
           disabled={saving}
-          className={cn("h-8 text-sm w-36", error && "border-red-500")}
+          className={cn("h-8 text-sm w-36", error && "border-destructive")}
         />
       ) : editType === "number" ? (
         <Input
@@ -265,7 +265,7 @@ export function InlineEditCell({
           placeholder={placeholder}
           min={validation?.min}
           max={validation?.max}
-          className={cn("h-8 text-sm w-24", error && "border-red-500")}
+          className={cn("h-8 text-sm w-24", error && "border-destructive")}
         />
       ) : (
         <Input
@@ -284,7 +284,7 @@ export function InlineEditCell({
           disabled={saving}
           placeholder={placeholder}
           maxLength={validation?.maxLength}
-          className={cn("h-8 text-sm", error && "border-red-500")}
+          className={cn("h-8 text-sm", error && "border-destructive")}
         />
       )}
 
@@ -297,7 +297,7 @@ export function InlineEditCell({
             <button
               type="button"
               onClick={handleSave}
-              className="p-1 hover:bg-green-50 rounded text-green-600"
+              className="p-1 hover:bg-success/10 rounded text-success"
               title="Save (Enter)"
             >
               <Check className="h-4 w-4" />
@@ -305,7 +305,7 @@ export function InlineEditCell({
             <button
               type="button"
               onClick={handleCancel}
-              className="p-1 hover:bg-red-50 rounded text-red-600"
+              className="p-1 hover:bg-destructive/10 rounded text-destructive"
               title="Cancel (Escape)"
             >
               <X className="h-4 w-4" />
@@ -316,7 +316,7 @@ export function InlineEditCell({
 
       {/* Error message */}
       {error && (
-        <span className="absolute -bottom-5 left-0 text-xs text-red-500 whitespace-nowrap">
+        <span className="absolute -bottom-5 left-0 text-xs text-destructive whitespace-nowrap">
           {error}
         </span>
       )}

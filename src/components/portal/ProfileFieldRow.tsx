@@ -32,7 +32,7 @@ export function ProfileFieldRow({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+          className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/5"
           onClick={onReport}
           title={`Report issue with ${label.toLowerCase()}`}
         >

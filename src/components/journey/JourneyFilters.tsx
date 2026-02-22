@@ -109,7 +109,7 @@ export function JourneyFilters({
           size="sm"
           onClick={() => setShowDatePicker(!showDatePicker)}
           className={cn(
-            filters.date_from || filters.date_to ? "bg-teal-600 hover:bg-teal-700" : ""
+            filters.date_from || filters.date_to ? "bg-primary hover:bg-primary/90" : ""
           )}
         >
           <Calendar className="w-4 h-4 mr-2" />
@@ -233,7 +233,7 @@ function CategoryChip({
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
         isSelected
-          ? colorClass || "bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300"
+          ? colorClass || "bg-primary/10 text-primary"
           : "bg-muted text-foreground hover:bg-muted/80"
       )}
     >
@@ -386,7 +386,7 @@ export function CompactFilters({
           <Filter className="w-4 h-4" />
           Filters
           {hasActiveFilters && (
-            <span className="bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-xs px-2 py-0.5 rounded-full">
+            <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
               Active
             </span>
           )}

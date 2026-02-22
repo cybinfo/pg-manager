@@ -161,8 +161,8 @@ export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTy
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${expenseType.is_enabled ? "bg-rose-100" : "bg-muted"}`}>
-                    <IndianRupee className={`h-4 w-4 ${expenseType.is_enabled ? "text-rose-600" : "text-muted-foreground"}`} />
+                  <div className={`p-2 rounded-lg ${expenseType.is_enabled ? "bg-destructive/10" : "bg-muted"}`}>
+                    <IndianRupee className={`h-4 w-4 ${expenseType.is_enabled ? "text-destructive" : "text-muted-foreground"}`} />
                   </div>
                   <div>
                     <p className={`font-medium ${!expenseType.is_enabled && "text-muted-foreground"}`}>
@@ -189,7 +189,7 @@ export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTy
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
                     onClick={() => deleteExpenseType(expenseType)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -208,15 +208,15 @@ export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTy
         </CardContent>
       </Card>
 
-      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+      <Card className="bg-info/10 border-info/20">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <IndianRupee className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 bg-info/20 rounded-lg">
+              <IndianRupee className="h-5 w-5 text-info" />
             </div>
             <div>
-              <h4 className="font-medium text-blue-900 dark:text-blue-100">Track Your Expenses</h4>
-              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+              <h4 className="font-medium text-info">Track Your Expenses</h4>
+              <p className="text-sm text-info mt-1">
                 Go to Dashboard → Expenses to record and track all your property-related expenses.
                 Expenses are shown in Reports for profitability analysis.
               </p>

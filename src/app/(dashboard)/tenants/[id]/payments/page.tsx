@@ -109,7 +109,7 @@ export default function TenantPaymentsPage() {
     {
       key: "amount",
       header: "Amount",
-      render: (payment) => <Currency amount={payment.amount} className="font-semibold text-emerald-600" />
+      render: (payment) => <Currency amount={payment.amount} className="font-semibold text-success" />
     },
     {
       key: "payment_method",
@@ -122,7 +122,7 @@ export default function TenantPaymentsPage() {
       key: "bill",
       header: "Bill",
       render: (payment) => payment.bill ? (
-        <Link href={`/bills/${payment.id}`} className="text-teal-600 hover:underline">
+        <Link href={`/bills/${payment.id}`} className="text-primary hover:underline">
           {payment.bill.bill_number}
         </Link>
       ) : "-"

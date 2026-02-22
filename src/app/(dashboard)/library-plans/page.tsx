@@ -46,10 +46,10 @@ const columns: Column<PlanItem>[] = [
     render: (plan) => (
       <div className="flex items-center gap-3">
         <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-          plan.is_active ? "bg-green-100 dark:bg-green-900" : "bg-gray-100 dark:bg-gray-800"
+          plan.is_active ? "bg-success/10" : "bg-muted"
         }`}>
           <CreditCard className={`h-4 w-4 ${
-            plan.is_active ? "text-green-600" : "text-muted-foreground"
+            plan.is_active ? "text-success" : "text-muted-foreground"
           }`} />
         </div>
         <div>

@@ -67,10 +67,10 @@ export function RequestsSection({ requests, showRequests, onToggleRequests }: Re
                       <span
                         className={"inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium " +
                           (request.status === "approved"
-                            ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
+                            ? "bg-success/10 text-success"
                             : request.status === "rejected"
-                            ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
-                            : "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300")
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-warning/10 text-warning")
                         }
                       >
                         {request.status === "approved" && <CheckCircle className="h-3 w-3" />}
@@ -91,7 +91,7 @@ export function RequestsSection({ requests, showRequests, onToggleRequests }: Re
       <Card className="bg-muted/50">
         <CardContent className="p-4">
           <p className="text-sm text-muted-foreground">
-            <strong>Need to update your information?</strong> Click the <Flag className="h-3 w-3 inline text-amber-500" /> icon next to any field to submit a change request. Your administrator will review and process it.
+            <strong>Need to update your information?</strong> Click the <Flag className="h-3 w-3 inline text-warning" /> icon next to any field to submit a change request. Your administrator will review and process it.
           </p>
         </CardContent>
       </Card>

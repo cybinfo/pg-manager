@@ -52,8 +52,8 @@ interface VendorSelectorProps {
 function VendorDropdownItem({ vendor }: { vendor: Vendor }) {
   return (
     <>
-      <div className="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-        <Store className="h-4 w-4 text-orange-600" />
+      <div className="h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
+        <Store className="h-4 w-4 text-warning" />
       </div>
       <div className="min-w-0 flex-1">
         <span className="font-medium truncate block">{vendor.name}</span>
@@ -81,13 +81,13 @@ function VendorSelectedCard({
     <div className="space-y-2">
       <Card className={cn(
         "border-2",
-        error ? "border-red-300" : "border-primary/30 bg-primary/5"
+        error ? "border-destructive/30" : "border-primary/30 bg-primary/5"
       )}>
         <CardContent className="p-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-                <Store className="h-5 w-5 text-orange-600" />
+              <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
+                <Store className="h-5 w-5 text-warning" />
               </div>
               <div className="min-w-0">
                 <span className="font-medium truncate block">{vendor.name}</span>
@@ -121,7 +121,7 @@ function VendorSelectedCard({
           </div>
         </CardContent>
       </Card>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }
@@ -142,10 +142,10 @@ function VendorSelectedCompact({
     <div className="space-y-2">
       <div className={cn(
         "h-10 flex items-center justify-between gap-2 px-3 rounded-lg border",
-        error ? "border-red-300" : "border-primary/30 bg-primary/5"
+        error ? "border-destructive/30" : "border-primary/30 bg-primary/5"
       )}>
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <Store className="h-4 w-4 text-orange-600 flex-shrink-0" />
+          <Store className="h-4 w-4 text-warning flex-shrink-0" />
           <span className="font-medium truncate text-sm">{vendor.name}</span>
         </div>
         {!disabled && (
@@ -158,7 +158,7 @@ function VendorSelectedCompact({
           </button>
         )}
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }

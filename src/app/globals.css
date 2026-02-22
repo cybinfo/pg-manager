@@ -42,6 +42,14 @@
   /* Radius */
   --radius: 0.5rem;
 
+  /* Z-Index Scale */
+  --z-dropdown: 40;
+  --z-sticky: 45;
+  --z-modal: 50;
+  --z-dialog: 100;
+  --z-lightbox: 150;
+  --z-toast: 200;
+
   /* Semantic Colors */
   --success: 142 76% 36%;
   --success-foreground: 0 0% 100%;
@@ -138,6 +146,12 @@
   --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --z-index-dropdown: var(--z-dropdown);
+  --z-index-sticky: var(--z-sticky);
+  --z-index-modal: var(--z-modal);
+  --z-index-dialog: var(--z-dialog);
+  --z-index-lightbox: var(--z-lightbox);
+  --z-index-toast: var(--z-toast);
 }
 
 * {
@@ -472,7 +486,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: var(--z-modal);
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));

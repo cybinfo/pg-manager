@@ -101,34 +101,34 @@ interface AnalyticsCardProps {
 function AnalyticsCard({ title, value, subtitle, icon: Icon, color }: AnalyticsCardProps) {
   const colorClasses: Record<string, { bg: string; text: string; icon: string }> = {
     teal: {
-      bg: "bg-teal-50 dark:bg-teal-950",
-      text: "text-teal-600",
-      icon: "text-teal-500",
+      bg: "bg-primary/5",
+      text: "text-primary",
+      icon: "text-primary",
     },
     emerald: {
-      bg: "bg-emerald-50 dark:bg-emerald-950",
-      text: "text-emerald-600",
-      icon: "text-emerald-500",
+      bg: "bg-success/10",
+      text: "text-success",
+      icon: "text-success",
     },
     amber: {
-      bg: "bg-amber-50 dark:bg-amber-950",
-      text: "text-amber-600",
-      icon: "text-amber-500",
+      bg: "bg-warning/5",
+      text: "text-warning",
+      icon: "text-warning",
     },
     rose: {
-      bg: "bg-rose-50 dark:bg-rose-950",
-      text: "text-rose-600",
-      icon: "text-rose-500",
+      bg: "bg-destructive/10",
+      text: "text-destructive",
+      icon: "text-destructive",
     },
     violet: {
-      bg: "bg-violet-50 dark:bg-violet-950",
-      text: "text-violet-600",
-      icon: "text-violet-500",
+      bg: "bg-primary/10",
+      text: "text-primary",
+      icon: "text-primary",
     },
     sky: {
-      bg: "bg-sky-50 dark:bg-sky-950",
-      text: "text-sky-600",
-      icon: "text-sky-500",
+      bg: "bg-info/10",
+      text: "text-info",
+      icon: "text-info",
     },
   }
 
@@ -234,9 +234,9 @@ export function DetailedAnalytics({ analytics, className }: DetailedAnalyticsPro
                 <p
                   className={cn(
                     "text-lg font-semibold",
-                    stat.color === "emerald" && "text-emerald-600",
-                    stat.color === "rose" && "text-rose-600",
-                    stat.color === "amber" && "text-amber-600",
+                    stat.color === "emerald" && "text-success",
+                    stat.color === "rose" && "text-destructive",
+                    stat.color === "amber" && "text-warning",
                     !stat.color && "text-foreground"
                   )}
                 >

@@ -129,14 +129,18 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
 ]
 
 /**
- * Mobile bottom nav items (5 most used)
+ * Mobile bottom nav items (most used + "More" to open sidebar)
+ *
+ * These use NavItem so they can be filtered by permission/feature flags
+ * via filterNavigation(). The "More" item has null permission/feature
+ * so it always passes through.
  */
-export const DASHBOARD_MOBILE_NAV: SimpleNavItem[] = [
-  { name: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Tenants", href: "/tenants", icon: Users },
-  { name: "Payments", href: "/payments", icon: CreditCard },
-  { name: "Bills", href: "/bills", icon: Receipt },
-  { name: "More", href: "#more", icon: MoreHorizontal },
+export const DASHBOARD_MOBILE_NAV: NavItem[] = [
+  { name: "Home", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
+  { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
+  { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
+  { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
+  { name: "More", href: "#more", icon: MoreHorizontal, permission: null, feature: null },
 ]
 
 // ============================================================================

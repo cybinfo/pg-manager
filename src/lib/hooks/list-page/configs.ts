@@ -825,3 +825,23 @@ export const APPROVALS_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     }
   },
 }
+
+// ============================================
+// AUDIT EVENTS CONFIG (Activity Log page)
+// ============================================
+
+export const AUDIT_EVENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
+  table: "audit_events",
+  select: "*",
+  defaultOrderBy: "occurred_at",
+  defaultOrderDirection: "desc",
+  searchFields: ["action", "entity_type", "actor_email", "actor_name"],
+  defaultPageSize: 50,
+  computedFields: (item: Record<string, unknown>) => {
+    const date = item.occurred_at ? new Date(item.occurred_at as string) : new Date()
+    return {
+      event_date: date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+      event_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    }
+  },
+}

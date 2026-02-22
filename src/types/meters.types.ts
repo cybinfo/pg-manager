@@ -39,22 +39,22 @@ export const METER_TYPE_CONFIG = {
     label: "Electricity",
     unit: "kWh",
     icon: "Zap",
-    color: "text-yellow-700",
-    bgColor: "bg-yellow-100",
+    color: "text-warning",
+    bgColor: "bg-warning/10",
   },
   water: {
     label: "Water",
     unit: "L",
     icon: "Droplets",
-    color: "text-blue-700",
-    bgColor: "bg-blue-100",
+    color: "text-info",
+    bgColor: "bg-info/10",
   },
   gas: {
     label: "Gas",
     unit: "m³",
     icon: "Gauge",
-    color: "text-orange-700",
-    bgColor: "bg-orange-100",
+    color: "text-warning",
+    bgColor: "bg-warning/10",
   },
 } as const
 

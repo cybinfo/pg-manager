@@ -36,7 +36,7 @@ export function ChartContainer({
         className={`flex items-center justify-center ${className}`}
         style={{ height, minHeight }}
       >
-        <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }

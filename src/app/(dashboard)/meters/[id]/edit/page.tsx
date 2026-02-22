@@ -191,7 +191,7 @@ export default function EditMeterPage() {
                   ...properties.map((p) => ({ value: p.id, label: p.name })),
                 ]}
               />
-              {errors.property_id && <p className="text-sm text-red-500">{errors.property_id}</p>}
+              {errors.property_id && <p className="text-sm text-destructive">{errors.property_id}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -202,9 +202,9 @@ export default function EditMeterPage() {
                   value={formData.meter_number as string}
                   onChange={(e) => updateField("meter_number", e.target.value)}
                   placeholder="e.g., E-001, W-101"
-                  className={errors.meter_number ? "border-red-500" : ""}
+                  className={errors.meter_number ? "border-destructive" : ""}
                 />
-                {errors.meter_number && <p className="text-sm text-red-500">{errors.meter_number}</p>}
+                {errors.meter_number && <p className="text-sm text-destructive">{errors.meter_number}</p>}
               </div>
 
               <div className="space-y-2">

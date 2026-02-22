@@ -226,7 +226,7 @@ export function RoomTypeSettings({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() => deleteRoomType(roomType.code)}
                     >
                       <Trash2 className="h-4 w-4" />

@@ -2,19 +2,24 @@
 
 import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, CheckCircle, XCircle } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
+import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { AuthCardLayout } from "@/components/auth/auth-card-layout"
 import { SubmitButton } from "@/components/ui/submit-button"
 
 function ResetPasswordForm() {
-  const router = useRouter()
+  const { handleSuccess } = useFormSubmit({
+    successMessage: "Password updated successfully!",
+    redirectTo: "/login",
+    redirectDelay: 3000,
+  })
   const searchParams = useSearchParams()
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -73,12 +78,7 @@ function ResetPasswordForm() {
       }
 
       setSuccess(true)
-      showSuccess("Password updated successfully!")
-
-      // Redirect to login after a short delay
-      setTimeout(() => {
-        router.push("/login")
-      }, 3000)
+      handleSuccess()
     } catch {
       showError("An unexpected error occurred")
     } finally {

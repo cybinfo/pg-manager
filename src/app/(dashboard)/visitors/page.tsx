@@ -92,10 +92,10 @@ const VisitorTypeBadge = ({ type }: { type: VisitorType }) => (
 
 const EnquiryStatusBadge = ({ status }: { status: EnquiryStatus }) => {
   const colorMap: Record<EnquiryStatus, string> = {
-    pending: "bg-yellow-100 text-yellow-700",
-    follow_up: "bg-blue-100 text-blue-700",
-    converted: "bg-green-100 text-green-700",
-    lost: "bg-red-100 text-red-700",
+    pending: "bg-warning/10 text-warning",
+    follow_up: "bg-info/10 text-info",
+    converted: "bg-success/10 text-success",
+    lost: "bg-destructive/10 text-destructive",
   }
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${colorMap[status]}`}>
@@ -137,16 +137,16 @@ const columns: Column<Visitor>[] = [
             <div className="flex items-center gap-2">
               <span className="font-medium truncate">{displayName}</span>
               {visitor.is_frequent_visitor && (
-                <Star className="h-3 w-3 text-yellow-500 flex-shrink-0" />
+                <Star className="h-3 w-3 text-warning flex-shrink-0" />
               )}
               {visitor.is_blocked_visitor && (
-                <Ban className="h-3 w-3 text-red-500 flex-shrink-0" />
+                <Ban className="h-3 w-3 text-destructive flex-shrink-0" />
               )}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {visitor.visitor_phone && <span>{visitor.visitor_phone}</span>}
               {visitor.total_visits > 1 && (
-                <span className="text-blue-600">({visitor.total_visits} visits)</span>
+                <span className="text-info">({visitor.total_visits} visits)</span>
               )}
             </div>
           </div>

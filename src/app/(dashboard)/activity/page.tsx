@@ -1,20 +1,26 @@
+/**
+ * Activity Log Page (Refactored)
+ *
+ * BEFORE: ~325 lines with manual data fetching, DataTable, MetricsBar, ListPageFilters
+ * AFTER: ~160 lines using ListPageTemplate
+ *
+ * Uses the centralized ListPageTemplate pattern:
+ * - AUDIT_EVENT_LIST_CONFIG for data fetching
+ * - MetricConfig with compute functions
+ * - FilterConfig for action types, entity types
+ * - Preserves specialized audit event formatting (action icons, user display)
+ */
+
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { useAuth, useCurrentContext } from "@/lib/auth"
-import { PageHeader } from "@/components/ui/page-header"
-import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
-import { DataTable, Column, TableBadge } from "@/components/ui/data-table"
-import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
+import { Column, TableBadge } from "@/components/ui/data-table"
+import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
+import { AUDIT_EVENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createCountMetric, MetricConfig } from "@/lib/metric-factories"
+import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createDateRangeFilter } from "@/lib/filter-presets"
-import { FeatureGuard } from "@/components/auth"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import {
   Activity,
-  Loader2,
-  RefreshCw,
   Plus,
   Edit,
   Trash2,
@@ -24,11 +30,14 @@ import {
   Users,
   Receipt,
   CreditCard,
-  Clock
+  Clock,
 } from "lucide-react"
 import { formatDistanceToNow, format } from "date-fns"
-import { showError } from "@/lib/toast-helpers"
 import { getEntityName } from "@/lib/entity-names"
+
+// ============================================
+// Types
+// ============================================
 
 interface AuditEvent {
   id: string
@@ -42,7 +51,13 @@ interface AuditEvent {
   old_values: Record<string, unknown> | null
   new_values: Record<string, unknown> | null
   workspace_id: string
+  event_date?: string
+  event_month?: string
 }
+
+// ============================================
+// Action / Entity Configuration
+// ============================================
 
 const ACTION_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof Plus }> = {
   create: { label: "Created", variant: "default", icon: Plus },
@@ -68,258 +83,180 @@ const ENTITY_ICONS: Record<string, typeof User> = {
   roles: Users,
 }
 
-export default function ActivityLogPage() {
-  const { user } = useAuth()
-  const { context } = useCurrentContext()
-  const workspaceId = context?.workspace_id
-  const [loading, setLoading] = useState(true)
-  const [events, setEvents] = useState<AuditEvent[]>([])
-  const [refreshing, setRefreshing] = useState(false)
-  const [filters, setFilters] = useState<Record<string, string>>({})
+// ============================================
+// Metrics Configuration
+// ============================================
 
-  useEffect(() => {
-    if (workspaceId) {
-      fetchEvents()
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createCountMetric("today", "Today", Clock,
+    (item) => {
+      const today = new Date()
+      const eventDate = new Date(item.occurred_at as string)
+      return eventDate.toDateString() === today.toDateString()
     }
-  }, [workspaceId])
+  ),
+  createCountMetric("created", "Created", Plus,
+    (item) => item.action === "create"
+  ),
+  createCountMetric("updated", "Updated", Edit,
+    (item) => item.action === "update"
+  ),
+  createCountMetric("deleted", "Deleted", Trash2,
+    (item) => item.action === "delete"
+  ),
+]
 
-  const fetchEvents = async () => {
-    if (!workspaceId) return
+// ============================================
+// Filter Configurations
+// ============================================
 
-    setRefreshing(true)
-    const supabase = createClient()
+const filters: FilterConfig[] = [
+  {
+    id: "action",
+    label: "Action",
+    type: "select",
+    placeholder: "All Actions",
+    options: [
+      { value: "create", label: "Created" },
+      { value: "update", label: "Updated" },
+      { value: "delete", label: "Deleted" },
+    ],
+  },
+  {
+    id: "entity_type",
+    label: "Entity Type",
+    type: "select",
+    placeholder: "All Types",
+    options: [
+      { value: "tenant", label: getEntityName("tenant", true) },
+      { value: "property", label: getEntityName("property", true) },
+      { value: "room", label: getEntityName("room", true) },
+      { value: "bill", label: getEntityName("bill", true) },
+      { value: "payment", label: getEntityName("payment", true) },
+      { value: "staff", label: getEntityName("staff", true) },
+    ],
+  },
+  createDateRangeFilter("occurred_at", "Date"),
+]
 
-    // Fetch audit events for current workspace
-    const { data, error } = await supabase
-      .from("audit_events")
-      .select("*")
-      .eq("workspace_id", workspaceId)
-      .order("occurred_at", { ascending: false })
-      .limit(200)
+// ============================================
+// Group By Options
+// ============================================
 
-    if (error) {
-      console.error("Error fetching audit events:", error)
-      showError("Failed to load activity log")
-    } else {
-      setEvents(data || [])
-    }
+const groupByOptions: GroupByOption[] = [
+  { value: "action", label: "Action" },
+  { value: "entity_type", label: "Entity Type" },
+  { value: "actor_name", label: "User" },
+  { value: "event_date", label: "Date" },
+  { value: "event_month", label: "Month" },
+]
 
-    setLoading(false)
-    setRefreshing(false)
-  }
+// ============================================
+// Column Definitions
+// ============================================
 
-  // Filter configuration
-  const filterConfigs: FilterConfig[] = [
-    {
-      id: "action",
-      label: "Action",
-      type: "select",
-      placeholder: "All Actions",
-      options: [
-        { value: "create", label: "Created" },
-        { value: "update", label: "Updated" },
-        { value: "delete", label: "Deleted" },
-      ],
-    },
-    {
-      id: "entity",
-      label: "Entity Type",
-      type: "select",
-      placeholder: "All Types",
-      options: [
-        { value: "tenant", label: getEntityName("tenant", true) },
-        { value: "property", label: getEntityName("property", true) },
-        { value: "room", label: getEntityName("room", true) },
-        { value: "bill", label: getEntityName("bill", true) },
-        { value: "payment", label: getEntityName("payment", true) },
-        { value: "staff", label: getEntityName("staff", true) },
-      ],
-    },
-    createDateRangeFilter("date", "Date"),
-  ]
-
-  // Apply filters
-  const filteredEvents = events.filter((event) => {
-    if (filters.action && filters.action !== "all" && event.action !== filters.action) {
-      return false
-    }
-    if (filters.entity && filters.entity !== "all") {
-      const entityLower = event.entity_type.toLowerCase()
-      if (!entityLower.includes(filters.entity)) {
-        return false
-      }
-    }
-    if (filters.date_from) {
-      const eventDate = new Date(event.occurred_at)
-      const fromDate = new Date(filters.date_from)
-      if (eventDate < fromDate) return false
-    }
-    if (filters.date_to) {
-      const eventDate = new Date(event.occurred_at)
-      const toDate = new Date(filters.date_to)
-      toDate.setHours(23, 59, 59, 999)
-      if (eventDate > toDate) return false
-    }
-    return true
-  })
-
-  // Metrics
-  const todayCount = events.filter(e => {
-    const today = new Date()
-    const eventDate = new Date(e.occurred_at)
-    return eventDate.toDateString() === today.toDateString()
-  }).length
-
-  const createCount = events.filter(e => e.action === "create").length
-  const updateCount = events.filter(e => e.action === "update").length
-  const deleteCount = events.filter(e => e.action === "delete").length
-
-  const metricsItems: MetricItem[] = [
-    { label: "Today", value: todayCount, icon: Clock },
-    { label: "Created", value: createCount, icon: Plus },
-    { label: "Updated", value: updateCount, icon: Edit },
-    { label: "Deleted", value: deleteCount, icon: Trash2 },
-  ]
-
-  const columns: Column<AuditEvent>[] = [
-    {
-      key: "occurred_at",
-      header: "When",
-      width: "tertiary",
-      render: (event) => (
-        <div className="text-sm">
-          <div className="font-medium">
-            {formatDistanceToNow(new Date(event.occurred_at), { addSuffix: true })}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {format(new Date(event.occurred_at), "MMM d, h:mm a")}
-          </div>
+const columns: Column<AuditEvent>[] = [
+  {
+    key: "occurred_at",
+    header: "When",
+    width: "tertiary",
+    sortable: true,
+    render: (event) => (
+      <div className="text-sm">
+        <div className="font-medium">
+          {formatDistanceToNow(new Date(event.occurred_at), { addSuffix: true })}
         </div>
-      ),
+        <div className="text-xs text-muted-foreground">
+          {format(new Date(event.occurred_at), "MMM d, h:mm a")}
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: "action",
+    header: "Action",
+    width: "badge",
+    render: (event) => {
+      const config = ACTION_CONFIG[event.action] || { label: event.action, variant: "outline" as const, icon: Activity }
+      return (
+        <TableBadge variant={
+          config.variant === "default" ? "success" :
+          config.variant === "destructive" ? "error" :
+          config.variant === "secondary" ? "warning" : "default"
+        }>
+          {config.label}
+        </TableBadge>
+      )
     },
-    {
-      key: "action",
-      header: "Action",
-      width: "badge",
-      render: (event) => {
-        const config = ACTION_CONFIG[event.action] || { label: event.action, variant: "outline" as const, icon: Activity }
-        return (
-          <TableBadge variant={
-            config.variant === "default" ? "success" :
-            config.variant === "destructive" ? "error" :
-            config.variant === "secondary" ? "warning" : "default"
-          }>
-            {config.label}
-          </TableBadge>
-        )
-      },
-    },
-    {
-      key: "entity_type",
-      header: "What",
-      width: "primary",
-      render: (event) => {
-        const entityKey = event.entity_type.toLowerCase()
-        const Icon = ENTITY_ICONS[entityKey] || Activity
-        const label = getEntityName(entityKey)
-        return (
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-muted">
-              <Icon className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div>
-              <div className="font-medium">{label}</div>
-              <div className="text-xs text-muted-foreground font-mono">
-                {event.entity_id.slice(0, 8)}...
-              </div>
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      key: "actor",
-      header: "Who",
-      width: "secondary",
-      hideOnMobile: true,
-      render: (event) => (
+  },
+  {
+    key: "entity_type",
+    header: "What",
+    width: "primary",
+    render: (event) => {
+      const entityKey = event.entity_type.toLowerCase()
+      const Icon = ENTITY_ICONS[entityKey] || Activity
+      const label = getEntityName(entityKey)
+      return (
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium">
-            {(event.actor_name || event.actor_email || "S")[0].toUpperCase()}
+          <div className="p-1.5 rounded-md bg-muted">
+            <Icon className="h-4 w-4 text-muted-foreground" />
           </div>
           <div>
-            <div className="text-sm font-medium">
-              {event.actor_name || "System"}
+            <div className="font-medium">{label}</div>
+            <div className="text-xs text-muted-foreground font-mono">
+              {event.entity_id.slice(0, 8)}...
             </div>
-            {event.actor_email && (
-              <div className="text-xs text-muted-foreground">
-                {event.actor_email}
-              </div>
-            )}
           </div>
         </div>
-      ),
+      )
     },
-  ]
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-
-  return (
-    <FeatureGuard feature="activityLog">
-      <div className="space-y-6">
-        <PageHeader
-          title="Activity Log"
-          description="Track all changes and actions in your workspace"
-          icon={Activity}
-          breadcrumbs={[{ label: "Activity Log" }]}
-          actions={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchEvents()}
-              disabled={refreshing}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-          }
-        />
-
-        <MetricsBar items={metricsItems} />
-
-        <ListPageFilters
-          filters={filterConfigs}
-          values={filters}
-          onChange={(id, value) => setFilters(prev => ({ ...prev, [id]: value }))}
-          onClear={() => setFilters({})}
-        />
-
-        <DataTable
-          columns={columns}
-          data={filteredEvents}
-          keyField="id"
-          searchable
-          searchPlaceholder="Search activity..."
-          searchFields={["action", "entity_type", "actor_email", "actor_name"]}
-          emptyState={
-            <div className="flex flex-col items-center py-12">
-              <Activity className="h-12 w-12 text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium mb-2">No activity yet</h3>
-              <p className="text-muted-foreground text-center">
-                {events.length === 0
-                  ? "Activity will appear here as changes are made"
-                  : "No activity matches your filters"}
-              </p>
+  },
+  {
+    key: "actor_name",
+    header: "Who",
+    width: "secondary",
+    hideOnMobile: true,
+    render: (event) => (
+      <div className="flex items-center gap-2">
+        <div className="h-7 w-7 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium">
+          {(event.actor_name || event.actor_email || "S")[0].toUpperCase()}
+        </div>
+        <div>
+          <div className="text-sm font-medium">
+            {event.actor_name || "System"}
+          </div>
+          {event.actor_email && (
+            <div className="text-xs text-muted-foreground">
+              {event.actor_email}
             </div>
-          }
-        />
+          )}
+        </div>
       </div>
-    </FeatureGuard>
+    ),
+  },
+]
+
+// ============================================
+// Page Component
+// ============================================
+
+export default function ActivityLogPage() {
+  return (
+    <ListPageTemplate
+      tableKey="activity"
+      title="Activity Log"
+      description="Track all changes and actions in your workspace"
+      icon={Activity}
+      feature="activityLog"
+      config={AUDIT_EVENT_LIST_CONFIG}
+      columns={columns}
+      filters={filters}
+      groupByOptions={groupByOptions}
+      metrics={metrics}
+      searchPlaceholder="Search activity..."
+      emptyTitle="No activity yet"
+      emptyDescription="Activity will appear here as changes are made"
+    />
   )
 }

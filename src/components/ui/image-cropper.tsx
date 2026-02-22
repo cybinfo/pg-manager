@@ -161,8 +161,7 @@ export function ImageCropper({
 
   return createPortal(
     <div
-      className="fixed inset-0 flex flex-col bg-black"
-      style={{ zIndex: 99999 }}
+      className="fixed inset-0 z-[var(--z-lightbox)] flex flex-col bg-black"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-gray-900 text-white">

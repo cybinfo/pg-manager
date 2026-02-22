@@ -73,8 +73,8 @@ const UNIT_OPTIONS = [
 function ProductDropdownItem({ product }: { product: Product }) {
   return (
     <>
-      <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-        <Package className="h-4 w-4 text-emerald-600" />
+      <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
+        <Package className="h-4 w-4 text-success" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
@@ -108,13 +108,13 @@ function ProductSelectedCard({
     <div className="space-y-2">
       <Card className={cn(
         "border-2",
-        error ? "border-red-300" : "border-primary/30 bg-primary/5"
+        error ? "border-destructive/30" : "border-primary/30 bg-primary/5"
       )}>
         <CardContent className="p-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <Package className="h-5 w-5 text-emerald-600" />
+              <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
+                <Package className="h-5 w-5 text-success" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -150,7 +150,7 @@ function ProductSelectedCard({
           </div>
         </CardContent>
       </Card>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }
@@ -171,10 +171,10 @@ function ProductSelectedCompact({
     <div className="space-y-2">
       <div className={cn(
         "h-10 flex items-center justify-between gap-2 px-3 rounded-lg border",
-        error ? "border-red-300" : "border-primary/30 bg-primary/5"
+        error ? "border-destructive/30" : "border-primary/30 bg-primary/5"
       )}>
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <Package className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+          <Package className="h-4 w-4 text-success flex-shrink-0" />
           <span className="font-medium truncate text-sm">
             {product.name}
             {product.name_hi && ` (${product.name_hi})`}
@@ -190,7 +190,7 @@ function ProductSelectedCompact({
           </button>
         )}
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }

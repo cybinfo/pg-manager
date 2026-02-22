@@ -24,7 +24,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { BillPaymentForm, BillBreakdown, BillInfoSidebar } from "./_components"
 
 interface Payment {
@@ -149,6 +149,10 @@ ManageKar`
         subtitle={`Bill for ${bill.for_month}`}
         backHref="/bills"
         backLabel="All Bills"
+        breadcrumbs={[
+          { label: "Bills", href: "/bills" },
+          { label: bill.bill_number || "Details" },
+        ]}
         status={bill.status === "paid" ? "active" : bill.status === "overdue" ? "inactive" : "warning"}
         avatar={
           <div className="p-3 bg-primary/10 rounded-lg">

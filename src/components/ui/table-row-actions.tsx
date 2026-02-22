@@ -146,7 +146,7 @@ export function TableRowActions<T>({
               <DropdownMenuItem
                 onClick={handleDelete}
                 disabled={deleteDisabled}
-                className="text-red-600 focus:text-red-600"
+                className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
@@ -182,7 +182,7 @@ export function TableRowActions<T>({
         <Button
           variant="ghost"
           size="icon"
-          className={cn(buttonSize, "text-muted-foreground hover:text-blue-600")}
+          className={cn(buttonSize, "text-muted-foreground hover:text-info")}
           onClick={handleEdit}
           disabled={editDisabled}
           title="Edit"
@@ -194,7 +194,7 @@ export function TableRowActions<T>({
         <Button
           variant="ghost"
           size="icon"
-          className={cn(buttonSize, "text-muted-foreground hover:text-red-600")}
+          className={cn(buttonSize, "text-muted-foreground hover:text-destructive")}
           onClick={handleDelete}
           disabled={deleteDisabled}
           title="Delete"

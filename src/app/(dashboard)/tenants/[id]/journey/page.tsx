@@ -202,7 +202,7 @@ function JourneyPageContent({ tenantId }: JourneyPageContentProps) {
           </p>
           <button
             onClick={() => fetchJourney()}
-            className="text-teal-600 hover:text-teal-700 font-medium"
+            className="text-primary hover:text-primary/80 font-medium"
           >
             Retry
           </button>
@@ -370,7 +370,7 @@ function LinkedVisitorsCard({ visitors }: LinkedVisitorsCardProps) {
           </div>
         ))}
         {hasMore && (
-          <p className="text-xs text-teal-600 text-center pt-2">
+          <p className="text-xs text-primary text-center pt-2">
             +{visitors.length - 5} more visitors
           </p>
         )}

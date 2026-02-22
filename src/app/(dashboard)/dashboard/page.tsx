@@ -432,18 +432,18 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Occupancy Rate - visible to those with rooms.view permission */}
           {canView("rooms.view") && (
-            <Card className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950 dark:to-emerald-950 border-teal-100 dark:border-teal-800">
+            <Card className="bg-primary/10 border-primary/20">
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-card rounded-lg shadow-sm">
-                    <Percent className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                    <Percent className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-teal-700 dark:text-teal-300">{occupancyRate}%</p>
-                    <p className="text-xs text-teal-600 dark:text-teal-400">Occupancy Rate</p>
+                    <p className="text-2xl font-bold text-primary">{occupancyRate}%</p>
+                    <p className="text-xs text-primary/80">Occupancy Rate</p>
                   </div>
                 </div>
-                <p className="text-xs text-teal-600/70 dark:text-teal-400/70 mt-2">
+                <p className="text-xs text-primary/60 mt-2">
                   {stats.occupiedBeds}/{stats.totalBeds} beds filled
                 </p>
               </CardContent>
@@ -453,17 +453,17 @@ export default function DashboardPage() {
           {/* Overdue Payments - visible to those with payments.view permission */}
           {canView("payments.view") && (
             <Link href="/payments">
-              <Card className={`h-full ${stats.overdueCount > 0 ? "bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950 dark:to-red-950 border-rose-100 dark:border-rose-800" : "bg-card"}`}>
+              <Card className={`h-full ${stats.overdueCount > 0 ? "bg-destructive/10 border-destructive/20" : "bg-card"}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg shadow-sm ${stats.overdueCount > 0 ? "bg-card" : "bg-muted"}`}>
-                      <Clock className={`h-4 w-4 ${stats.overdueCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground"}`} />
+                      <Clock className={`h-4 w-4 ${stats.overdueCount > 0 ? "text-destructive" : "text-foreground"}`} />
                     </div>
                     <div>
-                      <p className={`text-2xl font-bold ${stats.overdueCount > 0 ? "text-rose-700 dark:text-rose-300" : "text-foreground"}`}>
+                      <p className={`text-2xl font-bold ${stats.overdueCount > 0 ? "text-destructive" : "text-foreground"}`}>
                         {stats.overdueCount}
                       </p>
-                      <p className={`text-xs ${stats.overdueCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground"}`}>
+                      <p className={`text-xs ${stats.overdueCount > 0 ? "text-destructive" : "text-foreground"}`}>
                         Overdue Payments
                       </p>
                     </div>
@@ -476,17 +476,17 @@ export default function DashboardPage() {
           {/* Open Complaints - visible to those with complaints.view permission */}
           {canView("complaints.view") && (
             <Link href="/complaints">
-              <Card className={`h-full ${stats.openComplaints > 0 ? "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border-amber-100 dark:border-amber-800" : "bg-card"}`}>
+              <Card className={`h-full ${stats.openComplaints > 0 ? "bg-warning/10 border-warning/20" : "bg-card"}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg shadow-sm ${stats.openComplaints > 0 ? "bg-card" : "bg-muted"}`}>
-                      <MessageSquare className={`h-4 w-4 ${stats.openComplaints > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`} />
+                      <MessageSquare className={`h-4 w-4 ${stats.openComplaints > 0 ? "text-warning" : "text-foreground"}`} />
                     </div>
                     <div>
-                      <p className={`text-2xl font-bold ${stats.openComplaints > 0 ? "text-amber-700 dark:text-amber-300" : "text-foreground"}`}>
+                      <p className={`text-2xl font-bold ${stats.openComplaints > 0 ? "text-warning" : "text-foreground"}`}>
                         {stats.openComplaints}
                       </p>
-                      <p className={`text-xs ${stats.openComplaints > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>
+                      <p className={`text-xs ${stats.openComplaints > 0 ? "text-warning" : "text-foreground"}`}>
                         Open Complaints
                       </p>
                     </div>
@@ -499,17 +499,17 @@ export default function DashboardPage() {
           {/* Exiting Soon - visible to those with tenants.view permission */}
           {canView("tenants.view") && (
             <Link href="/tenants">
-              <Card className={`h-full ${stats.expiringLeases > 0 ? "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-100 dark:border-blue-800" : "bg-card"}`}>
+              <Card className={`h-full ${stats.expiringLeases > 0 ? "bg-info/10 border-info/20" : "bg-card"}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg shadow-sm ${stats.expiringLeases > 0 ? "bg-card" : "bg-muted"}`}>
-                      <CalendarDays className={`h-4 w-4 ${stats.expiringLeases > 0 ? "text-blue-600 dark:text-blue-400" : "text-foreground"}`} />
+                      <CalendarDays className={`h-4 w-4 ${stats.expiringLeases > 0 ? "text-info" : "text-foreground"}`} />
                     </div>
                     <div>
-                      <p className={`text-2xl font-bold ${stats.expiringLeases > 0 ? "text-blue-700 dark:text-blue-300" : "text-foreground"}`}>
+                      <p className={`text-2xl font-bold ${stats.expiringLeases > 0 ? "text-info" : "text-foreground"}`}>
                         {stats.expiringLeases}
                       </p>
-                      <p className={`text-xs ${stats.expiringLeases > 0 ? "text-blue-600 dark:text-blue-400" : "text-foreground"}`}>
+                      <p className={`text-xs ${stats.expiringLeases > 0 ? "text-info" : "text-foreground"}`}>
                         Exiting Soon (30d)
                       </p>
                     </div>
@@ -565,10 +565,10 @@ export default function DashboardPage() {
                 <Link href="/library-attendance" className="block">
                   <div className="p-3 bg-card/70 rounded-lg hover:bg-card transition-colors">
                     <div className="flex items-center gap-2 mb-1">
-                      <Clock className="h-4 w-4 text-green-500" />
+                      <Clock className="h-4 w-4 text-success" />
                       <span className="text-xs text-purple-600 dark:text-purple-400">Checked In Now</span>
                     </div>
-                    <p className="text-2xl font-bold text-green-600">{stats.libraryCheckedIn}</p>
+                    <p className="text-2xl font-bold text-success">{stats.libraryCheckedIn}</p>
                   </div>
                 </Link>
                 <Link href="/library-attendance/new" className="block">
@@ -699,7 +699,7 @@ export default function DashboardPage() {
                 key={i}
                 href={item.href}
                 className={`flex items-center justify-between px-4 py-3 transition-colors ${
-                  item.done ? "bg-teal-50/30 dark:bg-teal-950/30" : "hover:bg-muted"
+                  item.done ? "bg-primary/5" : "hover:bg-muted"
                 }`}
               >
                 <div className="flex items-center gap-3">

@@ -176,8 +176,8 @@ export default function RefundDetailPage() {
           backHref="/refunds"
           backLabel="All Refunds"
           avatar={
-            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-              <Wallet className="h-8 w-8 text-green-600" />
+            <div className="p-3 bg-success/10 rounded-lg">
+              <Wallet className="h-8 w-8 text-success" />
             </div>
           }
           status={
@@ -317,7 +317,7 @@ export default function RefundDetailPage() {
                   />
                   <InfoRow
                     label="Amount"
-                    value={<span className="text-xl font-bold text-green-600">{formatCurrency(refund.amount)}</span>}
+                    value={<span className="text-xl font-bold text-success">{formatCurrency(refund.amount)}</span>}
                   />
                 </div>
                 <InfoRow
@@ -373,7 +373,7 @@ export default function RefundDetailPage() {
           >
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <div className="h-2 w-2 rounded-full bg-blue-500 mt-2" />
+                <div className="h-2 w-2 rounded-full bg-info mt-2" />
                 <div>
                   <p className="text-sm font-medium">Created</p>
                   <p className="text-xs text-muted-foreground">{formatDateTime(refund.created_at)}</p>
@@ -381,7 +381,7 @@ export default function RefundDetailPage() {
               </div>
               {refund.processed_at && (
                 <div className="flex items-start gap-3">
-                  <div className="h-2 w-2 rounded-full bg-green-500 mt-2" />
+                  <div className="h-2 w-2 rounded-full bg-success mt-2" />
                   <div>
                     <p className="text-sm font-medium">Processed</p>
                     <p className="text-xs text-muted-foreground">{formatDateTime(refund.processed_at)}</p>

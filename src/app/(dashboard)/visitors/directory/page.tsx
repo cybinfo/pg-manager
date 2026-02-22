@@ -56,9 +56,9 @@ import {
 // ============================================
 
 const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-blue-100 text-blue-700",
+  tenant_visitor: "bg-info/10 text-info",
   enquiry: "bg-purple-100 text-purple-700",
-  service_provider: "bg-orange-100 text-orange-700",
+  service_provider: "bg-warning/10 text-warning",
   general: "bg-muted text-foreground",
 }
 
@@ -224,8 +224,8 @@ export default function VisitorDirectoryPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Star className="h-5 w-5 text-yellow-600" />
+                <div className="p-2 bg-warning/10 rounded-lg">
+                  <Star className="h-5 w-5 text-warning" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{metrics.frequent}</p>
@@ -237,8 +237,8 @@ export default function VisitorDirectoryPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Wrench className="h-5 w-5 text-orange-600" />
+                <div className="p-2 bg-warning/10 rounded-lg">
+                  <Wrench className="h-5 w-5 text-warning" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{metrics.serviceProviders}</p>
@@ -250,8 +250,8 @@ export default function VisitorDirectoryPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <Ban className="h-5 w-5 text-red-600" />
+                <div className="p-2 bg-destructive/10 rounded-lg">
+                  <Ban className="h-5 w-5 text-destructive" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{metrics.blocked}</p>
@@ -315,9 +315,9 @@ export default function VisitorDirectoryPage() {
                 key={contact.id}
                 className={
                   contact.is_blocked
-                    ? "border-red-200 bg-red-50/30"
+                    ? "border-destructive/30 bg-destructive/5"
                     : contact.is_frequent
-                    ? "border-yellow-200 bg-yellow-50/30"
+                    ? "border-warning/30 bg-warning/5"
                     : ""
                 }
               >
@@ -334,13 +334,13 @@ export default function VisitorDirectoryPage() {
                             {VISITOR_TYPE_LABELS[contact.visitor_type]}
                           </span>
                           {contact.is_frequent && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                            <span className="flex items-center gap-1 px-2 py-0.5 bg-warning/10 text-warning rounded-full text-xs font-medium">
                               <Star className="h-3 w-3" />
                               Frequent
                             </span>
                           )}
                           {contact.is_blocked && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                            <span className="flex items-center gap-1 px-2 py-0.5 bg-destructive/10 text-destructive rounded-full text-xs font-medium">
                               <Ban className="h-3 w-3" />
                               Blocked
                             </span>
@@ -417,7 +417,7 @@ export default function VisitorDirectoryPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleToggleBlocked(contact)}
-                            className={contact.is_blocked ? "text-green-600" : "text-red-600"}
+                            className={contact.is_blocked ? "text-success" : "text-destructive"}
                           >
                             {contact.is_blocked ? (
                               <>

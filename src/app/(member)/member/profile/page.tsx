@@ -13,6 +13,7 @@ import {
   Armchair,
   Lock,
   FileText,
+  AlertCircle,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { ProfileFieldRow } from "@/components/portal"
@@ -28,8 +29,10 @@ export default function MemberProfilePage() {
 
   if (!member) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>Member profile not found</p>
+      <div className="flex flex-col items-center justify-center h-64">
+        <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Profile Not Found</h2>
+        <p className="text-muted-foreground">Unable to load your member profile.</p>
       </div>
     )
   }
@@ -57,13 +60,13 @@ export default function MemberProfilePage() {
               <div className="flex items-center gap-2 mt-2">
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                   member.status === "active"
-                    ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300"
-                    : "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300"
+                    ? "bg-success/10 text-success"
+                    : "bg-warning/10 text-warning"
                 }`}>
                   {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
                 </span>
                 {member.preferred_slot && (
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
                     {member.preferred_slot}
                   </span>
                 )}
@@ -177,11 +180,11 @@ export default function MemberProfilePage() {
                 <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                   <div>
                     <p className="text-sm text-muted-foreground">Hours Used</p>
-                    <p className="font-medium text-amber-600">{member.hours_used?.toFixed(1) || 0}h</p>
+                    <p className="font-medium text-warning">{member.hours_used?.toFixed(1) || 0}h</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Hours Remaining</p>
-                    <p className="font-medium text-emerald-600">{member.hours_balance?.toFixed(1) || 0}h</p>
+                    <p className="font-medium text-success">{member.hours_balance?.toFixed(1) || 0}h</p>
                   </div>
                 </div>
               </>

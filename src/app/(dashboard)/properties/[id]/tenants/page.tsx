@@ -92,7 +92,7 @@ export default function PropertyTenantsPage() {
       key: "name",
       header: "Tenant",
       render: (tenant) => (
-        <Link href={`/tenants/${tenant.id}`} className="font-medium text-teal-600 hover:underline">
+        <Link href={`/tenants/${tenant.id}`} className="font-medium text-primary hover:underline">
           {tenant.name}
         </Link>
       )

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { ConfirmDialog } from "@/components/ui/form-dialog"
 import {
   User,
   Phone,
@@ -235,6 +235,10 @@ export default function TenantDetailPage() {
         }
         backHref="/tenants"
         backLabel="All Tenants"
+        breadcrumbs={[
+          { label: "Tenants", href: "/tenants" },
+          { label: tenant.person?.name || tenant.name || "Details" },
+        ]}
         status={getStatusKey(tenant.status)}
         avatar={
           <Avatar
@@ -369,7 +373,7 @@ export default function TenantDetailPage() {
           {tenant.expected_exit_date && (
             <InfoRow
               label="Expected Exit"
-              value={<span className="text-amber-600">{formatDate(tenant.expected_exit_date)}</span>}
+              value={<span className="text-warning">{formatDate(tenant.expected_exit_date)}</span>}
               icon={Clock}
             />
           )}

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
+import { Select } from "@/components/ui/form-components"
 import {
   CreditCard,
   IndianRupee,
@@ -190,18 +191,15 @@ export default function TenantPaymentsPage() {
       {years.length > 0 && (
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <select
+          <Select
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
-            className="h-9 px-3 rounded-md border border-input bg-background text-sm"
-          >
-            <option value="all">All Years</option>
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
+            aria-label="Filter by year"
+            options={[
+              { value: "all", label: "All Years" },
+              ...years.map((year) => ({ value: String(year), label: String(year) })),
+            ]}
+          />
         </div>
       )}
 
@@ -225,8 +223,8 @@ export default function TenantPaymentsPage() {
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
-                          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-full mt-1">
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          <div className="p-2 bg-success/10 rounded-full mt-1">
+                            <CheckCircle className="h-4 w-4 text-success" />
                           </div>
                           <div>
                             <p className="font-semibold text-lg">{formatCurrency(payment.amount)}</p>
@@ -266,7 +264,7 @@ export default function TenantPaymentsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+                            className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/5"
                             onClick={() => openReportDialog(payment)}
                             title="Report issue with this payment"
                           >

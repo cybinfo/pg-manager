@@ -357,7 +357,7 @@ export function ApprovalReviewDialog({
                 variant="outline"
                 onClick={handleReject}
                 disabled={processing}
-                className="text-rose-600"
+                className="text-destructive"
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Reject
@@ -365,7 +365,7 @@ export function ApprovalReviewDialog({
               <Button
                 onClick={handleApprove}
                 disabled={processing}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-success hover:bg-success/90"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Approve

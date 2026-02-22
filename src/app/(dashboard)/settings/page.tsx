@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useCallback, useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import {
   Settings,
@@ -77,10 +78,34 @@ const defaultConfigurableRoomTypes: ConfigurableRoomType[] = [
   { code: "dormitory", name: "Dormitory", default_rent: 4000, default_deposit: 4000, is_enabled: false, display_order: 4 },
 ]
 
-export default function SettingsPage() {
+const VALID_TABS = ["profile", "room-types", "billing", "food", "expenses", "notifications", "features", "defaults"] as const
+type TabId = typeof VALID_TABS[number]
+
+const DEFAULT_TAB: TabId = "profile"
+
+function isValidTab(tab: string | null): tab is TabId {
+  return tab !== null && (VALID_TABS as readonly string[]).includes(tab)
+}
+
+function SettingsContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, profile } = useAuth()
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState("profile")
+
+  const tabParam = searchParams.get("tab")
+  const activeTab: TabId = isValidTab(tabParam) ? tabParam : DEFAULT_TAB
+
+  const setActiveTab = useCallback((tab: TabId) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (tab === DEFAULT_TAB) {
+      params.delete("tab")
+    } else {
+      params.set("tab", tab)
+    }
+    const query = params.toString()
+    router.replace(`/settings${query ? `?${query}` : ""}`)
+  }, [router, searchParams])
 
   // Profile
   const [owner, setOwner] = useState<Owner | null>(null)
@@ -235,7 +260,7 @@ export default function SettingsPage() {
     }
   }
 
-  const tabs = [
+  const tabs: { id: TabId; label: string; icon: typeof User }[] = [
     { id: "profile", label: "Profile", icon: User },
     { id: "room-types", label: "Room Types", icon: Bed },
     { id: "billing", label: "Billing & Charges", icon: CreditCard },
@@ -366,5 +391,13 @@ export default function SettingsPage() {
       )}
     </div>
     </OwnerGuard>
+  )
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<PageSkeleton variant="form" />}>
+      <SettingsContent />
+    </Suspense>
   )
 }

@@ -43,10 +43,10 @@ interface RawNotice {
 }
 
 const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
-  general: { label: "General", color: "text-blue-700 dark:text-blue-300", bgColor: "bg-blue-100 dark:bg-blue-900", icon: Megaphone },
-  maintenance: { label: "Maintenance", color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-100 dark:bg-orange-900", icon: Wrench },
-  payment_reminder: { label: "Payment", color: "text-green-700 dark:text-green-300", bgColor: "bg-green-100 dark:bg-green-900", icon: CreditCard },
-  emergency: { label: "Emergency", color: "text-red-700 dark:text-red-300", bgColor: "bg-red-100 dark:bg-red-900", icon: AlertTriangle },
+  general: { label: "General", color: "text-info", bgColor: "bg-info/10", icon: Megaphone },
+  maintenance: { label: "Maintenance", color: "text-warning", bgColor: "bg-warning/10", icon: Wrench },
+  payment_reminder: { label: "Payment", color: "text-success", bgColor: "bg-success/10", icon: CreditCard },
+  emergency: { label: "Emergency", color: "text-destructive", bgColor: "bg-destructive/10", icon: AlertTriangle },
 }
 
 export default function TenantNoticesPage() {
@@ -151,7 +151,7 @@ export default function TenantNoticesPage() {
             return (
               <Card
                 key={notice.id}
-                className={notice.type === "emergency" ? "border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/50" : ""}
+                className={notice.type === "emergency" ? "border-destructive/20 bg-destructive/5" : ""}
               >
                 <CardContent className="p-4 md:p-6">
                   <div className="flex items-start gap-4">

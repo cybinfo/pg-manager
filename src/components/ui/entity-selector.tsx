@@ -359,7 +359,7 @@ export function EntitySelector<T extends { id: string }>({
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => setIsOpen(true)}
             disabled={disabled}
-            className={cn("pl-10 pr-10", error && "border-red-300")}
+            className={cn("pl-10 pr-10", error && "border-destructive/30")}
           />
           {loading && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
@@ -520,7 +520,7 @@ export function EntitySelector<T extends { id: string }>({
         </Card>
       )}
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
       {required && !selectedItem && config.searchHint && (
         <p className="text-xs text-muted-foreground">
           {config.searchHint}

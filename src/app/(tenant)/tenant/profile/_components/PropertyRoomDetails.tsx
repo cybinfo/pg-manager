@@ -47,7 +47,7 @@ export function PropertyRoomDetails({ tenant, onReport }: PropertyRoomDetailsPro
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+                  className="h-7 w-7 text-warning hover:text-warning hover:bg-warning/5"
                   onClick={() => onReport(
                     "Room Assignment",
                     "Room " + tenant.room!.room_number + " (" + (tenant.room!.room_type || "Standard") + ")",
@@ -68,7 +68,7 @@ export function PropertyRoomDetails({ tenant, onReport }: PropertyRoomDetailsPro
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-1 -right-1 h-5 w-5 text-warning hover:text-warning hover:bg-warning/5 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => onReport("Floor", String(tenant.room!.floor), "room_issue")}
                     title="Report issue with floor"
                   >
@@ -82,7 +82,7 @@ export function PropertyRoomDetails({ tenant, onReport }: PropertyRoomDetailsPro
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-1 -right-1 h-5 w-5 text-warning hover:text-warning hover:bg-warning/5 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => onReport("AC Status", tenant.room!.has_ac ? "Yes" : "No", "room_issue")}
                   title="Report issue with AC status"
                 >
@@ -95,7 +95,7 @@ export function PropertyRoomDetails({ tenant, onReport }: PropertyRoomDetailsPro
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-1 -right-1 h-5 w-5 text-warning hover:text-warning hover:bg-warning/5 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => onReport("Attached Bathroom", tenant.room!.has_attached_bathroom ? "Yes" : "No", "room_issue")}
                   title="Report issue with attached bathroom"
                 >
@@ -111,7 +111,7 @@ export function PropertyRoomDetails({ tenant, onReport }: PropertyRoomDetailsPro
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-5 w-5 text-warning hover:text-warning hover:bg-warning/5 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => onReport("Amenities", tenant.room!.amenities?.join(", ") || "", "room_issue")}
                     title="Report issue with amenities"
                   >

@@ -50,14 +50,14 @@ const columns: Column<SeatItem>[] = [
     render: (seat) => (
       <div className="flex items-center gap-3">
         <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${
-          seat.status === "available" ? "bg-green-100 dark:bg-green-900" :
-          seat.status === "occupied" ? "bg-blue-100 dark:bg-blue-900" :
-          seat.status === "reserved" ? "bg-yellow-100 dark:bg-yellow-900" : "bg-gray-100 dark:bg-gray-800"
+          seat.status === "available" ? "bg-success/10" :
+          seat.status === "occupied" ? "bg-info/10" :
+          seat.status === "reserved" ? "bg-warning/10" : "bg-muted"
         }`}>
           <Armchair className={`h-4 w-4 ${
-            seat.status === "available" ? "text-green-600" :
-            seat.status === "occupied" ? "text-blue-600" :
-            seat.status === "reserved" ? "text-yellow-600" : "text-muted-foreground"
+            seat.status === "available" ? "text-success" :
+            seat.status === "occupied" ? "text-info" :
+            seat.status === "reserved" ? "text-warning" : "text-muted-foreground"
           }`} />
         </div>
         <div>

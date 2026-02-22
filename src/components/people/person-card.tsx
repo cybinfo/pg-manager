@@ -37,14 +37,14 @@ import { cn } from "@/lib/utils"
 
 // Tag styling
 const TAG_COLORS: Record<string, string> = {
-  tenant: "bg-blue-100 text-blue-700",
-  staff: "bg-green-100 text-green-700",
-  visitor: "bg-purple-100 text-purple-700",
-  service_provider: "bg-orange-100 text-orange-700",
-  frequent: "bg-yellow-100 text-yellow-700",
-  vip: "bg-amber-100 text-amber-700",
-  blocked: "bg-red-100 text-red-700",
-  verified: "bg-emerald-100 text-emerald-700",
+  tenant: "bg-info/10 text-info",
+  staff: "bg-success/10 text-success",
+  visitor: "bg-primary/10 text-primary",
+  service_provider: "bg-warning/10 text-warning",
+  frequent: "bg-warning/10 text-warning",
+  vip: "bg-warning/10 text-warning",
+  blocked: "bg-destructive/10 text-destructive",
+  verified: "bg-success/10 text-success",
 }
 
 const TAG_ICONS: Record<string, React.ReactNode> = {
@@ -105,10 +105,10 @@ export function PersonCard({
           <div className="flex items-center gap-2">
             <span className="font-medium truncate">{person.name}</span>
             {person.is_verified && (
-              <BadgeCheck className="h-3 w-3 text-emerald-600 flex-shrink-0" />
+              <BadgeCheck className="h-3 w-3 text-success flex-shrink-0" />
             )}
             {person.is_blocked && (
-              <Ban className="h-3 w-3 text-red-600 flex-shrink-0" />
+              <Ban className="h-3 w-3 text-destructive flex-shrink-0" />
             )}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -129,8 +129,8 @@ export function PersonCard({
       className={cn(
         "transition-shadow",
         onClick && "cursor-pointer hover:shadow-md",
-        person.is_blocked && "border-red-200 bg-red-50/30",
-        person.is_verified && !person.is_blocked && "border-emerald-200 bg-emerald-50/30",
+        person.is_blocked && "border-destructive/20 bg-destructive/5",
+        person.is_verified && !person.is_blocked && "border-success/20 bg-success/5",
         className
       )}
       onClick={onClick}
@@ -143,10 +143,10 @@ export function PersonCard({
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-semibold truncate">{person.name}</h3>
                 {person.is_verified && (
-                  <BadgeCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                  <BadgeCheck className="h-4 w-4 text-success flex-shrink-0" />
                 )}
                 {person.is_blocked && (
-                  <Ban className="h-4 w-4 text-red-600 flex-shrink-0" />
+                  <Ban className="h-4 w-4 text-destructive flex-shrink-0" />
                 )}
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">

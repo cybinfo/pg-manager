@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FormField, Select } from "@/components/ui/form-components"
 import {
   Loader2,
   MessageSquare,
@@ -187,44 +187,32 @@ export default function TenantComplaintsPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <select
-                  id="category"
+              <FormField label="Category" htmlFor="category">
+                <Select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                >
-                  {categories.map((cat) => (
-                    <option key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  options={categories}
+                />
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
+              <FormField label="Title" htmlFor="title" required>
                 <Input
-                  id="title"
                   placeholder="Brief description of the issue"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Details</Label>
+              <FormField label="Details" htmlFor="description" hint="Provide as much detail as possible to help resolve the issue faster">
                 <textarea
-                  id="description"
                   placeholder="Provide more details about the issue..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
                   className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
                 />
-              </div>
+              </FormField>
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
@@ -249,8 +237,8 @@ export default function TenantComplaintsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                <Clock className="h-5 w-5 text-orange-600" />
+              <div className="p-2 bg-warning/10 rounded-lg">
+                <Clock className="h-5 w-5 text-warning" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{openComplaints.length}</p>
@@ -262,8 +250,8 @@ export default function TenantComplaintsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-success/10 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-success" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{resolvedComplaints.length}</p>
@@ -347,9 +335,9 @@ export default function TenantComplaintsPage() {
                           </div>
                           <h4 className="font-medium">{complaint.title}</h4>
                           {complaint.resolution_notes && (
-                            <div className="mt-2 p-2 bg-green-50 dark:bg-green-950 rounded text-sm">
-                              <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">Resolution:</p>
-                              <p className="text-green-800 dark:text-green-200">{complaint.resolution_notes}</p>
+                            <div className="mt-2 p-2 bg-success/10 rounded text-sm">
+                              <p className="text-xs text-success font-medium mb-1">Resolution:</p>
+                              <p className="text-success">{complaint.resolution_notes}</p>
                             </div>
                           )}
                           <p className="text-xs text-muted-foreground mt-2">

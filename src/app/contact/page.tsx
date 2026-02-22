@@ -50,7 +50,7 @@ export default function ContactPage() {
       description: "Get a response within 24 hours",
       value: CONTACT.SUPPORT_EMAIL,
       href: `mailto:${CONTACT.SUPPORT_EMAIL}`,
-      color: "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950",
+      color: "text-primary bg-primary/5",
     },
     {
       icon: Phone,
@@ -66,7 +66,7 @@ export default function ContactPage() {
       description: "Quick responses on chat",
       value: CONTACT.PHONE,
       href: `${CONTACT.WHATSAPP_URL}?text=Hi%20ManageKar%20Team!`,
-      color: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950",
+      color: "text-success bg-success/5",
     },
   ]
 
@@ -77,7 +77,7 @@ export default function ContactPage() {
       {/* Hero Section */}
       <section className="relative py-16 px-4 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950">
         <div className="container mx-auto text-center max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <MessageSquare className="h-4 w-4" />
             We&apos;re Here to Help
           </div>
@@ -104,7 +104,7 @@ export default function ContactPage() {
                     <CardDescription>{method.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <p className="font-medium text-teal-600">{method.value}</p>
+                    <p className="font-medium text-primary">{method.value}</p>
                   </CardContent>
                 </Card>
               </a>
@@ -121,9 +121,9 @@ export default function ContactPage() {
               </p>
 
               {submitted ? (
-                <Card className="border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-950">
+                <Card className="border-primary/20 bg-primary/5">
                   <CardContent className="pt-6 text-center">
-                    <CheckCircle className="h-16 w-16 text-teal-500 mx-auto mb-4" />
+                    <CheckCircle className="h-16 w-16 text-primary mx-auto mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Message Sent!</h3>
                     <p className="text-muted-foreground mb-4">
                       Thank you for reaching out. We&apos;ll get back to you soon.
@@ -216,10 +216,10 @@ export default function ContactPage() {
 
             {/* Info Card */}
             <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950 dark:to-emerald-950 border-teal-100 dark:border-teal-800">
+              <Card className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950 dark:to-emerald-950 border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-teal-600" />
+                    <MapPin className="h-5 w-5 text-primary" />
                     Our Office
                   </CardTitle>
                 </CardHeader>
@@ -229,7 +229,7 @@ export default function ContactPage() {
                     Sector 62, Noida<br />
                     Uttar Pradesh, India - 201301
                   </p>
-                  <div className="pt-4 border-t border-teal-200 dark:border-teal-800">
+                  <div className="pt-4 border-t border-primary/20">
                     <p className="text-sm text-muted-foreground mb-2">Business Hours</p>
                     <p className="font-medium">Monday - Saturday</p>
                     <p className="text-muted-foreground">10:00 AM - 6:00 PM IST</p>
@@ -242,24 +242,24 @@ export default function ContactPage() {
                   <CardTitle>Quick Links</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Link href="/help" className="flex items-center gap-2 text-teal-600 hover:underline">
+                  <Link href="/help" className="flex items-center gap-2 text-primary hover:underline">
                     → Help Center & FAQs
                   </Link>
-                  <Link href="/privacy" className="flex items-center gap-2 text-teal-600 hover:underline">
+                  <Link href="/privacy" className="flex items-center gap-2 text-primary hover:underline">
                     → Privacy Policy
                   </Link>
-                  <Link href="/terms" className="flex items-center gap-2 text-teal-600 hover:underline">
+                  <Link href="/terms" className="flex items-center gap-2 text-primary hover:underline">
                     → Terms of Service
                   </Link>
-                  <Link href="/register" className="flex items-center gap-2 text-teal-600 hover:underline">
+                  <Link href="/register" className="flex items-center gap-2 text-primary hover:underline">
                     → Get Started Free
                   </Link>
                 </CardContent>
               </Card>
 
-              <Card className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+              <Card className="bg-warning/10 border-warning/20">
                 <CardContent className="pt-6">
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                  <p className="text-sm text-warning">
                     <strong>Pro Tip:</strong> For fastest response, reach out via WhatsApp
                     during business hours. We typically respond within 30 minutes!
                   </p>

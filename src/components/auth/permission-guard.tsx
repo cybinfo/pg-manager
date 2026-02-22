@@ -86,8 +86,8 @@ export function PermissionGuard({
 
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="p-4 bg-rose-50 rounded-full mb-4">
-          <ShieldAlert className="h-12 w-12 text-rose-500" />
+        <div className="p-4 bg-destructive/10 rounded-full mb-4">
+          <ShieldAlert className="h-12 w-12 text-destructive" />
         </div>
         <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
         <p className="text-muted-foreground mb-4 max-w-md">
@@ -153,8 +153,8 @@ export function OwnerGuard({
 
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="p-4 bg-rose-50 rounded-full mb-4">
-          <ShieldAlert className="h-12 w-12 text-rose-500" />
+        <div className="p-4 bg-destructive/10 rounded-full mb-4">
+          <ShieldAlert className="h-12 w-12 text-destructive" />
         </div>
         <h2 className="text-xl font-semibold mb-2">Owner Access Only</h2>
         <p className="text-muted-foreground mb-4 max-w-md">
@@ -220,8 +220,8 @@ export function PlatformAdminGuard({
 
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="p-4 bg-rose-50 rounded-full mb-4">
-          <ShieldAlert className="h-12 w-12 text-rose-500" />
+        <div className="p-4 bg-destructive/10 rounded-full mb-4">
+          <ShieldAlert className="h-12 w-12 text-destructive" />
         </div>
         <h2 className="text-xl font-semibold mb-2">Platform Admin Access Only</h2>
         <p className="text-muted-foreground mb-4 max-w-md">

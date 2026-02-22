@@ -51,9 +51,9 @@ interface MeterReading {
 }
 
 const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string }> = {
-  electricity: { icon: Zap, color: "text-yellow-700 dark:text-yellow-300", bgColor: "bg-yellow-100 dark:bg-yellow-900" },
-  water: { icon: Droplets, color: "text-blue-700 dark:text-blue-300", bgColor: "bg-blue-100 dark:bg-blue-900" },
-  gas: { icon: Gauge, color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-100 dark:bg-orange-900" },
+  electricity: { icon: Zap, color: "text-warning", bgColor: "bg-warning/10" },
+  water: { icon: Droplets, color: "text-info", bgColor: "bg-info/10" },
+  gas: { icon: Gauge, color: "text-warning", bgColor: "bg-warning/10" },
 }
 
 const statusConfig: Record<string, { status: "success" | "error" | "warning" | "muted"; label: string }> = {
@@ -112,6 +112,10 @@ export default function RoomDetailPage() {
         }
         backHref="/rooms"
         backLabel="All Rooms"
+        breadcrumbs={[
+          { label: "Rooms", href: "/rooms" },
+          { label: `Room ${room.room_number}` },
+        ]}
         status={status.status === "success" ? "active" : status.status === "error" ? "inactive" : status.status}
         avatar={
           <div className="p-3 bg-primary/10 rounded-lg">
@@ -183,7 +187,7 @@ export default function RoomDetailPage() {
           <InfoRow
             label="Available Beds"
             value={
-              <span className={availableBeds > 0 ? "text-green-600" : "text-red-600"}>
+              <span className={availableBeds > 0 ? "text-success" : "text-destructive"}>
                 {availableBeds}
               </span>
             }
@@ -192,7 +196,7 @@ export default function RoomDetailPage() {
             <p className="text-sm text-muted-foreground mb-3">Amenities</p>
             <div className="flex flex-wrap gap-2">
               {room.has_ac && (
-                <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded text-sm">
+                <span className="flex items-center gap-1 px-2 py-1 bg-info/10 text-info rounded text-sm">
                   <Thermometer className="h-3 w-3" />
                   Air Conditioned
                 </span>
@@ -223,7 +227,7 @@ export default function RoomDetailPage() {
               onClick={() => handleStatusChange("available")}
               disabled={isSaving}
             >
-              <div className="h-2 w-2 rounded-full bg-green-500 mr-2" />
+              <div className="h-2 w-2 rounded-full bg-success mr-2" />
               Available
             </Button>
             <Button
@@ -232,7 +236,7 @@ export default function RoomDetailPage() {
               onClick={() => handleStatusChange("occupied")}
               disabled={isSaving}
             >
-              <div className="h-2 w-2 rounded-full bg-red-500 mr-2" />
+              <div className="h-2 w-2 rounded-full bg-destructive mr-2" />
               Occupied
             </Button>
             <Button
@@ -241,7 +245,7 @@ export default function RoomDetailPage() {
               onClick={() => handleStatusChange("partially_occupied")}
               disabled={isSaving}
             >
-              <div className="h-2 w-2 rounded-full bg-yellow-500 mr-2" />
+              <div className="h-2 w-2 rounded-full bg-warning mr-2" />
               Partial
             </Button>
             <Button
@@ -384,7 +388,7 @@ export default function RoomDetailPage() {
                   <div className="text-right">
                     <p className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</p>
                     {reading.units_consumed !== null && (
-                      <p className="text-xs text-orange-600">+{reading.units_consumed} units</p>
+                      <p className="text-xs text-warning">+{reading.units_consumed} units</p>
                     )}
                   </div>
                 </div>

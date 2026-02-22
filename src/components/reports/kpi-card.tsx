@@ -22,12 +22,12 @@ interface KPICardProps {
 }
 
 const colorClasses = {
-  green: { bg: "bg-green-100", text: "text-green-600", icon: "text-green-600" },
-  red: { bg: "bg-red-100", text: "text-red-600", icon: "text-red-600" },
-  blue: { bg: "bg-blue-100", text: "text-blue-600", icon: "text-blue-600" },
-  purple: { bg: "bg-purple-100", text: "text-purple-600", icon: "text-purple-600" },
-  amber: { bg: "bg-amber-100", text: "text-amber-600", icon: "text-amber-600" },
-  rose: { bg: "bg-rose-100", text: "text-rose-600", icon: "text-rose-600" },
+  green: { bg: "bg-success/10", text: "text-success", icon: "text-success" },
+  red: { bg: "bg-destructive/10", text: "text-destructive", icon: "text-destructive" },
+  blue: { bg: "bg-info/10", text: "text-info", icon: "text-info" },
+  purple: { bg: "bg-primary/10", text: "text-primary", icon: "text-primary" },
+  amber: { bg: "bg-warning/10", text: "text-warning", icon: "text-warning" },
+  rose: { bg: "bg-destructive/10", text: "text-destructive", icon: "text-destructive" },
 }
 
 export function KPICard({
@@ -61,7 +61,7 @@ export function KPICard({
             {trend && (
               <div
                 className={`flex items-center text-xs ${
-                  trend.isPositive ? "text-green-600" : "text-red-600"
+                  trend.isPositive ? "text-success" : "text-destructive"
                 }`}
               >
                 {trend.isPositive ? (

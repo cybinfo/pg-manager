@@ -104,7 +104,7 @@ const columns: Column<LibraryItem>[] = [
     defaultVisible: true,
     render: (library) => {
       const percent = library.occupancy_percent || 0
-      const colorClass = percent >= 80 ? "text-red-600" : percent >= 50 ? "text-yellow-600" : "text-green-600"
+      const colorClass = percent >= 80 ? "text-destructive" : percent >= 50 ? "text-warning" : "text-success"
       return (
         <span className={`font-medium ${colorClass}`}>{percent}%</span>
       )
@@ -179,16 +179,16 @@ const columns: Column<LibraryItem>[] = [
     render: (library) => (
       <div className="flex gap-1 flex-wrap">
         {library.has_ac && (
-          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">AC</span>
+          <span className="px-1.5 py-0.5 bg-info/10 text-info rounded text-xs">AC</span>
         )}
         {library.has_wifi && (
-          <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs">WiFi</span>
+          <span className="px-1.5 py-0.5 bg-success/10 text-success rounded text-xs">WiFi</span>
         )}
         {library.has_lockers && (
           <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Lockers</span>
         )}
         {library.has_parking && (
-          <span className="px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded text-xs">Parking</span>
+          <span className="px-1.5 py-0.5 bg-warning/10 text-warning rounded text-xs">Parking</span>
         )}
       </div>
     ),

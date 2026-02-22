@@ -18,7 +18,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2, Clock, RefreshCw } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
+import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
@@ -53,6 +54,9 @@ export default function RenewLibraryMemberPage({
   const { id } = use(params)
   const router = useRouter()
   const { user } = useAuthContext()
+  const { handleSuccess } = useFormSubmit({
+    redirectTo: `/library-members/${id}`,
+  })
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [member, setMember] = useState<MemberData | null>(null)
@@ -264,8 +268,7 @@ export default function RenewLibraryMemberPage({
         .eq("status", "active")
         .neq("id", membership.id)
 
-      showSuccess(`Subscription renewed! Added ${hoursToAdd}h to balance.`)
-      router.push(`/library-members/${id}`)
+      handleSuccess({ message: `Subscription renewed! Added ${hoursToAdd}h to balance.` })
     } catch (error) {
       handleClientError(error, "Renewing subscription")
     } finally {
@@ -310,12 +313,12 @@ export default function RenewLibraryMemberPage({
       </div>
 
       {/* Current Balance Card */}
-      <Card className="border-blue-200 bg-blue-50/50">
+      <Card className="border-info/20 bg-info/5">
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Clock className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-info/10 rounded-lg">
+                <Clock className="h-5 w-5 text-info" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Current Hours Balance</p>
@@ -335,8 +338,8 @@ export default function RenewLibraryMemberPage({
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <RefreshCw className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-success/10 rounded-lg">
+                <RefreshCw className="h-5 w-5 text-success" />
               </div>
               <div>
                 <CardTitle>New Subscription</CardTitle>
@@ -471,7 +474,7 @@ export default function RenewLibraryMemberPage({
                 </div>
                 <div className="flex justify-between text-base font-semibold border-t pt-2 mt-2">
                   <span>New Balance</span>
-                  <span className="text-green-600">{newHoursBalance.toFixed(1)}h</span>
+                  <span className="text-success">{newHoursBalance.toFixed(1)}h</span>
                 </div>
                 <div className="flex justify-between text-base font-semibold">
                   <span>Amount to Pay</span>

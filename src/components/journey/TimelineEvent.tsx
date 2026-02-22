@@ -55,7 +55,7 @@ export function TimelineEvent({
         className={cn(
           "bg-card rounded-lg border border-border shadow-sm overflow-hidden",
           "transition-all duration-200 hover:shadow-md",
-          expanded && "ring-1 ring-teal-200 dark:ring-teal-800"
+          expanded && "ring-1 ring-primary/20"
         )}
       >
         {/* Event header */}
@@ -143,7 +143,7 @@ export function TimelineEvent({
         {!hasQuickActions && event.action_url && (
           <div className="px-4 py-2 border-t border-border">
             <Link href={event.action_url}>
-              <Button variant="ghost" size="sm" className="text-xs text-teal-600 hover:text-teal-700 p-0 h-auto">
+              <Button variant="ghost" size="sm" className="text-xs text-primary hover:text-primary/80 p-0 h-auto">
                 View Details
                 <ExternalLink className="w-3 h-3 ml-1" />
               </Button>
@@ -172,8 +172,8 @@ function AmountBadge({ amount, type }: AmountBadgeProps) {
   }).format(amount)
 
   const colorClasses = {
-    credit: "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300",
-    debit: "bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300",
+    credit: "bg-success/10 text-success",
+    debit: "bg-destructive/10 text-destructive",
     neutral: "bg-muted text-foreground",
   }
 
@@ -355,7 +355,7 @@ export function CompactTimelineEvent({ event, onClick, className }: CompactTimel
           <p
             className={cn(
               "text-xs font-medium",
-              event.amount_type === "credit" ? "text-emerald-600" : "text-foreground"
+              event.amount_type === "credit" ? "text-success" : "text-foreground"
             )}
           >
             {event.amount_type === "credit" ? "+" : ""}

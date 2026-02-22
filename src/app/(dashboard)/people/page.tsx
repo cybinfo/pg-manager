@@ -108,10 +108,10 @@ const columns: Column<Person>[] = [
           <div className="font-medium flex items-center gap-2">
             {person.name}
             {person.is_verified && (
-              <BadgeCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+              <BadgeCheck className="h-4 w-4 text-success shrink-0" />
             )}
             {person.is_blocked && (
-              <Ban className="h-4 w-4 text-red-600 shrink-0" />
+              <Ban className="h-4 w-4 text-destructive shrink-0" />
             )}
           </div>
           <div className="text-xs text-muted-foreground flex items-center gap-1">
@@ -447,7 +447,7 @@ export default function PeoplePage() {
         <div className="flex gap-2">
           {duplicateCount > 0 && (
             <Link href="/people/duplicates">
-              <Button variant="outline" className="border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:border-amber-700 dark:bg-amber-950 dark:hover:bg-amber-900 dark:text-amber-300">
+              <Button variant="outline" className="border-warning/30 bg-warning/10 hover:bg-warning/20 text-warning">
                 <AlertTriangle className="mr-2 h-4 w-4" />
                 {duplicateCount} Duplicate{duplicateCount > 1 ? "s" : ""}
               </Button>

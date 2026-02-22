@@ -101,7 +101,7 @@ function SortableItem({ id, children, isEditMode }: SortableItemProps) {
           {...listeners}
           className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab drag-handle"
         >
-          <div className="bg-card/95 backdrop-blur-sm rounded-md shadow-md border p-1.5 hover:bg-teal-50 dark:hover:bg-teal-950 active:cursor-grabbing">
+          <div className="bg-card/95 backdrop-blur-sm rounded-md shadow-md border p-1.5 hover:bg-primary/5 active:cursor-grabbing">
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>

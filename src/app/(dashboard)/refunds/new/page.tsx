@@ -386,7 +386,7 @@ export default function NewRefundPage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Refund Amount</span>
-                  <span className="text-xl font-bold text-green-600">
+                  <span className="text-xl font-bold text-success">
                     {formData.amount ? formatCurrency(parseFloat(formData.amount)) : "₹0"}
                   </span>
                 </div>
@@ -403,7 +403,7 @@ export default function NewRefundPage() {
 
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Status</span>
-                  <span className={formData.refund_date ? "text-green-600" : "text-yellow-600"}>
+                  <span className={formData.refund_date ? "text-success" : "text-warning"}>
                     {formData.refund_date ? "Completed" : "Pending"}
                   </span>
                 </div>
@@ -418,7 +418,7 @@ export default function NewRefundPage() {
                       </div>
                       <div className="flex justify-between">
                         <span>Final Settlement</span>
-                        <span className={exitClearance.final_amount < 0 ? "text-green-600" : "text-red-600"}>
+                        <span className={exitClearance.final_amount < 0 ? "text-success" : "text-destructive"}>
                           {exitClearance.final_amount < 0 ? "Refund " : "Due "}
                           {formatCurrency(Math.abs(exitClearance.final_amount))}
                         </span>

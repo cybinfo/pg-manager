@@ -71,11 +71,11 @@ export default function LibraryPaymentDetailPage() {
         title={payment.receipt_number || "Payment"}
         subtitle={
           <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-            <span className="text-2xl font-bold text-green-600">
+            <span className="text-2xl font-bold text-success">
               +<Currency amount={payment.amount} />
             </span>
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-              payment.payment_type === "subscription" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" :
+              payment.payment_type === "subscription" ? "bg-info/10 text-info" :
               payment.payment_type === "locker_rent" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" :
               "bg-muted text-muted-foreground"
             }`}>
@@ -87,8 +87,8 @@ export default function LibraryPaymentDetailPage() {
         backLabel="All Payments"
         status={statusConfig?.variant || "muted"}
         avatar={
-          <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
-            <CreditCard className="h-8 w-8 text-green-600" />
+          <div className="p-3 bg-success/10 rounded-xl">
+            <CreditCard className="h-8 w-8 text-success" />
           </div>
         }
         actions={

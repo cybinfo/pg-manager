@@ -55,16 +55,16 @@ export const INQUIRY_SOURCE_LABELS: Record<string, string> = {
 }
 
 export const INQUIRY_STATUS_COLORS: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
-  contacted: "bg-yellow-100 text-yellow-700",
-  converted: "bg-green-100 text-green-700",
+  new: "bg-info/10 text-info",
+  contacted: "bg-warning/10 text-warning",
+  converted: "bg-success/10 text-success",
   closed: "bg-muted text-foreground",
 }
 
 export const INQUIRY_SOURCE_COLORS: Record<string, string> = {
-  website: "bg-purple-100 text-purple-700",
-  whatsapp: "bg-green-100 text-green-700",
-  phone: "bg-orange-100 text-orange-700",
+  website: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
+  whatsapp: "bg-success/10 text-success",
+  phone: "bg-warning/10 text-warning",
 }
 
 // ============================================================================

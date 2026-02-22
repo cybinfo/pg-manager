@@ -137,14 +137,14 @@ export function DemoWatermark() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 pointer-events-none">
-      <div className="bg-amber-500/90 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm">
+      <div className="bg-warning/90 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span className="font-medium">Demo Mode</span>
         </div>
-        <p className="text-xs text-amber-100 mt-1">Data shown is for demonstration only</p>
+        <p className="text-xs text-white/70 mt-1">Data shown is for demonstration only</p>
       </div>
     </div>
   )

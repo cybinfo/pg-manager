@@ -41,7 +41,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 
 interface MeterReading {
@@ -71,9 +71,9 @@ interface Charge {
 }
 
 const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: string; bgColor: string; unit: string }> = {
-  electricity: { label: "Electricity", icon: Zap, color: "text-yellow-700 dark:text-yellow-300", bgColor: "bg-yellow-100 dark:bg-yellow-900", unit: "kWh" },
-  water: { label: "Water", icon: Droplets, color: "text-blue-700 dark:text-blue-300", bgColor: "bg-blue-100 dark:bg-blue-900", unit: "L" },
-  gas: { label: "Gas", icon: Flame, color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-100 dark:bg-orange-900", unit: "m³" },
+  electricity: { label: "Electricity", icon: Zap, color: "text-warning", bgColor: "bg-warning/10", unit: "kWh" },
+  water: { label: "Water", icon: Droplets, color: "text-info", bgColor: "bg-info/10", unit: "L" },
+  gas: { label: "Gas", icon: Flame, color: "text-warning", bgColor: "bg-warning/10", unit: "m³" },
 }
 
 export default function MeterReadingDetailPage() {
@@ -444,7 +444,7 @@ export default function MeterReadingDetailPage() {
                 <div className="text-right">
                   <p className="font-bold">{formatCurrency(charge.amount)}</p>
                   {charge.paid_amount > 0 && (
-                    <p className="text-sm text-green-600">Paid: {formatCurrency(charge.paid_amount)}</p>
+                    <p className="text-sm text-success">Paid: {formatCurrency(charge.paid_amount)}</p>
                   )}
                 </div>
                 <StatusBadge
@@ -502,13 +502,13 @@ export default function MeterReadingDetailPage() {
             </div>
             <div className="text-right">
               {totalPaidAmount > 0 && (
-                <p className="text-sm text-green-600 flex items-center gap-1">
+                <p className="text-sm text-success flex items-center gap-1">
                   <CheckCircle className="h-4 w-4" />
                   {formatCurrency(totalPaidAmount)} paid
                 </p>
               )}
               {totalChargesAmount - totalPaidAmount > 0 && (
-                <p className="text-sm text-amber-600 flex items-center gap-1">
+                <p className="text-sm text-warning flex items-center gap-1">
                   <AlertCircle className="h-4 w-4" />
                   {formatCurrency(totalChargesAmount - totalPaidAmount)} pending
                 </p>

@@ -133,7 +133,7 @@ const columns: Column<MiscTransactionItem>[] = [
     editType: "number",
     editValidation: { min: 0 },
     render: (item) => (
-      <span className={item.transaction_type === "in" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+      <span className={item.transaction_type === "in" ? "text-success font-medium" : "text-destructive font-medium"}>
         {item.transaction_type === "in" ? "+" : "-"}
         {formatCurrency(item.amount)}
       </span>

@@ -48,13 +48,14 @@
 
 "use client"
 
-import { useState, useCallback, useEffect, ChangeEvent, useMemo } from "react"
+import { useState, useCallback, useEffect, useRef, ChangeEvent, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
+import { useUnsavedChanges } from "./useUnsavedChanges"
 
 // ============================================================================
 // TYPES
@@ -159,6 +160,8 @@ export interface UseFormPageReturn<T extends FormData> {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>
   /** True while the form is being submitted */
   saving: boolean
+  /** Whether any form field has been modified from its initial value */
+  hasUnsavedChanges: boolean
   /** Current authenticated user (from useAuthContext) */
   user: ReturnType<typeof useAuthContext>["user"]
   /** Shortcut to user.id (owner ID in most cases) */
@@ -216,8 +219,13 @@ export function useFormPage<T extends FormData>(
   const [formData, setFormData] = useState<T>(initialWithPreSelect)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const initialDataRef = useRef<T>(initialWithPreSelect)
 
   const ownerId = user?.id || ""
+
+  // ---- Unsaved Changes Warning ----
+  useUnsavedChanges(isDirty)
 
   // ---- Change Handlers ----
 
@@ -232,20 +240,29 @@ export function useFormPage<T extends FormData>(
         processedValue = value
       }
 
-      setFormData((prev) => ({
-        ...prev,
-        [name]: processedValue,
-      }))
+      setFormData((prev) => {
+        const next = { ...prev, [name]: processedValue }
+        setIsDirty(JSON.stringify(next) !== JSON.stringify(initialDataRef.current))
+        return next
+      })
     },
     []
   )
 
   const setField = useCallback(<K extends keyof T>(name: K, value: T[K]) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value }
+      setIsDirty(JSON.stringify(next) !== JSON.stringify(initialDataRef.current))
+      return next
+    })
   }, [])
 
   const setFields = useCallback((fields: Partial<T>) => {
-    setFormData((prev) => ({ ...prev, ...fields }))
+    setFormData((prev) => {
+      const next = { ...prev, ...fields }
+      setIsDirty(JSON.stringify(next) !== JSON.stringify(initialDataRef.current))
+      return next
+    })
   }, [])
 
   // ---- Submit Handler ----
@@ -277,6 +294,7 @@ export function useFormPage<T extends FormData>(
         if (customSubmit) {
           const supabase = createClient()
           const customRedirect = await customSubmit(formData, user.id, supabase)
+          setIsDirty(false)
           showSuccess(successMessage)
           router.push(customRedirect || redirectTo)
           return
@@ -333,6 +351,7 @@ export function useFormPage<T extends FormData>(
           }
         }
 
+        setIsDirty(false)
         showSuccess(successMessage)
         router.push(finalRedirect)
       } catch (error: unknown) {
@@ -369,6 +388,7 @@ export function useFormPage<T extends FormData>(
     loading,
     setLoading,
     saving,
+    hasUnsavedChanges: isDirty,
     user,
     ownerId,
     workspaceId,
@@ -441,6 +461,8 @@ export interface UseFormEditPageReturn<T extends FormData> {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>
   /** True while the form is being submitted */
   saving: boolean
+  /** Whether any form field has been modified from its initial/loaded value */
+  hasUnsavedChanges: boolean
   /** Current authenticated user */
   user: ReturnType<typeof useAuthContext>["user"]
   /** Owner ID shortcut */
@@ -481,9 +503,14 @@ export function useFormEditPage<T extends FormData>(
   const [formData, setFormData] = useState<T>(initialData)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
   const [record, setRecord] = useState<Record<string, unknown> | null>(null)
+  const loadedFormDataRef = useRef<T>(initialData)
 
   const ownerId = user?.id || ""
+
+  // ---- Unsaved Changes Warning ----
+  useUnsavedChanges(isDirty)
 
   // ---- Fetch record on mount ----
 
@@ -508,7 +535,10 @@ export function useFormEditPage<T extends FormData>(
       }
 
       setRecord(data as Record<string, unknown>)
-      setFormData(mapToForm(data as Record<string, unknown>))
+      const mappedData = mapToForm(data as Record<string, unknown>)
+      setFormData(mappedData)
+      loadedFormDataRef.current = mappedData
+      setIsDirty(false)
       setLoading(false)
     }
 
@@ -529,20 +559,29 @@ export function useFormEditPage<T extends FormData>(
         processedValue = value
       }
 
-      setFormData((prev) => ({
-        ...prev,
-        [name]: processedValue,
-      }))
+      setFormData((prev) => {
+        const next = { ...prev, [name]: processedValue }
+        setIsDirty(JSON.stringify(next) !== JSON.stringify(loadedFormDataRef.current))
+        return next
+      })
     },
     []
   )
 
   const setField = useCallback(<K extends keyof T>(name: K, value: T[K]) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value }
+      setIsDirty(JSON.stringify(next) !== JSON.stringify(loadedFormDataRef.current))
+      return next
+    })
   }, [])
 
   const setFields = useCallback((fields: Partial<T>) => {
-    setFormData((prev) => ({ ...prev, ...fields }))
+    setFormData((prev) => {
+      const next = { ...prev, ...fields }
+      setIsDirty(JSON.stringify(next) !== JSON.stringify(loadedFormDataRef.current))
+      return next
+    })
   }, [])
 
   // ---- Submit Handler ----
@@ -573,6 +612,7 @@ export function useFormEditPage<T extends FormData>(
         // Custom submit path
         if (customSubmit) {
           const customRedirect = await customSubmit(formData, user.id, id, supabase)
+          setIsDirty(false)
           showSuccess(successMessage)
           router.push(customRedirect || redirectTo)
           return
@@ -598,6 +638,7 @@ export function useFormEditPage<T extends FormData>(
           return
         }
 
+        setIsDirty(false)
         showSuccess(successMessage)
         router.push(redirectTo)
       } catch (error: unknown) {
@@ -619,6 +660,7 @@ export function useFormEditPage<T extends FormData>(
     loading,
     setLoading,
     saving,
+    hasUnsavedChanges: isDirty,
     user,
     ownerId,
     workspaceId,

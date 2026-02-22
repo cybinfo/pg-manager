@@ -228,7 +228,7 @@ function LoginForm() {
       title="Welcome back"
       description="Enter your credentials to access your account"
       headerExtra={inviteToken ? (
-        <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-sm rounded-lg">
+        <div className="mt-2 p-2 bg-success/10 text-success text-sm rounded-lg">
           Sign in to accept your invitation
         </div>
       ) : undefined}

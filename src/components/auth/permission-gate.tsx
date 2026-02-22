@@ -79,7 +79,7 @@ export function AccessDenied({
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       {showIcon && (
-        <div className="p-3 rounded-full bg-rose-100 text-rose-600 mb-4">
+        <div className="p-3 rounded-full bg-destructive/10 text-destructive mb-4">
           <Lock className="h-6 w-6" />
         </div>
       )}
@@ -182,8 +182,8 @@ export function PermissionBadge({ permission, className }: PermissionBadgeProps)
     <span
       className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
         hasIt
-          ? 'bg-emerald-100 text-emerald-700'
-          : 'bg-rose-100 text-rose-700'
+          ? 'bg-success/10 text-success'
+          : 'bg-destructive/10 text-destructive'
       } ${className || ''}`}
     >
       {hasIt ? '✓' : '✗'} {permission}
@@ -203,10 +203,10 @@ interface UpgradePromptProps {
 
 export function UpgradePrompt({ feature, requiredRole = "owner" }: UpgradePromptProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 text-center border rounded-lg bg-amber-50 border-amber-200">
-      <AlertTriangle className="h-8 w-8 text-amber-600 mb-3" />
-      <h3 className="text-lg font-semibold text-amber-900">Feature Locked</h3>
-      <p className="text-sm text-amber-700 mt-1 max-w-sm">
+    <div className="flex flex-col items-center justify-center py-8 px-4 text-center border rounded-lg bg-warning/10 border-warning/20">
+      <AlertTriangle className="h-8 w-8 text-warning mb-3" />
+      <h3 className="text-lg font-semibold text-warning">Feature Locked</h3>
+      <p className="text-sm text-warning/80 mt-1 max-w-sm">
         {feature} requires {requiredRole} access. Contact your administrator to upgrade your permissions.
       </p>
     </div>

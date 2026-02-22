@@ -1,8 +1,9 @@
 "use client"
 
 /**
- * Global Error Boundary (ARCH-003)
- * Catches unhandled errors in the application and displays a user-friendly error page.
+ * Root Error Boundary
+ * Catches unhandled errors across the entire application and displays
+ * a user-friendly error page with recovery options.
  */
 
 import { useEffect } from "react"
@@ -15,17 +16,21 @@ interface ErrorPageProps {
   reset: () => void
 }
 
-export default function GlobalError({ error, reset }: ErrorPageProps) {
+export default function RootError({ error, reset }: ErrorPageProps) {
   useEffect(() => {
-    // Log error to console in development
-    console.error("[GlobalError]", error)
+    console.error("[RootError]", {
+      message: error.message,
+      digest: error.digest,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+    })
   }, [error])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted px-4">
       <div className="max-w-md w-full text-center">
-        <div className="mx-auto w-16 h-16 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center mb-6">
-          <AlertCircle className="w-8 h-8 text-rose-600 dark:text-rose-400" />
+        <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-6">
+          <AlertCircle className="w-8 h-8 text-destructive" />
         </div>
 
         <h1 className="text-2xl font-bold text-foreground mb-2">
@@ -37,7 +42,7 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
         </p>
 
         {process.env.NODE_ENV === "development" && (
-          <div className="mb-6 p-4 bg-muted rounded-lg text-left">
+          <div className="mb-6 p-4 bg-card border rounded-lg text-left">
             <p className="text-sm font-mono text-foreground break-all">
               {error.message}
             </p>

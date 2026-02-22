@@ -243,7 +243,7 @@ export function SessionTimeout({
       <AlertDialog open={showWarning && authReady}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+            <AlertDialogTitle className="flex items-center gap-2 text-warning">
               <Clock className="h-5 w-5" />
               Session Timeout Warning
             </AlertDialogTitle>

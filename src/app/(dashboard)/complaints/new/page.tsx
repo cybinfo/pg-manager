@@ -456,8 +456,8 @@ function NewComplaintForm() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <div className="p-2 bg-warning/10 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-warning" />
               </div>
               <div>
                 <CardTitle>Issue Details</CardTitle>

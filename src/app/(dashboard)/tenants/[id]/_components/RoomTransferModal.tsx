@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,6 +30,7 @@ interface RoomTransferModalProps {
 }
 
 export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: RoomTransferModalProps) {
+  const router = useRouter()
   const [actionLoading, setActionLoading] = useState(false)
   const [transferData, setTransferData] = useState({
     to_room_id: "",
@@ -98,7 +100,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
 
       showSuccess("Room transfer completed!")
       onClose()
-      window.location.reload()
+      router.refresh()
     } catch (error) {
       handleClientError(error, "Transferring room")
     } finally {

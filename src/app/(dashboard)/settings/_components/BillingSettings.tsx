@@ -520,7 +520,7 @@ export function BillingSettings({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() => deleteChargeType(chargeType)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -718,10 +718,10 @@ export function BillingSettings({
 
               {/* Last Generated Info */}
               {autoBillingSettings.last_generated_month && (
-                <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    <span className="text-sm text-green-700 dark:text-green-300">
+                    <Check className="h-4 w-4 text-success" />
+                    <span className="text-sm text-success">
                       Last generated: <strong>{autoBillingSettings.last_generated_month}</strong>
                     </span>
                   </div>

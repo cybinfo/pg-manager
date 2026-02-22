@@ -50,10 +50,10 @@ interface Room {
 }
 
 const noticeTypes = [
-  { value: "general", label: "General", icon: Megaphone, color: "text-blue-600", bgColor: "bg-blue-100" },
-  { value: "maintenance", label: "Maintenance", icon: Wrench, color: "text-orange-600", bgColor: "bg-orange-100" },
-  { value: "payment_reminder", label: "Payment Reminder", icon: CreditCard, color: "text-green-600", bgColor: "bg-green-100" },
-  { value: "emergency", label: "Emergency", icon: AlertTriangle, color: "text-red-600", bgColor: "bg-red-100" },
+  { value: "general", label: "General", icon: Megaphone, color: "text-info", bgColor: "bg-info/10" },
+  { value: "maintenance", label: "Maintenance", icon: Wrench, color: "text-warning", bgColor: "bg-warning/10" },
+  { value: "payment_reminder", label: "Payment Reminder", icon: CreditCard, color: "text-success", bgColor: "bg-success/10" },
+  { value: "emergency", label: "Emergency", icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
 ]
 
 export default function NoticeDetailPage() {
@@ -236,9 +236,13 @@ export default function NoticeDetailPage() {
         subtitle={typeConfig?.label || formData.type}
         backHref="/notices"
         backLabel="All Notices"
+        breadcrumbs={[
+          { label: "Notices", href: "/notices" },
+          { label: notice.title || "Edit Notice" },
+        ]}
         avatar={
-          <div className={`p-3 rounded-lg ${typeConfig?.bgColor || "bg-blue-100"}`}>
-            <TypeIcon className={`h-8 w-8 ${typeConfig?.color || "text-blue-600"}`} />
+          <div className={`p-3 rounded-lg ${typeConfig?.bgColor || "bg-info/10"}`}>
+            <TypeIcon className={`h-8 w-8 ${typeConfig?.color || "text-info"}`} />
           </div>
         }
         status={

@@ -51,8 +51,8 @@ const columns: Column<Product>[] = [
     editValidation: { required: true, minLength: 2 },
     render: (product) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-teal-100 flex items-center justify-center">
-          <Package className="h-4 w-4 text-teal-600" />
+        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Package className="h-4 w-4 text-primary" />
         </div>
         <div>
           <div className="font-medium">{product.name}</div>

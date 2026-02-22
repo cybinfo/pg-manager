@@ -53,7 +53,7 @@ export function FormField({
       <div className="flex items-center justify-between">
         <Label htmlFor={fieldId} className="text-sm font-medium">
           {label}
-          {required && <span className="text-rose-500 ml-1" aria-hidden="true">*</span>}
+          {required && <span className="text-destructive ml-1" aria-hidden="true">*</span>}
           {required && <span className="sr-only">(required)</span>}
         </Label>
         {action}
@@ -63,7 +63,7 @@ export function FormField({
         <p id={hintId} className="text-xs text-muted-foreground">{hint}</p>
       )}
       {error && (
-        <p id={errorId} className="text-xs text-rose-500" role="alert">{error}</p>
+        <p id={errorId} className="text-xs text-destructive" role="alert">{error}</p>
       )}
     </div>
   )
@@ -100,7 +100,7 @@ export function Select({
         className={cn(
           "w-full h-10 rounded-lg border border-input bg-card text-sm",
           "transition-all duration-200",
-          "focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500",
+          "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
           "hover:border-muted-foreground",
           "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted",
           "appearance-none cursor-pointer",
@@ -251,7 +251,7 @@ export function TextareaWithCount({
         className={cn(
           "w-full min-h-[100px] px-3 py-2 rounded-lg border border-input bg-card text-sm",
           "transition-all duration-200 resize-y",
-          "focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500",
+          "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
           "placeholder:text-muted-foreground",
           "disabled:cursor-not-allowed disabled:opacity-50",
           className
@@ -357,8 +357,8 @@ export function ToggleSwitch({
         className={cn(
           "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
           // UI-005: Added focus styles for keyboard accessibility
-          "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2",
-          checked ? "bg-teal-500" : "bg-muted",
+          "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+          checked ? "bg-primary" : "bg-muted",
           disabled && "opacity-50 cursor-not-allowed"
         )}
       >

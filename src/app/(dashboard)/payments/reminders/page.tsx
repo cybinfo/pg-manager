@@ -234,7 +234,7 @@ export default function PaymentRemindersPage() {
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600">
+            <div className="text-2xl font-bold text-warning">
               {formatCurrency(totalPendingDues)}
             </div>
           </CardContent>
@@ -247,7 +247,7 @@ export default function PaymentRemindersPage() {
             <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-success">
               {sentReminders.size}
             </div>
           </CardContent>
@@ -271,7 +271,7 @@ export default function PaymentRemindersPage() {
       {tenants.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
+            <CheckCircle2 className="h-12 w-12 text-success mb-4" />
             <h3 className="text-lg font-medium mb-2">All caught up!</h3>
             <p className="text-muted-foreground text-center">
               No tenants have pending dues at the moment.
@@ -311,8 +311,8 @@ export default function PaymentRemindersPage() {
                     <div className="flex items-start gap-4">
                       <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
                         tenant.pendingDues >= tenant.monthly_rent * 2
-                          ? 'bg-red-100 text-red-600'
-                          : 'bg-amber-100 text-amber-600'
+                          ? 'bg-destructive/10 text-destructive'
+                          : 'bg-warning/10 text-warning'
                       }`}>
                         {tenant.pendingDues >= tenant.monthly_rent * 2 ? (
                           <AlertCircle className="h-5 w-5" />
@@ -324,7 +324,7 @@ export default function PaymentRemindersPage() {
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold">{tenant.name}</h3>
                           {isSent && (
-                            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                            <span className="text-xs bg-success/10 text-success px-2 py-0.5 rounded">
                               Sent
                             </span>
                           )}
@@ -354,8 +354,8 @@ export default function PaymentRemindersPage() {
                       <div className="text-right">
                         <div className={`text-xl font-bold ${
                           tenant.pendingDues >= tenant.monthly_rent * 2
-                            ? 'text-red-600'
-                            : 'text-amber-600'
+                            ? 'text-destructive'
+                            : 'text-warning'
                         }`}>
                           {formatCurrency(tenant.pendingDues)}
                         </div>
@@ -407,13 +407,13 @@ export default function PaymentRemindersPage() {
       )}
 
       {/* Tips Card */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-info/10 border-info/20">
         <CardContent className="pt-6">
           <div className="flex gap-3">
-            <Bell className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <Bell className="h-5 w-5 text-info shrink-0 mt-0.5" />
             <div>
-              <h4 className="font-medium text-blue-900 mb-1">Tips for sending reminders</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
+              <h4 className="font-medium text-info mb-1">Tips for sending reminders</h4>
+              <ul className="text-sm text-info/80 space-y-1">
                 <li>• Send reminders 3-5 days before the due date</li>
                 <li>• Click the WhatsApp button to send a pre-formatted message</li>
                 <li>• Mark as sent to track which tenants you&apos;ve reminded</li>

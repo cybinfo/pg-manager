@@ -8,9 +8,9 @@ import { PersonSearchResult } from "@/types/people.types"
 import { VisitorContactSearchResult, VisitorType } from "@/types/visitors.types"
 
 const VISITOR_TYPE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700",
+  tenant_visitor: "bg-info/10 text-info border-info/20",
   enquiry: "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700",
-  service_provider: "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700",
+  service_provider: "bg-warning/10 text-warning border-warning/20",
   general: "bg-muted text-foreground border-border",
 }
 
@@ -67,7 +67,7 @@ export function PersonStepCard({
 
         {/* Legacy contact display (if selected via old method) */}
         {selectedContact && !selectedPerson && (
-          <div className="flex items-center justify-between p-4 bg-card rounded-lg border-2 border-green-200 dark:border-green-800">
+          <div className="flex items-center justify-between p-4 bg-card rounded-lg border-2 border-success/30">
             <div className="flex items-center gap-3">
               <div className={`h-10 w-10 rounded-full flex items-center justify-center ${VISITOR_TYPE_COLORS[selectedContact.visitor_type]}`}>
                 <span />
@@ -76,7 +76,7 @@ export function PersonStepCard({
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{selectedContact.name}</span>
                   {selectedContact.is_frequent && (
-                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    <Star className="h-4 w-4 text-warning fill-warning" />
                   )}
                 </div>
                 <div className="text-sm text-muted-foreground">

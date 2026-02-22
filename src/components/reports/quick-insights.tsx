@@ -21,28 +21,28 @@ interface QuickInsightsProps {
 
 const typeStyles = {
   success: {
-    bg: "bg-green-50",
-    icon: "text-green-600",
-    title: "text-green-800",
-    message: "text-green-700",
+    bg: "bg-success/5",
+    icon: "text-success",
+    title: "text-success",
+    message: "text-success/80",
   },
   warning: {
-    bg: "bg-yellow-50",
-    icon: "text-yellow-600",
-    title: "text-yellow-800",
-    message: "text-yellow-700",
+    bg: "bg-warning/5",
+    icon: "text-warning",
+    title: "text-warning",
+    message: "text-warning/80",
   },
   error: {
-    bg: "bg-red-50",
-    icon: "text-red-600",
-    title: "text-red-800",
-    message: "text-red-700",
+    bg: "bg-destructive/5",
+    icon: "text-destructive",
+    title: "text-destructive",
+    message: "text-destructive/80",
   },
   info: {
-    bg: "bg-blue-50",
-    icon: "text-blue-600",
-    title: "text-blue-800",
-    message: "text-blue-700",
+    bg: "bg-info/5",
+    icon: "text-info",
+    title: "text-info",
+    message: "text-info/80",
   },
 }
 

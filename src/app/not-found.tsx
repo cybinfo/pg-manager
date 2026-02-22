@@ -16,8 +16,8 @@ export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted px-4">
       <div className="max-w-md w-full text-center">
-        <div className="mx-auto w-16 h-16 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center mb-6">
-          <FileQuestion className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+        <div className="mx-auto w-16 h-16 bg-warning/10 rounded-full flex items-center justify-center mb-6">
+          <FileQuestion className="w-8 h-8 text-warning" />
         </div>
 
         <h1 className="text-6xl font-bold text-foreground mb-2">404</h1>

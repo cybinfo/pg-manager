@@ -150,7 +150,7 @@ export function ContextSwitcher() {
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm truncate">{ctx.workspace_name}</span>
                   {ctx.is_default && (
-                    <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                    <Star className="h-3 w-3 text-warning fill-warning" />
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -168,7 +168,7 @@ export function ContextSwitcher() {
                   className="p-1 hover:bg-muted rounded opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Set as default"
                 >
-                  <Star className="h-3 w-3 text-muted-foreground hover:text-amber-500" />
+                  <Star className="h-3 w-3 text-muted-foreground hover:text-warning" />
                 </button>
               )}
             </DropdownMenuItem>

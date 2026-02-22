@@ -98,14 +98,14 @@ interface TimelineEvent {
 // ============================================
 
 const TAG_COLORS: Record<string, string> = {
-  tenant: "bg-blue-100 text-blue-700",
-  staff: "bg-green-100 text-green-700",
+  tenant: "bg-info/10 text-info",
+  staff: "bg-success/10 text-success",
   visitor: "bg-purple-100 text-purple-700",
-  service_provider: "bg-orange-100 text-orange-700",
-  frequent: "bg-yellow-100 text-yellow-700",
-  vip: "bg-amber-100 text-amber-700",
-  blocked: "bg-red-100 text-red-700",
-  verified: "bg-emerald-100 text-emerald-700",
+  service_provider: "bg-warning/10 text-warning",
+  frequent: "bg-warning/10 text-warning",
+  vip: "bg-warning/10 text-warning",
+  blocked: "bg-destructive/10 text-destructive",
+  verified: "bg-success/10 text-success",
 }
 
 const TAG_ICONS: Record<string, React.ReactNode> = {
@@ -442,7 +442,7 @@ export default function PersonDetailPage() {
             <div className="flex items-center gap-2 flex-wrap mt-1">
               {person.tags?.map((tag) => <TagBadge key={tag} tag={tag} />)}
               {person.is_verified && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success">
                   <BadgeCheck className="h-3 w-3" />
                   Verified
                 </span>
@@ -488,11 +488,11 @@ export default function PersonDetailPage() {
 
         {/* Blocked Warning */}
         {person.is_blocked && (
-          <div className="flex items-center gap-3 p-4 rounded-xl border border-red-300 bg-red-50">
-            <AlertTriangle className="h-6 w-6 text-red-600 shrink-0" />
+          <div className="flex items-center gap-3 p-4 rounded-xl border border-destructive/30 bg-destructive/10">
+            <AlertTriangle className="h-6 w-6 text-destructive shrink-0" />
             <div>
-              <p className="font-semibold text-red-700">This person is blocked</p>
-              <p className="text-sm text-red-600">
+              <p className="font-semibold text-destructive">This person is blocked</p>
+              <p className="text-sm text-destructive/80">
                 {person.blocked_reason || "No reason provided"}
                 {person.blocked_at && ` - Blocked on ${formatDate(person.blocked_at)}`}
               </p>
@@ -563,7 +563,7 @@ export default function PersonDetailPage() {
                     value={
                       <div className="flex items-center gap-2">
                         <span className="font-mono">{doc.number}</span>
-                        {doc.verified && <BadgeCheck className="h-4 w-4 text-emerald-600" />}
+                        {doc.verified && <BadgeCheck className="h-4 w-4 text-success" />}
                       </div>
                     }
                   />
@@ -640,8 +640,8 @@ export default function PersonDetailPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${stay.status === "active" ? "bg-blue-100 dark:bg-blue-900" : "bg-muted"}`}>
-                      <Home className={`h-5 w-5 ${stay.status === "active" ? "text-blue-600 dark:text-blue-400" : "text-foreground"}`} />
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${stay.status === "active" ? "bg-info/10" : "bg-muted"}`}>
+                      <Home className={`h-5 w-5 ${stay.status === "active" ? "text-info" : "text-foreground"}`} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -684,15 +684,15 @@ export default function PersonDetailPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${staff.is_active ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
-                      <Briefcase className={`h-5 w-5 ${staff.is_active ? "text-green-600 dark:text-green-400" : "text-foreground"}`} />
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${staff.is_active ? "bg-success/10" : "bg-muted"}`}>
+                      <Briefcase className={`h-5 w-5 ${staff.is_active ? "text-success" : "text-foreground"}`} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Staff Member</span>
                         <StatusBadge status={staff.is_active ? "active" : "inactive"} label={staff.is_active ? "Active" : "Inactive"} />
                         {staff.user_id && (
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Can Login</span>
+                          <span className="px-2 py-0.5 bg-info/10 text-info rounded-full text-xs font-medium">Can Login</span>
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">Added {formatDate(staff.created_at)}</div>
@@ -774,22 +774,22 @@ export default function PersonDetailPage() {
                 {timeline.map((event) => {
                   const getEventIcon = () => {
                     switch (event.type) {
-                      case "tenant_join": return <Home className="h-4 w-4 text-blue-600" />
+                      case "tenant_join": return <Home className="h-4 w-4 text-info" />
                       case "tenant_leave": return <Home className="h-4 w-4 text-muted-foreground" />
-                      case "staff_join": return <Briefcase className="h-4 w-4 text-green-600" />
-                      case "verified": return <BadgeCheck className="h-4 w-4 text-emerald-600" />
-                      case "blocked": return <Ban className="h-4 w-4 text-red-600" />
+                      case "staff_join": return <Briefcase className="h-4 w-4 text-success" />
+                      case "verified": return <BadgeCheck className="h-4 w-4 text-success" />
+                      case "blocked": return <Ban className="h-4 w-4 text-destructive" />
                       default: return <Clock className="h-4 w-4 text-muted-foreground" />
                     }
                   }
 
                   const getEventBg = () => {
                     switch (event.type) {
-                      case "tenant_join": return "bg-blue-100 dark:bg-blue-900"
+                      case "tenant_join": return "bg-info/10"
                       case "tenant_leave": return "bg-muted"
-                      case "staff_join": return "bg-green-100 dark:bg-green-900"
-                      case "verified": return "bg-emerald-100 dark:bg-emerald-900"
-                      case "blocked": return "bg-red-100 dark:bg-red-900"
+                      case "staff_join": return "bg-success/10"
+                      case "verified": return "bg-success/10"
+                      case "blocked": return "bg-destructive/10"
                       default: return "bg-muted"
                     }
                   }
@@ -844,23 +844,23 @@ export default function PersonDetailPage() {
                 {!person.is_verified ? (
                   <PermissionGate permission="tenants.update" hide>
                     <Button variant="outline" size="sm" onClick={handleVerify}>
-                      <BadgeCheck className="mr-2 h-4 w-4 text-emerald-600" />Verify Identity
+                      <BadgeCheck className="mr-2 h-4 w-4 text-success" />Verify Identity
                     </Button>
                   </PermissionGate>
                 ) : (
                   <Button variant="outline" size="sm" disabled>
-                    <BadgeCheck className="mr-2 h-4 w-4 text-emerald-600" />Identity Verified
+                    <BadgeCheck className="mr-2 h-4 w-4 text-success" />Identity Verified
                   </Button>
                 )}
                 {!person.is_blocked ? (
                   <PermissionGate permission="tenants.update" hide>
-                    <Button variant="outline" size="sm" onClick={handleBlock} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                    <Button variant="outline" size="sm" onClick={handleBlock} className="text-destructive hover:text-destructive hover:bg-destructive/10">
                       <Ban className="mr-2 h-4 w-4" />Block Person
                     </Button>
                   </PermissionGate>
                 ) : (
                   <PermissionGate permission="tenants.update" hide>
-                    <Button variant="outline" size="sm" onClick={handleUnblock} className="text-green-600 hover:text-green-700 hover:bg-green-50">
+                    <Button variant="outline" size="sm" onClick={handleUnblock} className="text-success hover:text-success hover:bg-success/10">
                       <Shield className="mr-2 h-4 w-4" />Unblock Person
                     </Button>
                   </PermissionGate>

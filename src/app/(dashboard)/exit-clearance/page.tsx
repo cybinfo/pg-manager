@@ -113,7 +113,7 @@ const columns: Column<ExitClearance>[] = [
       const isRefund = clearance.final_amount < 0
       return (
         <div className="text-right">
-          <span className={`font-medium ${isRefund ? "text-green-600" : "text-red-600"}`}>
+          <span className={`font-medium ${isRefund ? "text-success" : "text-destructive"}`}>
             {isRefund ? "-" : "+"}
             {formatCurrency(Math.abs(clearance.final_amount))}
           </span>
@@ -147,12 +147,12 @@ const columns: Column<ExitClearance>[] = [
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             {clearance.room_inspection_done && (
               <span title="Room Inspected">
-                <CheckCircle className="h-3 w-3 text-green-500" />
+                <CheckCircle className="h-3 w-3 text-success" />
               </span>
             )}
             {clearance.key_returned && (
               <span title="Key Returned">
-                <CheckCircle className="h-3 w-3 text-green-500" />
+                <CheckCircle className="h-3 w-3 text-success" />
               </span>
             )}
           </div>
@@ -163,8 +163,8 @@ const columns: Column<ExitClearance>[] = [
   // Hidden by default columns
   dateColumn("notice_given_date", "Notice Date", { defaultVisible: false }),
   dateColumn("actual_exit_date", "Actual Exit", { defaultVisible: false }),
-  currencyColumn("total_dues", "Total Dues", { defaultVisible: false, color: "text-red-600" }),
-  currencyColumn("total_refundable", "Refundable", { defaultVisible: false, color: "text-green-600" }),
+  currencyColumn("total_dues", "Total Dues", { defaultVisible: false, color: "text-destructive" }),
+  currencyColumn("total_refundable", "Refundable", { defaultVisible: false, color: "text-success" }),
   {
     key: "room_inspection_done",
     header: "Inspection",

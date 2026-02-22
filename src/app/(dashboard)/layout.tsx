@@ -61,7 +61,7 @@ import { DashboardShortcuts } from "@/components/dashboard-shortcuts"
 import { CommandPalette } from "@/components/command-palette"
 import { useFeatures } from "@/lib/features/use-features"
 import { FeatureFlagKey } from "@/lib/features"
-import { getPathPermissions, getPathFeatures } from "@/lib/navigation/config"
+import { getPathPermissions, getPathFeatures, DASHBOARD_MOBILE_NAV, filterNavigation } from "@/lib/navigation/config"
 
 // Navigation item type with optional children for sub-menus
 type NavItem = {
@@ -166,14 +166,8 @@ const navigation: NavItem[] = [
 const pathPermissions = getPathPermissions(navigation)
 const pathFeatures = getPathFeatures(navigation)
 
-// Mobile bottom nav items (5 most used)
-const mobileNavItems = [
-  { name: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Tenants", href: "/tenants", icon: Users },
-  { name: "Payments", href: "/payments", icon: CreditCard },
-  { name: "Bills", href: "/bills", icon: Receipt },
-  { name: "More", href: "#more", icon: MoreHorizontal },
-]
+// Mobile bottom nav items are now sourced from DASHBOARD_MOBILE_NAV
+// and filtered by permissions/features inside DashboardLayoutInner
 
 // Inner layout component that uses auth context
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
@@ -269,6 +263,20 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     })
   }, [baseNavigation, applyOrder, orderLoaded])
 
+  // Filter mobile bottom nav items by permissions and feature flags.
+  // The "More" item (href="#more") is always preserved at the end.
+  const filteredMobileNav = useMemo(() => {
+    const moreItem = DASHBOARD_MOBILE_NAV.find(item => item.href === "#more")
+    const filterable = DASHBOARD_MOBILE_NAV.filter(item => item.href !== "#more")
+    const filtered = filterNavigation(filterable, {
+      hasPermission: (perm: string) => currentContext.isOwner || hasPermission(perm),
+      isFeatureEnabled,
+      isPlatformAdmin,
+    })
+    // Always append the "More" item if it exists
+    return moreItem ? [...filtered, moreItem] : filtered
+  }, [currentContext.isOwner, hasPermission, isFeatureEnabled, isPlatformAdmin])
+
   // Get names array for reordering
   const navNames = finalNavigation.map(item => item.name)
 
@@ -310,7 +318,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <BrandLogo size="lg" hideText linkTo={null} />
-          <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       </div>
     )
@@ -323,7 +331,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <BrandLogo size="lg" hideText linkTo={null} />
-          <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">Redirecting to login...</p>
         </div>
       </div>
@@ -337,7 +345,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <BrandLogo size="lg" hideText linkTo={null} />
-          <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">Setting up your workspace...</p>
         </div>
       </div>
@@ -358,8 +366,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
           <div className="text-center p-8">
-            <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-full mb-4 inline-block">
-              <Shield className="h-12 w-12 text-amber-500" />
+            <div className="p-4 bg-warning/10 rounded-full mb-4 inline-block">
+              <Shield className="h-12 w-12 text-warning" />
             </div>
             <h2 className="text-xl font-semibold mb-2">Feature Not Available</h2>
             <p className="text-muted-foreground mb-4">This feature is not enabled for your subscription.</p>
@@ -376,8 +384,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
           <div className="text-center p-8">
-            <div className="p-4 bg-rose-50 dark:bg-rose-950 rounded-full mb-4 inline-block">
-              <Shield className="h-12 w-12 text-rose-500" />
+            <div className="p-4 bg-destructive/10 rounded-full mb-4 inline-block">
+              <Shield className="h-12 w-12 text-destructive" />
             </div>
             <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
             <p className="text-muted-foreground mb-4">You don't have permission to access this page.</p>
@@ -397,6 +405,13 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     >
     <DemoBanner />
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background">
+      {/* Skip to content link for keyboard navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none"
+      >
+        Skip to main content
+      </a>
       {/* Mobile sidebar backdrop with glass effect */}
       {sidebarOpen && (
         <div
@@ -416,7 +431,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-between h-16 px-4 border-b bg-gradient-to-r from-teal-500 to-emerald-500">
             <Link href="/dashboard" className="flex items-center gap-2 group">
               <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                <Building2 className="h-5 w-5 text-teal-600" />
+                <Building2 className="h-5 w-5 text-primary" />
               </div>
               <span className="text-xl font-bold text-white">ManageKar</span>
             </Link>
@@ -428,6 +443,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 className="hidden lg:flex text-white hover:bg-white/20"
                 onClick={() => setSidebarEditMode(!sidebarEditMode)}
                 title={sidebarEditMode ? "Done editing" : "Reorder menu"}
+                aria-label={sidebarEditMode ? "Done editing sidebar" : "Reorder sidebar menu"}
               >
                 {sidebarEditMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
               </Button>
@@ -436,6 +452,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 size="icon"
                 className="lg:hidden text-white hover:bg-white/20"
                 onClick={() => setSidebarOpen(false)}
+                aria-label="Close sidebar"
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -446,11 +463,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             {/* Edit mode instructions */}
             {sidebarEditMode && (
-              <div className="mb-3 p-2 bg-amber-50 dark:bg-amber-950 rounded-lg text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
+              <div className="mb-3 p-2 bg-warning/10 rounded-lg text-xs text-warning flex items-center justify-between">
                 <span>Use arrows to reorder</span>
                 <button
                   onClick={resetOrder}
-                  className="text-amber-600 hover:text-amber-800 underline"
+                  className="text-warning hover:text-warning/80 underline"
                 >
                   Reset
                 </button>
@@ -503,7 +520,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                             sidebarEditMode ? "pl-6 " : ""
                           }${
                             isParentActive
-                              ? "bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300"
+                              ? "bg-primary/10 text-primary"
                               : "text-muted-foreground hover:bg-muted hover:text-foreground"
                           }`}
                         >
@@ -636,7 +653,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             )}
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-rose-50 dark:hover:bg-rose-950 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-200"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
             >
               <LogOutIcon className="h-5 w-5" />
               Logout
@@ -654,6 +671,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             size="icon"
             className="lg:hidden hover:bg-muted"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -680,7 +698,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               <p className="text-sm font-medium">{displayName}</p>
               <p className="text-xs text-muted-foreground">{displayEmail}</p>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
+            <Button variant="ghost" size="icon" className="rounded-full" aria-label="User profile">
               <div className="h-9 w-9 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-sm font-medium shadow-md shadow-teal-500/20">
                 {displayName[0].toUpperCase()}
               </div>
@@ -689,7 +707,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="p-4 md:p-6 lg:p-8 animate-fade-in-up">
+        <main id="main-content" className="p-4 md:p-6 lg:p-8 animate-fade-in-up">
           {children}
         </main>
       </div>
@@ -697,7 +715,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       {/* Mobile Bottom Navigation - hide when sidebar is open so logout is accessible */}
       <nav className={`mobile-nav lg:hidden transition-opacity duration-200 ${sidebarOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
         <div className="flex items-center justify-around h-16">
-          {mobileNavItems.map((item) => {
+          {filteredMobileNav.map((item) => {
             const isActive = item.href !== "#more" && (pathname === item.href || pathname.startsWith(item.href + "/"))
             return (
               <Link
@@ -706,14 +724,14 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 onClick={() => handleMobileNavClick(item.href)}
                 className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
                   isActive
-                    ? "text-teal-600"
+                    ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <item.icon className={`h-5 w-5 ${isActive ? "animate-bounce-soft" : ""}`} />
                 <span className="text-xs font-medium">{item.name}</span>
                 {isActive && (
-                  <div className="absolute bottom-1 w-1 h-1 rounded-full bg-teal-500" />
+                  <div className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />
                 )}
               </Link>
             )

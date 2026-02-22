@@ -209,11 +209,11 @@ export default function MiscCategoriesPage() {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "in":
-        return <ArrowDownLeft className="h-4 w-4 text-green-600" />
+        return <ArrowDownLeft className="h-4 w-4 text-success" />
       case "out":
-        return <ArrowUpRight className="h-4 w-4 text-red-600" />
+        return <ArrowUpRight className="h-4 w-4 text-destructive" />
       default:
-        return <ArrowLeftRight className="h-4 w-4 text-blue-600" />
+        return <ArrowLeftRight className="h-4 w-4 text-info" />
     }
   }
 
@@ -319,7 +319,7 @@ export default function MiscCategoriesPage() {
                       size="icon"
                       onClick={() => handleDelete(category)}
                     >
-                      <Trash2 className="h-4 w-4 text-red-600" />
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </div>
@@ -374,10 +374,10 @@ export default function MiscCategoriesPage() {
                         className={`flex-1 p-3 rounded-lg border-2 transition-all ${
                           formData.default_type === type
                             ? type === "in"
-                              ? "border-green-500 bg-green-50"
+                              ? "border-success bg-success/10"
                               : type === "out"
-                              ? "border-red-500 bg-red-50"
-                              : "border-blue-500 bg-blue-50"
+                              ? "border-destructive bg-destructive/10"
+                              : "border-info bg-info/10"
                             : "border-border hover:border-border"
                         }`}
                       >

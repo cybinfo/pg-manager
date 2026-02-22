@@ -67,7 +67,7 @@ export function VisitDetailsCard({
 
         {/* Note about ID documents */}
         {selectedPerson && !selectedPerson.id_documents?.length && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+          <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg text-sm text-warning">
             <strong>Note:</strong> This visitor has no ID documents on file.
             ID information is managed in the People module.
           </div>

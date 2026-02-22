@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { QrCode, Info } from "lucide-react"
+import { QrCode, Info, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { MemberQRCode } from "@/components/library"
 
@@ -63,8 +63,10 @@ export default function MemberQRPage() {
 
   if (!member) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>Member data not found</p>
+      <div className="flex flex-col items-center justify-center h-64">
+        <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Active Membership</h2>
+        <p className="text-muted-foreground">You don&apos;t have an active library membership.</p>
       </div>
     )
   }

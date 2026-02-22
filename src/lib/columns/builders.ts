@@ -144,7 +144,7 @@ export function statusColumn(
 // ============================================================================
 
 interface CurrencyColumnOptions extends BaseColumnOptions {
-  /** Text color class (e.g., "text-emerald-600", "text-rose-600"). Default: none */
+  /** Text color class (e.g., "text-success", "text-destructive"). Default: none */
   color?: string
   /** Whether to show the font-medium class. Default: true */
   bold?: boolean
@@ -157,8 +157,8 @@ interface CurrencyColumnOptions extends BaseColumnOptions {
  *
  * @example
  * currencyColumn("monthly_rent", "Rent")
- * currencyColumn("amount", "Amount", { color: "text-emerald-600", bold: true })
- * currencyColumn("amount", "Amount", { color: "text-rose-600", prefix: "-" })
+ * currencyColumn("amount", "Amount", { color: "text-success", bold: true })
+ * currencyColumn("amount", "Amount", { color: "text-destructive", prefix: "-" })
  */
 export function currencyColumn(
   field: string,

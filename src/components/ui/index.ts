@@ -257,11 +257,8 @@ export type { EntitySelectorConfig, EntitySelectorProps, QuickCreateFieldConfig 
 // Avatar Components
 export { Avatar, AvatarGroup, getAvatarUrl } from "./avatar"
 
-// Confirm Dialog
-export { ConfirmDialog } from "./confirm-dialog"
-
-// Form Dialog Components
-export { FormDialog, DeleteDialog } from "./form-dialog"
+// Form Dialog Components (ConfirmDialog, DeleteDialog, FormDialog)
+export { FormDialog, ConfirmDialog, DeleteDialog } from "./form-dialog"
 
 // Pagination Components
 export { Pagination, PaginationCompact } from "./pagination"

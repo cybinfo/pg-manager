@@ -156,8 +156,8 @@ export default function ServicePaymentDetailPage({
           {/* Hero Section */}
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
-                <Hammer className="h-6 w-6 text-green-600" />
+              <div className="h-12 w-12 rounded-lg bg-success/10 flex items-center justify-center">
+                <Hammer className="h-6 w-6 text-success" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">{payment.description}</h1>
@@ -238,7 +238,7 @@ export default function ServicePaymentDetailPage({
                     label="Warranty Expires"
                     value={
                       payment.warranty_expiry ? (
-                        <span className={isWarrantyExpired ? "text-red-600" : "text-green-600"}>
+                        <span className={isWarrantyExpired ? "text-destructive" : "text-success"}>
                           {formatDate(payment.warranty_expiry)}
                           {isWarrantyExpired && " (Expired)"}
                         </span>

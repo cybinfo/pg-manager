@@ -98,7 +98,7 @@ export function PhoneInput({
         {showValidation && touched && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
             {validation.isValid ? (
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-success" />
             ) : displayValue ? (
               <XCircle className="h-4 w-4 text-destructive" />
             ) : null}
@@ -109,7 +109,7 @@ export function PhoneInput({
         <p className="text-xs text-destructive">{validation.error}</p>
       )}
       {!showError && showValidation && touched && validation.isValid && (
-        <p className="text-xs text-green-600">Valid Indian mobile number</p>
+        <p className="text-xs text-success">Valid Indian mobile number</p>
       )}
     </div>
   )

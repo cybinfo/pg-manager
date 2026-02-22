@@ -39,10 +39,10 @@ interface Room {
 }
 
 const noticeTypes = [
-  { value: "general", label: "General", description: "General announcements", icon: Megaphone, color: "text-blue-600" },
-  { value: "maintenance", label: "Maintenance", description: "Scheduled maintenance", icon: Wrench, color: "text-orange-600" },
-  { value: "payment_reminder", label: "Payment Reminder", description: "Payment due reminders", icon: CreditCard, color: "text-green-600" },
-  { value: "emergency", label: "Emergency", description: "Urgent notifications", icon: AlertTriangle, color: "text-red-600" },
+  { value: "general", label: "General", description: "General announcements", icon: Megaphone, color: "text-info" },
+  { value: "maintenance", label: "Maintenance", description: "Scheduled maintenance", icon: Wrench, color: "text-warning" },
+  { value: "payment_reminder", label: "Payment Reminder", description: "Payment due reminders", icon: CreditCard, color: "text-success" },
+  { value: "emergency", label: "Emergency", description: "Urgent notifications", icon: AlertTriangle, color: "text-destructive" },
 ]
 
 const audiences = [
@@ -236,8 +236,8 @@ export default function NewNoticePage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-info/10 rounded-lg">
+                <Users className="h-5 w-5 text-info" />
               </div>
               <div>
                 <CardTitle>Target Audience</CardTitle>
@@ -438,8 +438,8 @@ export default function NewNoticePage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Megaphone className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-success/10 rounded-lg">
+                <Megaphone className="h-5 w-5 text-success" />
               </div>
               <div>
                 <CardTitle>Notice Content</CardTitle>

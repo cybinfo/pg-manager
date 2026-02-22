@@ -301,7 +301,7 @@ export const TENANT_PERMISSIONS: Permission[] = [
 
 // Context type labels and icons
 export const CONTEXT_TYPE_CONFIG: Record<ContextType, { label: string; icon: string; color: string }> = {
-  owner: { label: 'Owner', icon: '👑', color: 'text-amber-600 bg-amber-50' },
-  staff: { label: 'Staff', icon: '👤', color: 'text-blue-600 bg-blue-50' },
-  tenant: { label: 'Tenant', icon: '🏠', color: 'text-emerald-600 bg-emerald-50' },
+  owner: { label: 'Owner', icon: '👑', color: 'text-warning bg-warning/10' },
+  staff: { label: 'Staff', icon: '👤', color: 'text-info bg-info/10' },
+  tenant: { label: 'Tenant', icon: '🏠', color: 'text-success bg-success/10' },
 }

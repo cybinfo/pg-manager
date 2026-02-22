@@ -317,8 +317,8 @@ export default function QRScannerPage() {
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2 text-red-700">
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <div className="flex items-center gap-2 text-destructive">
                   <AlertCircle className="h-4 w-4" />
                   <p className="text-sm">{error}</p>
                 </div>
@@ -377,23 +377,23 @@ export default function QRScannerPage() {
                     key={index}
                     className={`flex items-center gap-3 p-3 rounded-lg border ${
                       checkIn.success
-                        ? "bg-green-50 border-green-200"
-                        : "bg-red-50 border-red-200"
+                        ? "bg-success/10 border-success/20"
+                        : "bg-destructive/10 border-destructive/20"
                     }`}
                   >
                     <div className={`p-1.5 rounded-full ${
-                      checkIn.success ? "bg-green-100" : "bg-red-100"
+                      checkIn.success ? "bg-success/20" : "bg-destructive/20"
                     }`}>
                       {checkIn.success ? (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <CheckCircle className="h-4 w-4 text-success" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-red-600" />
+                        <XCircle className="h-4 w-4 text-destructive" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{checkIn.memberName}</p>
                       <p className={`text-xs ${
-                        checkIn.success ? "text-green-700" : "text-red-700"
+                        checkIn.success ? "text-success" : "text-destructive"
                       }`}>
                         {checkIn.message}
                       </p>

@@ -253,8 +253,8 @@ export default function NewBillPaymentPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <Receipt className="h-5 w-5 text-blue-600" />
+                  <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
+                    <Receipt className="h-5 w-5 text-info" />
                   </div>
                   <div>
                     <CardTitle>New Bill Payment</CardTitle>

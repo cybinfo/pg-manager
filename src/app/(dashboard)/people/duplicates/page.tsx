@@ -72,9 +72,9 @@ const MATCH_TYPE_ICONS: Record<string, React.ReactNode> = {
 }
 
 const MATCH_TYPE_COLORS: Record<string, string> = {
-  phone: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700",
+  phone: "bg-info/10 text-info border-info/30",
   email: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700",
-  aadhaar: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-700",
+  aadhaar: "bg-warning/10 text-warning border-warning/30",
 }
 
 export default function DuplicatesPage() {
@@ -225,8 +225,8 @@ export default function DuplicatesPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
-                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  <div className="p-2 bg-warning/10 rounded-lg">
+                    <AlertTriangle className="h-5 w-5 text-warning" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{duplicateGroups.length}</p>
@@ -238,8 +238,8 @@ export default function DuplicatesPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                    <Phone className="h-5 w-5 text-blue-600" />
+                  <div className="p-2 bg-info/10 rounded-lg">
+                    <Phone className="h-5 w-5 text-info" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">
@@ -268,8 +268,8 @@ export default function DuplicatesPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                    <CreditCard className="h-5 w-5 text-orange-600" />
+                  <div className="p-2 bg-warning/10 rounded-lg">
+                    <CreditCard className="h-5 w-5 text-warning" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold">
@@ -340,7 +340,7 @@ export default function DuplicatesPage() {
                           {persons.map((person, index) => (
                             <div
                               key={person.id}
-                              className={`p-3 border rounded-lg ${index === 0 ? "border-green-300 bg-green-50/50" : ""}`}
+                              className={`p-3 border rounded-lg ${index === 0 ? "border-success/30 bg-success/5" : ""}`}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -349,13 +349,13 @@ export default function DuplicatesPage() {
                                     <div className="flex items-center gap-2">
                                       <span className="font-medium">{person.name}</span>
                                       {person.is_verified && (
-                                        <BadgeCheck className="h-4 w-4 text-emerald-600" />
+                                        <BadgeCheck className="h-4 w-4 text-success" />
                                       )}
                                       {person.is_blocked && (
-                                        <Ban className="h-4 w-4 text-red-600" />
+                                        <Ban className="h-4 w-4 text-destructive" />
                                       )}
                                       {index === 0 && (
-                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full text-xs">
+                                        <span className="px-2 py-0.5 bg-success/10 text-success rounded-full text-xs">
                                           Recommended Primary
                                         </span>
                                       )}
@@ -380,13 +380,13 @@ export default function DuplicatesPage() {
                                   {/* Record counts */}
                                   <div className="flex items-center gap-3 text-xs">
                                     {person.tenant_count > 0 && (
-                                      <span className="flex items-center gap-1 text-blue-600">
+                                      <span className="flex items-center gap-1 text-info">
                                         <Home className="h-3 w-3" />
                                         {person.tenant_count}
                                       </span>
                                     )}
                                     {person.staff_count > 0 && (
-                                      <span className="flex items-center gap-1 text-green-600">
+                                      <span className="flex items-center gap-1 text-success">
                                         <Briefcase className="h-3 w-3" />
                                         {person.staff_count}
                                       </span>

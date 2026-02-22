@@ -172,8 +172,8 @@ export default function NewServiceProviderPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <Wrench className="h-5 w-5 text-amber-600" />
+                  <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                    <Wrench className="h-5 w-5 text-warning" />
                   </div>
                   <div>
                     <CardTitle>New Service Provider</CardTitle>

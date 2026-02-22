@@ -21,7 +21,8 @@ import {
   X,
   UserCheck,
 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
+import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { EmailInput } from "@/components/ui/form-components"
 import { handleClientError } from "@/lib/error-handler"
 import { sendInvitationEmail } from "@/lib/email"
@@ -51,6 +52,9 @@ interface RoleAssignment {
 export default function NewStaffPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { handleSuccess } = useFormSubmit({
+    redirectTo: "/staff",
+  })
   const personIdFromUrl = searchParams.get("person_id")
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
@@ -305,7 +309,8 @@ export default function NewStaffPage() {
         if (contextError) {
           console.error("Error creating context:", contextError)
         } else {
-          showSuccess(`Staff member added! ${existingProfile.name} can now login and switch to this staff account.`)
+          handleSuccess({ message: `Staff member added! ${existingProfile.name} can now login and switch to this staff account.` })
+          return
         }
       } else if (workspace) {
         // User doesn't exist - create invitation
@@ -331,7 +336,8 @@ export default function NewStaffPage() {
 
         if (inviteError) {
           console.error("Error creating invitation:", inviteError)
-          showSuccess("Staff member added! (Invitation could not be created)")
+          handleSuccess({ message: "Staff member added! (Invitation could not be created)" })
+          return
         } else if (invitation) {
           // Get role name for email
           const selectedRole = roles.find(r => r.id === primaryRoleId)
@@ -360,17 +366,20 @@ export default function NewStaffPage() {
           })
 
           if (emailResult.success) {
-            showSuccess("Staff member added! An invitation email has been sent.")
+            handleSuccess({ message: "Staff member added! An invitation email has been sent." })
           } else {
             console.warn("Failed to send invitation email:", emailResult.error)
-            showSuccess("Staff member added! Invitation created but email failed to send.")
+            handleSuccess({ message: "Staff member added! Invitation created but email failed to send." })
           }
+          return
         }
       } else {
-        showSuccess("Staff member added successfully!")
+        handleSuccess({ message: "Staff member added successfully!" })
+        return
       }
 
-      router.push("/staff")
+      // Fallback redirect if none of the above branches returned
+      handleSuccess({ message: "Staff member added!" })
     } catch (error) {
       handleClientError(error, "Adding staff member")
     } finally {

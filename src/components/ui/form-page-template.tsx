@@ -46,17 +46,17 @@ import type { FeatureFlagKey } from "@/lib/features"
 
 // Icon background color variants
 const iconColorVariants = {
-  teal: "bg-teal-100 text-teal-600",
-  emerald: "bg-emerald-100 text-emerald-600",
-  green: "bg-green-100 text-green-600",
-  blue: "bg-blue-100 text-blue-600",
+  teal: "bg-primary/10 text-primary",
+  emerald: "bg-success/10 text-success",
+  green: "bg-success/10 text-success",
+  blue: "bg-info/10 text-info",
   purple: "bg-purple-100 text-purple-600",
-  orange: "bg-orange-100 text-orange-600",
-  red: "bg-red-100 text-red-600",
-  amber: "bg-amber-100 text-amber-600",
+  orange: "bg-warning/10 text-warning",
+  red: "bg-destructive/10 text-destructive",
+  amber: "bg-warning/10 text-warning",
   indigo: "bg-indigo-100 text-indigo-600",
   pink: "bg-pink-100 text-pink-600",
-  gray: "bg-gray-100 text-gray-600",
+  gray: "bg-muted text-muted-foreground",
 } as const
 
 export type IconColor = keyof typeof iconColorVariants

@@ -2,18 +2,22 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
+import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { AuthCardLayout } from "@/components/auth/auth-card-layout"
 import { SubmitButton } from "@/components/ui/submit-button"
 
 export default function RegisterPage() {
-  const router = useRouter()
+  const { handleSuccess } = useFormSubmit({
+    successMessage: "Account created successfully!",
+    redirectTo: "/setup",
+    redirectDelay: 2000,
+  })
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -55,12 +59,7 @@ export default function RegisterPage() {
       }
 
       setSuccess(true)
-      showSuccess("Account created successfully!")
-
-      // Redirect to setup wizard after a short delay
-      setTimeout(() => {
-        router.push("/setup")
-      }, 2000)
+      handleSuccess()
     } catch {
       showError("An unexpected error occurred")
     } finally {

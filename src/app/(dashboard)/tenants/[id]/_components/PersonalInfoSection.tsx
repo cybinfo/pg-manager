@@ -48,7 +48,7 @@ export function PersonalInfoSection({ tenant }: PersonalInfoSectionProps) {
         <InfoRow
           label="Phone"
           value={
-            <a href={`tel:${tenant.person?.phone || tenant.phone}`} className="text-teal-600 hover:underline">
+            <a href={`tel:${tenant.person?.phone || tenant.phone}`} className="text-primary hover:underline">
               {tenant.person?.phone || tenant.phone}
             </a>
           }
@@ -58,7 +58,7 @@ export function PersonalInfoSection({ tenant }: PersonalInfoSectionProps) {
           <InfoRow
             label="Email"
             value={
-              <a href={`mailto:${tenant.person?.email || tenant.email}`} className="text-teal-600 hover:underline">
+              <a href={`mailto:${tenant.person?.email || tenant.email}`} className="text-primary hover:underline">
                 {tenant.person?.email || tenant.email}
               </a>
             }
@@ -103,7 +103,7 @@ export function PersonalInfoSection({ tenant }: PersonalInfoSectionProps) {
           <InfoRow
             label="Verification"
             value={
-              <span className="flex items-center gap-1 text-emerald-600">
+              <span className="flex items-center gap-1 text-success">
                 <CheckCircle className="h-4 w-4" /> Verified
               </span>
             }
@@ -125,7 +125,7 @@ export function PersonalInfoSection({ tenant }: PersonalInfoSectionProps) {
                 <p className="font-medium">{contact.name}</p>
                 <p className="text-xs text-muted-foreground">{contact.relation}</p>
               </div>
-              <a href={`tel:${contact.phone}`} className="text-teal-600 hover:underline text-sm">
+              <a href={`tel:${contact.phone}`} className="text-primary hover:underline text-sm">
                 {contact.phone}
               </a>
             </div>
@@ -160,7 +160,7 @@ export function PersonalInfoSection({ tenant }: PersonalInfoSectionProps) {
                 <p className="font-medium">{guardian.name}</p>
                 <p className="text-xs text-muted-foreground">{guardian.relation}</p>
               </div>
-              <a href={`tel:${guardian.phone}`} className="text-teal-600 hover:underline text-sm">
+              <a href={`tel:${guardian.phone}`} className="text-primary hover:underline text-sm">
                 {guardian.phone}
               </a>
             </div>
@@ -182,11 +182,11 @@ export function PersonalInfoSection({ tenant }: PersonalInfoSectionProps) {
           label="Agreement"
           value={
             tenant.agreement_signed ? (
-              <span className="flex items-center gap-1 text-emerald-600">
+              <span className="flex items-center gap-1 text-success">
                 <CheckCircle className="h-4 w-4" /> Signed
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-amber-600">
+              <span className="flex items-center gap-1 text-warning">
                 <AlertCircle className="h-4 w-4" /> Pending
               </span>
             )

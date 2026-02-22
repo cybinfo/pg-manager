@@ -351,9 +351,9 @@ export default function EditRolePage() {
             </Button>
           </Link>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${isSystemRole ? "bg-blue-100" : "bg-purple-100"}`}>
+            <div className={`p-2 rounded-lg ${isSystemRole ? "bg-info/10" : "bg-purple-100"}`}>
               {isSystemRole ? (
-                <Lock className={`h-5 w-5 text-blue-600`} />
+                <Lock className={`h-5 w-5 text-info`} />
               ) : (
                 <Shield className={`h-5 w-5 text-purple-600`} />
               )}
@@ -362,7 +362,7 @@ export default function EditRolePage() {
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl md:text-3xl font-bold">{role.name}</h1>
                 {isSystemRole && (
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                  <span className="px-2 py-0.5 bg-info/10 text-info rounded text-xs font-medium">
                     System Role
                   </span>
                 )}
@@ -388,11 +388,11 @@ export default function EditRolePage() {
       </div>
 
       {isSystemRole && (
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-info/30 bg-info/10">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Lock className="h-5 w-5 text-blue-600" />
-              <p className="text-sm text-blue-800">
+              <Lock className="h-5 w-5 text-info" />
+              <p className="text-sm text-info">
                 System roles cannot be modified. They are managed by the application.
               </p>
             </div>
@@ -449,8 +449,8 @@ export default function EditRolePage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Check className="h-5 w-5 text-blue-600" />
+                <div className="p-2 bg-info/10 rounded-lg">
+                  <Check className="h-5 w-5 text-info" />
                 </div>
                 <div>
                   <CardTitle>Permissions</CardTitle>

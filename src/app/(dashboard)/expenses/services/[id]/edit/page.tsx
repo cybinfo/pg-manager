@@ -309,8 +309,8 @@ export default function EditServicePaymentPage({
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                    <Hammer className="h-5 w-5 text-green-600" />
+                  <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <Hammer className="h-5 w-5 text-success" />
                   </div>
                   <div>
                     <CardTitle>Edit Service Payment</CardTitle>
@@ -487,7 +487,7 @@ export default function EditServicePaymentPage({
                           </div>
                           <div>
                             <div className="text-xs text-muted-foreground">Net Payable</div>
-                            <div className="font-bold text-green-600">
+                            <div className="font-bold text-success">
                               ₹{(formData.net_amount || formData.gross_amount).toFixed(2)}
                             </div>
                           </div>

@@ -80,7 +80,7 @@ export function StayHistorySections({ stays, transfers }: StayHistorySectionsPro
                   <span className="line-through text-muted-foreground">
                     <Currency amount={transfer.old_rent} />
                   </span>{" "}
-                  <Currency amount={transfer.new_rent} className="text-emerald-600" />
+                  <Currency amount={transfer.new_rent} className="text-success" />
                 </p>
               )}
             </div>

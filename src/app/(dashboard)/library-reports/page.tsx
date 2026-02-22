@@ -608,10 +608,10 @@ export default function LibraryReportsPage() {
                     : 0}%
                 </p>
               </div>
-              <div className="p-4 bg-amber-50 rounded-lg">
-                <p className="text-sm text-amber-600 font-medium">Other</p>
-                <p className="text-2xl font-bold text-amber-700">{formatCurrency(reportData.otherRevenue)}</p>
-                <p className="text-xs text-amber-500">
+              <div className="p-4 bg-warning/10 rounded-lg">
+                <p className="text-sm text-warning font-medium">Other</p>
+                <p className="text-2xl font-bold text-warning">{formatCurrency(reportData.otherRevenue)}</p>
+                <p className="text-xs text-warning/80">
                   {reportData.totalRevenueThisMonth > 0
                     ? ((reportData.otherRevenue / reportData.totalRevenueThisMonth) * 100).toFixed(1)
                     : 0}%
@@ -663,21 +663,21 @@ export default function LibraryReportsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <UserPlus className="h-4 w-4 text-green-500" />
+                      <UserPlus className="h-4 w-4 text-success" />
                       <span className="text-sm">New Members</span>
                     </div>
-                    <span className="font-medium text-green-600">+{reportData.newMembersThisMonth}</span>
+                    <span className="font-medium text-success">+{reportData.newMembersThisMonth}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <UserMinus className="h-4 w-4 text-red-500" />
+                      <UserMinus className="h-4 w-4 text-destructive" />
                       <span className="text-sm">Churned</span>
                     </div>
-                    <span className="font-medium text-red-600">-{reportData.churnsThisMonth}</span>
+                    <span className="font-medium text-destructive">-{reportData.churnsThisMonth}</span>
                   </div>
                   <div className="flex items-center justify-between pt-2 border-t">
                     <span className="text-sm font-medium">Net Change</span>
-                    <span className={`font-bold ${reportData.newMembersThisMonth - reportData.churnsThisMonth >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    <span className={`font-bold ${reportData.newMembersThisMonth - reportData.churnsThisMonth >= 0 ? "text-success" : "text-destructive"}`}>
                       {reportData.newMembersThisMonth - reportData.churnsThisMonth >= 0 ? "+" : ""}
                       {reportData.newMembersThisMonth - reportData.churnsThisMonth}
                     </span>

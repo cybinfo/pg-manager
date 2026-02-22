@@ -51,9 +51,9 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 
 const statusColors: Record<string, string> = {
-  available: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  occupied: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-  partially_occupied: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+  available: "bg-success/10 text-success",
+  occupied: "bg-destructive/10 text-destructive",
+  partially_occupied: "bg-warning/10 text-warning",
   maintenance: "bg-muted text-muted-foreground",
 }
 
@@ -113,6 +113,10 @@ export default function PropertyDetailPage() {
         }
         backHref="/properties"
         backLabel="All Properties"
+        breadcrumbs={[
+          { label: "Properties", href: "/properties" },
+          { label: property.name || "Details" },
+        ]}
         status={property.is_active ? "active" : "inactive"}
         avatar={
           <div className="p-3 bg-primary/10 rounded-lg">
@@ -123,7 +127,7 @@ export default function PropertyDetailPage() {
           <div className="flex items-center gap-2 flex-wrap">
             {property.website_enabled && property.website_slug && (
               <Link href={`/pg/${property.website_slug}`} target="_blank">
-                <Button variant="outline" size="sm" className="text-teal-600 border-teal-200 hover:bg-teal-50 dark:text-teal-400 dark:border-teal-800 dark:hover:bg-teal-950">
+                <Button variant="outline" size="sm" className="text-primary border-primary/20 hover:bg-primary/10">
                   <Globe className="mr-2 h-4 w-4" />
                   View Website
                   <ExternalLink className="ml-1 h-3 w-3" />
@@ -198,7 +202,7 @@ export default function PropertyDetailPage() {
             <InfoRow
               label="Manager Phone"
               value={
-                <a href={`tel:${property.manager_phone}`} className="text-teal-600 hover:underline">
+                <a href={`tel:${property.manager_phone}`} className="text-primary hover:underline">
                   {property.manager_phone}
                 </a>
               }
@@ -213,12 +217,12 @@ export default function PropertyDetailPage() {
             title="Tenants on Notice"
             description={`${noticeTenants} tenant(s) leaving soon`}
             icon={AlertCircle}
-            className="border-yellow-200 bg-yellow-50/50 dark:border-yellow-800 dark:bg-yellow-950/50"
+            className="border-warning/20 bg-warning/5"
             items={tenants.filter(t => t.status === "notice_period")}
             keyExtractor={(tenant, _idx) => tenant.id}
             renderItem={(tenant) => (
               <Link href={`/tenants/${tenant.id}`}>
-                <div className="flex items-center justify-between p-2 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900 transition-colors">
+                <div className="flex items-center justify-between p-2 rounded-lg hover:bg-warning/10 transition-colors">
                   <div>
                     <p className="font-medium">{tenant.name}</p>
                     <p className="text-sm text-muted-foreground">Room {tenant.room?.room_number}</p>
@@ -261,7 +265,7 @@ export default function PropertyDetailPage() {
                 </div>
                 <div className="flex gap-1 mt-2">
                   {room.has_ac && (
-                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded text-xs">AC</span>
+                    <span className="px-1.5 py-0.5 bg-info/10 text-info rounded text-xs">AC</span>
                   )}
                   {room.has_attached_bathroom && (
                     <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded text-xs">Bath</span>
@@ -341,7 +345,7 @@ export default function PropertyDetailPage() {
                 <div className="text-right">
                   <p className="font-semibold text-sm">{formatCurrency(bill.total_amount)}</p>
                   {bill.balance_due > 0 && (
-                    <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
+                    <p className="text-xs text-destructive">Due: {formatCurrency(bill.balance_due)}</p>
                   )}
                 </div>
               </div>
@@ -372,7 +376,7 @@ export default function PropertyDetailPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-sm text-green-600">+{formatCurrency(payment.amount)}</p>
+                  <p className="font-semibold text-sm text-success">+{formatCurrency(payment.amount)}</p>
                   <p className="text-xs text-muted-foreground capitalize">{payment.payment_method.replace("_", " ")}</p>
                 </div>
               </div>
@@ -401,7 +405,7 @@ export default function PropertyDetailPage() {
                     {expense.description || formatDate(expense.expense_date)}
                   </p>
                 </div>
-                <p className="font-semibold text-sm text-rose-600">-{formatCurrency(expense.amount)}</p>
+                <p className="font-semibold text-sm text-destructive">-{formatCurrency(expense.amount)}</p>
               </div>
             </Link>
           )}

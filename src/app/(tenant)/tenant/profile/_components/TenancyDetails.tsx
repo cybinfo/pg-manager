@@ -14,21 +14,21 @@ function getVerificationBadge(status: string) {
   switch (status) {
     case "verified":
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-success/10 text-success rounded text-xs font-medium">
           <CheckCircle className="h-3 w-3" />
           Verified
         </span>
       )
     case "submitted":
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-info/10 text-info rounded text-xs font-medium">
           <Clock className="h-3 w-3" />
           Submitted
         </span>
       )
     case "pending":
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded text-xs font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-warning/10 text-warning rounded text-xs font-medium">
           <AlertCircle className="h-3 w-3" />
           Pending
         </span>
@@ -61,7 +61,7 @@ export function TenancyDetails({ tenant, onReport }: TenancyDetailsProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+              className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/5"
               onClick={() => onReport("Check-in Date", formatDate(tenant.check_in_date), "tenancy_issue")}
               title="Report issue with check-in date"
             >
@@ -76,7 +76,7 @@ export function TenancyDetails({ tenant, onReport }: TenancyDetailsProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+              className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/5"
               onClick={() => onReport("Monthly Rent", "₹" + tenant.monthly_rent.toLocaleString("en-IN"), "tenancy_issue")}
               title="Report issue with monthly rent"
             >
@@ -93,12 +93,12 @@ export function TenancyDetails({ tenant, onReport }: TenancyDetailsProps) {
             <p className="text-sm text-muted-foreground">Agreement Status</p>
             <div className="mt-1">
               {tenant.agreement_signed ? (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-success/10 text-success rounded text-xs font-medium">
                   <CheckCircle className="h-3 w-3" />
                   Signed
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-warning/10 text-warning rounded text-xs font-medium">
                   <AlertCircle className="h-3 w-3" />
                   Pending
                 </span>

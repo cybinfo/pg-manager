@@ -80,8 +80,8 @@ export default function ExpenseDetailPage() {
         backHref="/expenses"
         backLabel="All Expenses"
         avatar={
-          <div className="p-3 bg-rose-100 rounded-lg">
-            <Receipt className="h-8 w-8 text-rose-600" />
+          <div className="p-3 bg-destructive/10 rounded-lg">
+            <Receipt className="h-8 w-8 text-destructive" />
           </div>
         }
         actions={

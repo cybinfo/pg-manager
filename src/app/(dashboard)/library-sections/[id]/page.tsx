@@ -31,9 +31,9 @@ import {
 import type { LibrarySection, LibrarySeat } from "@/types/library.types"
 
 const statusColors: Record<string, string> = {
-  available: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  occupied: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-  reserved: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+  available: "bg-success/10 text-success",
+  occupied: "bg-info/10 text-info",
+  reserved: "bg-warning/10 text-warning",
   maintenance: "bg-muted text-muted-foreground",
 }
 
@@ -87,7 +87,7 @@ export default function LibrarySectionDetailPage() {
             )}
             {section.floor > 0 && <span>Floor {section.floor}</span>}
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-              section.is_ac ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" : "bg-muted text-muted-foreground"
+              section.is_ac ? "bg-info/10 text-info" : "bg-muted text-muted-foreground"
             }`}>
               {section.is_ac ? "AC" : "Non-AC"}
             </span>
@@ -95,6 +95,10 @@ export default function LibrarySectionDetailPage() {
         }
         backHref="/library-sections"
         backLabel="All Sections"
+        breadcrumbs={[
+          { label: "Library Sections", href: "/library-sections" },
+          { label: section.name || "Details" },
+        ]}
         status={section.is_active ? "active" : "inactive"}
         avatar={
           <div className="p-3 bg-primary/10 rounded-lg">
@@ -247,19 +251,19 @@ export default function LibrarySectionDetailPage() {
             </div>
             <div className="flex gap-4 mt-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-green-100 border border-green-300 dark:bg-green-900 dark:border-green-700"></div>
+                <div className="w-3 h-3 rounded bg-success/20 border border-success/30"></div>
                 <span>Available</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-blue-100 border border-blue-300 dark:bg-blue-900 dark:border-blue-700"></div>
+                <div className="w-3 h-3 rounded bg-info/20 border border-info/30"></div>
                 <span>Occupied</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-300 dark:bg-yellow-900 dark:border-yellow-700"></div>
+                <div className="w-3 h-3 rounded bg-warning/20 border border-warning/30"></div>
                 <span>Reserved</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-gray-100 border border-gray-300 dark:bg-gray-800 dark:border-gray-600"></div>
+                <div className="w-3 h-3 rounded bg-muted border border-border"></div>
                 <span>Maintenance</span>
               </div>
             </div>

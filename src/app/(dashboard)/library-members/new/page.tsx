@@ -317,13 +317,13 @@ export default function NewLibraryMemberPage() {
 
       {/* Waitlist Conversion Banner */}
       {waitlistId && (
-        <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <UserCheck className="h-5 w-5 text-green-600 flex-shrink-0" />
+        <div className="flex items-center gap-3 p-4 bg-success/10 border border-success/20 rounded-lg">
+          <UserCheck className="h-5 w-5 text-success flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-green-800">
+            <p className="text-sm font-medium text-success">
               Converting from Waitlist
             </p>
-            <p className="text-xs text-green-600">
+            <p className="text-xs text-success/80">
               Contact details have been pre-filled. Complete the subscription to convert this waitlist entry to a member.
             </p>
           </div>
@@ -458,8 +458,8 @@ export default function NewLibraryMemberPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <CreditCard className="h-5 w-5 text-green-600" />
+                <div className="p-2 bg-success/10 rounded-lg">
+                  <CreditCard className="h-5 w-5 text-success" />
                 </div>
                 <div>
                   <CardTitle>Subscription & Payment</CardTitle>

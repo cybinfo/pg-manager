@@ -31,7 +31,7 @@ export function PublicFooter({ variant = "full" }: PublicFooterProps) {
               Simple management software for Indian small businesses.
             </p>
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded">PG Manager</span>
+              <span className="px-2 py-1 bg-primary/20 text-primary rounded">PG Manager</span>
               <span className="px-2 py-1 bg-slate-700 text-slate-400 rounded">Shop Manager</span>
               <span className="px-2 py-1 bg-slate-700 text-slate-400 rounded">Rent Manager</span>
             </div>

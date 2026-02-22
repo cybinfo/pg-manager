@@ -53,8 +53,8 @@ const columns: Column<DailySpendItem>[] = [
     canHide: false,
     render: (item) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center">
-          <Calendar className="h-4 w-4 text-orange-600" />
+        <div className="h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center">
+          <Calendar className="h-4 w-4 text-warning" />
         </div>
         <div>
           <div className="font-medium">{formatDate(item.spend_date)}</div>

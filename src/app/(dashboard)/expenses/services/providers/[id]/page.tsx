@@ -181,8 +181,8 @@ export default function ServiceProviderDetailPage({
           {/* Hero Section */}
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-lg bg-amber-100 flex items-center justify-center">
-                <Wrench className="h-6 w-6 text-amber-600" />
+              <div className="h-12 w-12 rounded-lg bg-warning/10 flex items-center justify-center">
+                <Wrench className="h-6 w-6 text-warning" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold">{provider.name}</h1>
@@ -230,7 +230,7 @@ export default function ServiceProviderDetailPage({
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-card border rounded-lg p-4">
               <div className="text-sm text-muted-foreground">Total Paid</div>
-              <div className="text-xl font-bold text-green-600">
+              <div className="text-xl font-bold text-success">
                 {formatCurrency(stats.totalPaid)}
               </div>
             </div>
@@ -323,7 +323,7 @@ export default function ServiceProviderDetailPage({
                 value={
                   provider.rating ? (
                     <span className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                      <Star className="h-4 w-4 text-warning fill-warning" />
                       {provider.rating.toFixed(1)}
                     </span>
                   ) : (

@@ -297,8 +297,8 @@ export default function NewDailySpendPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                    <ShoppingBag className="h-5 w-5 text-orange-600" />
+                  <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                    <ShoppingBag className="h-5 w-5 text-warning" />
                   </div>
                   <div>
                     <CardTitle>New Daily Spend</CardTitle>

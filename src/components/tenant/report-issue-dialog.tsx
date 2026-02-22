@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormField } from "@/components/ui/form-components"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, AlertCircle, FileText, Paperclip } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -203,7 +203,7 @@ export function ReportIssueDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-amber-500" />
+            <AlertCircle className="h-5 w-5 text-warning" />
             Report Issue: {fieldLabel}
           </DialogTitle>
           <DialogDescription>
@@ -213,22 +213,20 @@ export function ReportIssueDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Current Value */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground">Current Value</Label>
+          <FormField label="Current Value" htmlFor="current-value">
             <div className="p-3 bg-muted rounded-md text-sm font-medium">
               {currentValue || <span className="text-muted-foreground italic">Not provided</span>}
             </div>
-          </div>
+          </FormField>
 
           {/* Requested Change */}
-          <div className="space-y-2">
-            <Label htmlFor="requested-value">
-              {isChangeRequest ? "Requested Change" : "Details"}
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
+          <FormField
+            label={isChangeRequest ? "Requested Change" : "Details"}
+            htmlFor="requested-value"
+            required
+          >
             {isChangeRequest ? (
               <Input
-                id="requested-value"
                 value={requestedValue}
                 onChange={(e) => setRequestedValue(e.target.value)}
                 placeholder={`Enter new ${fieldLabel.toLowerCase()}`}
@@ -236,7 +234,6 @@ export function ReportIssueDialog({
               />
             ) : (
               <Textarea
-                id="requested-value"
                 value={requestedValue}
                 onChange={(e) => setRequestedValue(e.target.value)}
                 placeholder="Describe the issue or requested change"
@@ -244,31 +241,34 @@ export function ReportIssueDialog({
                 disabled={loading}
               />
             )}
-          </div>
+          </FormField>
 
           {/* Reason */}
-          <div className="space-y-2">
-            <Label htmlFor="reason">
-              Reason for Request
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
+          <FormField
+            label="Reason for Request"
+            htmlFor="reason"
+            required
+          >
             <Textarea
-              id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Why do you need this change?"
               rows={3}
               disabled={loading}
             />
-          </div>
+          </FormField>
 
           {/* Document Attachment */}
           {documents.length > 0 && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Paperclip className="h-4 w-4" />
-                Attach Supporting Documents (Optional)
-              </Label>
+            <FormField
+              label="Attach Supporting Documents"
+              htmlFor="doc-attachment"
+              hint={
+                selectedDocIds.length > 0
+                  ? `${selectedDocIds.length} document(s) selected`
+                  : "Select approved documents to attach to this request"
+              }
+            >
               <div className="border rounded-md p-3 space-y-2 max-h-32 overflow-y-auto">
                 {documents.map((doc) => (
                   <div key={doc.id} className="flex items-center gap-2">
@@ -288,12 +288,7 @@ export function ReportIssueDialog({
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {selectedDocIds.length > 0
-                  ? `${selectedDocIds.length} document(s) selected`
-                  : "Select approved documents to attach to this request"}
-              </p>
-            </div>
+            </FormField>
           )}
 
           <DialogFooter className="gap-2 sm:gap-0">

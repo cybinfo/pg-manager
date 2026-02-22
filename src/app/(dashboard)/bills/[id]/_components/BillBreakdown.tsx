@@ -63,13 +63,13 @@ export function BillBreakdown({
               <span>{formatCurrency(subtotal)}</span>
             </div>
             {discountAmount > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
+              <div className="flex justify-between text-sm text-success">
                 <span>Discount</span>
                 <span>-{formatCurrency(discountAmount)}</span>
               </div>
             )}
             {lateFee > 0 && (
-              <div className="flex justify-between text-sm text-red-600">
+              <div className="flex justify-between text-sm text-destructive">
                 <span>Late Fee</span>
                 <span>+{formatCurrency(lateFee)}</span>
               </div>
@@ -98,7 +98,7 @@ export function BillBreakdown({
         renderItem={(payment) => (
           <div className="flex justify-between items-center py-3 border-b last:border-0">
             <div>
-              <p className="font-medium text-green-600">+{formatCurrency(payment.amount)}</p>
+              <p className="font-medium text-success">+{formatCurrency(payment.amount)}</p>
               <p className="text-sm text-muted-foreground">
                 {formatDate(payment.payment_date)} via {payment.payment_method}
               </p>

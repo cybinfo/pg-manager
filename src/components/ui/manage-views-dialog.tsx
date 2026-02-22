@@ -26,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { TableView, TableViewConfig } from "@/lib/hooks/useTableViews"
 import { formatDistanceToNow } from "date-fns"
 
@@ -153,7 +153,7 @@ export function ManageViewsDialog({
                       {/* Icon */}
                       <div className="mt-0.5">
                         {view.is_default ? (
-                          <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                          <Star className="h-4 w-4 text-warning fill-warning" />
                         ) : (
                           <Bookmark className="h-4 w-4 text-muted-foreground" />
                         )}
@@ -245,7 +245,7 @@ export function ManageViewsDialog({
                           >
                             <Star
                               className={`h-4 w-4 ${
-                                view.is_default ? "text-amber-500 fill-amber-500" : ""
+                                view.is_default ? "text-warning fill-warning" : ""
                               }`}
                             />
                           </Button>

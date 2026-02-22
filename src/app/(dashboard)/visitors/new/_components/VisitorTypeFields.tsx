@@ -65,8 +65,8 @@ export function VisitorTypeFields({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 bg-info/10 rounded-lg">
+              <Users className="h-5 w-5 text-info" />
             </div>
             <div>
               <CardTitle>Visiting Tenant</CardTitle>
@@ -124,8 +124,8 @@ export function VisitorTypeFields({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-              <Wrench className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            <div className="p-2 bg-warning/10 rounded-lg">
+              <Wrench className="h-5 w-5 text-warning" />
             </div>
             <div>
               <CardTitle>Service Details</CardTitle>
@@ -138,8 +138,8 @@ export function VisitorTypeFields({
         <CardContent className="space-y-4">
           {/* Show service info from person if available */}
           {selectedPerson && (selectedPerson.occupation || selectedPerson.company_name) && (
-            <div className="p-3 bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg">
-              <div className="text-sm text-orange-700 dark:text-orange-300">
+            <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+              <div className="text-sm text-warning">
                 <strong>From People:</strong>{" "}
                 {selectedPerson.occupation && <span>{selectedPerson.occupation}</span>}
                 {selectedPerson.company_name && <span> at {selectedPerson.company_name}</span>}

@@ -19,12 +19,12 @@ export function ProfileHeader({ tenant }: ProfileHeaderProps) {
               {tenant.property?.name || "Unknown Property"} \u2022 Room {tenant.room?.room_number || "-"}
             </p>
             <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs font-medium">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-success/10 text-success rounded text-xs font-medium">
                 <CheckCircle className="h-3 w-3" />
                 Active Tenant
               </span>
               {tenant.agreement_signed && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-info/10 text-info rounded text-xs font-medium">
                   <FileText className="h-3 w-3" />
                   Agreement Signed
                 </span>

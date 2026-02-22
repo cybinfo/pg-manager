@@ -148,12 +148,12 @@ export default function MiscTransactionDetailPage({
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className={`h-12 w-12 rounded-lg flex items-center justify-center ${
-                isMoneyIn ? "bg-green-100" : "bg-red-100"
+                isMoneyIn ? "bg-success/10" : "bg-destructive/10"
               }`}>
                 {isMoneyIn ? (
-                  <ArrowDownLeft className="h-6 w-6 text-green-600" />
+                  <ArrowDownLeft className="h-6 w-6 text-success" />
                 ) : (
-                  <ArrowUpRight className="h-6 w-6 text-red-600" />
+                  <ArrowUpRight className="h-6 w-6 text-destructive" />
                 )}
               </div>
               <div>

@@ -137,7 +137,7 @@ function ImageGallery({ images, propertyName }: { images: string[]; propertyName
           <button
             key={i}
             onClick={() => openLightbox(i)}
-            className="relative aspect-video rounded-lg overflow-hidden group focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="relative aspect-video rounded-lg overflow-hidden group focus:outline-none focus:ring-2 focus:ring-primary"
             aria-label={`View image ${i + 1} of ${images.length}`}
           >
             <Image
@@ -468,7 +468,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
       {/* Skip to content link for accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-teal-600 text-white px-4 py-2 rounded-md z-50"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-white px-4 py-2 rounded-md z-50"
       >
         Skip to main content
       </a>
@@ -490,7 +490,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
             <div className="container mx-auto px-4 pb-8 md:pb-12">
               <div className="max-w-3xl text-white">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <span className="px-3 py-1 bg-teal-500 rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 bg-primary rounded-full text-sm font-medium">
                     {propertyType}
                   </span>
                   {config.established_year && (
@@ -499,7 +499,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                     </span>
                   )}
                   {totalAvailable > 0 && (
-                    <span className="px-3 py-1 bg-green-500 rounded-full text-sm font-medium">
+                    <span className="px-3 py-1 bg-success rounded-full text-sm font-medium">
                       {totalAvailable} {totalAvailable === 1 ? "Bed" : "Beds"} Available
                     </span>
                   )}
@@ -536,7 +536,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                 rel="noopener noreferrer"
                 aria-label="Send WhatsApp inquiry"
               >
-                <Button size="lg" className="bg-green-600 hover:bg-green-700 shadow-lg">
+                <Button size="lg" className="bg-success hover:bg-success/90 shadow-lg">
                   <MessageCircle className="mr-2 h-5 w-5" aria-hidden="true" />
                   WhatsApp Inquiry
                 </Button>
@@ -586,8 +586,8 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                       key={i}
                       className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
                     >
-                      <div className="h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-                        <Icon className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
                       </div>
                       <span className="font-medium">{amenity}</span>
                     </div>
@@ -605,7 +605,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                     <Card key={type} className="overflow-hidden">
                       <div className="bg-gradient-to-r from-teal-500 to-emerald-500 p-4 text-white">
                         <h3 className="text-lg font-semibold capitalize">{type} Room</h3>
-                        <p className="text-teal-100 text-sm">
+                        <p className="text-white/80 text-sm">
                           {data.rooms.length} {data.rooms.length === 1 ? "room" : "rooms"}
                         </p>
                       </div>
@@ -613,7 +613,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                         <div className="flex items-baseline justify-between mb-3">
                           {config.show_pricing !== false && data.minPrice !== Infinity ? (
                             <div>
-                              <span className="text-2xl font-bold text-teal-600">
+                              <span className="text-2xl font-bold text-primary">
                                 {formatCurrency(data.minPrice)}
                               </span>
                               {data.maxPrice > data.minPrice && (
@@ -632,11 +632,11 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                             <Users className="h-4 w-4" aria-hidden="true" />
                             <span>
                               {data.available > 0 ? (
-                                <span className="text-green-600 font-medium">
+                                <span className="text-success font-medium">
                                   {data.available} {data.available === 1 ? "bed" : "beds"} available
                                 </span>
                               ) : (
-                                <span className="text-red-500">No vacancy</span>
+                                <span className="text-destructive">No vacancy</span>
                               )}
                             </span>
                           </div>
@@ -644,12 +644,12 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                         {data.rooms.some(r => r.has_ac || r.has_attached_bathroom) && (
                           <div className="flex gap-2 mt-3 flex-wrap">
                             {data.rooms.some(r => r.has_ac) && (
-                              <span className="px-2 py-1 bg-sky-100 text-sky-700 rounded text-xs">
+                              <span className="px-2 py-1 bg-info/10 text-info rounded text-xs">
                                 AC Available
                               </span>
                             )}
                             {data.rooms.some(r => r.has_attached_bathroom) && (
-                              <span className="px-2 py-1 bg-violet-100 text-violet-700 rounded text-xs">
+                              <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">
                                 Attached Bath
                               </span>
                             )}
@@ -682,7 +682,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-start gap-3 mb-4">
-                    <MapPin className="h-5 w-5 text-teal-600 mt-1 shrink-0" aria-hidden="true" />
+                    <MapPin className="h-5 w-5 text-primary mt-1 shrink-0" aria-hidden="true" />
                     <div>
                       <p className="font-medium">{property.name}</p>
                       <p className="text-muted-foreground">
@@ -715,7 +715,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                       href={config.google_maps_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-teal-600 hover:underline"
+                      className="inline-flex items-center gap-2 text-primary hover:underline"
                     >
                       <ExternalLink className="h-4 w-4" aria-hidden="true" />
                       View on Google Maps
@@ -741,7 +741,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                         className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                         aria-label={`Call ${formatPhone(property.manager_phone)}`}
                       >
-                        <Phone className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                        <Phone className="h-5 w-5 text-primary" aria-hidden="true" />
                         <span>{formatPhone(property.manager_phone)}</span>
                       </a>
                     )}
@@ -751,7 +751,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                         className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
                         aria-label={`Email ${config.contact_email}`}
                       >
-                        <Mail className="h-5 w-5 text-teal-600" aria-hidden="true" />
+                        <Mail className="h-5 w-5 text-primary" aria-hidden="true" />
                         <span className="truncate">{config.contact_email}</span>
                       </a>
                     )}
@@ -773,7 +773,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
 
                       {submitted ? (
                         <div className="text-center py-8">
-                          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" aria-hidden="true" />
+                          <CheckCircle className="h-12 w-12 text-success mx-auto mb-4" aria-hidden="true" />
                           <h4 className="font-semibold mb-2">Inquiry Submitted!</h4>
                           <p className="text-muted-foreground text-sm mb-4">
                             We&apos;ll get back to you soon.
@@ -799,7 +799,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="name">Name <span className="text-destructive">*</span></Label>
                             <Input
                               id="name"
                               placeholder="Your name"
@@ -811,7 +811,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                           </div>
 
                           <div className="space-y-2">
-                            <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="phone">Phone <span className="text-destructive">*</span></Label>
                             <Input
                               id="phone"
                               type="tel"
@@ -822,10 +822,10 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                               aria-required="true"
                               aria-invalid={!!phoneError}
                               aria-describedby={phoneError ? "phone-error" : undefined}
-                              className={phoneError ? "border-red-500" : ""}
+                              className={phoneError ? "border-destructive" : ""}
                             />
                             {phoneError && (
-                              <p id="phone-error" className="text-sm text-red-500" role="alert">
+                              <p id="phone-error" className="text-sm text-destructive" role="alert">
                                 {phoneError}
                               </p>
                             )}

@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormField, Select } from "@/components/ui/form-components"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Loader2, Upload } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -141,60 +141,38 @@ export function DocumentUploadDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Document Name */}
-          <div className="space-y-2">
-            <Label htmlFor="doc-name">
-              Document Name
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
+          <FormField label="Document Name" htmlFor="doc-name" required>
             <Input
-              id="doc-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Aadhaar Card, Rent Agreement"
               disabled={loading}
             />
-          </div>
+          </FormField>
 
           {/* Document Type */}
-          <div className="space-y-2">
-            <Label htmlFor="doc-type">
-              Document Type
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
-            <select
-              id="doc-type"
+          <FormField label="Document Type" htmlFor="doc-type" required>
+            <Select
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value as DocumentType)}
-              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              options={DOCUMENT_TYPES}
               disabled={loading}
-            >
-              {DOCUMENT_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
+            />
+          </FormField>
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="doc-description">Description (Optional)</Label>
+          <FormField label="Description" htmlFor="doc-description" hint="Optional notes about this document">
             <Textarea
-              id="doc-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add any notes about this document"
               rows={2}
               disabled={loading}
             />
-          </div>
+          </FormField>
 
           {/* File Upload */}
-          <div className="space-y-2">
-            <Label>
-              File
-              <span className="text-red-500 ml-1">*</span>
-            </Label>
+          <FormField label="File" htmlFor="doc-file" required>
             <FileUpload
               bucket="tenant-documents"
               folder={`${workspaceId}/${tenantId}`}
@@ -205,7 +183,7 @@ export function DocumentUploadDialog({
               description="PDF, JPG, PNG up to 10MB"
               disabled={loading}
             />
-          </div>
+          </FormField>
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button

@@ -35,7 +35,7 @@ import { WhatsAppButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { ConfirmDialog } from "@/components/ui/form-dialog"
 
 // Extended Payment type with owner info
 interface PaymentWithOwner extends Payment {
@@ -171,9 +171,13 @@ export default function PaymentReceiptPage() {
           subtitle={`Receipt #${payment.receipt_number || payment.id.slice(0, 8).toUpperCase()}`}
           backHref="/payments"
           backLabel="All Payments"
+          breadcrumbs={[
+            { label: "Payments", href: "/payments" },
+            { label: payment.receipt_number || payment.id.slice(0, 8).toUpperCase() || "Details" },
+          ]}
           avatar={
-            <div className="p-3 bg-emerald-100 rounded-lg">
-              <Receipt className="h-8 w-8 text-emerald-600" />
+            <div className="p-3 bg-success/10 rounded-lg">
+              <Receipt className="h-8 w-8 text-success" />
             </div>
           }
           actions={
@@ -329,7 +333,7 @@ export default function PaymentReceiptPage() {
             <tfoot>
               <tr className="font-bold text-lg">
                 <td className="py-3">Total</td>
-                <td className="py-3 text-right text-green-600">
+                <td className="py-3 text-right text-success">
                   {formatCurrency(Number(payment.amount))}
                 </td>
               </tr>
@@ -337,7 +341,7 @@ export default function PaymentReceiptPage() {
           </table>
 
           {/* Amount in Words */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-6">
+          <div className="bg-success/10 border border-success/30 rounded-lg p-3 mb-6">
             <span className="text-sm text-muted-foreground">Amount in Words: </span>
             <span className="font-medium">
               Rupees {numberToWords(Math.floor(Number(payment.amount)))} Only
@@ -370,7 +374,7 @@ export default function PaymentReceiptPage() {
 
           {/* Footer */}
           <div className="border-t pt-6 mt-6">
-            <div className="flex items-center justify-center gap-2 text-green-600 mb-4">
+            <div className="flex items-center justify-center gap-2 text-success mb-4">
               <CheckCircle className="h-5 w-5" />
               <span className="font-medium">Payment Received Successfully</span>
             </div>

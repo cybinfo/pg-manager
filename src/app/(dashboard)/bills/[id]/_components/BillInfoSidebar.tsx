@@ -77,7 +77,7 @@ export function BillInfoSidebar({ bill, isOverdue }: BillInfoSidebarProps) {
         <InfoRow
           label="Due Date"
           value={
-            <span className={isOverdue ? "text-red-600 font-medium" : ""}>
+            <span className={isOverdue ? "text-destructive font-medium" : ""}>
               {formatDate(bill.due_date)}
             </span>
           }
@@ -103,7 +103,7 @@ export function BillInfoSidebar({ bill, isOverdue }: BillInfoSidebarProps) {
             <InfoRow
               label="Phone"
               value={
-                <a href={`tel:${bill.tenant.phone}`} className="text-teal-600 hover:underline">
+                <a href={`tel:${bill.tenant.phone}`} className="text-primary hover:underline">
                   {bill.tenant.phone}
                 </a>
               }
@@ -114,7 +114,7 @@ export function BillInfoSidebar({ bill, isOverdue }: BillInfoSidebarProps) {
             <InfoRow
               label="Email"
               value={
-                <a href={`mailto:${bill.tenant.email}`} className="text-teal-600 hover:underline truncate">
+                <a href={`mailto:${bill.tenant.email}`} className="text-primary hover:underline truncate">
                   {bill.tenant.email}
                 </a>
               }

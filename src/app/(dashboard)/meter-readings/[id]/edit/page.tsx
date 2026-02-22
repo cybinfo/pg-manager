@@ -129,10 +129,10 @@ export default function EditMeterReadingPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${meterType === "electricity" ? "bg-yellow-100 dark:bg-yellow-900" : meterType === "water" ? "bg-blue-100 dark:bg-blue-900" : "bg-orange-100 dark:bg-orange-900"}`}>
-                {meterType === "electricity" && <Zap className="h-5 w-5 text-yellow-600" />}
-                {meterType === "water" && <Droplets className="h-5 w-5 text-blue-600" />}
-                {meterType === "gas" && <Gauge className="h-5 w-5 text-orange-600" />}
+              <div className={`p-2 rounded-lg ${meterType === "electricity" ? "bg-warning/10" : meterType === "water" ? "bg-info/10" : "bg-warning/10"}`}>
+                {meterType === "electricity" && <Zap className="h-5 w-5 text-warning" />}
+                {meterType === "water" && <Droplets className="h-5 w-5 text-info" />}
+                {meterType === "gas" && <Gauge className="h-5 w-5 text-warning" />}
               </div>
               <div>
                 <CardTitle>Meter Information</CardTitle>
@@ -189,8 +189,8 @@ export default function EditMeterReadingPage() {
 
             {/* Previous Reading (Read-only) */}
             {previousReading !== null && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="p-3 bg-info/10 border border-info/20 rounded-lg">
+                <p className="text-sm text-info">
                   <strong>Previous Reading:</strong> {previousReading.toLocaleString()}
                 </p>
               </div>
@@ -218,14 +218,14 @@ export default function EditMeterReadingPage() {
 
             {/* Calculated Units */}
             {calculatedUnits !== null && (
-              <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+              <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                    <Calculator className="h-5 w-5 text-green-600" />
+                  <div className="p-2 bg-success/20 rounded-lg">
+                    <Calculator className="h-5 w-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-sm text-green-800">Units Consumed</p>
-                    <p className="text-2xl font-bold text-green-700">
+                    <p className="text-sm text-success">Units Consumed</p>
+                    <p className="text-2xl font-bold text-success">
                       {calculatedUnits.toLocaleString()} {meterType === "electricity" ? "kWh" : meterType === "water" ? "L" : meterType === "gas" ? "m3" : "units"}
                     </p>
                   </div>

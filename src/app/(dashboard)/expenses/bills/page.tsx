@@ -56,8 +56,8 @@ const columns: Column<BillPaymentListItem>[] = [
     canHide: false,
     render: (bill) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-          <Receipt className="h-4 w-4 text-blue-600" />
+        <div className="h-8 w-8 rounded-lg bg-info/10 flex items-center justify-center">
+          <Receipt className="h-4 w-4 text-info" />
         </div>
         <div>
           <div className="font-medium">{bill.vendor?.name || bill.vendor_name}</div>
@@ -116,9 +116,9 @@ const columns: Column<BillPaymentListItem>[] = [
         <span
           className={
             isOverdue
-              ? "text-red-600 font-medium"
+              ? "text-destructive font-medium"
               : isDueSoon
-                ? "text-orange-600"
+                ? "text-warning"
                 : ""
           }
         >
@@ -137,7 +137,7 @@ const columns: Column<BillPaymentListItem>[] = [
     defaultVisible: true,
     render: (bill) =>
       bill.payment_date ? (
-        <span className="text-green-600">{formatDate(bill.payment_date)}</span>
+        <span className="text-success">{formatDate(bill.payment_date)}</span>
       ) : (
         <span className="text-muted-foreground">—</span>
       ),
@@ -208,7 +208,7 @@ const columns: Column<BillPaymentListItem>[] = [
     editType: "number",
     editValidation: { min: 0 },
     render: (bill) => bill.paid_amount ? (
-      <span className="text-green-600 font-medium tabular-nums">{formatCurrency(bill.paid_amount)}</span>
+      <span className="text-success font-medium tabular-nums">{formatCurrency(bill.paid_amount)}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
   {

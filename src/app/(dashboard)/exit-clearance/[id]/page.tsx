@@ -238,9 +238,13 @@ export default function ExitClearanceDetailPage() {
         subtitle={clearance.tenant?.name || "Unknown Tenant"}
         backHref="/exit-clearance"
         backLabel="All Exit Clearances"
+        breadcrumbs={[
+          { label: "Exit Clearance", href: "/exit-clearance" },
+          { label: clearance.tenant?.name || "Details" },
+        ]}
         avatar={
-          <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
-            <DoorOpen className="h-8 w-8 text-orange-600" />
+          <div className="p-3 bg-warning/10 rounded-lg">
+            <DoorOpen className="h-8 w-8 text-warning" />
           </div>
         }
         status={<StatusBadge variant={statusConfig.variant} label={statusConfig.label} />}
@@ -336,19 +340,19 @@ export default function ExitClearanceDetailPage() {
               <span className="text-muted-foreground">Pending Dues</span>
               <span>{formatCurrency(clearance.total_dues)}</span>
             </div>
-            <div className="flex justify-between text-sm text-green-600">
+            <div className="flex justify-between text-sm text-success">
               <span>Security Deposit</span>
               <span>- {formatCurrency(clearance.total_refundable)}</span>
             </div>
             {deductions.length > 0 && (
-              <div className="flex justify-between text-sm text-red-600">
+              <div className="flex justify-between text-sm text-destructive">
                 <span>Deductions</span>
                 <span>+ {formatCurrency(deductions.reduce((sum, d) => sum + d.amount, 0))}</span>
               </div>
             )}
             <div className="flex justify-between pt-3 border-t font-bold text-lg">
               <span>{isRefund ? "Refund" : "Due"}</span>
-              <span className={isRefund ? "text-green-600" : "text-red-600"}>
+              <span className={isRefund ? "text-success" : "text-destructive"}>
                 {formatCurrency(Math.abs(finalAmount))}
               </span>
             </div>
@@ -381,7 +385,7 @@ export default function ExitClearanceDetailPage() {
             {clearance.completed_at && (
               <InfoRow
                 label="Completed"
-                value={<span className="text-green-600">{formatDate(clearance.completed_at)}</span>}
+                value={<span className="text-success">{formatDate(clearance.completed_at)}</span>}
               />
             )}
           </div>
@@ -396,7 +400,7 @@ export default function ExitClearanceDetailPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3">
-                <ClipboardCheck className={`h-5 w-5 ${formData.room_inspection_done ? "text-green-600" : "text-muted-foreground"}`} />
+                <ClipboardCheck className={`h-5 w-5 ${formData.room_inspection_done ? "text-success" : "text-muted-foreground"}`} />
                 <div>
                   <p className="font-medium">Room Inspection</p>
                   <p className="text-sm text-muted-foreground">Check room condition and inventory</p>
@@ -413,7 +417,7 @@ export default function ExitClearanceDetailPage() {
 
             <div className="flex items-center justify-between p-3 border rounded-lg">
               <div className="flex items-center gap-3">
-                <Key className={`h-5 w-5 ${formData.key_returned ? "text-green-600" : "text-muted-foreground"}`} />
+                <Key className={`h-5 w-5 ${formData.key_returned ? "text-success" : "text-muted-foreground"}`} />
                 <div>
                   <p className="font-medium">Key Returned</p>
                   <p className="text-sm text-muted-foreground">Collect all room keys</p>
@@ -464,11 +468,11 @@ export default function ExitClearanceDetailPage() {
                 {deductions.map((deduction, index) => (
                   <div
                     key={`deduction-${index}-${deduction.reason}`}
-                    className="flex items-center justify-between p-3 bg-red-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-destructive/10 rounded-lg"
                   >
                     <span>{deduction.reason}</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-red-600">
+                      <span className="font-medium text-destructive">
                         {formatCurrency(deduction.amount)}
                       </span>
                       {!isCleared && (
@@ -478,7 +482,7 @@ export default function ExitClearanceDetailPage() {
                           className="h-8 w-8"
                           onClick={() => removeDeduction(index)}
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       )}
                     </div>
@@ -554,10 +558,10 @@ export default function ExitClearanceDetailPage() {
 
         {/* Cleared Badge */}
         {isCleared && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-            <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-2" />
-            <p className="font-semibold text-green-800">Clearance Completed</p>
-            <p className="text-sm text-green-600">Room is now available</p>
+          <div className="bg-success/10 border border-success/20 rounded-lg p-4 text-center">
+            <CheckCircle className="h-12 w-12 text-success mx-auto mb-2" />
+            <p className="font-semibold text-success">Clearance Completed</p>
+            <p className="text-sm text-success/80">Room is now available</p>
           </div>
         )}
 

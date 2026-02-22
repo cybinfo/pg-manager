@@ -355,16 +355,16 @@ export default function NewLibraryAttendancePage() {
             {selectedMember && (
               <div className={`p-4 rounded-lg border ${
                 selectedMember.hours_balance <= 0
-                  ? "bg-red-50 border-red-200"
+                  ? "bg-destructive/10 border-destructive/20"
                   : selectedMember.hours_balance <= 2
-                    ? "bg-yellow-50 border-yellow-200"
-                    : "bg-green-50 border-green-200"
+                    ? "bg-warning/10 border-warning/20"
+                    : "bg-success/10 border-success/20"
               }`}>
                 <div className="flex items-start gap-3">
                   {selectedMember.hours_balance <= 0 ? (
-                    <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
+                    <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
                   ) : (
-                    <Clock className="h-5 w-5 text-green-500 mt-0.5" />
+                    <Clock className="h-5 w-5 text-success mt-0.5" />
                   )}
                   <div>
                     <p className="font-medium">{selectedMember.name}</p>
@@ -373,10 +373,10 @@ export default function NewLibraryAttendancePage() {
                     )}
                     <p className={`text-sm font-medium mt-1 ${
                       selectedMember.hours_balance <= 0
-                        ? "text-red-600"
+                        ? "text-destructive"
                         : selectedMember.hours_balance <= 2
-                          ? "text-yellow-600"
-                          : "text-green-600"
+                          ? "text-warning"
+                          : "text-success"
                     }`}>
                       {selectedMember.hours_balance.toFixed(1)} hours remaining
                     </p>
@@ -420,8 +420,8 @@ export default function NewLibraryAttendancePage() {
                     </p>
                   </>
                 ) : (
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-700">
+                  <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                    <p className="text-sm text-warning">
                       No available seats in this library. Member can still check in without seat assignment.
                     </p>
                   </div>

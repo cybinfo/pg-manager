@@ -828,7 +828,8 @@ export function ListPageTemplate({
   )
 
   // Wrap with permission and feature guards
-  if (feature) {
+  // Skip PermissionGuard when no permission is specified (e.g., Activity Log)
+  if (feature && permission) {
     return (
       <FeatureGuard feature={feature}>
         <PermissionGuard permission={permission}>{content}</PermissionGuard>
@@ -836,7 +837,19 @@ export function ListPageTemplate({
     )
   }
 
-  return <PermissionGuard permission={permission}>{content}</PermissionGuard>
+  if (feature) {
+    return (
+      <FeatureGuard feature={feature}>
+        {content}
+      </FeatureGuard>
+    )
+  }
+
+  if (permission) {
+    return <PermissionGuard permission={permission}>{content}</PermissionGuard>
+  }
+
+  return content
 }
 
 // ============================================

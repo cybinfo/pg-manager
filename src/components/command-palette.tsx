@@ -116,7 +116,7 @@ export function CommandPalette() {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-[var(--z-dialog)]">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
@@ -124,7 +124,7 @@ export function CommandPalette() {
       />
 
       {/* Dialog */}
-      <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh]">
+      <div className="fixed inset-0 z-[var(--z-dialog)] flex items-start justify-center pt-[20vh]">
         <div className="w-full max-w-lg mx-4 animate-scale-in">
           <Command
             className="bg-card border rounded-xl shadow-2xl overflow-hidden"
@@ -155,7 +155,7 @@ export function CommandPalette() {
                     onSelect={() => handleSelect(item.href)}
                     className="flex items-center gap-3 px-4 py-2.5 cursor-pointer"
                   >
-                    <item.icon className="h-4 w-4 text-teal-600" />
+                    <item.icon className="h-4 w-4 text-primary" />
                     <span>{item.name}</span>
                   </CommandItem>
                 ))}

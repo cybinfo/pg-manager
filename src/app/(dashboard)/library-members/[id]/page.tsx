@@ -104,6 +104,10 @@ export default function LibraryMemberDetailPage() {
         }
         backHref="/library-members"
         backLabel="All Members"
+        breadcrumbs={[
+          { label: "Library Members", href: "/library-members" },
+          { label: displayName || "Details" },
+        ]}
         status={statusConfig?.variant || "muted"}
         avatar={
           <Avatar name={displayName} src={photoUrl} size="xl" />
@@ -320,7 +324,7 @@ export default function LibraryMemberDetailPage() {
                     {formatDate(payment.payment_date)} • {payment.payment_method}
                   </p>
                 </div>
-                <p className="font-semibold text-sm text-green-600">
+                <p className="font-semibold text-sm text-success">
                   +<Currency amount={payment.amount} />
                 </p>
               </div>

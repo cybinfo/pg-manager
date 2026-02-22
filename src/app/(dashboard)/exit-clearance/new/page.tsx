@@ -267,15 +267,15 @@ function InitiateCheckoutForm() {
     if (difference < 0) {
       status = "short"
       message = `${Math.abs(difference)} days SHORT of required ${configuredNoticePeriod} days notice`
-      colorClass = "text-red-600 bg-red-50 border-red-200"
+      colorClass = "text-destructive bg-destructive/10 border-destructive/20"
     } else if (difference === 0) {
       status = "exact"
       message = `Exactly ${configuredNoticePeriod} days notice (as required)`
-      colorClass = "text-green-600 bg-green-50 border-green-200"
+      colorClass = "text-success bg-success/10 border-success/20"
     } else {
       status = "long"
       message = `${difference} days MORE than required ${configuredNoticePeriod} days notice`
-      colorClass = "text-blue-600 bg-blue-50 border-blue-200"
+      colorClass = "text-info bg-info/10 border-info/20"
     }
 
     return { actualDays, configuredDays: configuredNoticePeriod, difference, status, message, colorClass }
@@ -386,12 +386,12 @@ function InitiateCheckoutForm() {
             <div className="space-y-2">
               <Label htmlFor="tenant_id">Tenant *</Label>
               {tenants.length === 0 ? (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
-                  <Bell className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-amber-800 mb-1">
+                <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg text-center">
+                  <Bell className="h-8 w-8 text-warning mx-auto mb-2" />
+                  <p className="text-sm font-medium text-warning mb-1">
                     No tenants on notice period
                   </p>
-                  <p className="text-xs text-amber-700 mb-3">
+                  <p className="text-xs text-warning/80 mb-3">
                     To initiate checkout, you must first put a tenant on notice period from their profile page.
                   </p>
                   <Link href="/tenants" className="inline-block">
@@ -456,8 +456,8 @@ function InitiateCheckoutForm() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-info/10 rounded-lg">
+                <Calendar className="h-5 w-5 text-info" />
               </div>
               <div>
                 <CardTitle>Exit Details</CardTitle>
@@ -549,8 +549,8 @@ function InitiateCheckoutForm() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-red-600" />
+              <div className="p-2 bg-destructive/10 rounded-lg">
+                <AlertCircle className="h-5 w-5 text-destructive" />
               </div>
               <div>
                 <CardTitle>Deductions</CardTitle>
@@ -565,11 +565,11 @@ function InitiateCheckoutForm() {
                 {deductions.map((deduction) => (
                   <div
                     key={deduction.id}
-                    className="flex items-center justify-between p-3 bg-red-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-destructive/10 rounded-lg"
                   >
                     <span>{deduction.reason}</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-red-600">
+                      <span className="font-medium text-destructive">
                         ₹{deduction.amount.toLocaleString("en-IN")}
                       </span>
                       <Button
@@ -579,7 +579,7 @@ function InitiateCheckoutForm() {
                         className="h-8 w-8"
                         onClick={() => removeDeduction(deduction.id)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   </div>
@@ -614,8 +614,8 @@ function InitiateCheckoutForm() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <IndianRupee className="h-5 w-5 text-green-600" />
+                <div className="p-2 bg-success/10 rounded-lg">
+                  <IndianRupee className="h-5 w-5 text-success" />
                 </div>
                 <div>
                   <CardTitle>Settlement Summary</CardTitle>
@@ -629,19 +629,19 @@ function InitiateCheckoutForm() {
                   <span className="text-muted-foreground">Pending Dues</span>
                   <span className="font-medium">₹{amounts.totalDues.toLocaleString("en-IN")}</span>
                 </div>
-                <div className="flex justify-between text-green-600">
+                <div className="flex justify-between text-success">
                   <span>Security Deposit (Refundable)</span>
                   <span className="font-medium">- ₹{amounts.totalRefundable.toLocaleString("en-IN")}</span>
                 </div>
                 {amounts.totalDeductions > 0 && (
-                  <div className="flex justify-between text-red-600">
+                  <div className="flex justify-between text-destructive">
                     <span>Deductions</span>
                     <span className="font-medium">+ ₹{amounts.totalDeductions.toLocaleString("en-IN")}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-3 border-t text-lg font-bold">
                   <span>{amounts.finalAmount >= 0 ? "Tenant Owes" : "Refund to Tenant"}</span>
-                  <span className={amounts.finalAmount >= 0 ? "text-red-600" : "text-green-600"}>
+                  <span className={amounts.finalAmount >= 0 ? "text-destructive" : "text-success"}>
                     ₹{Math.abs(amounts.finalAmount).toLocaleString("en-IN")}
                   </span>
                 </div>

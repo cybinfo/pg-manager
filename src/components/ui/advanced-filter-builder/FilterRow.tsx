@@ -43,8 +43,8 @@ export function CombineModeToggle({ mode, onToggle }: CombineModeToggleProps) {
         className={cn(
           "px-3 py-1 text-xs font-medium rounded-full border transition-colors",
           mode === "and"
-            ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-            : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+            ? "bg-info/10 border-info/20 text-info hover:bg-info/15"
+            : "bg-warning/10 border-warning/20 text-warning hover:bg-warning/15"
         )}
       >
         {mode.toUpperCase()}

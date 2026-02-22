@@ -89,7 +89,7 @@ export function SavedViewSelector({
             <Bookmark className="h-4 w-4 text-muted-foreground" />
             <span className="max-w-[150px] truncate">{displayLabel}</span>
             {activeView?.is_default && (
-              <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+              <Star className="h-3 w-3 text-warning fill-warning" />
             )}
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </Button>
@@ -132,7 +132,7 @@ export function SavedViewSelector({
                   className={activeViewId === view.id ? "bg-accent" : ""}
                 >
                   {view.is_default ? (
-                    <Star className="h-4 w-4 mr-2 text-amber-500 fill-amber-500" />
+                    <Star className="h-4 w-4 mr-2 text-warning fill-warning" />
                   ) : (
                     <Bookmark className="h-4 w-4 mr-2 text-muted-foreground" />
                   )}

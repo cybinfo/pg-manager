@@ -18,7 +18,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   {
     category: "Getting Started",
     icon: HelpCircle,
-    color: "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950",
+    color: "text-primary bg-primary/10",
     items: [
       {
         question: "What is ManageKar?",
@@ -41,7 +41,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   {
     category: "Properties & Rooms",
     icon: Home,
-    color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950",
+    color: "text-success bg-success/10",
     items: [
       {
         question: "How many properties can I manage?",
@@ -79,7 +79,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   {
     category: "Payments",
     icon: CreditCard,
-    color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950",
+    color: "text-warning bg-warning/10",
     items: [
       {
         question: "How does payment tracking work?",
@@ -117,7 +117,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   {
     category: "Security & Privacy",
     icon: Shield,
-    color: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950",
+    color: "text-destructive bg-destructive/10",
     items: [
       {
         question: "Is my data secure?",
@@ -136,7 +136,7 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
   {
     category: "Staff Management",
     icon: Settings,
-    color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950",
+    color: "text-info bg-info/10",
     items: [
       {
         question: "Can I add staff members?",

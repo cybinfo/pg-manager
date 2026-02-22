@@ -105,7 +105,7 @@ export function AcceptInvitation({ token }: AcceptInvitationProps) {
       <Card className="max-w-md mx-auto">
         <CardContent className="pt-6">
           <div className="text-center">
-            <div className="p-3 rounded-full bg-rose-100 text-rose-600 w-fit mx-auto mb-4">
+            <div className="p-3 rounded-full bg-destructive/10 text-destructive w-fit mx-auto mb-4">
               <X className="h-6 w-6" />
             </div>
             <h3 className="text-lg font-semibold">Invalid Invitation</h3>

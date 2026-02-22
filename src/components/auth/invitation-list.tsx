@@ -120,7 +120,7 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
                 <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
                   <Clock className="h-3 w-3" />
                   {isExpired ? (
-                    <span className="text-rose-600">Expired</span>
+                    <span className="text-destructive">Expired</span>
                   ) : (
                     <span>
                       Expires {new Date(inv.expires_at).toLocaleDateString('en-IN')}

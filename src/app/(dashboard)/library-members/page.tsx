@@ -93,7 +93,7 @@ const columns: Column<LibraryMemberItem>[] = [
     render: (member) => (
       <div className="flex items-center gap-1.5">
         <Clock className="h-4 w-4 text-muted-foreground" />
-        <span className={member.hours_balance <= 0 ? "text-red-600 font-medium" : ""}>
+        <span className={member.hours_balance <= 0 ? "text-destructive font-medium" : ""}>
           {member.hours_balance?.toFixed(1) || 0}h left
         </span>
       </div>

@@ -124,21 +124,21 @@ export function FeatureSettings({ featureFlags, setFeatureFlags, config }: Featu
       </Card>
 
       {/* Quick Stats */}
-      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+      <Card className="bg-info/10 border-info/20">
         <CardContent className="pt-6">
-          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-3">Feature Summary</h4>
+          <h4 className="font-medium text-info mb-3">Feature Summary</h4>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+              <p className="text-2xl font-bold text-info">
                 {Object.values(featureFlags).filter(Boolean).length}
               </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">Features enabled</p>
+              <p className="text-sm text-info">Features enabled</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+              <p className="text-2xl font-bold text-info">
                 {Object.values(featureFlags).filter(v => !v).length}
               </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">Features disabled</p>
+              <p className="text-sm text-info">Features disabled</p>
             </div>
           </div>
         </CardContent>

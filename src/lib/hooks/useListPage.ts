@@ -86,6 +86,7 @@ export {
   LIBRARY_PLAN_LIST_CONFIG,
   LIBRARY_WAITLIST_LIST_CONFIG,
   APPROVALS_LIST_CONFIG,
+  AUDIT_EVENT_LIST_CONFIG,
 } from "./list-page/configs"
 
 // Import types for use in this file

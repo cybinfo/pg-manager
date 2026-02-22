@@ -179,8 +179,8 @@ export default function RolesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Lock className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-info/10 rounded-lg">
+                <Lock className="h-5 w-5 text-info" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{systemRoles.length}</p>
@@ -192,8 +192,8 @@ export default function RolesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Edit className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-success/10 rounded-lg">
+                <Edit className="h-5 w-5 text-success" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{customRoles.length}</p>
@@ -217,8 +217,8 @@ export default function RolesPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Lock className="h-5 w-5 text-blue-600" />
+                      <div className="p-2 bg-info/10 rounded-lg">
+                        <Lock className="h-5 w-5 text-info" />
                       </div>
                       <div>
                         <h3 className="font-semibold">{role.name}</h3>
@@ -235,7 +235,7 @@ export default function RolesPage() {
                           {role._count?.users || 0} users
                         </p>
                       </div>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-info/10 text-info rounded text-xs font-medium">
                         System
                       </span>
                     </div>

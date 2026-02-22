@@ -44,39 +44,39 @@ export function DuesAgingCard({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-success/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-green-500" />
+              <div className="w-3 h-3 rounded-full bg-success" />
               <span className="font-medium">Current (Not Due)</span>
             </div>
-            <span className="font-bold text-green-700">
+            <span className="font-bold text-success">
               {formatCurrency(data.current)}
             </span>
           </div>
-          <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-warning/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-yellow-500" />
+              <div className="w-3 h-3 rounded-full bg-warning" />
               <span className="font-medium">1-30 Days Overdue</span>
             </div>
-            <span className="font-bold text-yellow-700">
+            <span className="font-bold text-warning">
               {formatCurrency(data.days30)}
             </span>
           </div>
-          <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-warning/10 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-orange-500" />
+              <div className="w-3 h-3 rounded-full bg-warning" />
               <span className="font-medium">31-60 Days Overdue</span>
             </div>
-            <span className="font-bold text-orange-700">
+            <span className="font-bold text-warning">
               {formatCurrency(data.days60)}
             </span>
           </div>
-          <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-destructive/5 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
+              <div className="w-3 h-3 rounded-full bg-destructive" />
               <span className="font-medium">60+ Days Overdue</span>
             </div>
-            <span className="font-bold text-red-700">
+            <span className="font-bold text-destructive">
               {formatCurrency(data.days90Plus)}
             </span>
           </div>

@@ -64,8 +64,8 @@ const columns: Column<Expense>[] = [
     canHide: false,
     render: (expense) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-rose-100 flex items-center justify-center">
-          <Receipt className="h-4 w-4 text-rose-600" />
+        <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+          <Receipt className="h-4 w-4 text-destructive" />
         </div>
         <div>
           <div className="font-medium">{expense.expense_type?.name || "Expense"}</div>
@@ -85,7 +85,7 @@ const columns: Column<Expense>[] = [
     canHide: true,
     defaultVisible: true,
     render: (expense) => (
-      <span className="font-semibold text-rose-600 tabular-nums">
+      <span className="font-semibold text-destructive tabular-nums">
         -{formatCurrency(Number(expense.amount))}
       </span>
     ),

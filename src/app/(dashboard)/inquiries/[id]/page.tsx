@@ -81,9 +81,9 @@ const statusLabels: Record<string, string> = {
 }
 
 const statusColors: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
-  contacted: "bg-yellow-100 text-yellow-700",
-  converted: "bg-green-100 text-green-700",
+  new: "bg-info/10 text-info",
+  contacted: "bg-warning/10 text-warning",
+  converted: "bg-success/10 text-success",
   closed: "bg-muted text-foreground",
 }
 
@@ -179,8 +179,8 @@ export default function InquiryDetailPage() {
         backHref="/inquiries"
         backLabel="All Inquiries"
         avatar={
-          <div className="p-3 bg-teal-100 rounded-lg">
-            <Inbox className="h-8 w-8 text-teal-600" />
+          <div className="p-3 bg-primary/10 rounded-lg">
+            <Inbox className="h-8 w-8 text-primary" />
           </div>
         }
         status={<StatusBadge status={inquiry.status} />}
@@ -198,7 +198,7 @@ export default function InquiryDetailPage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Button variant="outline" size="sm" className="text-green-600 border-green-200 hover:bg-green-50">
+              <Button variant="outline" size="sm" className="text-success border-success/20 hover:bg-success/10">
                 <MessageSquare className="mr-2 h-4 w-4" />
                 WhatsApp
               </Button>
@@ -261,7 +261,7 @@ export default function InquiryDetailPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-green-600 border-green-200 hover:bg-green-50"
+                    className="text-success border-success/20 hover:bg-success/10"
                     onClick={() => handleQuickStatusChange("converted")}
                     disabled={isSaving}
                   >
@@ -292,7 +292,7 @@ export default function InquiryDetailPage() {
             <InfoRow
               label="Phone"
               value={
-                <a href={`tel:${inquiry.phone}`} className="text-teal-600 hover:underline">
+                <a href={`tel:${inquiry.phone}`} className="text-primary hover:underline">
                   {formatPhone(inquiry.phone)}
                 </a>
               }
@@ -302,7 +302,7 @@ export default function InquiryDetailPage() {
               label="Email"
               value={
                 inquiry.email ? (
-                  <a href={`mailto:${inquiry.email}`} className="text-teal-600 hover:underline">
+                  <a href={`mailto:${inquiry.email}`} className="text-primary hover:underline">
                     {inquiry.email}
                   </a>
                 ) : (
@@ -373,8 +373,8 @@ export default function InquiryDetailPage() {
           <DetailSection title="Property" icon={Building2}>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-blue-600" />
+                <div className="h-12 w-12 rounded-lg bg-info/10 flex items-center justify-center">
+                  <Building2 className="h-6 w-6 text-info" />
                 </div>
                 <div>
                   <PropertyLink id={inquiry.property.id} name={inquiry.property.name} />

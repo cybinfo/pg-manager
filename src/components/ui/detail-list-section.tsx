@@ -96,7 +96,7 @@ export function DetailListSection<T>({
   const viewAllButton = showViewAllButton && (
     effectiveViewAllMode === "link" && viewAllHref ? (
       <Link href={viewAllHref}>
-        <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700 hover:bg-teal-50">
+        <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-primary/5">
           {hasMoreItems ? viewAllButtonLabel : `View All (${totalItems})`}
           <ExternalLink className="ml-1 h-3 w-3" />
         </Button>
@@ -106,7 +106,7 @@ export function DetailListSection<T>({
         variant="ghost"
         size="sm"
         onClick={handleViewAllClick}
-        className="text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+        className="text-primary hover:text-primary/80 hover:bg-primary/5"
       >
         {viewAllButtonLabel}
         {isExpanded ? (
@@ -117,7 +117,7 @@ export function DetailListSection<T>({
       </Button>
     ) : viewAllHref ? (
       <Link href={viewAllHref}>
-        <Button variant="ghost" size="sm" className="text-teal-600 hover:text-teal-700 hover:bg-teal-50">
+        <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80 hover:bg-primary/5">
           View All ({totalItems})
           <ExternalLink className="ml-1 h-3 w-3" />
         </Button>

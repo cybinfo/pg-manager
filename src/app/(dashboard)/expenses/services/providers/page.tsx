@@ -55,8 +55,8 @@ const columns: Column<ServiceProviderListItem>[] = [
     editValidation: { required: true, minLength: 2 },
     render: (provider) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
-          <Wrench className="h-4 w-4 text-amber-600" />
+        <div className="h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center">
+          <Wrench className="h-4 w-4 text-warning" />
         </div>
         <div>
           <div className="font-medium">{provider.name}</div>
@@ -94,7 +94,7 @@ const columns: Column<ServiceProviderListItem>[] = [
     render: (provider) =>
       provider.rating ? (
         <div className="flex items-center gap-1">
-          <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+          <Star className="h-3 w-3 text-warning fill-warning" />
           <span className="tabular-nums">{provider.rating.toFixed(1)}</span>
         </div>
       ) : (

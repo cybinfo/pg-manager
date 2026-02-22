@@ -32,9 +32,9 @@ interface Room {
 }
 
 const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string; unit: string }> = {
-  electricity: { icon: Zap, color: "text-yellow-700", bgColor: "bg-yellow-100", unit: "kWh" },
-  water: { icon: Droplets, color: "text-blue-700", bgColor: "bg-blue-100", unit: "L" },
-  gas: { icon: Gauge, color: "text-orange-700", bgColor: "bg-orange-100", unit: "m³" },
+  electricity: { icon: Zap, color: "text-warning", bgColor: "bg-warning/10", unit: "kWh" },
+  water: { icon: Droplets, color: "text-info", bgColor: "bg-info/10", unit: "L" },
+  gas: { icon: Gauge, color: "text-warning", bgColor: "bg-warning/10", unit: "m³" },
 }
 
 export default function RoomMeterReadingsPage() {
@@ -139,7 +139,7 @@ export default function RoomMeterReadingsPage() {
       render: (row) => {
         if (row.units_consumed === null) return <span className="text-muted-foreground">-</span>
         return (
-          <span className="font-medium text-orange-600">
+          <span className="font-medium text-warning">
             +{row.units_consumed.toLocaleString()}
           </span>
         )

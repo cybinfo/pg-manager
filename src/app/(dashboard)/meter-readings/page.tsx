@@ -151,7 +151,7 @@ const columns: Column<MeterReading>[] = [
       if (reading.units_consumed === null) return <span className="text-muted-foreground">-</span>
       const hasIncrease = reading.units_consumed > 0
       return (
-        <div className={`flex items-center gap-1 font-medium ${hasIncrease ? "text-orange-600" : "text-green-600"}`}>
+        <div className={`flex items-center gap-1 font-medium ${hasIncrease ? "text-warning" : "text-success"}`}>
           {hasIncrease ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
           {reading.units_consumed.toLocaleString()}
         </div>
@@ -186,7 +186,7 @@ const columns: Column<MeterReading>[] = [
     canHide: true,
     defaultVisible: false,
     render: (reading) => reading.image_url ? (
-      <span className="text-sm text-blue-600">Has Image</span>
+      <span className="text-sm text-info">Has Image</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
   {

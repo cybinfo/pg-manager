@@ -75,8 +75,8 @@ const columns: Column<Bill>[] = [
     canHide: false,
     render: (bill) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-          <FileText className="h-4 w-4 text-blue-600" />
+        <div className="h-8 w-8 rounded-lg bg-info/10 flex items-center justify-center shrink-0">
+          <FileText className="h-4 w-4 text-info" />
         </div>
         <div className="min-w-0">
           <div className="font-medium truncate">{bill.bill_number}</div>
@@ -120,7 +120,7 @@ const columns: Column<Bill>[] = [
       <div>
         <div className="font-medium tabular-nums">{formatCurrency(bill.total_amount)}</div>
         {bill.balance_due > 0 && bill.status !== "paid" && (
-          <div className="text-xs text-rose-600">Due: {formatCurrency(bill.balance_due)}</div>
+          <div className="text-xs text-destructive">Due: {formatCurrency(bill.balance_due)}</div>
         )}
       </div>
     ),
@@ -139,8 +139,8 @@ const columns: Column<Bill>[] = [
     ],
   }),
   // Hidden by default columns
-  currencyColumn("paid_amount", "Paid Amount", { defaultVisible: false, color: "text-emerald-600", bold: false }),
-  currencyColumn("balance_due", "Balance Due", { defaultVisible: false, color: "text-rose-600", bold: false }),
+  currencyColumn("paid_amount", "Paid Amount", { defaultVisible: false, color: "text-success", bold: false }),
+  currencyColumn("balance_due", "Balance Due", { defaultVisible: false, color: "text-destructive", bold: false }),
   dateColumn("bill_date", "Bill Date", { defaultVisible: false }),
   {
     key: "tenant_phone",

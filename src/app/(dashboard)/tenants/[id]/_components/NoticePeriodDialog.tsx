@@ -34,7 +34,7 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
       <Card className="w-full max-w-md animate-scale-in">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-amber-500" />
+            <Bell className="h-5 w-5 text-warning" />
             Put on Notice Period
           </CardTitle>
           <CardDescription>
@@ -42,8 +42,8 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-            <p className="text-amber-800">
+          <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg text-sm">
+            <p className="text-warning">
               <strong>Note:</strong> This action will change the tenant&apos;s status to &ldquo;Notice Period&rdquo;.
               You can later initiate the checkout process when they&apos;re ready to leave.
             </p>
@@ -89,8 +89,8 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
           </div>
 
           {noticeData.notice_date && noticeData.expected_exit_date && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-              <p className="text-blue-800">
+            <div className="p-3 bg-info/10 border border-info/30 rounded-lg text-sm">
+              <p className="text-info">
                 <strong>Notice Period:</strong>{" "}
                 {Math.ceil((new Date(noticeData.expected_exit_date).getTime() - new Date(noticeData.notice_date).getTime()) / (1000 * 60 * 60 * 24))} days
                 {" "}(from {new Date(noticeData.notice_date).toLocaleDateString("en-IN")} to {new Date(noticeData.expected_exit_date).toLocaleDateString("en-IN")})
@@ -115,7 +115,7 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
           <Button
             onClick={handleSubmit}
             disabled={loading || !noticeData.expected_exit_date}
-            className="bg-amber-500 hover:bg-amber-600 text-white"
+            className="bg-warning hover:bg-warning/90 text-white"
           >
             {loading ? (
               <>

@@ -107,6 +107,14 @@ export function PortalLayout({
 
   return (
     <div className="min-h-screen bg-muted/50">
+      {/* Skip to content link for keyboard navigation */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       {/* Mobile Header */}
       <header className={`sticky top-0 z-50 bg-gradient-to-r ${brandGradient} lg:hidden`}>
         <div className="flex items-center justify-between h-14 px-4">
@@ -121,6 +129,8 @@ export function PortalLayout({
             size="icon"
             className="text-white hover:bg-white/20"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
@@ -212,7 +222,7 @@ export function PortalLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 lg:pl-64">
+        <main id="main-content" className="flex-1 lg:pl-64">
           <div className="p-4 md:p-6 lg:p-8">
             {children}
           </div>

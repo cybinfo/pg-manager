@@ -49,7 +49,7 @@ export function WhatsAppButton({
         onClick={handleWhatsAppClick}
         variant={variant}
         size={size}
-        className={`bg-green-500 hover:bg-green-600 text-white ${className}`}
+        className={`bg-success hover:bg-success/90 text-white ${className}`}
       >
         <MessageCircle className="h-4 w-4 mr-2" />
         {label}
@@ -65,7 +65,7 @@ export function WhatsAppButton({
           title="Copy message"
         >
           {copied ? (
-            <Check className="h-4 w-4 text-green-500" />
+            <Check className="h-4 w-4 text-success" />
           ) : (
             <Copy className="h-4 w-4" />
           )}
@@ -97,7 +97,7 @@ export function WhatsAppIconButton({
       onClick={handleClick}
       variant="ghost"
       size="icon"
-      className={`h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50 ${className}`}
+      className={`h-8 w-8 text-success hover:text-success hover:bg-success/10 ${className}`}
       title="Send via WhatsApp"
     >
       <MessageCircle className="h-4 w-4" />

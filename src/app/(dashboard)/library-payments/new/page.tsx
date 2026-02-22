@@ -187,8 +187,8 @@ export default function NewLibraryPaymentPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CreditCard className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-success/10 rounded-lg">
+                <CreditCard className="h-5 w-5 text-success" />
               </div>
               <div>
                 <CardTitle>Payment Details</CardTitle>

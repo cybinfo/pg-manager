@@ -51,11 +51,11 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "p-2 rounded-lg",
-                    availableBeds > 0 ? "bg-green-100 dark:bg-green-900" : "bg-rose-100 dark:bg-rose-900"
+                    availableBeds > 0 ? "bg-success/10" : "bg-destructive/10"
                   )}>
                     <Building2 className={cn(
                       "h-5 w-5",
-                      availableBeds > 0 ? "text-green-600" : "text-rose-600"
+                      availableBeds > 0 ? "text-success" : "text-destructive"
                     )} />
                   </div>
                   <div>
@@ -89,8 +89,8 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
                 <div
                   className={cn(
                     "h-full transition-all",
-                    occupancy >= 90 ? "bg-rose-500" :
-                    occupancy >= 70 ? "bg-amber-500" : "bg-green-500"
+                    occupancy >= 90 ? "bg-destructive" :
+                    occupancy >= 70 ? "bg-warning" : "bg-success"
                   )}
                   style={{ width: `${occupancy}%` }}
                 />

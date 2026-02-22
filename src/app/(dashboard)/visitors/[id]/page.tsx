@@ -66,9 +66,9 @@ interface VisitHistoryEntry {
 }
 
 const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-blue-100 text-blue-700",
+  tenant_visitor: "bg-info/10 text-info",
   enquiry: "bg-purple-100 text-purple-700",
-  service_provider: "bg-orange-100 text-orange-700",
+  service_provider: "bg-warning/10 text-warning",
   general: "bg-muted text-foreground",
 }
 
@@ -245,6 +245,10 @@ export default function VisitorDetailPage() {
         }
         backHref="/visitors"
         backLabel="All Visitors"
+        breadcrumbs={[
+          { label: "Visitors", href: "/visitors" },
+          { label: displayName || "Details" },
+        ]}
         status={isCheckedIn ? "active" : "muted"}
         avatar={
           displayPhoto ? (
@@ -372,7 +376,7 @@ export default function VisitorDetailPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-green-600 border-green-300 hover:bg-green-50"
+                  className="text-success border-success/30 hover:bg-success/10"
                   onClick={() => handleUpdateEnquiryStatus("converted")}
                   disabled={saving}
                 >
@@ -382,7 +386,7 @@ export default function VisitorDetailPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-red-600 border-red-300 hover:bg-red-50"
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
                   onClick={() => handleUpdateEnquiryStatus("lost")}
                   disabled={saving}
                 >
@@ -413,7 +417,7 @@ export default function VisitorDetailPage() {
             <InfoRow
               label="Phone"
               value={
-                <a href={`tel:${displayPhone}`} className="text-teal-600 hover:underline">
+                <a href={`tel:${displayPhone}`} className="text-primary hover:underline">
                   {displayPhone}
                 </a>
               }
@@ -424,7 +428,7 @@ export default function VisitorDetailPage() {
             <InfoRow
               label="Email"
               value={
-                <a href={`mailto:${displayEmail}`} className="text-teal-600 hover:underline">
+                <a href={`mailto:${displayEmail}`} className="text-primary hover:underline">
                   {displayEmail}
                 </a>
               }
@@ -463,7 +467,7 @@ export default function VisitorDetailPage() {
             value={
               visitor.check_out_time
                 ? formatDateTime(visitor.check_out_time)
-                : <span className="text-green-600">Still here</span>
+                : <span className="text-success">Still here</span>
             }
             icon={LogOut}
           />
@@ -580,17 +584,17 @@ export default function VisitorDetailPage() {
             title="Visitor Profile"
             description="Contact directory entry"
             icon={User}
-            className="border-blue-200 bg-blue-50/30"
+            className="border-info/20 bg-info/5"
             actions={
               <div className="flex items-center gap-2">
                 {visitor.visitor_contact.is_frequent && (
-                  <span className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                  <span className="flex items-center gap-1 px-2 py-1 bg-warning/10 text-warning rounded-full text-xs font-medium">
                     <Star className="h-3 w-3" />
                     Frequent
                   </span>
                 )}
                 {visitor.visitor_contact.is_blocked && (
-                  <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                  <span className="flex items-center gap-1 px-2 py-1 bg-destructive/10 text-destructive rounded-full text-xs font-medium">
                     <Ban className="h-3 w-3" />
                     Blocked
                   </span>
@@ -601,7 +605,7 @@ export default function VisitorDetailPage() {
             <div className="grid md:grid-cols-3 gap-4 mb-4">
               <div className="p-3 bg-card rounded-lg border">
                 <p className="text-sm text-muted-foreground">Total Visits</p>
-                <p className="text-2xl font-bold text-blue-600">{visitor.visitor_contact.visit_count}</p>
+                <p className="text-2xl font-bold text-info">{visitor.visitor_contact.visit_count}</p>
               </div>
               <div className="p-3 bg-card rounded-lg border">
                 <p className="text-sm text-muted-foreground">First Visit</p>
@@ -669,7 +673,7 @@ export default function VisitorDetailPage() {
                         {getDuration(visit.check_in_time, visit.check_out_time)}
                       </span>
                     ) : (
-                      <span className="text-green-600 font-medium">Currently here</span>
+                      <span className="text-success font-medium">Currently here</span>
                     )}
                   </div>
                 </div>

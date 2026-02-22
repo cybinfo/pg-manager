@@ -63,7 +63,7 @@ const columns: Column<Payment>[] = [
     canHide: false,
     render: (payment) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-xs font-bold shrink-0">
+        <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center text-success text-xs font-bold shrink-0">
           ₹
         </div>
         <div className="min-w-0">
@@ -75,7 +75,7 @@ const columns: Column<Payment>[] = [
       </div>
     ),
   },
-  currencyColumn("amount", "Amount", { color: "text-emerald-600", bold: true }),
+  currencyColumn("amount", "Amount", { color: "text-success", bold: true }),
   badgeColumn("payment_method", "Method", PAYMENT_METHODS, { hideOnMobile: true }),
   dateColumn("payment_date", "Date"),
   {
@@ -133,7 +133,7 @@ const columns: Column<Payment>[] = [
     canHide: true,
     defaultVisible: false,
     render: (payment) => payment.bill ? (
-      <span className="text-blue-600">{payment.bill.bill_number}</span>
+      <span className="text-info">{payment.bill.bill_number}</span>
     ) : <NullDisplay />,
   },
   {

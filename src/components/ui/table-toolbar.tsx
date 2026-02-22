@@ -367,12 +367,12 @@ export function ActiveFiltersSummary({
 
       {/* Advanced Filters */}
       {advancedFilterCount > 0 && (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-info/10 text-info text-xs font-medium">
           {advancedFilterCount} advanced filter{advancedFilterCount > 1 ? "s" : ""}
           {onClearAdvancedFilters && (
             <button
               onClick={onClearAdvancedFilters}
-              className="ml-0.5 hover:bg-blue-200 rounded-full p-0.5"
+              className="ml-0.5 hover:bg-info/20 rounded-full p-0.5"
             >
               <X className="h-3 w-3" />
             </button>
@@ -382,13 +382,13 @@ export function ActiveFiltersSummary({
 
       {/* Grouping */}
       {groupByLabels.length > 0 && (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 text-xs font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-warning/10 text-warning text-xs font-medium">
           <Layers className="h-3 w-3" />
           Grouped: {groupByLabels.join(" → ")}
           {onClearGrouping && (
             <button
               onClick={onClearGrouping}
-              className="ml-0.5 hover:bg-amber-200 rounded-full p-0.5"
+              className="ml-0.5 hover:bg-warning/20 rounded-full p-0.5"
             >
               <X className="h-3 w-3" />
             </button>

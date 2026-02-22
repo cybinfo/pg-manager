@@ -163,27 +163,27 @@ export default function MemberHomePage() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm font-medium">Hours Balance</p>
+              <p className="text-white/70 text-sm font-medium">Hours Balance</p>
               <p className="text-4xl font-bold mt-1">
                 {member.hours_balance?.toFixed(1) || "0.0"}h
               </p>
               {subscription?.hours_included && (
-                <p className="text-purple-100 text-sm mt-2">
+                <p className="text-white/70 text-sm mt-2">
                   of {subscription.hours_included}h total
                 </p>
               )}
             </div>
             <div className="text-right">
-              <Timer className="h-12 w-12 text-purple-200" />
+              <Timer className="h-12 w-12 text-white/40" />
             </div>
           </div>
           {subscription?.hours_included && (
             <div className="mt-4">
               <Progress
                 value={100 - hoursPercentUsed}
-                className="h-2 bg-purple-400"
+                className="h-2 bg-white/30"
               />
-              <p className="text-xs text-purple-100 mt-2">
+              <p className="text-xs text-white/70 mt-2">
                 {member.hours_used?.toFixed(1) || 0}h used
               </p>
             </div>
@@ -194,34 +194,10 @@ export default function MemberHomePage() {
       {/* Quick Stats */}
       <StatsGrid
         stats={[
-          {
-            icon: BookOpen,
-            label: "Library",
-            value: member.library?.name || "-",
-            bgColor: "bg-purple-50 dark:bg-purple-950",
-            iconColor: "text-purple-600",
-          },
-          {
-            icon: Clock,
-            label: "This Month",
-            value: `${extra.totalHoursThisMonth.toFixed(1)}h`,
-            bgColor: "bg-emerald-50 dark:bg-emerald-950",
-            iconColor: "text-emerald-600",
-          },
-          {
-            icon: Calendar,
-            label: "Visits",
-            value: extra.visitsThisMonth,
-            bgColor: "bg-sky-50 dark:bg-sky-950",
-            iconColor: "text-sky-600",
-          },
-          {
-            icon: CreditCard,
-            label: "Total Paid",
-            value: formatCurrency(extra.totalPaid),
-            bgColor: "bg-violet-50 dark:bg-violet-950",
-            iconColor: "text-violet-600",
-          },
+          { icon: BookOpen, label: "Library", value: member.library?.name || "-", color: "purple" },
+          { icon: Clock, label: "This Month", value: `${extra.totalHoursThisMonth.toFixed(1)}h`, color: "green" },
+          { icon: Calendar, label: "Visits", value: extra.visitsThisMonth, color: "blue" },
+          { icon: CreditCard, label: "Total Paid", value: formatCurrency(extra.totalPaid), color: "purple" },
         ]}
       />
 
@@ -252,7 +228,7 @@ export default function MemberHomePage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Days Remaining</p>
-                    <p className={`font-medium ${daysUntilExpiry && daysUntilExpiry <= 7 ? "text-amber-600" : ""}`}>
+                    <p className={`font-medium ${daysUntilExpiry && daysUntilExpiry <= 7 ? "text-warning" : ""}`}>
                       {daysUntilExpiry !== null ? (daysUntilExpiry > 0 ? daysUntilExpiry : 0) : "-"}
                     </p>
                   </div>
@@ -271,8 +247,8 @@ export default function MemberHomePage() {
                 </div>
 
                 {daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0 && (
-                  <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
-                    <p className="text-sm text-amber-800">
+                  <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                    <p className="text-sm text-warning">
                       <strong>Reminder:</strong> Your subscription expires in {daysUntilExpiry} days.
                       Please renew to continue uninterrupted access.
                     </p>
@@ -298,32 +274,32 @@ export default function MemberHomePage() {
               icon={QrCode}
               title="My QR Code"
               description="Quick check-in"
-              bgColor="bg-purple-50 dark:bg-purple-950"
-              iconColor="text-purple-600"
+              bgColor="bg-primary/10"
+              iconColor="text-primary"
             />
             <QuickActionLink
               href="/member/attendance"
               icon={Clock}
               title="View Attendance"
               description="Check-in history"
-              bgColor="bg-emerald-50 dark:bg-emerald-950"
-              iconColor="text-emerald-600"
+              bgColor="bg-success/10"
+              iconColor="text-success"
             />
             <QuickActionLink
               href="/member/payments"
               icon={CreditCard}
               title="Payment History"
               description="View all payments"
-              bgColor="bg-sky-50 dark:bg-sky-950"
-              iconColor="text-sky-600"
+              bgColor="bg-info/10"
+              iconColor="text-info"
             />
             <QuickActionLink
               href="/member/profile"
               icon={User}
               title="My Profile"
               description="View details"
-              bgColor="bg-violet-50 dark:bg-violet-950"
-              iconColor="text-violet-600"
+              bgColor="bg-muted"
+              iconColor="text-muted-foreground"
             />
           </CardContent>
         </Card>
@@ -354,11 +330,11 @@ export default function MemberHomePage() {
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${att.check_out_time ? "bg-purple-50 dark:bg-purple-950" : "bg-emerald-50 dark:bg-emerald-950"}`}>
+                    <div className={`p-2 rounded-full ${att.check_out_time ? "bg-primary/10" : "bg-success/10"}`}>
                       {att.check_out_time ? (
-                        <CheckCircle className="h-4 w-4 text-purple-600" />
+                        <CheckCircle className="h-4 w-4 text-primary" />
                       ) : (
-                        <Clock className="h-4 w-4 text-emerald-600 animate-pulse" />
+                        <Clock className="h-4 w-4 text-success animate-pulse" />
                       )}
                     </div>
                     <div>
@@ -382,9 +358,9 @@ export default function MemberHomePage() {
                   </div>
                   <div className="text-right">
                     {att.hours_spent ? (
-                      <p className="font-semibold text-purple-600">{att.hours_spent.toFixed(1)}h</p>
+                      <p className="font-semibold text-primary">{att.hours_spent.toFixed(1)}h</p>
                     ) : (
-                      <span className="text-xs px-2 py-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-full">
+                      <span className="text-xs px-2 py-1 bg-success/10 text-success rounded-full">
                         Active
                       </span>
                     )}

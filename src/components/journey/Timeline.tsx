@@ -252,7 +252,7 @@ export function MiniTimeline({
         <Button
           variant="ghost"
           size="sm"
-          className="w-full text-xs text-teal-600 hover:text-teal-700"
+          className="w-full text-xs text-primary hover:text-primary/80"
           onClick={onViewAll}
         >
           View all {events.length} events
@@ -294,7 +294,7 @@ function MiniTimelineEvent({ event }: MiniTimelineEventProps) {
         <span
           className={cn(
             "text-xs font-medium shrink-0",
-            event.amount_type === "credit" ? "text-emerald-600" : "text-foreground"
+            event.amount_type === "credit" ? "text-success" : "text-foreground"
           )}
         >
           {event.amount_type === "credit" ? "+" : ""}

@@ -44,7 +44,7 @@ export function RoomGrid({ rooms, onRoomClick }: RoomGridProps) {
             key={room.id}
             className={cn(
               "cursor-pointer transition-all hover:shadow-md",
-              isFull ? "border-rose-200 bg-rose-50/50" : "border-green-200 bg-green-50/50 hover:border-green-400"
+              isFull ? "border-destructive/20 bg-destructive/5" : "border-success/20 bg-success/5 hover:border-success/40"
             )}
             onClick={() => onRoomClick(room)}
           >
@@ -65,8 +65,8 @@ export function RoomGrid({ rooms, onRoomClick }: RoomGridProps) {
                     className={cn(
                       "w-6 h-6 rounded flex items-center justify-center",
                       idx < room.occupied_beds
-                        ? "bg-rose-500 text-white"
-                        : "bg-green-500 text-white"
+                        ? "bg-destructive text-white"
+                        : "bg-success text-white"
                     )}
                   >
                     <Bed className="h-3 w-3" />

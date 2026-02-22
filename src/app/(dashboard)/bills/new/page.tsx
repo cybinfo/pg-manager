@@ -573,7 +573,7 @@ function NewBillContent() {
               })}
             </div>
             {selectedChargeTypes.length === 0 && (
-              <p className="text-sm text-amber-600 mt-3">
+              <p className="text-sm text-warning mt-3">
                 Please select at least one charge type to include in the bill.
               </p>
             )}
@@ -701,7 +701,7 @@ function NewBillContent() {
                       variant="ghost"
                       size="icon"
                       onClick={() => removeLineItem(item.id)}
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

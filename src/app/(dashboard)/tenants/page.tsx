@@ -195,10 +195,10 @@ const columns: ExtendedColumn<Tenant>[] = [
     ],
     render: (tenant) => {
       const statusMap: Record<string, { label: string; className: string }> = {
-        pending: { label: "Pending", className: "text-yellow-600 bg-yellow-50" },
-        submitted: { label: "Submitted", className: "text-blue-600 bg-blue-50" },
-        verified: { label: "Verified", className: "text-green-600 bg-green-50" },
-        rejected: { label: "Rejected", className: "text-red-600 bg-red-50" },
+        pending: { label: "Pending", className: "text-warning bg-warning/10" },
+        submitted: { label: "Submitted", className: "text-info bg-info/10" },
+        verified: { label: "Verified", className: "text-success bg-success/10" },
+        rejected: { label: "Rejected", className: "text-destructive bg-destructive/10" },
         not_required: { label: "Not Required", className: "text-muted-foreground bg-muted" },
       }
       const status = statusMap[tenant.police_verification_status] || statusMap.pending
@@ -221,8 +221,8 @@ const columns: ExtendedColumn<Tenant>[] = [
     render: (tenant) => (
       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
         tenant.agreement_signed
-          ? "text-green-600 bg-green-50"
-          : "text-yellow-600 bg-yellow-50"
+          ? "text-success bg-success/10"
+          : "text-warning bg-warning/10"
       }`}>
         {tenant.agreement_signed ? "Signed" : "Pending"}
       </span>

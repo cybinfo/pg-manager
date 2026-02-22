@@ -198,8 +198,8 @@ export default function EditExpensePage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-rose-100 rounded-lg">
-                <Receipt className="h-5 w-5 text-rose-600" />
+              <div className="p-2 bg-destructive/10 rounded-lg">
+                <Receipt className="h-5 w-5 text-destructive" />
               </div>
               <div>
                 <CardTitle>Expense Details</CardTitle>
@@ -293,8 +293,8 @@ export default function EditExpensePage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Wallet className="h-5 w-5 text-blue-600" />
+              <div className="p-2 bg-info/10 rounded-lg">
+                <Wallet className="h-5 w-5 text-info" />
               </div>
               <div>
                 <CardTitle>Payment Information</CardTitle>

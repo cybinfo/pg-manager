@@ -64,7 +64,7 @@ export function FinancialSections({ tenantId, charges, payments, bills }: Financ
               <p className="text-xs text-muted-foreground">{charge.for_period}</p>
             </div>
             <div className="text-right">
-              <Currency amount={charge.amount} className="text-rose-600 font-semibold" />
+              <Currency amount={charge.amount} className="text-destructive font-semibold" />
               <p className="text-xs text-muted-foreground">Due: {formatDate(charge.due_date)}</p>
             </div>
           </div>
@@ -108,7 +108,7 @@ export function FinancialSections({ tenantId, charges, payments, bills }: Financ
               </p>
             </div>
             <div className="text-right">
-              <Currency amount={payment.amount} className="text-emerald-600 font-semibold" />
+              <Currency amount={payment.amount} className="text-success font-semibold" />
               <p className="text-xs text-muted-foreground capitalize">{payment.payment_method}</p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export function FinancialSections({ tenantId, charges, payments, bills }: Financ
               <div className="text-right">
                 <p className="font-semibold">{formatCurrency(bill.total_amount)}</p>
                 {bill.balance_due > 0 && (
-                  <p className="text-xs text-red-600">Due: {formatCurrency(bill.balance_due)}</p>
+                  <p className="text-xs text-destructive">Due: {formatCurrency(bill.balance_due)}</p>
                 )}
               </div>
             </div>

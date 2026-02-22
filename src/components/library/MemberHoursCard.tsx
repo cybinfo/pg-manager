@@ -41,13 +41,13 @@ export function MemberHoursCard({
         <div
           className={cn(
             "p-2 rounded-full",
-            isCritical ? "bg-red-100" : isLow ? "bg-amber-100" : "bg-green-100"
+            isCritical ? "bg-destructive/10" : isLow ? "bg-warning/10" : "bg-success/10"
           )}
         >
           <Clock
             className={cn(
               "h-4 w-4",
-              isCritical ? "text-red-600" : isLow ? "text-amber-600" : "text-green-600"
+              isCritical ? "text-destructive" : isLow ? "text-warning" : "text-success"
             )}
           />
         </div>
@@ -59,7 +59,7 @@ export function MemberHoursCard({
             <span
               className={cn(
                 "text-sm font-bold",
-                isCritical ? "text-red-600" : isLow ? "text-amber-600" : "text-green-600"
+                isCritical ? "text-destructive" : isLow ? "text-warning" : "text-success"
               )}
             >
               {hoursRemaining.toFixed(1)}h left
@@ -70,10 +70,10 @@ export function MemberHoursCard({
             className={cn(
               "h-1.5",
               isCritical
-                ? "[&>div]:bg-red-500"
+                ? "[&>div]:bg-destructive"
                 : isLow
-                ? "[&>div]:bg-amber-500"
-                : "[&>div]:bg-green-500"
+                ? "[&>div]:bg-warning"
+                : "[&>div]:bg-success"
             )}
           />
         </div>
@@ -89,13 +89,13 @@ export function MemberHoursCard({
             <div
               className={cn(
                 "p-2 rounded-lg",
-                isCritical ? "bg-red-100" : isLow ? "bg-amber-100" : "bg-green-100"
+                isCritical ? "bg-destructive/10" : isLow ? "bg-warning/10" : "bg-success/10"
               )}
             >
               <Clock
                 className={cn(
                   "h-5 w-5",
-                  isCritical ? "text-red-600" : isLow ? "text-amber-600" : "text-green-600"
+                  isCritical ? "text-destructive" : isLow ? "text-warning" : "text-success"
                 )}
               />
             </div>
@@ -111,8 +111,8 @@ export function MemberHoursCard({
               className={cn(
                 "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
                 isCritical
-                  ? "bg-red-100 text-red-700"
-                  : "bg-amber-100 text-amber-700"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-warning/10 text-warning"
               )}
             >
               <AlertTriangle className="h-3 w-3" />
@@ -129,10 +129,10 @@ export function MemberHoursCard({
             className={cn(
               "h-3",
               isCritical
-                ? "[&>div]:bg-red-500"
+                ? "[&>div]:bg-destructive"
                 : isLow
-                ? "[&>div]:bg-amber-500"
-                : "[&>div]:bg-green-500"
+                ? "[&>div]:bg-warning"
+                : "[&>div]:bg-success"
             )}
           />
 
@@ -147,7 +147,7 @@ export function MemberHoursCard({
               <span
                 className={cn(
                   "font-bold",
-                  isCritical ? "text-red-600" : isLow ? "text-amber-600" : "text-green-600"
+                  isCritical ? "text-destructive" : isLow ? "text-warning" : "text-success"
                 )}
               >
                 {hoursRemaining.toFixed(1)}h

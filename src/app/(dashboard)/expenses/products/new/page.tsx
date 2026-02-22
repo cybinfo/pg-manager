@@ -185,8 +185,8 @@ export default function NewProductPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-teal-100 flex items-center justify-center">
-                    <Package className="h-5 w-5 text-teal-600" />
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Package className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <CardTitle>New Product</CardTitle>

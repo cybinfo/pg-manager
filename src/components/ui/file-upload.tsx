@@ -298,7 +298,7 @@ export function FileUpload({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => handleRemove(url)}
                 >
                   <X className="h-4 w-4" />
@@ -462,7 +462,7 @@ export function ProfilePhotoUpload({
           type="button"
           variant="ghost"
           size="sm"
-          className="text-xs text-red-600 hover:text-red-700"
+          className="text-xs text-destructive hover:text-destructive/80"
           onClick={() => onChange?.("")}
         >
           Remove

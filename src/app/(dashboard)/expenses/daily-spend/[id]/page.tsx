@@ -148,8 +148,8 @@ export default function DailySpendDetailPage({
             backHref="/expenses/daily-spend"
             backLabel="Back to Daily Spend"
             avatar={
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <ShoppingBag className="h-8 w-8 text-orange-600" />
+              <div className="p-3 bg-warning/10 rounded-lg">
+                <ShoppingBag className="h-8 w-8 text-warning" />
               </div>
             }
             status={

@@ -94,10 +94,10 @@ function PersonDropdownItem({ person }: { person: PersonSearchResult }) {
         <div className="flex items-center gap-2">
           <span className="font-medium truncate">{person.name}</span>
           {person.is_verified && (
-            <BadgeCheck className="h-3 w-3 text-emerald-600" />
+            <BadgeCheck className="h-3 w-3 text-success" />
           )}
           {person.is_blocked && (
-            <Ban className="h-3 w-3 text-red-600" />
+            <Ban className="h-3 w-3 text-destructive" />
           )}
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -133,7 +133,7 @@ function PersonSelectedCard({
     <div className="space-y-2">
       <Card className={cn(
         "border-2",
-        error ? "border-red-300" : "border-primary/30 bg-primary/5"
+        error ? "border-destructive/30" : "border-primary/30 bg-primary/5"
       )}>
         <CardContent className="p-3">
           <div className="flex items-center justify-between gap-3">
@@ -143,7 +143,7 @@ function PersonSelectedCard({
                 <div className="flex items-center gap-2">
                   <span className="font-medium truncate">{person.name}</span>
                   {person.is_verified && (
-                    <BadgeCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                    <BadgeCheck className="h-4 w-4 text-success flex-shrink-0" />
                   )}
                 </div>
                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -202,7 +202,7 @@ function PersonSelectedCard({
                       <span key={i} className="inline-flex items-center gap-1">
                         {i > 0 && ", "}
                         {doc.type}
-                        {doc.verified && <BadgeCheck className="h-3 w-3 text-emerald-500" />}
+                        {doc.verified && <BadgeCheck className="h-3 w-3 text-success" />}
                       </span>
                     ))}
                   </div>
@@ -230,7 +230,7 @@ function PersonSelectedCard({
               )}
 
               {!hasIdDocuments && (
-                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-2 rounded">
+                <div className="flex items-center gap-2 text-sm text-warning bg-warning/10 p-2 rounded">
                   <FileText className="h-4 w-4" />
                   <span>No ID documents on file.</span>
                   {showEditLink && (
@@ -244,7 +244,7 @@ function PersonSelectedCard({
           )}
         </CardContent>
       </Card>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }

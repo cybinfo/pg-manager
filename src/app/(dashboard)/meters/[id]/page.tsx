@@ -27,7 +27,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { PageLoading } from "@/components/ui/loading"
 import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { Select } from "@/components/ui/form-components"
-import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { ConfirmDialog } from "@/components/ui/form-dialog"
 import {
   Dialog,
   DialogContent,
@@ -236,6 +236,10 @@ export default function MeterDetailPage() {
         subtitle={typeConfig.label}
         backHref="/meters"
         backLabel="All Meters"
+        breadcrumbs={[
+          { label: "Meters", href: "/meters" },
+          { label: meter.meter_number || "Details" },
+        ]}
         avatar={
           <div className={`p-3 rounded-lg ${typeConfig.bgColor}`}>
             <TypeIcon className={`h-8 w-8 ${typeConfig.color}`} />

@@ -189,13 +189,13 @@ export default function TenantDocumentsPage() {
       </div>
 
       {/* Info Card */}
-      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+      <Card className="bg-info/5 border-info/20">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
+            <FileText className="h-5 w-5 text-info mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-blue-800 dark:text-blue-200">Document Verification</p>
-              <p className="text-blue-700 dark:text-blue-300">
+              <p className="font-medium text-info">Document Verification</p>
+              <p className="text-info/80">
                 Documents you upload will be reviewed by the property administrator.
                 Once approved, you can reference them in any issue reports to avoid re-uploading.
                 <span className="font-medium"> Approved documents cannot be deleted.</span>
@@ -215,7 +215,7 @@ export default function TenantDocumentsPage() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-success">
               {documents.filter(d => d.status === "approved").length}
             </p>
             <p className="text-sm text-muted-foreground">Approved</p>
@@ -223,7 +223,7 @@ export default function TenantDocumentsPage() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-amber-600">
+            <p className="text-2xl font-bold text-warning">
               {documents.filter(d => d.status === "pending").length}
             </p>
             <p className="text-sm text-muted-foreground">Pending</p>
@@ -278,7 +278,7 @@ export default function TenantDocumentsPage() {
                         {doc.reviewed_at && ` • Reviewed on ${formatDate(doc.reviewed_at)}`}
                       </p>
                       {doc.review_notes && doc.status === "rejected" && (
-                        <p className="text-sm text-red-600 mt-2 bg-red-50 dark:bg-red-950 p-2 rounded">
+                        <p className="text-sm text-destructive mt-2 bg-destructive/5 p-2 rounded">
                           Rejection reason: {doc.review_notes}
                         </p>
                       )}
@@ -296,7 +296,7 @@ export default function TenantDocumentsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/5"
                           onClick={() => confirmDelete(doc)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -337,7 +337,7 @@ export default function TenantDocumentsPage() {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               {deleting ? (
                 <>

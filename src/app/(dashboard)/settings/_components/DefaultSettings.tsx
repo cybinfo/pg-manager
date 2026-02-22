@@ -157,7 +157,7 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
                 key={amenity}
                 className="flex items-center gap-2 p-2 border rounded-lg"
               >
-                <Check className="h-4 w-4 text-green-600" />
+                <Check className="h-4 w-4 text-success" />
                 <span className="text-sm">{amenity}</span>
               </div>
             ))}
@@ -187,10 +187,10 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
             </Button>
           </div>
 
-          <div className="flex items-center justify-between p-4 border rounded-lg border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+          <div className="flex items-center justify-between p-4 border rounded-lg border-destructive/20 bg-destructive/10">
             <div>
-              <p className="font-medium text-red-700 dark:text-red-300">Delete Account</p>
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="font-medium text-destructive">Delete Account</p>
+              <p className="text-sm text-destructive">
                 Permanently delete your account and all data
               </p>
             </div>
