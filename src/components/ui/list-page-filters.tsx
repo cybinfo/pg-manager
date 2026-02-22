@@ -53,7 +53,7 @@ export function ListPageFilters({
               <select
                 value={values[filter.id] || "all"}
                 onChange={(e) => onChange(filter.id, e.target.value)}
-                className="h-9 px-3 rounded-md border border-input bg-white text-sm min-w-[140px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                className="h-9 px-3 rounded-md border border-input bg-card text-sm min-w-[140px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 aria-label={filter.label}
               >
                 <option value="all">{filter.placeholder || `All ${filter.label}`}</option>
@@ -71,7 +71,7 @@ export function ListPageFilters({
                   type="date"
                   value={values[filter.id] || ""}
                   onChange={(e) => onChange(filter.id, e.target.value)}
-                  className="h-9 px-3 pl-9 rounded-md border border-input bg-white text-sm min-w-[150px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  className="h-9 px-3 pl-9 rounded-md border border-input bg-card text-sm min-w-[150px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                   aria-label={filter.label}
                 />
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -85,7 +85,7 @@ export function ListPageFilters({
                     type="date"
                     value={values[`${filter.id}_from`] || ""}
                     onChange={(e) => onChange(`${filter.id}_from`, e.target.value)}
-                    className="h-9 px-3 pl-9 rounded-md border border-input bg-white text-sm w-[140px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                    className="h-9 px-3 pl-9 rounded-md border border-input bg-card text-sm w-[140px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                     aria-label={`${filter.label} from`}
                   />
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -96,7 +96,7 @@ export function ListPageFilters({
                     type="date"
                     value={values[`${filter.id}_to`] || ""}
                     onChange={(e) => onChange(`${filter.id}_to`, e.target.value)}
-                    className="h-9 px-3 pl-9 rounded-md border border-input bg-white text-sm w-[140px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                    className="h-9 px-3 pl-9 rounded-md border border-input bg-card text-sm w-[140px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                     aria-label={`${filter.label} to`}
                   />
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />

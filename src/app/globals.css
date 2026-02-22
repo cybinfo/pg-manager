@@ -64,11 +64,11 @@
   --foreground: 210 40% 98%;
 
   /* Card */
-  --card: 224 71% 4%;
+  --card: 222 47% 11%;
   --card-foreground: 210 40% 98%;
 
   /* Popover */
-  --popover: 224 71% 4%;
+  --popover: 222 47% 11%;
   --popover-foreground: 210 40% 98%;
 
   /* Primary - Teal (Brand Color) */
@@ -427,7 +427,7 @@ body {
 
 .gradient-border {
   position: relative;
-  background: white;
+  background: hsl(var(--card));
   border-radius: inherit;
 }
 

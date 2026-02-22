@@ -248,7 +248,7 @@ export default function TenantBillsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                              className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
                               onClick={() => openReportDialog(bill)}
                               title="Report issue with this bill"
                             >

@@ -56,7 +56,7 @@ const columns: Column<ServicePaymentListItem>[] = [
     canHide: false,
     render: (payment) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center">
+        <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
           <Hammer className="h-4 w-4 text-green-600" />
         </div>
         <div>

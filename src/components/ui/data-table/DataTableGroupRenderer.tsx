@@ -30,7 +30,7 @@ export function DataTableGroupControls({
   if (!collapsibleGroups) return null
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 border-b bg-slate-50/50">
+    <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/50">
       <span className="text-xs text-muted-foreground">
         {groupConfigs.length > 1
           ? `Grouped by ${groupConfigs.length} fields`
@@ -45,7 +45,7 @@ export function DataTableGroupControls({
             "inline-flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors",
             allGroupsExpanded
               ? "text-muted-foreground/50 cursor-not-allowed"
-              : "text-muted-foreground hover:text-foreground hover:bg-slate-100"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           )}
         >
           <ExpandAllIcon className="h-3.5 w-3.5" />
@@ -59,7 +59,7 @@ export function DataTableGroupControls({
             "inline-flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors",
             allGroupsCollapsed
               ? "text-muted-foreground/50 cursor-not-allowed"
-              : "text-muted-foreground hover:text-foreground hover:bg-slate-100"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           )}
         >
           <ChevronsDownUp className="h-3.5 w-3.5" />
@@ -94,14 +94,14 @@ interface NestedGroupRendererProps<T extends object> {
 // Depth-based styling
 function getDepthStyles(depth: number) {
   const bgColors = [
-    "bg-slate-100/80 hover:bg-slate-100",      // depth 0
-    "bg-slate-50/80 hover:bg-slate-50",        // depth 1
-    "bg-white hover:bg-slate-50/50",           // depth 2+
+    "bg-muted/80 hover:bg-muted",              // depth 0
+    "bg-muted/50 hover:bg-muted/70",           // depth 1
+    "bg-card hover:bg-muted/50",               // depth 2+
   ]
   const countBgColors = [
-    "bg-slate-200",   // depth 0
-    "bg-slate-150",   // depth 1
-    "bg-slate-100",   // depth 2+
+    "bg-muted",       // depth 0
+    "bg-muted/80",    // depth 1
+    "bg-muted/60",    // depth 2+
   ]
   return {
     bg: bgColors[Math.min(depth, bgColors.length - 1)],

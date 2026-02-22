@@ -156,21 +156,21 @@ export default function TenantHomePage() {
             icon: IndianRupee,
             label: "Monthly Rent",
             value: formatCurrency(tenant.monthly_rent),
-            bgColor: "bg-emerald-50",
+            bgColor: "bg-emerald-50 dark:bg-emerald-950",
             iconColor: "text-emerald-600",
           },
           {
             icon: Calendar,
             label: "Days Stayed",
             value: getDaysStayed(),
-            bgColor: "bg-sky-50",
+            bgColor: "bg-sky-50 dark:bg-sky-950",
             iconColor: "text-sky-600",
           },
           {
             icon: CreditCard,
             label: "Paid This Year",
             value: formatCurrency(totalPaid),
-            bgColor: "bg-violet-50",
+            bgColor: "bg-violet-50 dark:bg-violet-950",
             iconColor: "text-violet-600",
           },
         ]}
@@ -246,7 +246,7 @@ export default function TenantHomePage() {
                 icon={CreditCard}
                 title="View Payments"
                 description="Payment history & receipts"
-                bgColor="bg-emerald-50"
+                bgColor="bg-emerald-50 dark:bg-emerald-950"
                 iconColor="text-emerald-600"
               />
             )}
@@ -261,7 +261,7 @@ export default function TenantHomePage() {
                     ? `${openComplaints} open complaint${openComplaints > 1 ? "s" : ""}`
                     : "Report an issue"
                 }
-                bgColor="bg-amber-50"
+                bgColor="bg-amber-50 dark:bg-amber-950"
                 iconColor="text-amber-600"
               />
             )}
@@ -276,7 +276,7 @@ export default function TenantHomePage() {
                     ? `${unreadNotices} active notice${unreadNotices > 1 ? "s" : ""}`
                     : "No new notices"
                 }
-                bgColor="bg-sky-50"
+                bgColor="bg-sky-50 dark:bg-sky-950"
                 iconColor="text-sky-600"
               />
             )}
@@ -287,7 +287,7 @@ export default function TenantHomePage() {
                 icon={User}
                 title="My Profile"
                 description="View & update your details"
-                bgColor="bg-violet-50"
+                bgColor="bg-violet-50 dark:bg-violet-950"
                 iconColor="text-violet-600"
               />
             )}
@@ -322,7 +322,7 @@ export default function TenantHomePage() {
                     date={payment.payment_date}
                     method={payment.payment_method}
                     label={payment.for_period || formatDate(payment.payment_date)}
-                    statusBgColor="bg-teal-50"
+                    statusBgColor="bg-teal-50 dark:bg-teal-950"
                     statusIconColor="text-teal-600"
                   />
                 ))}

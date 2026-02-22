@@ -140,7 +140,7 @@ export function TableToolbar({
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-9 bg-white"
+              className="pl-9 bg-card"
             />
           </div>
         )}
@@ -162,7 +162,7 @@ export function TableToolbar({
           <div className="relative">
             <button
               onClick={() => setGroupDropdownOpen(!groupDropdownOpen)}
-              className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-slate-50"
+              className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-muted"
             >
               <Layers className="h-4 w-4 text-muted-foreground" />
               <span className="hidden sm:inline">
@@ -186,7 +186,7 @@ export function TableToolbar({
                   className="fixed inset-0 z-10"
                   onClick={() => setGroupDropdownOpen(false)}
                 />
-                <div className="absolute right-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-20 py-1">
+                <div className="absolute right-0 mt-1 w-56 bg-card border rounded-lg shadow-lg z-20 py-1">
                   <div className="px-3 py-2 border-b">
                     <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                       Group by (select order)
@@ -199,7 +199,7 @@ export function TableToolbar({
                     return (
                       <label
                         key={opt.value}
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-muted cursor-pointer"
                       >
                         <Checkbox
                           checked={isSelected}
@@ -295,7 +295,7 @@ export function TableToolbarCompact({
           placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9 bg-white"
+          className="pl-9 bg-card"
         />
       </div>
       {rightContent && (
@@ -367,7 +367,7 @@ export function ActiveFiltersSummary({
 
       {/* Advanced Filters */}
       {advancedFilterCount > 0 && (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-xs font-medium">
           {advancedFilterCount} advanced filter{advancedFilterCount > 1 ? "s" : ""}
           {onClearAdvancedFilters && (
             <button
@@ -382,7 +382,7 @@ export function ActiveFiltersSummary({
 
       {/* Grouping */}
       {groupByLabels.length > 0 && (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 text-xs font-medium">
           <Layers className="h-3 w-3" />
           Grouped: {groupByLabels.join(" → ")}
           {onClearGrouping && (
@@ -398,12 +398,12 @@ export function ActiveFiltersSummary({
 
       {/* Hidden Columns */}
       {hiddenColumnCount > 0 && (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-foreground text-xs font-medium">
           {hiddenColumnCount} column{hiddenColumnCount > 1 ? "s" : ""} hidden
           {onResetColumns && (
             <button
               onClick={onResetColumns}
-              className="ml-0.5 hover:bg-slate-200 rounded-full p-0.5"
+              className="ml-0.5 hover:bg-muted rounded-full p-0.5"
             >
               <X className="h-3 w-3" />
             </button>

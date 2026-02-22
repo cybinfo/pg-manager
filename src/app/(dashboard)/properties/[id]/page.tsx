@@ -51,10 +51,10 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 
 const statusColors: Record<string, string> = {
-  available: "bg-green-100 text-green-700",
-  occupied: "bg-red-100 text-red-700",
-  partially_occupied: "bg-yellow-100 text-yellow-700",
-  maintenance: "bg-gray-100 text-gray-700",
+  available: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+  occupied: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+  partially_occupied: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+  maintenance: "bg-muted text-muted-foreground",
 }
 
 export default function PropertyDetailPage() {
@@ -123,7 +123,7 @@ export default function PropertyDetailPage() {
           <div className="flex items-center gap-2 flex-wrap">
             {property.website_enabled && property.website_slug && (
               <Link href={`/pg/${property.website_slug}`} target="_blank">
-                <Button variant="outline" size="sm" className="text-teal-600 border-teal-200 hover:bg-teal-50">
+                <Button variant="outline" size="sm" className="text-teal-600 border-teal-200 hover:bg-teal-50 dark:text-teal-400 dark:border-teal-800 dark:hover:bg-teal-950">
                   <Globe className="mr-2 h-4 w-4" />
                   View Website
                   <ExternalLink className="ml-1 h-3 w-3" />
@@ -213,12 +213,12 @@ export default function PropertyDetailPage() {
             title="Tenants on Notice"
             description={`${noticeTenants} tenant(s) leaving soon`}
             icon={AlertCircle}
-            className="border-yellow-200 bg-yellow-50/50"
+            className="border-yellow-200 bg-yellow-50/50 dark:border-yellow-800 dark:bg-yellow-950/50"
             items={tenants.filter(t => t.status === "notice_period")}
             keyExtractor={(tenant, _idx) => tenant.id}
             renderItem={(tenant) => (
               <Link href={`/tenants/${tenant.id}`}>
-                <div className="flex items-center justify-between p-2 rounded-lg hover:bg-yellow-100 transition-colors">
+                <div className="flex items-center justify-between p-2 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900 transition-colors">
                   <div>
                     <p className="font-medium">{tenant.name}</p>
                     <p className="text-sm text-muted-foreground">Room {tenant.room?.room_number}</p>
@@ -261,10 +261,10 @@ export default function PropertyDetailPage() {
                 </div>
                 <div className="flex gap-1 mt-2">
                   {room.has_ac && (
-                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">AC</span>
+                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded text-xs">AC</span>
                   )}
                   {room.has_attached_bathroom && (
-                    <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Bath</span>
+                    <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded text-xs">Bath</span>
                   )}
                 </div>
               </div>

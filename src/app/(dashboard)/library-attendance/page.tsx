@@ -156,11 +156,11 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <div className="p-1.5 bg-green-100 rounded-lg">
+            <div className="p-1.5 bg-green-100 dark:bg-green-900 rounded-lg">
               <Users className="h-5 w-5 text-green-600" />
             </div>
             Currently Checked In
-            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
+            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
               {checkedIn.length}
             </span>
           </CardTitle>
@@ -319,7 +319,7 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
     <Card className="mb-6">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-100 rounded-lg">
+          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
             <LogIn className="h-5 w-5 text-green-600" />
           </div>
           <div>

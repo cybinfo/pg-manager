@@ -191,7 +191,7 @@ function LoginForm() {
   // Show context picker
   if (step === 'context-picker') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-emerald-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-6">
             <Link href="/" className="flex items-center gap-2">
@@ -227,7 +227,7 @@ function LoginForm() {
 
   // Show login form
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-emerald-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -243,7 +243,7 @@ function LoginForm() {
             Enter your credentials to access your account
           </CardDescription>
           {inviteToken && (
-            <div className="mt-2 p-2 bg-emerald-50 text-emerald-700 text-sm rounded-lg">
+            <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-sm rounded-lg">
               Sign in to accept your invitation
             </div>
           )}

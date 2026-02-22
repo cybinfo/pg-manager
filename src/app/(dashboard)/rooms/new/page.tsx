@@ -414,7 +414,7 @@ export default function NewRoomPage() {
                       checked={formData[amenity.key as keyof typeof formData] as boolean}
                       onChange={handleChange}
                       disabled={saving}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                     />
                     <span className="text-sm">{amenity.label}</span>
                   </label>

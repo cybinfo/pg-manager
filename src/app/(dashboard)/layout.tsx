@@ -306,7 +306,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-emerald-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
             <Building2 className="h-6 w-6 text-white" />
@@ -321,7 +321,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   if (!user) {
     router.push("/login")
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-emerald-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
             <Building2 className="h-6 w-6 text-white" />
@@ -337,7 +337,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   if (contexts.length === 0) {
     router.push("/setup")
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-emerald-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/25">
             <Building2 className="h-6 w-6 text-white" />
@@ -361,9 +361,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     // Check feature flag first
     if (requiredFeature && !isFeatureEnabled(requiredFeature)) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
           <div className="text-center p-8">
-            <div className="p-4 bg-amber-50 rounded-full mb-4 inline-block">
+            <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-full mb-4 inline-block">
               <Shield className="h-12 w-12 text-amber-500" />
             </div>
             <h2 className="text-xl font-semibold mb-2">Feature Not Available</h2>
@@ -379,9 +379,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     // Check permission - owners always have access
     if (!currentContext.isOwner && !hasPermission(requiredPermission)) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
           <div className="text-center p-8">
-            <div className="p-4 bg-rose-50 rounded-full mb-4 inline-block">
+            <div className="p-4 bg-rose-50 dark:bg-rose-950 rounded-full mb-4 inline-block">
               <Shield className="h-12 w-12 text-rose-500" />
             </div>
             <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
@@ -401,7 +401,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       warningTime={60 * 1000} // 1 minute warning
     >
     <DemoBanner />
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background">
       {/* Mobile sidebar backdrop with glass effect */}
       {sidebarOpen && (
         <div
@@ -412,7 +412,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white/95 backdrop-blur-md border-r shadow-xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:shadow-none ${
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-card/95 backdrop-blur-md border-r shadow-xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -451,7 +451,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             {/* Edit mode instructions */}
             {sidebarEditMode && (
-              <div className="mb-3 p-2 bg-amber-50 rounded-lg text-xs text-amber-700 flex items-center justify-between">
+              <div className="mb-3 p-2 bg-amber-50 dark:bg-amber-950 rounded-lg text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
                 <span>Use arrows to reorder</span>
                 <button
                   onClick={resetOrder}
@@ -508,7 +508,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                             sidebarEditMode ? "pl-6 " : ""
                           }${
                             isParentActive
-                              ? "bg-teal-50 text-teal-700"
+                              ? "bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300"
                               : "text-muted-foreground hover:bg-muted hover:text-foreground"
                           }`}
                         >
@@ -644,7 +644,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             )}
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-rose-50 hover:text-rose-600 transition-all duration-200"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-rose-50 dark:hover:bg-rose-950 hover:text-rose-600 dark:hover:text-rose-400 transition-all duration-200"
             >
               <LogOutIcon className="h-5 w-5" />
               Logout

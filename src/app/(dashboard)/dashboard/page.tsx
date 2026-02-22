@@ -375,7 +375,7 @@ export default function DashboardPage() {
   const CustomBarTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number }> }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border rounded-lg shadow-lg px-3 py-2">
+        <div className="bg-card border rounded-lg shadow-lg px-3 py-2">
           <p className="text-sm font-medium">{formatCurrency(payload[0].value)}</p>
         </div>
       )
@@ -420,7 +420,7 @@ export default function DashboardPage() {
 
       {/* Metrics Bar - main stats */}
       {loading ? (
-        <div className="bg-white rounded-xl border shadow-sm p-8 flex items-center justify-center">
+        <div className="bg-card rounded-xl border shadow-sm p-8 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
@@ -432,18 +432,18 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Occupancy Rate - visible to those with rooms.view permission */}
           {canView("rooms.view") && (
-            <Card className="bg-gradient-to-br from-teal-50 to-emerald-50 border-teal-100">
+            <Card className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950 dark:to-emerald-950 border-teal-100 dark:border-teal-800">
               <CardContent className="pt-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm">
-                    <Percent className="h-4 w-4 text-teal-600" />
+                  <div className="p-2 bg-card rounded-lg shadow-sm">
+                    <Percent className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-teal-700">{occupancyRate}%</p>
-                    <p className="text-xs text-teal-600">Occupancy Rate</p>
+                    <p className="text-2xl font-bold text-teal-700 dark:text-teal-300">{occupancyRate}%</p>
+                    <p className="text-xs text-teal-600 dark:text-teal-400">Occupancy Rate</p>
                   </div>
                 </div>
-                <p className="text-xs text-teal-600/70 mt-2">
+                <p className="text-xs text-teal-600/70 dark:text-teal-400/70 mt-2">
                   {stats.occupiedBeds}/{stats.totalBeds} beds filled
                 </p>
               </CardContent>
@@ -453,17 +453,17 @@ export default function DashboardPage() {
           {/* Overdue Payments - visible to those with payments.view permission */}
           {canView("payments.view") && (
             <Link href="/payments">
-              <Card className={`h-full ${stats.overdueCount > 0 ? "bg-gradient-to-br from-rose-50 to-red-50 border-rose-100" : "bg-white"}`}>
+              <Card className={`h-full ${stats.overdueCount > 0 ? "bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-950 dark:to-red-950 border-rose-100 dark:border-rose-800" : "bg-card"}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg shadow-sm ${stats.overdueCount > 0 ? "bg-white" : "bg-slate-100"}`}>
-                      <Clock className={`h-4 w-4 ${stats.overdueCount > 0 ? "text-rose-600" : "text-slate-600"}`} />
+                    <div className={`p-2 rounded-lg shadow-sm ${stats.overdueCount > 0 ? "bg-card" : "bg-muted"}`}>
+                      <Clock className={`h-4 w-4 ${stats.overdueCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground"}`} />
                     </div>
                     <div>
-                      <p className={`text-2xl font-bold ${stats.overdueCount > 0 ? "text-rose-700" : "text-slate-700"}`}>
+                      <p className={`text-2xl font-bold ${stats.overdueCount > 0 ? "text-rose-700 dark:text-rose-300" : "text-foreground"}`}>
                         {stats.overdueCount}
                       </p>
-                      <p className={`text-xs ${stats.overdueCount > 0 ? "text-rose-600" : "text-slate-600"}`}>
+                      <p className={`text-xs ${stats.overdueCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground"}`}>
                         Overdue Payments
                       </p>
                     </div>
@@ -476,17 +476,17 @@ export default function DashboardPage() {
           {/* Open Complaints - visible to those with complaints.view permission */}
           {canView("complaints.view") && (
             <Link href="/complaints">
-              <Card className={`h-full ${stats.openComplaints > 0 ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100" : "bg-white"}`}>
+              <Card className={`h-full ${stats.openComplaints > 0 ? "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950 border-amber-100 dark:border-amber-800" : "bg-card"}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg shadow-sm ${stats.openComplaints > 0 ? "bg-white" : "bg-slate-100"}`}>
-                      <MessageSquare className={`h-4 w-4 ${stats.openComplaints > 0 ? "text-amber-600" : "text-slate-600"}`} />
+                    <div className={`p-2 rounded-lg shadow-sm ${stats.openComplaints > 0 ? "bg-card" : "bg-muted"}`}>
+                      <MessageSquare className={`h-4 w-4 ${stats.openComplaints > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`} />
                     </div>
                     <div>
-                      <p className={`text-2xl font-bold ${stats.openComplaints > 0 ? "text-amber-700" : "text-slate-700"}`}>
+                      <p className={`text-2xl font-bold ${stats.openComplaints > 0 ? "text-amber-700 dark:text-amber-300" : "text-foreground"}`}>
                         {stats.openComplaints}
                       </p>
-                      <p className={`text-xs ${stats.openComplaints > 0 ? "text-amber-600" : "text-slate-600"}`}>
+                      <p className={`text-xs ${stats.openComplaints > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>
                         Open Complaints
                       </p>
                     </div>
@@ -499,17 +499,17 @@ export default function DashboardPage() {
           {/* Exiting Soon - visible to those with tenants.view permission */}
           {canView("tenants.view") && (
             <Link href="/tenants">
-              <Card className={`h-full ${stats.expiringLeases > 0 ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100" : "bg-white"}`}>
+              <Card className={`h-full ${stats.expiringLeases > 0 ? "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-100 dark:border-blue-800" : "bg-card"}`}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg shadow-sm ${stats.expiringLeases > 0 ? "bg-white" : "bg-slate-100"}`}>
-                      <CalendarDays className={`h-4 w-4 ${stats.expiringLeases > 0 ? "text-blue-600" : "text-slate-600"}`} />
+                    <div className={`p-2 rounded-lg shadow-sm ${stats.expiringLeases > 0 ? "bg-card" : "bg-muted"}`}>
+                      <CalendarDays className={`h-4 w-4 ${stats.expiringLeases > 0 ? "text-blue-600 dark:text-blue-400" : "text-foreground"}`} />
                     </div>
                     <div>
-                      <p className={`text-2xl font-bold ${stats.expiringLeases > 0 ? "text-blue-700" : "text-slate-700"}`}>
+                      <p className={`text-2xl font-bold ${stats.expiringLeases > 0 ? "text-blue-700 dark:text-blue-300" : "text-foreground"}`}>
                         {stats.expiringLeases}
                       </p>
-                      <p className={`text-xs ${stats.expiringLeases > 0 ? "text-blue-600" : "text-slate-600"}`}>
+                      <p className={`text-xs ${stats.expiringLeases > 0 ? "text-blue-600 dark:text-blue-400" : "text-foreground"}`}>
                         Exiting Soon (30d)
                       </p>
                     </div>
@@ -524,17 +524,17 @@ export default function DashboardPage() {
       {/* Library Overview - only show if user has libraries */}
       {!loading && stats.libraries > 0 && (
         <FeatureGuard feature="library">
-          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100">
+          <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 border-purple-100 dark:border-purple-800">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm">
-                    <Library className="h-5 w-5 text-purple-600" />
+                  <div className="p-2 bg-card rounded-lg shadow-sm">
+                    <Library className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <CardTitle className="text-base font-medium text-purple-900">Library Overview</CardTitle>
+                  <CardTitle className="text-base font-medium text-purple-900 dark:text-purple-100">Library Overview</CardTitle>
                 </div>
                 <Link href="/library">
-                  <Button variant="ghost" size="sm" className="text-purple-600 hover:text-purple-700 hover:bg-purple-100">
+                  <Button variant="ghost" size="sm" className="text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900">
                     View All
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Button>
@@ -544,29 +544,29 @@ export default function DashboardPage() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Link href="/library" className="block">
-                  <div className="p-3 bg-white/70 rounded-lg hover:bg-white transition-colors">
+                  <div className="p-3 bg-card/70 rounded-lg hover:bg-card transition-colors">
                     <div className="flex items-center gap-2 mb-1">
                       <Library className="h-4 w-4 text-purple-500" />
-                      <span className="text-xs text-purple-600">Libraries</span>
+                      <span className="text-xs text-purple-600 dark:text-purple-400">Libraries</span>
                     </div>
-                    <p className="text-2xl font-bold text-purple-900">{stats.libraries}</p>
+                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{stats.libraries}</p>
                   </div>
                 </Link>
                 <Link href="/library-members" className="block">
-                  <div className="p-3 bg-white/70 rounded-lg hover:bg-white transition-colors">
+                  <div className="p-3 bg-card/70 rounded-lg hover:bg-card transition-colors">
                     <div className="flex items-center gap-2 mb-1">
                       <Users className="h-4 w-4 text-purple-500" />
-                      <span className="text-xs text-purple-600">Active Members</span>
+                      <span className="text-xs text-purple-600 dark:text-purple-400">Active Members</span>
                     </div>
-                    <p className="text-2xl font-bold text-purple-900">{stats.libraryActiveMembers}</p>
-                    <p className="text-xs text-purple-600/70">{stats.libraryMembers} total</p>
+                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{stats.libraryActiveMembers}</p>
+                    <p className="text-xs text-purple-600/70 dark:text-purple-400/70">{stats.libraryMembers} total</p>
                   </div>
                 </Link>
                 <Link href="/library-attendance" className="block">
-                  <div className="p-3 bg-white/70 rounded-lg hover:bg-white transition-colors">
+                  <div className="p-3 bg-card/70 rounded-lg hover:bg-card transition-colors">
                     <div className="flex items-center gap-2 mb-1">
                       <Clock className="h-4 w-4 text-green-500" />
-                      <span className="text-xs text-purple-600">Checked In Now</span>
+                      <span className="text-xs text-purple-600 dark:text-purple-400">Checked In Now</span>
                     </div>
                     <p className="text-2xl font-bold text-green-600">{stats.libraryCheckedIn}</p>
                   </div>
@@ -672,8 +672,8 @@ export default function DashboardPage() {
 
       {/* Getting Started - only show if not complete */}
       {!allTasksDone && (
-        <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b bg-slate-50/80 flex items-center justify-between">
+        <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b bg-muted/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
                 <CheckCircle className="h-4 w-4 text-white" />
@@ -686,7 +686,7 @@ export default function DashboardPage() {
               </div>
             </div>
             {/* Progress bar */}
-            <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500"
                 style={{ width: `${(completedTasks / gettingStarted.length) * 100}%` }}
@@ -699,7 +699,7 @@ export default function DashboardPage() {
                 key={i}
                 href={item.href}
                 className={`flex items-center justify-between px-4 py-3 transition-colors ${
-                  item.done ? "bg-teal-50/30" : "hover:bg-slate-50"
+                  item.done ? "bg-teal-50/30 dark:bg-teal-950/30" : "hover:bg-muted"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -708,7 +708,7 @@ export default function DashboardPage() {
                       <CheckCircle className="h-3 w-3 text-white" />
                     </div>
                   ) : (
-                    <div className="h-5 w-5 rounded-full border-2 border-slate-300" />
+                    <div className="h-5 w-5 rounded-full border-2 border-border" />
                   )}
                   <span className={`text-sm ${item.done ? "text-muted-foreground line-through" : "font-medium"}`}>
                     {item.task}
@@ -728,8 +728,8 @@ export default function DashboardPage() {
           <div className="flex flex-wrap gap-2">
             {quickActions.map((action) => (
               <Link key={action.name} href={action.href}>
-                <Button variant="outline" size="sm" className="gap-2 hover:bg-slate-50">
-                  <action.icon className="h-4 w-4 text-slate-600" />
+                <Button variant="outline" size="sm" className="gap-2 hover:bg-muted">
+                  <action.icon className="h-4 w-4 text-foreground" />
                   {action.name}
                 </Button>
               </Link>
@@ -740,7 +740,7 @@ export default function DashboardPage() {
 
       {/* Empty state for new users */}
       {stats.properties === 0 && !loading && (
-        <div className="bg-white rounded-xl border shadow-sm p-8 text-center">
+        <div className="bg-card rounded-xl border shadow-sm p-8 text-center">
           <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/20">
             <Building2 className="h-8 w-8 text-white" />
           </div>

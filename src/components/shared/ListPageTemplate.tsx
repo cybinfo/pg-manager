@@ -678,7 +678,7 @@ export function ListPageTemplate({
                 onClick={() => setGroupDropdownOpen(!groupDropdownOpen)}
                 aria-expanded={groupDropdownOpen}
                 aria-haspopup="true"
-                className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-slate-50"
+                className="h-9 px-3 rounded-md border border-input bg-background text-sm flex items-center gap-2 hover:bg-muted"
               >
                 <Layers className="h-4 w-4 text-muted-foreground" />
                 <span className="hidden sm:inline">
@@ -701,7 +701,7 @@ export function ListPageTemplate({
                     className="fixed inset-0 z-10"
                     onClick={() => setGroupDropdownOpen(false)}
                   />
-                  <div className="absolute right-0 mt-1 w-56 bg-white border rounded-lg shadow-lg z-20 py-1">
+                  <div className="absolute right-0 mt-1 w-56 bg-card border rounded-lg shadow-lg z-20 py-1">
                     <div className="px-3 py-2 border-b">
                       <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                         Group by (select order)
@@ -714,7 +714,7 @@ export function ListPageTemplate({
                       return (
                         <label
                           key={opt.value}
-                          className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 cursor-pointer"
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-muted cursor-pointer"
                         >
                           <Checkbox
                             checked={isSelected}

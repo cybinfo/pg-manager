@@ -30,73 +30,73 @@ const features = [
     icon: Building2,
     title: "Multi-Property Management",
     description: "Manage multiple PGs from a single dashboard. Track rooms, beds, and occupancy across all properties with 2D architecture view.",
-    color: "text-teal-600 bg-teal-50"
+    color: "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950"
   },
   {
     icon: Users,
     title: "Complete Tenant Lifecycle",
     description: "Registration with document upload, notice period workflow, exit clearance with settlements. Automatic returning tenant detection.",
-    color: "text-violet-600 bg-violet-50"
+    color: "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950"
   },
   {
     icon: Shield,
     title: "Staff & Roles (RBAC)",
     description: "5 default roles + custom roles with 50+ granular permissions. Multi-role support, email invitations, property-level access control.",
-    color: "text-cyan-600 bg-cyan-50"
+    color: "text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950"
   },
   {
     icon: Globe,
     title: "Your Own PG Website",
     description: "Auto-generate a public website for each property at managekar.com/pg/your-slug. Share with potential tenants.",
-    color: "text-pink-600 bg-pink-50"
+    color: "text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950"
   },
   {
     icon: Gauge,
     title: "Meter Readings",
     description: "Track electricity, water, and gas meters. Auto-generate charges based on consumption with configurable rates and split methods.",
-    color: "text-amber-600 bg-amber-50"
+    color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950"
   },
   {
     icon: Receipt,
     title: "Smart Billing System",
     description: "Generate itemized bills with multiple charge types. Calendar month or check-in anniversary billing. Auto-generation on schedule.",
-    color: "text-emerald-600 bg-emerald-50"
+    color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950"
   },
   {
     icon: Bell,
     title: "Automated Notifications",
     description: "Email & WhatsApp payment reminders, receipts, and daily summaries. Professional formatting with property details.",
-    color: "text-sky-600 bg-sky-50"
+    color: "text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950"
   },
   {
     icon: MessageSquare,
     title: "Approvals & Complaints",
     description: "Tenant issue reporting with approval workflow. Document uploads, profile change requests, and complaint tracking.",
-    color: "text-rose-600 bg-rose-50"
+    color: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950"
   },
   {
     icon: FileText,
     title: "PDF & WhatsApp Receipts",
     description: "Professional rent receipts with property details, room info, and owner contact. Download, email, or share via WhatsApp.",
-    color: "text-orange-600 bg-orange-50"
+    color: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950"
   },
   {
     icon: TrendingDown,
     title: "Expense Tracking",
     description: "Track all expenses by category and vendor. Configurable expense types. See where your money goes.",
-    color: "text-indigo-600 bg-indigo-50"
+    color: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950"
   },
   {
     icon: BarChart3,
     title: "Reports & Analytics",
     description: "Revenue trends, occupancy rates, dues aging, collection efficiency. Multi-level grouping across all list pages.",
-    color: "text-purple-600 bg-purple-50"
+    color: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950"
   },
   {
     icon: UserCheck,
     title: "Visitor Management",
     description: "Log visitor entries with multi-day overnight stays. Per-night charges with automatic bill creation for tenants.",
-    color: "text-lime-600 bg-lime-50"
+    color: "text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-950"
   }
 ]
 
@@ -180,8 +180,8 @@ export default function PGManagerPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-emerald-50" />
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-teal-100/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950" />
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-teal-100/50 to-transparent dark:from-teal-900/50" />
 
         <div className="relative container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
@@ -193,7 +193,7 @@ export default function PGManagerPage() {
             </div>
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-100 to-emerald-100 text-teal-700 text-sm font-medium mb-8 animate-fade-in-down">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-100 to-emerald-100 dark:from-teal-900 dark:to-emerald-900 text-teal-700 dark:text-teal-300 text-sm font-medium mb-8 animate-fade-in-down">
               <Building2 className="h-4 w-4" />
               Complete PG & Hostel Management
             </div>
@@ -229,8 +229,8 @@ export default function PGManagerPage() {
             <div className="flex flex-wrap justify-center gap-6 animate-fade-in-up animation-delay-300">
               {highlights.map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-6 w-6 rounded-full bg-teal-100 flex items-center justify-center">
-                    <item.icon className="h-3 w-3 text-teal-600" />
+                  <div className="h-6 w-6 rounded-full bg-teal-100 dark:bg-teal-900 flex items-center justify-center">
+                    <item.icon className="h-3 w-3 text-teal-600 dark:text-teal-400" />
                   </div>
                   {item.text}
                 </div>
@@ -244,7 +244,7 @@ export default function PGManagerPage() {
       <section className="py-20 md:py-28 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900 dark:to-purple-900 text-violet-700 dark:text-violet-300 text-sm font-medium mb-4">
               <Zap className="h-4 w-4" />
               12 Powerful Features
             </div>
@@ -307,7 +307,7 @@ export default function PGManagerPage() {
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 text-sm font-medium mb-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 text-amber-700 dark:text-amber-300 text-sm font-medium mb-4">
                 <IndianRupee className="h-4 w-4" />
                 Made for India
               </div>
@@ -329,11 +329,11 @@ export default function PGManagerPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl p-8 border border-teal-100">
+            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950 dark:to-emerald-950 rounded-2xl p-8 border border-teal-100 dark:border-teal-800">
               <h3 className="font-semibold text-lg mb-6">Quick Setup Templates</h3>
               <div className="space-y-4">
                 {templates.map((template, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                  <div key={i} className="flex items-center justify-between p-4 bg-card rounded-xl shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{template.icon}</span>
                       <div>

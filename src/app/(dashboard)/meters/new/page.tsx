@@ -376,7 +376,7 @@ export default function NewMeterPage() {
                 type="checkbox"
                 checked={formData.assign_to_room as boolean}
                 onChange={(e) => updateField("assign_to_room", e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-border"
               />
               <Label htmlFor="assign_to_room" className="font-normal cursor-pointer">
                 Assign to a room immediately

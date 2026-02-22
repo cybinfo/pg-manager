@@ -22,7 +22,7 @@ const buttonVariants = cva(
         gradient:
           "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/25 hover:from-teal-600 hover:to-emerald-600 hover:shadow-xl hover:shadow-teal-500/30",
         "gradient-outline":
-          "relative bg-white text-teal-600 border-2 border-teal-500 hover:bg-teal-50",
+          "relative bg-card text-teal-600 border-2 border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-950",
       },
       size: {
         default: "h-9 px-4 py-2",

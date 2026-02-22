@@ -43,7 +43,7 @@ export function TimelineEvent({
       )}
     >
       {/* Timeline connector line */}
-      <div className="absolute left-[15px] top-8 bottom-0 w-0.5 bg-slate-200 group-last:hidden" />
+      <div className="absolute left-[15px] top-8 bottom-0 w-0.5 bg-border group-last:hidden" />
 
       {/* Event icon */}
       <div className="absolute left-0 top-0">
@@ -53,16 +53,16 @@ export function TimelineEvent({
       {/* Event card */}
       <div
         className={cn(
-          "bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden",
+          "bg-card rounded-lg border border-border shadow-sm overflow-hidden",
           "transition-all duration-200 hover:shadow-md",
-          expanded && "ring-1 ring-teal-200"
+          expanded && "ring-1 ring-teal-200 dark:ring-teal-800"
         )}
       >
         {/* Event header */}
         <div
           className={cn(
             "px-4 py-3 cursor-pointer",
-            hasDetails && "hover:bg-slate-50"
+            hasDetails && "hover:bg-muted"
           )}
           onClick={hasDetails ? handleToggle : undefined}
         >
@@ -73,7 +73,7 @@ export function TimelineEvent({
                 {showCategory && (
                   <CategoryBadge category={event.category} size="sm" showIcon={false} />
                 )}
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted-foreground">
                   {formatEventTime(event.timestamp)}
                 </span>
                 {event.status && event.status_color && (
@@ -82,12 +82,12 @@ export function TimelineEvent({
               </div>
 
               {/* Title */}
-              <h4 className="font-medium text-slate-900 truncate">
+              <h4 className="font-medium text-foreground truncate">
                 {event.title}
               </h4>
 
               {/* Description */}
-              <p className="text-sm text-slate-600 mt-0.5 line-clamp-2">
+              <p className="text-sm text-foreground mt-0.5 line-clamp-2">
                 {event.description}
               </p>
 
@@ -106,9 +106,9 @@ export function TimelineEvent({
             {hasDetails && (
               <Button variant="ghost" size="sm" className="shrink-0 -mr-2 -mt-1">
                 {expanded ? (
-                  <ChevronUp className="w-4 h-4 text-slate-400" />
+                  <ChevronUp className="w-4 h-4 text-muted-foreground" />
                 ) : (
-                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 )}
               </Button>
             )}
@@ -117,14 +117,14 @@ export function TimelineEvent({
 
         {/* Expanded details */}
         {expanded && hasDetails && (
-          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50">
+          <div className="px-4 py-3 border-t border-border bg-muted">
             <EventDetails metadata={event.metadata!} />
           </div>
         )}
 
         {/* Quick actions */}
         {hasQuickActions && (
-          <div className="px-4 py-2 border-t border-slate-100 bg-slate-50 flex items-center gap-2">
+          <div className="px-4 py-2 border-t border-border bg-muted flex items-center gap-2">
             {event.quick_actions!.map(action => (
               <QuickActionButton key={action.id} action={action} />
             ))}
@@ -141,7 +141,7 @@ export function TimelineEvent({
 
         {/* View details link (if no quick actions but has action_url) */}
         {!hasQuickActions && event.action_url && (
-          <div className="px-4 py-2 border-t border-slate-100">
+          <div className="px-4 py-2 border-t border-border">
             <Link href={event.action_url}>
               <Button variant="ghost" size="sm" className="text-xs text-teal-600 hover:text-teal-700 p-0 h-auto">
                 View Details
@@ -172,9 +172,9 @@ function AmountBadge({ amount, type }: AmountBadgeProps) {
   }).format(amount)
 
   const colorClasses = {
-    credit: "bg-emerald-100 text-emerald-700",
-    debit: "bg-rose-100 text-rose-700",
-    neutral: "bg-slate-100 text-slate-700",
+    credit: "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300",
+    debit: "bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300",
+    neutral: "bg-muted text-foreground",
   }
 
   const prefix = type === "credit" ? "+" : type === "debit" ? "" : ""
@@ -257,8 +257,8 @@ function EventDetails({ metadata }: EventDetailsProps) {
     <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
       {displayFields.map(([key, value]) => (
         <div key={key}>
-          <dt className="text-slate-500 text-xs">{formatLabel(key)}</dt>
-          <dd className="text-slate-900 font-medium truncate">
+          <dt className="text-muted-foreground text-xs">{formatLabel(key)}</dt>
+          <dd className="text-foreground font-medium truncate">
             {formatValue(key, value)}
           </dd>
         </div>
@@ -339,23 +339,23 @@ export function CompactTimelineEvent({ event, onClick, className }: CompactTimel
   return (
     <div
       className={cn(
-        "flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors",
+        "flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted cursor-pointer transition-colors",
         className
       )}
       onClick={onClick}
     >
       <EventIcon category={event.category} icon={event.icon} size="sm" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-900 truncate">{event.title}</p>
-        <p className="text-xs text-slate-500 truncate">{event.description}</p>
+        <p className="text-sm font-medium text-foreground truncate">{event.title}</p>
+        <p className="text-xs text-muted-foreground truncate">{event.description}</p>
       </div>
       <div className="text-right shrink-0">
-        <p className="text-xs text-slate-500">{formatEventTime(event.timestamp)}</p>
+        <p className="text-xs text-muted-foreground">{formatEventTime(event.timestamp)}</p>
         {event.amount !== undefined && event.amount > 0 && (
           <p
             className={cn(
               "text-xs font-medium",
-              event.amount_type === "credit" ? "text-emerald-600" : "text-slate-600"
+              event.amount_type === "credit" ? "text-emerald-600" : "text-foreground"
             )}
           >
             {event.amount_type === "credit" ? "+" : ""}

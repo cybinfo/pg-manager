@@ -85,8 +85,8 @@ const columns: Column<Notice>[] = [
       const isActive = notice.is_active && !notice.is_expired
       return (
         <div className={`flex items-start gap-3 ${!isActive ? "opacity-60" : ""}`}>
-          <div className={`p-2 rounded-lg shrink-0 ${typeConfig[notice.type]?.bgColor || "bg-gray-100"}`}>
-            <TypeIcon className={`h-4 w-4 ${typeConfig[notice.type]?.color || "text-gray-600"}`} />
+          <div className={`p-2 rounded-lg shrink-0 ${typeConfig[notice.type]?.bgColor || "bg-muted"}`}>
+            <TypeIcon className={`h-4 w-4 ${typeConfig[notice.type]?.color || "text-muted-foreground"}`} />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-0.5 flex-wrap">

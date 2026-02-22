@@ -32,7 +32,7 @@ export function DataTableRow<T extends object>({
     <div
       className={cn(
         "px-4 py-3 transition-colors",
-        isClickable && "cursor-pointer hover:bg-slate-50",
+        isClickable && "cursor-pointer hover:bg-muted",
         isSelected && "bg-primary/5"
       )}
       onClick={() => onRowClick(row)}

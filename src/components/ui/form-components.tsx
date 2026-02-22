@@ -98,11 +98,11 @@ export function Select({
       )}
       <select
         className={cn(
-          "w-full h-10 rounded-lg border border-input bg-white text-sm",
+          "w-full h-10 rounded-lg border border-input bg-card text-sm",
           "transition-all duration-200",
           "focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500",
-          "hover:border-slate-400",
-          "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50",
+          "hover:border-muted-foreground",
+          "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted",
           "appearance-none cursor-pointer",
           Icon ? "pl-10 pr-10" : "pl-3 pr-10",
           className
@@ -249,7 +249,7 @@ export function TextareaWithCount({
     <div className="relative">
       <textarea
         className={cn(
-          "w-full min-h-[100px] px-3 py-2 rounded-lg border border-input bg-white text-sm",
+          "w-full min-h-[100px] px-3 py-2 rounded-lg border border-input bg-card text-sm",
           "transition-all duration-200 resize-y",
           "focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500",
           "placeholder:text-muted-foreground",
@@ -294,12 +294,12 @@ export function FormSection({
     <div className={cn("space-y-4", className)}>
       <div className="flex items-center gap-3 pb-2 border-b">
         {Icon && (
-          <div className="p-2 rounded-lg bg-slate-100">
-            <Icon className="h-4 w-4 text-slate-600" />
+          <div className="p-2 rounded-lg bg-muted">
+            <Icon className="h-4 w-4 text-foreground" />
           </div>
         )}
         <div>
-          <h3 className="font-semibold text-slate-900">{title}</h3>
+          <h3 className="font-semibold text-foreground">{title}</h3>
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>
           )}
@@ -358,7 +358,7 @@ export function ToggleSwitch({
           "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
           // UI-005: Added focus styles for keyboard accessibility
           "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2",
-          checked ? "bg-teal-500" : "bg-slate-200",
+          checked ? "bg-teal-500" : "bg-muted",
           disabled && "opacity-50 cursor-not-allowed"
         )}
       >

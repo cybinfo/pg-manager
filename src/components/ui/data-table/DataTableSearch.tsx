@@ -48,7 +48,7 @@ export function DataTableSearch({
           cursorPosRef.current = e.target.selectionStart || e.target.value.length
           setSearch(e.target.value)
         }}
-        className="pl-9 bg-white"
+        className="pl-9 bg-card"
       />
     </div>
   )

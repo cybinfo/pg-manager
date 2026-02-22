@@ -456,7 +456,7 @@ function InitiateCheckoutForm() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
                 <Calendar className="h-5 w-5 text-blue-600" />
               </div>
               <div>
@@ -549,7 +549,7 @@ function InitiateCheckoutForm() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
+              <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
                 <AlertCircle className="h-5 w-5 text-red-600" />
               </div>
               <div>
@@ -614,7 +614,7 @@ function InitiateCheckoutForm() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                   <IndianRupee className="h-5 w-5 text-green-600" />
                 </div>
                 <div>

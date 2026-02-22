@@ -105,7 +105,7 @@ const columns: Column<LibrarySectionItem>[] = [
     defaultVisible: true,
     render: (section) => (
       <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-        section.is_ac ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
+        section.is_ac ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" : "bg-muted text-muted-foreground"
       }`}>
         {section.is_ac ? "AC" : "Non-AC"}
       </span>

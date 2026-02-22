@@ -59,7 +59,7 @@ const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
   tenant_visitor: "bg-blue-100 text-blue-700",
   enquiry: "bg-purple-100 text-purple-700",
   service_provider: "bg-orange-100 text-orange-700",
-  general: "bg-slate-100 text-slate-700",
+  general: "bg-muted text-foreground",
 }
 
 const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {

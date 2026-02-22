@@ -226,7 +226,7 @@ export default function TenantPaymentsPage() {
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
-                          <div className="p-2 bg-green-100 rounded-full mt-1">
+                          <div className="p-2 bg-green-100 dark:bg-green-900 rounded-full mt-1">
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           </div>
                           <div>
@@ -267,7 +267,7 @@ export default function TenantPaymentsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                            className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
                             onClick={() => openReportDialog(payment)}
                             title="Report issue with this payment"
                           >

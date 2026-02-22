@@ -175,7 +175,7 @@ export function InlineEditCell({
       <div
         className={cn(
           "group relative inline-flex items-center gap-1 min-w-0",
-          !disabled && "cursor-pointer hover:bg-slate-50 rounded px-1 -mx-1",
+          !disabled && "cursor-pointer hover:bg-muted rounded px-1 -mx-1",
           className
         )}
         onClick={handleClick}
@@ -218,7 +218,7 @@ export function InlineEditCell({
           }}
           disabled={saving}
           className={cn(
-            "h-8 text-sm rounded border border-input bg-white px-2 pr-6",
+            "h-8 text-sm rounded border border-input bg-card px-2 pr-6",
             "focus:outline-none focus:ring-1 focus:ring-ring",
             error && "border-red-500"
           )}

@@ -194,10 +194,10 @@ function JourneyPageContent({ tenantId }: JourneyPageContentProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">
+          <h2 className="text-xl font-semibold text-foreground mb-2">
             {error || "Journey not found"}
           </h2>
-          <p className="text-slate-500 mb-4">
+          <p className="text-muted-foreground mb-4">
             Unable to load the tenant journey. Please try again.
           </p>
           <button
@@ -294,23 +294,23 @@ interface PreTenantVisitsCardProps {
 
 function PreTenantVisitsCard({ visits }: PreTenantVisitsCardProps) {
   return (
-    <div className="bg-violet-50 rounded-xl border border-violet-200 p-4">
-      <h3 className="font-semibold text-violet-800 mb-3">
+    <div className="bg-violet-50 dark:bg-violet-950 rounded-xl border border-violet-200 dark:border-violet-800 p-4">
+      <h3 className="font-semibold text-violet-800 dark:text-violet-200 mb-3">
         Before Joining
       </h3>
-      <p className="text-sm text-violet-600 mb-3">
+      <p className="text-sm text-violet-600 dark:text-violet-400 mb-3">
         This tenant visited the property before registering
       </p>
       <div className="space-y-2">
         {visits.map((visit, index) => (
           <div
             key={index}
-            className="bg-white rounded-lg p-3 text-sm"
+            className="bg-card rounded-lg p-3 text-sm"
           >
-            <p className="font-medium text-slate-900">
+            <p className="font-medium text-foreground">
               Visited {visit.visited_tenant_name}
             </p>
-            <p className="text-slate-500">
+            <p className="text-muted-foreground">
               {new Date(visit.visit_date).toLocaleDateString("en-IN", {
                 day: "numeric",
                 month: "short",
@@ -320,7 +320,7 @@ function PreTenantVisitsCard({ visits }: PreTenantVisitsCardProps) {
               {visit.days_before_joining} days before joining
             </p>
             {visit.property_name && (
-              <p className="text-slate-400 text-xs mt-1">
+              <p className="text-muted-foreground text-xs mt-1">
                 at {visit.property_name}
               </p>
             )}
@@ -344,10 +344,10 @@ function LinkedVisitorsCard({ visitors }: LinkedVisitorsCardProps) {
   const hasMore = visitors.length > 5
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4">
-      <h3 className="font-semibold text-slate-900 mb-3 flex items-center justify-between">
+    <div className="bg-card rounded-xl border border-border p-4">
+      <h3 className="font-semibold text-foreground mb-3 flex items-center justify-between">
         Recent Visitors
-        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+        <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
           {visitors.length}
         </span>
       </h3>
@@ -355,13 +355,13 @@ function LinkedVisitorsCard({ visitors }: LinkedVisitorsCardProps) {
         {displayVisitors.map((visitor, index) => (
           <div
             key={index}
-            className="flex items-center justify-between text-sm py-2 border-b border-slate-100 last:border-0"
+            className="flex items-center justify-between text-sm py-2 border-b border-border last:border-0"
           >
             <div>
-              <p className="font-medium text-slate-900">{visitor.visitor_name}</p>
-              <p className="text-xs text-slate-500">{visitor.relationship}</p>
+              <p className="font-medium text-foreground">{visitor.visitor_name}</p>
+              <p className="text-xs text-muted-foreground">{visitor.relationship}</p>
             </div>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-muted-foreground">
               {new Date(visitor.visit_date).toLocaleDateString("en-IN", {
                 day: "numeric",
                 month: "short",

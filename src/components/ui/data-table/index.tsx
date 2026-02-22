@@ -377,7 +377,7 @@ export function DataTable<T extends object>({
         />
       )}
 
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+      <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
         {/* Group Controls - shown when grouping is active */}
         {groupedData && collapsibleGroups && (
           <DataTableGroupControls

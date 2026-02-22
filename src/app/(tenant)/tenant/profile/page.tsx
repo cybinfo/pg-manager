@@ -86,28 +86,28 @@ export default function TenantProfilePage() {
     switch (status) {
       case "verified":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs font-medium">
             <CheckCircle className="h-3 w-3" />
             Verified
           </span>
         )
       case "submitted":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
             <Clock className="h-3 w-3" />
             Submitted
           </span>
         )
       case "pending":
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded text-xs font-medium">
             <AlertCircle className="h-3 w-3" />
             Pending
           </span>
         )
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-muted text-muted-foreground rounded text-xs font-medium">
             N/A
           </span>
         )
@@ -149,12 +149,12 @@ export default function TenantProfilePage() {
                 {tenant.property?.name || "Unknown Property"} • Room {tenant.room?.room_number || "-"}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs font-medium">
                   <CheckCircle className="h-3 w-3" />
                   Active Tenant
                 </span>
                 {tenant.agreement_signed && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
                     <FileText className="h-3 w-3" />
                     Agreement Signed
                   </span>
@@ -210,7 +210,7 @@ export default function TenantProfilePage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                      className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
                       onClick={() => openReportDialog(label, String(value), "other")}
                       title={`Report issue with ${label.toLowerCase()}`}
                     >
@@ -242,7 +242,7 @@ export default function TenantProfilePage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
                 onClick={() => openReportDialog("Check-in Date", formatDate(tenant.check_in_date), "tenancy_issue")}
                 title="Report issue with check-in date"
               >
@@ -257,7 +257,7 @@ export default function TenantProfilePage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
                 onClick={() => openReportDialog("Monthly Rent", `₹${tenant.monthly_rent.toLocaleString("en-IN")}`, "tenancy_issue")}
                 title="Report issue with monthly rent"
               >
@@ -274,12 +274,12 @@ export default function TenantProfilePage() {
               <p className="text-sm text-muted-foreground">Agreement Status</p>
               <div className="mt-1">
                 {tenant.agreement_signed ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded text-xs font-medium">
                     <CheckCircle className="h-3 w-3" />
                     Signed
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 rounded text-xs font-medium">
                     <AlertCircle className="h-3 w-3" />
                     Pending
                   </span>
@@ -327,7 +327,7 @@ export default function TenantProfilePage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                    className="h-7 w-7 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
                     onClick={() => openReportDialog(
                       "Room Assignment",
                       `Room ${tenant.room!.room_number} (${tenant.room!.room_type || "Standard"})`,
@@ -348,7 +348,7 @@ export default function TenantProfilePage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => openReportDialog("Floor", String(tenant.room!.floor), "room_issue")}
                       title="Report issue with floor"
                     >
@@ -362,7 +362,7 @@ export default function TenantProfilePage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => openReportDialog("AC Status", tenant.room!.has_ac ? "Yes" : "No", "room_issue")}
                     title="Report issue with AC status"
                   >
@@ -375,7 +375,7 @@ export default function TenantProfilePage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-1 -right-1 h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => openReportDialog("Attached Bathroom", tenant.room!.has_attached_bathroom ? "Yes" : "No", "room_issue")}
                     title="Report issue with attached bathroom"
                   >
@@ -391,7 +391,7 @@ export default function TenantProfilePage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-5 w-5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => openReportDialog("Amenities", tenant.room!.amenities?.join(", ") || "", "room_issue")}
                       title="Report issue with amenities"
                     >
@@ -462,10 +462,10 @@ export default function TenantProfilePage() {
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
                           request.status === "approved"
-                            ? "bg-green-100 text-green-700"
+                            ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
                             : request.status === "rejected"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
+                            ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
+                            : "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300"
                         }`}
                       >
                         {request.status === "approved" && <CheckCircle className="h-3 w-3" />}

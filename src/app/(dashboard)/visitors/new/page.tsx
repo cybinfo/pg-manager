@@ -171,8 +171,8 @@ export default function NewVisitorPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <MessageSquare className="h-5 w-5 text-gray-600" />
+              <div className="p-2 bg-muted rounded-lg">
+                <MessageSquare className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
                 <CardTitle>Additional Notes</CardTitle>

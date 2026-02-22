@@ -63,12 +63,12 @@ interface Person {
 // ============================================
 
 const TAG_COLORS: Record<string, string> = {
-  tenant: "bg-blue-100 text-blue-700",
-  staff: "bg-green-100 text-green-700",
-  visitor: "bg-purple-100 text-purple-700",
-  service_provider: "bg-orange-100 text-orange-700",
-  frequent: "bg-yellow-100 text-yellow-700",
-  vip: "bg-amber-100 text-amber-700",
+  tenant: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  staff: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+  visitor: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
+  service_provider: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
+  frequent: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+  vip: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
 }
 
 const TAG_ICONS: Record<string, React.ReactNode> = {
@@ -81,7 +81,7 @@ const TAG_ICONS: Record<string, React.ReactNode> = {
 }
 
 const TagBadge = ({ tag }: { tag: string }) => (
-  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${TAG_COLORS[tag] || "bg-slate-100 text-slate-700"}`}>
+  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${TAG_COLORS[tag] || "bg-muted text-foreground"}`}>
     {TAG_ICONS[tag]}
     {tag.replace("_", " ")}
   </span>
@@ -452,7 +452,7 @@ export default function PeoplePage() {
         <div className="flex gap-2">
           {duplicateCount > 0 && (
             <Link href="/people/duplicates">
-              <Button variant="outline" className="border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700">
+              <Button variant="outline" className="border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:border-amber-700 dark:bg-amber-950 dark:hover:bg-amber-900 dark:text-amber-300">
                 <AlertTriangle className="mr-2 h-4 w-4" />
                 {duplicateCount} Duplicate{duplicateCount > 1 ? "s" : ""}
               </Button>

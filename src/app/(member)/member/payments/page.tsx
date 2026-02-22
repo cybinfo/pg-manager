@@ -103,28 +103,28 @@ export default function MemberPaymentsPage() {
             icon: IndianRupee,
             label: "Total Paid",
             value: formatCurrency(stats.totalPaid),
-            bgColor: "bg-emerald-50",
+            bgColor: "bg-emerald-50 dark:bg-emerald-950",
             iconColor: "text-emerald-600",
           },
           {
             icon: IndianRupee,
             label: "This Year",
             value: formatCurrency(stats.thisYearPaid),
-            bgColor: "bg-purple-50",
+            bgColor: "bg-purple-50 dark:bg-purple-950",
             iconColor: "text-purple-600",
           },
           {
             icon: CreditCard,
             label: "Payments",
             value: stats.paymentCount,
-            bgColor: "bg-sky-50",
+            bgColor: "bg-sky-50 dark:bg-sky-950",
             iconColor: "text-sky-600",
           },
           {
             icon: Calendar,
             label: "Last Payment",
             value: stats.lastPaymentDate ? formatDate(stats.lastPaymentDate) : "-",
-            bgColor: "bg-violet-50",
+            bgColor: "bg-violet-50 dark:bg-violet-950",
             iconColor: "text-violet-600",
           },
         ]}
@@ -156,7 +156,7 @@ export default function MemberPaymentsPage() {
                   className="flex items-center justify-between p-4 rounded-lg border"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 bg-emerald-50 rounded-full">
+                    <div className="p-2 bg-emerald-50 dark:bg-emerald-950 rounded-full">
                       <CheckCircle className="h-5 w-5 text-emerald-600" />
                     </div>
                     <div>

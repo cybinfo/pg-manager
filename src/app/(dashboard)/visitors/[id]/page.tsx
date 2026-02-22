@@ -69,7 +69,7 @@ const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
   tenant_visitor: "bg-blue-100 text-blue-700",
   enquiry: "bg-purple-100 text-purple-700",
   service_provider: "bg-orange-100 text-orange-700",
-  general: "bg-slate-100 text-slate-700",
+  general: "bg-muted text-foreground",
 }
 
 const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
@@ -599,15 +599,15 @@ export default function VisitorDetailPage() {
             }
           >
             <div className="grid md:grid-cols-3 gap-4 mb-4">
-              <div className="p-3 bg-white rounded-lg border">
+              <div className="p-3 bg-card rounded-lg border">
                 <p className="text-sm text-muted-foreground">Total Visits</p>
                 <p className="text-2xl font-bold text-blue-600">{visitor.visitor_contact.visit_count}</p>
               </div>
-              <div className="p-3 bg-white rounded-lg border">
+              <div className="p-3 bg-card rounded-lg border">
                 <p className="text-sm text-muted-foreground">First Visit</p>
                 <p className="font-medium">{formatDate(visitor.visitor_contact.created_at)}</p>
               </div>
-              <div className="p-3 bg-white rounded-lg border">
+              <div className="p-3 bg-card rounded-lg border">
                 <p className="text-sm text-muted-foreground">Last Visit</p>
                 <p className="font-medium">
                   {visitor.visitor_contact.last_visit_at
@@ -617,7 +617,7 @@ export default function VisitorDetailPage() {
               </div>
             </div>
             {visitor.visitor_contact.notes && (
-              <div className="p-3 bg-white rounded-lg border">
+              <div className="p-3 bg-card rounded-lg border">
                 <p className="text-sm text-muted-foreground mb-1">Contact Notes</p>
                 <p className="text-sm">{visitor.visitor_contact.notes}</p>
               </div>

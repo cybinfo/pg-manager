@@ -117,7 +117,7 @@ const TAG_ICONS: Record<string, React.ReactNode> = {
 }
 
 const TagBadge = ({ tag }: { tag: string }) => (
-  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${TAG_COLORS[tag] || "bg-slate-100 text-slate-700"}`}>
+  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${TAG_COLORS[tag] || "bg-muted text-foreground"}`}>
     {TAG_ICONS[tag]}
     {tag.replace("_", " ")}
   </span>
@@ -609,7 +609,7 @@ export default function PersonDetailPage() {
               items={person.emergency_contacts}
               keyExtractor={(contact, index) => `contact-${index}-${contact.phone}`}
               renderItem={(contact) => (
-                <div className="p-3 border rounded-lg bg-slate-50/50 mb-2 last:mb-0">
+                <div className="p-3 border rounded-lg bg-muted/50 mb-2 last:mb-0">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">{contact.name}</p>
@@ -636,12 +636,12 @@ export default function PersonDetailPage() {
             renderItem={(stay) => (
               <Link
                 href={`/tenants/${stay.id}`}
-                className="block p-4 border rounded-lg hover:bg-slate-50/50 transition-colors group mb-2 last:mb-0"
+                className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors group mb-2 last:mb-0"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${stay.status === "active" ? "bg-blue-100" : "bg-slate-100"}`}>
-                      <Home className={`h-5 w-5 ${stay.status === "active" ? "text-blue-600" : "text-slate-600"}`} />
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${stay.status === "active" ? "bg-blue-100 dark:bg-blue-900" : "bg-muted"}`}>
+                      <Home className={`h-5 w-5 ${stay.status === "active" ? "text-blue-600 dark:text-blue-400" : "text-foreground"}`} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -680,12 +680,12 @@ export default function PersonDetailPage() {
             renderItem={(staff) => (
               <Link
                 href={`/staff/${staff.id}`}
-                className="block p-4 border rounded-lg hover:bg-slate-50/50 transition-colors group mb-2 last:mb-0"
+                className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors group mb-2 last:mb-0"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${staff.is_active ? "bg-green-100" : "bg-slate-100"}`}>
-                      <Briefcase className={`h-5 w-5 ${staff.is_active ? "text-green-600" : "text-slate-600"}`} />
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${staff.is_active ? "bg-green-100 dark:bg-green-900" : "bg-muted"}`}>
+                      <Briefcase className={`h-5 w-5 ${staff.is_active ? "text-green-600 dark:text-green-400" : "text-foreground"}`} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -719,7 +719,7 @@ export default function PersonDetailPage() {
             renderItem={(visit) => (
               <Link
                 href={`/visitors/${visit.id}`}
-                className="block p-4 border rounded-lg hover:bg-slate-50/50 transition-colors group mb-2 last:mb-0"
+                className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors group mb-2 last:mb-0"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -775,22 +775,22 @@ export default function PersonDetailPage() {
                   const getEventIcon = () => {
                     switch (event.type) {
                       case "tenant_join": return <Home className="h-4 w-4 text-blue-600" />
-                      case "tenant_leave": return <Home className="h-4 w-4 text-slate-500" />
+                      case "tenant_leave": return <Home className="h-4 w-4 text-muted-foreground" />
                       case "staff_join": return <Briefcase className="h-4 w-4 text-green-600" />
                       case "verified": return <BadgeCheck className="h-4 w-4 text-emerald-600" />
                       case "blocked": return <Ban className="h-4 w-4 text-red-600" />
-                      default: return <Clock className="h-4 w-4 text-slate-500" />
+                      default: return <Clock className="h-4 w-4 text-muted-foreground" />
                     }
                   }
 
                   const getEventBg = () => {
                     switch (event.type) {
-                      case "tenant_join": return "bg-blue-100"
-                      case "tenant_leave": return "bg-slate-100"
-                      case "staff_join": return "bg-green-100"
-                      case "verified": return "bg-emerald-100"
-                      case "blocked": return "bg-red-100"
-                      default: return "bg-slate-100"
+                      case "tenant_join": return "bg-blue-100 dark:bg-blue-900"
+                      case "tenant_leave": return "bg-muted"
+                      case "staff_join": return "bg-green-100 dark:bg-green-900"
+                      case "verified": return "bg-emerald-100 dark:bg-emerald-900"
+                      case "blocked": return "bg-red-100 dark:bg-red-900"
+                      default: return "bg-muted"
                     }
                   }
 

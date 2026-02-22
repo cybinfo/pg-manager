@@ -187,10 +187,10 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
             </Button>
           </div>
 
-          <div className="flex items-center justify-between p-4 border rounded-lg border-red-200 bg-red-50">
+          <div className="flex items-center justify-between p-4 border rounded-lg border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
             <div>
-              <p className="font-medium text-red-700">Delete Account</p>
-              <p className="text-sm text-red-600">
+              <p className="font-medium text-red-700 dark:text-red-300">Delete Account</p>
+              <p className="text-sm text-red-600 dark:text-red-400">
                 Permanently delete your account and all data
               </p>
             </div>

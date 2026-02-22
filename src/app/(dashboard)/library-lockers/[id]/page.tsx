@@ -166,9 +166,9 @@ export default function LibraryLockerDetailPage() {
               <span>Section: {locker.section}</span>
             )}
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-              locker.size === "large" ? "bg-blue-100 text-blue-700" :
-              locker.size === "medium" ? "bg-purple-100 text-purple-700" :
-              "bg-gray-100 text-gray-700"
+              locker.size === "large" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" :
+              locker.size === "medium" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" :
+              "bg-muted text-muted-foreground"
             }`}>
               {sizeConfig?.label || locker.size}
             </span>
@@ -179,12 +179,12 @@ export default function LibraryLockerDetailPage() {
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className={`p-3 rounded-xl ${
-            locker.status === "available" ? "bg-green-100" :
-            locker.status === "occupied" ? "bg-blue-100" : "bg-gray-100"
+            locker.status === "available" ? "bg-green-100 dark:bg-green-900" :
+            locker.status === "occupied" ? "bg-blue-100 dark:bg-blue-900" : "bg-gray-100 dark:bg-gray-800"
           }`}>
             <Lock className={`h-8 w-8 ${
               locker.status === "available" ? "text-green-600" :
-              locker.status === "occupied" ? "text-blue-600" : "text-gray-600"
+              locker.status === "occupied" ? "text-blue-600" : "text-muted-foreground"
             }`} />
           </div>
         }

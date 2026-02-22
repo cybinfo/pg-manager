@@ -132,8 +132,8 @@ export function Timeline({
         <div key={group.date || groupIndex}>
           {/* Group header */}
           {groupByDate && group.label && (
-            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm py-2 mb-4">
-              <h3 className="text-sm font-semibold text-slate-700 pl-10">
+            <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm py-2 mb-4">
+              <h3 className="text-sm font-semibold text-foreground pl-10">
                 {group.label}
               </h3>
             </div>
@@ -196,21 +196,21 @@ function TimelineEventSkeleton() {
   return (
     <div className="relative pl-10 pb-8 animate-pulse">
       {/* Timeline connector */}
-      <div className="absolute left-[15px] top-8 bottom-0 w-0.5 bg-slate-200" />
+      <div className="absolute left-[15px] top-8 bottom-0 w-0.5 bg-border" />
 
       {/* Icon placeholder */}
       <div className="absolute left-0 top-0">
-        <div className="w-8 h-8 rounded-full bg-slate-200" />
+        <div className="w-8 h-8 rounded-full bg-border" />
       </div>
 
       {/* Card placeholder */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
+      <div className="bg-card rounded-lg border border-border p-4">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-16 h-4 bg-slate-200 rounded" />
-          <div className="w-24 h-3 bg-slate-200 rounded" />
+          <div className="w-16 h-4 bg-border rounded" />
+          <div className="w-24 h-3 bg-border rounded" />
         </div>
-        <div className="w-48 h-5 bg-slate-200 rounded mb-2" />
-        <div className="w-full h-4 bg-slate-200 rounded" />
+        <div className="w-48 h-5 bg-border rounded mb-2" />
+        <div className="w-full h-4 bg-border rounded" />
       </div>
     </div>
   )
@@ -238,7 +238,7 @@ export function MiniTimeline({
 
   if (events.length === 0) {
     return (
-      <p className="text-sm text-slate-500 text-center py-4">No recent events</p>
+      <p className="text-sm text-muted-foreground text-center py-4">No recent events</p>
     )
   }
 
@@ -282,8 +282,8 @@ function MiniTimelineEvent({ event }: MiniTimelineEventProps) {
         )}
       />
       <div className="flex-1 min-w-0">
-        <p className="text-slate-700 truncate">{event.title}</p>
-        <p className="text-xs text-slate-500">
+        <p className="text-foreground truncate">{event.title}</p>
+        <p className="text-xs text-muted-foreground">
           {new Date(event.timestamp).toLocaleDateString("en-IN", {
             day: "numeric",
             month: "short",
@@ -294,7 +294,7 @@ function MiniTimelineEvent({ event }: MiniTimelineEventProps) {
         <span
           className={cn(
             "text-xs font-medium shrink-0",
-            event.amount_type === "credit" ? "text-emerald-600" : "text-slate-600"
+            event.amount_type === "credit" ? "text-emerald-600" : "text-foreground"
           )}
         >
           {event.amount_type === "credit" ? "+" : ""}

@@ -42,7 +42,7 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
   return (
     <div
       className={cn(
-        "flex flex-wrap items-stretch bg-white rounded-xl border shadow-sm overflow-hidden",
+        "flex flex-wrap items-stretch bg-card rounded-xl border shadow-sm overflow-hidden",
         className
       )}
       role="group"
@@ -59,8 +59,8 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
             className={cn(
               "flex-1 min-w-[140px] px-4 py-3 flex items-center gap-3 text-left",
               index !== items.length - 1 && "border-r border-dashed",
-              item.highlight && "bg-amber-50/50",
-              isClickable && "hover-lift cursor-pointer hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-inset"
+              item.highlight && "bg-amber-50/50 dark:bg-amber-950/50",
+              isClickable && "hover-lift cursor-pointer hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-inset"
             )}
             onClick={() => handleClick(item.href)}
             onKeyDown={(e) => handleKeyDown(e as React.KeyboardEvent, item.href)}
@@ -70,8 +70,8 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
               <div className={cn(
                 "p-2 rounded-lg",
                 item.highlight
-                  ? "bg-amber-100 text-amber-600"
-                  : "bg-slate-100 text-slate-600"
+                  ? "bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400"
+                  : "bg-muted text-foreground"
               )} aria-hidden="true">
                 <item.icon className="h-4 w-4" />
               </div>
@@ -119,7 +119,7 @@ export function MetricsBarCompact({ items, className }: MetricsBarProps) {
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-4 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-lg border",
+        "flex flex-wrap items-center gap-4 px-4 py-2 bg-card/80 backdrop-blur-sm rounded-lg border",
         className
       )}
       role="group"

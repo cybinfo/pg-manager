@@ -57,34 +57,34 @@ export const colors = {
 // ============================================
 export const statusColors = {
   success: {
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
+    bg: "bg-emerald-50 dark:bg-emerald-950",
+    text: "text-emerald-700 dark:text-emerald-300",
     dot: "bg-emerald-500",
-    border: "border-emerald-200",
+    border: "border-emerald-200 dark:border-emerald-800",
   },
   warning: {
-    bg: "bg-amber-50",
-    text: "text-amber-700",
+    bg: "bg-amber-50 dark:bg-amber-950",
+    text: "text-amber-700 dark:text-amber-300",
     dot: "bg-amber-500",
-    border: "border-amber-200",
+    border: "border-amber-200 dark:border-amber-800",
   },
   error: {
-    bg: "bg-rose-50",
-    text: "text-rose-700",
+    bg: "bg-rose-50 dark:bg-rose-950",
+    text: "text-rose-700 dark:text-rose-300",
     dot: "bg-rose-500",
-    border: "border-rose-200",
+    border: "border-rose-200 dark:border-rose-800",
   },
   info: {
-    bg: "bg-blue-50",
-    text: "text-blue-700",
+    bg: "bg-blue-50 dark:bg-blue-950",
+    text: "text-blue-700 dark:text-blue-300",
     dot: "bg-blue-500",
-    border: "border-blue-200",
+    border: "border-blue-200 dark:border-blue-800",
   },
   muted: {
-    bg: "bg-slate-50",
-    text: "text-slate-500",
+    bg: "bg-muted",
+    text: "text-muted-foreground",
     dot: "bg-slate-400",
-    border: "border-slate-200",
+    border: "border-border",
   },
 } as const
 
@@ -199,7 +199,7 @@ export const animations = {
   hover: {
     lift: "hover:-translate-y-0.5 hover:shadow-md",
     scale: "hover:scale-105",
-    bg: "hover:bg-slate-50",
+    bg: "hover:bg-muted",
     bgAccent: "hover:bg-accent",
   },
 
@@ -215,9 +215,9 @@ export const animations = {
 export const presets = {
   // Card styles
   card: {
-    base: "bg-white rounded-xl border shadow-sm",
-    interactive: "bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer",
-    elevated: "bg-white rounded-xl shadow-md",
+    base: "bg-card rounded-xl border shadow-sm",
+    interactive: "bg-card rounded-xl border shadow-sm hover:shadow-md transition-shadow cursor-pointer",
+    elevated: "bg-card rounded-xl shadow-md",
   },
 
   // Button icon containers
@@ -258,13 +258,13 @@ export const presets = {
   // Table row
   tableRow: {
     base: "px-4 py-3 transition-colors",
-    clickable: "px-4 py-3 transition-colors cursor-pointer hover:bg-slate-50",
+    clickable: "px-4 py-3 transition-colors cursor-pointer hover:bg-muted",
   },
 
   // Metrics bar
   metricsBar: {
     container: "grid grid-cols-2 md:grid-cols-4 gap-4",
-    item: "flex items-center gap-3 p-4 bg-white rounded-xl border shadow-sm",
+    item: "flex items-center gap-3 p-4 bg-card rounded-xl border shadow-sm",
   },
 } as const
 

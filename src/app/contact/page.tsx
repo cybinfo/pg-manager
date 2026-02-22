@@ -48,7 +48,7 @@ export default function ContactPage() {
       description: "Get a response within 24 hours",
       value: "support@managekar.com",
       href: "mailto:support@managekar.com",
-      color: "text-teal-600 bg-teal-50",
+      color: "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950",
     },
     {
       icon: Phone,
@@ -56,7 +56,7 @@ export default function ContactPage() {
       description: "Mon-Sat, 10am-6pm IST",
       value: "+91 78274 74789",
       href: "tel:+917827474789",
-      color: "text-emerald-600 bg-emerald-50",
+      color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950",
     },
     {
       icon: MessageSquare,
@@ -64,7 +64,7 @@ export default function ContactPage() {
       description: "Quick responses on chat",
       value: "+91 78274 74789",
       href: "https://wa.me/917827474789?text=Hi%20ManageKar%20Team!",
-      color: "text-green-600 bg-green-50",
+      color: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950",
     },
   ]
 
@@ -91,9 +91,9 @@ export default function ContactPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative py-16 px-4 bg-gradient-to-br from-teal-50 via-white to-emerald-50">
+      <section className="relative py-16 px-4 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950">
         <div className="container mx-auto text-center max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-100 text-teal-700 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-sm font-medium mb-6">
             <MessageSquare className="h-4 w-4" />
             We&apos;re Here to Help
           </div>
@@ -137,7 +137,7 @@ export default function ContactPage() {
               </p>
 
               {submitted ? (
-                <Card className="border-teal-200 bg-teal-50">
+                <Card className="border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-950">
                   <CardContent className="pt-6 text-center">
                     <CheckCircle className="h-16 w-16 text-teal-500 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold mb-2">Message Sent!</h3>
@@ -232,7 +232,7 @@ export default function ContactPage() {
 
             {/* Info Card */}
             <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-teal-50 to-emerald-50 border-teal-100">
+              <Card className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950 dark:to-emerald-950 border-teal-100 dark:border-teal-800">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-teal-600" />
@@ -245,7 +245,7 @@ export default function ContactPage() {
                     Sector 62, Noida<br />
                     Uttar Pradesh, India - 201301
                   </p>
-                  <div className="pt-4 border-t border-teal-200">
+                  <div className="pt-4 border-t border-teal-200 dark:border-teal-800">
                     <p className="text-sm text-muted-foreground mb-2">Business Hours</p>
                     <p className="font-medium">Monday - Saturday</p>
                     <p className="text-muted-foreground">10:00 AM - 6:00 PM IST</p>
@@ -273,9 +273,9 @@ export default function ContactPage() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-amber-50 border-amber-200">
+              <Card className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
                 <CardContent className="pt-6">
-                  <p className="text-sm text-amber-800">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
                     <strong>Pro Tip:</strong> For fastest response, reach out via WhatsApp
                     during business hours. We typically respond within 30 minutes!
                   </p>

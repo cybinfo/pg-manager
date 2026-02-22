@@ -561,7 +561,7 @@ function PersonCard({ person }: { person: PersonWithStats }) {
           {person.tags.map((tag) => (
             <span
               key={tag}
-              className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full text-xs"
+              className="px-2 py-0.5 bg-muted text-foreground rounded-full text-xs"
             >
               {tag}
             </span>

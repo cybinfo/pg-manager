@@ -390,7 +390,7 @@ export default function NewServicePaymentPage() {
                             tds_applicable: e.target.checked,
                           }))
                         }
-                        className="h-4 w-4 rounded border-gray-300"
+                        className="h-4 w-4 rounded border-border"
                       />
                       <label htmlFor="tds_applicable" className="text-sm font-medium">
                         TDS Applicable

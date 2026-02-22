@@ -24,7 +24,7 @@ export function StayHistorySections({ stays, transfers }: StayHistorySectionsPro
           items={stays}
           keyExtractor={(stay, _idx) => stay.id}
           renderItem={(stay) => (
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg mb-2 last:mb-0">
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg mb-2 last:mb-0">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Stay #{stay.stay_number}</span>
@@ -60,7 +60,7 @@ export function StayHistorySections({ stays, transfers }: StayHistorySectionsPro
           items={transfers}
           keyExtractor={(transfer, _idx) => transfer.id}
           renderItem={(transfer) => (
-            <div className="p-3 bg-slate-50 rounded-lg mb-2 last:mb-0">
+            <div className="p-3 bg-muted rounded-lg mb-2 last:mb-0">
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium">
                   {transfer.from_property?.name} Room {transfer.from_room?.room_number}

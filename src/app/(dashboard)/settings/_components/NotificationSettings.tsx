@@ -259,15 +259,15 @@ export function NotificationSettings({
       </Card>
 
       {/* WhatsApp Info */}
-      <Card className="bg-green-50 border-green-200">
+      <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Phone className="h-5 w-5 text-green-600" />
+            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <Phone className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <h4 className="font-medium text-green-900">WhatsApp Notifications</h4>
-              <p className="text-sm text-green-700 mt-1">
+              <h4 className="font-medium text-green-900 dark:text-green-100">WhatsApp Notifications</h4>
+              <p className="text-sm text-green-700 dark:text-green-300 mt-1">
                 WhatsApp reminders are available via manual send buttons on the Payments page.
                 Go to Payments → Send Reminders to send WhatsApp messages to tenants with pending dues.
               </p>

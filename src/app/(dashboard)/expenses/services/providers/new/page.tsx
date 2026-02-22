@@ -311,7 +311,7 @@ export default function NewServiceProviderPage() {
                             tds_rate: e.target.checked ? prev.tds_rate : undefined,
                           }))
                         }
-                        className="h-4 w-4 rounded border-gray-300"
+                        className="h-4 w-4 rounded border-border"
                       />
                       <label htmlFor="tds_applicable" className="text-sm font-medium">
                         TDS Applicable
@@ -384,7 +384,7 @@ export default function NewServiceProviderPage() {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, is_active: e.target.checked }))
                     }
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-border"
                   />
                   <label htmlFor="is_active" className="text-sm">
                     Active (available for selection)

@@ -49,7 +49,7 @@ export function OvernightStaySection({
             checked={formData.is_overnight}
             onChange={onChange}
             disabled={loading}
-            className="h-4 w-4 rounded border-gray-300"
+            className="h-4 w-4 rounded border-border"
           />
           <Label htmlFor="is_overnight" className="font-normal cursor-pointer">
             This is an overnight stay
@@ -132,7 +132,7 @@ export function OvernightStaySection({
                       checked={formData.create_bill}
                       onChange={onChange}
                       disabled={loading}
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-border"
                     />
                     <Label htmlFor="create_bill" className="font-normal cursor-pointer flex items-center gap-2">
                       <FileText className="h-4 w-4 text-purple-600" />

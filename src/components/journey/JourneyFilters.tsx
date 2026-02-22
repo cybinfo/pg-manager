@@ -86,7 +86,7 @@ export function JourneyFilters({
       <div className="flex items-center gap-3">
         {/* Search input */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search events..."
             value={filters.search_query}
@@ -96,7 +96,7 @@ export function JourneyFilters({
           {filters.search_query && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="w-4 h-4" />
             </button>
@@ -134,7 +134,7 @@ export function JourneyFilters({
             variant="ghost"
             size="sm"
             onClick={onClear}
-            className="text-slate-500 hover:text-slate-700"
+            className="text-muted-foreground hover:text-foreground"
           >
             <X className="w-4 h-4 mr-1" />
             Clear
@@ -156,7 +156,7 @@ export function JourneyFilters({
       {/* Category chips */}
       {categoriesToShow.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-slate-500 mr-1">
+          <span className="text-sm text-muted-foreground mr-1">
             <Filter className="w-4 h-4 inline mr-1" />
             Filter:
           </span>
@@ -191,7 +191,7 @@ export function JourneyFilters({
 
       {/* Active filters summary */}
       {hasActiveFilters && (
-        <div className="text-sm text-slate-500">
+        <div className="text-sm text-muted-foreground">
           Showing filtered results
           {filters.categories.length > 0 && (
             <> • {filters.categories.length} categories</>
@@ -233,8 +233,8 @@ function CategoryChip({
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
         isSelected
-          ? colorClass || "bg-teal-100 text-teal-700"
-          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          ? colorClass || "bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300"
+          : "bg-muted text-foreground hover:bg-muted/80"
       )}
     >
       {label}
@@ -242,7 +242,7 @@ function CategoryChip({
         <span
           className={cn(
             "text-xs px-1.5 py-0.5 rounded-full",
-            isSelected ? "bg-white/30" : "bg-slate-200"
+            isSelected ? "bg-white/30" : "bg-muted-foreground/20"
           )}
         >
           {count}
@@ -287,7 +287,7 @@ function DateRangePicker({
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-4 space-y-4">
+    <div className="bg-card border border-border rounded-lg shadow-lg p-4 space-y-4">
       {/* Quick select buttons */}
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={() => handleQuickSelect(7)}>
@@ -307,7 +307,7 @@ function DateRangePicker({
       {/* Date inputs */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <label className="block text-xs font-medium text-slate-500 mb-1">
+          <label className="block text-xs font-medium text-muted-foreground mb-1">
             From
           </label>
           <Input
@@ -318,7 +318,7 @@ function DateRangePicker({
           />
         </div>
         <div className="flex-1">
-          <label className="block text-xs font-medium text-slate-500 mb-1">
+          <label className="block text-xs font-medium text-muted-foreground mb-1">
             To
           </label>
           <Input
@@ -386,7 +386,7 @@ export function CompactFilters({
           <Filter className="w-4 h-4" />
           Filters
           {hasActiveFilters && (
-            <span className="bg-teal-100 text-teal-700 text-xs px-2 py-0.5 rounded-full">
+            <span className="bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-xs px-2 py-0.5 rounded-full">
               Active
             </span>
           )}

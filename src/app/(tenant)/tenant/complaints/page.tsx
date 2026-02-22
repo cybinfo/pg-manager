@@ -249,7 +249,7 @@ export default function TenantComplaintsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
+              <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
                 <Clock className="h-5 w-5 text-orange-600" />
               </div>
               <div>
@@ -262,7 +262,7 @@ export default function TenantComplaintsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
+              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
               <div>
@@ -347,9 +347,9 @@ export default function TenantComplaintsPage() {
                           </div>
                           <h4 className="font-medium">{complaint.title}</h4>
                           {complaint.resolution_notes && (
-                            <div className="mt-2 p-2 bg-green-50 rounded text-sm">
-                              <p className="text-xs text-green-700 font-medium mb-1">Resolution:</p>
-                              <p className="text-green-800">{complaint.resolution_notes}</p>
+                            <div className="mt-2 p-2 bg-green-50 dark:bg-green-950 rounded text-sm">
+                              <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">Resolution:</p>
+                              <p className="text-green-800 dark:text-green-200">{complaint.resolution_notes}</p>
                             </div>
                           )}
                           <p className="text-xs text-muted-foreground mt-2">

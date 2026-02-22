@@ -314,9 +314,9 @@ export default function AssignLockerToMemberPage({
                       <div className="flex items-center gap-2 mb-1">
                         <Package className="h-3 w-3 text-muted-foreground" />
                         <span className={`text-xs px-2 py-0.5 rounded ${
-                          locker.size === "large" ? "bg-blue-100 text-blue-700" :
-                          locker.size === "medium" ? "bg-purple-100 text-purple-700" :
-                          "bg-gray-100 text-gray-700"
+                          locker.size === "large" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" :
+                          locker.size === "medium" ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" :
+                          "bg-muted text-muted-foreground"
                         }`}>
                           {sizeConfig?.label || locker.size}
                         </span>

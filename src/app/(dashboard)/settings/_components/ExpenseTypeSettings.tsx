@@ -208,15 +208,15 @@ export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTy
         </CardContent>
       </Card>
 
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <IndianRupee className="h-5 w-5 text-blue-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <IndianRupee className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h4 className="font-medium text-blue-900">Track Your Expenses</h4>
-              <p className="text-sm text-blue-700 mt-1">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100">Track Your Expenses</h4>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                 Go to Dashboard → Expenses to record and track all your property-related expenses.
                 Expenses are shown in Reports for profitability analysis.
               </p>

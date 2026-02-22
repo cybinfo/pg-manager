@@ -106,7 +106,7 @@ export function ColumnManager({
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors",
                   canToggle
-                    ? "hover:bg-slate-50 cursor-pointer"
+                    ? "hover:bg-muted cursor-pointer"
                     : "cursor-not-allowed opacity-50"
                 )}
               >
@@ -146,7 +146,7 @@ export function ColumnManager({
         </div>
 
         {/* Footer hint */}
-        <div className="px-3 py-2 border-t bg-slate-50/50">
+        <div className="px-3 py-2 border-t bg-muted/50">
           <p className="text-[11px] text-muted-foreground">
             Click to toggle visibility. Hidden columns won&apos;t appear in the table.
           </p>

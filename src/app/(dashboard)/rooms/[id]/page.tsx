@@ -51,9 +51,9 @@ interface MeterReading {
 }
 
 const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor: string }> = {
-  electricity: { icon: Zap, color: "text-yellow-700", bgColor: "bg-yellow-100" },
-  water: { icon: Droplets, color: "text-blue-700", bgColor: "bg-blue-100" },
-  gas: { icon: Gauge, color: "text-orange-700", bgColor: "bg-orange-100" },
+  electricity: { icon: Zap, color: "text-yellow-700 dark:text-yellow-300", bgColor: "bg-yellow-100 dark:bg-yellow-900" },
+  water: { icon: Droplets, color: "text-blue-700 dark:text-blue-300", bgColor: "bg-blue-100 dark:bg-blue-900" },
+  gas: { icon: Gauge, color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-100 dark:bg-orange-900" },
 }
 
 const statusConfig: Record<string, { status: "success" | "error" | "warning" | "muted"; label: string }> = {
@@ -192,13 +192,13 @@ export default function RoomDetailPage() {
             <p className="text-sm text-muted-foreground mb-3">Amenities</p>
             <div className="flex flex-wrap gap-2">
               {room.has_ac && (
-                <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm">
+                <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded text-sm">
                   <Thermometer className="h-3 w-3" />
                   Air Conditioned
                 </span>
               )}
               {room.has_attached_bathroom && (
-                <span className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded text-sm">
+                <span className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded text-sm">
                   <Bath className="h-3 w-3" />
                   Attached Bathroom
                 </span>

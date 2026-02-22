@@ -71,9 +71,9 @@ interface Charge {
 }
 
 const meterTypeConfig: Record<string, { label: string; icon: typeof Zap; color: string; bgColor: string; unit: string }> = {
-  electricity: { label: "Electricity", icon: Zap, color: "text-yellow-700", bgColor: "bg-yellow-100", unit: "kWh" },
-  water: { label: "Water", icon: Droplets, color: "text-blue-700", bgColor: "bg-blue-100", unit: "L" },
-  gas: { label: "Gas", icon: Flame, color: "text-orange-700", bgColor: "bg-orange-100", unit: "m³" },
+  electricity: { label: "Electricity", icon: Zap, color: "text-yellow-700 dark:text-yellow-300", bgColor: "bg-yellow-100 dark:bg-yellow-900", unit: "kWh" },
+  water: { label: "Water", icon: Droplets, color: "text-blue-700 dark:text-blue-300", bgColor: "bg-blue-100 dark:bg-blue-900", unit: "L" },
+  gas: { label: "Gas", icon: Flame, color: "text-orange-700 dark:text-orange-300", bgColor: "bg-orange-100 dark:bg-orange-900", unit: "m³" },
 }
 
 export default function MeterReadingDetailPage() {

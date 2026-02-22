@@ -503,7 +503,7 @@ export default function NewMeterReadingPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
                   <Gauge className="h-5 w-5 text-yellow-600" />
                 </div>
                 <div>
@@ -589,7 +589,7 @@ export default function NewMeterReadingPage() {
                       id="generateCharge"
                       checked={generateCharge}
                       onChange={(e) => setGenerateCharge(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-border"
                       disabled={loading}
                     />
                     <Label htmlFor="generateCharge" className="font-medium cursor-pointer">

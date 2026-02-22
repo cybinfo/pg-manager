@@ -193,12 +193,12 @@ export default function PricingPage() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 md:py-24">
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-emerald-50" />
-        <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-200/30 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200/30 dark:bg-teal-800/30 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-200/30 dark:bg-emerald-800/30 rounded-full blur-3xl" />
 
         <div className="relative container mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 text-sm font-medium mb-6 animate-fade-in-down">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 text-amber-700 dark:text-amber-300 text-sm font-medium mb-6 animate-fade-in-down">
             <Gift className="h-4 w-4" />
             3 Months Free - No Credit Card Required
           </div>
@@ -222,7 +222,7 @@ export default function PricingPage() {
               onClick={() => setBillingCycle("monthly")}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 billingCycle === "monthly"
-                  ? "bg-white shadow text-foreground"
+                  ? "bg-card shadow text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -232,7 +232,7 @@ export default function PricingPage() {
               onClick={() => setBillingCycle("yearly")}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 billingCycle === "yearly"
-                  ? "bg-white shadow text-foreground"
+                  ? "bg-card shadow text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -339,7 +339,7 @@ export default function PricingPage() {
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-sky-100 to-blue-100 text-sky-700 text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-sky-100 to-blue-100 dark:from-sky-900 dark:to-blue-900 text-sky-700 dark:text-sky-300 text-sm font-medium mb-4">
               <HelpCircle className="h-4 w-4" />
               FAQ
             </div>

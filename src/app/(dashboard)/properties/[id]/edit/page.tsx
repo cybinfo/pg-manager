@@ -324,7 +324,7 @@ export default function EditPropertyPage() {
           <Globe className="h-4 w-4 inline mr-2" />
           Website Settings
           {websiteData.website_enabled && (
-            <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+            <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-xs rounded-full">
               Live
             </span>
           )}

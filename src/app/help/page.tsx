@@ -140,14 +140,14 @@ const faqs: FAQ[] = [
 ]
 
 const categories = [
-  { name: "Getting Started", icon: HelpCircle, color: "text-teal-600 bg-teal-50" },
-  { name: "Properties & Rooms", icon: Home, color: "text-emerald-600 bg-emerald-50" },
-  { name: "Tenants", icon: Users, color: "text-violet-600 bg-violet-50" },
-  { name: "Payments", icon: CreditCard, color: "text-amber-600 bg-amber-50" },
-  { name: "Meter Readings", icon: Zap, color: "text-yellow-600 bg-yellow-50" },
-  { name: "Security & Privacy", icon: Shield, color: "text-rose-600 bg-rose-50" },
-  { name: "Staff Management", icon: Settings, color: "text-blue-600 bg-blue-50" },
-  { name: "Support", icon: MessageSquare, color: "text-pink-600 bg-pink-50" },
+  { name: "Getting Started", icon: HelpCircle, color: "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950" },
+  { name: "Properties & Rooms", icon: Home, color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950" },
+  { name: "Tenants", icon: Users, color: "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950" },
+  { name: "Payments", icon: CreditCard, color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950" },
+  { name: "Meter Readings", icon: Zap, color: "text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950" },
+  { name: "Security & Privacy", icon: Shield, color: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950" },
+  { name: "Staff Management", icon: Settings, color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950" },
+  { name: "Support", icon: MessageSquare, color: "text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950" },
 ]
 
 export default function HelpPage() {
@@ -194,9 +194,9 @@ export default function HelpPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative py-16 px-4 bg-gradient-to-br from-teal-50 via-white to-emerald-50">
+      <section className="relative py-16 px-4 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950">
         <div className="container mx-auto text-center max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-100 text-teal-700 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-sm font-medium mb-6">
             <HelpCircle className="h-4 w-4" />
             Help Center
           </div>
@@ -269,7 +269,7 @@ export default function HelpPage() {
               return (
                 <div key={category} className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className={`h-10 w-10 rounded-lg ${categoryInfo?.color || 'bg-gray-100'} flex items-center justify-center`}>
+                    <div className={`h-10 w-10 rounded-lg ${categoryInfo?.color || 'bg-muted'} flex items-center justify-center`}>
                       <CategoryIcon className="h-5 w-5" />
                     </div>
                     <h2 className="text-xl font-bold">{category}</h2>
@@ -315,9 +315,9 @@ export default function HelpPage() {
       </section>
 
       {/* Still Need Help */}
-      <section className="py-12 px-4 bg-gradient-to-br from-teal-50 to-emerald-50">
+      <section className="py-12 px-4 bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950 dark:to-emerald-950">
         <div className="container mx-auto max-w-4xl">
-          <Card className="bg-white border-teal-200">
+          <Card className="bg-card border-teal-200 dark:border-teal-800">
             <CardContent className="pt-6">
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 <div>
@@ -333,7 +333,7 @@ export default function HelpPage() {
                       </Button>
                     </Link>
                     <a href="https://wa.me/919876543210?text=Hi%20ManageKar%20Team!" target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" className="border-teal-500 text-teal-600 hover:bg-teal-50">
+                      <Button variant="outline" className="border-teal-500 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950">
                         <Smartphone className="mr-2 h-4 w-4" />
                         WhatsApp Us
                       </Button>
@@ -364,8 +364,8 @@ export default function HelpPage() {
             <Link href="/register">
               <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer text-center group">
                 <CardContent className="pt-6">
-                  <div className="h-12 w-12 bg-teal-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <Users className="h-6 w-6 text-teal-600" />
+                  <div className="h-12 w-12 bg-teal-50 dark:bg-teal-950 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <Users className="h-6 w-6 text-teal-600 dark:text-teal-400" />
                   </div>
                   <CardTitle className="text-sm">Get Started</CardTitle>
                   <CardDescription className="text-xs mt-1">Create free account</CardDescription>
@@ -375,8 +375,8 @@ export default function HelpPage() {
             <Link href="/contact">
               <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer text-center group">
                 <CardContent className="pt-6">
-                  <div className="h-12 w-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <MessageSquare className="h-6 w-6 text-emerald-600" />
+                  <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-950 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <MessageSquare className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <CardTitle className="text-sm">Contact Us</CardTitle>
                   <CardDescription className="text-xs mt-1">Get in touch</CardDescription>
@@ -386,8 +386,8 @@ export default function HelpPage() {
             <Link href="/privacy">
               <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer text-center group">
                 <CardContent className="pt-6">
-                  <div className="h-12 w-12 bg-violet-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <Shield className="h-6 w-6 text-violet-600" />
+                  <div className="h-12 w-12 bg-violet-50 dark:bg-violet-950 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <Shield className="h-6 w-6 text-violet-600 dark:text-violet-400" />
                   </div>
                   <CardTitle className="text-sm">Privacy Policy</CardTitle>
                   <CardDescription className="text-xs mt-1">Your data, protected</CardDescription>
@@ -397,8 +397,8 @@ export default function HelpPage() {
             <Link href="/terms">
               <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer text-center group">
                 <CardContent className="pt-6">
-                  <div className="h-12 w-12 bg-amber-50 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <HelpCircle className="h-6 w-6 text-amber-600" />
+                  <div className="h-12 w-12 bg-amber-50 dark:bg-amber-950 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <HelpCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                   </div>
                   <CardTitle className="text-sm">Terms of Service</CardTitle>
                   <CardDescription className="text-xs mt-1">Usage guidelines</CardDescription>

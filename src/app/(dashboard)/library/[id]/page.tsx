@@ -47,10 +47,10 @@ import type {
 } from "@/types/library.types"
 
 const statusColors: Record<string, string> = {
-  available: "bg-green-100 text-green-700",
-  occupied: "bg-blue-100 text-blue-700",
-  reserved: "bg-yellow-100 text-yellow-700",
-  maintenance: "bg-gray-100 text-gray-700",
+  available: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+  occupied: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+  reserved: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+  maintenance: "bg-muted text-muted-foreground",
 }
 
 export default function LibraryDetailPage() {
@@ -213,22 +213,22 @@ export default function LibraryDetailPage() {
           )}
           <div className="flex gap-2 mt-3 flex-wrap">
             {library.has_ac && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm font-medium">AC</span>
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded text-sm font-medium">AC</span>
             )}
             {library.has_wifi && (
-              <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-sm font-medium flex items-center gap-1">
+              <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded text-sm font-medium flex items-center gap-1">
                 <Wifi className="h-3 w-3" />
                 WiFi
               </span>
             )}
             {library.has_lockers && (
-              <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-sm font-medium flex items-center gap-1">
+              <span className="px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded text-sm font-medium flex items-center gap-1">
                 <Lock className="h-3 w-3" />
                 Lockers
               </span>
             )}
             {library.has_parking && (
-              <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-sm font-medium flex items-center gap-1">
+              <span className="px-2 py-1 bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 rounded text-sm font-medium flex items-center gap-1">
                 <Car className="h-3 w-3" />
                 Parking
               </span>
@@ -248,7 +248,7 @@ export default function LibraryDetailPage() {
               <div className="p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold">{section.name}</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${section.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${section.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-muted text-muted-foreground'}`}>
                     {section.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
@@ -258,7 +258,7 @@ export default function LibraryDetailPage() {
                     {section.occupied_seats}/{section.total_seats} seats
                   </span>
                   {section.is_ac && (
-                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">AC</span>
+                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded text-xs">AC</span>
                   )}
                   {section.floor > 0 && (
                     <span className="text-xs">Floor {section.floor}</span>

@@ -99,7 +99,7 @@ export default function MemberAttendancePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-50 rounded-lg">
+              <div className="p-2 bg-purple-50 dark:bg-purple-950 rounded-lg">
                 <Calendar className="h-5 w-5 text-purple-600" />
               </div>
               <div>
@@ -113,7 +113,7 @@ export default function MemberAttendancePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 rounded-lg">
+              <div className="p-2 bg-emerald-50 dark:bg-emerald-950 rounded-lg">
                 <Timer className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
@@ -127,7 +127,7 @@ export default function MemberAttendancePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-sky-50 rounded-lg">
+              <div className="p-2 bg-sky-50 dark:bg-sky-950 rounded-lg">
                 <Clock className="h-5 w-5 text-sky-600" />
               </div>
               <div>
@@ -141,7 +141,7 @@ export default function MemberAttendancePage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-violet-50 rounded-lg">
+              <div className="p-2 bg-violet-50 dark:bg-violet-950 rounded-lg">
                 <Calendar className="h-5 w-5 text-violet-600" />
               </div>
               <div>
@@ -182,8 +182,8 @@ export default function MemberAttendancePage() {
                     <div
                       className={`p-2 rounded-full ${
                         record.check_out_time
-                          ? "bg-purple-50"
-                          : "bg-emerald-50"
+                          ? "bg-purple-50 dark:bg-purple-950"
+                          : "bg-emerald-50 dark:bg-emerald-950"
                       }`}
                     >
                       {record.check_out_time ? (
@@ -220,7 +220,7 @@ export default function MemberAttendancePage() {
                         {record.hours_spent.toFixed(1)}h
                       </p>
                     ) : (
-                      <span className="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+                      <span className="text-xs px-2 py-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-full">
                         Currently Active
                       </span>
                     )}

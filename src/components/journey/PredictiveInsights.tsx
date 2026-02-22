@@ -76,11 +76,11 @@ export function PredictiveInsights({ insights, className }: PredictiveInsightsPr
 
       {/* Recommendations */}
       {insights.recommendations.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
+        <div className="bg-card rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-3">
             <Lightbulb className="w-5 h-5 text-amber-500" />
-            <h3 className="font-semibold text-slate-900">Recommendations</h3>
-            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+            <h3 className="font-semibold text-foreground">Recommendations</h3>
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
               {insights.recommendations.length}
             </span>
           </div>
@@ -96,7 +96,7 @@ export function PredictiveInsights({ insights, className }: PredictiveInsightsPr
               variant="ghost"
               size="sm"
               onClick={() => setShowAllRecommendations(!showAllRecommendations)}
-              className="w-full mt-2 text-slate-500"
+              className="w-full mt-2 text-muted-foreground"
             >
               {showAllRecommendations ? (
                 <>
@@ -115,7 +115,7 @@ export function PredictiveInsights({ insights, className }: PredictiveInsightsPr
       )}
 
       {/* Confidence indicator */}
-      <div className="text-xs text-slate-500 text-center">
+      <div className="text-xs text-muted-foreground text-center">
         <Info className="w-3 h-3 inline mr-1" />
         Insights based on {insights.data_points_analyzed} data points •{" "}
         <span className="capitalize">{insights.confidence} confidence</span>
@@ -164,7 +164,7 @@ function ScoreCard({
       ? "text-emerald-500"
       : trend === "declining"
       ? "text-rose-500"
-      : "text-slate-400"
+      : "text-muted-foreground"
 
   // For churn risk, lower is better
   const displayScore = invertScore ? 100 - score : score
@@ -180,7 +180,7 @@ function ScoreCard({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Icon className={cn("w-5 h-5", colorScheme.text)} />
-          <h4 className="font-medium text-slate-700">{title}</h4>
+          <h4 className="font-medium text-foreground">{title}</h4>
         </div>
         {trend && (
           <TrendIcon className={cn("w-4 h-4", trendColor)} />
@@ -192,7 +192,7 @@ function ScoreCard({
         <span className={cn("text-3xl font-bold", colorScheme.scoreText)}>
           {score}
         </span>
-        <span className="text-slate-500 text-sm mb-1">/ 100</span>
+        <span className="text-muted-foreground text-sm mb-1">/ 100</span>
       </div>
 
       {/* Progress bar */}
@@ -218,12 +218,12 @@ function ScoreCard({
 
       {/* Factors (if any) */}
       {factors && factors.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-slate-200/50">
-          <p className="text-xs text-slate-500 mb-1">Contributing factors:</p>
-          <ul className="text-xs text-slate-600 space-y-0.5">
+        <div className="mt-3 pt-3 border-t border-border/50">
+          <p className="text-xs text-muted-foreground mb-1">Contributing factors:</p>
+          <ul className="text-xs text-foreground space-y-0.5">
             {factors.slice(0, 2).map((factor, i) => (
               <li key={i} className="flex items-start gap-1">
-                <span className="text-slate-400">•</span>
+                <span className="text-muted-foreground">•</span>
                 {factor}
               </li>
             ))}
@@ -249,25 +249,25 @@ function SatisfactionCard({ level, factors }: SatisfactionCardProps) {
       icon: CheckCircle,
       label: "High Satisfaction",
       color: "text-emerald-600",
-      bg: "bg-emerald-50",
-      border: "border-emerald-200",
-      iconBg: "bg-emerald-100",
+      bg: "bg-emerald-50 dark:bg-emerald-950",
+      border: "border-emerald-200 dark:border-emerald-800",
+      iconBg: "bg-emerald-100 dark:bg-emerald-900",
     },
     medium: {
       icon: Minus,
       label: "Medium Satisfaction",
       color: "text-amber-600",
-      bg: "bg-amber-50",
-      border: "border-amber-200",
-      iconBg: "bg-amber-100",
+      bg: "bg-amber-50 dark:bg-amber-950",
+      border: "border-amber-200 dark:border-amber-800",
+      iconBg: "bg-amber-100 dark:bg-amber-900",
     },
     low: {
       icon: AlertCircle,
       label: "Low Satisfaction",
       color: "text-rose-600",
-      bg: "bg-rose-50",
-      border: "border-rose-200",
-      iconBg: "bg-rose-100",
+      bg: "bg-rose-50 dark:bg-rose-950",
+      border: "border-rose-200 dark:border-rose-800",
+      iconBg: "bg-rose-100 dark:bg-rose-900",
     },
   }
 
@@ -281,7 +281,7 @@ function SatisfactionCard({ level, factors }: SatisfactionCardProps) {
           <Icon className={cn("w-5 h-5", c.color)} />
         </div>
         <div>
-          <h4 className="font-medium text-slate-700">Satisfaction</h4>
+          <h4 className="font-medium text-foreground">Satisfaction</h4>
           <p className={cn("text-sm font-semibold", c.color)}>{c.label}</p>
         </div>
       </div>
@@ -289,7 +289,7 @@ function SatisfactionCard({ level, factors }: SatisfactionCardProps) {
       {factors.length > 0 && (
         <div className="space-y-1">
           {factors.map((factor, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm text-slate-600">
+            <div key={i} className="flex items-center gap-2 text-sm text-foreground">
               <CheckCircle className="w-3 h-3 text-emerald-500" />
               {factor}
             </div>
@@ -310,11 +310,11 @@ interface AlertsSectionProps {
 
 function AlertsSection({ alerts }: AlertsSectionProps) {
   return (
-    <div className="bg-rose-50 rounded-xl border border-rose-200 p-4">
+    <div className="bg-rose-50 dark:bg-rose-950 rounded-xl border border-rose-200 dark:border-rose-800 p-4">
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="w-5 h-5 text-rose-500" />
-        <h3 className="font-semibold text-rose-700">Active Alerts</h3>
-        <span className="text-xs text-rose-600 bg-rose-100 px-2 py-0.5 rounded-full">
+        <h3 className="font-semibold text-rose-700 dark:text-rose-300">Active Alerts</h3>
+        <span className="text-xs text-rose-600 bg-rose-100 dark:bg-rose-900 px-2 py-0.5 rounded-full">
           {alerts.length}
         </span>
       </div>
@@ -338,10 +338,10 @@ interface AlertCardProps {
 
 function AlertCard({ alert }: AlertCardProps) {
   const severityConfig = {
-    low: { bg: "bg-slate-100", text: "text-slate-700", icon: Info },
-    medium: { bg: "bg-amber-100", text: "text-amber-700", icon: AlertCircle },
-    high: { bg: "bg-rose-100", text: "text-rose-700", icon: AlertTriangle },
-    critical: { bg: "bg-rose-200", text: "text-rose-800", icon: Zap },
+    low: { bg: "bg-muted", text: "text-foreground", icon: Info },
+    medium: { bg: "bg-amber-100 dark:bg-amber-900", text: "text-amber-700 dark:text-amber-300", icon: AlertCircle },
+    high: { bg: "bg-rose-100 dark:bg-rose-900", text: "text-rose-700 dark:text-rose-300", icon: AlertTriangle },
+    critical: { bg: "bg-rose-200 dark:bg-rose-900", text: "text-rose-800 dark:text-rose-200", icon: Zap },
   }
 
   const config = severityConfig[alert.severity]
@@ -352,7 +352,7 @@ function AlertCard({ alert }: AlertCardProps) {
       <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", config.text)} />
       <div className="flex-1 min-w-0">
         <p className={cn("font-medium text-sm", config.text)}>{alert.title}</p>
-        <p className="text-xs text-slate-600 mt-0.5">{alert.description}</p>
+        <p className="text-xs text-foreground mt-0.5">{alert.description}</p>
       </div>
       {alert.action_url && (
         <Link href={alert.action_url}>
@@ -377,7 +377,7 @@ function RecommendationCard({ recommendation }: RecommendationCardProps) {
   const priorityConfig = {
     high: { dot: "bg-rose-500", text: "text-rose-600" },
     medium: { dot: "bg-amber-500", text: "text-amber-600" },
-    low: { dot: "bg-slate-400", text: "text-slate-500" },
+    low: { dot: "bg-muted-foreground", text: "text-muted-foreground" },
   }
 
   const typeConfig = {
@@ -393,18 +393,18 @@ function RecommendationCard({ recommendation }: RecommendationCardProps) {
   const Icon = type.icon
 
   return (
-    <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
-      <div className="p-1.5 bg-white rounded-lg shadow-sm">
-        <Icon className="w-4 h-4 text-slate-500" />
+    <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+      <div className="p-1.5 bg-card rounded-lg shadow-sm">
+        <Icon className="w-4 h-4 text-muted-foreground" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className={cn("w-2 h-2 rounded-full", priority.dot)} />
-          <span className="text-xs text-slate-500 capitalize">{recommendation.priority} priority</span>
-          <span className="text-xs text-slate-400">•</span>
-          <span className="text-xs text-slate-500">{type.label}</span>
+          <span className="text-xs text-muted-foreground capitalize">{recommendation.priority} priority</span>
+          <span className="text-xs text-muted-foreground">•</span>
+          <span className="text-xs text-muted-foreground">{type.label}</span>
         </div>
-        <p className="text-sm text-slate-700">{recommendation.message}</p>
+        <p className="text-sm text-foreground">{recommendation.message}</p>
       </div>
       {recommendation.action_url && (
         <Link href={recommendation.action_url}>
@@ -425,49 +425,49 @@ function getPaymentColorScheme(level: string): ColorScheme {
   switch (level) {
     case "excellent":
       return {
-        bg: "bg-emerald-50",
-        border: "border-emerald-200",
+        bg: "bg-emerald-50 dark:bg-emerald-950",
+        border: "border-emerald-200 dark:border-emerald-800",
         text: "text-emerald-600",
         scoreText: "text-emerald-600",
-        progressBg: "bg-emerald-200",
+        progressBg: "bg-emerald-200 dark:bg-emerald-800",
         progressFill: "bg-emerald-500",
       }
     case "good":
       return {
-        bg: "bg-teal-50",
-        border: "border-teal-200",
+        bg: "bg-teal-50 dark:bg-teal-950",
+        border: "border-teal-200 dark:border-teal-800",
         text: "text-teal-600",
         scoreText: "text-teal-600",
-        progressBg: "bg-teal-200",
+        progressBg: "bg-teal-200 dark:bg-teal-800",
         progressFill: "bg-teal-500",
       }
     case "fair":
       return {
-        bg: "bg-amber-50",
-        border: "border-amber-200",
+        bg: "bg-amber-50 dark:bg-amber-950",
+        border: "border-amber-200 dark:border-amber-800",
         text: "text-amber-600",
         scoreText: "text-amber-600",
-        progressBg: "bg-amber-200",
+        progressBg: "bg-amber-200 dark:bg-amber-800",
         progressFill: "bg-amber-500",
       }
     case "poor":
     case "critical":
       return {
-        bg: "bg-rose-50",
-        border: "border-rose-200",
+        bg: "bg-rose-50 dark:bg-rose-950",
+        border: "border-rose-200 dark:border-rose-800",
         text: "text-rose-600",
         scoreText: "text-rose-600",
-        progressBg: "bg-rose-200",
+        progressBg: "bg-rose-200 dark:bg-rose-800",
         progressFill: "bg-rose-500",
       }
     default:
       return {
-        bg: "bg-slate-50",
-        border: "border-slate-200",
-        text: "text-slate-600",
-        scoreText: "text-slate-600",
-        progressBg: "bg-slate-200",
-        progressFill: "bg-slate-500",
+        bg: "bg-muted",
+        border: "border-border",
+        text: "text-muted-foreground",
+        scoreText: "text-muted-foreground",
+        progressBg: "bg-muted",
+        progressFill: "bg-muted-foreground",
       }
   }
 }
@@ -477,40 +477,40 @@ function getChurnColorScheme(level: string): ColorScheme {
   switch (level) {
     case "low":
       return {
-        bg: "bg-emerald-50",
-        border: "border-emerald-200",
+        bg: "bg-emerald-50 dark:bg-emerald-950",
+        border: "border-emerald-200 dark:border-emerald-800",
         text: "text-emerald-600",
         scoreText: "text-emerald-600",
-        progressBg: "bg-emerald-200",
+        progressBg: "bg-emerald-200 dark:bg-emerald-800",
         progressFill: "bg-emerald-500",
       }
     case "medium":
       return {
-        bg: "bg-amber-50",
-        border: "border-amber-200",
+        bg: "bg-amber-50 dark:bg-amber-950",
+        border: "border-amber-200 dark:border-amber-800",
         text: "text-amber-600",
         scoreText: "text-amber-600",
-        progressBg: "bg-amber-200",
+        progressBg: "bg-amber-200 dark:bg-amber-800",
         progressFill: "bg-amber-500",
       }
     case "high":
     case "critical":
       return {
-        bg: "bg-rose-50",
-        border: "border-rose-200",
+        bg: "bg-rose-50 dark:bg-rose-950",
+        border: "border-rose-200 dark:border-rose-800",
         text: "text-rose-600",
         scoreText: "text-rose-600",
-        progressBg: "bg-rose-200",
+        progressBg: "bg-rose-200 dark:bg-rose-800",
         progressFill: "bg-rose-500",
       }
     default:
       return {
-        bg: "bg-slate-50",
-        border: "border-slate-200",
-        text: "text-slate-600",
-        scoreText: "text-slate-600",
-        progressBg: "bg-slate-200",
-        progressFill: "bg-slate-500",
+        bg: "bg-muted",
+        border: "border-border",
+        text: "text-muted-foreground",
+        scoreText: "text-muted-foreground",
+        progressBg: "bg-muted",
+        progressFill: "bg-muted-foreground",
       }
   }
 }
@@ -526,13 +526,13 @@ interface CompactInsightsProps {
 
 export function CompactInsights({ insights, className }: CompactInsightsProps) {
   return (
-    <div className={cn("bg-white rounded-lg border border-slate-200 p-4", className)}>
+    <div className={cn("bg-card rounded-lg border border-border p-4", className)}>
       <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium text-slate-900 flex items-center gap-2">
+        <h4 className="font-medium text-foreground flex items-center gap-2">
           <Brain className="w-4 h-4 text-violet-500" />
           AI Insights
         </h4>
-        <span className="text-xs text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
+        <span className="text-xs text-violet-600 bg-violet-100 dark:bg-violet-900 px-2 py-0.5 rounded-full">
           Beta
         </span>
       </div>
@@ -540,10 +540,10 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
       <div className="space-y-3">
         {/* Payment score */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-600">Payment</span>
+          <span className="text-sm text-foreground">Payment</span>
           <div className="flex items-center gap-2">
             <div
-              className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden"
+              className="w-16 h-2 bg-muted rounded-full overflow-hidden"
               role="progressbar"
               aria-valuenow={insights.payment_reliability_score}
               aria-valuemin={0}
@@ -560,7 +560,7 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
                 aria-hidden="true"
               />
             </div>
-            <span className="text-sm font-medium text-slate-900 w-8">
+            <span className="text-sm font-medium text-foreground w-8">
               {insights.payment_reliability_score}
             </span>
           </div>
@@ -568,14 +568,14 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
 
         {/* Churn risk */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-600">Churn Risk</span>
+          <span className="text-sm text-foreground">Churn Risk</span>
           <span
             className={cn(
               "text-sm font-medium capitalize px-2 py-0.5 rounded",
-              insights.churn_risk_level === "low" && "bg-emerald-100 text-emerald-700",
-              insights.churn_risk_level === "medium" && "bg-amber-100 text-amber-700",
+              insights.churn_risk_level === "low" && "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300",
+              insights.churn_risk_level === "medium" && "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300",
               (insights.churn_risk_level === "high" || insights.churn_risk_level === "critical") &&
-                "bg-rose-100 text-rose-700"
+                "bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300"
             )}
           >
             {insights.churn_risk_level}
@@ -584,9 +584,9 @@ export function CompactInsights({ insights, className }: CompactInsightsProps) {
 
         {/* Active alerts count */}
         {insights.active_alerts.length > 0 && (
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-            <span className="text-sm text-slate-600">Active Alerts</span>
-            <span className="text-sm font-medium text-rose-600 bg-rose-100 px-2 py-0.5 rounded">
+          <div className="flex items-center justify-between pt-2 border-t border-border">
+            <span className="text-sm text-foreground">Active Alerts</span>
+            <span className="text-sm font-medium text-rose-600 bg-rose-100 dark:bg-rose-900 px-2 py-0.5 rounded">
               {insights.active_alerts.length}
             </span>
           </div>

@@ -57,13 +57,13 @@ export default function MemberProfilePage() {
               <div className="flex items-center gap-2 mt-2">
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                   member.status === "active"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-amber-100 text-amber-700"
+                    ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300"
+                    : "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300"
                 }`}>
                   {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
                 </span>
                 {member.preferred_slot && (
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
                     {member.preferred_slot}
                   </span>
                 )}

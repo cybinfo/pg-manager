@@ -241,7 +241,7 @@ export default function StaffDetailPage() {
             name={staff.name}
             src={staff.person?.photo_url}
             size="lg"
-            className={`h-14 w-14 text-2xl ${staff.is_active ? "" : "bg-gray-100 text-gray-500"}`}
+            className={`h-14 w-14 text-2xl ${staff.is_active ? "" : "bg-muted text-muted-foreground"}`}
             clickable
           />
         }

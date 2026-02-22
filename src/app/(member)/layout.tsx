@@ -76,9 +76,9 @@ export default function MemberLayout({
         )}
       </div>
       {/* Hours Balance */}
-      <div className="mt-3 p-3 bg-purple-50 rounded-lg">
+      <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
         <p className="text-xs text-purple-600 font-medium">Hours Balance</p>
-        <p className="text-2xl font-bold text-purple-700">
+        <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
           {member?.hours_balance?.toFixed(1) || "0.0"}h
         </p>
       </div>

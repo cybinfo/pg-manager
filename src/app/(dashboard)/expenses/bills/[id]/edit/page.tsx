@@ -403,7 +403,7 @@ export default function EditBillPaymentPage({
                         type="checkbox"
                         checked={showGstFields}
                         onChange={(e) => setShowGstFields(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300"
+                        className="h-4 w-4 rounded border-border"
                       />
                       GST Breakdown
                     </label>

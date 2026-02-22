@@ -189,13 +189,13 @@ export default function TenantDocumentsPage() {
       </div>
 
       {/* Info Card */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-blue-800">Document Verification</p>
-              <p className="text-blue-700">
+              <p className="font-medium text-blue-800 dark:text-blue-200">Document Verification</p>
+              <p className="text-blue-700 dark:text-blue-300">
                 Documents you upload will be reviewed by the property administrator.
                 Once approved, you can reference them in any issue reports to avoid re-uploading.
                 <span className="font-medium"> Approved documents cannot be deleted.</span>
@@ -278,7 +278,7 @@ export default function TenantDocumentsPage() {
                         {doc.reviewed_at && ` • Reviewed on ${formatDate(doc.reviewed_at)}`}
                       </p>
                       {doc.review_notes && doc.status === "rejected" && (
-                        <p className="text-sm text-red-600 mt-2 bg-red-50 p-2 rounded">
+                        <p className="text-sm text-red-600 mt-2 bg-red-50 dark:bg-red-950 p-2 rounded">
                           Rejection reason: {doc.review_notes}
                         </p>
                       )}
@@ -296,7 +296,7 @@ export default function TenantDocumentsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                           onClick={() => confirmDelete(doc)}
                         >
                           <Trash2 className="h-4 w-4" />

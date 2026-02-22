@@ -30,7 +30,7 @@ const products = [
     icon: Building2,
     color: "from-teal-500 to-emerald-500",
     bgColor: "bg-teal-50",
-    textColor: "text-teal-600",
+    textColor: "text-teal-600 dark:text-teal-400",
     status: "live",
     href: "/products/pg-manager",
     features: ["Tenant Management", "Smart Billing", "Staff & Roles (RBAC)", "Your Own Website"]
@@ -42,7 +42,7 @@ const products = [
     icon: Store,
     color: "from-violet-500 to-purple-500",
     bgColor: "bg-violet-50",
-    textColor: "text-violet-600",
+    textColor: "text-violet-600 dark:text-violet-400",
     status: "coming",
     href: "#",
     features: ["Inventory Tracking", "GST Billing", "Customer Ledger", "Staff Management"]
@@ -54,7 +54,7 @@ const products = [
     icon: Home,
     color: "from-amber-500 to-orange-500",
     bgColor: "bg-amber-50",
-    textColor: "text-amber-600",
+    textColor: "text-amber-600 dark:text-amber-400",
     status: "coming",
     href: "#",
     features: ["Rent Collection", "Tenant Screening", "Maintenance Tracking", "Agreement Generator"]
@@ -66,7 +66,7 @@ const products = [
     icon: Building,
     color: "from-sky-500 to-blue-500",
     bgColor: "bg-sky-50",
-    textColor: "text-sky-600",
+    textColor: "text-sky-600 dark:text-sky-400",
     status: "coming",
     href: "#",
     features: ["Maintenance Billing", "Complaint Portal", "Visitor Logs", "Society Accounting"]
@@ -213,17 +213,17 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-white to-emerald-50" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-100/40 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-100/40 via-transparent to-transparent dark:from-teal-900/40" />
 
         {/* Animated shapes */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200/30 rounded-full blur-3xl animate-pulse-soft" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-200/30 rounded-full blur-3xl animate-pulse-soft animation-delay-500" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200/30 dark:bg-teal-800/30 rounded-full blur-3xl animate-pulse-soft" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-200/30 dark:bg-emerald-800/30 rounded-full blur-3xl animate-pulse-soft animation-delay-500" />
 
         <div className="relative container mx-auto px-4 py-20 md:py-32">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-100 to-emerald-100 text-teal-700 text-sm font-medium mb-8 animate-fade-in-down shadow-sm">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-100 to-emerald-100 dark:from-teal-900 dark:to-emerald-900 text-teal-700 dark:text-teal-300 text-sm font-medium mb-8 animate-fade-in-down shadow-sm">
               <Sparkles className="h-4 w-4" />
               Simple Software for Indian Small Businesses
             </div>
@@ -268,8 +268,8 @@ export default function HomePage() {
                 { icon: Smartphone, text: "Works on Mobile" },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-teal-100 to-emerald-100 flex items-center justify-center">
-                    <item.icon className="h-3.5 w-3.5 text-teal-600" />
+                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900 dark:to-emerald-900 flex items-center justify-center">
+                    <item.icon className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
                   </div>
                   {item.text}
                 </div>
@@ -298,7 +298,7 @@ export default function HomePage() {
       <section id="products" className="py-20 md:py-28 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900 dark:to-purple-900 text-violet-700 dark:text-violet-300 text-sm font-medium mb-4">
               <Rocket className="h-4 w-4" />
               Our Products
             </div>
@@ -320,7 +320,7 @@ export default function HomePage() {
               >
                 {product.status === "live" && (
                   <div className="absolute top-4 right-4">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-teal-100 text-teal-700 text-xs font-semibold">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-xs font-semibold">
                       <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
                       Live Now
                     </span>
@@ -328,7 +328,7 @@ export default function HomePage() {
                 )}
                 {product.status === "coming" && (
                   <div className="absolute top-4 right-4">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-semibold">
                       <Clock className="h-3 w-3" />
                       Coming Soon
                     </span>
@@ -379,7 +379,7 @@ export default function HomePage() {
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 text-amber-700 dark:text-amber-300 text-sm font-medium mb-4">
               <Star className="h-4 w-4" />
               Why Choose Us
             </div>
@@ -428,7 +428,7 @@ export default function HomePage() {
       <section className="py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-100 to-rose-100 text-pink-700 text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900 dark:to-rose-900 text-pink-700 dark:text-pink-300 text-sm font-medium mb-4">
               <Users className="h-4 w-4" />
               Success Stories
             </div>

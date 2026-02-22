@@ -266,7 +266,7 @@ export default function MiscCategoriesPage() {
               }}
             />
           ) : (
-            <div className="bg-white rounded-lg border divide-y">
+            <div className="bg-card rounded-lg border divide-y">
               {categories.map((category) => (
                 <div
                   key={category.id}
@@ -378,7 +378,7 @@ export default function MiscCategoriesPage() {
                               : type === "out"
                               ? "border-red-500 bg-red-50"
                               : "border-blue-500 bg-blue-50"
-                            : "border-gray-200 hover:border-gray-300"
+                            : "border-border hover:border-border"
                         }`}
                       >
                         <div className="flex items-center justify-center gap-2">

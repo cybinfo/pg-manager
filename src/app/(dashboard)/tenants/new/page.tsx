@@ -768,7 +768,7 @@ export default function NewTenantPage() {
                 checked={formData.agreement_signed}
                 onChange={handleChange}
                 disabled={loading}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-border"
               />
               <Label htmlFor="agreement_signed" className="font-normal cursor-pointer">
                 Agreement signed

@@ -228,17 +228,17 @@ export default function ServiceProviderDetailPage({
 
           {/* Stats Cards */}
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-white border rounded-lg p-4">
+            <div className="bg-card border rounded-lg p-4">
               <div className="text-sm text-muted-foreground">Total Paid</div>
               <div className="text-xl font-bold text-green-600">
                 {formatCurrency(stats.totalPaid)}
               </div>
             </div>
-            <div className="bg-white border rounded-lg p-4">
+            <div className="bg-card border rounded-lg p-4">
               <div className="text-sm text-muted-foreground">TDS Deducted</div>
               <div className="text-xl font-bold">{formatCurrency(stats.totalTds)}</div>
             </div>
-            <div className="bg-white border rounded-lg p-4">
+            <div className="bg-card border rounded-lg p-4">
               <div className="text-sm text-muted-foreground">Total Jobs</div>
               <div className="text-xl font-bold">{provider.total_jobs}</div>
             </div>

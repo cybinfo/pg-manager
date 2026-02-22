@@ -51,7 +51,7 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "p-2 rounded-lg",
-                    availableBeds > 0 ? "bg-green-100" : "bg-rose-100"
+                    availableBeds > 0 ? "bg-green-100 dark:bg-green-900" : "bg-rose-100 dark:bg-rose-900"
                   )}>
                     <Building2 className={cn(
                       "h-5 w-5",

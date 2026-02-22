@@ -65,8 +65,8 @@ export function VisitorTypeFields({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="h-5 w-5 text-blue-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <CardTitle>Visiting Tenant</CardTitle>
@@ -124,8 +124,8 @@ export function VisitorTypeFields({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Wrench className="h-5 w-5 text-orange-600" />
+            <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+              <Wrench className="h-5 w-5 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
               <CardTitle>Service Details</CardTitle>
@@ -138,8 +138,8 @@ export function VisitorTypeFields({
         <CardContent className="space-y-4">
           {/* Show service info from person if available */}
           {selectedPerson && (selectedPerson.occupation || selectedPerson.company_name) && (
-            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <div className="text-sm text-orange-700">
+            <div className="p-3 bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg">
+              <div className="text-sm text-orange-700 dark:text-orange-300">
                 <strong>From People:</strong>{" "}
                 {selectedPerson.occupation && <span>{selectedPerson.occupation}</span>}
                 {selectedPerson.company_name && <span> at {selectedPerson.company_name}</span>}
@@ -203,8 +203,8 @@ export function VisitorTypeFields({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Search className="h-5 w-5 text-purple-600" />
+            <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+              <Search className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
               <CardTitle>Enquiry Details</CardTitle>
@@ -258,8 +258,8 @@ export function VisitorTypeFields({
                     onClick={() => onRoomsInterestedChange(room.id)}
                     className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
                       formData.rooms_interested.includes(room.id)
-                        ? "bg-purple-100 text-purple-700 border-purple-300"
-                        : "bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300"
+                        ? "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700"
+                        : "bg-muted text-foreground border-border hover:border-border"
                     }`}
                   >
                     Room {room.room_number}
@@ -278,8 +278,8 @@ export function VisitorTypeFields({
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-100 rounded-lg">
-              <User className="h-5 w-5 text-slate-600" />
+            <div className="p-2 bg-muted rounded-lg">
+              <User className="h-5 w-5 text-foreground" />
             </div>
             <div>
               <CardTitle>Visit Details</CardTitle>

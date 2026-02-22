@@ -154,7 +154,7 @@ export function AdvancedFilterBuilder({
         </div>
 
         {/* Add Filter */}
-        <div className="border-t p-3 bg-slate-50/50">
+        <div className="border-t p-3 bg-muted/50">
           <AddFilterDropdown
             columns={columns}
             onSelect={addFilter}
@@ -221,7 +221,7 @@ function FilterRow({
   } = useFilterRow({ filter, column, onUpdate, onRemove })
 
   return (
-    <div className="rounded-lg border bg-white p-3 space-y-2">
+    <div className="rounded-lg border bg-card p-3 space-y-2">
       {/* Column Selector + Remove */}
       <div className="flex items-center gap-2">
         <ColumnDropdown
@@ -375,7 +375,7 @@ function OperatorDropdown({ operators, selected, onSelect }: OperatorDropdownPro
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="flex items-center gap-1 px-2 py-1.5 text-xs bg-slate-50 hover:bg-slate-100 border rounded min-w-[100px] justify-between transition-colors">
+        <button className="flex items-center gap-1 px-2 py-1.5 text-xs bg-muted hover:bg-muted/80 border rounded min-w-[100px] justify-between transition-colors">
           <span className="truncate">{FILTER_OPERATOR_LABELS[selected]}</span>
           <ChevronDown className="h-3 w-3 shrink-0" />
         </button>
@@ -422,7 +422,7 @@ function FilterValueInput({
       <select
         value={value === null || value === undefined ? "" : String(value)}
         onChange={(e) => onChange(e.target.value || null)}
-        className="h-8 px-2 text-sm border rounded bg-white flex-1 min-w-[120px]"
+        className="h-8 px-2 text-sm border rounded bg-card flex-1 min-w-[120px]"
       >
         <option value="">{placeholder}</option>
         {options.map(opt => (

@@ -59,7 +59,7 @@ export function BedView({ room, tenants }: BedViewProps) {
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "p-2 rounded-full",
-                        isOccupied ? "bg-rose-100" : "bg-green-100"
+                        isOccupied ? "bg-rose-100 dark:bg-rose-900" : "bg-green-100 dark:bg-green-900"
                       )}>
                         {isOccupied ? (
                           <User className="h-5 w-5 text-rose-600" />

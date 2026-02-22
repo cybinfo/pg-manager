@@ -176,7 +176,7 @@ export default function RefundDetailPage() {
           backHref="/refunds"
           backLabel="All Refunds"
           avatar={
-            <div className="p-3 bg-green-100 rounded-lg">
+            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
               <Wallet className="h-8 w-8 text-green-600" />
             </div>
           }

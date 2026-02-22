@@ -137,7 +137,7 @@ export function StatusDot({ color, size = "sm", pulse = false, className }: Stat
     error: "bg-rose-500",
     info: "bg-sky-500",
     primary: "bg-teal-500",
-    muted: "bg-slate-400",
+    muted: "bg-muted-foreground",
   }
 
   const sizeClasses = {

@@ -94,7 +94,7 @@ const columns: Column<StaffMember>[] = [
             name={displayName}
             src={staff.person?.photo_url}
             size="md"
-            className={staff.is_active ? "" : "bg-gray-100 text-gray-500"}
+            className={staff.is_active ? "" : "bg-muted text-muted-foreground"}
           />
           <div className={!staff.is_active ? "opacity-60" : ""}>
             <div className="font-medium flex items-center gap-2">

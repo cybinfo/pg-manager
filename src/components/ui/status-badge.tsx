@@ -21,13 +21,13 @@ const statusBadgeVariants = cva(
   {
     variants: {
       variant: {
-        success: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-        warning: "bg-amber-50 text-amber-700 border border-amber-200",
-        error: "bg-rose-50 text-rose-700 border border-rose-200",
-        info: "bg-sky-50 text-sky-700 border border-sky-200",
-        muted: "bg-slate-100 text-slate-600 border border-slate-200",
-        primary: "bg-teal-50 text-teal-700 border border-teal-200",
-        purple: "bg-violet-50 text-violet-700 border border-violet-200",
+        success: "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
+        warning: "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800",
+        error: "bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800",
+        info: "bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800",
+        muted: "bg-muted text-muted-foreground border border-border",
+        primary: "bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800",
+        purple: "bg-violet-50 dark:bg-violet-950 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800",
       },
       size: {
         sm: "px-2 py-0.5 text-[10px]",

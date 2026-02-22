@@ -72,9 +72,9 @@ const MATCH_TYPE_ICONS: Record<string, React.ReactNode> = {
 }
 
 const MATCH_TYPE_COLORS: Record<string, string> = {
-  phone: "bg-blue-100 text-blue-700 border-blue-300",
-  email: "bg-purple-100 text-purple-700 border-purple-300",
-  aadhaar: "bg-orange-100 text-orange-700 border-orange-300",
+  phone: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700",
+  email: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700",
+  aadhaar: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-700",
 }
 
 export default function DuplicatesPage() {
@@ -225,7 +225,7 @@ export default function DuplicatesPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg">
+                  <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg">
                     <AlertTriangle className="h-5 w-5 text-amber-600" />
                   </div>
                   <div>
@@ -238,7 +238,7 @@ export default function DuplicatesPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
                     <Phone className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
@@ -253,7 +253,7 @@ export default function DuplicatesPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
                     <Mail className="h-5 w-5 text-purple-600" />
                   </div>
                   <div>
@@ -268,7 +268,7 @@ export default function DuplicatesPage() {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
+                  <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
                     <CreditCard className="h-5 w-5 text-orange-600" />
                   </div>
                   <div>
@@ -305,13 +305,13 @@ export default function DuplicatesPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${MATCH_TYPE_COLORS[group.match_type]?.split(" ")[0] || "bg-slate-100"}`}>
+                        <div className={`p-2 rounded-lg ${MATCH_TYPE_COLORS[group.match_type]?.split(" ")[0] || "bg-muted"}`}>
                           {MATCH_TYPE_ICONS[group.match_type]}
                         </div>
                         <div>
                           <CardTitle className="text-base flex items-center gap-2">
                             {MATCH_TYPE_LABELS[group.match_type] || group.match_type}
-                            <span className={`px-2 py-0.5 rounded-full text-xs ${MATCH_TYPE_COLORS[group.match_type] || "bg-slate-100 text-slate-700"}`}>
+                            <span className={`px-2 py-0.5 rounded-full text-xs ${MATCH_TYPE_COLORS[group.match_type] || "bg-muted text-foreground"}`}>
                               {group.duplicate_count} people
                             </span>
                           </CardTitle>
@@ -355,7 +355,7 @@ export default function DuplicatesPage() {
                                         <Ban className="h-4 w-4 text-red-600" />
                                       )}
                                       {index === 0 && (
-                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
+                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full text-xs">
                                           Recommended Primary
                                         </span>
                                       )}

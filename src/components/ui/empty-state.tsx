@@ -60,7 +60,7 @@ export function EmptyState({
     },
     minimal: {
       icon: FolderOpen,
-      iconBg: "bg-slate-50",
+      iconBg: "bg-muted",
       iconColor: "text-slate-300",
     },
   }
@@ -85,7 +85,7 @@ export function EmptyState({
         <Icon className={cn("h-10 w-10", config.iconColor)} />
       </div>
 
-      <h3 className="text-lg font-semibold text-slate-900 mb-1">
+      <h3 className="text-lg font-semibold text-foreground mb-1">
         {title}
       </h3>
 

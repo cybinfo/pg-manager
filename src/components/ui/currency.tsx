@@ -80,7 +80,7 @@ export function AmountDisplay({
   className,
 }: AmountDisplayProps) {
   const variants = {
-    default: "text-slate-900",
+    default: "text-foreground",
     success: "text-emerald-600",
     warning: "text-amber-600",
     error: "text-rose-600",

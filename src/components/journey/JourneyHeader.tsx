@@ -65,7 +65,7 @@ export function JourneyHeader({
           variant="ghost"
           size="sm"
           onClick={() => router.back()}
-          className="text-slate-600 hover:text-slate-900 -ml-2"
+          className="text-muted-foreground hover:text-foreground -ml-2"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Back
@@ -147,13 +147,13 @@ export function JourneyHeader({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-slate-900 truncate">
+            <h1 className="text-2xl font-bold text-foreground truncate">
               {journey.tenant_name}&apos;s Journey
             </h1>
             <StatusBadge status={statusInfo.variant as any} label={statusInfo.label} />
           </div>
 
-          <div className="flex items-center gap-4 mt-1 text-sm text-slate-600 flex-wrap">
+          <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground flex-wrap">
             <span>
               Joined{" "}
               {new Date(journey.check_in_date).toLocaleDateString("en-IN", {
@@ -162,11 +162,11 @@ export function JourneyHeader({
                 year: "numeric",
               })}
             </span>
-            <span className="text-slate-300">•</span>
+            <span className="text-muted-foreground/50">•</span>
             <span className="font-medium text-teal-600">{stayDuration}</span>
             {journey.property && (
               <>
-                <span className="text-slate-300">•</span>
+                <span className="text-muted-foreground/50">•</span>
                 <Link
                   href={`/properties/${journey.property.id}`}
                   className="hover:text-teal-600 hover:underline"
@@ -177,7 +177,7 @@ export function JourneyHeader({
             )}
             {journey.room && (
               <>
-                <span className="text-slate-300">•</span>
+                <span className="text-muted-foreground/50">•</span>
                 <Link
                   href={`/rooms/${journey.room.id}`}
                   className="hover:text-teal-600 hover:underline"
@@ -190,7 +190,7 @@ export function JourneyHeader({
 
           {/* Pre-tenant visit info */}
           {journey.pre_tenant_visits && journey.pre_tenant_visits.length > 0 && (
-            <div className="mt-2 text-sm text-violet-600 bg-violet-50 px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+            <div className="mt-2 text-sm text-violet-600 bg-violet-50 dark:bg-violet-950 px-3 py-1.5 rounded-full inline-flex items-center gap-1">
               <span className="w-2 h-2 bg-violet-500 rounded-full" />
               Visited as prospective tenant{" "}
               {journey.pre_tenant_visits[0].days_before_joining} days before joining
@@ -254,8 +254,8 @@ export function CompactHeader({ journey, className }: CompactHeaderProps) {
         size="md"
       />
       <div className="flex-1 min-w-0">
-        <h2 className="font-semibold text-slate-900 truncate">{journey.tenant_name}</h2>
-        <p className="text-xs text-slate-500 truncate">
+        <h2 className="font-semibold text-foreground truncate">{journey.tenant_name}</h2>
+        <p className="text-xs text-muted-foreground truncate">
           {journey.property?.name} • Room {journey.room?.room_number}
         </p>
       </div>

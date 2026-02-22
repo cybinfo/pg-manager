@@ -197,28 +197,28 @@ export default function MemberHomePage() {
             icon: BookOpen,
             label: "Library",
             value: member.library?.name || "-",
-            bgColor: "bg-purple-50",
+            bgColor: "bg-purple-50 dark:bg-purple-950",
             iconColor: "text-purple-600",
           },
           {
             icon: Clock,
             label: "This Month",
             value: `${extra.totalHoursThisMonth.toFixed(1)}h`,
-            bgColor: "bg-emerald-50",
+            bgColor: "bg-emerald-50 dark:bg-emerald-950",
             iconColor: "text-emerald-600",
           },
           {
             icon: Calendar,
             label: "Visits",
             value: extra.visitsThisMonth,
-            bgColor: "bg-sky-50",
+            bgColor: "bg-sky-50 dark:bg-sky-950",
             iconColor: "text-sky-600",
           },
           {
             icon: CreditCard,
             label: "Total Paid",
             value: formatCurrency(extra.totalPaid),
-            bgColor: "bg-violet-50",
+            bgColor: "bg-violet-50 dark:bg-violet-950",
             iconColor: "text-violet-600",
           },
         ]}
@@ -270,7 +270,7 @@ export default function MemberHomePage() {
                 </div>
 
                 {daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0 && (
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
                     <p className="text-sm text-amber-800">
                       <strong>Reminder:</strong> Your subscription expires in {daysUntilExpiry} days.
                       Please renew to continue uninterrupted access.
@@ -297,7 +297,7 @@ export default function MemberHomePage() {
               icon={QrCode}
               title="My QR Code"
               description="Quick check-in"
-              bgColor="bg-purple-50"
+              bgColor="bg-purple-50 dark:bg-purple-950"
               iconColor="text-purple-600"
             />
             <QuickActionLink
@@ -305,7 +305,7 @@ export default function MemberHomePage() {
               icon={Clock}
               title="View Attendance"
               description="Check-in history"
-              bgColor="bg-emerald-50"
+              bgColor="bg-emerald-50 dark:bg-emerald-950"
               iconColor="text-emerald-600"
             />
             <QuickActionLink
@@ -313,7 +313,7 @@ export default function MemberHomePage() {
               icon={CreditCard}
               title="Payment History"
               description="View all payments"
-              bgColor="bg-sky-50"
+              bgColor="bg-sky-50 dark:bg-sky-950"
               iconColor="text-sky-600"
             />
             <QuickActionLink
@@ -321,7 +321,7 @@ export default function MemberHomePage() {
               icon={User}
               title="My Profile"
               description="View details"
-              bgColor="bg-violet-50"
+              bgColor="bg-violet-50 dark:bg-violet-950"
               iconColor="text-violet-600"
             />
           </CardContent>
@@ -353,7 +353,7 @@ export default function MemberHomePage() {
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${att.check_out_time ? "bg-purple-50" : "bg-emerald-50"}`}>
+                    <div className={`p-2 rounded-full ${att.check_out_time ? "bg-purple-50 dark:bg-purple-950" : "bg-emerald-50 dark:bg-emerald-950"}`}>
                       {att.check_out_time ? (
                         <CheckCircle className="h-4 w-4 text-purple-600" />
                       ) : (
@@ -383,7 +383,7 @@ export default function MemberHomePage() {
                     {att.hours_spent ? (
                       <p className="font-semibold text-purple-600">{att.hours_spent.toFixed(1)}h</p>
                     ) : (
-                      <span className="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+                      <span className="text-xs px-2 py-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-full">
                         Active
                       </span>
                     )}

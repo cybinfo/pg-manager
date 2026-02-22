@@ -117,7 +117,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
           <p className="text-sm text-muted-foreground">Move {tenant.name} to a different room</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-3 bg-slate-50 rounded-lg text-sm">
+          <div className="p-3 bg-muted rounded-lg text-sm">
             <p className="text-muted-foreground">Current Room</p>
             <p className="font-medium">{tenant.property?.name} - Room {tenant.room?.room_number}</p>
             <p className="text-muted-foreground">Rent: <Currency amount={tenant.monthly_rent} /></p>

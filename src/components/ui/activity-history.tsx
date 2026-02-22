@@ -73,7 +73,7 @@ function ActivityTimeline({
             <div
               className={cn(
                 "relative z-10 flex h-8 w-8 items-center justify-center rounded-full",
-                actionColors[event.action] || "text-slate-600 bg-slate-50"
+                actionColors[event.action] || "text-foreground bg-muted"
               )}
             >
               <Icon className="h-4 w-4" />

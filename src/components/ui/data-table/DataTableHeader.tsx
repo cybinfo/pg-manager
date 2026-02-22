@@ -30,7 +30,7 @@ export function DataTableHeader<T>({
 }: DataTableHeaderProps<T>) {
   return (
     <div
-      className="hidden md:grid gap-4 border-b bg-slate-50/80 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider"
+      className="hidden md:grid gap-4 border-b bg-muted/80 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider"
       style={{ gridTemplateColumns: gridTemplate }}
     >
       {selectable && (

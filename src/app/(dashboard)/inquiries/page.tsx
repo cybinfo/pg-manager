@@ -49,7 +49,7 @@ const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-100 text-blue-700",
   contacted: "bg-yellow-100 text-yellow-700",
   converted: "bg-green-100 text-green-700",
-  closed: "bg-slate-100 text-slate-700",
+  closed: "bg-muted text-foreground",
 }
 
 const SOURCE_COLORS: Record<string, string> = {

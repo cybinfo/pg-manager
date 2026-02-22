@@ -350,8 +350,8 @@ export default function EditExpensePage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-100 rounded-lg">
-                <FileText className="h-5 w-5 text-slate-600" />
+              <div className="p-2 bg-muted rounded-lg">
+                <FileText className="h-5 w-5 text-foreground" />
               </div>
               <div>
                 <CardTitle>Additional Notes</CardTitle>

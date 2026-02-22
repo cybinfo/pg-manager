@@ -22,27 +22,27 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4">
       <div className="max-w-md w-full text-center">
-        <div className="mx-auto w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mb-6">
-          <AlertCircle className="w-8 h-8 text-rose-600" />
+        <div className="mx-auto w-16 h-16 bg-rose-100 dark:bg-rose-900 rounded-full flex items-center justify-center mb-6">
+          <AlertCircle className="w-8 h-8 text-rose-600 dark:text-rose-400" />
         </div>
 
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
           Something went wrong
         </h1>
 
-        <p className="text-slate-600 mb-6">
+        <p className="text-muted-foreground mb-6">
           We encountered an unexpected error. Please try again or contact support if the problem persists.
         </p>
 
         {process.env.NODE_ENV === "development" && (
-          <div className="mb-6 p-4 bg-slate-100 rounded-lg text-left">
-            <p className="text-sm font-mono text-slate-700 break-all">
+          <div className="mb-6 p-4 bg-muted rounded-lg text-left">
+            <p className="text-sm font-mono text-foreground break-all">
               {error.message}
             </p>
             {error.digest && (
-              <p className="text-xs text-slate-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Error ID: {error.digest}
               </p>
             )}

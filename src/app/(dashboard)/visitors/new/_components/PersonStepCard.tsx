@@ -8,10 +8,10 @@ import { PersonSearchResult } from "@/types/people.types"
 import { VisitorContactSearchResult, VisitorType } from "@/types/visitors.types"
 
 const VISITOR_TYPE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-blue-100 text-blue-700 border-blue-300",
-  enquiry: "bg-purple-100 text-purple-700 border-purple-300",
-  service_provider: "bg-orange-100 text-orange-700 border-orange-300",
-  general: "bg-slate-100 text-slate-700 border-slate-300",
+  tenant_visitor: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700",
+  enquiry: "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700",
+  service_provider: "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700",
+  general: "bg-muted text-foreground border-border",
 }
 
 interface PersonStepCardProps {
@@ -67,7 +67,7 @@ export function PersonStepCard({
 
         {/* Legacy contact display (if selected via old method) */}
         {selectedContact && !selectedPerson && (
-          <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-green-200">
+          <div className="flex items-center justify-between p-4 bg-card rounded-lg border-2 border-green-200 dark:border-green-800">
             <div className="flex items-center gap-3">
               <div className={`h-10 w-10 rounded-full flex items-center justify-center ${VISITOR_TYPE_COLORS[selectedContact.visitor_type]}`}>
                 <span />

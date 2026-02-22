@@ -129,7 +129,7 @@ export default function EditMeterReadingPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${meterType === "electricity" ? "bg-yellow-100" : meterType === "water" ? "bg-blue-100" : "bg-orange-100"}`}>
+              <div className={`p-2 rounded-lg ${meterType === "electricity" ? "bg-yellow-100 dark:bg-yellow-900" : meterType === "water" ? "bg-blue-100 dark:bg-blue-900" : "bg-orange-100 dark:bg-orange-900"}`}>
                 {meterType === "electricity" && <Zap className="h-5 w-5 text-yellow-600" />}
                 {meterType === "water" && <Droplets className="h-5 w-5 text-blue-600" />}
                 {meterType === "gas" && <Gauge className="h-5 w-5 text-orange-600" />}
@@ -218,9 +218,9 @@ export default function EditMeterReadingPage() {
 
             {/* Calculated Units */}
             {calculatedUnits !== null && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
+                  <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
                     <Calculator className="h-5 w-5 text-green-600" />
                   </div>
                   <div>

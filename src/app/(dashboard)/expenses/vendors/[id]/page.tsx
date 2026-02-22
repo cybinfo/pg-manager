@@ -230,23 +230,23 @@ export default function VendorDetailPage({
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white border rounded-lg p-4">
+            <div className="bg-card border rounded-lg p-4">
               <div className="text-sm text-muted-foreground">Total Paid</div>
               <div className="text-xl font-bold text-green-600">
                 {formatCurrency(stats.totalPaid)}
               </div>
             </div>
-            <div className="bg-white border rounded-lg p-4">
+            <div className="bg-card border rounded-lg p-4">
               <div className="text-sm text-muted-foreground">Total Bills</div>
               <div className="text-xl font-bold">{formatCurrency(stats.totalBills)}</div>
             </div>
-            <div className="bg-white border rounded-lg p-4">
+            <div className="bg-card border rounded-lg p-4">
               <div className="text-sm text-muted-foreground">Pending</div>
               <div className="text-xl font-bold text-orange-600">
                 {formatCurrency(stats.pendingAmount)}
               </div>
             </div>
-            <div className="bg-white border rounded-lg p-4">
+            <div className="bg-card border rounded-lg p-4">
               <div className="text-sm text-muted-foreground">Last Payment</div>
               <div className="text-xl font-bold">
                 {stats.lastPaymentDate ? formatDate(stats.lastPaymentDate) : "—"}

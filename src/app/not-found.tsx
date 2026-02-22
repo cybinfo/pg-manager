@@ -14,19 +14,19 @@ export default function NotFound() {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted px-4">
       <div className="max-w-md w-full text-center">
-        <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-6">
-          <FileQuestion className="w-8 h-8 text-amber-600" />
+        <div className="mx-auto w-16 h-16 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center mb-6">
+          <FileQuestion className="w-8 h-8 text-amber-600 dark:text-amber-400" />
         </div>
 
-        <h1 className="text-6xl font-bold text-slate-900 mb-2">404</h1>
+        <h1 className="text-6xl font-bold text-foreground mb-2">404</h1>
 
-        <h2 className="text-xl font-semibold text-slate-700 mb-2">
+        <h2 className="text-xl font-semibold text-foreground mb-2">
           Page Not Found
         </h2>
 
-        <p className="text-slate-600 mb-8">
+        <p className="text-muted-foreground mb-8">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
 

@@ -239,7 +239,7 @@ export default function ExitClearanceDetailPage() {
         backHref="/exit-clearance"
         backLabel="All Exit Clearances"
         avatar={
-          <div className="p-3 bg-orange-100 rounded-lg">
+          <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
             <DoorOpen className="h-8 w-8 text-orange-600" />
           </div>
         }

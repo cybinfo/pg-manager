@@ -116,19 +116,19 @@ export function InfoCard({
   className,
 }: InfoCardProps) {
   const variantStyles = {
-    default: "bg-white border-slate-200",
-    success: "bg-emerald-50 border-emerald-200",
-    warning: "bg-amber-50 border-amber-200",
-    error: "bg-rose-50 border-rose-200",
-    muted: "bg-slate-50 border-slate-200",
+    default: "bg-card border-border",
+    success: "bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800",
+    warning: "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800",
+    error: "bg-rose-50 dark:bg-rose-950 border-rose-200 dark:border-rose-800",
+    muted: "bg-muted border-border",
   }
 
   const iconColors = {
-    default: "text-slate-600 bg-slate-100",
-    success: "text-emerald-600 bg-emerald-100",
-    warning: "text-amber-600 bg-amber-100",
-    error: "text-rose-600 bg-rose-100",
-    muted: "text-slate-500 bg-slate-100",
+    default: "text-foreground bg-muted",
+    success: "text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900",
+    warning: "text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900",
+    error: "text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-900",
+    muted: "text-muted-foreground bg-muted",
   }
 
   const content = (
@@ -192,22 +192,22 @@ export function DetailSection({
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
 
   return (
-    <div className={cn("bg-white rounded-xl border shadow-sm overflow-hidden animate-fade-in-up", className)}>
+    <div className={cn("bg-card rounded-xl border shadow-sm overflow-hidden animate-fade-in-up", className)}>
       <div
         className={cn(
-          "flex items-center justify-between px-5 py-4 border-b bg-slate-50/50",
-          collapsible && "cursor-pointer hover:bg-slate-50"
+          "flex items-center justify-between px-5 py-4 border-b bg-muted/50",
+          collapsible && "cursor-pointer hover:bg-muted"
         )}
         onClick={collapsible ? () => setIsOpen(!isOpen) : undefined}
       >
         <div className="flex items-center gap-3">
           {Icon && (
-            <div className="p-2 rounded-lg bg-white shadow-sm">
-              <Icon className="h-4 w-4 text-slate-600" />
+            <div className="p-2 rounded-lg bg-card shadow-sm">
+              <Icon className="h-4 w-4 text-foreground" />
             </div>
           )}
           <div>
-            <h3 className="font-semibold text-slate-900">{title}</h3>
+            <h3 className="font-semibold text-foreground">{title}</h3>
             {description && (
               <p className="text-sm text-muted-foreground">{description}</p>
             )}
@@ -291,7 +291,7 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div ref={menuRef} role="menu" className="absolute right-0 top-full mt-1 w-48 bg-white border rounded-lg shadow-lg z-20 py-1 animate-fade-in">
+          <div ref={menuRef} role="menu" className="absolute right-0 top-full mt-1 w-48 bg-card border rounded-lg shadow-lg z-20 py-1 animate-fade-in">
             {items.map((item, index) => {
               const Icon = item.icon
               const content = (
@@ -308,8 +308,8 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
                     href={item.href}
                     role="menuitem"
                     className={cn(
-                      "block px-3 py-2 text-sm hover:bg-slate-50 transition-colors",
-                      item.variant === "danger" && "text-rose-600 hover:bg-rose-50",
+                      "block px-3 py-2 text-sm hover:bg-muted transition-colors",
+                      item.variant === "danger" && "text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950",
                       item.disabled && "opacity-50 cursor-not-allowed"
                     )}
                     onClick={() => setIsOpen(false)}
@@ -329,8 +329,8 @@ export function ActionMenu({ items, className }: ActionMenuProps) {
                   }}
                   disabled={item.disabled}
                   className={cn(
-                    "w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors",
-                    item.variant === "danger" && "text-rose-600 hover:bg-rose-50",
+                    "w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors",
+                    item.variant === "danger" && "text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950",
                     item.disabled && "opacity-50 cursor-not-allowed"
                   )}
                 >

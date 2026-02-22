@@ -101,32 +101,32 @@ interface AnalyticsCardProps {
 function AnalyticsCard({ title, value, subtitle, icon: Icon, color }: AnalyticsCardProps) {
   const colorClasses: Record<string, { bg: string; text: string; icon: string }> = {
     teal: {
-      bg: "bg-teal-50",
+      bg: "bg-teal-50 dark:bg-teal-950",
       text: "text-teal-600",
       icon: "text-teal-500",
     },
     emerald: {
-      bg: "bg-emerald-50",
+      bg: "bg-emerald-50 dark:bg-emerald-950",
       text: "text-emerald-600",
       icon: "text-emerald-500",
     },
     amber: {
-      bg: "bg-amber-50",
+      bg: "bg-amber-50 dark:bg-amber-950",
       text: "text-amber-600",
       icon: "text-amber-500",
     },
     rose: {
-      bg: "bg-rose-50",
+      bg: "bg-rose-50 dark:bg-rose-950",
       text: "text-rose-600",
       icon: "text-rose-500",
     },
     violet: {
-      bg: "bg-violet-50",
+      bg: "bg-violet-50 dark:bg-violet-950",
       text: "text-violet-600",
       icon: "text-violet-500",
     },
     sky: {
-      bg: "bg-sky-50",
+      bg: "bg-sky-50 dark:bg-sky-950",
       text: "text-sky-600",
       icon: "text-sky-500",
     },
@@ -135,14 +135,14 @@ function AnalyticsCard({ title, value, subtitle, icon: Icon, color }: AnalyticsC
   const colors = colorClasses[color] || colorClasses.teal
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-shadow">
+    <div className="bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             {title}
           </p>
           <p className={cn("text-2xl font-bold mt-1", colors.text)}>{value}</p>
-          <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
         </div>
         <div className={cn("p-2 rounded-lg", colors.bg)}>
           <Icon className={cn("w-5 h-5", colors.icon)} />
@@ -221,23 +221,23 @@ export function DetailedAnalytics({ analytics, className }: DetailedAnalyticsPro
       {sections.map((section, index) => (
         <div
           key={index}
-          className="bg-white rounded-xl border border-slate-200 p-4"
+          className="bg-card rounded-xl border border-border p-4"
         >
           <div className="flex items-center gap-2 mb-3">
-            <section.icon className="w-4 h-4 text-slate-500" />
-            <h3 className="font-semibold text-slate-900">{section.title}</h3>
+            <section.icon className="w-4 h-4 text-muted-foreground" />
+            <h3 className="font-semibold text-foreground">{section.title}</h3>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {section.stats.map((stat, statIndex) => (
               <div key={statIndex}>
-                <p className="text-xs text-slate-500">{stat.label}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
                 <p
                   className={cn(
                     "text-lg font-semibold",
                     stat.color === "emerald" && "text-emerald-600",
                     stat.color === "rose" && "text-rose-600",
                     stat.color === "amber" && "text-amber-600",
-                    !stat.color && "text-slate-900"
+                    !stat.color && "text-foreground"
                   )}
                 >
                   {stat.value}

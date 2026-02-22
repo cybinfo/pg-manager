@@ -18,10 +18,10 @@ const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
 }
 
 const VISITOR_TYPE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-blue-100 text-blue-700 border-blue-300",
-  enquiry: "bg-purple-100 text-purple-700 border-purple-300",
-  service_provider: "bg-orange-100 text-orange-700 border-orange-300",
-  general: "bg-slate-100 text-slate-700 border-slate-300",
+  tenant_visitor: "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700",
+  enquiry: "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700",
+  service_provider: "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700",
+  general: "bg-muted text-foreground border-border",
 }
 
 interface VisitorTypeSelectorProps {
@@ -59,12 +59,12 @@ export function VisitorTypeSelector({
               className={`p-4 rounded-lg border-2 transition-all text-left ${
                 selectedType === type
                   ? VISITOR_TYPE_COLORS[type] + " border-current"
-                  : "border-gray-200 hover:border-gray-300"
+                  : "border-border hover:border-border"
               } ${selectedContact && selectedContact.visitor_type !== type ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${
-                  selectedType === type ? "bg-white/50" : "bg-gray-100"
+                  selectedType === type ? "bg-card/50" : "bg-muted"
                 }`}>
                   {VISITOR_TYPE_ICONS[type]}
                 </div>
