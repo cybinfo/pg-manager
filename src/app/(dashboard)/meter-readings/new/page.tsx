@@ -14,6 +14,7 @@ import { showWarning } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface ChargeType {
   id: string
@@ -74,7 +75,7 @@ export default function NewMeterReadingPage() {
     table: "meter_readings",
     initialData: {
       meter_id: "",
-      reading_date: new Date().toISOString().split("T")[0],
+      reading_date: getTodayISO(),
       reading_value: "",
       notes: "",
     },

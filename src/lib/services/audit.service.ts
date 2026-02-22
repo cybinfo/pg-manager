@@ -17,6 +17,7 @@ import {
   ERROR_CODES,
 } from "./types"
 import { logger, extractErrorMeta } from "@/lib/logger"
+import { getNowISO } from "@/lib/date-helpers"
 
 const auditLogger = logger.child("audit")
 
@@ -41,7 +42,7 @@ export async function logAuditEvent(event: AuditEvent): Promise<ServiceResult<st
         metadata: event.metadata || null,
         ip_address: event.ip_address || null,
         user_agent: event.user_agent || null,
-        created_at: new Date().toISOString(),
+        created_at: getNowISO(),
       })
       .select("id")
       .single()
@@ -85,7 +86,7 @@ export async function logAuditEvents(events: AuditEvent[]): Promise<ServiceResul
       metadata: event.metadata || null,
       ip_address: event.ip_address || null,
       user_agent: event.user_agent || null,
-      created_at: new Date().toISOString(),
+      created_at: getNowISO(),
     }))
 
     const { data, error } = await supabase

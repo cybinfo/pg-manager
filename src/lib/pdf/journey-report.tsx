@@ -12,6 +12,7 @@ import {
   EventCategory,
 } from "@/types/journey.types"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
+import { getNowISO } from "@/lib/date-helpers"
 
 // ============================================
 // Styles
@@ -402,7 +403,7 @@ function PageHeader({ title }: { title: string }) {
       <View style={styles.reportInfo}>
         <Text style={styles.reportTitle}>{title}</Text>
         <Text style={styles.reportSubtitle}>
-          Generated: {formatDateTime(new Date().toISOString())}
+          Generated: {formatDateTime(getNowISO())}
         </Text>
       </View>
     </View>

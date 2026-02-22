@@ -26,6 +26,7 @@ import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { withCreatedBy } from "@/lib/audit"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -73,7 +74,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
 
   const fetchCheckedIn = useCallback(async () => {
     const supabase = createClient()
-    const today = new Date().toISOString().split("T")[0]
+    const today = getTodayISO()
 
     const { data } = await supabase
       .from("library_attendance")
@@ -98,7 +99,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
 
   const handleQuickCheckOut = async (attendanceId: string, memberName: string, seatId: string | null) => {
     const supabase = createClient()
-    const checkOutTime = new Date().toISOString()
+    const checkOutTime = getNowISO()
 
     const { error } = await supabase
       .from("library_attendance")
@@ -259,7 +260,7 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
         .from("library_attendance")
         .select("id")
         .eq("member_id", member.id)
-        .eq("attendance_date", new Date().toISOString().split("T")[0])
+        .eq("attendance_date", getTodayISO())
         .is("check_out_time", null)
         .is("deleted_at", null)
         .single()
@@ -291,8 +292,8 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
           owner_id: fullMember.owner_id,
           workspace_id: fullMember.workspace_id,
           member_id: member.id,
-          attendance_date: new Date().toISOString().split("T")[0],
-          check_in_time: new Date().toISOString(),
+          attendance_date: getTodayISO(),
+          check_in_time: getNowISO(),
         },
         user?.id || ""
       )
@@ -464,7 +465,7 @@ function CheckOutButton({ attendanceId, memberName }: { attendanceId: string; me
     setLoading(true)
 
     const supabase = createClient()
-    const checkOutTime = new Date().toISOString()
+    const checkOutTime = getNowISO()
 
     try {
       // First, get the attendance record to check if a seat was assigned
@@ -551,7 +552,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     label: "Today",
     icon: Calendar,
     compute: (items) => {
-      const today = new Date().toISOString().split("T")[0]
+      const today = getTodayISO()
       return items.filter((a) => a.attendance_date === today).length
     },
   },
@@ -561,7 +562,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     label: "Hours Today",
     icon: Clock,
     compute: (items) => {
-      const today = new Date().toISOString().split("T")[0]
+      const today = getTodayISO()
       return items
         .filter((a) => a.attendance_date === today && a.hours_spent)
         .reduce((sum: number, a) => sum + (Number(a.hours_spent) || 0), 0)

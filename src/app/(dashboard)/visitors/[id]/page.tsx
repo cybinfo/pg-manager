@@ -44,6 +44,7 @@ import {
   Ban,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getNowISO } from "@/lib/date-helpers"
 import { formatDateTime, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
@@ -168,7 +169,7 @@ export default function VisitorDetailPage() {
   const handleCheckOut = async () => {
     if (!visitor) return
     setActionLoading(true)
-    const success = await updateField("check_out_time", new Date().toISOString())
+    const success = await updateField("check_out_time", getNowISO())
     if (success) {
       showSuccess("Visitor checked out successfully")
     }

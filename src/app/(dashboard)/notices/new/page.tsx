@@ -21,6 +21,7 @@ import {
   Library
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface Property {
   id: string
@@ -486,7 +487,7 @@ export default function NewNoticePage() {
                   value={formData.expires_at as string}
                   onChange={handleChange}
                   disabled={saving}
-                  min={new Date().toISOString().split("T")[0]}
+                  min={getTodayISO()}
                 />
                 <p className="text-xs text-muted-foreground">
                   Leave empty for no expiration

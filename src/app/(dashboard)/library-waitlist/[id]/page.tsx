@@ -58,6 +58,7 @@ import {
 } from "lucide-react"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getNowISO } from "@/lib/date-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist, LibraryWaitlistStatus } from "@/types/library.types"
@@ -104,7 +105,7 @@ export default function WaitlistDetailPage({
         .from("library_waitlist")
         .update({
           status: newStatus,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", entry.id)
 
@@ -132,9 +133,9 @@ export default function WaitlistDetailPage({
         .from("library_waitlist")
         .update({
           status: "contacted",
-          last_contacted_at: new Date().toISOString(),
+          last_contacted_at: getNowISO(),
           contact_notes: contactNotes.trim() || null,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", entry.id)
 

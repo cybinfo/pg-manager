@@ -30,6 +30,7 @@ import {
 import { buildApprovalDecisionNotification } from "@/lib/services/notification.service"
 import { createAuditEvent } from "@/lib/services/audit.service"
 import { transferRoom } from "./tenant.workflow"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -107,7 +108,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       // Update tenant name
       const { error: tenantError } = await supabase
         .from("tenants")
-        .update({ name: newName, updated_at: new Date().toISOString() })
+        .update({ name: newName, updated_at: getNowISO() })
         .eq("id", approval.requester_tenant_id)
 
       if (tenantError) {
@@ -119,7 +120,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       if (tenant?.user_id) {
         await supabase
           .from("user_profiles")
-          .update({ name: newName, updated_at: new Date().toISOString() })
+          .update({ name: newName, updated_at: getNowISO() })
           .eq("user_id", tenant.user_id)
       }
 
@@ -154,7 +155,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
         // Simple string - update the address field
         await supabase
           .from("tenants")
-          .update({ address: newAddress as string, updated_at: new Date().toISOString() })
+          .update({ address: newAddress as string, updated_at: getNowISO() })
           .eq("id", approval.requester_tenant_id)
 
         return createSuccessResult({ actions: ["tenant_address_updated"] })
@@ -162,7 +163,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
 
       const { error } = await supabase
         .from("tenants")
-        .update({ addresses: updatedAddresses, updated_at: new Date().toISOString() })
+        .update({ addresses: updatedAddresses, updated_at: getNowISO() })
         .eq("id", approval.requester_tenant_id)
 
       if (error) {
@@ -185,7 +186,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       // Update tenant phone
       const { error: tenantError } = await supabase
         .from("tenants")
-        .update({ phone: newPhone, updated_at: new Date().toISOString() })
+        .update({ phone: newPhone, updated_at: getNowISO() })
         .eq("id", approval.requester_tenant_id)
 
       if (tenantError) {
@@ -197,7 +198,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       if (tenant?.user_id) {
         await supabase
           .from("user_profiles")
-          .update({ phone: newPhone, updated_at: new Date().toISOString() })
+          .update({ phone: newPhone, updated_at: getNowISO() })
           .eq("user_id", tenant.user_id)
       }
 
@@ -218,7 +219,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       // Update tenant email
       const { error: tenantError } = await supabase
         .from("tenants")
-        .update({ email: newEmail, updated_at: new Date().toISOString() })
+        .update({ email: newEmail, updated_at: getNowISO() })
         .eq("id", approval.requester_tenant_id)
 
       if (tenantError) {
@@ -231,7 +232,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       if (tenant?.user_id) {
         await supabase
           .from("user_profiles")
-          .update({ email: newEmail, updated_at: new Date().toISOString() })
+          .update({ email: newEmail, updated_at: getNowISO() })
           .eq("user_id", tenant.user_id)
         actions.push("user_profile_email_updated")
 
@@ -281,7 +282,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
           tenant_id: approval.requester_tenant_id as string,
           new_room_id: payload.requested_room_id,
           new_bed_id: payload.requested_bed_id || undefined,
-          transfer_date: new Date().toISOString().split("T")[0],
+          transfer_date: getTodayISO(),
           reason: payload.reason || `Approved room change request (Approval #${approval.id})`,
           adjust_rent: payload.adjust_rent === "true",
           new_rent: payload.new_rent ? parseFloat(payload.new_rent) : undefined,
@@ -324,8 +325,8 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
           .update({
             status: "resolved",
             resolution_notes: input.decision_notes || "Resolved via approval workflow",
-            resolved_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+            resolved_at: getNowISO(),
+            updated_at: getNowISO(),
           })
           .eq("id", complaintId)
 
@@ -367,7 +368,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       }
 
       const updates: Record<string, unknown> = {
-        updated_at: new Date().toISOString(),
+        updated_at: getNowISO(),
       }
 
       // Apply adjustment if provided
@@ -467,7 +468,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
             .from("payments")
             .update({
               notes: `${payment.notes || ""}\nDISPUTE: Payment not received claim - ${input.decision_notes || "Under review"}`,
-              updated_at: new Date().toISOString(),
+              updated_at: getNowISO(),
             })
             .eq("id", paymentId)
           actions.push("payment_marked_disputed")
@@ -479,7 +480,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
             .from("payments")
             .update({
               notes: `${payment.notes || ""}\nDISPUTE: Amount discrepancy - ${payload.claimed_amount} claimed vs ${payment.amount} recorded`,
-              updated_at: new Date().toISOString(),
+              updated_at: getNowISO(),
             })
             .eq("id", paymentId)
           actions.push("amount_discrepancy_noted")
@@ -491,7 +492,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
             .from("payments")
             .update({
               notes: `${payment.notes || ""}\nDISPUTE: Duplicate payment claim - Review for refund`,
-              updated_at: new Date().toISOString(),
+              updated_at: getNowISO(),
             })
             .eq("id", paymentId)
           actions.push("duplicate_payment_flagged")
@@ -521,7 +522,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
         .from("tenants")
         .update({
           notes: `${(approval.tenant as Record<string, unknown>)?.notes || ""}\nISSUE RESOLVED [${new Date().toLocaleDateString()}]: ${issueType} - ${input.decision_notes || "Resolved"}`,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", approval.requester_tenant_id)
 
@@ -588,7 +589,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
         .from("rooms")
         .update({
           notes: `${room?.notes || ""}\nISSUE RESOLVED [${new Date().toLocaleDateString()}]: ${issueType} - ${input.decision_notes || "Resolved"}`,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", roomId)
 
@@ -733,9 +734,9 @@ export const processApprovalWorkflow: WorkflowDefinition<ApprovalDecisionInput, 
           .update({
             status: input.decision,
             decided_by: context.actor_id,
-            decided_at: new Date().toISOString(),
+            decided_at: getNowISO(),
             decision_notes: input.decision_notes || null,
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", input.approval_id)
 
@@ -790,7 +791,7 @@ export const processApprovalWorkflow: WorkflowDefinition<ApprovalDecisionInput, 
           .from("approvals")
           .update({
             change_applied: true,
-            applied_at: new Date().toISOString(),
+            applied_at: getNowISO(),
           })
           .eq("id", input.approval_id)
 
@@ -915,7 +916,7 @@ export const createApprovalWorkflow: WorkflowDefinition<CreateApprovalInput, Cre
             priority: input.priority || "normal",
             document_ids: input.document_ids || null,
             status: "pending",
-            created_at: new Date().toISOString(),
+            created_at: getNowISO(),
           })
           .select()
           .single()

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { getTodayISO } from "@/lib/date-helpers"
 import Link from "next/link"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
@@ -866,7 +867,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                                 type="date"
                                 value={inquiryForm.expected_move_in}
                                 onChange={(e) => setInquiryForm(prev => ({ ...prev, expected_move_in: e.target.value }))}
-                                min={new Date().toISOString().split("T")[0]}
+                                min={getTodayISO()}
                                 className="pl-10"
                               />
                               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />

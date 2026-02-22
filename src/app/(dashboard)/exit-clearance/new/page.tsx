@@ -24,9 +24,11 @@ import {
   Bell
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { formatCurrency } from "@/lib/format"
 import { handleClientError } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
 import { initiateExitClearance, ExitClearanceInput } from "@/lib/workflows/exit.workflow"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface TenantRaw {
   id: string
@@ -84,7 +86,7 @@ function InitiateCheckoutForm() {
 
   const [formData, setFormData] = useState({
     tenant_id: preselectedTenantId || "",
-    notice_given_date: new Date().toISOString().split("T")[0],
+    notice_given_date: getTodayISO(),
     expected_exit_date: "",
     room_condition_notes: "",
   })
@@ -158,7 +160,7 @@ function InitiateCheckoutForm() {
         if (tenant) {
           setSelectedTenant(tenant)
           // Use tenant's notice_date if available, otherwise today
-          const noticeDate = tenant.notice_date || new Date().toISOString().split("T")[0]
+          const noticeDate = tenant.notice_date || getTodayISO()
           // Use tenant's expected_exit_date if available, otherwise 30 days from now
           const exitDate = tenant.expected_exit_date || (() => {
             const date = new Date()
@@ -187,7 +189,7 @@ function InitiateCheckoutForm() {
 
       // Update dates from tenant's stored values when selecting a different tenant
       if (tenant) {
-        const noticeDate = tenant.notice_date || new Date().toISOString().split("T")[0]
+        const noticeDate = tenant.notice_date || getTodayISO()
         const exitDate = tenant.expected_exit_date || (() => {
           const date = new Date()
           date.setDate(date.getDate() + 30)
@@ -434,7 +436,7 @@ function InitiateCheckoutForm() {
                   </div>
                   <div className="flex items-center gap-2">
                     <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                    <span>Rent: ₹{selectedTenant.monthly_rent.toLocaleString("en-IN")}/month</span>
+                    <span>Rent: {formatCurrency(selectedTenant.monthly_rent)}/month</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -444,7 +446,7 @@ function InitiateCheckoutForm() {
                 <div className="pt-2 border-t mt-2">
                   <p className="text-sm">
                     <span className="text-muted-foreground">Security Deposit:</span>{" "}
-                    <span className="font-medium">₹{(selectedTenant.room.deposit_amount || 0).toLocaleString("en-IN")}</span>
+                    <span className="font-medium">{formatCurrency(selectedTenant.room.deposit_amount || 0)}</span>
                   </p>
                 </div>
               </div>
@@ -570,7 +572,7 @@ function InitiateCheckoutForm() {
                     <span>{deduction.reason}</span>
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-destructive">
-                        ₹{deduction.amount.toLocaleString("en-IN")}
+                        {formatCurrency(deduction.amount)}
                       </span>
                       <Button
                         type="button"
@@ -627,22 +629,22 @@ function InitiateCheckoutForm() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Pending Dues</span>
-                  <span className="font-medium">₹{amounts.totalDues.toLocaleString("en-IN")}</span>
+                  <span className="font-medium">{formatCurrency(amounts.totalDues)}</span>
                 </div>
                 <div className="flex justify-between text-success">
                   <span>Security Deposit (Refundable)</span>
-                  <span className="font-medium">- ₹{amounts.totalRefundable.toLocaleString("en-IN")}</span>
+                  <span className="font-medium">- {formatCurrency(amounts.totalRefundable)}</span>
                 </div>
                 {amounts.totalDeductions > 0 && (
                   <div className="flex justify-between text-destructive">
                     <span>Deductions</span>
-                    <span className="font-medium">+ ₹{amounts.totalDeductions.toLocaleString("en-IN")}</span>
+                    <span className="font-medium">+ {formatCurrency(amounts.totalDeductions)}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-3 border-t text-lg font-bold">
                   <span>{amounts.finalAmount >= 0 ? "Tenant Owes" : "Refund to Tenant"}</span>
                   <span className={amounts.finalAmount >= 0 ? "text-destructive" : "text-success"}>
-                    ₹{Math.abs(amounts.finalAmount).toLocaleString("en-IN")}
+                    {formatCurrency(Math.abs(amounts.finalAmount))}
                   </span>
                 </div>
               </div>

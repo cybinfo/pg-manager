@@ -11,6 +11,7 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
+import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -122,7 +123,7 @@ export default function EditMeterPage() {
           model: (data.model as string).trim() || null,
           installation_date: data.installation_date || null,
           notes: (data.notes as string).trim() || null,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", recordId)
 

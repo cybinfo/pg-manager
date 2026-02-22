@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Bell } from "lucide-react"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface NoticePeriodDialogProps {
   tenantName: string
@@ -15,7 +16,7 @@ interface NoticePeriodDialogProps {
 }
 
 export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: NoticePeriodDialogProps) {
-  const today = new Date().toISOString().split("T")[0]
+  const today = getTodayISO()
   const defaultExitDate = new Date()
   defaultExitDate.setDate(defaultExitDate.getDate() + 30)
 

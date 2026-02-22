@@ -19,6 +19,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
+import { getTodayISO } from "@/lib/date-helpers"
 import type { ServiceProvider, ServiceCategory, ServicePaymentFormData, TdsSection, PaymentMode } from "@/types/expense-enhanced.types"
 
 const PAYMENT_MODE_OPTIONS = [
@@ -53,7 +54,7 @@ export default function NewServicePaymentPage() {
     provider_name: "",
     category_id: "",
     category_name: "",
-    service_date: new Date().toISOString().split("T")[0],
+    service_date: getTodayISO(),
     description: "",
     gross_amount: 0,
     tds_applicable: false,
@@ -63,7 +64,7 @@ export default function NewServicePaymentPage() {
     net_amount: undefined,
     payment_mode: undefined,
     payment_reference: "",
-    payment_date: new Date().toISOString().split("T")[0],
+    payment_date: getTodayISO(),
     warranty_months: 0,
     notes: "",
   })

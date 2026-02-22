@@ -1,6 +1,7 @@
 "use client"
 
 import { useCountUp } from "@/lib/hooks/useCountUp"
+import { formatNumber } from "@/lib/format"
 
 interface AnimatedNumberProps {
   /** The target number to animate to */
@@ -35,7 +36,7 @@ export function AnimatedNumber({
   return (
     <span className={className}>
       {prefix}
-      {count.toLocaleString("en-IN")}
+      {formatNumber(count)}
       {suffix}
     </span>
   )

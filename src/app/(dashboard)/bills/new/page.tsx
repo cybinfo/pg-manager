@@ -30,6 +30,7 @@ import { withCreatedBy } from "@/lib/audit"
 import { PageSkeleton } from "@/components/ui/loading"
 import { cn } from "@/lib/utils"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 interface Tenant {
   id: string
@@ -92,7 +93,7 @@ function NewBillContent() {
 
   const [formData, setFormData] = useState({
     for_month: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-    bill_date: new Date().toISOString().split("T")[0],
+    bill_date: getTodayISO(),
     due_date: "",
     previous_balance: 0,
     discount_amount: 0,
@@ -414,7 +415,7 @@ function NewBillContent() {
               amount: item.amount,
             })),
             notes: formData.notes || null,
-            generated_at: new Date().toISOString(),
+            generated_at: getNowISO(),
           }, user.id)
         )
         .select()

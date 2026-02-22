@@ -49,9 +49,9 @@ export const INQUIRY_STATUS_LABELS: Record<string, string> = {
 }
 
 export const INQUIRY_SOURCE_LABELS: Record<string, string> = {
-  website: "Website",
+  website: "Website Form",
   whatsapp: "WhatsApp",
-  phone: "Phone",
+  phone: "Phone Call",
 }
 
 export const INQUIRY_STATUS_COLORS: Record<string, string> = {
@@ -65,6 +65,24 @@ export const INQUIRY_SOURCE_COLORS: Record<string, string> = {
   website: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
   whatsapp: "bg-success/10 text-success",
   phone: "bg-warning/10 text-warning",
+}
+
+// ============================================================================
+// OCCUPANCY STATUS COLORS (CSS classes for seat/locker/section status)
+// ============================================================================
+
+export const OCCUPANCY_STATUS_COLORS: Record<string, string> = {
+  available: "bg-success/10 text-success",
+  occupied: "bg-info/10 text-info",
+  reserved: "bg-warning/10 text-warning",
+  maintenance: "bg-muted text-muted-foreground",
+}
+
+export const PG_ROOM_STATUS_COLORS: Record<string, string> = {
+  available: "bg-success/10 text-success",
+  occupied: "bg-destructive/10 text-destructive",
+  partially_occupied: "bg-warning/10 text-warning",
+  maintenance: "bg-muted text-muted-foreground",
 }
 
 // ============================================================================

@@ -21,6 +21,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import { VendorSelector } from "@/components/expenses/vendor-selector"
+import { getTodayISO } from "@/lib/date-helpers"
 import { ProductSelector } from "@/components/expenses/product-selector"
 
 import type { Product, ProductCategory, Vendor } from "@/types/expense-enhanced.types"
@@ -68,7 +69,7 @@ export default function NewDailySpendPage() {
   const [vendors, setVendors] = useState<Vendor[]>([])
 
   // Form state
-  const [spendDate, setSpendDate] = useState(new Date().toISOString().split("T")[0])
+  const [spendDate, setSpendDate] = useState(getTodayISO())
   const [vendorId, setVendorId] = useState("")
   const [vendorName, setVendorName] = useState("")
   const [paymentMode, setPaymentMode] = useState("cash")

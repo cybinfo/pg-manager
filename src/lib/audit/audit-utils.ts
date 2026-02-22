@@ -12,6 +12,7 @@
 
 import { createClient } from "@/lib/supabase/client"
 import type { SoftDeletableTable, AuditInsertFields, AuditDeleteFields } from "@/types/audit.types"
+import { getNowISO } from "@/lib/date-helpers"
 
 // ============================================================================
 // INSERT UTILITIES
@@ -74,7 +75,7 @@ export async function softDelete(
   const supabase = createClient()
 
   const deleteFields: AuditDeleteFields = {
-    deleted_at: new Date().toISOString(),
+    deleted_at: getNowISO(),
     deleted_by: deletedBy,
   }
 
@@ -106,7 +107,7 @@ export async function softDeleteBatch(
   const supabase = createClient()
 
   const deleteFields: AuditDeleteFields = {
-    deleted_at: new Date().toISOString(),
+    deleted_at: getNowISO(),
     deleted_by: deletedBy,
   }
 
@@ -210,7 +211,7 @@ export async function cascadeSoftDelete(
   const errors: string[] = []
 
   const deleteFields: AuditDeleteFields = {
-    deleted_at: new Date().toISOString(),
+    deleted_at: getNowISO(),
     deleted_by: deletedBy,
   }
 

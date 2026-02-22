@@ -9,6 +9,7 @@
 import { use } from "react"
 import Link from "next/link"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
+import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -74,7 +75,7 @@ export default function EditLibraryPlanPage({
       allowed_slots: (data.allowed_slots as string[]).length > 0 ? data.allowed_slots : null,
       is_active: data.is_active,
       sort_order: Number(data.sort_order) || 0,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowISO(),
     }),
   })
 

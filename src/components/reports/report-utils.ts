@@ -6,6 +6,7 @@
 import { DateRange } from "@/components/ui/date-range-picker"
 import { showError } from "@/lib/toast-helpers"
 import { DemoAction } from "@/lib/demo-mode"
+import { formatNumber } from "@/lib/format"
 
 export const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -34,7 +35,7 @@ export function formatCurrency(amount: number): string {
   if (amount >= 100000) {
     return `\u20B9${(amount / 100000).toFixed(2)} L`
   }
-  return `\u20B9${amount.toLocaleString("en-IN")}`
+  return `\u20B9${formatNumber(amount)}`
 }
 
 /**

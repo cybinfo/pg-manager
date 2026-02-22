@@ -28,6 +28,7 @@ import { handleClientError } from "@/lib/error-handler"
 import { sendInvitationEmail } from "@/lib/email"
 import { withCreatedBy, withCreatedByBatch } from "@/lib/audit"
 import { PageSkeleton } from "@/components/ui/loading"
+import { getNowISO } from "@/lib/date-helpers"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
@@ -301,8 +302,8 @@ export default function NewStaffPage() {
               is_active: true,
               is_default: false,
               invited_by: user.id,
-              invited_at: new Date().toISOString(),
-              accepted_at: new Date().toISOString(), // Auto-accepted since user exists
+              invited_at: getNowISO(),
+              accepted_at: getNowISO(), // Auto-accepted since user exists
             }, user.id)
           )
 

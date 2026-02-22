@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Download, X } from "lucide-react"
+import { getNowISO } from "@/lib/date-helpers"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -68,7 +69,7 @@ export function PWAInstallPrompt() {
 
   const handleDismiss = () => {
     setShowPrompt(false)
-    localStorage.setItem("pwa-install-dismissed", new Date().toISOString())
+    localStorage.setItem("pwa-install-dismissed", getNowISO())
   }
 
   if (!showPrompt) return null

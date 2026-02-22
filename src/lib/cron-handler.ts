@@ -31,6 +31,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { validateCronRequest } from "@/lib/api-middleware"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { apiSuccess, internalError } from "@/lib/api-response"
+import { getNowISO } from "@/lib/date-helpers"
 
 // ============================================================================
 // TYPES
@@ -140,7 +141,7 @@ export async function logCronAudit(
       actor_type: "system",
       workspace_id: workspace.id,
       metadata: params.metadata,
-      created_at: new Date().toISOString(),
+      created_at: getNowISO(),
     })
   }
 }

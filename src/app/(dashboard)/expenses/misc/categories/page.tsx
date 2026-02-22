@@ -23,6 +23,7 @@ import { softDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getNowISO } from "@/lib/date-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
@@ -130,7 +131,7 @@ export default function MiscCategoriesPage() {
             name: formData.name.trim(),
             name_hi: formData.name_hi.trim() || null,
             default_type: formData.default_type,
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", editingCategory.id)
 
@@ -197,7 +198,7 @@ export default function MiscCategoriesPage() {
         .from("misc_transaction_categories")
         .update({
           is_active: !category.is_active,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", category.id)
 

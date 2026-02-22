@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import { IdentityConflict } from './types'
+import { getNowISO } from '@/lib/date-helpers'
 
 // ============================================
 // AI Detection Utilities
@@ -113,7 +114,7 @@ export async function checkContextAnomalies(userId: string): Promise<Anomaly[]> 
         severity: 'medium',
         message: `User is both staff and tenant at ${Array.isArray(workspace) ? workspace[0]?.name : workspace?.name || 'Unknown'}`,
         details: { workspace_id: wsId, context_types: types },
-        detectedAt: new Date().toISOString(),
+        detectedAt: getNowISO(),
       })
     }
   })
@@ -132,7 +133,7 @@ export async function checkContextAnomalies(userId: string): Promise<Anomaly[]> 
       severity: 'high',
       message: `${switches.length} context switches in the last minute`,
       details: { switch_count: switches.length },
-      detectedAt: new Date().toISOString(),
+      detectedAt: getNowISO(),
     })
   }
 

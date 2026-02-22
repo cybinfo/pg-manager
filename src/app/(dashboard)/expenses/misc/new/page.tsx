@@ -23,6 +23,7 @@ import {
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
+import { getTodayISO } from "@/lib/date-helpers"
 import type { MiscTransactionCategory, MiscPaymentMode } from "@/types/expense-enhanced.types"
 
 const PAYMENT_MODE_OPTIONS = [
@@ -54,7 +55,7 @@ export default function NewMiscTransactionPage() {
       person_name: "",
       description: "",
       amount: 0,
-      transaction_date: new Date().toISOString().split("T")[0],
+      transaction_date: getTodayISO(),
       payment_mode: "cash",
       payment_reference: "",
       notes: "",

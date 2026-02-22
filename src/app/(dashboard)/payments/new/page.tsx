@@ -15,6 +15,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
+import { getTodayISO } from "@/lib/date-helpers"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
 
 interface Tenant {
@@ -83,7 +84,7 @@ function NewPaymentForm() {
     charge_type_id: "",
     amount: "",
     payment_method: "cash",
-    payment_date: new Date().toISOString().split("T")[0],
+    payment_date: getTodayISO(),
     for_period: "",
     reference_number: "",
     notes: "",

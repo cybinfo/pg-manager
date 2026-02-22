@@ -49,6 +49,7 @@ import {
   isRefundDue,
   getDaysStayed,
 } from "@/types/exit-clearance.types"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 export default function ExitClearanceDetailPage() {
   const params = useParams()
@@ -165,7 +166,7 @@ export default function ExitClearanceDetailPage() {
     setSaving(true)
     try {
       const supabase = createClient()
-      const exitDate = formData.actual_exit_date || new Date().toISOString().split("T")[0]
+      const exitDate = formData.actual_exit_date || getTodayISO()
 
       // Update clearance status
       const { error: clearanceError } = await supabase
@@ -173,7 +174,7 @@ export default function ExitClearanceDetailPage() {
         .update({
           settlement_status: "cleared",
           actual_exit_date: exitDate,
-          completed_at: new Date().toISOString(),
+          completed_at: getNowISO(),
         })
         .eq("id", clearance.id)
 

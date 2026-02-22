@@ -9,6 +9,7 @@
 import { use } from "react"
 import Link from "next/link"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
+import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -76,7 +77,7 @@ export default function EditLibraryMemberPage({
       preferred_slot: data.preferred_slot || null,
       notes: data.notes || null,
       status: data.status,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowISO(),
     }),
   })
 

@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { getNowISO } from "@/lib/date-helpers"
 
 export default function EditLibrarySectionPage({
   params,
@@ -71,7 +72,7 @@ export default function EditLibrarySectionPage({
       has_power_outlets: data.has_power_outlets,
       hourly_rate: data.hourly_rate ? Number(data.hourly_rate) : null,
       monthly_rate: data.monthly_rate ? Number(data.monthly_rate) : null,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowISO(),
     }),
   })
 

@@ -20,6 +20,7 @@ import {
   CreditCard
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getNowISO } from "@/lib/date-helpers"
 
 const templates = [
   {
@@ -163,7 +164,7 @@ export default function SetupPage() {
               context_type: "owner",
               is_active: true,
               is_default: true,
-              accepted_at: new Date().toISOString(),
+              accepted_at: getNowISO(),
             }, user.id)
           )
 

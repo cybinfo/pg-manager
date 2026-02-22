@@ -21,6 +21,7 @@ import { PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess } from "@/lib/toast-helpers"
 import { PAYMENT_METHODS } from "@/lib/status"
+import { getTodayISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -289,7 +290,7 @@ function ExportButton({ expenses }: { expenses: Expense[] }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `expenses-${new Date().toISOString().split("T")[0]}.csv`
+    a.download = `expenses-${getTodayISO()}.csv`
     a.click()
     URL.revokeObjectURL(url)
     showSuccess("Expenses exported to CSV")

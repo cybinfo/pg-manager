@@ -19,6 +19,7 @@ import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { getNowISO } from "@/lib/date-helpers"
 
 interface MemberOption {
   id: string
@@ -148,7 +149,7 @@ export default function NewLibraryAttendancePage() {
           .update({
             status: "occupied",
             current_member_id: data.member_id,
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", data.seat_id)
 

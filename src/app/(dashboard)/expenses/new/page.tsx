@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface ExpenseType {
   id: string
@@ -47,7 +48,7 @@ export default function NewExpensePage() {
       expense_type_id: "",
       property_id: "",
       amount: "",
-      expense_date: new Date().toISOString().split("T")[0],
+      expense_date: getTodayISO(),
       vendor_name: "",
       reference_number: "",
       payment_method: "cash",

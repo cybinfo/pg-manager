@@ -24,6 +24,7 @@ import {
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import type { MiscTransaction, MiscTransactionCategory, MiscTransactionFormData, MiscPaymentMode } from "@/types/expense-enhanced.types"
 
 const PAYMENT_MODE_OPTIONS = [
@@ -56,7 +57,7 @@ export default function EditMiscTransactionPage({
     person_name: "",
     description: "",
     amount: 0,
-    transaction_date: new Date().toISOString().split("T")[0],
+    transaction_date: getTodayISO(),
     payment_mode: "cash",
     payment_reference: "",
     notes: "",
@@ -156,7 +157,7 @@ export default function EditMiscTransactionPage({
         payment_mode: formData.payment_mode || "cash",
         payment_reference: formData.payment_reference?.trim() || null,
         notes: formData.notes?.trim() || null,
-        updated_at: new Date().toISOString(),
+        updated_at: getNowISO(),
       }
 
       const { error } = await supabase

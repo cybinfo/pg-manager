@@ -20,6 +20,7 @@
  */
 
 import { sanitizeFilename } from "./format"
+import { getTodayISO } from "@/lib/date-helpers"
 
 // ============================================================================
 // TYPES
@@ -262,7 +263,7 @@ export function entityExportFilename(
   prefix?: string
 ): string {
   const safeName = sanitizeFilename(entityName.toLowerCase())
-  const datePart = new Date().toISOString().split("T")[0]
+  const datePart = getTodayISO()
   const base = prefix ? `${prefix}-${safeName}` : `${safeName}-export`
   return `${base}-${datePart}.${extension}`
 }

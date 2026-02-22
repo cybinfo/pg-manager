@@ -33,6 +33,7 @@ import {
   MoreVertical,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getNowISO } from "@/lib/date-helpers"
 import { formatDate } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -135,7 +136,7 @@ export default function VisitorDirectoryPage() {
 
     const { error } = await supabase
       .from("visitor_contacts")
-      .update({ is_frequent: !contact.is_frequent, updated_at: new Date().toISOString() })
+      .update({ is_frequent: !contact.is_frequent, updated_at: getNowISO() })
       .eq("id", contact.id)
 
     if (error) {
@@ -156,7 +157,7 @@ export default function VisitorDirectoryPage() {
       .update({
         is_blocked: !contact.is_blocked,
         blocked_reason: contact.is_blocked ? null : "Blocked by admin",
-        updated_at: new Date().toISOString(),
+        updated_at: getNowISO(),
       })
       .eq("id", contact.id)
 

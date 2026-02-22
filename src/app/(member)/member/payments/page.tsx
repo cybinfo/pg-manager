@@ -9,7 +9,7 @@ import { PortalEmptyState } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
-import { PAYMENT_METHODS } from "@/lib/status"
+import { PAYMENT_METHODS, LIBRARY_PAYMENT_TYPE_LABELS } from "@/lib/status"
 
 interface PaymentRecord {
   id: string
@@ -21,13 +21,7 @@ interface PaymentRecord {
   notes: string | null
 }
 
-const paymentTypeLabels: Record<string, string> = {
-  subscription: "Subscription",
-  locker_rent: "Locker Rent",
-  locker_deposit: "Locker Deposit",
-  fine: "Fine",
-  other: "Other",
-}
+const paymentTypeLabels = LIBRARY_PAYMENT_TYPE_LABELS
 
 export default function MemberPaymentsPage() {
   const { member, loading: memberLoading } = useMemberPortalData()

@@ -23,6 +23,7 @@ import { formatDate, formatTimeAgo } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
+import { COMPLAINT_CATEGORIES } from "@/lib/status"
 
 interface Complaint {
   id: string
@@ -36,20 +37,8 @@ interface Complaint {
   resolved_at: string | null
 }
 
-const categories = [
-  { value: "electrical", label: "Electrical" },
-  { value: "plumbing", label: "Plumbing" },
-  { value: "furniture", label: "Furniture" },
-  { value: "cleanliness", label: "Cleanliness" },
-  { value: "appliances", label: "Appliances" },
-  { value: "security", label: "Security" },
-  { value: "noise", label: "Noise/Disturbance" },
-  { value: "other", label: "Other" },
-]
-
-const categoryLabels: Record<string, string> = Object.fromEntries(
-  categories.map((c) => [c.value, c.label])
-)
+const categoryOptions = Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label }))
+const categoryLabels = COMPLAINT_CATEGORIES
 
 export default function TenantComplaintsPage() {
   const { tenant, tenantContext, user, loading: tenantLoading } = useTenantPortalData()
@@ -191,7 +180,7 @@ export default function TenantComplaintsPage() {
                 <Select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  options={categories}
+                  options={categoryOptions}
                 />
               </FormField>
 

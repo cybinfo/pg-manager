@@ -25,6 +25,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, createDateFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { PAYMENT_METHODS } from "@/lib/status"
 import { Button } from "@/components/ui/button"
 
 // ============================================
@@ -147,18 +148,9 @@ const columns: Column<MiscTransactionItem>[] = [
     hideOnMobile: true,
     canHide: true,
     defaultVisible: true,
-    render: (item) => {
-      const modeLabels: Record<string, string> = {
-        cash: "Cash",
-        upi: "UPI",
-        paytm: "Paytm",
-        bank_transfer: "Bank",
-        card: "Card",
-        cheque: "Cheque",
-        other: "Other",
-      }
-      return <TableBadge variant="muted">{modeLabels[item.payment_mode] || item.payment_mode}</TableBadge>
-    },
+    render: (item) => (
+      <TableBadge variant="muted">{PAYMENT_METHODS[item.payment_mode] || item.payment_mode}</TableBadge>
+    ),
   },
   // Hidden by default columns
   {

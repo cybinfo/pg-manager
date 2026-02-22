@@ -12,12 +12,13 @@
 import { baseCronHandler, logCronAudit } from "@/lib/cron-handler"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 export const GET = (request: Request) =>
   baseCronHandler(request, {
     name: "expire-library-memberships",
     execute: async (supabaseAdmin, _today) => {
-      const todayStr = new Date().toISOString().split("T")[0]
+      const todayStr = getTodayISO()
 
       // 1. Find all active memberships that have expired
       const { data: expiredMemberships, error: membershipError } = await supabaseAdmin
@@ -83,7 +84,7 @@ export const GET = (request: Request) =>
             .from("library_memberships")
             .update({
               status: "expired",
-              updated_at: new Date().toISOString(),
+              updated_at: getNowISO(),
             })
             .eq("id", membership.id)
 
@@ -114,7 +115,7 @@ export const GET = (request: Request) =>
                   current_subscription_id: null,
                   hours_balance: 0, // Reset hours balance
                   expiry_date: todayStr,
-                  updated_at: new Date().toISOString(),
+                  updated_at: getNowISO(),
                 })
                 .eq("id", membership.member_id)
 
@@ -151,7 +152,7 @@ export const GET = (request: Request) =>
                 .from("library_members")
                 .update({
                   current_subscription_id: otherActiveMembershipId,
-                  updated_at: new Date().toISOString(),
+                  updated_at: getNowISO(),
                 })
                 .eq("id", membership.member_id)
 
@@ -206,7 +207,7 @@ export const GET = (request: Request) =>
                 status: "expired",
                 current_subscription_id: null,
                 hours_balance: 0,
-                updated_at: new Date().toISOString(),
+                updated_at: getNowISO(),
               })
               .eq("id", member.id)
 

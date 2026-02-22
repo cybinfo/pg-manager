@@ -17,7 +17,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Users, Loader2, CreditCard, UserCheck } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 import { TIME_SLOTS } from "@/types/library.types"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 interface Library {
   id: string
@@ -58,7 +60,7 @@ export default function NewLibraryMemberPage() {
       notes: "",
       // Subscription
       plan_id: "",
-      start_date: new Date().toISOString().split("T")[0],
+      start_date: getTodayISO(),
       amount: "",
       discount_amount: "0",
       payment_method: "cash",
@@ -214,8 +216,8 @@ export default function NewLibraryMemberPage() {
             .update({
               status: "converted",
               converted_member_id: member.id,
-              converted_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
+              converted_at: getNowISO(),
+              updated_at: getNowISO(),
             })
             .eq("id", waitlistId)
 
@@ -531,7 +533,7 @@ export default function NewLibraryMemberPage() {
                 <div className="space-y-2">
                   <Label>Final Amount</Label>
                   <div className="h-10 px-3 py-2 bg-muted rounded-md flex items-center font-medium">
-                    Rs.{((parseFloat(formData.amount as string) || 0) - (parseFloat(formData.discount_amount as string) || 0)).toLocaleString("en-IN")}
+                    {formatCurrency((parseFloat(formData.amount as string) || 0) - (parseFloat(formData.discount_amount as string) || 0))}
                   </div>
                 </div>
               </div>

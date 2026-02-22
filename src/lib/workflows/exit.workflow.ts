@@ -33,6 +33,7 @@ import {
 import { createAuditEvent } from "@/lib/services/audit.service"
 import { workflowLogger } from "@/lib/logger"
 import { API_TIMEOUT_MS } from "@/lib/constants"
+import { getNowISO, getTodayISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -243,9 +244,9 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
             .from("tenants")
             .update({
               status: "notice_period",
-              notice_date: input.notice_date || new Date().toISOString(),
+              notice_date: input.notice_date || getNowISO(),
               expected_exit_date: input.requested_exit_date,
-              updated_at: new Date().toISOString(),
+              updated_at: getNowISO(),
             })
             .eq("id", input.tenant_id)
 
@@ -290,7 +291,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
           tenant_id: input.tenant_id,
           property_id: input.property_id,
           room_id: input.room_id,
-          notice_given_date: input.notice_date || new Date().toISOString().split('T')[0],
+          notice_given_date: input.notice_date || getTodayISO(),
           expected_exit_date: input.requested_exit_date,
           total_dues: settlement.total_dues || 0,
           total_refundable: settlement.deposit_amount || 0,
@@ -540,7 +541,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
             status: "checked_out",
             check_out_date: input.actual_exit_date,
             room_id: null, // Clear room assignment
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", tenant.id)
 
@@ -577,7 +578,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
               exit_date: input.actual_exit_date,
               exit_reason: clearance.exit_reason,
               status: "completed",
-              updated_at: new Date().toISOString(),
+              updated_at: getNowISO(),
             })
             .eq("id", stay.id)
 
@@ -620,7 +621,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
           .update({
             occupied_beds: newOccupied,
             status: getRoomStatus(newOccupied, totalBeds),
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", room.id)
           .eq("occupied_beds", currentOccupied) // Optimistic lock
@@ -646,7 +647,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
               .update({
                 occupied_beds: finalOccupied,
                 status: getRoomStatus(finalOccupied, freshTotal),
-                updated_at: new Date().toISOString(),
+                updated_at: getNowISO(),
               })
               .eq("id", room.id)
           }
@@ -680,7 +681,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
           .update({
             current_tenant_id: null,
             status: "available",
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", clearance.bed_id)
 
@@ -731,7 +732,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
           refund_date: input.final_settlement_mode ? input.actual_exit_date : null,
           due_date: input.actual_exit_date,
           processed_by: input.final_settlement_mode ? context.actor_id : null,
-          processed_at: input.final_settlement_mode ? new Date().toISOString() : null,
+          processed_at: input.final_settlement_mode ? getNowISO() : null,
           reason: `Security deposit refund for exit clearance`,
           notes: input.final_notes || null,
         }
@@ -781,9 +782,9 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
             settlement_mode: input.final_settlement_mode || null,
             settlement_reference: input.settlement_reference || null,
             final_notes: input.final_notes || null,
-            completed_at: new Date().toISOString(),
+            completed_at: getNowISO(),
             completed_by: context.actor_id,
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", input.clearance_id)
 

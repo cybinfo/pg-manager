@@ -11,6 +11,7 @@ import { withCreatedBy } from '@/lib/audit'
 import { Phone, Send, Loader2, UserPlus } from 'lucide-react'
 import { EmailInput } from '@/components/ui/form-components'
 import { showSuccess, showError } from '@/lib/toast-helpers'
+import { getNowISO } from '@/lib/date-helpers'
 
 // ============================================
 // Invitation Form Component
@@ -80,8 +81,8 @@ export function InvitationForm({
               entity_id: entityId || null,
               is_active: true,
               invited_by: user.id,
-              invited_at: new Date().toISOString(),
-              accepted_at: new Date().toISOString(),
+              invited_at: getNowISO(),
+              accepted_at: getNowISO(),
             }, user.id)
           )
           .select()

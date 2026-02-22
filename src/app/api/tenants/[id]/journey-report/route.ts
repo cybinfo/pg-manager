@@ -10,6 +10,7 @@ import {
   internalError,
   ErrorCodes,
 } from "@/lib/api-response"
+import { getTodayISO } from "@/lib/date-helpers"
 
 /**
  * GET /api/tenants/[id]/journey-report
@@ -71,7 +72,7 @@ export async function GET(
     // SEC-018: Create safe filename using sanitizeFilename utility
     // SEC-018: Use createContentDisposition for safe filename handling
     const tenantNameSlug = sanitizeFilename(result.data.tenant_name)
-    const dateStr = new Date().toISOString().split("T")[0]
+    const dateStr = getTodayISO()
     const filename = `tenant-journey-${tenantNameSlug}-${dateStr}.pdf`
 
     // Convert Buffer to Uint8Array for NextResponse compatibility

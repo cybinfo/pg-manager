@@ -12,6 +12,7 @@ import {
   VisitorContactSearchResult,
   EnquirySource,
 } from "@/types/visitors.types"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 interface Property {
   id: string
@@ -336,7 +337,7 @@ export function useVisitorForm() {
             service_type: selectedPerson.occupation || null,
             id_type: selectedPerson.id_documents?.[0]?.type || null,
             id_number: selectedPerson.id_documents?.[0]?.number || null,
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", visitorContactId)
       }
@@ -361,7 +362,7 @@ export function useVisitorForm() {
       let billId: string | null = null
       if (formData.create_bill && overnightCharge && overnightCharge > 0 && numNights && chargePerNight && formData.tenant_id) {
         const billNumber = `VIS-${Date.now().toString(36).toUpperCase()}`
-        const today = new Date().toISOString().split("T")[0]
+        const today = getTodayISO()
 
         const { data: billData, error: billError } = await supabase
           .from("bills")
@@ -405,7 +406,7 @@ export function useVisitorForm() {
         id_type: selectedPerson.id_documents?.[0]?.type || null,
         id_number: selectedPerson.id_documents?.[0]?.number || null,
         purpose: formData.purpose || null,
-        check_in_time: new Date().toISOString(),
+        check_in_time: getNowISO(),
         is_overnight: formData.is_overnight,
         num_nights: numNights,
         charge_per_night: chargePerNight,

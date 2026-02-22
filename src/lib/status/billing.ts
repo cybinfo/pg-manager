@@ -44,6 +44,8 @@ export const POLICE_VERIFICATION_STATUS: Record<string, StatusConfig> = {
 }
 
 export const REFUND_TYPE_LABELS: Record<string, string> = {
+  security_deposit: "Security Deposit",
+  advance_rent: "Advance Rent",
   deposit_refund: "Deposit Refund",
   overpayment: "Overpayment",
   adjustment: "Adjustment",
@@ -153,4 +155,35 @@ export const PERSON_TAG_ICONS: Record<string, string> = {
   service_provider: "Wrench",
   frequent: "Star",
   vip: "Star",
+}
+
+// ============================================================================
+// BILL STATUS VARIANT CONFIG (for StatusBadge, TableBadge)
+// ============================================================================
+
+export const BILL_STATUS: Record<string, StatusConfig> = {
+  unpaid: { label: "Unpaid", variant: "warning" },
+  pending: { label: "Pending", variant: "warning" },
+  partial: { label: "Partial", variant: "muted" },
+  paid: { label: "Paid", variant: "success" },
+  overdue: { label: "Overdue", variant: "error" },
+  cancelled: { label: "Cancelled", variant: "muted" },
+}
+
+export const BILL_STATUS_TEXT_COLORS: Record<string, string> = {
+  paid: "text-success",
+  pending: "text-warning",
+  partial: "text-info",
+  overdue: "text-destructive",
+}
+
+// ============================================================================
+// ROOM STATUS VARIANT CONFIG
+// ============================================================================
+
+export const ROOM_STATUS: Record<string, StatusConfig> = {
+  available: { label: "Available", variant: "success" },
+  occupied: { label: "Occupied", variant: "error" },
+  partially_occupied: { label: "Partially Occupied", variant: "warning" },
+  maintenance: { label: "Maintenance", variant: "muted" },
 }

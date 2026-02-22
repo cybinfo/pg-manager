@@ -13,8 +13,9 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
+import { getTodayISO } from "@/lib/date-helpers"
 import { LIBRARY_PAYMENT_METHOD_FILTER, createStatusFilter } from "@/lib/filter-presets"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatCurrency } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { Avatar } from "@/components/ui/avatar"
 import { LIBRARY_PAYMENT_TYPE_CONFIG, LIBRARY_PAYMENT_METHOD_CONFIG, LIBRARY_PAYMENT_STATUS_CONFIG } from "@/types/library.types"
@@ -216,7 +217,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     icon: CreditCard,
     compute: (items) => {
       const total = items.reduce((sum: number, p) => sum + (Number(p.amount) || 0), 0)
-      return `\u20B9${total.toLocaleString("en-IN")}`
+      return formatCurrency(total)
     },
   },
   createStatusMetric("subscription", "Subscriptions", Users, { id: "subscriptions", column: "payment_type" }),
@@ -226,7 +227,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     label: "Today",
     icon: Calendar,
     compute: (items) => {
-      const today = new Date().toISOString().split("T")[0]
+      const today = getTodayISO()
       return items.filter((p) => p.payment_date === today).length
     },
   },

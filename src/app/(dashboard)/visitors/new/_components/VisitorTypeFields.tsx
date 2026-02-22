@@ -12,6 +12,7 @@ import {
   VISITOR_RELATIONS,
   ENQUIRY_SOURCE_LABELS,
 } from "@/types/visitors.types"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface Tenant {
   id: string
@@ -242,7 +243,7 @@ export function VisitorTypeFields({
                 value={formData.follow_up_date}
                 onChange={onChange}
                 disabled={loading}
-                min={new Date().toISOString().split("T")[0]}
+                min={getTodayISO()}
               />
             </div>
           </div>

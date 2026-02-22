@@ -12,6 +12,7 @@ import { showError, showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { createClient } from "@/lib/supabase/client"
 import type { Tenant, TenantStay } from "@/types/tenants.types"
+import { getTodayISO } from "@/lib/date-helpers"
 
 export interface TransferRoom {
   id: string
@@ -64,7 +65,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
         from_room_id: tenant.room?.id,
         to_property_id: selectedRoom.property_id,
         to_room_id: selectedRoom.id,
-        transfer_date: new Date().toISOString().split("T")[0],
+        transfer_date: getTodayISO(),
         reason: transferData.reason || null,
         notes: transferData.notes || null,
         old_rent: tenant.monthly_rent,
@@ -74,7 +75,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
       // Update current stay
       await supabase
         .from("tenant_stays")
-        .update({ status: "transferred", exit_date: new Date().toISOString().split("T")[0], exit_reason: "transferred" })
+        .update({ status: "transferred", exit_date: getTodayISO(), exit_reason: "transferred" })
         .eq("tenant_id", tenant.id)
         .eq("status", "active")
 
@@ -85,7 +86,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
         tenant_id: tenant.id,
         property_id: selectedRoom.property_id,
         room_id: selectedRoom.id,
-        join_date: new Date().toISOString().split("T")[0],
+        join_date: getTodayISO(),
         monthly_rent: newRent,
         security_deposit: tenant.security_deposit,
         status: "active",

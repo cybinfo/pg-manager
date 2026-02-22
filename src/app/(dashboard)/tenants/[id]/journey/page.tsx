@@ -22,6 +22,7 @@ import { FinancialSummary } from "@/components/journey/FinancialSummary"
 import { PredictiveInsights, CompactInsights } from "@/components/journey/PredictiveInsights"
 import { JourneyFilters } from "@/components/journey/JourneyFilters"
 import { Timeline } from "@/components/journey/Timeline"
+import { getTodayISO } from "@/lib/date-helpers"
 
 // ============================================
 // Journey Page
@@ -159,7 +160,7 @@ function JourneyPageContent({ tenantId }: JourneyPageContentProps) {
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
-        a.download = `journey-report-${journey?.tenant_name?.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.pdf`
+        a.download = `journey-report-${journey?.tenant_name?.replace(/\s+/g, "-")}-${getTodayISO()}.pdf`
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)

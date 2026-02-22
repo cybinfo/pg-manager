@@ -12,6 +12,7 @@
 import { createClient, hasStoredSession } from "@/lib/supabase/client"
 import { User, Session, AuthError } from "@supabase/supabase-js"
 import { TOKEN_REFRESH_BUFFER_SECONDS } from "@/lib/constants"
+import { getNowISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -267,9 +268,9 @@ export async function signOut(): Promise<{ success: boolean; error: SessionError
           metadata: {
             operation: "logout",
             email: user.email,
-            timestamp: new Date().toISOString(),
+            timestamp: getNowISO(),
           },
-          created_at: new Date().toISOString(),
+          created_at: getNowISO(),
         }).then(({ error: auditError }: { error: { message: string } | null }) => {
           if (auditError) {
             console.warn("[Session] Failed to log logout audit event:", auditError.message)

@@ -67,6 +67,7 @@ import {
   ASSIGNMENT_REASONS,
   AssignmentReason,
 } from "@/types/meters.types"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 // ============================================
 // Icon mapping
@@ -95,13 +96,13 @@ export default function MeterDetailPage() {
   const [newStatus, setNewStatus] = useState<MeterStatus>("faulty")
   const [assignForm, setAssignForm] = useState({
     room_id: "",
-    start_date: new Date().toISOString().split("T")[0],
+    start_date: getTodayISO(),
     start_reading: "0",
     reason: "initial" as AssignmentReason,
     notes: "",
   })
   const [endForm, setEndForm] = useState({
-    end_date: new Date().toISOString().split("T")[0],
+    end_date: getTodayISO(),
     end_reading: "",
     new_status: "" as MeterStatus | "",
   })
@@ -206,7 +207,7 @@ export default function MeterDetailPage() {
     if (endForm.new_status && meter) {
       await supabase
         .from("meters")
-        .update({ status: endForm.new_status, updated_at: new Date().toISOString() })
+        .update({ status: endForm.new_status, updated_at: getNowISO() })
         .eq("id", meter.id)
     }
 

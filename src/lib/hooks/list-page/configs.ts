@@ -6,6 +6,7 @@
  */
 
 import type { ListPageConfig } from "./types"
+import { formatCurrency } from "@/lib/format"
 import {
   NOTICE_TYPE_LABELS,
   REFUND_STATUS_LABELS,
@@ -430,7 +431,7 @@ export const DAILY_SPEND_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = 
     return {
       spend_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       spend_year: date.getFullYear().toString(),
-      display_amount: `₹${(item.total as number)?.toLocaleString("en-IN")}`,
+      display_amount: formatCurrency(item.total as number),
       display_qty: `${item.quantity} ${item.unit}`,
     }
   },
@@ -478,7 +479,7 @@ export const BILL_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
       is_overdue: dueDate && today > dueDate && item.status !== "paid",
       status_label: BILL_PAYMENT_STATUS_LABELS[item.status as string]?.label || item.status,
       status_label_hi: BILL_PAYMENT_STATUS_LABELS[item.status as string]?.labelHi || item.status,
-      display_amount: `₹${(item.bill_amount as number)?.toLocaleString("en-IN")}`,
+      display_amount: formatCurrency(item.bill_amount as number),
       balance_due: ((item.bill_amount as number) || 0) - ((item.paid_amount as number) || 0),
     }
   },
@@ -530,9 +531,9 @@ export const SERVICE_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>
       service_month: serviceDate?.toLocaleDateString("en-US", { month: "long", year: "numeric" }) || "",
       service_year: serviceDate?.getFullYear().toString() || "",
       warranty_status: warrantyStatus,
-      display_gross: `₹${(item.gross_amount as number)?.toLocaleString("en-IN")}`,
-      display_net: `₹${(item.net_amount as number)?.toLocaleString("en-IN")}`,
-      display_tds: item.tds_amount ? `₹${(item.tds_amount as number)?.toLocaleString("en-IN")}` : "-",
+      display_gross: formatCurrency(item.gross_amount as number),
+      display_net: formatCurrency(item.net_amount as number),
+      display_tds: item.tds_amount ? formatCurrency(item.tds_amount as number) : "-",
       linked_to_complaint: !!item.complaint_id,
     }
   },
@@ -556,7 +557,7 @@ export const KITCHEN_WASTAGE_LIST_CONFIG: ListPageConfig<Record<string, unknown>
       wastage_year: date.getFullYear().toString(),
       reason_label: KITCHEN_WASTAGE_REASON_LABELS[item.reason as string]?.label || item.reason,
       reason_label_hi: KITCHEN_WASTAGE_REASON_LABELS[item.reason as string]?.labelHi || item.reason,
-      display_value: `₹${(item.estimated_value as number)?.toLocaleString("en-IN")}`,
+      display_value: formatCurrency(item.estimated_value as number),
       display_qty: `${item.quantity} ${item.unit}`,
     }
   },
@@ -580,7 +581,7 @@ export const MISC_TRANSACTION_LIST_CONFIG: ListPageConfig<Record<string, unknown
       transaction_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       transaction_year: date.getFullYear().toString(),
       type_label: item.transaction_type === "in" ? "Money In" : "Money Out",
-      display_amount: `₹${(item.amount as number)?.toLocaleString("en-IN")}`,
+      display_amount: formatCurrency(item.amount as number),
     }
   },
 }
@@ -690,7 +691,7 @@ export const LIBRARY_MEMBERSHIP_LIST_CONFIG: ListPageConfig<Record<string, unkno
       hours_display: item.hours_included
         ? `${item.hours_used || 0}h / ${item.hours_included}h`
         : "Unlimited",
-      display_amount: `₹${(item.final_amount as number)?.toLocaleString("en-IN")}`,
+      display_amount: formatCurrency(item.final_amount as number),
     }
   },
 }
@@ -737,8 +738,8 @@ export const LIBRARY_LOCKER_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
     return {
       status_label: LIBRARY_LOCKER_STATUS_LABELS[item.status as string] || (item.status as string),
       size_label: LIBRARY_LOCKER_SIZE_LABELS[item.size as string] || (item.size as string),
-      display_rent: item.monthly_rent ? `₹${(item.monthly_rent as number).toLocaleString("en-IN")}/mo` : "-",
-      display_deposit: item.deposit_amount ? `₹${(item.deposit_amount as number).toLocaleString("en-IN")}` : "-",
+      display_rent: item.monthly_rent ? `${formatCurrency(item.monthly_rent as number)}/mo` : "-",
+      display_deposit: item.deposit_amount ? formatCurrency(item.deposit_amount as number) : "-",
     }
   },
 }
@@ -761,7 +762,7 @@ export const LIBRARY_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>
       type_label: LIBRARY_PAYMENT_TYPE_LABELS[item.payment_type as string] || (item.payment_type as string),
       status_label: LIBRARY_PAYMENT_STATUS_LABELS[item.status as string] || (item.status as string),
       method_label: LIBRARY_PAYMENT_METHOD_LABELS[item.payment_method as string] || (item.payment_method as string),
-      display_amount: `₹${(item.amount as number)?.toLocaleString("en-IN")}`,
+      display_amount: formatCurrency(item.amount as number),
       display_name: (item.member as { person?: { name?: string }; name?: string })?.person?.name
         || (item.member as { name?: string })?.name || "Unknown",
     }
@@ -778,7 +779,7 @@ export const LIBRARY_PLAN_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
   computedFields: (item) => ({
     hours_display: item.hours_included ? `${item.hours_included}h` : "Unlimited",
     validity_display: `${item.validity_days} days`,
-    display_price: `₹${(item.base_price as number)?.toLocaleString("en-IN")}`,
+    display_price: formatCurrency(item.base_price as number),
     status_label: item.is_active ? "Active" : "Inactive",
   }),
 }

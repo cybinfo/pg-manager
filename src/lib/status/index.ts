@@ -11,6 +11,7 @@ export type { StatusDotVariant, StatusVariant, StatusConfig, StatusConfigWithIco
 // Shared
 export { ACTIVE_STATUS, VISITOR_STATUS, getStatusConfig, getStatusInfo } from "./shared"
 export { INQUIRY_STATUS_LABELS, INQUIRY_SOURCE_LABELS, INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_COLORS } from "./shared"
+export { OCCUPANCY_STATUS_COLORS, PG_ROOM_STATUS_COLORS } from "./shared"
 
 // Tenant & Approval
 export { TENANT_STATUS, APPROVAL_STATUS, APPROVAL_TYPE_LABELS, APPROVAL_PRIORITY } from "./tenant"
@@ -28,6 +29,7 @@ export {
   METER_TYPES, METER_STATUS_LABELS, METER_TYPE_LABELS,
   PERSON_TAG_COLORS, PERSON_TAG_ICONS,
   KITCHEN_WASTAGE_REASON_LABELS, BILL_PAYMENT_STATUS_LABELS,
+  BILL_STATUS, BILL_STATUS_TEXT_COLORS, ROOM_STATUS,
 } from "./billing"
 
 // Library

@@ -26,6 +26,6 @@ export const COMPLAINT_CATEGORIES: Record<string, string> = {
   cleanliness: "Cleanliness",
   appliances: "Appliances",
   security: "Security",
-  noise: "Noise",
+  noise: "Noise/Disturbance",
   other: "Other",
 }

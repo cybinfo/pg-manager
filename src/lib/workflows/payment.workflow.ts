@@ -25,6 +25,7 @@ import { buildPaymentNotification } from "@/lib/services/notification.service"
 import { createAuditEvent } from "@/lib/services/audit.service"
 import { formatCurrency } from "@/lib/format"
 import { softDelete } from "@/lib/audit"
+import { getNowISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -178,7 +179,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
           status: "completed",
           owner_id: context.actor_id,
           created_by: context.actor_id,
-          created_at: new Date().toISOString(),
+          created_at: getNowISO(),
         }
 
         const { data: payment, error } = await supabase
@@ -228,7 +229,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
             balance_due: Math.max(0, newBalance),
             status: newStatus,
             last_payment_date: input.payment_date,
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", input.bill_id)
 
@@ -270,7 +271,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
           .from("tenants")
           .update({
             advance_balance: newBalance,
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", input.tenant_id)
 
@@ -457,7 +458,7 @@ export const refundPaymentWorkflow: WorkflowDefinition<RefundPaymentInput, Refun
             refund_method: input.refund_method,
             reference_number: input.refund_reference || null,
             processed_by: context.actor_id,
-            created_at: new Date().toISOString(),
+            created_at: getNowISO(),
           })
           .select()
           .single()
@@ -470,7 +471,7 @@ export const refundPaymentWorkflow: WorkflowDefinition<RefundPaymentInput, Refun
             .update({
               notes: `${payment.notes || ""}\nREFUND: ${formatCurrency(input.refund_amount)} on ${new Date().toLocaleDateString()} - ${input.refund_reason}`,
               status: "refunded",
-              updated_at: new Date().toISOString(),
+              updated_at: getNowISO(),
             })
             .eq("id", input.payment_id)
 
@@ -509,7 +510,7 @@ export const refundPaymentWorkflow: WorkflowDefinition<RefundPaymentInput, Refun
             paid_amount: Math.max(0, newPaidAmount),
             balance_due: newBalance,
             status: newStatus,
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", bill.id)
 

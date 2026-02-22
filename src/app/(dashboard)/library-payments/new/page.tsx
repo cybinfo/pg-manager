@@ -19,6 +19,7 @@ import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
 import { Currency } from "@/components/ui/currency"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface Member {
   id: string
@@ -46,7 +47,7 @@ export default function NewLibraryPaymentPage() {
     table: "library_payments",
     initialData: {
       member_id: "",
-      payment_date: new Date().toISOString().split("T")[0],
+      payment_date: getTodayISO(),
       amount: "",
       payment_type: "subscription",
       payment_method: "cash",

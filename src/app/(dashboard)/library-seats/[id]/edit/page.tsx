@@ -18,6 +18,7 @@ import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Armchair, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { getNowISO } from "@/lib/date-helpers"
 
 export default function EditLibrarySeatPage({
   params,
@@ -69,7 +70,7 @@ export default function EditLibrarySeatPage({
       has_lamp: data.has_lamp,
       is_window_seat: data.is_window_seat,
       status: data.status,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowISO(),
     }),
   })
 

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { BILL_STATUS_TEXT_COLORS } from "@/lib/status"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 
 // ============================================
@@ -226,12 +227,7 @@ export function PaymentAmount({
   paidAmount = 0,
   className,
 }: PaymentAmountProps) {
-  const statusColors = {
-    paid: "text-success",
-    pending: "text-warning",
-    partial: "text-info",
-    overdue: "text-destructive",
-  }
+  const statusColors = BILL_STATUS_TEXT_COLORS
 
   return (
     <div className={cn("space-y-0.5", className)}>

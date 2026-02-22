@@ -24,7 +24,8 @@ import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
-import { PAYMENT_METHODS } from "@/lib/status"
+import { PAYMENT_METHODS, REFUND_STATUS, REFUND_TYPE_LABELS } from "@/lib/status"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import {
   Wallet,
   User,
@@ -71,12 +72,7 @@ interface Refund {
   exit_clearance: { id: string; expected_exit_date: string; actual_exit_date: string | null; settlement_status: string } | null
 }
 
-const refundTypeLabels: Record<string, string> = {
-  security_deposit: "Security Deposit",
-  advance_rent: "Advance Rent",
-  overpayment: "Overpayment",
-  other: "Other",
-}
+const refundTypeLabels = REFUND_TYPE_LABELS
 
 export default function RefundDetailPage() {
   const params = useParams()
@@ -125,8 +121,8 @@ export default function RefundDetailPage() {
 
     // If marking as completed, set processed info
     if (formData.status === "completed" && refund.status !== "completed") {
-      updates.refund_date = formData.refund_date || new Date().toISOString().split("T")[0]
-      updates.processed_at = new Date().toISOString()
+      updates.refund_date = formData.refund_date || getTodayISO()
+      updates.processed_at = getNowISO()
     } else if (formData.refund_date) {
       updates.refund_date = formData.refund_date
     }
@@ -186,15 +182,9 @@ export default function RefundDetailPage() {
           }
           status={
             <TableBadge
-              variant={
-                refund.status === "completed"
-                  ? "success"
-                  : refund.status === "pending"
-                  ? "warning"
-                  : "error"
-              }
+              variant={REFUND_STATUS[refund.status]?.variant || "error"}
             >
-              {refund.status}
+              {REFUND_STATUS[refund.status]?.label || refund.status}
             </TableBadge>
           }
           actions={
@@ -347,15 +337,9 @@ export default function RefundDetailPage() {
                   label="Status"
                   value={
                     <TableBadge
-                      variant={
-                        refund.status === "completed"
-                          ? "success"
-                          : refund.status === "pending"
-                          ? "warning"
-                          : "error"
-                      }
+                      variant={REFUND_STATUS[refund.status]?.variant || "error"}
                     >
-                      {refund.status}
+                      {REFUND_STATUS[refund.status]?.label || refund.status}
                     </TableBadge>
                   }
                 />

@@ -20,6 +20,7 @@ import {
 } from "@/lib/features"
 import { PageHeader } from "@/components/ui/page-header"
 import { PageSkeleton } from "@/components/ui/loading"
+import { METER_TYPE_CONFIG, MeterType } from "@/types/meters.types"
 import { OwnerGuard } from "@/components/auth"
 import { useAuth } from "@/lib/auth"
 import {
@@ -178,11 +179,6 @@ function SettingsContent() {
 
         // Extract utility rates from charge types with calculation_config
         const utilityCodes = ['electricity', 'water', 'gas']
-        const unitLabels: Record<string, string> = {
-          electricity: 'kWh',
-          water: 'L',
-          gas: 'm³'
-        }
         const utilities = chargeTypesRes.data
           .filter((ct: ChargeType) => utilityCodes.includes(ct.code))
           .map((ct: ChargeType): UtilityRate => ({
@@ -193,7 +189,7 @@ function SettingsContent() {
             rate_per_unit: ct.calculation_config?.rate_per_unit || 0,
             flat_amount: ct.calculation_config?.default_amount || 0,
             split_by: ct.calculation_config?.split_by || 'occupants',
-            unit_label: unitLabels[ct.code] || 'units'
+            unit_label: METER_TYPE_CONFIG[ct.code as MeterType]?.unit || 'units'
           }))
         setUtilityRates(utilities)
       }

@@ -22,6 +22,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { DOCUMENT_STATUS } from "@/lib/status"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,11 +50,7 @@ interface TenantDocument {
   reviewed_at: string | null
 }
 
-const docStatusMap: Record<string, { variant: "warning" | "success" | "error"; label: string }> = {
-  pending: { variant: "warning", label: "Pending Review" },
-  approved: { variant: "success", label: "Approved" },
-  rejected: { variant: "error", label: "Rejected" },
-}
+const docStatusMap = DOCUMENT_STATUS
 
 const documentTypeLabels: Record<string, string> = {
   id_proof: "ID Proof",
@@ -265,7 +262,7 @@ export default function TenantDocumentsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold truncate">{doc.name}</h3>
-                        <StatusBadge variant={statusMapping?.variant} label={statusMapping?.label} />
+                        <StatusBadge variant={statusMapping?.variant as "warning" | "success" | "error"} label={statusMapping?.label} />
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {documentTypeLabels[doc.document_type] || doc.document_type}

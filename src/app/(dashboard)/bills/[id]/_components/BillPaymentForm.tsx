@@ -8,6 +8,7 @@ import { DetailSection } from "@/components/ui"
 import { CreditCard, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface BillPaymentFormProps {
   billId: string
@@ -29,7 +30,7 @@ export function BillPaymentForm({
   const [submitting, setSubmitting] = useState(false)
   const [paymentData, setPaymentData] = useState({
     amount: "",
-    payment_date: new Date().toISOString().split("T")[0],
+    payment_date: getTodayISO(),
     payment_method: "cash",
     reference_number: "",
     notes: "",

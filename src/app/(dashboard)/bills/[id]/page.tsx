@@ -25,6 +25,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
+import { BILL_STATUS } from "@/lib/status"
 import { BillPaymentForm, BillBreakdown, BillInfoSidebar } from "./_components"
 
 interface Payment {
@@ -47,14 +48,9 @@ interface BillWithDetails extends Bill {
   room?: { room_number: string } | null
 }
 
-const statusLabels: Record<string, string> = {
-  unpaid: "Unpaid",
-  pending: "Pending",
-  partial: "Partial Payment",
-  paid: "Paid",
-  overdue: "Overdue",
-  cancelled: "Cancelled",
-}
+const statusLabels: Record<string, string> = Object.fromEntries(
+  Object.entries(BILL_STATUS).map(([k, v]) => [k, v.label])
+)
 
 export default function BillDetailPage() {
   const router = useRouter()

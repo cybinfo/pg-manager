@@ -24,6 +24,7 @@
 import { useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getNowISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -86,7 +87,7 @@ export function useInlineEdit({
         // Add updated_at timestamp
         const payload = {
           ...updates,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         }
 
         const { error } = await supabase
@@ -212,7 +213,7 @@ export function useBatchInlineEdit({
 
         const payload = {
           ...updates,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         }
 
         const { error } = await supabase

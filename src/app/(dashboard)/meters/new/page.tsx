@@ -37,6 +37,7 @@ import {
   AssignmentReason,
   METER_TYPE_CONFIG,
 } from "@/types/meters.types"
+import { getTodayISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -152,7 +153,7 @@ export default function NewMeterPage() {
             owner_id: userId,
             meter_id: meterData.id,
             room_id: data.room_id,
-            start_date: new Date().toISOString().split("T")[0],
+            start_date: getTodayISO(),
             start_reading: parseFloat(data.initial_reading as string) || 0,
             reason: data.assignment_reason,
           })

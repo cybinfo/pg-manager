@@ -16,6 +16,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { BILL_STATUS } from "@/lib/status"
 
 // ============================================
 // Types
@@ -158,13 +159,7 @@ const columns: Column<BillPaymentListItem>[] = [
       { value: "overdue", label: "Overdue" },
     ],
     render: (bill) => {
-      const statusConfig: Record<string, { variant: "success" | "warning" | "error" | "muted"; label: string }> = {
-        paid: { variant: "success", label: "Paid" },
-        pending: { variant: "warning", label: "Pending" },
-        partial: { variant: "muted", label: "Partial" },
-        overdue: { variant: "error", label: "Overdue" },
-      }
-      const config = statusConfig[bill.status] || { variant: "muted", label: bill.status }
+      const config = BILL_STATUS[bill.status] || { variant: "muted", label: bill.status }
 
       return <TableBadge variant={config.variant}>{config.label}</TableBadge>
     },

@@ -6,24 +6,7 @@ import { DetailSection, InfoRow } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { FileText, Calendar, User, Phone, Mail, Home, Building2 } from "lucide-react"
 import { formatDate } from "@/lib/format"
-
-const statusLabels: Record<string, string> = {
-  unpaid: "Unpaid",
-  pending: "Pending",
-  partial: "Partial Payment",
-  paid: "Paid",
-  overdue: "Overdue",
-  cancelled: "Cancelled",
-}
-
-const statusConfig: Record<string, "warning" | "info" | "success" | "error" | "muted"> = {
-  unpaid: "warning",
-  pending: "warning",
-  partial: "info",
-  paid: "success",
-  overdue: "error",
-  cancelled: "muted",
-}
+import { BILL_STATUS } from "@/lib/status"
 
 interface BillInfoSidebarProps {
   bill: {
@@ -67,8 +50,8 @@ export function BillInfoSidebar({ bill, isOverdue }: BillInfoSidebarProps) {
           label="Status"
           value={
             <StatusBadge
-              status={statusConfig[bill.status] || "muted"}
-              label={statusLabels[bill.status] || bill.status}
+              status={(BILL_STATUS[bill.status] || BILL_STATUS.pending).variant}
+              label={(BILL_STATUS[bill.status] || { label: bill.status }).label}
               size="sm"
             />
           }

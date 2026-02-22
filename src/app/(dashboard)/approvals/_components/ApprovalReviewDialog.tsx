@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { formatDateTime } from "@/lib/format"
+import { getNowISO } from "@/lib/date-helpers"
 import { APPROVAL_TYPE_LABELS } from "@/lib/status-config"
 import {
   Dialog,
@@ -129,7 +130,7 @@ export function ApprovalReviewDialog({
       .update({
         status: "approved",
         decided_by: user?.id,
-        decided_at: new Date().toISOString(),
+        decided_at: getNowISO(),
         decision_notes: decisionNotes || null,
       } as Record<string, unknown>)
       .eq("id", approval.id)
@@ -204,7 +205,7 @@ export function ApprovalReviewDialog({
       .update({
         status: "rejected",
         decided_by: user?.id,
-        decided_at: new Date().toISOString(),
+        decided_at: getNowISO(),
         decision_notes: decisionNotes,
       } as Record<string, unknown>)
       .eq("id", approval.id)

@@ -40,6 +40,7 @@ import {
   ERROR_CODES,
 } from "./types"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { getNowISO } from "@/lib/date-helpers"
 import { normalizePhoneForComparison } from "@/lib/phone"
 import {
   ONE_DAY_MS,
@@ -187,7 +188,7 @@ export async function getTenantJourney(
       insights: insightsResult,
       linked_visitors: visitorsResult.linked,
       pre_tenant_visits: visitorsResult.preTenant,
-      generated_at: new Date().toISOString(),
+      generated_at: getNowISO(),
     })
   } catch (error) {
     journeyLogger.error("Error fetching tenant journey", extractErrorMeta(error))
@@ -1219,7 +1220,7 @@ function calculatePredictiveInsights(
       severity: "high",
       title: "Consecutive Late Payments",
       description: `${analytics.bills_paid_late} bills were paid after due date`,
-      created_at: new Date().toISOString(),
+      created_at: getNowISO(),
     })
   }
 
@@ -1230,7 +1231,7 @@ function calculatePredictiveInsights(
       severity: financial.total_overdue > OVERDUE_THRESHOLD_HIGH ? "high" : "medium",
       title: "Overdue Amount",
       description: `${formatCurrency(financial.total_overdue)} is overdue`,
-      created_at: new Date().toISOString(),
+      created_at: getNowISO(),
       action_url: `/payments/new?tenant=${tenant.id}`,
     })
   }
@@ -1242,7 +1243,7 @@ function calculatePredictiveInsights(
       severity: "low",
       title: "Security Deposit Below Rent",
       description: `Deposit (${formatCurrency(financial.security_deposit_paid)}) is less than monthly rent`,
-      created_at: new Date().toISOString(),
+      created_at: getNowISO(),
     })
   }
 

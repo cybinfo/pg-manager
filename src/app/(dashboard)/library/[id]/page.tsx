@@ -38,6 +38,7 @@ import {
   CreditCard,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
+import { OCCUPANCY_STATUS_COLORS } from "@/lib/status"
 import type {
   Library as LibraryType,
   LibrarySection,
@@ -45,13 +46,6 @@ import type {
   LibraryLocker,
   LibraryPayment,
 } from "@/types/library.types"
-
-const statusColors: Record<string, string> = {
-  available: "bg-success/10 text-success",
-  occupied: "bg-info/10 text-info",
-  reserved: "bg-warning/10 text-warning",
-  maintenance: "bg-muted text-muted-foreground",
-}
 
 export default function LibraryDetailPage() {
   const params = useParams()
@@ -337,7 +331,7 @@ export default function LibraryDetailPage() {
                     {locker.size} • {locker.monthly_rent ? <Currency amount={locker.monthly_rent} /> : "—"}/mo
                   </p>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[locker.status]}`}>
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${OCCUPANCY_STATUS_COLORS[locker.status]}`}>
                   {locker.status}
                 </span>
               </div>

@@ -24,6 +24,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { Currency } from "@/components/ui/currency"
 import { withCreatedBy } from "@/lib/audit"
 import { LIBRARY_LOCKER_SIZE_CONFIG } from "@/types/library.types"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 interface MemberData {
   id: string
@@ -63,7 +64,7 @@ export default function AssignLockerToMemberPage({
   const [selectedLockerId, setSelectedLockerId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
-    start_date: new Date().toISOString().split("T")[0],
+    start_date: getTodayISO(),
     end_date: "",
     rent_amount: "",
     deposit_amount: "",
@@ -203,7 +204,7 @@ export default function AssignLockerToMemberPage({
           current_member_id: memberId,
           assigned_from: formData.start_date,
           assigned_until: formData.end_date || null,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", selectedLockerId)
 
@@ -218,7 +219,7 @@ export default function AssignLockerToMemberPage({
         .from("library_members")
         .update({
           locker_id: selectedLockerId,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", memberId)
 

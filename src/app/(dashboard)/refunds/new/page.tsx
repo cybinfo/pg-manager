@@ -26,6 +26,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PermissionGuard } from "@/components/auth"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 interface Tenant {
   id: string
@@ -63,7 +64,7 @@ export default function NewRefundPage() {
     amount: "",
     payment_mode: "cash",
     reference_number: "",
-    refund_date: new Date().toISOString().split("T")[0],
+    refund_date: getTodayISO(),
     reason: "",
     notes: "",
   })
@@ -169,7 +170,7 @@ export default function NewRefundPage() {
         reason: formData.reason || null,
         notes: formData.notes || null,
         processed_by: formData.refund_date ? session.user.id : null,
-        processed_at: formData.refund_date ? new Date().toISOString() : null,
+        processed_at: formData.refund_date ? getNowISO() : null,
       }
 
       const { data, error } = await supabase

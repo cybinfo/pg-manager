@@ -363,10 +363,10 @@ export default function ReportsPage() {
           ["Occupancy Rate", `${reportData.occupancyRate.toFixed(1)}%`],
           ["Active Tenants", reportData.activeTenants],
           ["New Tenants (Period)", reportData.newTenantsThisMonth],
-          ["Revenue (Period)", `\u20B9${reportData.totalCollectedThisMonth.toLocaleString("en-IN")}`],
-          ["Total Billed", `\u20B9${reportData.totalBilled.toLocaleString("en-IN")}`],
-          ["Pending Dues", `\u20B9${reportData.totalPendingDues.toLocaleString("en-IN")}`],
-          ["Overdue Amount", `\u20B9${reportData.overdueAmount.toLocaleString("en-IN")}`],
+          ["Revenue (Period)", formatCurrency(reportData.totalCollectedThisMonth)],
+          ["Total Billed", formatCurrency(reportData.totalBilled)],
+          ["Pending Dues", formatCurrency(reportData.totalPendingDues)],
+          ["Overdue Amount", formatCurrency(reportData.overdueAmount)],
           ["Open Complaints", reportData.openComplaints],
         )
         break
@@ -377,8 +377,8 @@ export default function ReportsPage() {
           ...reportData.propertyStats.map((p) => [
             p.name, p.totalRooms, p.occupiedRooms,
             p.totalRooms > 0 ? `${((p.occupiedRooms / p.totalRooms) * 100).toFixed(1)}%` : "0%",
-            `\u20B9${p.revenue.toLocaleString("en-IN")}`,
-            `\u20B9${Math.max(0, p.pendingDues).toLocaleString("en-IN")}`,
+            formatCurrency(p.revenue),
+            formatCurrency(Math.max(0, p.pendingDues)),
           ]),
         )
         break
@@ -388,8 +388,8 @@ export default function ReportsPage() {
           ["Month", "Collected", "Billed"],
           ...reportData.monthlyRevenue.map((m) => [
             m.month,
-            `\u20B9${m.collected.toLocaleString("en-IN")}`,
-            `\u20B9${m.billed.toLocaleString("en-IN")}`,
+            formatCurrency(m.collected),
+            formatCurrency(m.billed),
           ]),
         )
         break
@@ -397,10 +397,10 @@ export default function ReportsPage() {
         filename = "pg-manager-aging-report.csv"
         rows.push(
           ["Age Bucket", "Amount"],
-          ["Current (Not Due)", `\u20B9${reportData.duesAging.current.toLocaleString("en-IN")}`],
-          ["1-30 Days", `\u20B9${reportData.duesAging.days30.toLocaleString("en-IN")}`],
-          ["31-60 Days", `\u20B9${reportData.duesAging.days60.toLocaleString("en-IN")}`],
-          ["60+ Days", `\u20B9${reportData.duesAging.days90Plus.toLocaleString("en-IN")}`],
+          ["Current (Not Due)", formatCurrency(reportData.duesAging.current)],
+          ["1-30 Days", formatCurrency(reportData.duesAging.days30)],
+          ["31-60 Days", formatCurrency(reportData.duesAging.days60)],
+          ["60+ Days", formatCurrency(reportData.duesAging.days90Plus)],
         )
         break
       default:

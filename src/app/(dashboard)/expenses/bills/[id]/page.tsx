@@ -27,7 +27,8 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
-import { PAYMENT_METHODS } from "@/lib/status"
+import { PAYMENT_METHODS, BILL_STATUS } from "@/lib/status"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -122,9 +123,9 @@ export default function BillPaymentDetailPage({
         .from("bill_payments")
         .update({
           paid_amount: bill.bill_amount,
-          payment_date: new Date().toISOString().split("T")[0],
+          payment_date: getTodayISO(),
           status: "paid",
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", id)
 
@@ -137,7 +138,7 @@ export default function BillPaymentDetailPage({
           ? {
               ...prev,
               paid_amount: prev.bill_amount,
-              payment_date: new Date().toISOString().split("T")[0],
+              payment_date: getTodayISO(),
               status: "paid",
             }
           : null
@@ -164,13 +165,11 @@ export default function BillPaymentDetailPage({
     )
   }
 
-  const statusConfig: Record<string, { variant: "success" | "warning" | "error" | "muted"; label: string; icon: React.ElementType }> = {
-    paid: { variant: "success", label: "Paid", icon: Check },
-    pending: { variant: "warning", label: "Pending", icon: Calendar },
-    partial: { variant: "muted", label: "Partial", icon: CreditCard },
-    overdue: { variant: "error", label: "Overdue", icon: AlertCircle },
+  const billStatusIcons: Record<string, React.ElementType> = {
+    paid: Check, pending: Calendar, partial: CreditCard, overdue: AlertCircle,
   }
-  const status = statusConfig[bill.status] || { variant: "muted", label: bill.status, icon: Receipt }
+  const statusEntry = BILL_STATUS[bill.status] || { variant: "muted", label: bill.status }
+  const status = { ...statusEntry, icon: billStatusIcons[bill.status] || Receipt }
 
   const balanceDue = bill.bill_amount - (bill.paid_amount || 0)
   const isOverdue = bill.due_date && new Date(bill.due_date) < new Date() && bill.status !== "paid"

@@ -49,6 +49,7 @@ import {
 } from "@/components/reports"
 import { StatCard } from "@/components/ui/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface LibraryOption {
   id: string
@@ -174,7 +175,7 @@ export default function LibraryReportsPage() {
       const availableSeats = filteredSeats.filter((s) => s.status === "available").length
       const utilizationRate = totalSeats > 0 ? (occupiedSeats / totalSeats) * 100 : 0
 
-      const today = new Date().toISOString().split("T")[0]
+      const today = getTodayISO()
       const currentlyCheckedIn = filteredAttendance.filter(
         (a) => a.attendance_date === today && !a.check_out_time
       ).length
@@ -363,7 +364,7 @@ export default function LibraryReportsPage() {
           ["Utilization Rate", `${reportData.utilizationRate.toFixed(1)}%`],
           ["Active Members", reportData.activeMembers],
           ["New Members (Period)", reportData.newMembersThisMonth],
-          ["Revenue (Period)", `\u20B9${reportData.totalRevenueThisMonth.toLocaleString("en-IN")}`],
+          ["Revenue (Period)", formatCurrency(reportData.totalRevenueThisMonth)],
           ["Total Hours Used", reportData.totalHoursUsed.toFixed(1)],
           ["Total Check-ins (Period)", reportData.totalCheckInsThisMonth],
         )
@@ -374,7 +375,7 @@ export default function LibraryReportsPage() {
           ["Library", "Total Seats", "Active Members", "Revenue", "Check-ins"],
           ...reportData.libraryStats.map((l) => [
             l.name, l.totalSeats, l.activeMembers,
-            `\u20B9${l.revenue.toLocaleString("en-IN")}`, l.checkIns,
+            formatCurrency(l.revenue), l.checkIns,
           ]),
         )
         break
@@ -383,7 +384,7 @@ export default function LibraryReportsPage() {
         rows.push(
           ["Month", "Revenue", "New Members"],
           ...reportData.monthlyRevenue.map((m) => [
-            m.month, `\u20B9${m.revenue.toLocaleString("en-IN")}`, m.members,
+            m.month, formatCurrency(m.revenue), m.members,
           ]),
         )
         break
@@ -513,7 +514,7 @@ export default function LibraryReportsPage() {
                     <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
                     <Tooltip
                       formatter={(value, name) => [
-                        name === "revenue" ? `\u20B9${Number(value).toLocaleString("en-IN")}` : value,
+                        name === "revenue" ? formatCurrency(Number(value)) : value,
                         name === "revenue" ? "Revenue" : "New Members",
                       ]}
                     />

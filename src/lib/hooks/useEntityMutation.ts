@@ -33,6 +33,7 @@ import { logAuditEvent, createAuditEvent, diffObjects } from "@/lib/services/aud
 import { sendNotification } from "@/lib/services/notification.service"
 import { softDelete, softDeleteBatch, isSoftDeletableTable } from "@/lib/audit"
 import { getEntityName } from "@/lib/entity-names"
+import { getNowISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -126,7 +127,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         const insertData = {
           ...data,
           owner_id: data.owner_id || actorInfo.actor_id,
-          created_at: new Date().toISOString(),
+          created_at: getNowISO(),
         }
 
         const { data: result, error: insertError } = await supabase
@@ -203,7 +204,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         // Update
         const updateData = {
           ...data,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         }
 
         const { data: result, error: updateError } = await supabase
@@ -353,7 +354,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         const insertData = items.map((item) => ({
           ...item,
           owner_id: item.owner_id || actorInfo.actor_id,
-          created_at: new Date().toISOString(),
+          created_at: getNowISO(),
         }))
 
         const { data: results, error: insertError } = await supabase
@@ -422,7 +423,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         for (const { id, data } of updates) {
           const { data: result, error: updateError } = await supabase
             .from(table)
-            .update({ ...data, updated_at: new Date().toISOString() })
+            .update({ ...data, updated_at: getNowISO() })
             .eq("id", id)
             .select()
             .single()

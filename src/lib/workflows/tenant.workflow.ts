@@ -22,6 +22,7 @@ import { buildWelcomeNotification, buildBillNotification } from "@/lib/services/
 import { createAuditEvent } from "@/lib/services/audit.service"
 import { formatCurrency } from "@/lib/format"
 import { softDelete } from "@/lib/audit"
+import { getNowISO } from "@/lib/date-helpers"
 
 // ============================================
 // Types
@@ -236,7 +237,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
             .from("people")
             .update({
               tags: supabase.sql`ARRAY(SELECT DISTINCT unnest(tags || ARRAY['tenant']::TEXT[]))`,
-              updated_at: new Date().toISOString(),
+              updated_at: getNowISO(),
             })
             .eq("id", existingPerson.id)
             .catch(() => {
@@ -329,7 +330,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           status: "active",
           owner_id: context.actor_id,
           created_by: context.actor_id,
-          created_at: new Date().toISOString(),
+          created_at: getNowISO(),
           // Link to person record - this is the key for person-centric architecture
           person_id: personResult?.person_id as string || null,
         }
@@ -379,7 +380,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           join_date: input.check_in_date,
           monthly_rent: input.monthly_rent,
           status: "active",
-          created_at: new Date().toISOString(),
+          created_at: getNowISO(),
         }
 
         const { data: stay, error } = await supabase
@@ -439,7 +440,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         // Update room status based on new occupancy
         await supabase
           .from("rooms")
-          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .update({ status: newStatus, updated_at: getNowISO() })
           .eq("id", input.room_id)
 
         return createSuccessResult({ new_occupied_beds: newOccupied, new_status: newStatus })
@@ -470,7 +471,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           .update({
             current_tenant_id: tenant.id,
             status: "occupied",
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", input.bed_id)
 
@@ -490,7 +491,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           .update({
             current_tenant_id: null,
             status: "available",
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", input.bed_id)
           .catch((err: unknown) => console.warn("[TenantCreate] Rollback bed assignment failed:", err))
@@ -512,7 +513,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const documents = input.id_documents.map((doc) => ({
           tenant_id: tenant.id,
           ...doc,
-          created_at: new Date().toISOString(),
+          created_at: getNowISO(),
         }))
 
         const { data, error } = await supabase
@@ -613,7 +614,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
             line_items: lineItems,
             owner_id: context.actor_id,
             created_by: context.actor_id,
-            created_at: new Date().toISOString(),
+            created_at: getNowISO(),
           })
           .select()
           .single()
@@ -802,7 +803,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
             old_rent: (tenant as Record<string, unknown>)?.monthly_rent,
             new_rent: input.new_rent || (tenant as Record<string, unknown>)?.monthly_rent,
             created_by: context.actor_id,
-            created_at: new Date().toISOString(),
+            created_at: getNowISO(),
           })
           .select()
           .single()
@@ -838,7 +839,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
           .update({
             occupied_beds: Math.max(0, currentOccupied - 1),
             status: currentOccupied - 1 <= 0 ? "available" : "occupied",
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", room.id)
           .eq("occupied_beds", currentOccupied) // Optimistic lock
@@ -859,7 +860,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
               .update({
                 occupied_beds: Math.max(0, freshOccupied - 1),
                 status: freshOccupied - 1 <= 0 ? "available" : "occupied",
-                updated_at: new Date().toISOString(),
+                updated_at: getNowISO(),
               })
               .eq("id", room.id)
           }
@@ -886,7 +887,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
           .update({
             occupied_beds: currentOccupied + 1,
             status: (currentOccupied + 1) >= bedCount ? "occupied" : "partially_occupied",
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", input.new_room_id)
           .eq("occupied_beds", currentOccupied) // Optimistic lock
@@ -908,7 +909,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
               .update({
                 occupied_beds: freshOccupied + 1,
                 status: (freshOccupied + 1) >= freshBedCount ? "occupied" : "partially_occupied",
-                updated_at: new Date().toISOString(),
+                updated_at: getNowISO(),
               })
               .eq("id", input.new_room_id)
           }
@@ -928,7 +929,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
         const updateData: Record<string, unknown> = {
           room_id: input.new_room_id,
           bed_id: input.new_bed_id || null,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         }
 
         if (input.adjust_rent && input.new_rent) {
@@ -977,7 +978,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
           .from("tenant_stays")
           .update({
             room_id: input.new_room_id,
-            updated_at: new Date().toISOString(),
+            updated_at: getNowISO(),
           })
           .eq("id", currentStay.id)
 

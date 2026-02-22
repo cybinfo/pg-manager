@@ -17,6 +17,7 @@ import {
   ERROR_CODES,
 } from "./types"
 import { logger, extractErrorMeta } from "@/lib/logger"
+import { getNowISO } from "@/lib/date-helpers"
 
 const notificationLogger = logger.child("notification")
 
@@ -195,9 +196,9 @@ async function queueNotification(
         action_label: payload.template.action_label,
         data: payload.data,
         priority: payload.priority || "normal",
-        scheduled_at: payload.scheduled_at?.toISOString() || new Date().toISOString(),
+        scheduled_at: payload.scheduled_at?.toISOString() || getNowISO(),
         status: "pending",
-        created_at: new Date().toISOString(),
+        created_at: getNowISO(),
       })
       .select("id")
       .single()
@@ -239,7 +240,7 @@ async function createInAppNotification(
         action_url: template.action_url,
         data: payload.data,
         read: false,
-        created_at: new Date().toISOString(),
+        created_at: getNowISO(),
       })
       .select("id")
       .single()

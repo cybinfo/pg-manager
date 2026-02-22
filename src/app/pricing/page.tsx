@@ -16,6 +16,7 @@ import {
   HelpCircle,
   MessageSquare
 } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 
 const plans = [
   {
@@ -231,7 +232,7 @@ export default function PricingPage() {
                   <CardDescription>{plan.description}</CardDescription>
                   <div className="mt-4">
                     <span className="text-4xl font-bold">
-                      {plan.price === 0 ? "₹0" : `₹${getPrice(plan.price).toLocaleString("en-IN")}`}
+                      {formatCurrency(getPrice(plan.price))}
                     </span>
                     <span className="text-muted-foreground">
                       /{plan.period === "forever" ? "forever" : billingCycle === "yearly" && plan.price > 0 ? "year" : plan.period}
@@ -239,7 +240,7 @@ export default function PricingPage() {
                   </div>
                   {billingCycle === "yearly" && plan.price > 0 && (
                     <p className="text-sm text-teal-600 mt-1">
-                      ₹{Math.round(getPrice(plan.price) / 12).toLocaleString("en-IN")}/month
+                      {formatCurrency(Math.round(getPrice(plan.price) / 12))}/month
                     </p>
                   )}
                 </CardHeader>

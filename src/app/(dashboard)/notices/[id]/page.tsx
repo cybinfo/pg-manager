@@ -33,6 +33,7 @@ import {
   Target,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getNowISO } from "@/lib/date-helpers"
 import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -181,7 +182,7 @@ export default function NoticeDetailPage() {
           content: formData.content,
           expires_at: formData.expires_at || null,
           is_active: formData.is_active,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", params.id)
 

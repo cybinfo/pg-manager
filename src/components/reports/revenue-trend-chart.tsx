@@ -17,6 +17,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { Download } from "lucide-react"
+import { formatCurrency as defaultFormatCurrency } from "@/lib/format"
 
 interface MonthlyRevenue {
   month: string
@@ -33,7 +34,7 @@ interface RevenueTrendChartProps {
 export function RevenueTrendChart({
   data,
   onExport,
-  formatCurrency = (v) => `₹${v.toLocaleString("en-IN")}`,
+  formatCurrency = defaultFormatCurrency,
 }: RevenueTrendChartProps) {
   return (
     <Card>

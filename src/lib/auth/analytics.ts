@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { getTodayISO } from '@/lib/date-helpers'
 import { transformJoin } from '@/lib/supabase/transforms'
 
 // ============================================
@@ -368,7 +369,7 @@ export function exportToCSV(data: Record<string, unknown>[], filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `${filename}-${new Date().toISOString().split('T')[0]}.csv`
+  a.download = `${filename}-${getTodayISO()}.csv`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

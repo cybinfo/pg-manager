@@ -27,6 +27,7 @@ import { logAuditEvent, logAuditEvents, createAuditEvent } from "./audit.service
 import { sendNotification, sendNotifications } from "./notification.service"
 import { workflowLogger, extractErrorMeta } from "@/lib/logger"
 import { softDelete, isSoftDeletableTable } from "@/lib/audit"
+import { getNowISO } from "@/lib/date-helpers"
 import { entityTypeToTable as centralEntityTypeToTable } from "@/lib/entity-names"
 
 // ============================================
@@ -372,7 +373,7 @@ async function applyCascadeEffect(effect: CascadeEffect): Promise<void> {
       case "status_change":
         await supabase
           .from(entityTypeToTable(effect.entity_type))
-          .update({ status: effect.data?.status, updated_at: new Date().toISOString() })
+          .update({ status: effect.data?.status, updated_at: getNowISO() })
           .eq("id", effect.entity_id)
         break
 

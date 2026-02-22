@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar, CheckCircle, AlertCircle, Clock, Flag } from "lucide-react"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatCurrency } from "@/lib/format"
 import type { ApprovalType } from "@/components/tenant/report-issue-dialog"
 import type { TenantPortalTenant } from "@/lib/hooks/useTenantPortalData"
 
@@ -71,13 +71,13 @@ export function TenancyDetails({ tenant, onReport }: TenancyDetailsProps) {
           <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">Monthly Rent</p>
-              <p className="font-medium text-lg">{"₹"}{tenant.monthly_rent.toLocaleString("en-IN")}</p>
+              <p className="font-medium text-lg">{formatCurrency(tenant.monthly_rent)}</p>
             </div>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/5"
-              onClick={() => onReport("Monthly Rent", "₹" + tenant.monthly_rent.toLocaleString("en-IN"), "tenancy_issue")}
+              onClick={() => onReport("Monthly Rent", formatCurrency(tenant.monthly_rent), "tenancy_issue")}
               title="Report issue with monthly rent"
             >
               <Flag className="h-4 w-4" />

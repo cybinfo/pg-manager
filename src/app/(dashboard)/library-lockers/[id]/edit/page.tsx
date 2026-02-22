@@ -17,6 +17,7 @@ import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { getNowISO } from "@/lib/date-helpers"
 
 export default function EditLibraryLockerPage({
   params,
@@ -71,7 +72,7 @@ export default function EditLibraryLockerPage({
       monthly_rent: data.monthly_rent ? Number(data.monthly_rent) : null,
       deposit_amount: data.deposit_amount ? Number(data.deposit_amount) : null,
       status: data.status,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowISO(),
     }),
   })
 

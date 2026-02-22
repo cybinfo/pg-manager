@@ -48,14 +48,8 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { PG_ROOM_STATUS_COLORS } from "@/lib/status"
 import { Avatar } from "@/components/ui/avatar"
-
-const statusColors: Record<string, string> = {
-  available: "bg-success/10 text-success",
-  occupied: "bg-destructive/10 text-destructive",
-  partially_occupied: "bg-warning/10 text-warning",
-  maintenance: "bg-muted text-muted-foreground",
-}
 
 export default function PropertyDetailPage() {
   const params = useParams()
@@ -249,7 +243,7 @@ export default function PropertyDetailPage() {
               <div className="p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold">Room {room.room_number}</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[room.status] || statusColors.available}`}>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${PG_ROOM_STATUS_COLORS[room.status] || PG_ROOM_STATUS_COLORS.available}`}>
                     {room.status.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
                   </span>
                 </div>

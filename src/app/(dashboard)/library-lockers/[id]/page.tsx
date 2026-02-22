@@ -54,6 +54,7 @@ import {
   LIBRARY_LOCKER_SIZE_CONFIG,
 } from "@/types/library.types"
 import type { LibraryLocker, LibraryLockerAssignment } from "@/types/library.types"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 export default function LibraryLockerDetailPage() {
   const params = useParams()
@@ -84,8 +85,8 @@ export default function LibraryLockerDetailPage() {
         .from("library_locker_assignments")
         .update({
           status: "ended",
-          end_date: new Date().toISOString().split("T")[0],
-          updated_at: new Date().toISOString(),
+          end_date: getTodayISO(),
+          updated_at: getNowISO(),
         })
         .eq("locker_id", locker.id)
         .eq("member_id", locker.current_member_id)
@@ -105,7 +106,7 @@ export default function LibraryLockerDetailPage() {
           current_member_id: null,
           assigned_from: null,
           assigned_until: null,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", locker.id)
 
@@ -120,7 +121,7 @@ export default function LibraryLockerDetailPage() {
         .from("library_members")
         .update({
           locker_id: null,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", locker.current_member_id)
 

@@ -33,6 +33,7 @@ import {
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getNowISO } from "@/lib/date-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import type { LibraryAttendance } from "@/types/library.types"
 
@@ -55,7 +56,7 @@ export default function LibraryAttendanceDetailPage() {
     setCheckingOut(true)
     try {
       const supabase = createClient()
-      const checkOutTime = new Date().toISOString()
+      const checkOutTime = getNowISO()
       const checkInTime = new Date(attendance.check_in_time)
       const hoursSpent = (new Date(checkOutTime).getTime() - checkInTime.getTime()) / (1000 * 60 * 60)
 

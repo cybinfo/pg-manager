@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Camera, CheckCircle, XCircle, Loader2, Users, Clock, AlertCircle } from "lucide-react"
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
+import { getNowISO } from "@/lib/date-helpers"
 import { Avatar } from "@/components/ui/avatar"
 
 interface QRPayload {
@@ -151,7 +152,7 @@ export default function QRScannerPage() {
       }
 
       // Create check-in
-      const checkInTime = new Date().toISOString()
+      const checkInTime = getNowISO()
       const attendanceDate = checkInTime.split("T")[0]
 
       const attendanceData = withCreatedBy(

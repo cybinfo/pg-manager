@@ -36,27 +36,16 @@ import {
 } from "lucide-react"
 import { RoomLink, TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime } from "@/lib/format"
+import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge"
+import { COMPLAINT_STATUS, COMPLAINT_CATEGORIES } from "@/lib/status"
 
-const statusLabels: Record<string, string> = {
-  open: "Open",
-  acknowledged: "Acknowledged",
-  in_progress: "In Progress",
-  resolved: "Resolved",
-  closed: "Closed",
-}
+const statusLabels: Record<string, string> = Object.fromEntries(
+  Object.entries(COMPLAINT_STATUS).map(([k, v]) => [k, v.label])
+)
 
-const categoryLabels: Record<string, string> = {
-  electrical: "Electrical",
-  plumbing: "Plumbing",
-  furniture: "Furniture",
-  cleanliness: "Cleanliness",
-  appliances: "Appliances",
-  security: "Security",
-  noise: "Noise/Disturbance",
-  other: "Other",
-}
+const categoryLabels = COMPLAINT_CATEGORIES
 
 const statusFlow = ["open", "acknowledged", "in_progress", "resolved", "closed"]
 
@@ -97,7 +86,7 @@ export default function ComplaintDetailPage() {
     }
 
     if (newStatus === "resolved" && complaint?.status !== "resolved") {
-      updateData.resolved_at = new Date().toISOString()
+      updateData.resolved_at = getNowISO()
     }
 
     await updateFields(updateData)
@@ -112,7 +101,7 @@ export default function ComplaintDetailPage() {
     }
 
     if (editData.status === "resolved" && complaint?.status !== "resolved") {
-      updateData.resolved_at = new Date().toISOString()
+      updateData.resolved_at = getNowISO()
     }
 
     const success = await updateFields(updateData)

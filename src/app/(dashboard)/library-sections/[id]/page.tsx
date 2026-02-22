@@ -28,14 +28,8 @@ import {
   Plug,
   Lightbulb,
 } from "lucide-react"
+import { OCCUPANCY_STATUS_COLORS } from "@/lib/status"
 import type { LibrarySection, LibrarySeat } from "@/types/library.types"
-
-const statusColors: Record<string, string> = {
-  available: "bg-success/10 text-success",
-  occupied: "bg-info/10 text-info",
-  reserved: "bg-warning/10 text-warning",
-  maintenance: "bg-muted text-muted-foreground",
-}
 
 export default function LibrarySectionDetailPage() {
   const params = useParams()
@@ -183,7 +177,7 @@ export default function LibrarySectionDetailPage() {
           renderItem={(seat) => (
             <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
               <div className="flex items-center gap-3">
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${statusColors[seat.status]}`}>
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${OCCUPANCY_STATUS_COLORS[seat.status]}`}>
                   <span className="text-xs font-bold">{seat.seat_number}</span>
                 </div>
                 <div>
@@ -197,7 +191,7 @@ export default function LibrarySectionDetailPage() {
                 </div>
               </div>
               <div className="text-right">
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[seat.status]}`}>
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${OCCUPANCY_STATUS_COLORS[seat.status]}`}>
                   {seat.status}
                 </span>
                 {seat.current_member && (
@@ -239,7 +233,7 @@ export default function LibrarySectionDetailPage() {
                     {rowSeats.sort((a, b) => a.seat_number.localeCompare(b.seat_number)).map((seat) => (
                       <div
                         key={seat.id}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold cursor-default ${statusColors[seat.status]}`}
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold cursor-default ${OCCUPANCY_STATUS_COLORS[seat.status]}`}
                         title={`Seat ${seat.seat_number} - ${seat.status}${seat.current_member ? ` (${(seat.current_member as { name?: string })?.name})` : ""}`}
                       >
                         {seat.seat_number.slice(-2)}

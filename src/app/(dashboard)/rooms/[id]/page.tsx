@@ -37,6 +37,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG } from "@/types/meters.types"
+import { ROOM_STATUS } from "@/lib/status"
 
 interface MeterReading {
   id: string
@@ -54,13 +55,6 @@ const meterTypeConfig: Record<string, { icon: typeof Zap; color: string; bgColor
   electricity: { icon: Zap, color: "text-warning", bgColor: "bg-warning/10" },
   water: { icon: Droplets, color: "text-info", bgColor: "bg-info/10" },
   gas: { icon: Gauge, color: "text-warning", bgColor: "bg-warning/10" },
-}
-
-const statusConfig: Record<string, { status: "success" | "error" | "warning" | "muted"; label: string }> = {
-  available: { status: "success", label: "Available" },
-  occupied: { status: "error", label: "Occupied" },
-  partially_occupied: { status: "warning", label: "Partially Occupied" },
-  maintenance: { status: "muted", label: "Maintenance" },
 }
 
 export default function RoomDetailPage() {
@@ -94,7 +88,7 @@ export default function RoomDetailPage() {
   const meterReadings = (related.meterReadings || []) as MeterReading[]
   const complaints = (related.complaints || []) as RoomComplaint[]
 
-  const status = statusConfig[room.status] || statusConfig.available
+  const status = ROOM_STATUS[room.status] || ROOM_STATUS.available
   const availableBeds = room.total_beds - room.occupied_beds
 
   return (
@@ -116,7 +110,7 @@ export default function RoomDetailPage() {
           { label: "Rooms", href: "/rooms" },
           { label: `Room ${room.room_number}` },
         ]}
-        status={status.status === "success" ? "active" : status.status === "error" ? "inactive" : status.status}
+        status={status.variant === "success" ? "active" : status.variant === "error" ? "inactive" : status.variant}
         avatar={
           <div className="p-3 bg-primary/10 rounded-lg">
             <Home className="h-8 w-8 text-primary" />
@@ -148,7 +142,7 @@ export default function RoomDetailPage() {
           label="Status"
           value={status.label}
           icon={Home}
-          variant={status.status}
+          variant={status.variant}
         />
         <InfoCard
           label="Occupancy"

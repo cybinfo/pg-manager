@@ -22,6 +22,7 @@ import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
 import { Currency } from "@/components/ui/currency"
 import { withCreatedBy } from "@/lib/audit"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 interface LockerData {
   id: string
@@ -58,7 +59,7 @@ export default function AssignLockerPage({
 
   const [formData, setFormData] = useState({
     member_id: preselectedMember || "",
-    start_date: new Date().toISOString().split("T")[0],
+    start_date: getTodayISO(),
     end_date: "",
     rent_amount: "",
     deposit_amount: "",
@@ -187,7 +188,7 @@ export default function AssignLockerPage({
           current_member_id: formData.member_id,
           assigned_from: formData.start_date,
           assigned_until: formData.end_date || null,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", id)
 
@@ -202,7 +203,7 @@ export default function AssignLockerPage({
         .from("library_members")
         .update({
           locker_id: id,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", formData.member_id)
 

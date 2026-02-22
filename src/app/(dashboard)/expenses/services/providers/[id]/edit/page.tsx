@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getNowISO } from "@/lib/date-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -168,7 +169,7 @@ export default function EditServiceProviderPage({
           tds_rate: formData.tds_applicable ? formData.tds_rate : null,
           is_active: formData.is_active ?? true,
           notes: formData.notes?.trim() || null,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", id)
 

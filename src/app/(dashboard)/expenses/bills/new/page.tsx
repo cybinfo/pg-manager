@@ -21,6 +21,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
+import { getTodayISO } from "@/lib/date-helpers"
 import type { Vendor, BillCategory, BillPaymentFormData } from "@/types/expense-enhanced.types"
 
 const PAYMENT_MODE_OPTIONS = [
@@ -54,7 +55,7 @@ export default function NewBillPaymentPage() {
     category_name: "",
     bill_number: "",
     bill_period: "",
-    bill_date: new Date().toISOString().split("T")[0],
+    bill_date: getTodayISO(),
     due_date: "",
     bill_amount: 0,
     base_amount: undefined,

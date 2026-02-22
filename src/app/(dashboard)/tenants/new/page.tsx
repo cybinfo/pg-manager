@@ -23,6 +23,7 @@ import { withCreatedBy } from "@/lib/audit"
 import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 
 interface Property {
@@ -59,7 +60,7 @@ export default function NewTenantPage() {
     property_id: "",
     room_id: "",
     name: "",
-    check_in_date: new Date().toISOString().split("T")[0],
+    check_in_date: getTodayISO(),
     monthly_rent: "",
     security_deposit: "",
     // Status & Verification
@@ -418,8 +419,8 @@ export default function NewTenantPage() {
                 is_active: true,
                 is_default: false,
                 invited_by: user.id,
-                invited_at: new Date().toISOString(),
-                accepted_at: new Date().toISOString(),
+                invited_at: getNowISO(),
+                accepted_at: getNowISO(),
               }, user.id)
             )
 

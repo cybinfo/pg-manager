@@ -25,6 +25,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
 import { TIME_SLOTS } from "@/types/library.types"
 import { Currency } from "@/components/ui/currency"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 interface MemberData {
   id: string
@@ -64,7 +65,7 @@ export default function RenewLibraryMemberPage({
 
   const [formData, setFormData] = useState({
     plan_id: "",
-    start_date: new Date().toISOString().split("T")[0],
+    start_date: getTodayISO(),
     amount: "",
     discount_amount: "0",
     time_slot: "",
@@ -252,7 +253,7 @@ export default function RenewLibraryMemberPage({
           current_subscription_id: membership.id,
           expiry_date: endDate.toISOString().split("T")[0],
           status: "active",
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", member.id)
 

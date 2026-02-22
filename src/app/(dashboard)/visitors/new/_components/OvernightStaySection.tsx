@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Moon, IndianRupee, Calendar, FileText } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
+import { getTodayISO } from "@/lib/date-helpers"
 
 interface OvernightStaySectionProps {
   formData: {
@@ -103,7 +105,7 @@ export function OvernightStaySection({
                   onChange={onChange}
                   disabled={loading}
                   className="pl-9"
-                  min={new Date().toISOString().split("T")[0]}
+                  min={getTodayISO()}
                 />
               </div>
               <p className="text-xs text-muted-foreground">
@@ -116,11 +118,11 @@ export function OvernightStaySection({
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-muted-foreground">Total Charge</span>
                   <span className="text-xl font-bold text-purple-600">
-                    ₹{totalCharge.toLocaleString("en-IN")}
+                    {formatCurrency(totalCharge)}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">
-                  {formData.num_nights} night{parseInt(formData.num_nights) > 1 ? "s" : ""} × ₹{parseFloat(formData.charge_per_night).toLocaleString("en-IN")}/night
+                  {formData.num_nights} night{parseInt(formData.num_nights) > 1 ? "s" : ""} × {formatCurrency(parseFloat(formData.charge_per_night))}/night
                 </p>
 
                 <div className="pt-3 border-t border-purple-200">

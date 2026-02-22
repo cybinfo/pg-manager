@@ -20,6 +20,7 @@ import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 
+import { getNowISO } from "@/lib/date-helpers"
 import type { ServicePayment, ServiceProvider, ServiceCategory, ServicePaymentFormData, TdsSection, PaymentMode } from "@/types/expense-enhanced.types"
 
 const PAYMENT_MODE_OPTIONS = [
@@ -257,7 +258,7 @@ export default function EditServicePaymentPage({
           warranty_months: formData.warranty_months || 0,
           warranty_expiry: warrantyExpiry,
           notes: formData.notes?.trim() || null,
-          updated_at: new Date().toISOString(),
+          updated_at: getNowISO(),
         })
         .eq("id", id)
 

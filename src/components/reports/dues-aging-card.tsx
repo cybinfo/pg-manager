@@ -8,6 +8,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
+import { formatCurrency as defaultFormatCurrency } from "@/lib/format"
 
 interface DuesAging {
   current: number
@@ -25,7 +26,7 @@ interface DuesAgingCardProps {
 export function DuesAgingCard({
   data,
   onExport,
-  formatCurrency = (v) => `₹${v.toLocaleString("en-IN")}`,
+  formatCurrency = defaultFormatCurrency,
 }: DuesAgingCardProps) {
   return (
     <Card>

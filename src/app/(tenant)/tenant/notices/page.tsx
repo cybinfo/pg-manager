@@ -13,6 +13,7 @@ import {
   Clock
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { getNowISO } from "@/lib/date-helpers"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
@@ -65,7 +66,7 @@ export default function TenantNoticesPage() {
       const supabase = createClient()
 
       // Fetch active notices for tenant's property
-      const now = new Date().toISOString()
+      const now = getNowISO()
       const { data: noticesData } = await supabase
         .from("notices")
         .select(`

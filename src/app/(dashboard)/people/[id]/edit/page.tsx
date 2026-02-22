@@ -11,6 +11,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -304,7 +305,7 @@ export default function EditPersonPage() {
         blood_group: formData.blood_group || null,
         emergency_contacts: formData.emergency_contacts || [],
         notes: formData.notes || null,
-        updated_at: new Date().toISOString(),
+        updated_at: getNowISO(),
       })
       .eq("id", params.id)
 

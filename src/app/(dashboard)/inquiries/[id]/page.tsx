@@ -46,6 +46,7 @@ import { formatDateTime, formatDate, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
 import { PermissionGate } from "@/components/auth"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { INQUIRY_STATUS_LABELS, INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_LABELS } from "@/lib/status"
 
 // ============================================
 // Types
@@ -73,25 +74,9 @@ interface Inquiry {
 // Constants
 // ============================================
 
-const statusLabels: Record<string, string> = {
-  new: "New",
-  contacted: "Contacted",
-  converted: "Converted",
-  closed: "Closed",
-}
-
-const statusColors: Record<string, string> = {
-  new: "bg-info/10 text-info",
-  contacted: "bg-warning/10 text-warning",
-  converted: "bg-success/10 text-success",
-  closed: "bg-muted text-foreground",
-}
-
-const sourceLabels: Record<string, string> = {
-  website: "Website Form",
-  whatsapp: "WhatsApp",
-  phone: "Phone Call",
-}
+const statusLabels = INQUIRY_STATUS_LABELS
+const statusColors = INQUIRY_STATUS_COLORS
+const sourceLabels = INQUIRY_SOURCE_LABELS
 
 const statusOptions = [
   { value: "new", label: "New" },

@@ -2,6 +2,7 @@ import { baseCronHandler, logCronAudit } from "@/lib/cron-handler"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
+import { getNowISO } from "@/lib/date-helpers"
 
 interface AutoBillingSettings {
   enabled: boolean
@@ -200,7 +201,7 @@ export const GET = (request: Request) =>
               status: "pending",
               line_items: lineItems,
               is_auto_generated: true,
-              generated_at: new Date().toISOString(),
+              generated_at: getNowISO(),
               created_by: SYSTEM_ACTOR_ID,
             })
 
@@ -253,7 +254,7 @@ export const GET = (request: Request) =>
               bills_failed: billsFailed,
               total_amount: totalAmount,
               error_details: errors.length > 0 ? errors : null,
-              completed_at: new Date().toISOString(),
+              completed_at: getNowISO(),
             })
             .eq("id", logEntry.id)
         }
