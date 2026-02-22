@@ -51,7 +51,7 @@ import {
 } from "lucide-react"
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
 import { showSuccess } from "@/lib/toast-helpers"
-import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { ThemeToggleSidebar } from "@/components/ui/theme-toggle"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { AuthProvider, useAuth, useCurrentContext } from "@/lib/auth"
 import { ContextSwitcher, SessionTimeout } from "@/components/auth"
@@ -623,10 +623,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Theme Toggle, Settings & Logout */}
           <div className="border-t p-4 space-y-1 bg-muted/30">
             {/* Theme Toggle */}
-            <div className="flex items-center gap-3 px-3 py-1">
-              <ThemeToggle />
-              <span className="text-sm font-medium text-muted-foreground">Theme</span>
-            </div>
+            <ThemeToggleSidebar />
             {/* Settings only for owners */}
             {currentContext.isOwner && (
               <Link
