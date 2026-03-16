@@ -12,7 +12,7 @@
 | **Production URL** | https://managekar.com |
 | **Stack** | Next.js 16 + TypeScript + Supabase + Tailwind + shadcn/ui |
 | **Database** | PostgreSQL with Row Level Security (RLS) |
-| **Migrations** | 69 total (001-069) |
+| **Migrations** | 70 total (001-070) |
 
 ```bash
 npm run dev          # Development server at localhost:3000
@@ -50,11 +50,12 @@ Free Trial (3 months) → Free Tier (1 PG/10 rooms) → Pro ₹499/month → Bus
 ### Library Module Overview
 
 Indian "libraries" in this context are **study spaces** (not book-lending), where:
-- Students pay for **hours of access** (e.g., ₹1000 for 9 hours)
+- Students pay for **hours of access per day** (e.g., "9 Hours Plan" = 9h every day)
 - They get assigned **seats** (similar to beds in PG)
 - Attendance is tracked via check-in/check-out
 - Lockers are rented separately
 - Time slots (Morning/Evening/Night/24 Hours) determine access
+- **Per-day hours model**: `hours_balance` = daily allowance minus today's usage (resets each day)
 
 ---
 
@@ -606,6 +607,7 @@ import { Select } from "@/components/ui/form-components"
 | 067 | library_member_status_log.sql | Member status transition tracking |
 | 068 | library_plans_audit_and_indexes.sql | Library plans audit trigger + indexes |
 | 069 | fix_audit_trigger_service_role.sql | Fix audit trigger for service role (NULL auth.uid) |
+| 070 | fix_hours_per_day_model.sql | Switch hours tracking from pool to per-day model |
 
 ---
 

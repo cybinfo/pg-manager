@@ -673,12 +673,13 @@ export const LIBRARY_MEMBERSHIP_LIST_CONFIG: ListPageConfig<Record<string, unkno
   table: "library_memberships",
   select: `
     *,
-    member:library_members(id, name, member_code, person:people(id, name, photo_url))
+    member:library_members!library_memberships_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
+    plan:library_plans(id, name, hours_included)
   `,
   defaultOrderBy: "start_date",
   defaultOrderDirection: "desc",
   searchFields: ["plan_name", "member.name", "member.member_code"],
-  joinFields: ["member"],
+  joinFields: ["member", "plan"],
   computedFields: (item) => {
     const startDate = item.start_date ? new Date(item.start_date as string) : new Date()
     const endDate = item.end_date ? new Date(item.end_date as string) : null

@@ -197,7 +197,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
                     {checkInTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                     {" • "}
                     <span className={parseFloat(hoursAgo) > (record.member?.hours_balance || 999) ? "text-destructive font-medium" : "text-success"}>
-                      {hoursAgo}h{record.member?.hours_balance ? ` / ${record.member.hours_balance.toFixed(0)}h` : ""}
+                      {hoursAgo}h{record.member?.hours_balance ? ` / ${record.member.hours_balance.toFixed(0)}h today` : ""}
                     </span>
                   </p>
                 </div>
@@ -257,9 +257,9 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
       }
 
       if (member.hours_balance <= 0) {
-        showError("No hours remaining. Please renew subscription.")
-        setLoading(false)
-        return
+        showWarning("No daily hours remaining. Member may be in overtime.")
+        // In per-day model, we still allow check-in — the balance resets each day
+        // and overtime is tracked. Only block if truly no subscription.
       }
 
       // Check if already checked in

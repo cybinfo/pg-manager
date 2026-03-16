@@ -139,8 +139,11 @@ export default function MemberHomePage() {
   }
 
   const subscription = member.current_subscription
-  const hoursPercentUsed = subscription?.hours_included
-    ? ((subscription.hours_included - (member.hours_balance || 0)) / subscription.hours_included) * 100
+  const dailyAllowance = subscription?.hours_included || 0
+  const todayRemaining = member.hours_balance || 0
+  const todayUsed = dailyAllowance > 0 ? Math.max(0, dailyAllowance - todayRemaining) : 0
+  const hoursPercentUsed = dailyAllowance > 0
+    ? (todayUsed / dailyAllowance) * 100
     : 0
 
   // Calculate days until expiry
@@ -158,18 +161,18 @@ export default function MemberHomePage() {
         <p className="text-muted-foreground">Here&apos;s your membership overview</p>
       </div>
 
-      {/* Hours Balance Card - Prominent */}
+      {/* Today's Hours Card - Per-Day Model */}
       <Card className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/70 text-sm font-medium">Hours Balance</p>
+              <p className="text-white/70 text-sm font-medium">Today&apos;s Hours</p>
               <p className="text-4xl font-bold mt-1">
-                {member.hours_balance?.toFixed(1) || "0.0"}h
+                {todayRemaining.toFixed(1)}h
               </p>
-              {subscription?.hours_included && (
+              {dailyAllowance > 0 && (
                 <p className="text-white/70 text-sm mt-2">
-                  of {subscription.hours_included}h total
+                  of {dailyAllowance}h daily allowance
                 </p>
               )}
             </div>
@@ -177,14 +180,14 @@ export default function MemberHomePage() {
               <Timer className="h-12 w-12 text-white/40" />
             </div>
           </div>
-          {subscription?.hours_included && (
+          {dailyAllowance > 0 && (
             <div className="mt-4">
               <Progress
                 value={100 - hoursPercentUsed}
                 className="h-2 bg-white/30"
               />
               <p className="text-xs text-white/70 mt-2">
-                {member.hours_used?.toFixed(1) || 0}h used
+                {todayUsed.toFixed(1)}h used today
               </p>
             </div>
           )}

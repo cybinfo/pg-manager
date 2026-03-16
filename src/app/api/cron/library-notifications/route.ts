@@ -24,7 +24,12 @@ import {
 } from "@/lib/email"
 
 // Configuration
-const LOW_HOURS_THRESHOLD = 2 // Send warning when hours_balance <= 2
+// Note: Low hours threshold is no longer meaningful in per-day model.
+// hours_balance resets daily to the plan's daily allowance.
+// We keep the low-hours check but it now only catches members whose
+// daily allowance itself is very low (e.g., 2h plans) — unlikely to trigger
+// for most members. The primary notifications are now subscription-expiry based.
+const LOW_HOURS_DAILY_ALLOWANCE_THRESHOLD = 2 // Warn if daily allowance <= 2h
 const RENEWAL_REMINDER_DAYS = 3 // Send renewal reminder 3 days before
 const EXPIRING_DAYS_BEFORE = 7 // Send expiring notification 7 days before
 
@@ -39,7 +44,7 @@ export const GET = (request: Request) =>
 
       cronLogger.info("Library notifications config", {
         expiringCheckDate: expiringDateStr,
-        lowHoursThreshold: LOW_HOURS_THRESHOLD,
+        lowHoursDailyAllowanceThreshold: LOW_HOURS_DAILY_ALLOWANCE_THRESHOLD,
       })
 
       const renewalReminderDate = new Date(today)
@@ -55,7 +60,9 @@ export const GET = (request: Request) =>
         errors: [] as string[],
       }
 
-      // 1. Low Hours Warning - Active members with low balance
+      // 1. Low Hours Warning - Active members whose daily allowance is very low
+      // In the per-day model, hours_balance resets daily. Instead of checking
+      // a depleting pool, we warn members whose plan gives them very few daily hours.
       const { data: lowHoursMembers, error: lowHoursError } = await supabaseAdmin
         .from("library_members")
         .select(`
@@ -70,7 +77,7 @@ export const GET = (request: Request) =>
         `)
         .eq("status", "active")
         .not("email", "is", null)
-        .lte("hours_balance", LOW_HOURS_THRESHOLD)
+        .lte("hours_balance", LOW_HOURS_DAILY_ALLOWANCE_THRESHOLD)
         .gt("hours_balance", 0) // Don't send for 0 or negative
 
       if (lowHoursError) {

@@ -139,6 +139,11 @@ export default function LibraryMemberDetailPage() {
   const hoursRemaining = member.hours_balance || 0
   const statusConfig = LIBRARY_MEMBER_STATUS_CONFIG[member.status as keyof typeof LIBRARY_MEMBER_STATUS_CONFIG]
 
+  // Per-day hours model: daily allowance from active membership
+  const activeMembership = memberships.find((m: LibraryMembership) => m.status === "active")
+  const dailyAllowance = activeMembership?.hours_included || null
+  const todayUsed = dailyAllowance ? Math.max(0, dailyAllowance - hoursRemaining) : 0
+
   // Contact info (live person data with fallback)
   const memberPhone = member.person?.phone || member.phone
   const memberEmail = member.person?.email || member.email
@@ -281,10 +286,12 @@ export default function LibraryMemberDetailPage() {
         }
       />
 
-      {/* Hours Balance Card */}
+      {/* Hours Balance Card — Per-Day Model */}
       <MemberHoursCard
         hoursUsed={totalHoursUsed}
         hoursRemaining={hoursRemaining}
+        dailyAllowance={dailyAllowance}
+        todayUsed={todayUsed}
         memberName={displayName}
       />
 
@@ -533,8 +540,9 @@ export default function LibraryMemberDetailPage() {
                   </div>
                   {membership.hours_included && (
                     <div>
-                      <span className="text-muted-foreground">Hours:</span>{" "}
-                      {membership.hours_used?.toFixed(1) || 0}h / {membership.hours_included}h
+                      <span className="text-muted-foreground">Daily Allowance:</span>{" "}
+                      {membership.hours_included}h/day
+                      <span className="text-muted-foreground ml-2">({membership.hours_used?.toFixed(1) || 0}h used total)</span>
                     </div>
                   )}
                   {balanceDue > 0 && (

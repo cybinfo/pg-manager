@@ -89,7 +89,7 @@ const columns: Column<LibraryMemberItem>[] = [
   },
   {
     key: "hours_balance",
-    header: "Hours",
+    header: "Today's Hours",
     width: "secondary",
     sortable: true,
     sortType: "number",
@@ -99,7 +99,7 @@ const columns: Column<LibraryMemberItem>[] = [
       <div className="flex items-center gap-1.5">
         <Clock className="h-4 w-4 text-muted-foreground" />
         <span className={member.hours_balance <= 0 ? "text-destructive font-medium" : ""}>
-          {member.hours_balance?.toFixed(1) || 0}h left
+          {member.hours_balance?.toFixed(1) || 0}h left today
         </span>
       </div>
     ),
@@ -264,7 +264,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
   createTotalMetric({ label: "Members", icon: Users }),
   createStatusMetric("active", "Active", Users),
   createStatusMetric("expired", "Expired", Users),
-  createCountMetric("low_hours", "Low Hours (<2h)", Clock,
+  createCountMetric("low_hours", "Low Today (<2h)", Clock,
     (item) => (Number(item.hours_balance) || 0) < 2 && item.status === "active"
   ),
   createCountMetric("overdue", "Overdue", AlertTriangle,
@@ -307,7 +307,7 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   { key: "email" as keyof Record<string, unknown>, header: "Email", format: (v) => String(v ?? "") },
   { key: "status" as keyof Record<string, unknown>, header: "Status", format: (v) => String(v ?? "") },
   { key: "preferred_slot" as keyof Record<string, unknown>, header: "Slot", format: (v) => String(v ?? "") },
-  { key: "hours_balance" as keyof Record<string, unknown>, header: "Hours Balance", format: (v) => v ? formatDecimalForExport(v) : "0" },
+  { key: "hours_balance" as keyof Record<string, unknown>, header: "Hours Left Today", format: (v) => v ? formatDecimalForExport(v) : "0" },
   dateExportColumn("expiry_date", "Expiry Date"),
   { key: "member_code" as keyof Record<string, unknown>, header: "Member Code", format: (v) => String(v ?? "") },
 ]
