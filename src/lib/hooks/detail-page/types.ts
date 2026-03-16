@@ -860,7 +860,7 @@ export const LIBRARY_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     member:library_members(id, name, member_code, phone, person:people(id, photo_url)),
-    membership:library_memberships(id, plan_name, start_date, end_date)
+    membership:library_memberships!library_payments_membership_id_fkey(id, plan_name, start_date, end_date)
   `,
   joinFields: ["member", "membership"],
   redirectOnNotFound: "/library-payments",
