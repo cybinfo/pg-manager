@@ -562,25 +562,45 @@ async function migrate() {
       // Status logic:
       //   active    = subscription valid, member attending
       //   expired   = subscription ended naturally, member may renew
-      //   suspended = member explicitly left (has leftDate in source data)
+      //   suspended = member explicitly left AND did NOT resubscribe after leaving
       //   cancelled = not used during migration
+      //
+      // Key rule: if member left on Jan 1 but resubscribed on Feb 1,
+      // their latest subscription START date is after leftDate → they came back.
+      // Only mark suspended if leftDate is AFTER the latest subscription start date.
+      const userSubs = subscriptions.filter((s) => s.user_id === user.user_id)
+      const latestSubStartDate = (() => {
+        const activeSubs = userSubs
+          .map((s) => parseDate(s.start_date))
+          .filter((d): d is string => d !== null)
+          .sort((a, b) => b.localeCompare(a))
+        return activeSubs[0] || null
+      })()
+
+      // Did the member resubscribe after leaving?
+      const resubscribedAfterLeaving = latestLeftDate && latestSubStartDate
+        && new Date(latestSubStartDate) > new Date(latestLeftDate)
+
       let status: string
       if (!expiryDate) {
         status = "expired" // No subscription ever
       } else if (new Date(expiryDate) >= new Date()) {
         // Subscription still valid
-        if (latestLeftDate && new Date(latestLeftDate) > new Date(expiryDate)) {
-          status = "suspended" // Left while subscription was still valid
+        if (latestLeftDate && !resubscribedAfterLeaving) {
+          status = "suspended" // Left and didn't come back
         } else {
-          status = "active" // Valid subscription, not left (or resubscribed after leaving)
+          status = "active" // Valid subscription (or came back after leaving)
         }
       } else {
         // Subscription expired
-        status = latestLeftDate ? "suspended" : "expired" // Left = suspended, just expired = expired
+        if (latestLeftDate && !resubscribedAfterLeaving) {
+          status = "suspended" // Left and didn't resubscribe after
+        } else {
+          status = "expired" // Subscription just expired naturally (or came back then expired)
+        }
       }
 
       // Find join date (earliest subscription start date)
-      const userSubs = subscriptions.filter((s) => s.user_id === user.user_id)
       const joinDate = userSubs.length > 0
         ? userSubs.reduce((earliest: string | null, s) => {
           const d = parseDate(s.start_date)
@@ -623,7 +643,7 @@ async function migrate() {
           hours_balance: hoursBalance,
           hours_used: 0,
           preferred_slot: preferredSlot,
-          left_date: latestLeftDate || null,
+          left_date: (latestLeftDate && !resubscribedAfterLeaving) ? latestLeftDate : null,
           notes: user.father_name ? `Father: ${user.father_name}` : null,
           created_by: ownerId,
         })
