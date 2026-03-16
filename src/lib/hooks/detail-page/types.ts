@@ -748,8 +748,8 @@ export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
     *,
     person:people(id, name, phone, email, photo_url, aadhaar_number, pan_number, date_of_birth, gender, phone_numbers, emergency_contacts, id_documents, permanent_address, permanent_city, permanent_state, permanent_pincode, current_address, current_city, occupation, blood_group, company_name),
     library:libraries(id, name, code),
-    assigned_seat:library_seats(id, seat_number, section:library_sections(id, name)),
-    locker:library_lockers(id, locker_number, size)
+    assigned_seat:library_seats!library_members_assigned_seat_id_fkey(id, seat_number, section:library_sections(id, name)),
+    locker:library_lockers!library_members_locker_id_fkey(id, locker_number, size)
   `,
   joinFields: ["person", "library", "assigned_seat", "locker"],
   redirectOnNotFound: "/library-members",
