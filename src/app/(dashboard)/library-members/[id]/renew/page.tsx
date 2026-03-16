@@ -59,6 +59,7 @@ interface CurrentMembership {
   plan_id: string | null
   plan_name: string
   time_slot: string | null
+  hours_included: number | null
 }
 
 /**
@@ -130,7 +131,6 @@ export default function RenewLibraryMemberPage({
     discount: 0,
     start_time: "",
     end_time: "",
-    add_to_existing: true,
   })
 
   useEffect(() => {
@@ -287,7 +287,7 @@ export default function RenewLibraryMemberPage({
         time_slot: timeSlot,
         start_date: formData.start_date,
         end_date: endDate,
-        hours_remaining: hoursToAdd || null,
+        hours_remaining: null,
         hours_used: 0,
         status: "active",
         payment_id: null,
@@ -306,15 +306,11 @@ export default function RenewLibraryMemberPage({
         return
       }
 
-      // Update member with new hours and subscription
-      const newHoursBalance = formData.add_to_existing
-        ? member.hours_balance + hoursToAdd
-        : hoursToAdd
-
+      // Update member — hours_balance is the daily allowance (per-day model)
       const { error: memberUpdateError } = await supabase
         .from("library_members")
         .update({
-          hours_balance: newHoursBalance,
+          hours_balance: hoursToAdd,
           current_subscription_id: membership.id,
           expiry_date: endDate,
           status: "active",
@@ -354,9 +350,6 @@ export default function RenewLibraryMemberPage({
 
   const displayName = member.person?.name || member.name
   const selectedPlan = plans.find((p) => p.id === formData.plan_id)
-  const newHoursBalance = formData.add_to_existing
-    ? member.hours_balance + (selectedPlan?.hours_included || 0)
-    : selectedPlan?.hours_included || 0
 
   // Compute expiry info
   const isExpired = member.status === "expired"
@@ -448,13 +441,13 @@ export default function RenewLibraryMemberPage({
                   <Clock className="h-5 w-5 text-info" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Current Hours Balance</p>
-                  <p className="text-2xl font-bold">{member.hours_balance.toFixed(1)}h</p>
+                  <p className="text-sm text-muted-foreground">Current Plan</p>
+                  <p className="text-2xl font-bold">{currentMembership?.plan_name || "None"}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground">Total Used</p>
-                <p className="text-lg font-medium">{member.hours_used.toFixed(1)}h</p>
+                <p className="text-sm text-muted-foreground">Daily Allowance</p>
+                <p className="text-lg font-medium">{currentMembership?.hours_included || 0}h/day</p>
               </div>
             </div>
           </CardContent>
@@ -643,18 +636,6 @@ export default function RenewLibraryMemberPage({
                   <div className="flex justify-between text-base font-semibold border-t pt-2 mt-2">
                     <span>Total</span>
                     <span className="text-success"><Currency amount={finalAmount} /></span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2 mt-2">
-                    <span>Hours to Add</span>
-                    <span className="font-medium">{selectedPlan?.hours_included || 0}h</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Current Balance</span>
-                    <span>{member.hours_balance.toFixed(1)}h</span>
-                  </div>
-                  <div className="flex justify-between text-base font-semibold">
-                    <span>New Balance</span>
-                    <span className="text-success">{newHoursBalance.toFixed(1)}h</span>
                   </div>
                 </div>
               </div>
