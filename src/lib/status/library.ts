@@ -11,6 +11,13 @@ import type { StatusConfig } from "./shared"
 // FULL STATUS CONFIGS (with variant)
 // ============================================================================
 
+/**
+ * Library Member Status Definitions:
+ * - active:    Currently enrolled, subscription valid. Auto-set on enrollment/renewal.
+ * - expired:   Subscription ended naturally, member may renew. Auto-set by cron when end_date passes.
+ * - suspended: Member explicitly left / voluntarily stopped attending. Set manually by staff.
+ * - cancelled: Permanently removed / banned (rule violations, refund cases). Set manually by staff.
+ */
 export const LIBRARY_MEMBER_STATUS_CONFIG: Record<string, StatusConfig> = {
   active: { label: "Active", variant: "success" },
   expired: { label: "Expired", variant: "warning" },

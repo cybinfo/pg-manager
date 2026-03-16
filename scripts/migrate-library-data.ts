@@ -559,19 +559,24 @@ async function migrate() {
         }, null as string | null)
       })()
 
+      // Status logic:
+      //   active    = subscription valid, member attending
+      //   expired   = subscription ended naturally, member may renew
+      //   suspended = member explicitly left (has leftDate in source data)
+      //   cancelled = not used during migration
       let status: string
       if (!expiryDate) {
         status = "expired" // No subscription ever
       } else if (new Date(expiryDate) >= new Date()) {
         // Subscription still valid
         if (latestLeftDate && new Date(latestLeftDate) > new Date(expiryDate)) {
-          status = "suspended" // Left after subscription (shouldn't happen if sub is future, but safety)
+          status = "suspended" // Left while subscription was still valid
         } else {
           status = "active" // Valid subscription, not left (or resubscribed after leaving)
         }
       } else {
         // Subscription expired
-        status = latestLeftDate ? "suspended" : "expired"
+        status = latestLeftDate ? "suspended" : "expired" // Left = suspended, just expired = expired
       }
 
       // Find join date (earliest subscription start date)
