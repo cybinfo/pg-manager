@@ -46,6 +46,71 @@ import {
   User,
   IndianRupee,
 } from "lucide-react"
+
+// ============================================
+// Time Slot Helpers
+// ============================================
+
+interface TimeSlotEntry {
+  start: string
+  end: string
+}
+
+function formatTime12h(time: string): string {
+  const [h, m] = time.split(":").map(Number)
+  const ampm = h >= 12 ? "PM" : "AM"
+  const hour12 = h % 12 || 12
+  return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`
+}
+
+function parseTimeSlots(raw: string | null): TimeSlotEntry[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) {
+      return parsed.map((s: { start: string; end: string }) => ({
+        start: s.start || "",
+        end: s.end || "",
+      }))
+    }
+  } catch {
+    // Not JSON — try old format
+  }
+  if (raw.includes("-")) {
+    const [st, et] = raw.split("-")
+    return [{ start: st.trim(), end: et.trim() }]
+  }
+  return []
+}
+
+function calcSlotHours(slot: TimeSlotEntry): number {
+  if (!slot.start || !slot.end) return 0
+  const [sh, sm] = slot.start.split(":").map(Number)
+  const [eh, em] = slot.end.split(":").map(Number)
+  let hours = (eh * 60 + em - sh * 60 - sm) / 60
+  if (hours < 0) hours += 24
+  return hours
+}
+
+function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
+  const slots = parseTimeSlots(raw)
+  if (slots.length === 0) return raw || "Full Day"
+  if (slots.length === 1) {
+    const s = slots[0]
+    return `${formatTime12h(s.start)} \u2013 ${formatTime12h(s.end)} (${calcSlotHours(s).toFixed(1)}h)`
+  }
+  const total = slots.reduce((sum: number, s: TimeSlotEntry) => sum + calcSlotHours(s), 0)
+  return (
+    <span className="flex flex-col gap-0.5">
+      {slots.map((s: TimeSlotEntry, i: number) => (
+        <span key={i}>
+          {formatTime12h(s.start)} &ndash; {formatTime12h(s.end)} ({calcSlotHours(s).toFixed(1)}h)
+        </span>
+      ))}
+      <span className="text-xs text-muted-foreground">Total: {total.toFixed(1)}h</span>
+    </span>
+  )
+}
 import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
@@ -404,11 +469,17 @@ function LibrarySubscriptionDetailContent() {
             {member?.member_code && (
               <span className="font-mono bg-muted px-2 py-0.5 rounded text-xs">{member.member_code}</span>
             )}
-            {subscription.time_slot && (
-              <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
-                {subscription.time_slot}
-              </span>
-            )}
+            {subscription.time_slot && (() => {
+              const slots = parseTimeSlots(subscription.time_slot)
+              const display = slots.length > 0
+                ? slots.map((s: TimeSlotEntry) => `${formatTime12h(s.start)}\u2013${formatTime12h(s.end)}`).join(", ")
+                : subscription.time_slot
+              return (
+                <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                  {display}
+                </span>
+              )
+            })()}
           </div>
         }
         backHref={backHref}
@@ -489,7 +560,7 @@ function LibrarySubscriptionDetailContent() {
         >
           <InfoRow label="Plan" value={subscription.plan_name} icon={CreditCard} />
           {subscription.time_slot && (
-            <InfoRow label="Time Slot" value={subscription.time_slot} icon={Clock} />
+            <InfoRow label="Time Slot" value={formatTimeSlotsDisplay(subscription.time_slot)} icon={Clock} />
           )}
           {subscription.hours_included && (
             <InfoRow label="Hours/Day" value={`${subscription.hours_included}h`} icon={Clock} />

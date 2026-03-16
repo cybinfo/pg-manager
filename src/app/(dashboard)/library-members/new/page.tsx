@@ -19,7 +19,7 @@ import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { Currency } from "@/components/ui/currency"
-import { ArrowLeft, Users, Loader2, CreditCard, UserCheck } from "lucide-react"
+import { ArrowLeft, Users, Loader2, CreditCard, UserCheck, Trash2, Plus } from "lucide-react"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { formatDate } from "@/lib/format"
@@ -62,6 +62,58 @@ function formatTime12h(time: string): string {
   return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`
 }
 
+interface TimeSlot {
+  start: string
+  end: string
+}
+
+/**
+ * Calculate hours for a single time slot.
+ */
+function calcSlotHours(slot: TimeSlot): number {
+  if (!slot.start || !slot.end) return 0
+  const [sh, sm] = slot.start.split(":").map(Number)
+  const [eh, em] = slot.end.split(":").map(Number)
+  let hours = (eh * 60 + em - sh * 60 - sm) / 60
+  if (hours < 0) hours += 24
+  return hours
+}
+
+/**
+ * Serialize time slots for database storage.
+ * Empty array → null, any slots → JSON array string.
+ */
+function serializeTimeSlots(slots: TimeSlot[]): string | null {
+  const valid = slots.filter((s) => s.start && s.end)
+  if (valid.length === 0) return null
+  return JSON.stringify(valid.map((s) => ({ start: s.start, end: s.end })))
+}
+
+/**
+ * Parse time_slot from database into TimeSlot array.
+ * Handles null, old "HH:MM-HH:MM" format, and JSON array format.
+ */
+function parseTimeSlots(raw: string | null): TimeSlot[] {
+  if (!raw) return []
+  // Try JSON array first
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) {
+      return parsed.map((s: { start: string; end: string }) => ({
+        start: s.start || "",
+        end: s.end || "",
+      }))
+    }
+  } catch {
+    // Not JSON — try old format "HH:MM-HH:MM"
+  }
+  if (raw.includes("-")) {
+    const [st, et] = raw.split("-")
+    return [{ start: st.trim(), end: et.trim() }]
+  }
+  return []
+}
+
 export default function NewLibraryMemberPage() {
   return (
     <PermissionGuard permission="library_members.create">
@@ -96,8 +148,7 @@ function NewLibraryMemberContent() {
     duration_months: 1,
     amount: 0,
     discount: 0,
-    start_time: "",
-    end_time: "",
+    time_slots: [] as TimeSlot[],
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -271,14 +322,12 @@ function NewLibraryMemberContent() {
       // Calculate subscription dates
       const selectedPlan = plans.find((p) => p.id === formData.plan_id)
 
-      // Validate access time window doesn't exceed plan hours
-      if (formData.start_time && formData.end_time && selectedPlan?.hours_included) {
-        const [sh, sm] = formData.start_time.split(":").map(Number)
-        const [eh, em] = formData.end_time.split(":").map(Number)
-        let windowHours = (eh * 60 + em - sh * 60 - sm) / 60
-        if (windowHours < 0) windowHours += 24
-        if (windowHours > selectedPlan.hours_included) {
-          showError(`Access time window (${windowHours.toFixed(1)}h) exceeds plan limit (${selectedPlan.hours_included}h/day)`)
+      // Validate total slot hours don't exceed plan hours
+      const validSlots = formData.time_slots.filter((s: TimeSlot) => s.start && s.end)
+      if (validSlots.length > 0 && selectedPlan?.hours_included) {
+        const totalSlotHours = validSlots.reduce((sum: number, s: TimeSlot) => sum + calcSlotHours(s), 0)
+        if (totalSlotHours > selectedPlan.hours_included) {
+          showError(`Total slot hours (${totalSlotHours.toFixed(1)}h) exceeds plan limit (${selectedPlan.hours_included}h/day)`)
           setSaving(false)
           return
         }
@@ -289,9 +338,7 @@ function NewLibraryMemberContent() {
       const finalAmount = formData.amount - formData.discount
 
       // Build time_slot string
-      const timeSlot = formData.start_time && formData.end_time
-        ? `${formData.start_time}-${formData.end_time}`
-        : null
+      const timeSlot = serializeTimeSlots(formData.time_slots)
 
       // Auto-uppercase name
       const memberName = formData.name.toUpperCase()
@@ -441,10 +488,10 @@ function NewLibraryMemberContent() {
   // Final amount
   const finalAmount = formData.amount - formData.discount
 
-  // Access time display
-  const accessTimeDisplay = formData.start_time && formData.end_time
-    ? `${formatTime12h(formData.start_time)} \u2013 ${formatTime12h(formData.end_time)}`
-    : "Full Day"
+  // Access time computed values
+  const validTimeSlots = formData.time_slots.filter((s: TimeSlot) => s.start && s.end)
+  const totalSlotHours = validTimeSlots.reduce((sum: number, s: TimeSlot) => sum + calcSlotHours(s), 0)
+  const hoursExceeded = selectedPlan?.hours_included ? totalSlotHours > selectedPlan.hours_included : false
 
   // Price calculation display
   const priceCalcDisplay = selectedPlan && formData.duration_months
@@ -705,54 +752,81 @@ function NewLibraryMemberContent() {
                 </div>
               </div>
 
-              {/* Start Time & End Time */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start_time">Start Time</Label>
-                  <Input
-                    id="start_time"
-                    name="start_time"
-                    type="time"
-                    value={formData.start_time}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, start_time: e.target.value }))}
+              {/* Access Schedule (Multi-Slot Time Input) */}
+              <div className="space-y-3">
+                <Label>Access Schedule (optional)</Label>
+                <div className="border rounded-lg p-3 space-y-3">
+                  {formData.time_slots.map((slot: TimeSlot, idx: number) => {
+                    const slotHours = calcSlotHours(slot)
+                    return (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-12 flex-shrink-0">Slot {idx + 1}:</span>
+                        <Input
+                          type="time"
+                          value={slot.start}
+                          onChange={(e) => {
+                            const updated = [...formData.time_slots]
+                            updated[idx] = { ...updated[idx], start: e.target.value }
+                            setFormData((prev) => ({ ...prev, time_slots: updated }))
+                          }}
+                          disabled={saving}
+                          className="w-32"
+                        />
+                        <span className="text-muted-foreground">&mdash;</span>
+                        <Input
+                          type="time"
+                          value={slot.end}
+                          onChange={(e) => {
+                            const updated = [...formData.time_slots]
+                            updated[idx] = { ...updated[idx], end: e.target.value }
+                            setFormData((prev) => ({ ...prev, time_slots: updated }))
+                          }}
+                          disabled={saving}
+                          className="w-32"
+                        />
+                        {slot.start && slot.end && (
+                          <span className="text-xs text-muted-foreground w-10 text-right">{slotHours.toFixed(1)}h</span>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 flex-shrink-0"
+                          onClick={() => {
+                            const updated = formData.time_slots.filter((_: TimeSlot, i: number) => i !== idx)
+                            setFormData((prev) => ({ ...prev, time_slots: updated }))
+                          }}
+                          disabled={saving}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    )
+                  })}
+
+                  {validTimeSlots.length > 0 && selectedPlan?.hours_included && (
+                    <div className={`text-xs font-medium ${hoursExceeded ? "text-destructive" : "text-muted-foreground"}`}>
+                      Total: {totalSlotHours.toFixed(1)}h / {selectedPlan.hours_included}h daily {hoursExceeded ? "\u2717" : "\u2713"}
+                    </div>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData((prev) => ({ ...prev, time_slots: [...prev.time_slots, { start: "", end: "" }] }))}
                     disabled={saving}
-                  />
+                  >
+                    <Plus className="mr-1 h-3 w-3" />
+                    Add Slot
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="end_time">End Time</Label>
-                  <Input
-                    id="end_time"
-                    name="end_time"
-                    type="time"
-                    value={formData.end_time}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, end_time: e.target.value }))}
-                    disabled={saving}
-                  />
-                </div>
-              </div>
-              {!(formData.start_time && formData.end_time) && (
-                <p className="text-xs text-muted-foreground">
-                  Leave empty for full day access (no time restriction).
-                </p>
-              )}
-              {formData.start_time && formData.end_time && selectedPlan?.hours_included && (() => {
-                const [sh, sm] = formData.start_time.split(":").map(Number)
-                const [eh, em] = formData.end_time.split(":").map(Number)
-                let windowH = (eh * 60 + em - sh * 60 - sm) / 60
-                if (windowH < 0) windowH += 24
-                if (windowH > selectedPlan.hours_included) {
-                  return (
-                    <p className="text-xs text-destructive font-medium">
-                      Access window ({windowH.toFixed(1)}h) exceeds plan limit ({selectedPlan.hours_included}h/day)
-                    </p>
-                  )
-                }
-                return (
+                {formData.time_slots.length === 0 && (
                   <p className="text-xs text-muted-foreground">
-                    Access window: {windowH.toFixed(1)}h (plan allows {selectedPlan.hours_included}h/day)
+                    Leave empty for full day access (no time restriction).
                   </p>
-                )
-              })()}
+                )}
+              </div>
 
               {/* Amount & Discount */}
               <div className="grid grid-cols-2 gap-4">
@@ -808,8 +882,21 @@ function NewLibraryMemberContent() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Access Time</span>
-                      <span className="font-medium">{accessTimeDisplay}</span>
+                      <span>Access Schedule</span>
+                      <span className="font-medium text-right">
+                        {validTimeSlots.length > 0 ? (
+                          <span className="flex flex-col items-end gap-0.5">
+                            {validTimeSlots.map((slot: TimeSlot, idx: number) => (
+                              <span key={idx}>
+                                {formatTime12h(slot.start)} &ndash; {formatTime12h(slot.end)} ({calcSlotHours(slot).toFixed(1)}h)
+                              </span>
+                            ))}
+                            {validTimeSlots.length > 1 && (
+                              <span className="text-xs text-muted-foreground">Total: {totalSlotHours.toFixed(1)}h</span>
+                            )}
+                          </span>
+                        ) : "Full Day"}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Daily Hours</span>
