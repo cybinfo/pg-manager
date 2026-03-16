@@ -236,7 +236,7 @@ export default function LibrarySubscriptionsPage() {
       enableInlineEdit={true}
       exportColumns={exportColumns}
       exportFilename="library-subscriptions"
-      detailHref={(sub) => `/library-members/${(sub.member as Record<string, unknown>)?.id}`}
+      detailHref={(sub) => `/library-subscriptions/${sub.id}`}
       emptyTitle="No subscriptions found"
       emptyDescription="Subscriptions are created when members enroll in a library plan"
     />

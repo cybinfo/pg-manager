@@ -830,6 +830,30 @@ export const LIBRARY_LOCKER_DETAIL_CONFIG: DetailPageConfig = {
   ],
 }
 
+// Library Subscription (Membership) Detail Config
+export const LIBRARY_SUBSCRIPTION_DETAIL_CONFIG: DetailPageConfig = {
+  table: "library_memberships",
+  select: `
+    *,
+    member:library_members!library_memberships_member_id_fkey(id, name, member_code, phone, email,
+      person:people(id, name, photo_url, phone, email)),
+    plan:library_plans(id, name, hours_included, base_price)
+  `,
+  joinFields: ["member", "plan"],
+  redirectOnNotFound: "/library-subscriptions",
+  notFoundMessage: "Subscription not found",
+  relatedQueries: [
+    {
+      key: "payments",
+      table: "library_payments",
+      select: "id, amount, payment_date, payment_method, receipt_number, status, notes, payment_type, payment_reference",
+      foreignKey: "membership_id",
+      orderBy: "payment_date",
+      orderDirection: "desc",
+    },
+  ],
+}
+
 // Library Payment Detail Config
 export const LIBRARY_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
   table: "library_payments",

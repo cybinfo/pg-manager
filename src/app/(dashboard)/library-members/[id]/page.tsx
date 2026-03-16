@@ -520,39 +520,41 @@ export default function LibraryMemberDetailPage() {
             const config = LIBRARY_MEMBERSHIP_STATUS_CONFIG[membership.status as keyof typeof LIBRARY_MEMBERSHIP_STATUS_CONFIG]
             const balanceDue = getBalanceDue(membership)
             return (
-              <div className="p-3 border rounded-lg mb-2 last:mb-0">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold">{membership.plan_name}</span>
-                  <StatusBadge
-                    status={config?.variant || "muted"}
-                    label={config?.label || membership.status}
-                    size="sm"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Period:</span>{" "}
-                    {formatDate(membership.start_date)} - {formatDate(membership.end_date)}
+              <Link href={`/library-subscriptions/${membership.id}`}>
+                <div className="p-3 border rounded-lg mb-2 last:mb-0 hover:bg-muted/50 transition-colors cursor-pointer">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold">{membership.plan_name}</span>
+                    <StatusBadge
+                      status={config?.variant || "muted"}
+                      label={config?.label || membership.status}
+                      size="sm"
+                    />
                   </div>
-                  <div>
-                    <span className="text-muted-foreground">Amount:</span>{" "}
-                    <Currency amount={membership.final_amount} />
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Period:</span>{" "}
+                      {formatDate(membership.start_date)} - {formatDate(membership.end_date)}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Amount:</span>{" "}
+                      <Currency amount={membership.final_amount} />
+                    </div>
+                    {membership.hours_included && (
+                      <div>
+                        <span className="text-muted-foreground">Daily Allowance:</span>{" "}
+                        {membership.hours_included}h/day
+                        <span className="text-muted-foreground ml-2">({membership.hours_used?.toFixed(1) || 0}h used total)</span>
+                      </div>
+                    )}
+                    {balanceDue > 0 && (
+                      <div>
+                        <span className="text-muted-foreground">Due:</span>{" "}
+                        <span className="text-destructive font-medium"><Currency amount={balanceDue} /></span>
+                      </div>
+                    )}
                   </div>
-                  {membership.hours_included && (
-                    <div>
-                      <span className="text-muted-foreground">Daily Allowance:</span>{" "}
-                      {membership.hours_included}h/day
-                      <span className="text-muted-foreground ml-2">({membership.hours_used?.toFixed(1) || 0}h used total)</span>
-                    </div>
-                  )}
-                  {balanceDue > 0 && (
-                    <div>
-                      <span className="text-muted-foreground">Due:</span>{" "}
-                      <span className="text-destructive font-medium"><Currency amount={balanceDue} /></span>
-                    </div>
-                  )}
                 </div>
-              </div>
+              </Link>
             )
           }}
           initialLimit={3}
