@@ -89,22 +89,23 @@ function computeDefaultStartDate(expiryDate: string | null, status: string): str
 }
 
 /**
- * Compute end date from start date + validity days.
+ * Compute end date from start date + duration in months (each month = 30 days).
  */
-function computeEndDate(startDate: string, validityDays: number): string {
+function computeEndDate(startDate: string, durationMonths: number): string {
   const start = new Date(startDate)
   const end = new Date(start)
-  end.setDate(end.getDate() + validityDays)
+  end.setDate(end.getDate() + Math.round(durationMonths * 30))
   return end.toISOString().split("T")[0]
 }
 
 /**
- * Compute duration in days between two date strings.
+ * Format time string "HH:MM" to 12-hour display format.
  */
-function computeDurationDays(startDate: string, endDate: string): number {
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+function formatTime12h(time: string): string {
+  const [h, m] = time.split(":").map(Number)
+  const ampm = h >= 12 ? "PM" : "AM"
+  const hour12 = h % 12 || 12
+  return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`
 }
 
 export default function RenewLibraryMemberPage({
@@ -124,12 +125,13 @@ export default function RenewLibraryMemberPage({
   const [formData, setFormData] = useState({
     plan_id: "",
     start_date: getTodayISO(),
-    end_date: "",
+    duration_months: 1,
+    amount: 0,
+    discount: 0,
+    start_time: "",
+    end_time: "",
     add_to_existing: true,
   })
-
-  // Track whether user has manually overridden end_date
-  const [endDateManuallySet, setEndDateManuallySet] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -192,47 +194,52 @@ export default function RenewLibraryMemberPage({
     if (currentMembership && plans.length > 0 && !formData.plan_id) {
       const matchingPlan = plans.find((p) => p.id === currentMembership.plan_id)
       if (matchingPlan) {
-        const smartStartDate = formData.start_date
-        const newEndDate = computeEndDate(smartStartDate, matchingPlan.validity_days)
+        const durationMonths = 1
+        const amount = matchingPlan.base_price * durationMonths
+
+        // Pre-fill time from current membership time_slot
+        let startTime = ""
+        let endTime = ""
+        if (currentMembership.time_slot && currentMembership.time_slot.includes("-")) {
+          const [st, et] = currentMembership.time_slot.split("-")
+          startTime = st.trim()
+          endTime = et.trim()
+        }
 
         setFormData((prev) => ({
           ...prev,
           plan_id: matchingPlan.id,
-          end_date: newEndDate,
+          duration_months: durationMonths,
+          amount: amount,
+          discount: 0,
+          start_time: startTime,
+          end_time: endTime,
         }))
       }
     }
-  }, [currentMembership, plans, formData.plan_id, formData.start_date])
+  }, [currentMembership, plans, formData.plan_id])
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newStartDate = e.target.value
-    setFormData((prev) => {
-      // If end_date was not manually overridden, auto-update it keeping same duration
-      if (!endDateManuallySet && prev.end_date && prev.start_date) {
-        const currentDuration = computeDurationDays(prev.start_date, prev.end_date)
-        const newEndDate = computeEndDate(newStartDate, currentDuration)
-        return { ...prev, start_date: newStartDate, end_date: newEndDate }
-      }
-      return { ...prev, start_date: newStartDate }
-    })
+    setFormData((prev) => ({ ...prev, start_date: e.target.value }))
   }
 
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEndDateManuallySet(true)
-    setFormData((prev) => ({ ...prev, end_date: e.target.value }))
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const duration = parseFloat(e.target.value) || 0
+    const plan = plans.find((p) => p.id === formData.plan_id)
+    const newAmount = plan ? plan.base_price * duration : formData.amount
+    setFormData((prev) => ({ ...prev, duration_months: duration, amount: newAmount }))
   }
 
   const handlePlanChange = (planId: string) => {
     const plan = plans.find((p) => p.id === planId)
-    const newEndDate = plan
-      ? computeEndDate(formData.start_date, plan.validity_days)
-      : formData.end_date
-
-    setEndDateManuallySet(false)
+    const duration = 1
+    const newAmount = plan ? plan.base_price * duration : 0
     setFormData((prev) => ({
       ...prev,
       plan_id: planId,
-      end_date: newEndDate,
+      duration_months: duration,
+      amount: newAmount,
+      discount: 0,
     }))
   }
 
@@ -258,7 +265,13 @@ export default function RenewLibraryMemberPage({
       const selectedPlan = plans.find((p) => p.id === formData.plan_id)
       const hoursToAdd = selectedPlan?.hours_included || 0
 
-      const amount = selectedPlan?.base_price || 0
+      const finalAmount = formData.amount - formData.discount
+      const endDate = computeEndDate(formData.start_date, formData.duration_months)
+
+      // Build time_slot string
+      const timeSlot = formData.start_time && formData.end_time
+        ? `${formData.start_time}-${formData.end_time}`
+        : null
 
       // Create new membership record
       const membershipData = withCreatedBy({
@@ -268,12 +281,12 @@ export default function RenewLibraryMemberPage({
         plan_id: formData.plan_id || null,
         plan_name: selectedPlan?.name || "Custom Renewal",
         hours_included: hoursToAdd || null,
-        amount: amount,
-        discount_amount: 0,
-        final_amount: amount,
-        time_slot: null,
+        amount: formData.amount,
+        discount_amount: formData.discount,
+        final_amount: finalAmount,
+        time_slot: timeSlot,
         start_date: formData.start_date,
-        end_date: formData.end_date,
+        end_date: endDate,
         hours_remaining: hoursToAdd || null,
         hours_used: 0,
         status: "active",
@@ -303,7 +316,7 @@ export default function RenewLibraryMemberPage({
         .update({
           hours_balance: newHoursBalance,
           current_subscription_id: membership.id,
-          expiry_date: formData.end_date,
+          expiry_date: endDate,
           status: "active",
           left_date: null,
           updated_at: getNowISO(),
@@ -354,9 +367,22 @@ export default function RenewLibraryMemberPage({
     ? Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
     : null
 
-  // Duration in days between start and end date
-  const durationDays = formData.start_date && formData.end_date
-    ? computeDurationDays(formData.start_date, formData.end_date)
+  // Computed end date
+  const computedEndDate = formData.start_date
+    ? computeEndDate(formData.start_date, formData.duration_months)
+    : ""
+
+  // Final amount
+  const finalAmount = formData.amount - formData.discount
+
+  // Access time display
+  const accessTimeDisplay = formData.start_time && formData.end_time
+    ? `${formatTime12h(formData.start_time)} \u2013 ${formatTime12h(formData.end_time)}`
+    : "Full Day"
+
+  // Price calculation display
+  const priceCalcDisplay = selectedPlan && formData.duration_months
+    ? `\u20B9${selectedPlan.base_price.toLocaleString("en-IN")}/month \u00D7 ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = \u20B9${(selectedPlan.base_price * formData.duration_months).toLocaleString("en-IN")}`
     : null
 
   const planOptions = plans.map((plan) => ({
@@ -475,7 +501,7 @@ export default function RenewLibraryMemberPage({
                 />
               </div>
 
-              {/* Start Date & End Date */}
+              {/* Start Date & Duration */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="start_date">Start Date *</Label>
@@ -490,21 +516,87 @@ export default function RenewLibraryMemberPage({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="end_date">End Date *</Label>
+                  <Label htmlFor="duration_months">Duration (Months) *</Label>
                   <Input
-                    id="end_date"
-                    name="end_date"
-                    type="date"
-                    value={formData.end_date}
-                    onChange={handleEndDateChange}
+                    id="duration_months"
+                    name="duration_months"
+                    type="number"
+                    min="0.5"
+                    step="0.5"
+                    value={formData.duration_months}
+                    onChange={handleDurationChange}
                     required
                     disabled={loading}
                   />
-                  {durationDays !== null && (
+                  {computedEndDate && (
                     <p className="text-xs text-muted-foreground">
-                      Duration: {durationDays} days
+                      Ends: {formatDate(computedEndDate)}
                     </p>
                   )}
+                </div>
+              </div>
+
+              {/* Start Time & End Time */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start_time">Start Time</Label>
+                  <Input
+                    id="start_time"
+                    name="start_time"
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, start_time: e.target.value }))}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end_time">End Time</Label>
+                  <Input
+                    id="end_time"
+                    name="end_time"
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, end_time: e.target.value }))}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+              {!(formData.start_time && formData.end_time) && (
+                <p className="text-xs text-muted-foreground">
+                  Leave empty for full day access (no time restriction).
+                </p>
+              )}
+
+              {/* Amount & Discount */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.amount}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                    disabled={loading}
+                  />
+                  {priceCalcDisplay && (
+                    <p className="text-xs text-muted-foreground">{priceCalcDisplay}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="discount">Discount</Label>
+                  <Input
+                    id="discount"
+                    name="discount"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.discount}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                    disabled={loading}
+                  />
                 </div>
               </div>
 
@@ -517,25 +609,40 @@ export default function RenewLibraryMemberPage({
                     <span className="font-medium">{selectedPlan?.name || "\u2014"}</span>
                   </div>
                   <div className="flex justify-between">
+                    <span>Duration</span>
+                    <span className="font-medium">{formData.duration_months} month{formData.duration_months !== 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span>Period</span>
                     <span className="font-medium">
                       {formData.start_date ? formatDate(formData.start_date) : "\u2014"}
-                      {formData.end_date ? ` \u2013 ${formatDate(formData.end_date)}` : ""}
+                      {computedEndDate ? ` \u2013 ${formatDate(computedEndDate)}` : ""}
                     </span>
                   </div>
-                  {durationDays !== null && (
-                    <div className="flex justify-between">
-                      <span>Duration</span>
-                      <span className="font-medium">{durationDays} days</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span>Access Time</span>
+                    <span className="font-medium">{accessTimeDisplay}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span>Daily Hours</span>
-                    <span className="font-medium">{selectedPlan?.hours_included || 0}h</span>
+                    <span className="font-medium">{selectedPlan?.hours_included || 0}h/day</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Amount</span>
-                    <span className="font-medium"><Currency amount={selectedPlan?.base_price || 0} /></span>
+                    <span className="font-medium">
+                      {selectedPlan && formData.duration_months !== 1
+                        ? <><Currency amount={selectedPlan.base_price} /> &times; {formData.duration_months} = <Currency amount={selectedPlan.base_price * formData.duration_months} /></>
+                        : <Currency amount={formData.amount} />
+                      }
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Discount</span>
+                    <span className="font-medium"><Currency amount={formData.discount} /></span>
+                  </div>
+                  <div className="flex justify-between text-base font-semibold border-t pt-2 mt-2">
+                    <span>Total</span>
+                    <span className="text-success"><Currency amount={finalAmount} /></span>
                   </div>
                   <div className="flex justify-between border-t pt-2 mt-2">
                     <span>Hours to Add</span>

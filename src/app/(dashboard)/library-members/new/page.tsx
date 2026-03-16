@@ -18,9 +18,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
+import { Currency } from "@/components/ui/currency"
 import { ArrowLeft, Users, Loader2, CreditCard, UserCheck } from "lucide-react"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { formatDate } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -41,22 +43,23 @@ interface Plan {
 }
 
 /**
- * Compute end date from start date + validity days.
+ * Compute end date from start date + duration in months (each month = 30 days).
  */
-function computeEndDate(startDate: string, validityDays: number): string {
+function computeEndDate(startDate: string, durationMonths: number): string {
   const start = new Date(startDate)
   const end = new Date(start)
-  end.setDate(end.getDate() + validityDays)
+  end.setDate(end.getDate() + Math.round(durationMonths * 30))
   return end.toISOString().split("T")[0]
 }
 
 /**
- * Compute duration in days between two date strings.
+ * Format time string "HH:MM" to 12-hour display format.
  */
-function computeDurationDays(startDate: string, endDate: string): number {
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+function formatTime12h(time: string): string {
+  const [h, m] = time.split(":").map(Number)
+  const ampm = h >= 12 ? "PM" : "AM"
+  const hour12 = h % 12 || 12
+  return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`
 }
 
 export default function NewLibraryMemberPage() {
@@ -74,7 +77,6 @@ function NewLibraryMemberContent() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [endDateManuallySet, setEndDateManuallySet] = useState(false)
 
   const [formData, setFormData] = useState({
     library_id: "",
@@ -91,7 +93,11 @@ function NewLibraryMemberContent() {
     // Subscription
     plan_id: "",
     start_date: getTodayISO(),
-    end_date: "",
+    duration_months: 1,
+    amount: 0,
+    discount: 0,
+    start_time: "",
+    end_time: "",
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -171,33 +177,26 @@ function NewLibraryMemberContent() {
   }
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newStartDate = e.target.value
-    setFormData((prev) => {
-      if (!endDateManuallySet && prev.end_date && prev.start_date) {
-        const currentDuration = computeDurationDays(prev.start_date, prev.end_date)
-        const newEndDate = computeEndDate(newStartDate, currentDuration)
-        return { ...prev, start_date: newStartDate, end_date: newEndDate }
-      }
-      return { ...prev, start_date: newStartDate }
-    })
+    setFormData((prev) => ({ ...prev, start_date: e.target.value }))
   }
 
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEndDateManuallySet(true)
-    setFormData((prev) => ({ ...prev, end_date: e.target.value }))
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const duration = parseFloat(e.target.value) || 0
+    const plan = plans.find((p) => p.id === formData.plan_id)
+    const newAmount = plan ? plan.base_price * duration : formData.amount
+    setFormData((prev) => ({ ...prev, duration_months: duration, amount: newAmount }))
   }
 
   const handlePlanChange = (planId: string) => {
     const plan = plans.find((p) => p.id === planId)
-    const newEndDate = plan
-      ? computeEndDate(formData.start_date, plan.validity_days)
-      : formData.end_date
-
-    setEndDateManuallySet(false)
+    const duration = 1
+    const newAmount = plan ? plan.base_price * duration : 0
     setFormData((prev) => ({
       ...prev,
       plan_id: planId,
-      end_date: newEndDate,
+      duration_months: duration,
+      amount: newAmount,
+      discount: 0,
     }))
   }
 
@@ -271,11 +270,14 @@ function NewLibraryMemberContent() {
 
       // Calculate subscription dates
       const selectedPlan = plans.find((p) => p.id === formData.plan_id)
-      const endDate = formData.end_date || (selectedPlan
-        ? computeEndDate(formData.start_date, selectedPlan.validity_days)
-        : computeEndDate(formData.start_date, 30))
+      const endDate = computeEndDate(formData.start_date, formData.duration_months)
 
-      const amount = selectedPlan?.base_price || 0
+      const finalAmount = formData.amount - formData.discount
+
+      // Build time_slot string
+      const timeSlot = formData.start_time && formData.end_time
+        ? `${formData.start_time}-${formData.end_time}`
+        : null
 
       // Auto-uppercase name
       const memberName = formData.name.toUpperCase()
@@ -318,10 +320,10 @@ function NewLibraryMemberContent() {
         plan_id: formData.plan_id || null,
         plan_name: selectedPlan?.name || "Custom",
         hours_included: selectedPlan?.hours_included || null,
-        amount: amount,
-        discount_amount: 0,
-        final_amount: amount,
-        time_slot: null,
+        amount: formData.amount,
+        discount_amount: formData.discount,
+        final_amount: finalAmount,
+        time_slot: timeSlot,
         start_date: formData.start_date,
         end_date: endDate,
         hours_remaining: selectedPlan?.hours_included || null,
@@ -416,8 +418,23 @@ function NewLibraryMemberContent() {
   }
 
   const selectedPlan = plans.find((p) => p.id === formData.plan_id)
-  const durationDays = formData.start_date && formData.end_date
-    ? computeDurationDays(formData.start_date, formData.end_date)
+
+  // Computed end date
+  const computedEndDate = formData.start_date
+    ? computeEndDate(formData.start_date, formData.duration_months)
+    : ""
+
+  // Final amount
+  const finalAmount = formData.amount - formData.discount
+
+  // Access time display
+  const accessTimeDisplay = formData.start_time && formData.end_time
+    ? `${formatTime12h(formData.start_time)} \u2013 ${formatTime12h(formData.end_time)}`
+    : "Full Day"
+
+  // Price calculation display
+  const priceCalcDisplay = selectedPlan && formData.duration_months
+    ? `\u20B9${selectedPlan.base_price.toLocaleString("en-IN")}/month \u00D7 ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = \u20B9${(selectedPlan.base_price * formData.duration_months).toLocaleString("en-IN")}`
     : null
 
   const libraryOptions = libraries.map((lib) => ({
@@ -639,7 +656,7 @@ function NewLibraryMemberContent() {
                 />
               </div>
 
-              {/* Start Date & End Date */}
+              {/* Start Date & Duration */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="start_date">Start Date *</Label>
@@ -654,23 +671,138 @@ function NewLibraryMemberContent() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="end_date">End Date *</Label>
+                  <Label htmlFor="duration_months">Duration (Months) *</Label>
                   <Input
-                    id="end_date"
-                    name="end_date"
-                    type="date"
-                    value={formData.end_date}
-                    onChange={handleEndDateChange}
+                    id="duration_months"
+                    name="duration_months"
+                    type="number"
+                    min="0.5"
+                    step="0.5"
+                    value={formData.duration_months}
+                    onChange={handleDurationChange}
                     required
                     disabled={saving}
                   />
-                  {durationDays !== null && (
+                  {computedEndDate && (
                     <p className="text-xs text-muted-foreground">
-                      Duration: {durationDays} days
+                      Ends: {formatDate(computedEndDate)}
                     </p>
                   )}
                 </div>
               </div>
+
+              {/* Start Time & End Time */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start_time">Start Time</Label>
+                  <Input
+                    id="start_time"
+                    name="start_time"
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, start_time: e.target.value }))}
+                    disabled={saving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end_time">End Time</Label>
+                  <Input
+                    id="end_time"
+                    name="end_time"
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, end_time: e.target.value }))}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+              {!(formData.start_time && formData.end_time) && (
+                <p className="text-xs text-muted-foreground">
+                  Leave empty for full day access (no time restriction).
+                </p>
+              )}
+
+              {/* Amount & Discount */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.amount}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                    disabled={saving}
+                  />
+                  {priceCalcDisplay && (
+                    <p className="text-xs text-muted-foreground">{priceCalcDisplay}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="discount">Discount</Label>
+                  <Input
+                    id="discount"
+                    name="discount"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.discount}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              {/* Summary */}
+              {selectedPlan && (
+                <div className="border-t pt-4 bg-muted/50 rounded-lg p-4 mt-4">
+                  <h3 className="font-medium mb-3">Summary</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Plan</span>
+                      <span className="font-medium">{selectedPlan.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Duration</span>
+                      <span className="font-medium">{formData.duration_months} month{formData.duration_months !== 1 ? "s" : ""}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Period</span>
+                      <span className="font-medium">
+                        {formData.start_date ? formatDate(formData.start_date) : "\u2014"}
+                        {computedEndDate ? ` \u2013 ${formatDate(computedEndDate)}` : ""}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Access Time</span>
+                      <span className="font-medium">{accessTimeDisplay}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Daily Hours</span>
+                      <span className="font-medium">{selectedPlan.hours_included || 0}h/day</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Amount</span>
+                      <span className="font-medium">
+                        {formData.duration_months !== 1
+                          ? <><Currency amount={selectedPlan.base_price} /> &times; {formData.duration_months} = <Currency amount={selectedPlan.base_price * formData.duration_months} /></>
+                          : <Currency amount={formData.amount} />
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Discount</span>
+                      <span className="font-medium"><Currency amount={formData.discount} /></span>
+                    </div>
+                    <div className="flex justify-between text-base font-semibold border-t pt-2 mt-2">
+                      <span>Total</span>
+                      <span className="text-success"><Currency amount={finalAmount} /></span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </CardContent>
           </Card>
