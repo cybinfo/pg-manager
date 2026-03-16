@@ -54,6 +54,9 @@ export default function NewLibraryMemberPage() {
       name: "",
       phone: "",
       email: "",
+      gender: "",
+      father_name: "",
+      date_of_birth: "",
       id_proof_type: "aadhar",
       id_proof_number: "",
       preferred_slot: "Morning",
@@ -109,12 +112,15 @@ export default function NewLibraryMemberPage() {
       const discountAmount = parseFloat(data.discount_amount as string) || 0
       const finalAmount = amount - discountAmount
 
+      // Auto-uppercase name
+      const memberName = (data.name as string).toUpperCase()
+
       // Create member
       const memberData = withCreatedBy({
         owner_id: library.owner_id,
         workspace_id: workspaceId,
         library_id: data.library_id,
-        name: data.name,
+        name: memberName,
         phone: data.phone,
         email: data.email || null,
         member_code: memberCode,
@@ -204,6 +210,25 @@ export default function NewLibraryMemberPage() {
           .from("library_members")
           .update({ current_subscription_id: membership.id })
           .eq("id", member.id)
+      }
+
+      // Update person record with additional fields (gender, DOB, father/guardian)
+      if (member.person_id || data.gender || data.date_of_birth || data.father_name) {
+        const personUpdates: Record<string, unknown> = {}
+        if (data.gender) personUpdates.gender = data.gender
+        if (data.date_of_birth) personUpdates.date_of_birth = data.date_of_birth
+        if (data.father_name) {
+          personUpdates.emergency_contacts = [
+            { name: (data.father_name as string).toUpperCase(), phone: "", relation: "Father/Guardian" },
+          ]
+        }
+
+        if (Object.keys(personUpdates).length > 0 && member.person_id) {
+          await supabase
+            .from("people")
+            .update(personUpdates)
+            .eq("id", member.person_id)
+        }
       }
 
       // If converting from waitlist, update the waitlist entry
@@ -405,6 +430,49 @@ export default function NewLibraryMemberPage() {
                   onChange={handleChange}
                   disabled={saving}
                   type="email"
+                />
+              </div>
+
+              {/* Gender & Date of Birth */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender</Label>
+                  <Select
+                    value={formData.gender as string}
+                    onChange={handleChange}
+                    name="gender"
+                    disabled={saving}
+                    options={[
+                      { value: "", label: "Select Gender" },
+                      { value: "male", label: "Male" },
+                      { value: "female", label: "Female" },
+                      { value: "other", label: "Other" },
+                    ]}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date_of_birth">Date of Birth</Label>
+                  <Input
+                    id="date_of_birth"
+                    name="date_of_birth"
+                    type="date"
+                    value={formData.date_of_birth as string}
+                    onChange={handleChange}
+                    disabled={saving}
+                  />
+                </div>
+              </div>
+
+              {/* Father/Guardian Name */}
+              <div className="space-y-2">
+                <Label htmlFor="father_name">Father/Guardian Name</Label>
+                <Input
+                  id="father_name"
+                  name="father_name"
+                  placeholder="e.g., Mr. Sharma"
+                  value={formData.father_name as string}
+                  onChange={handleChange}
+                  disabled={saving}
                 />
               </div>
 

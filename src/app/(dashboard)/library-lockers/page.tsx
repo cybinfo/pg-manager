@@ -120,7 +120,10 @@ const columns: Column<LockerItem>[] = [
         <div className="text-xs text-muted-foreground">{locker.current_member.member_code}</div>
       </div>
     ) : (
-      <span className="text-muted-foreground">—</span>
+      <span className="text-success text-sm flex items-center gap-1">
+        <span className="h-1.5 w-1.5 rounded-full bg-success inline-block" />
+        Available
+      </span>
     ),
   },
   // Hidden by default

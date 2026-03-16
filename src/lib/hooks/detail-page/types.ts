@@ -746,7 +746,7 @@ export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
   table: "library_members",
   select: `
     *,
-    person:people(id, name, phone, email, photo_url, aadhaar_number, pan_number, date_of_birth, gender),
+    person:people(id, name, phone, email, photo_url, aadhaar_number, pan_number, date_of_birth, gender, phone_numbers, emergency_contacts, id_documents, permanent_address, permanent_city, permanent_state, permanent_pincode, current_address, current_city, occupation, blood_group, company_name),
     library:libraries(id, name, code),
     assigned_seat:library_seats(id, seat_number, section:library_sections(id, name)),
     locker:library_lockers(id, locker_number, size)

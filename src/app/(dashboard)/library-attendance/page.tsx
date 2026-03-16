@@ -191,7 +191,9 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
                   <p className="text-xs text-muted-foreground">
                     {checkInTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                     {" • "}
-                    <span className="text-success">{hoursAgo}h</span>
+                    <span className={parseFloat(hoursAgo) > (record.member?.hours_balance || 999) ? "text-destructive font-medium" : "text-success"}>
+                      {hoursAgo}h{record.member?.hours_balance ? ` / ${record.member.hours_balance.toFixed(0)}h` : ""}
+                    </span>
                   </p>
                 </div>
                 <Button
@@ -429,7 +431,12 @@ const columns: Column<AttendanceItem>[] = [
     canHide: true,
     defaultVisible: true,
     render: (att) => att.hours_spent ? (
-      <span className="font-medium">{att.hours_spent.toFixed(1)}h</span>
+      <span className="font-medium">
+        {att.hours_spent.toFixed(1)}h
+        {att.hours_spent > 8 && (
+          <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-warning/10 text-warning rounded font-medium">OT</span>
+        )}
+      </span>
     ) : (
       <span className="text-muted-foreground">—</span>
     ),

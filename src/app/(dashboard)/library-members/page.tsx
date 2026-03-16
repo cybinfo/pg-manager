@@ -6,7 +6,7 @@
 
 "use client"
 
-import { Users, Library, Clock, CreditCard } from "lucide-react"
+import { Users, Library, Clock, CreditCard, AlertTriangle, CalendarClock } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
@@ -43,6 +43,10 @@ interface LibraryMemberItem {
   join_year?: string
   status_label?: string
   hours_display?: string
+  overdue_days?: number
+  days_until_expiry?: number
+  overdue_status?: string
+  missing_data_count?: number
 }
 
 // ============================================
@@ -135,6 +139,45 @@ const columns: Column<LibraryMemberItem>[] = [
   },
   dateColumn("join_date", "Joined", { defaultVisible: false }),
   dateColumn("expiry_date", "Expiry", { defaultVisible: false }),
+  {
+    key: "overdue_status",
+    header: "Overdue Status",
+    width: "badge",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (member) => {
+      if (!member.expiry_date) return "—"
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const expiry = new Date(member.expiry_date)
+      expiry.setHours(0, 0, 0, 0)
+      const diff = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+      if (diff < -30) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive">Severely Overdue</span>
+      if (diff < 0) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-warning/10 text-warning">Overdue</span>
+      if (diff <= 7) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Expiring Soon</span>
+      return <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/10 text-success">Current</span>
+    },
+  },
+  {
+    key: "overdue_days",
+    header: "Overdue Days",
+    width: "count",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: false,
+    render: (member) => {
+      if (!member.expiry_date) return "—"
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const expiry = new Date(member.expiry_date)
+      expiry.setHours(0, 0, 0, 0)
+      const diff = Math.ceil((today.getTime() - expiry.getTime()) / (1000 * 60 * 60 * 24))
+      if (diff <= 0) return "—"
+      return <span className="text-destructive font-medium">{diff}d</span>
+    },
+  },
 ]
 
 // ============================================
@@ -161,6 +204,7 @@ const groupByOptions: GroupByOption[] = [
   { value: "status", label: "Status" },
   { value: "preferred_slot", label: "Time Slot" },
   { value: "join_month", label: "Join Month" },
+  { value: "overdue_status", label: "Overdue Status" },
 ]
 
 // ============================================
@@ -173,6 +217,27 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
   createStatusMetric("expired", "Expired", Users),
   createCountMetric("low_hours", "Low Hours (<2h)", Clock,
     (item) => (Number(item.hours_balance) || 0) < 2 && item.status === "active"
+  ),
+  createCountMetric("overdue", "Overdue", AlertTriangle,
+    (item) => {
+      if (!item.expiry_date || item.status !== "active") return false
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const expiry = new Date(item.expiry_date as string)
+      expiry.setHours(0, 0, 0, 0)
+      return expiry < today
+    }
+  ),
+  createCountMetric("expiring_soon", "Expiring Soon", CalendarClock,
+    (item) => {
+      if (!item.expiry_date || item.status !== "active") return false
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const expiry = new Date(item.expiry_date as string)
+      expiry.setHours(0, 0, 0, 0)
+      const diff = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+      return diff >= 0 && diff <= 7
+    }
   ),
 ]
 

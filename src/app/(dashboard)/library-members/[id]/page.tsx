@@ -1,7 +1,8 @@
 /**
  * Library Member Detail Page
  *
- * Shows member 360 view with subscriptions, attendance, and payments.
+ * Shows member 360 view with subscriptions, attendance, payments,
+ * personal details, emergency contacts, and quick actions.
  */
 
 "use client"
@@ -35,6 +36,14 @@ import {
   Pencil,
   FileText,
   RefreshCw,
+  MessageCircle,
+  MapPin,
+  AlertTriangle,
+  Heart,
+  Shield,
+  User,
+  Briefcase,
+  Droplets,
 } from "lucide-react"
 import { MemberHoursCard, MemberQRCode } from "@/components/library"
 import { formatDate } from "@/lib/format"
@@ -47,6 +56,47 @@ import type {
   LibraryPayment,
   LibraryLockerAssignment,
 } from "@/types/library.types"
+
+// ============================================
+// Helper: Compute overdue info
+// ============================================
+
+function computeOverdueInfo(expiryDate: string | null) {
+  if (!expiryDate) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const expiry = new Date(expiryDate)
+  expiry.setHours(0, 0, 0, 0)
+  const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (diffDays < -30) return { label: "Severely Overdue", days: Math.abs(diffDays), variant: "error" as const, isOverdue: true }
+  if (diffDays < 0) return { label: "Overdue", days: Math.abs(diffDays), variant: "warning" as const, isOverdue: true }
+  if (diffDays <= 7) return { label: "Expiring Soon", days: diffDays, variant: "warning" as const, isOverdue: false }
+  return { label: "Current", days: diffDays, variant: "success" as const, isOverdue: false }
+}
+
+// ============================================
+// Helper: Profile completeness
+// ============================================
+
+function getMissingFields(member: LibraryMember): string[] {
+  const missing: string[] = []
+  if (!member.phone && !member.person?.phone) missing.push("Phone")
+  if (!member.email && !member.person?.email) missing.push("Email")
+  if (!member.person?.photo_url) missing.push("Photo")
+  if (!member.id_proof_type && !member.person?.id_documents?.length) missing.push("ID Proof")
+  if (!member.person?.emergency_contacts?.length) missing.push("Emergency Contact")
+  return missing
+}
+
+// ============================================
+// Helper: Format address
+// ============================================
+
+function formatAddress(address: string | null, city: string | null, state?: string | null, pincode?: string | null): string | null {
+  const parts = [address, city, state, pincode].filter(Boolean)
+  return parts.length > 0 ? parts.join(", ") : null
+}
 
 export default function LibraryMemberDetailPage() {
   const params = useParams()
@@ -78,13 +128,57 @@ export default function LibraryMemberDetailPage() {
   // Calculate stats
   const displayName = member.person?.name || member.name
   const photoUrl = member.person?.photo_url
-  const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0)
+  const totalPaid = payments.reduce((sum: number, p: LibraryPayment) => sum + (p.amount || 0), 0)
   const totalHoursUsed = member.hours_used || 0
   const hoursRemaining = member.hours_balance || 0
   const statusConfig = LIBRARY_MEMBER_STATUS_CONFIG[member.status as keyof typeof LIBRARY_MEMBER_STATUS_CONFIG]
 
+  // Contact info (live person data with fallback)
+  const memberPhone = member.person?.phone || member.phone
+  const memberEmail = member.person?.email || member.email
+
+  // Overdue info
+  const overdueInfo = computeOverdueInfo(member.expiry_date)
+
+  // Profile completeness
+  const missingFields = getMissingFields(member)
+
+  // Person data
+  const person = member.person
+  const emergencyContacts = person?.emergency_contacts || []
+  const phoneNumbers = person?.phone_numbers || []
+  const idDocuments = person?.id_documents || []
+  const permanentAddress = formatAddress(person?.permanent_address ?? null, person?.permanent_city ?? null, person?.permanent_state ?? null, person?.permanent_pincode ?? null)
+  const currentAddress = formatAddress(person?.current_address ?? null, person?.current_city ?? null)
+
+  // Balance due calculation per membership
+  const getBalanceDue = (membership: LibraryMembership): number => {
+    const membershipPayments = payments.filter((p: LibraryPayment) => p.membership_id === membership.id)
+    const paid = membershipPayments.reduce((sum: number, p: LibraryPayment) => sum + (p.amount || 0), 0)
+    return Math.max(0, membership.final_amount - paid)
+  }
+
+  // Total balance due across active memberships
+  const totalBalanceDue = memberships
+    .filter((m: LibraryMembership) => m.status === "active")
+    .reduce((sum: number, m: LibraryMembership) => sum + getBalanceDue(m), 0)
+
   return (
     <div className="space-y-6">
+      {/* Profile Completeness Banner */}
+      {missingFields.length > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+          <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-warning">Incomplete Profile</p>
+            <p className="text-xs text-warning/80">Missing: {missingFields.join(", ")}</p>
+          </div>
+          <Link href={`/library-members/${member.id}/edit`}>
+            <Button variant="outline" size="sm" className="text-xs">Complete</Button>
+          </Link>
+        </div>
+      )}
+
       {/* Hero Header */}
       <DetailHero
         title={displayName}
@@ -117,6 +211,28 @@ export default function LibraryMemberDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Actions: Call, WhatsApp, Email */}
+            {memberPhone && (
+              <a href={`tel:${memberPhone}`}>
+                <Button variant="outline" size="icon" className="h-9 w-9" title="Call">
+                  <Phone className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
+            {memberPhone && (
+              <a href={`https://wa.me/91${memberPhone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="icon" className="h-9 w-9 text-green-600 hover:text-green-700" title="WhatsApp">
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
+            {memberEmail && (
+              <a href={`mailto:${memberEmail}`}>
+                <Button variant="outline" size="icon" className="h-9 w-9" title="Email">
+                  <Mail className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
             <Link href={`/library-attendance/new?member=${member.id}`}>
               <Button variant="outline" size="sm">
                 <Clock className="mr-2 h-4 w-4" />
@@ -155,12 +271,18 @@ export default function LibraryMemberDetailPage() {
       />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <InfoCard
           label="Total Paid"
           value={<Currency amount={totalPaid} />}
           icon={CreditCard}
           variant="default"
+        />
+        <InfoCard
+          label="Balance Due"
+          value={<Currency amount={totalBalanceDue} />}
+          icon={CreditCard}
+          variant={totalBalanceDue > 0 ? "error" : "default"}
         />
         <InfoCard
           label="Subscriptions"
@@ -177,19 +299,30 @@ export default function LibraryMemberDetailPage() {
       </div>
 
       <DetailPageTemplate layoutKey="member-detail" entityType="library_member" record={member}>
-        {/* Member Details */}
+        {/* Contact Information */}
         <DetailSection
           title="Contact Information"
           description="Personal and contact details"
           icon={Users}
         >
-          <InfoRow label="Phone" value={member.phone || "—"} icon={Phone} />
-          <InfoRow label="Email" value={member.email || "—"} icon={Mail} />
+          <InfoRow label="Phone" value={memberPhone || "—"} icon={Phone} />
+          <InfoRow label="Email" value={memberEmail || "—"} icon={Mail} />
           <InfoRow label="Join Date" value={formatDate(member.join_date)} icon={Calendar} />
           {member.expiry_date && (
             <InfoRow
               label="Expiry Date"
-              value={formatDate(member.expiry_date)}
+              value={
+                <span className="flex items-center gap-2">
+                  {formatDate(member.expiry_date)}
+                  {overdueInfo && (
+                    <StatusBadge
+                      status={overdueInfo.variant}
+                      label={overdueInfo.isOverdue ? `${overdueInfo.days}d overdue` : `${overdueInfo.days}d left`}
+                      size="sm"
+                    />
+                  )}
+                </span>
+              }
               icon={Calendar}
             />
           )}
@@ -209,19 +342,145 @@ export default function LibraryMemberDetailPage() {
           )}
         </DetailSection>
 
+        {/* Personal Details (from people table) */}
+        {(person?.gender || person?.date_of_birth || person?.occupation || person?.blood_group) && (
+          <DetailSection
+            title="Personal Details"
+            description="Demographics and personal info"
+            icon={User}
+          >
+            {person?.gender && (
+              <InfoRow label="Gender" value={person.gender.charAt(0).toUpperCase() + person.gender.slice(1)} icon={User} />
+            )}
+            {person?.date_of_birth && (
+              <InfoRow label="Date of Birth" value={formatDate(person.date_of_birth)} icon={Calendar} />
+            )}
+            {person?.occupation && (
+              <InfoRow label="Occupation" value={person.occupation} icon={Briefcase} />
+            )}
+            {person?.company_name && (
+              <InfoRow label="Company" value={person.company_name} icon={Briefcase} />
+            )}
+            {person?.blood_group && (
+              <InfoRow label="Blood Group" value={person.blood_group} icon={Droplets} />
+            )}
+          </DetailSection>
+        )}
+
+        {/* Address (from people table) */}
+        {(permanentAddress || currentAddress) && (
+          <DetailSection
+            title="Address"
+            description="Residential information"
+            icon={MapPin}
+          >
+            {permanentAddress && (
+              <InfoRow label="Permanent Address" value={permanentAddress} icon={MapPin} />
+            )}
+            {currentAddress && (
+              <InfoRow label="Current Address" value={currentAddress} icon={MapPin} />
+            )}
+          </DetailSection>
+        )}
+
+        {/* Phone Numbers (from people table) */}
+        {phoneNumbers.length > 0 && (
+          <DetailSection
+            title="Phone Numbers"
+            description="All contact numbers"
+            icon={Phone}
+          >
+            {phoneNumbers.map((pn: { number: string; type: string; is_whatsapp?: boolean }, idx: number) => (
+              <div key={idx} className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {pn.type?.charAt(0).toUpperCase() + pn.type?.slice(1) || "Phone"}
+                  </span>
+                  {pn.is_whatsapp && (
+                    <span className="text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded font-medium">WA</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <a href={`tel:${pn.number}`} className="text-sm hover:underline">{pn.number}</a>
+                  {pn.is_whatsapp && (
+                    <a
+                      href={`https://wa.me/91${pn.number.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-green-600 hover:text-green-700"
+                      title="WhatsApp"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </DetailSection>
+        )}
+
+        {/* Emergency Contacts (from people table) */}
+        {emergencyContacts.length > 0 && (
+          <DetailSection
+            title="Emergency Contacts"
+            description="Family and guardian contacts"
+            icon={Heart}
+          >
+            {emergencyContacts.map((ec: { name: string; phone: string; relation: string }, idx: number) => (
+              <div key={idx} className="flex items-center justify-between py-2">
+                <div>
+                  <p className="font-medium text-sm">{ec.name}</p>
+                  <p className="text-xs text-muted-foreground">{ec.relation}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a href={`tel:${ec.phone}`} className="text-sm hover:underline">{ec.phone}</a>
+                  <a
+                    href={`https://wa.me/91${ec.phone.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-600 hover:text-green-700"
+                    title="WhatsApp"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </DetailSection>
+        )}
+
         {/* ID Proof */}
-        {(member.id_proof_type || member.id_proof_number) && (
+        {(member.id_proof_type || member.id_proof_number || idDocuments.length > 0) && (
           <DetailSection
             title="ID Proof"
             description="Identity verification"
-            icon={FileText}
+            icon={Shield}
           >
             {member.id_proof_type && (
-              <InfoRow label="ID Type" value={member.id_proof_type.replace("_", " ").toUpperCase()} />
+              <InfoRow label="ID Type" value={member.id_proof_type.replace("_", " ").toUpperCase()} icon={FileText} />
             )}
             {member.id_proof_number && (
-              <InfoRow label="ID Number" value={member.id_proof_number} />
+              <InfoRow label="ID Number" value={member.id_proof_number} icon={FileText} />
             )}
+            {idDocuments.map((doc: { type: string; number: string; verified?: boolean; expiry?: string }, idx: number) => (
+              <InfoRow
+                key={idx}
+                label={doc.type?.replace("_", " ").toUpperCase() || "Document"}
+                value={
+                  <span className="flex items-center gap-2">
+                    {doc.number}
+                    {doc.verified && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-success/10 text-success rounded font-medium">Verified</span>
+                    )}
+                    {doc.expiry && (
+                      <span className="text-xs text-muted-foreground">Exp: {formatDate(doc.expiry)}</span>
+                    )}
+                  </span>
+                }
+                icon={Shield}
+              />
+            ))}
           </DetailSection>
         )}
 
@@ -234,6 +493,7 @@ export default function LibraryMemberDetailPage() {
           keyExtractor={(membership) => membership.id}
           renderItem={(membership) => {
             const config = LIBRARY_MEMBERSHIP_STATUS_CONFIG[membership.status as keyof typeof LIBRARY_MEMBERSHIP_STATUS_CONFIG]
+            const balanceDue = getBalanceDue(membership)
             return (
               <div className="p-3 border rounded-lg mb-2 last:mb-0">
                 <div className="flex items-center justify-between mb-2">
@@ -257,6 +517,12 @@ export default function LibraryMemberDetailPage() {
                     <div>
                       <span className="text-muted-foreground">Hours:</span>{" "}
                       {membership.hours_used?.toFixed(1) || 0}h / {membership.hours_included}h
+                    </div>
+                  )}
+                  {balanceDue > 0 && (
+                    <div>
+                      <span className="text-muted-foreground">Due:</span>{" "}
+                      <span className="text-destructive font-medium"><Currency amount={balanceDue} /></span>
                     </div>
                   )}
                 </div>

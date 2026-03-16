@@ -213,6 +213,18 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
   createSumMetric("amount", "total_amount", "Total Amount", CreditCard),
   createStatusMetric("subscription", "Subscriptions", Users, { id: "subscriptions", column: "payment_type" }),
   createTodayCountMetric("payment_date", "Today", Calendar),
+  {
+    id: "today_amount",
+    label: "Today's Collection",
+    icon: CreditCard,
+    format: "currency",
+    compute: (items) => {
+      const today = new Date().toISOString().split("T")[0]
+      return items
+        .filter((p) => p.payment_date === today && p.status === "completed")
+        .reduce((sum: number, p) => sum + (Number(p.amount) || 0), 0)
+    },
+  },
 ]
 
 // ============================================

@@ -1,7 +1,7 @@
 # ManageKar - AI Development Guide
 
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-02-02
+> **Last Updated**: 2026-02-23
 
 ---
 
@@ -17,7 +17,7 @@
 ```bash
 npm run dev          # Development server at localhost:3000
 npm run build        # Production build
-npm test             # Run test suite (280 tests)
+npm test             # Run test suite (835 tests)
 npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Run tests with coverage
 npx tsc --noEmit     # Type check
@@ -237,7 +237,62 @@ render: (tenant) => {
 }
 ```
 
-### 3.6 List Page Architecture
+### 3.6 Metric Factories (USE INSTEAD OF INLINE COMPUTE)
+
+**NEVER write inline `compute` functions** for common metric patterns. Use the factories from `src/lib/metric-factories.ts`:
+
+```typescript
+import {
+  createTotalMetric, createStatusMetric, createSumMetric, createCountMetric,
+  createTodayCountMetric, createLastMonthSumMetric, createYearToDateSumMetric,
+  createAverageMetric, createTopValueMetric, createTopValueByAmountMetric,
+  createExpiringMetric,
+} from "@/lib/metric-factories"
+
+const metrics: MetricConfig<EntityType>[] = [
+  createTotalMetric("Total", { icon: Users }),
+  createStatusMetric("Active", "active", { icon: CheckCircle }),
+  createSumMetric("Revenue", "amount", { icon: DollarSign, format: "currency" }),
+  createTodayCountMetric("Today", "created_at", { icon: Calendar }),
+  createAverageMetric("Avg Hours", "hours_included", { icon: Clock, suffix: "h" }),
+  createTopValueMetric("Top Method", "payment_method", { icon: TrendingUp, labelMap: PAYMENT_METHOD_LABELS }),
+  createExpiringMetric("Expiring", "expires_at", 3, { icon: AlertTriangle }),
+]
+```
+
+### 3.7 Column Builders (USE FOR LIST PAGE COLUMNS)
+
+**Use column builder functions** from `src/lib/columns/builders.ts` instead of inline column definitions:
+
+```typescript
+import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
+
+const columns = [
+  // Avatar + Name column (supports live person data pattern)
+  personNameWithAvatarColumn("Tenant", {
+    // All optional — smart defaults resolve person.name, person.photo_url, phone
+    subtitleField: ["member_code", "phone"],  // fallback chain
+    nameField: "tenant.name",                 // dot-notation for joins
+  }),
+  statusColumn("Status"),
+  currencyColumn("Amount", "amount"),
+  dateColumn("Date", "created_at"),
+]
+```
+
+### 3.8 Centralized Option Lists (NEVER HARDCODE)
+
+**NEVER hardcode option arrays** (payment methods, room types, etc.) inline. Import from centralized configs:
+
+```typescript
+// Payment methods, refund types, notice types, meter types
+import { PAYMENT_METHODS, REFUND_TYPE_LABELS, NOTICE_TYPES } from "@/lib/status"
+
+// Room types, amenities, ID proof types
+import { ROOM_TYPE_OPTIONS, AVAILABLE_AMENITIES, ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
+```
+
+### 3.9 List Page Architecture
 
 All list pages use the centralized `ListPageTemplate` + `useListPage` hook pattern:
 
@@ -286,11 +341,11 @@ const metrics: MetricConfig<EntityType>[] = [
 />
 ```
 
-### 3.7 Audit System (MANDATORY)
+### 3.10 Audit System (MANDATORY)
 
 All entities must track accountability using the centralized audit utilities.
 
-#### 3.7.1 Created By Tracking
+#### 3.10.1 Created By Tracking
 
 **ALWAYS** use `withCreatedBy()` when inserting records:
 
@@ -302,7 +357,7 @@ const { data, error } = await supabase
   .insert(withCreatedBy(tenantData, user.id))
 ```
 
-#### 3.7.2 Soft Delete (NEVER Hard Delete)
+#### 3.10.2 Soft Delete (NEVER Hard Delete)
 
 **NEVER** use `.delete()` on auditable tables. Use `softDelete()` instead:
 
@@ -322,7 +377,7 @@ const result = await cascadeSoftDelete(propertyId, user.id, [
 **Soft-deletable tables** (17 total):
 `tenants`, `bills`, `payments`, `expenses`, `refunds`, `complaints`, `notices`, `visitors`, `meter_readings`, `exit_clearance`, `properties`, `rooms`, `people`, `meters`, `staff_members`, `visitor_contacts`, `library_waitlist`
 
-#### 3.7.3 Detail Page Audit Display
+#### 3.10.3 Detail Page Audit Display
 
 **Use `DetailPageTemplate`** - audit sections are added automatically:
 
@@ -344,7 +399,9 @@ import { DetailPageTemplate } from "@/components/ui"
 
 ## 4. UI Component Patterns
 
-### 4.1 Select Component (NOT shadcn)
+### 4.1 Select Component (MANDATORY — NO RAW `<select>`)
+
+**NEVER use raw HTML `<select>`**. Always use the custom Select component:
 
 ```typescript
 // USE THIS - Custom Select from form-components
@@ -357,9 +414,12 @@ import { Select } from "@/components/ui/form-components"
     { value: "pending", label: "Pending" },
     { value: "completed", label: "Completed" },
   ]}
+  placeholder="Select status"  // optional, replaces <option value="">
 />
 
-// DO NOT USE shadcn Select with SelectItem children
+// DO NOT USE:
+// - Raw HTML <select> with <option> children
+// - shadcn Select with SelectItem children
 ```
 
 ### 4.2 Select vs Combobox Decision
@@ -385,7 +445,14 @@ import { Select } from "@/components/ui/form-components"
 | `DetailPageTemplate` | `@/components/ui` | Detail page wrapper |
 | `DetailListSection` | `@/components/ui` | Limited list with "View All" |
 
-### 4.4 Library Components
+### 4.4 Portal Components
+
+| Component | Import | Usage |
+|-----------|--------|-------|
+| `PortalLayout` | `@/components/portal` | Shared layout for tenant/member portals |
+| `PortalError` | `@/components/portal` | Shared error boundary for portals |
+
+### 4.5 Library Components
 
 | Component | Import | Usage |
 |-----------|--------|-------|
@@ -617,16 +684,21 @@ const filteredNav = filterNavigation(DASHBOARD_NAVIGATION, {
 **List Page:**
 1. Create `src/app/(dashboard)/[module]/page.tsx`
 2. Define config with `ListPageConfig` type
-3. Define metrics with `MetricConfig` type and `compute` function
-4. Use `ListPageTemplate` with all required props
-5. Add to navigation in `src/lib/navigation/config.ts`
-6. Add permissions in `src/lib/auth/types.ts`
+3. Define metrics using **metric factories** from `src/lib/metric-factories.ts` (not inline compute)
+4. Define columns using **column builders** from `src/lib/columns` (not inline render)
+5. Use `ListPageTemplate` with all required props
+6. Add to navigation in `src/lib/navigation/config.ts`
+7. Add permissions in `src/lib/auth/types.ts`
+8. Import option lists from `@/lib/status` or `@/lib/constants/form-options` (never hardcode)
 
 **Detail Page:**
 1. Create `src/app/(dashboard)/[module]/[id]/page.tsx`
 2. Use `useDetailPage` hook for data fetching
 3. Use `<DetailPageTemplate>` for consistent layout
 4. Use `<DetailListSection>` for lists with "View All"
+5. **ALWAYS add breadcrumbs** to `<DetailHero>` — `breadcrumbs={[{ label: "Module", href: "/module" }, { label: "Details" }]}`
+6. **ALWAYS wrap edit/delete buttons** with `<PermissionGate permission="module.edit" hide>`
+7. Use `personNameWithAvatarColumn()` for person name columns in embedded tables
 
 ### 11.2 Adding a New Database Table
 
@@ -711,4 +783,4 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-*Last Updated: 2026-02-02*
+*Last Updated: 2026-02-23*
