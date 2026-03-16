@@ -46,6 +46,7 @@ import {
   Pencil,
   Check,
   Library,
+  BookOpen,
   Armchair,
   Clock,
   Lock,
@@ -114,6 +115,7 @@ const navigation: NavItem[] = [
       { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
       { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", feature: "library" },
       { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", feature: "library" },
+      { name: "Subscriptions", href: "/library-subscriptions", icon: BookOpen, permission: "library_members.view", feature: "library" },
       { name: "Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
       { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", feature: "library" },
     ]
