@@ -7,7 +7,8 @@
 
 "use client"
 
-import { useParams } from "next/navigation"
+import { useState } from "react"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useDetailPage, LIBRARY_MEMBER_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
@@ -45,11 +46,29 @@ import {
   User,
   Briefcase,
   Droplets,
+  UserMinus,
+  Loader2,
 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { MemberHoursCard, MemberQRCode } from "@/components/library"
 import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { LIBRARY_MEMBER_STATUS_CONFIG, LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
+import { createClient } from "@/lib/supabase/client"
+import { useAuthContext } from "@/lib/auth/useAuthContext"
+import { showSuccess, showError } from "@/lib/toast-helpers"
+import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import type {
   LibraryMember,
   LibraryMembership,
@@ -101,6 +120,8 @@ function formatAddress(address: string | null, city: string | null, state?: stri
 
 export default function LibraryMemberDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user } = useAuthContext()
 
   const {
     data: member,
@@ -112,6 +133,39 @@ export default function LibraryMemberDetailPage() {
   })
 
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-members", defaultLabel: "All Members" })
+
+  // Mark as Left dialog state
+  const [markLeftOpen, setMarkLeftOpen] = useState(false)
+  const [markLeftDate, setMarkLeftDate] = useState(getTodayISO())
+  const [markLeftLoading, setMarkLeftLoading] = useState(false)
+
+  const handleMarkAsLeft = async () => {
+    if (!member || !user) return
+    setMarkLeftLoading(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from("library_members")
+        .update({
+          left_date: markLeftDate,
+          status: "suspended",
+          updated_at: getNowISO(),
+        })
+        .eq("id", member.id)
+
+      if (error) {
+        showError("Failed to mark member as left", error.message)
+      } else {
+        showSuccess("Member marked as left")
+        setMarkLeftOpen(false)
+        router.refresh()
+      }
+    } catch {
+      showError("Failed to mark member as left")
+    } finally {
+      setMarkLeftLoading(false)
+    }
+  }
 
   if (loading) {
     return <PageLoading message="Loading member details..." />
@@ -268,6 +322,22 @@ export default function LibraryMemberDetailPage() {
                 </Link>
               </PermissionGate>
             )}
+            {member.status === "active" && !member.left_date && (
+              <PermissionGate permission="library_members.edit" hide>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={() => {
+                    setMarkLeftDate(getTodayISO())
+                    setMarkLeftOpen(true)
+                  }}
+                >
+                  <UserMinus className="mr-2 h-4 w-4" />
+                  Mark as Left
+                </Button>
+              </PermissionGate>
+            )}
             <PermissionGate permission="library_members.edit" hide>
               <Link href={`/library-members/${member.id}/edit`}>
                 <Button variant="outline" size="sm">
@@ -349,6 +419,15 @@ export default function LibraryMemberDetailPage() {
                 </span>
               }
               icon={Calendar}
+            />
+          )}
+          {member.left_date && (
+            <InfoRow
+              label="Left Date"
+              value={
+                <span className="text-destructive">{formatDate(member.left_date)}</span>
+              }
+              icon={UserMinus}
             />
           )}
           {member.assigned_seat && (
@@ -702,6 +781,46 @@ export default function LibraryMemberDetailPage() {
           </DetailSection>
         )}
       </DetailPageTemplate>
+
+      {/* Mark as Left Dialog */}
+      <AlertDialog open={markLeftOpen} onOpenChange={setMarkLeftOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mark Member as Left</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will set the member status to &quot;Suspended&quot; and record the left date. You can reverse this by renewing their subscription.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Label htmlFor="left_date">Left Date</Label>
+            <Input
+              id="left_date"
+              type="date"
+              value={markLeftDate}
+              onChange={(e) => setMarkLeftDate(e.target.value)}
+              disabled={markLeftLoading}
+              className="mt-2"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={markLeftLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleMarkAsLeft() }}
+              disabled={markLeftLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {markLeftLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

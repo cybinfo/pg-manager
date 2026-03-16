@@ -59,6 +59,7 @@ function EditLibraryMemberContent({
       id_proof_type: "aadhar",
       id_proof_number: "",
       preferred_slot: "Morning",
+      left_date: "",
       notes: "",
       status: "active",
     },
@@ -72,6 +73,7 @@ function EditLibraryMemberContent({
       id_proof_type: (rec.id_proof_type as string) || "aadhar",
       id_proof_number: (rec.id_proof_number as string) || "",
       preferred_slot: (rec.preferred_slot as string) || "Morning",
+      left_date: (rec.left_date as string) || "",
       notes: (rec.notes as string) || "",
       status: (rec.status as string) || "active",
     }),
@@ -88,6 +90,7 @@ function EditLibraryMemberContent({
       id_proof_type: data.id_proof_type || null,
       id_proof_number: data.id_proof_number || null,
       preferred_slot: data.preferred_slot || null,
+      left_date: data.left_date || null,
       notes: data.notes || null,
       status: data.status,
       updated_at: getNowISO(),
@@ -240,6 +243,22 @@ function EditLibraryMemberContent({
                   ]}
                 />
               </div>
+            </div>
+
+            {/* Left Date */}
+            <div className="space-y-2">
+              <Label htmlFor="left_date">Left Date</Label>
+              <Input
+                id="left_date"
+                name="left_date"
+                type="date"
+                value={formData.left_date as string}
+                onChange={handleChange}
+                disabled={saving}
+              />
+              <p className="text-xs text-muted-foreground">
+                Set when member explicitly leaves. Clear when they renew.
+              </p>
             </div>
 
             {/* Notes */}

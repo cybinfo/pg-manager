@@ -623,6 +623,7 @@ async function migrate() {
           hours_balance: hoursBalance,
           hours_used: 0,
           preferred_slot: preferredSlot,
+          left_date: latestLeftDate || null,
           notes: user.father_name ? `Father: ${user.father_name}` : null,
           created_by: ownerId,
         })

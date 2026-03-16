@@ -157,6 +157,7 @@ export interface LibraryMember extends AuditableEntity {
   status: LibraryMemberStatus
   join_date: string
   expiry_date: string | null
+  left_date: string | null
   locker_id: string | null
   notes: string | null
 

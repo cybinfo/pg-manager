@@ -160,6 +160,7 @@ const columns: Column<LibraryMemberItem>[] = [
   },
   dateColumn("join_date", "Joined", { defaultVisible: false }),
   dateColumn("expiry_date", "Expiry", { defaultVisible: false }),
+  dateColumn("left_date", "Left Date", { defaultVisible: false }),
   {
     key: "overdue_status",
     header: "Overdue Status",
@@ -253,6 +254,7 @@ const advancedFilterColumns: FilterableColumn[] = [
   ]),
   dateFilterColumn("join_date", "Join Date"),
   dateFilterColumn("expiry_date", "Expiry Date", ["is_null", "is_not_null"]),
+  dateFilterColumn("left_date", "Left Date", ["is_null", "is_not_null"]),
   dateFilterColumn("created_at", "Added On"),
 ]
 

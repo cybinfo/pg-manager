@@ -339,6 +339,7 @@ export default function RenewLibraryMemberPage({
           current_subscription_id: membership.id,
           expiry_date: endDate.toISOString().split("T")[0],
           status: "active",
+          left_date: null,
           updated_at: getNowISO(),
         })
         .eq("id", member.id)
