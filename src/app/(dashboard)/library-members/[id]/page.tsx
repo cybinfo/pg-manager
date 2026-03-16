@@ -23,6 +23,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
+import { PermissionGate } from "@/components/auth"
 import {
   Users,
   Phone,
@@ -117,7 +118,12 @@ export default function LibraryMemberDetailPage() {
   }
 
   if (!member) {
-    return null
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <h2 className="text-lg font-semibold">Not Found</h2>
+          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+        </div>
+      )
   }
 
   const memberships = (related.memberships || []) as LibraryMembership[]
@@ -247,12 +253,24 @@ export default function LibraryMemberDetailPage() {
                 </Button>
               </Link>
             )}
-            <Link href={`/library-members/${member.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </Link>
+            {(member.status === "active" || member.status === "expired") && (
+              <PermissionGate permission="library_members.edit" hide>
+                <Link href={`/library-members/${member.id}/renew`}>
+                  <Button variant="outline" size="sm" className="text-success border-success/30 hover:bg-success/10">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Renew
+                  </Button>
+                </Link>
+              </PermissionGate>
+            )}
+            <PermissionGate permission="library_members.edit" hide>
+              <Link href={`/library-members/${member.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             <Link href={`/library-payments/new?member=${member.id}`}>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />

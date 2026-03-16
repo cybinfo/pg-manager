@@ -3,6 +3,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { BILL_STATUS_TEXT_COLORS } from "@/lib/status"
+import { brandGradient } from "@/lib/design-tokens"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 
 // ============================================
@@ -187,7 +188,7 @@ export function DuesSummary({
       {/* Progress Bar */}
       <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-500"
+          className={`h-full ${brandGradient.horizontal} rounded-full transition-all duration-500`}
           style={{ width: `${Math.min(collectedPercentage, 100)}%` }}
         />
       </div>

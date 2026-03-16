@@ -1,7 +1,7 @@
 # ManageKar - AI Development Guide
 
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-02-23
+> **Last Updated**: 2026-03-16
 
 ---
 
@@ -12,7 +12,7 @@
 | **Production URL** | https://managekar.com |
 | **Stack** | Next.js 16 + TypeScript + Supabase + Tailwind + shadcn/ui |
 | **Database** | PostgreSQL with Row Level Security (RLS) |
-| **Migrations** | 65 total (001-065) |
+| **Migrations** | 69 total (001-069) |
 
 ```bash
 npm run dev          # Development server at localhost:3000
@@ -164,7 +164,33 @@ const transformed = data?.map(item => ({
 const items = transformArrayJoins(data || [], ["property", "room", "charge_type"])
 ```
 
-### 3.2 Page Protection
+### 3.2 Ambiguous FK Joins (MANDATORY)
+
+When a table has **multiple foreign keys to the same target table**, PostgREST requires an explicit FK hint. Without it, the query fails with `PGRST201: more than one relationship was found`.
+
+**ALWAYS add `!fk_constraint_name`** to disambiguate:
+
+```typescript
+// BAD — ambiguous, will crash at runtime
+assigned_seat:library_seats(id, seat_number)
+locker:library_lockers(id, locker_number)
+
+// GOOD — explicit FK constraint name
+assigned_seat:library_seats!library_members_assigned_seat_id_fkey(id, seat_number)
+locker:library_lockers!library_members_locker_id_fkey(id, locker_number)
+```
+
+**Known ambiguous relationships:**
+
+| From Table | To Table | Must Use FK Hint |
+|------------|----------|------------------|
+| `library_members` | `library_seats` | `!library_members_assigned_seat_id_fkey` |
+| `library_members` | `library_lockers` | `!library_members_locker_id_fkey` |
+| `library_attendance` | `library_members` | `!library_attendance_member_id_fkey` |
+
+**How to find the FK name:** Check the migration SQL or run `\d+ table_name` in psql.
+
+### 3.3 Page Protection
 
 ```typescript
 // Permission-based (ALWAYS use for dashboard pages)
@@ -184,7 +210,7 @@ import { FeatureGuard } from "@/components/auth"
 </FeatureGuard>
 ```
 
-### 3.3 Permission Checks
+### 3.4 Permission Checks
 
 ```typescript
 import { useAuth, useCurrentContext } from "@/lib/auth"
@@ -196,7 +222,7 @@ if (hasPermission("tenants.create")) { /* allowed */ }
 if (isOwner) { /* owner-only logic */ }
 ```
 
-### 3.4 Platform Admin Check
+### 3.5 Platform Admin Check
 
 ```typescript
 // In SQL - use is_platform_admin() function (NOT pa.is_active column)
@@ -209,7 +235,7 @@ OR is_platform_admin(auth.uid())
 const isPlatformAdmin = await checkPlatformAdmin(userId)
 ```
 
-### 3.5 Live Person Data Pattern (IMPORTANT)
+### 3.6 Live Person Data Pattern (IMPORTANT)
 
 Entities with a `person_id` FK should display **live data from the `people` table**, not denormalized copies. This ensures name/phone/photo updates in People are immediately reflected everywhere.
 
@@ -237,7 +263,7 @@ render: (tenant) => {
 }
 ```
 
-### 3.6 Metric Factories (USE INSTEAD OF INLINE COMPUTE)
+### 3.7 Metric Factories (USE INSTEAD OF INLINE COMPUTE)
 
 **NEVER write inline `compute` functions** for common metric patterns. Use the factories from `src/lib/metric-factories.ts`:
 
@@ -260,7 +286,7 @@ const metrics: MetricConfig<EntityType>[] = [
 ]
 ```
 
-### 3.7 Column Builders (USE FOR LIST PAGE COLUMNS)
+### 3.8 Column Builders (USE FOR LIST PAGE COLUMNS)
 
 **Use column builder functions** from `src/lib/columns/builders.ts` instead of inline column definitions:
 
@@ -280,7 +306,7 @@ const columns = [
 ]
 ```
 
-### 3.8 Centralized Option Lists (NEVER HARDCODE)
+### 3.9 Centralized Option Lists (NEVER HARDCODE)
 
 **NEVER hardcode option arrays** (payment methods, room types, etc.) inline. Import from centralized configs:
 
@@ -292,7 +318,54 @@ import { PAYMENT_METHODS, REFUND_TYPE_LABELS, NOTICE_TYPES } from "@/lib/status"
 import { ROOM_TYPE_OPTIONS, AVAILABLE_AMENITIES, ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
 ```
 
-### 3.9 List Page Architecture
+### 3.10 Library Member Detail Pattern
+
+The library member detail page is the reference implementation for **surfacing people table data** and **quick actions**:
+
+```typescript
+// Detail config — fetch full person data including JSONB arrays
+select: `
+  *,
+  person:people(id, name, phone, email, photo_url, gender, date_of_birth,
+    phone_numbers, emergency_contacts, id_documents,
+    permanent_address, permanent_city, permanent_state, permanent_pincode,
+    current_address, current_city, occupation, blood_group, company_name),
+  ...
+`
+
+// Quick actions in DetailHero — Call, WhatsApp, Email
+{memberPhone && <a href={`tel:${memberPhone}`}><Button variant="outline" size="icon" /></a>}
+{memberPhone && <a href={`https://wa.me/91${memberPhone.replace(/\D/g, "")}`}><Button /></a>}
+{memberEmail && <a href={`mailto:${memberEmail}`}><Button /></a>}
+
+// Profile completeness check
+const missing = []
+if (!phone) missing.push("Phone")
+if (!email) missing.push("Email")
+if (!photo_url) missing.push("Photo")
+if (!id_proof_type && !id_documents?.length) missing.push("ID Proof")
+if (!emergency_contacts?.length) missing.push("Emergency Contact")
+
+// Overdue computation
+const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
+// >30d overdue = "Severely Overdue", >0d = "Overdue", ≤7d = "Expiring Soon"
+```
+
+### 3.11 Data Migration Scripts
+
+Data migration scripts live in `scripts/` and use the Supabase service role key:
+
+```bash
+npx tsx scripts/migrate-library-data.ts  # Migrate Google Sheets → Supabase
+```
+
+**Key patterns:**
+- Use `createClient(URL, SERVICE_ROLE_KEY)` to bypass RLS
+- Clean up circular FKs before deletion (e.g., `library_members.locker_id` ↔ `library_lockers.current_member_id`)
+- Tag migrated people records with `tags: ["library_member"]` for clean re-runs
+- `universal_audit_trigger` blocks service-role inserts to tables with audit triggers — skip status logs during migration
+
+### 3.12 List Page Architecture
 
 All list pages use the centralized `ListPageTemplate` + `useListPage` hook pattern:
 
@@ -341,7 +414,7 @@ const metrics: MetricConfig<EntityType>[] = [
 />
 ```
 
-### 3.10 Audit System (MANDATORY)
+### 3.13 Audit System (MANDATORY)
 
 All entities must track accountability using the centralized audit utilities.
 
@@ -499,6 +572,7 @@ import { Select } from "@/components/ui/form-components"
 | `library_payments` | Subscription & locker payments |
 | `library_plans` | Subscription plan definitions |
 | `library_waitlist` | Prospective member queue |
+| `library_member_status_log` | Member status transition history |
 
 ### 5.3 Critical Column Names
 
@@ -509,6 +583,7 @@ import { Select } from "@/components/ui/form-components"
 | `tenant_stays` | `join_date` | ~~start_date~~ |
 | `exit_clearance` | `settlement_status` | ~~status~~ |
 | `platform_admins` | NO `is_active` column | ~~is_active~~ |
+| `workspaces` | `owner_user_id` | ~~owner_id~~ |
 
 ### 5.4 Key Migrations
 
@@ -527,6 +602,10 @@ import { Select } from "@/components/ui/form-components"
 | 063 | library_complaints_notices.sql | Library support for complaints/notices |
 | 064 | library_attendance_hours_trigger.sql | Auto-calculate hours on check-out |
 | 065 | library_waitlist.sql | Waitlist with auto-queue positioning |
+| 066 | add_composite_indexes.sql | Performance indexes |
+| 067 | library_member_status_log.sql | Member status transition tracking |
+| 068 | library_plans_audit_and_indexes.sql | Library plans audit trigger + indexes |
+| 069 | fix_audit_trigger_service_role.sql | Fix audit trigger for service role (NULL auth.uid) |
 
 ---
 
@@ -773,6 +852,14 @@ git add . && git commit -m "description" && git push && vercel --prod
 - Include `compute` function (required)
 - Use `serverFilter` for server-side counting
 
+### Recently Fixed Issues
+- **personNameWithAvatarColumn**: Now applied to 8/8 list pages (was 3/8)
+- **Form submit debouncing**: Added to `useFormPage` hook to prevent double submissions
+- **Detail page "Not Found" UI**: Detail pages now show a proper "Not Found" message instead of a blank screen
+- **Column visibility persistence**: DataTable column visibility is persisted to localStorage per table
+- **Password strength**: Upgraded to 8+ characters with complexity requirements (uppercase, lowercase, number)
+- **Email enumeration**: Fixed on forgot-password page (consistent response regardless of email existence)
+
 ---
 
 ## Contact
@@ -783,4 +870,4 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-*Last Updated: 2026-02-23*
+*Last Updated: 2026-03-16*

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { PortalLayout } from "@/components/portal"
 import { TENANT_NAVIGATION } from "@/lib/navigation/config"
 import { TenantPortalInfo, RawTenantPortalInfo } from "@/types/tenants.types"
+import { brandGradient } from "@/lib/design-tokens"
 
 export default function TenantLayout({
   children,
@@ -58,7 +59,7 @@ export default function TenantLayout({
   return (
     <PortalLayout
       portalType="tenant"
-      brandGradient="from-teal-500 to-emerald-500"
+      brandGradient={brandGradient.values}
       brandIconColor="text-primary"
       icon={Building2}
       portalName="Tenant Portal"

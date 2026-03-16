@@ -29,6 +29,7 @@ import {
   MapPin,
 } from "lucide-react"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { PermissionGuard } from "@/components/auth"
 
 interface Property {
   id: string
@@ -46,6 +47,14 @@ interface Room {
 }
 
 export default function EditTenantPage() {
+  return (
+    <PermissionGuard permission="tenants.edit">
+      <EditTenantContent />
+    </PermissionGuard>
+  )
+}
+
+function EditTenantContent() {
   const params = useParams()
   const id = params.id as string
   const [properties, setProperties] = useState<Property[]>([])

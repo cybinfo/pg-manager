@@ -28,6 +28,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { handleClientError } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PermissionGuard } from "@/components/auth"
 import { initiateExitClearance, ExitClearanceInput } from "@/lib/workflows/exit.workflow"
 import { getTodayISO } from "@/lib/date-helpers"
 
@@ -677,14 +678,16 @@ function InitiateCheckoutForm() {
 
 export default function NewExitClearancePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      }
-    >
-      <InitiateCheckoutForm />
-    </Suspense>
+    <PermissionGuard permission="exit_clearance.create">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        }
+      >
+        <InitiateCheckoutForm />
+      </Suspense>
+    </PermissionGuard>
   )
 }

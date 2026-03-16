@@ -20,8 +20,21 @@ import { ArrowLeft, Users, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { PermissionGuard } from "@/components/auth"
 
 export default function EditLibraryMemberPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  return (
+    <PermissionGuard permission="library_members.edit">
+      <EditLibraryMemberContent params={params} />
+    </PermissionGuard>
+  )
+}
+
+function EditLibraryMemberContent({
   params,
 }: {
   params: Promise<{ id: string }>

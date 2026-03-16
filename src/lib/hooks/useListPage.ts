@@ -109,6 +109,7 @@ export function useListPage<T extends object>(
     initialPageSize,
     initialViewConfig,
     enabled = true,
+    tableKey,
   } = options
 
   // Pagination defaults
@@ -134,6 +135,7 @@ export function useListPage<T extends object>(
     initialSort: computedInitialSort,
     initialHiddenColumns: computedInitialHiddenColumns,
     initialAdvancedFilters: computedInitialAdvancedFilters,
+    tableKey,
   })
 
   // Pagination

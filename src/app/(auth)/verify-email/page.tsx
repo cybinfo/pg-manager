@@ -7,6 +7,7 @@ import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BrandLogo } from "@/components/ui/brand-logo"
+import { brandGradient } from "@/lib/design-tokens"
 
 type VerificationStatus = "loading" | "success" | "error" | "no-token"
 
@@ -52,7 +53,7 @@ function VerifyEmailContent() {
   }, [token])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 p-4">
+    <div className={`min-h-screen flex items-center justify-center ${brandGradient.pageBg} p-4`}>
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
@@ -113,7 +114,7 @@ function VerifyEmailContent() {
               <div className="space-y-3">
                 <Button
                   onClick={() => router.push("/dashboard")}
-                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600"
+                  className={`w-full ${brandGradient.button}`}
                 >
                   Go to Dashboard
                 </Button>
@@ -134,7 +135,7 @@ function VerifyEmailContent() {
                 </p>
                 <Button
                   onClick={() => router.push("/settings")}
-                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600"
+                  className={`w-full ${brandGradient.button}`}
                 >
                   Request New Verification
                 </Button>
@@ -152,7 +153,7 @@ function VerifyEmailContent() {
               <div className="space-y-3">
                 <Button
                   onClick={() => router.push("/login")}
-                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600"
+                  className={`w-full ${brandGradient.button}`}
                 >
                   Sign In
                 </Button>
@@ -176,7 +177,7 @@ function VerifyEmailContent() {
 // Loading fallback
 function LoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 p-4">
+    <div className={`min-h-screen flex items-center justify-center ${brandGradient.pageBg} p-4`}>
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <BrandLogo size="lg" linkTo={null} />

@@ -83,6 +83,35 @@ export default function ComplaintDetailPage() {
     })
   }
 
+  const sendResolvedEmail = async (complaintData: Complaint) => {
+    try {
+      const supabase = (await import("@/lib/supabase/client")).createClient()
+      const { data: tenantData } = await supabase
+        .from("tenants")
+        .select("email, person:people(email)")
+        .eq("id", complaintData.tenant_id)
+        .single()
+
+      const email = tenantData?.person?.email || tenantData?.email
+      if (!email) return
+
+      const { sendComplaintResolvedEmail } = await import("@/lib/email")
+      const categoryLabel = categoryLabels[complaintData.category] || complaintData.category
+
+      sendComplaintResolvedEmail({
+        to: email,
+        recipientName: complaintData.tenant?.name || "Tenant",
+        complaintTitle: complaintData.title,
+        category: categoryLabel,
+        resolutionNotes: complaintData.resolution_notes,
+        resolvedDate: new Date(),
+        propertyName: complaintData.property?.name,
+      }).catch(() => {}) // non-blocking
+    } catch {
+      // Non-blocking
+    }
+  }
+
   const handleStatusChange = async (newStatus: string) => {
     const updateData: Record<string, unknown> = {
       status: newStatus,
@@ -92,7 +121,12 @@ export default function ComplaintDetailPage() {
       updateData.resolved_at = getNowISO()
     }
 
-    await updateFields(updateData)
+    const success = await updateFields(updateData)
+
+    // Send email when status changes to resolved
+    if (success && newStatus === "resolved" && complaint?.status !== "resolved" && complaint) {
+      sendResolvedEmail(complaint)
+    }
   }
 
   const handleSave = async () => {
@@ -110,6 +144,14 @@ export default function ComplaintDetailPage() {
     const success = await updateFields(updateData)
     if (success) {
       setEditing(false)
+
+      // Send email when status changes to resolved via edit
+      if (editData.status === "resolved" && complaint?.status !== "resolved" && complaint) {
+        sendResolvedEmail({
+          ...complaint,
+          resolution_notes: editData.resolution_notes || null,
+        })
+      }
     }
   }
 
@@ -118,7 +160,12 @@ export default function ComplaintDetailPage() {
   }
 
   if (!complaint) {
-    return null
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <h2 className="text-lg font-semibold">Not Found</h2>
+          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+        </div>
+      )
   }
 
   const currentStatusIndex = statusFlow.indexOf(complaint.status)

@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Home, Loader2 } from "lucide-react"
 import { Select } from "@/components/ui/form-components"
 import { PhotoGallery } from "@/components/forms"
+import { PermissionGuard } from "@/components/auth"
 
 interface Property {
   id: string
@@ -49,6 +50,14 @@ const availableAmenities = [
 ]
 
 export default function EditRoomPage() {
+  return (
+    <PermissionGuard permission="rooms.edit">
+      <EditRoomContent />
+    </PermissionGuard>
+  )
+}
+
+function EditRoomContent() {
   const params = useParams()
   const [properties, setProperties] = useState<Property[]>([])
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)

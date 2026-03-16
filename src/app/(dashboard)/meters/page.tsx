@@ -18,7 +18,7 @@ import {
   Archive,
 } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { dateColumn } from "@/lib/column-builders"
+import { dateColumn, statusColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { METER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
@@ -26,8 +26,6 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, METER_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { formatDate } from "@/lib/format"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
 
 // ============================================
@@ -142,13 +140,8 @@ const columns: Column<Meter>[] = [
       <span className="font-mono text-sm">{meter.initial_reading.toLocaleString()}</span>
     ),
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
+  statusColumn(METER_STATUS_CONFIG, {
+    style: "badge",
     editable: true,
     editType: "select",
     editOptions: [
@@ -156,11 +149,7 @@ const columns: Column<Meter>[] = [
       { value: "inactive", label: "Inactive" },
       { value: "faulty", label: "Faulty" },
     ],
-    render: (meter) => {
-      const statusConfig = METER_STATUS_CONFIG[meter.status] || METER_STATUS_CONFIG.active
-      return <StatusBadge variant={statusConfig.variant} label={statusConfig.label} />
-    },
-  },
+  }),
   // Hidden by default columns
   {
     key: "meter_type",

@@ -60,6 +60,13 @@ export const AUTH_MAX_RETRY_DELAY_MS = 10000
 export const SESSION_REFRESH_BUFFER_MS = 5 * 60 * 1000
 
 // ============================================
+// Security Constants
+// ============================================
+
+/** CSRF token expiry duration (ms) - 24 hours */
+export const CSRF_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000
+
+// ============================================
 // Toast & UI Notification Constants
 // ============================================
 

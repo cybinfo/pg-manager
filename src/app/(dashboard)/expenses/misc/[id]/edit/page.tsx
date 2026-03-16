@@ -25,19 +25,23 @@ import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { EXPENSE_MISC_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { MiscTransaction, MiscTransactionCategory, MiscTransactionFormData, MiscPaymentMode } from "@/types/expense-enhanced.types"
-
-const PAYMENT_MODE_OPTIONS = [
-  { value: "cash", label: "Cash" },
-  { value: "upi", label: "UPI" },
-  { value: "paytm", label: "Paytm" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "card", label: "Card" },
-  { value: "cheque", label: "Cheque" },
-  { value: "other", label: "Other" },
-]
+import { PermissionGuard } from "@/components/auth"
 
 export default function EditMiscTransactionPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  return (
+    <PermissionGuard permission="expenses.edit">
+      <EditMiscTransactionContent params={params} />
+    </PermissionGuard>
+  )
+}
+
+function EditMiscTransactionContent({
   params,
 }: {
   params: Promise<{ id: string }>

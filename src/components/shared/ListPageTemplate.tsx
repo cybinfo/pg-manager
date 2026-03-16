@@ -67,9 +67,12 @@ import {
   MetricConfig,
   TableViewConfig,
 } from "@/lib/hooks/useListPage"
+import { ExportButton } from "@/components/ui/export-button"
+import type { CSVColumn } from "@/lib/download-utils"
 import { useTableViews } from "@/lib/hooks/useTableViews"
 import { buildDetailHref } from "@/lib/hooks/useBackNavigation"
 import { useInlineEdit } from "@/lib/hooks/useInlineEdit"
+import { useRowSelection } from "@/lib/hooks/useRowSelection"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { SavedViewSelector } from "@/components/ui/saved-view-selector"
 import type { FilterGroup } from "@/types/table-features.types"
@@ -277,6 +280,28 @@ export interface ListPageTemplateProps<T extends Record<string, unknown> = Recor
 
   // --- Inline edit props (grouped style, new API) ---
   inlineEdit?: ListPageInlineEditConfig
+
+  // --- CSV Export ---
+  /** Column definitions for CSV export. When provided, shows an Export CSV button in the header. */
+  exportColumns?: CSVColumn<T>[]
+  /** Base filename for CSV export (default: derived from title). Date is appended automatically. */
+  exportFilename?: string
+
+  // --- Bulk Actions ---
+  /** Enable row selection and render bulk actions bar when rows are selected */
+  bulkActions?: BulkActionConfig
+}
+
+/**
+ * Configuration for bulk actions on the list page.
+ * When provided, enables row selection checkboxes and renders
+ * a bulk actions bar above the table when rows are selected.
+ */
+export interface BulkActionConfig {
+  /** Permission required to use bulk actions (e.g., "library_members.edit") */
+  permission?: string
+  /** Render function for the bulk actions bar. Receives selected IDs and a clear function. */
+  renderActions: (selectedIds: string[], clearSelection: () => void, refetch: () => void) => React.ReactNode
 }
 
 // ============================================
@@ -357,6 +382,13 @@ export function ListPageTemplate({
 
   // Inline Editing (grouped - new)
   inlineEdit,
+
+  // CSV Export
+  exportColumns,
+  exportFilename,
+
+  // Bulk Actions
+  bulkActions,
 }: ListPageTemplateProps<FlexibleRow>) {
   // ============================================
   // Resolve flat + grouped props (flat props take precedence for backward compat)
@@ -441,6 +473,7 @@ export function ListPageTemplate({
     groupByOptions,
     metrics,
     initialViewConfig: tableViews.activeView?.config,
+    tableKey,
   })
 
   // Apply view config when it changes from saved views
@@ -512,6 +545,19 @@ export function ListPageTemplate({
       }
     })
   }, [columns, canEdit, inlineSaving, handleRowUpdate])
+
+  // ============================================
+  // Row Selection (for Bulk Actions)
+  // ============================================
+  const enableBulkActions = !!bulkActions && (!bulkActions.permission || hasPermission(bulkActions.permission))
+  const {
+    selectedIds: bulkSelectedIds,
+    toggleRow: bulkToggleRow,
+    toggleAll: bulkToggleAll,
+    clearSelection: bulkClearSelection,
+    isAllSelected: bulkIsAllSelected,
+    isSomeSelected: bulkIsSomeSelected,
+  } = useRowSelection(enableBulkActions ? filteredData : [])
 
   // Group dropdown state
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false)
@@ -624,6 +670,13 @@ export function ListPageTemplate({
                 onDeleteView={tableViews.deleteView}
                 onSetDefault={tableViews.setDefaultView}
                 onClearDefault={tableViews.clearDefaultView}
+              />
+            )}
+            {exportColumns && exportColumns.length > 0 && (
+              <ExportButton
+                data={filteredData}
+                filename={exportFilename || title.toLowerCase().replace(/\s+/g, "-")}
+                columns={exportColumns}
               />
             )}
             {headerActions}
@@ -777,6 +830,23 @@ export function ListPageTemplate({
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {enableBulkActions && bulkSelectedIds.length > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+          <span className="text-sm font-medium">
+            {bulkSelectedIds.length} selected
+          </span>
+          <div className="h-4 w-px bg-border" />
+          {bulkActions.renderActions(bulkSelectedIds, bulkClearSelection, refetch)}
+          <button
+            onClick={bulkClearSelection}
+            className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
       {/* DataTable */}
       <DataTable
         columns={enhancedColumns}
@@ -794,6 +864,12 @@ export function ListPageTemplate({
         defaultSort={sortConfig}
         onSortChange={handleSortChange}
         hiddenColumns={hiddenColumns}
+        selectable={enableBulkActions}
+        selectedIds={enableBulkActions ? bulkSelectedIds : undefined}
+        onToggleRow={enableBulkActions ? bulkToggleRow : undefined}
+        onToggleAll={enableBulkActions ? bulkToggleAll : undefined}
+        isAllSelected={enableBulkActions ? bulkIsAllSelected : undefined}
+        isSomeSelected={enableBulkActions ? bulkIsSomeSelected : undefined}
         emptyState={
           <div className="flex flex-col items-center py-8">
             {EmptyIcon ? (

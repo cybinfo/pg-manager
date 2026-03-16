@@ -22,6 +22,20 @@ const customJestConfig = {
     '!src/**/*.d.ts',
     '!src/**/*.stories.{js,jsx,ts,tsx}',
   ],
+  coverageThreshold: {
+    global: {
+      statements: 0,
+      branches: 0,
+      functions: 0,
+      lines: 0,
+    },
+    './src/lib/': {
+      statements: 50,
+      branches: 40,
+      functions: 50,
+      lines: 50,
+    },
+  },
 }
 
 module.exports = createJestConfig(customJestConfig)

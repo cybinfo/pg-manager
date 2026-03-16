@@ -17,6 +17,8 @@ import {
   FileText,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import { PermissionGuard } from "@/components/auth"
 
 interface ExpenseType {
   id: string
@@ -30,6 +32,14 @@ interface Property {
 }
 
 export default function EditExpensePage() {
+  return (
+    <PermissionGuard permission="expenses.edit">
+      <EditExpenseContent />
+    </PermissionGuard>
+  )
+}
+
+function EditExpenseContent() {
   const router = useRouter()
   const params = useParams()
   const [loading, setLoading] = useState(true)
@@ -329,13 +339,7 @@ export default function EditExpensePage() {
                 name="payment_method"
                 value={formData.payment_method}
                 onChange={handleChange}
-                options={[
-                  { value: "cash", label: "Cash" },
-                  { value: "upi", label: "UPI" },
-                  { value: "bank_transfer", label: "Bank Transfer" },
-                  { value: "card", label: "Card" },
-                  { value: "cheque", label: "Cheque" },
-                ]}
+                options={EXPENSE_PAYMENT_MODE_OPTIONS}
               />
             </div>
           </CardContent>

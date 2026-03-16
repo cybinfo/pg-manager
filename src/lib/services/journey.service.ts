@@ -146,7 +146,7 @@ export async function getTenantJourney(
       ...tenantData,
       property: transformJoin(tenantData.property),
       room: transformJoin(tenantData.room),
-    }
+    } as unknown as TenantRecord
 
     // Step 2: Execute parallel data fetches
     const [
@@ -178,8 +178,8 @@ export async function getTenantJourney(
       tenant_status: tenant.status,
       tenant_photo_url: tenant.photo_url,
       check_in_date: tenant.check_in_date,
-      property: tenant.property,
-      room: tenant.room,
+      property: tenant.property || undefined,
+      room: tenant.room || undefined,
       events: eventsResult.events,
       total_events: eventsResult.total,
       has_more_events: eventsResult.total > events_offset + events_limit,
@@ -247,16 +247,16 @@ async function fetchAndNormalizeEvents(
 
   // Normalize each source to JourneyEvent format
   const allEvents: JourneyEvent[] = [
-    ...normalizeStayEvents(tenantStays),
-    ...normalizeBillEvents(bills),
-    ...normalizePaymentEvents(payments),
-    ...normalizeChargeEvents(charges),
-    ...normalizeComplaintEvents(complaints),
-    ...normalizeTransferEvents(roomTransfers),
-    ...normalizeExitEvents(exitClearances),
-    ...normalizeRefundEvents(refunds),
-    ...normalizeVisitorEvents(visitors),
-    ...normalizeMeterEvents(meterReadings),
+    ...normalizeStayEvents(tenantStays as unknown as StayRecord[]),
+    ...normalizeBillEvents(bills as unknown as BillRecord[]),
+    ...normalizePaymentEvents(payments as unknown as PaymentRecord[]),
+    ...normalizeChargeEvents(charges as unknown as ChargeRecord[]),
+    ...normalizeComplaintEvents(complaints as unknown as ComplaintRecord[]),
+    ...normalizeTransferEvents(roomTransfers as unknown as TransferRecord[]),
+    ...normalizeExitEvents(exitClearances as unknown as ExitClearanceRecord[]),
+    ...normalizeRefundEvents(refunds as unknown as RefundRecord[]),
+    ...normalizeVisitorEvents(visitors as unknown as VisitorRecord[]),
+    ...normalizeMeterEvents(meterReadings as unknown as MeterReadingRecord[]),
   ]
 
   // Filter by categories if specified
@@ -497,10 +497,165 @@ async function fetchMeterReadings(supabase: ReturnType<typeof createClient>, ten
 }
 
 // ============================================
+// Internal Types for Event Normalization
+// ============================================
+
+interface StayRecord {
+  id: string
+  created_at?: string
+  join_date: string
+  exit_date?: string
+  stay_number: number
+  monthly_rent?: number
+  status: string
+  security_deposit?: number
+  exit_reason?: string
+  tenant_id: string
+  property?: { id: string; name: string } | null
+  room?: { id: string; room_number: string } | null
+}
+
+interface BillRecord {
+  id: string
+  created_at: string
+  bill_number: string
+  total_amount: number
+  balance_due: number
+  paid_amount?: number
+  for_month: string
+  status: string
+  due_date: string
+  line_items?: unknown
+  tenant_id: string
+  property?: { id: string; name: string } | null
+}
+
+interface PaymentRecord {
+  id: string
+  created_at: string
+  amount: number
+  payment_method: string
+  for_period?: string
+  reference_number?: string
+  receipt_number?: string
+  notes?: string
+  bill?: { id: string; bill_number: string } | null
+  charge_type?: { name?: string } | null
+}
+
+interface ChargeRecord {
+  id: string
+  created_at: string
+  amount?: number
+  late_fee_applied?: number
+  charge_type?: { name?: string } | null
+}
+
+interface ComplaintRecord {
+  id: string
+  created_at: string
+  title: string
+  category: string
+  priority: string
+  description?: string
+  status: string
+  resolved_at?: string
+  resolution_notes?: string
+  room?: { id: string; room_number: string } | null
+}
+
+interface TransferRecord {
+  id: string
+  created_at?: string
+  transfer_date: string
+  reason?: string
+  old_rent: number
+  new_rent: number
+  from_room?: { room_number: string } | null
+  to_room?: { id: string; room_number: string } | null
+  from_property?: { name: string } | null
+  to_property?: { id: string; name: string } | null
+}
+
+interface ExitClearanceRecord {
+  id: string
+  created_at: string
+  expected_exit_date: string
+  settlement_status: string
+  notice_given_date?: string
+  total_dues?: number
+  total_refundable?: number
+  final_amount?: number
+  deductions?: unknown
+  completed_at?: string
+  key_returned?: boolean
+  room_inspection_done?: boolean
+  actual_exit_date?: string
+  property?: { id: string; name: string } | null
+  room?: { id: string; room_number: string } | null
+}
+
+interface RefundRecord {
+  id: string
+  created_at: string
+  processed_at?: string
+  amount: number
+  status: string
+  payment_mode: string
+  refund_type?: string
+  reason?: string
+  notes?: string
+  refund_date?: string
+}
+
+interface VisitorRecord {
+  id: string
+  created_at: string
+  visitor_name: string
+  visitor_phone?: string
+  relation?: string
+  purpose?: string
+  is_overnight?: boolean
+  check_in_time?: string
+  check_out_time?: string
+}
+
+interface MeterReadingRecord {
+  id: string
+  created_at?: string
+  reading_date: string
+  reading_value?: number
+  previous_reading?: number
+  units_consumed: number
+  amount?: number
+  charge_type?: { name?: string } | null
+}
+
+/** Properties accessed on tenant records across analytics, financial, and predictive functions */
+interface TenantRecord {
+  id: string
+  name: string
+  status: string
+  photo_url?: string
+  monthly_rent?: number
+  check_in_date: string
+  phone?: string
+  phone_numbers?: Array<{ number?: string }>
+  police_verification_status?: string
+  agreement_signed?: boolean
+  security_deposit_paid?: number
+  security_deposit?: number
+  advance_amount?: number
+  advance_balance?: number
+  property?: { id: string; name: string; address?: string } | null
+  room?: { id: string; room_number: string; room_type?: string } | null
+}
+
+// ============================================
 // Event Normalizers
 // ============================================
 
-function normalizeStayEvents(stays: any[]): JourneyEvent[] {
+function normalizeStayEvents(stays: StayRecord[]): JourneyEvent[] {
   const events: JourneyEvent[] = []
 
   stays.forEach(stay => {
@@ -563,7 +718,7 @@ function normalizeStayEvents(stays: any[]): JourneyEvent[] {
   return events
 }
 
-function normalizeBillEvents(bills: any[]): JourneyEvent[] {
+function normalizeBillEvents(bills: BillRecord[]): JourneyEvent[] {
   return bills.map(bill => ({
     id: `bill_${bill.id}`,
     timestamp: bill.created_at,
@@ -597,7 +752,7 @@ function normalizeBillEvents(bills: any[]): JourneyEvent[] {
   }))
 }
 
-function normalizePaymentEvents(payments: any[]): JourneyEvent[] {
+function normalizePaymentEvents(payments: PaymentRecord[]): JourneyEvent[] {
   return payments.map(payment => ({
     id: `payment_${payment.id}`,
     timestamp: payment.created_at,
@@ -631,7 +786,7 @@ function normalizePaymentEvents(payments: any[]): JourneyEvent[] {
   }))
 }
 
-function normalizeChargeEvents(charges: any[]): JourneyEvent[] {
+function normalizeChargeEvents(charges: ChargeRecord[]): JourneyEvent[] {
   return charges
     .filter(charge => charge.late_fee_applied && charge.late_fee_applied > 0)
     .map(charge => ({
@@ -655,7 +810,7 @@ function normalizeChargeEvents(charges: any[]): JourneyEvent[] {
     }))
 }
 
-function normalizeComplaintEvents(complaints: any[]): JourneyEvent[] {
+function normalizeComplaintEvents(complaints: ComplaintRecord[]): JourneyEvent[] {
   const events: JourneyEvent[] = []
 
   complaints.forEach(complaint => {
@@ -713,7 +868,7 @@ function normalizeComplaintEvents(complaints: any[]): JourneyEvent[] {
   return events
 }
 
-function normalizeTransferEvents(transfers: any[]): JourneyEvent[] {
+function normalizeTransferEvents(transfers: TransferRecord[]): JourneyEvent[] {
   return transfers.map(transfer => ({
     id: `transfer_${transfer.id}`,
     timestamp: transfer.created_at || `${transfer.transfer_date}T00:00:00Z`,
@@ -746,7 +901,7 @@ function normalizeTransferEvents(transfers: any[]): JourneyEvent[] {
   }))
 }
 
-function normalizeExitEvents(clearances: any[]): JourneyEvent[] {
+function normalizeExitEvents(clearances: ExitClearanceRecord[]): JourneyEvent[] {
   const events: JourneyEvent[] = []
 
   clearances.forEach(clearance => {
@@ -792,7 +947,7 @@ function normalizeExitEvents(clearances: any[]): JourneyEvent[] {
         source_table: "exit_clearance",
         source_id: clearance.id,
         amount: clearance.final_amount,
-        amount_type: clearance.final_amount > 0 ? "debit" : "credit",
+        amount_type: (clearance.final_amount || 0) > 0 ? "debit" : "credit",
         status: "completed",
         status_color: "success",
         metadata: {
@@ -808,7 +963,7 @@ function normalizeExitEvents(clearances: any[]): JourneyEvent[] {
   return events
 }
 
-function normalizeRefundEvents(refunds: any[]): JourneyEvent[] {
+function normalizeRefundEvents(refunds: RefundRecord[]): JourneyEvent[] {
   return refunds.map(refund => ({
     id: `refund_${refund.id}`,
     timestamp: refund.processed_at || refund.created_at,
@@ -834,7 +989,7 @@ function normalizeRefundEvents(refunds: any[]): JourneyEvent[] {
   }))
 }
 
-function normalizeVisitorEvents(visitors: any[]): JourneyEvent[] {
+function normalizeVisitorEvents(visitors: VisitorRecord[]): JourneyEvent[] {
   return visitors.map(visitor => ({
     id: `visitor_${visitor.id}`,
     timestamp: visitor.check_in_time || visitor.created_at,
@@ -858,7 +1013,7 @@ function normalizeVisitorEvents(visitors: any[]): JourneyEvent[] {
   }))
 }
 
-function normalizeMeterEvents(readings: any[]): JourneyEvent[] {
+function normalizeMeterEvents(readings: MeterReadingRecord[]): JourneyEvent[] {
   return readings.map(reading => ({
     id: `meter_${reading.id}`,
     timestamp: reading.created_at || `${reading.reading_date}T00:00:00Z`,
@@ -890,7 +1045,7 @@ function normalizeMeterEvents(readings: any[]): JourneyEvent[] {
 async function calculateAnalytics(
   supabase: ReturnType<typeof createClient>,
   tenant_id: string,
-  tenant: any
+  tenant: TenantRecord
 ): Promise<JourneyAnalytics> {
   // Parallel queries for analytics data
   const [staysResult, billsResult, paymentsResult, complaintsResult, transfersResult, visitorsResult] = await Promise.all([
@@ -1012,7 +1167,7 @@ async function calculateAnalytics(
 async function calculateFinancialSummary(
   supabase: ReturnType<typeof createClient>,
   tenant_id: string,
-  tenant: any
+  tenant: TenantRecord
 ): Promise<FinancialSummary> {
   const [billsResult, paymentsResult, chargesResult, refundsResult] = await Promise.all([
     supabase.from("bills").select("*").eq("tenant_id", tenant_id),
@@ -1108,7 +1263,7 @@ async function calculateFinancialSummary(
 // ============================================
 
 function calculatePredictiveInsights(
-  tenant: any,
+  tenant: TenantRecord,
   analytics: JourneyAnalytics,
   financial: FinancialSummary
 ): PredictiveInsights {
@@ -1306,12 +1461,12 @@ function calculatePredictiveInsights(
 async function findLinkedVisitors(
   supabase: ReturnType<typeof createClient>,
   tenant_id: string,
-  tenant: any
+  tenant: TenantRecord
 ): Promise<{ linked: LinkedVisitor[]; preTenant: PreTenantVisit[] }> {
   // Get tenant's phone numbers for matching
-  const tenantPhones: string[] = [tenant.phone].filter(Boolean)
+  const tenantPhones: string[] = [tenant.phone].filter((p): p is string => Boolean(p))
   if (tenant.phone_numbers && Array.isArray(tenant.phone_numbers)) {
-    tenant.phone_numbers.forEach((p: any) => {
+    tenant.phone_numbers.forEach((p: { number?: string }) => {
       if (p.number) tenantPhones.push(p.number)
     })
   }
@@ -1334,7 +1489,7 @@ async function findLinkedVisitors(
   const safeLinkedVisitors = linkedVisitors || []
 
   // 2. Find if this tenant was a visitor before joining
-  interface VisitorRecord {
+  interface LinkedVisitorRecord {
     id: string
     visitor_name: string
     visitor_phone?: string
@@ -1345,7 +1500,7 @@ async function findLinkedVisitors(
   const checkInDate = tenant.check_in_date
   if (!checkInDate || normalizedPhones.length === 0) {
     return {
-      linked: safeLinkedVisitors.map((v: VisitorRecord) => ({
+      linked: safeLinkedVisitors.map((v: LinkedVisitorRecord) => ({
         visitor_id: v.id,
         visitor_name: v.visitor_name,
         visit_date: v.check_in_date || v.check_in_time,
@@ -1374,26 +1529,28 @@ async function findLinkedVisitors(
 
   // Filter pre-tenant visits by phone match
   const matchedPreTenantVisits = safePreTenantVisits
-    .filter((v: any) => {
+    .filter((v: { visitor_phone?: string }) => {
       if (!v.visitor_phone) return false
       const normalizedVisitorPhone = normalizePhone(v.visitor_phone)
       return normalizedPhones.includes(normalizedVisitorPhone)
     })
-    .map((v: any) => {
-      const visitDate = new Date(v.check_in_date || v.check_in_time)
+    .map((v: { id: string; visitor_phone?: string; check_in_date?: string; check_in_time?: string; tenant?: unknown; property?: unknown }) => {
+      const visitDate = new Date(v.check_in_date || v.check_in_time || "")
       const joinDate = new Date(checkInDate)
       const daysBeforeJoining = daysBetween(visitDate, joinDate)
+      const tenantJoin = transformJoin(v.tenant) as { name?: string } | null
+      const propertyJoin = transformJoin(v.property) as { name?: string } | null
       return {
         visitor_id: v.id,
-        visited_tenant_name: transformJoin(v.tenant)?.name || "Unknown",
+        visited_tenant_name: tenantJoin?.name || "Unknown",
         visit_date: v.check_in_date || v.check_in_time,
         days_before_joining: daysBeforeJoining,
-        property_name: transformJoin(v.property)?.name,
+        property_name: propertyJoin?.name,
       }
     })
 
   return {
-    linked: safeLinkedVisitors.map((v: VisitorRecord) => ({
+    linked: safeLinkedVisitors.map((v: LinkedVisitorRecord) => ({
       visitor_id: v.id,
       visitor_name: v.visitor_name,
       visit_date: v.check_in_date || v.check_in_time,

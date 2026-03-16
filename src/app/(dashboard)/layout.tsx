@@ -62,6 +62,7 @@ import { CommandPalette } from "@/components/command-palette"
 import { useFeatures } from "@/lib/features/use-features"
 import { FeatureFlagKey } from "@/lib/features"
 import { getPathPermissions, getPathFeatures, DASHBOARD_MOBILE_NAV, filterNavigation } from "@/lib/navigation/config"
+import { brandGradient } from "@/lib/design-tokens"
 
 // Navigation item type with optional children for sub-menus
 type NavItem = {
@@ -428,7 +429,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 border-b bg-gradient-to-r from-teal-500 to-emerald-500">
+          <div className={`flex items-center justify-between h-16 px-4 border-b ${brandGradient.horizontal}`}>
             <Link href="/dashboard" className="flex items-center gap-2 group">
               <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
                 <Building2 className="h-5 w-5 text-primary" />
@@ -588,7 +589,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                                     href={child.href}
                                     className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                                       isChildActive
-                                        ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
+                                        ? brandGradient.navActive
                                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                     }`}
                                     onClick={() => setSidebarOpen(false)}
@@ -617,7 +618,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                         href={item.href}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                           isActive
-                            ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
+                            ? brandGradient.navActive
                             : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         }`}
                         onClick={() => setSidebarOpen(false)}
@@ -642,7 +643,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 href="/settings"
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   pathname === "/settings"
-                    ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-500/20"
+                    ? brandGradient.navActive
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
                 onClick={() => setSidebarOpen(false)}
@@ -699,7 +700,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               <p className="text-xs text-muted-foreground">{displayEmail}</p>
             </div>
             <Button variant="ghost" size="icon" className="rounded-full" aria-label="User profile">
-              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-sm font-medium shadow-md shadow-teal-500/20">
+              <div className={`h-9 w-9 rounded-full ${brandGradient.solid} flex items-center justify-center text-white text-sm font-medium shadow-md ${brandGradient.shadow}`}>
                 {displayName[0].toUpperCase()}
               </div>
             </Button>

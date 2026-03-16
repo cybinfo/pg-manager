@@ -42,6 +42,8 @@ import {
   History,
   Star,
   Ban,
+  Mail,
+  MessageCircle,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getNowISO } from "@/lib/date-helpers"
@@ -197,7 +199,12 @@ export default function VisitorDetailPage() {
   }
 
   if (!visitor) {
-    return null
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <h2 className="text-lg font-semibold">Not Found</h2>
+          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+        </div>
+      )
   }
 
   const isCheckedIn = !visitor.check_out_time
@@ -270,6 +277,28 @@ export default function VisitorDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Actions: Call, WhatsApp, Email */}
+            {displayPhone && (
+              <a href={`tel:${displayPhone}`}>
+                <Button variant="outline" size="icon" className="h-9 w-9" title="Call">
+                  <Phone className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
+            {displayPhone && (
+              <a href={`https://wa.me/91${displayPhone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="icon" className="h-9 w-9 text-green-600 hover:text-green-700" title="WhatsApp">
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
+            {displayEmail && (
+              <a href={`mailto:${displayEmail}`}>
+                <Button variant="outline" size="icon" className="h-9 w-9" title="Email">
+                  <Mail className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
             {personId && (
               <Link href={`/people/${personId}`}>
                 <Button variant="outline" size="sm">

@@ -22,6 +22,7 @@ import { Avatar } from "@/components/ui/avatar"
 import { PropertyLink, RoomLink, TenantLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate, formatDateTime, formatTimeAgo } from "@/lib/format"
 import { getStatusInfo } from "@/lib/status-config"
+import { brandGradient } from "@/lib/design-tokens"
 
 // ============================================================================
 // TYPES
@@ -57,7 +58,7 @@ export function createAvatarNameColumn<T>(
     getPhotoUrl,
     getSubtitle,
     sortKey,
-    avatarClassName = "bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0",
+    avatarClassName = `${brandGradient.solid} text-white shrink-0`,
   } = config
 
   return {

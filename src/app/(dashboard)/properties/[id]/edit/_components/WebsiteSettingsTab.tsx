@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react"
 import { showSuccess } from "@/lib/toast-helpers"
+import { brandGradient } from "@/lib/design-tokens"
 
 interface WebsiteConfig {
   tagline: string
@@ -109,7 +110,7 @@ export function WebsiteSettingsTab({
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+              <div className={`h-12 w-12 rounded-xl ${brandGradient.solid} flex items-center justify-center`}>
                 <Globe className="h-6 w-6 text-white" />
               </div>
               <div>

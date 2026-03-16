@@ -177,7 +177,12 @@ export default function WaitlistDetailPage({
   }
 
   if (!entry) {
-    return null
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <h2 className="text-lg font-semibold">Not Found</h2>
+          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+        </div>
+      )
   }
 
   const statusConfig = LIBRARY_WAITLIST_STATUS_CONFIG[entry.status]

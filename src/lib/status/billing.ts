@@ -187,3 +187,60 @@ export const ROOM_STATUS: Record<string, StatusConfig> = {
   partially_occupied: { label: "Partially Occupied", variant: "warning" },
   maintenance: { label: "Maintenance", variant: "muted" },
 }
+
+// ============================================================================
+// HELPER: Convert Record<string, string> label maps to {value, label}[] arrays
+// ============================================================================
+
+/**
+ * Convert a `Record<string, string>` label map to an array of `{ value, label }` options
+ * suitable for Select/Combobox components.
+ *
+ * @param labels - e.g. PAYMENT_METHODS, REFUND_TYPE_LABELS
+ * @param keys  - optional subset of keys to include (preserves given order)
+ *
+ * @example
+ * labelsToOptions(PAYMENT_METHODS)                         // all options
+ * labelsToOptions(PAYMENT_METHODS, ["cash", "upi", "card"]) // subset
+ */
+export function labelsToOptions(
+  labels: Record<string, string>,
+  keys?: string[],
+): { value: string; label: string }[] {
+  const entries = keys
+    ? keys.filter((k) => k in labels).map((k) => [k, labels[k]] as const)
+    : Object.entries(labels)
+  return entries.map(([value, label]) => ({ value, label }))
+}
+
+// ============================================================================
+// FORM OPTION ARRAYS (derived from label maps above)
+// ============================================================================
+
+/** Standard PG payment method options (5 common modes) */
+export const PAYMENT_METHOD_OPTIONS = labelsToOptions(PAYMENT_METHODS, [
+  "cash", "upi", "bank_transfer", "cheque", "card",
+])
+
+/** Refund payment mode options (4 modes — no card) */
+export const REFUND_PAYMENT_MODE_OPTIONS = labelsToOptions(PAYMENT_METHODS, [
+  "cash", "upi", "bank_transfer", "cheque",
+])
+
+/** Refund type options for forms */
+export const REFUND_TYPE_OPTIONS = labelsToOptions(REFUND_TYPE_LABELS)
+
+/** Expense payment mode options (5 standard) */
+export const EXPENSE_PAYMENT_MODE_OPTIONS = labelsToOptions(PAYMENT_METHODS, [
+  "cash", "upi", "bank_transfer", "card", "cheque",
+])
+
+/** Expense daily-spend payment mode options (includes credit) */
+export const EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS = labelsToOptions(PAYMENT_METHODS, [
+  "cash", "upi", "card", "bank_transfer", "credit",
+])
+
+/** Expense misc payment mode options (full set) */
+export const EXPENSE_MISC_PAYMENT_MODE_OPTIONS = labelsToOptions(PAYMENT_METHODS, [
+  "cash", "upi", "paytm", "bank_transfer", "card", "cheque", "other",
+])

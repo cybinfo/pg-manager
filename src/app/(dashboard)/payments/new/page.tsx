@@ -16,8 +16,10 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PermissionGuard } from "@/components/auth"
 import { getTodayISO } from "@/lib/date-helpers"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
+import { PAYMENT_METHOD_OPTIONS } from "@/lib/status"
 
 interface Tenant {
   id: string
@@ -530,13 +532,7 @@ function NewPaymentForm() {
                   onChange={handleChange}
                   required
                   disabled={loading}
-                  options={[
-                    { value: "cash", label: "Cash" },
-                    { value: "upi", label: "UPI" },
-                    { value: "bank_transfer", label: "Bank Transfer" },
-                    { value: "cheque", label: "Cheque" },
-                    { value: "card", label: "Card" },
-                  ]}
+                  options={PAYMENT_METHOD_OPTIONS}
                 />
               </div>
               <div className="space-y-2">
@@ -594,12 +590,14 @@ function NewPaymentForm() {
 
 export default function NewPaymentPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
-      <NewPaymentForm />
-    </Suspense>
+    <PermissionGuard permission="payments.create">
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }>
+        <NewPaymentForm />
+      </Suspense>
+    </PermissionGuard>
   )
 }

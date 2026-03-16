@@ -7,16 +7,16 @@
 
 "use client"
 
-import { Building2, Home, Users, MapPin, Phone } from "lucide-react"
-import { Column, StatusDot } from "@/components/ui/data-table"
-import { dateColumn } from "@/lib/column-builders"
+import { Building2, Home, Users, MapPin } from "lucide-react"
+import { Column } from "@/components/ui/data-table"
+import { dateColumn, booleanColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PROPERTY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createBooleanMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { formatDate } from "@/lib/format"
+import { brandGradient } from "@/lib/design-tokens"
 
 // ============================================
 // Types
@@ -58,7 +58,7 @@ const columns: Column<Property>[] = [
     editValidation: { required: true, minLength: 2 },
     render: (property) => (
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+        <div className={`h-8 w-8 rounded-lg ${brandGradient.solid} flex items-center justify-center`}>
           <Building2 className="h-4 w-4 text-white" />
         </div>
         <div>
@@ -102,23 +102,14 @@ const columns: Column<Property>[] = [
       </div>
     ),
   },
-  {
-    key: "is_active",
-    header: "Status",
+  booleanColumn("is_active", "Status", {
+    trueLabel: "Active",
+    falseLabel: "Inactive",
     width: "status",
     hideOnMobile: true,
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
     editable: true,
     editType: "boolean",
-    render: (property) => (
-      <StatusDot
-        status={property.is_active ? "success" : "muted"}
-        label={property.is_active ? "Active" : "Inactive"}
-      />
-    ),
-  },
+  }),
   // Hidden by default columns
   {
     key: "address",
@@ -191,20 +182,11 @@ const columns: Column<Property>[] = [
       </div>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "website_enabled",
-    header: "Website",
-    width: "badge",
-    sortable: true,
-    canHide: true,
+  booleanColumn("website_enabled", "Website", {
+    trueLabel: "Enabled",
+    falseLabel: "Disabled",
     defaultVisible: false,
-    render: (property) => (
-      <StatusDot
-        status={property.website_enabled ? "success" : "muted"}
-        label={property.website_enabled ? "Enabled" : "Disabled"}
-      />
-    ),
-  },
+  }),
   dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 

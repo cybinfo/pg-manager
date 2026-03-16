@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Loader2, Save, Plus, Trash2, IndianRupee,
-  Calendar, Clock, CreditCard, Check, Cog,
+  Calendar, Clock, CreditCard, Check, Cog, Bell, AlertTriangle,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { withCreatedBy } from "@/lib/audit"
@@ -611,36 +611,110 @@ export function BillingSettings({
                 </div>
               </div>
 
-              {/* Bill Options */}
+              {/* Include Charges */}
               <div className="space-y-4">
-                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Bill Options</h4>
+                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Include Charges</h4>
 
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium text-sm">Include Pending Charges</p>
-                    <p className="text-xs text-muted-foreground">Add pending electricity, water, and other charges to the bill</p>
-                  </div>
-                  <button
-                    onClick={() => setAutoBillingSettings({
-                      ...autoBillingSettings,
-                      include_pending_charges: !autoBillingSettings.include_pending_charges
-                    })}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                      autoBillingSettings.include_pending_charges ? "bg-primary" : "bg-muted"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                        autoBillingSettings.include_pending_charges ? "translate-x-5" : "translate-x-1"
-                      }`}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 border rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="charge_rent"
+                      checked
+                      disabled
+                      className="h-4 w-4 rounded border-muted-foreground"
                     />
-                  </button>
+                    <label htmlFor="charge_rent" className="flex-1">
+                      <p className="font-medium text-sm">Monthly Rent</p>
+                      <p className="text-xs text-muted-foreground">Always included in auto-generated bills</p>
+                    </label>
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Required</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="charge_pending"
+                        checked={autoBillingSettings.include_pending_charges}
+                        onChange={() => setAutoBillingSettings({
+                          ...autoBillingSettings,
+                          include_pending_charges: !autoBillingSettings.include_pending_charges
+                        })}
+                        className="h-4 w-4 rounded border-muted-foreground"
+                      />
+                      <label htmlFor="charge_pending">
+                        <p className="font-medium text-sm">Pending Charges</p>
+                        <p className="text-xs text-muted-foreground">Include pending electricity, water, and other charges</p>
+                      </label>
+                    </div>
+                  </div>
+
+                  {autoBillingSettings.include_pending_charges && chargeTypes.length > 0 && (
+                    <div className="ml-7 p-3 border rounded-lg bg-muted/30 space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Select which charge types to include:</p>
+                      {chargeTypes.filter((ct: ChargeType) => ct.is_enabled).map((ct: ChargeType) => {
+                        const included = autoBillingSettings.included_charge_types?.[ct.code] !== false
+                        return (
+                          <label key={ct.id} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={included}
+                              onChange={() => {
+                                const updated = { ...(autoBillingSettings.included_charge_types || {}) }
+                                updated[ct.code] = !included
+                                setAutoBillingSettings({
+                                  ...autoBillingSettings,
+                                  included_charge_types: updated,
+                                })
+                              }}
+                              className="h-3.5 w-3.5 rounded border-muted-foreground"
+                            />
+                            <span className="text-sm">{ct.name}</span>
+                            <span className="text-xs text-muted-foreground">({ct.code})</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
+              </div>
+
+              {/* Grace Period */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Overdue Settings</h4>
+
+                <div className="space-y-2">
+                  <Label htmlFor="grace_period_days" className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                    Grace Period
+                  </Label>
+                  <Select
+                    id="grace_period_days"
+                    value={(autoBillingSettings.grace_period_days ?? 7).toString()}
+                    onChange={(e) => setAutoBillingSettings({
+                      ...autoBillingSettings,
+                      grace_period_days: parseInt(e.target.value)
+                    })}
+                    options={[0, 3, 5, 7, 10, 15, 30].map((days) => ({
+                      value: days.toString(),
+                      label: days === 0 ? "No grace period" : `${days} days after due date`,
+                    }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Number of days after the due date before a bill is marked as overdue
+                  </p>
+                </div>
+              </div>
+
+              {/* Notification & Reminders */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Notifications & Reminders</h4>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
-                    <p className="font-medium text-sm">Send Notification</p>
-                    <p className="text-xs text-muted-foreground">Send email notification when bill is generated</p>
+                    <p className="font-medium text-sm">Send Bill Notification</p>
+                    <p className="text-xs text-muted-foreground">Email tenants when a bill is generated</p>
                   </div>
                   <button
                     onClick={() => setAutoBillingSettings({
@@ -658,6 +732,52 @@ export function BillingSettings({
                     />
                   </button>
                 </div>
+
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Bell className={`h-4 w-4 ${autoBillingSettings.auto_reminder_enabled ? "text-primary" : "text-muted-foreground"}`} />
+                    <div>
+                      <p className="font-medium text-sm">Auto Payment Reminders</p>
+                      <p className="text-xs text-muted-foreground">Send reminder emails before the due date</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setAutoBillingSettings({
+                      ...autoBillingSettings,
+                      auto_reminder_enabled: !autoBillingSettings.auto_reminder_enabled
+                    })}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      autoBillingSettings.auto_reminder_enabled ? "bg-primary" : "bg-muted"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                        autoBillingSettings.auto_reminder_enabled ? "translate-x-5" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {autoBillingSettings.auto_reminder_enabled && (
+                  <div className="ml-7 space-y-2">
+                    <Label htmlFor="reminder_days_before">Remind Before Due Date</Label>
+                    <Select
+                      id="reminder_days_before"
+                      value={(autoBillingSettings.reminder_days_before ?? 5).toString()}
+                      onChange={(e) => setAutoBillingSettings({
+                        ...autoBillingSettings,
+                        reminder_days_before: parseInt(e.target.value)
+                      })}
+                      options={[1, 2, 3, 5, 7, 10].map((days) => ({
+                        value: days.toString(),
+                        label: `${days} day${days > 1 ? "s" : ""} before due date`,
+                      }))}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Tenants will receive a payment reminder this many days before their bill is due
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Last Generated Info */}

@@ -22,6 +22,77 @@
 
 import { z, type ZodType } from "zod"
 import { badRequest } from "./api-response"
+import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
+
+// ============================================================================
+// FIELD-LEVEL VALIDATORS (for useFormPage validationSchema)
+// ============================================================================
+
+/** Requires a non-empty trimmed string */
+export function requiredField(label: string): (value: unknown) => ValidatorResult {
+  return (value: unknown) => {
+    if (!String(value ?? "").trim()) {
+      return { isValid: false, error: `${label} is required` }
+    }
+    return null
+  }
+}
+
+/** Requires a non-empty select value (non-empty string) */
+export function requiredSelect(label: string): (value: unknown) => ValidatorResult {
+  return (value: unknown) => {
+    if (!String(value ?? "").trim()) {
+      return { isValid: false, error: `Please select a ${label.toLowerCase()}` }
+    }
+    return null
+  }
+}
+
+/** Requires a valid 10-digit Indian phone number */
+export function requiredPhone(label: string): (value: unknown) => ValidatorResult {
+  return (value: unknown) => {
+    const str = String(value ?? "").trim()
+    if (!str) {
+      return { isValid: false, error: `${label} is required` }
+    }
+    if (!/^\d{10}$/.test(str.replace(/\D/g, ""))) {
+      return { isValid: false, error: `${label} must be a valid 10-digit number` }
+    }
+    return null
+  }
+}
+
+/** Requires a positive numeric amount */
+export function requiredAmount(label: string): (value: unknown) => ValidatorResult {
+  return (value: unknown) => {
+    const num = Number(value)
+    if (!value || isNaN(num) || num <= 0) {
+      return { isValid: false, error: `${label} must be a positive amount` }
+    }
+    return null
+  }
+}
+
+/** Requires a non-empty date string */
+export function requiredDate(label: string): (value: unknown) => ValidatorResult {
+  return (value: unknown) => {
+    if (!String(value ?? "").trim()) {
+      return { isValid: false, error: `${label} is required` }
+    }
+    return null
+  }
+}
+
+/** Requires a positive integer */
+export function requiredPositiveInt(label: string): (value: unknown) => ValidatorResult {
+  return (value: unknown) => {
+    const num = Number(value)
+    if (!value || isNaN(num) || num < 1 || !Number.isInteger(num)) {
+      return { isValid: false, error: `${label} must be a positive whole number` }
+    }
+    return null
+  }
+}
 
 /**
  * Validate an unknown body against a Zod schema.

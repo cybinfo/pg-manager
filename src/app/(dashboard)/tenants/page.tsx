@@ -22,9 +22,11 @@ import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } 
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { formatCurrency, formatDate } from "@/lib/format"
 import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn, booleanFilterColumn } from "@/lib/advanced-filter-builders"
+import { brandGradient } from "@/lib/design-tokens"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, currencyExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -72,7 +74,7 @@ interface ExtendedColumn<T> extends Column<T> {
 
 const columns: ExtendedColumn<Tenant>[] = [
   personNameWithAvatarColumn("Tenant", {
-    avatarClassName: "bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0",
+    avatarClassName: `${brandGradient.solid} text-white shrink-0`,
   }) as ExtendedColumn<Tenant>,
   {
     key: "property",
@@ -94,21 +96,11 @@ const columns: ExtendedColumn<Tenant>[] = [
       </div>
     ),
   },
-  {
-    key: "monthly_rent",
-    header: "Rent",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
-    defaultVisible: true,
+  currencyColumn("monthly_rent", "Rent", {
     editable: true,
     editType: "number",
     editValidation: { min: 0 },
-    render: (tenant) => (
-      <span className="font-medium tabular-nums">{formatCurrency(tenant.monthly_rent)}</span>
-    ),
-  },
+  }),
   dateColumn("check_in_date", "Since", { hideOnMobile: true }),
   {
     ...statusColumn((status) => getTenantStatusInfo("tenant", status), {
@@ -290,6 +282,27 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  {
+    key: "name" as keyof Record<string, unknown>,
+    header: "Name",
+    format: (_, row) => {
+      const person = row.person as Record<string, unknown> | null
+      return String(person?.name || row.name || "")
+    },
+  },
+  { key: "phone" as keyof Record<string, unknown>, header: "Phone", format: (v) => String(v ?? "") },
+  nestedColumn("room", "Room", "room.room_number"),
+  nestedColumn("property", "Property", "property.name"),
+  currencyExportColumn("monthly_rent", "Rent"),
+  { key: "status" as keyof Record<string, unknown>, header: "Status", format: (v) => String(v ?? "") },
+  dateExportColumn("check_in_date", "Join Date"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -315,6 +328,8 @@ export default function TenantsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="tenants"
       // Contextual help
       headerActions={
         <HelpTooltip

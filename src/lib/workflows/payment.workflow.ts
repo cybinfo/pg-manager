@@ -26,6 +26,7 @@ import { createAuditEvent } from "@/lib/services/audit.service"
 import { formatCurrency } from "@/lib/format"
 import { softDelete } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"
+import { sendPaymentReceipt } from "@/lib/email"
 
 // ============================================
 // Types
@@ -300,6 +301,64 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
         }
 
         return createSuccessResult({ checked: true })
+      },
+      optional: true,
+    },
+
+    // Step 7: Send payment receipt email (fire and forget)
+    {
+      name: "send_receipt_email",
+      execute: async (context, input, previousResults) => {
+        if (!input.send_receipt) {
+          return createSuccessResult({ sent: false })
+        }
+
+        const { tenant, bill } = previousResults.validate as Record<string, unknown>
+        const tenantData = tenant as Record<string, unknown>
+        const billData = bill as Record<string, unknown>
+        const receiptResult = previousResults.generate_receipt_number as Record<string, unknown>
+        const billStatus = previousResults.update_bill as Record<string, unknown>
+
+        const tenantEmail = tenantData?.email as string | undefined
+        if (!tenantEmail) {
+          return createSuccessResult({ sent: false, reason: "no_email" })
+        }
+
+        try {
+          // Fetch property name for the receipt
+          const supabase = createClient()
+          const { data: property } = await supabase
+            .from("properties")
+            .select("name")
+            .eq("id", input.property_id)
+            .single()
+
+          // Fetch owner name
+          const { data: owner } = await supabase
+            .from("user_profiles")
+            .select("full_name")
+            .eq("user_id", context.actor_id)
+            .single()
+
+          await sendPaymentReceipt({
+            to: tenantEmail,
+            tenantName: tenantData.name as string,
+            amount: input.amount,
+            receiptNumber: receiptResult?.receipt_number as string,
+            propertyName: property?.name || "Property",
+            roomNumber: "", // Not available in this context
+            paymentDate: new Date(input.payment_date),
+            paymentMethod: input.payment_method,
+            forPeriod: (billData?.for_month as string) || undefined,
+            ownerName: owner?.full_name || "Management",
+          })
+
+          return createSuccessResult({ sent: true })
+        } catch (err) {
+          // Non-blocking: log but don't fail the workflow
+          console.warn("[PaymentRecord] Failed to send receipt email:", err)
+          return createSuccessResult({ sent: false, reason: "send_error" })
+        }
       },
       optional: true,
     },

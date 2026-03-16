@@ -8,14 +8,15 @@
 "use client"
 
 import { MessageSquare, AlertCircle, Clock, CheckCircle, Wrench } from "lucide-react"
-import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
-import { statusColumn, badgeColumn } from "@/lib/column-builders"
+import { Column, TableBadge } from "@/components/ui/data-table"
+import { statusColumn, badgeColumn, timeAgoColumn } from "@/lib/column-builders"
 import { formatTimeAgo } from "@/lib/format"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { COMPLAINT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createStatusMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { PROPERTY_FILTER, PRIORITY_FILTER, createStatusFilter } from "@/lib/filter-presets"
+import { PROPERTY_FILTER, PRIORITY_FILTER, COMPLAINT_STATUS_FILTER, COMPLAINT_CATEGORY_FILTER } from "@/lib/filter-presets"
+import { COMPLAINT_STATUS_OPTIONS, PRIORITY_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { COMPLAINT_STATUS, COMPLAINT_PRIORITY, COMPLAINT_CATEGORIES, getStatusInfo as getComplaintStatusInfo } from "@/lib/status-config"
@@ -99,19 +100,10 @@ const columns: Column<Complaint>[] = [
       { value: "closed", label: "Closed" },
     ],
   }),
-  {
-    key: "created_at",
-    header: "Created",
+  timeAgoColumn("created_at", "Created", {
     width: "date",
     hideOnMobile: true,
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: true,
-    render: (row) => (
-      <span className="text-sm text-muted-foreground">{formatTimeAgo(row.created_at)}</span>
-    ),
-  },
+  }),
   // Hidden by default columns
   {
     key: "description",
@@ -182,21 +174,9 @@ const columns: Column<Complaint>[] = [
 
 const filters: FilterConfig[] = [
   PROPERTY_FILTER,
-  createStatusFilter([
-    { value: "open", label: "Open" },
-    { value: "acknowledged", label: "Acknowledged" },
-    { value: "in_progress", label: "In Progress" },
-    { value: "resolved", label: "Resolved" },
-    { value: "closed", label: "Closed" },
-  ]),
+  COMPLAINT_STATUS_FILTER,
   PRIORITY_FILTER,
-  {
-    id: "category",
-    label: "Category",
-    type: "select",
-    placeholder: "All Categories",
-    options: Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label })),
-  },
+  COMPLAINT_CATEGORY_FILTER,
 ]
 
 // ============================================
@@ -221,22 +201,9 @@ const groupByOptions: GroupByOption[] = [
 
 const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("title", "Title"),
-  statusFilterColumn([
-    { value: "open", label: "Open" },
-    { value: "acknowledged", label: "Acknowledged" },
-    { value: "in_progress", label: "In Progress" },
-    { value: "resolved", label: "Resolved" },
-    { value: "closed", label: "Closed" },
-  ]),
-  selectFilterColumn("priority", "Priority", [
-    { value: "urgent", label: "Urgent" },
-    { value: "high", label: "High" },
-    { value: "medium", label: "Medium" },
-    { value: "low", label: "Low" },
-  ], ["eq", "neq", "in", "not_in"]),
-  selectFilterColumn("category", "Category",
-    Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label }))
-  ),
+  statusFilterColumn(COMPLAINT_STATUS_OPTIONS),
+  selectFilterColumn("priority", "Priority", PRIORITY_OPTIONS, ["eq", "neq", "in", "not_in"]),
+  selectFilterColumn("category", "Category", COMPLAINT_CATEGORY_FILTER.options!),
   dateFilterColumn("created_at", "Created Date"),
 ]
 

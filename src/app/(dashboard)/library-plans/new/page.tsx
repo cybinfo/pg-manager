@@ -12,20 +12,33 @@ import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { FormField } from "@/components/ui/form-components"
+import { Label } from "@/components/ui/label"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
+import { requiredField, requiredAmount, requiredPositiveInt } from "@/lib/validation"
 import { TIME_SLOTS } from "@/types/library.types"
+import { PermissionGuard } from "@/components/auth"
 
 export default function NewLibraryPlanPage() {
+  return (
+    <PermissionGuard permission="library_members.create">
+      <NewLibraryPlanContent />
+    </PermissionGuard>
+  )
+}
+
+function NewLibraryPlanContent() {
   const {
     formData, setFormData,
     handleChange,
     handleSubmit,
     saving,
     user, workspaceId,
+    errors,
+    validateField,
   } = useFormPage({
     table: "library_plans",
     initialData: {
@@ -41,11 +54,10 @@ export default function NewLibraryPlanPage() {
     redirectTo: "/library-plans",
     successMessage: "Plan created successfully!",
     errorMessage: "Failed to create plan",
-    validate: (data) => {
-      if (!data.name || !data.base_price || !data.validity_days) {
-        return "Please fill in required fields (Name, Price, Validity)"
-      }
-      return null
+    validationSchema: {
+      name: requiredField("Plan name"),
+      base_price: requiredAmount("Price"),
+      validity_days: requiredPositiveInt("Validity days"),
     },
     customSubmit: async (data, userId, supabase) => {
       // Get owner_id from workspace
@@ -130,20 +142,18 @@ export default function NewLibraryPlanPage() {
           <CardContent className="space-y-6">
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Plan Name *</Label>
+              <FormField label="Plan Name" htmlFor="name" required error={errors.name}>
                 <Input
                   id="name"
                   name="name"
                   placeholder="e.g., 9 Hours, Monthly"
                   value={formData.name as string}
                   onChange={handleChange}
-                  required
+                  onBlur={() => validateField("name")}
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="base_price">Price (₹) *</Label>
+              </FormField>
+              <FormField label="Price (₹)" htmlFor="base_price" required error={errors.base_price}>
                 <Input
                   id="base_price"
                   name="base_price"
@@ -151,12 +161,12 @@ export default function NewLibraryPlanPage() {
                   placeholder="e.g., 1000"
                   value={formData.base_price as string}
                   onChange={handleChange}
-                  required
+                  onBlur={() => validateField("base_price")}
                   disabled={saving}
                   min={0}
                   step="0.01"
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="space-y-2">
@@ -189,8 +199,7 @@ export default function NewLibraryPlanPage() {
                   Leave empty for unlimited hours
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="validity_days">Validity (Days) *</Label>
+              <FormField label="Validity (Days)" htmlFor="validity_days" required error={errors.validity_days}>
                 <Input
                   id="validity_days"
                   name="validity_days"
@@ -198,11 +207,11 @@ export default function NewLibraryPlanPage() {
                   placeholder="e.g., 30"
                   value={formData.validity_days as string}
                   onChange={handleChange}
-                  required
+                  onBlur={() => validateField("validity_days")}
                   disabled={saving}
                   min={1}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Time Slot Restrictions */}

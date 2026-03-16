@@ -30,6 +30,7 @@ import { sendInvitationEmail } from "@/lib/email"
 import { withCreatedBy, withCreatedByBatch } from "@/lib/audit"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getNowISO } from "@/lib/date-helpers"
+import { PermissionGuard } from "@/components/auth"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
@@ -52,6 +53,14 @@ interface RoleAssignment {
 }
 
 export default function NewStaffPage() {
+  return (
+    <PermissionGuard permission="staff.create">
+      <NewStaffContent />
+    </PermissionGuard>
+  )
+}
+
+function NewStaffContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { handleSuccess } = useFormSubmit({

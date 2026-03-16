@@ -8,8 +8,8 @@
 "use client"
 
 import { Home, Bed, CheckCircle, AlertCircle } from "lucide-react"
-import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
-import { statusColumn, currencyColumn, dateColumn } from "@/lib/column-builders"
+import { Column } from "@/components/ui/data-table"
+import { statusColumn, currencyColumn, dateColumn, badgeColumn, booleanColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { ROOM_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
@@ -17,7 +17,12 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, ROOM_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { ROOM_TYPES } from "@/types/rooms.types"
+
+// Room type labels for badgeColumn
+const ROOM_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  ROOM_TYPES.map(({ value, label }) => [value, label])
+)
 
 // ============================================
 // Types
@@ -92,20 +97,9 @@ const columns: Column<Room>[] = [
       </div>
     ),
   },
-  {
-    key: "room_type",
-    header: "Type",
-    width: "badge",
+  badgeColumn("room_type", "Type", ROOM_TYPE_LABELS, {
     hideOnMobile: true,
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (room) => (
-      <TableBadge variant="default">
-        {room.room_type.charAt(0).toUpperCase() + room.room_type.slice(1)}
-      </TableBadge>
-    ),
-  },
+  }),
   {
     key: "beds",
     header: "Beds",
@@ -123,21 +117,11 @@ const columns: Column<Room>[] = [
       <span className="tabular-nums">{room.occupied_beds}/{room.total_beds}</span>
     ),
   },
-  {
-    key: "rent_amount",
-    header: "Rent",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
-    defaultVisible: true,
+  currencyColumn("rent_amount", "Rent", {
     editable: true,
     editType: "number",
     editValidation: { min: 0 },
-    render: (room) => (
-      <span className="font-medium tabular-nums">{formatCurrency(room.rent_amount)}</span>
-    ),
-  },
+  }),
   statusColumn(getStatusInfo, {
     editable: true,
     editType: "select",
@@ -160,59 +144,14 @@ const columns: Column<Room>[] = [
     render: (room) => <span className="tabular-nums">{room.floor}</span>,
   },
   currencyColumn("deposit_amount", "Deposit", { defaultVisible: false, bold: false }),
-  {
-    key: "has_ac",
-    header: "AC",
-    width: "badge",
-    sortable: true,
-    canHide: true,
+  booleanColumn("has_ac", "AC", { defaultVisible: false }),
+  booleanColumn("has_attached_bathroom", "Attached Bath", { defaultVisible: false }),
+  booleanColumn("has_balcony", "Balcony", { defaultVisible: false }),
+  booleanColumn("is_active", "Active", {
+    trueLabel: "Active",
+    falseLabel: "Inactive",
     defaultVisible: false,
-    render: (room) => (
-      <TableBadge variant={room.has_ac ? "success" : "muted"}>
-        {room.has_ac ? "Yes" : "No"}
-      </TableBadge>
-    ),
-  },
-  {
-    key: "has_attached_bathroom",
-    header: "Attached Bath",
-    width: "badge",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (room) => (
-      <TableBadge variant={room.has_attached_bathroom ? "success" : "muted"}>
-        {room.has_attached_bathroom ? "Yes" : "No"}
-      </TableBadge>
-    ),
-  },
-  {
-    key: "has_balcony",
-    header: "Balcony",
-    width: "badge",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (room) => (
-      <TableBadge variant={room.has_balcony ? "success" : "muted"}>
-        {room.has_balcony ? "Yes" : "No"}
-      </TableBadge>
-    ),
-  },
-  {
-    key: "is_active",
-    header: "Active",
-    width: "badge",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (room) => (
-      <StatusDot
-        status={room.is_active ? "success" : "muted"}
-        label={room.is_active ? "Active" : "Inactive"}
-      />
-    ),
-  },
+  }),
   {
     key: "notes",
     header: "Notes",

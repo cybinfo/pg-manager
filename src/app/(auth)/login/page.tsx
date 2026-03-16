@@ -15,6 +15,7 @@ import { AuthCardLayout } from "@/components/auth/auth-card-layout"
 import { BrandLogo } from "@/components/ui/brand-logo"
 import { SubmitButton } from "@/components/ui/submit-button"
 import { ContextWithDetails } from "@/lib/auth/types"
+import { brandGradient } from "@/lib/design-tokens"
 
 type LoginStep = 'credentials' | 'context-picker'
 
@@ -193,7 +194,7 @@ function LoginForm() {
   // Show context picker
   if (step === 'context-picker') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
+      <div className={`min-h-screen flex items-center justify-center ${brandGradient.pageBg} px-4`}>
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-6">
             <BrandLogo />

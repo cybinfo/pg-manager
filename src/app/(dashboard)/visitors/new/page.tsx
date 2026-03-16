@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 
+import { PermissionGuard } from "@/components/auth"
 import {
   VisitorTypeSelector,
   VisitorTypeFields,
@@ -24,6 +25,14 @@ import {
 } from "./_components"
 
 export default function NewVisitorPage() {
+  return (
+    <PermissionGuard permission="visitors.create">
+      <NewVisitorContent />
+    </PermissionGuard>
+  )
+}
+
+function NewVisitorContent() {
   const {
     loading,
     loadingData,

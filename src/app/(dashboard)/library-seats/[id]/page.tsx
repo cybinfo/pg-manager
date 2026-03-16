@@ -51,7 +51,12 @@ export default function LibrarySeatDetailPage() {
   }
 
   if (!seat) {
-    return null
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <h2 className="text-lg font-semibold">Not Found</h2>
+          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+        </div>
+      )
   }
 
   const statusConfig = LIBRARY_SEAT_STATUS_CONFIG[seat.status as keyof typeof LIBRARY_SEAT_STATUS_CONFIG]

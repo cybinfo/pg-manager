@@ -19,7 +19,7 @@ import { showSuccess, showError, toast } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
-import { sendInvitationEmail } from "@/lib/email"
+import { sendInvitationEmail, sendTenantWelcomeEmail } from "@/lib/email"
 import { withCreatedBy } from "@/lib/audit"
 import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
 import { PersonSelector } from "@/components/people"
@@ -479,6 +479,28 @@ export default function NewTenantPage() {
             }
           }
         }
+      }
+
+      // Send welcome email (non-blocking - don't fail creation if email fails)
+      if (selectedPerson.email) {
+        const { data: inviterProfile } = await supabase
+          .from("user_profiles")
+          .select("name, phone")
+          .eq("user_id", user.id)
+          .single()
+
+        sendTenantWelcomeEmail({
+          to: selectedPerson.email,
+          tenantName: selectedPerson.name,
+          propertyName: propertyCheck.name,
+          roomNumber: roomCheck.room_number,
+          moveInDate: new Date(formData.check_in_date),
+          monthlyRent: parseFloat(formData.monthly_rent),
+          ownerName: inviterProfile?.name || "Property Owner",
+          ownerPhone: inviterProfile?.phone || undefined,
+        }).catch((err: unknown) => {
+          console.warn("[NewTenant] Failed to send welcome email:", err)
+        })
       }
 
       toast.success("Tenant added successfully!", {

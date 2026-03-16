@@ -18,7 +18,8 @@
 
 import * as React from "react"
 import { Column, ColumnWidthKey } from "@/components/ui/data-table/types"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatCurrency, formatDate, formatTimeAgo } from "@/lib/format"
+import type { LucideIcon } from "lucide-react"
 
 // ============================================================================
 // Types
@@ -412,7 +413,7 @@ function resolveField(row: AnyRecord, path: string): unknown {
  *
  * // With avatar gradient and custom key
  * personNameWithAvatarColumn("Tenant", {
- *   avatarClassName: "bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0",
+ *   avatarClassName: `${brandGradient.solid} text-white shrink-0`,
  * })
  */
 export function personNameWithAvatarColumn(
@@ -476,6 +477,350 @@ export function personNameWithAvatarColumn(
             : null
         )
       )
+    },
+  }
+}
+
+// ============================================================================
+// BOOLEAN COLUMN
+// ============================================================================
+
+interface BooleanColumnOptions extends BaseColumnOptions {
+  /** Label when value is true. Default: "Yes" */
+  trueLabel?: string
+  /** Label when value is false. Default: "No" */
+  falseLabel?: string
+  /** Badge variant when true. Default: "success" */
+  trueColor?: BadgeVariant
+  /** Badge variant when false. Default: "muted" */
+  falseColor?: BadgeVariant
+}
+
+/**
+ * Creates a boolean column displaying a badge for yes/no values.
+ *
+ * @example
+ * booleanColumn("has_ac", "AC")
+ * booleanColumn("agreement_signed", "Agreement", { trueLabel: "Signed", falseLabel: "Pending" })
+ */
+export function booleanColumn(
+  field: string,
+  label: string,
+  options: BooleanColumnOptions = {}
+): Column<AnyRecord> {
+  const {
+    key,
+    header,
+    width = "badge",
+    sortable = true,
+    canHide = true,
+    defaultVisible = true,
+    trueLabel = "Yes",
+    falseLabel = "No",
+    trueColor = "success",
+    falseColor = "muted",
+    ...rest
+  } = options
+
+  return {
+    key: key || field,
+    header: header || label,
+    width,
+    sortable,
+    canHide,
+    defaultVisible,
+    ...rest,
+    render: (row: AnyRecord) => {
+      const value = Boolean(row[field])
+      const { TableBadge } = require("@/components/ui/data-table/TableBadge")
+      return React.createElement(
+        TableBadge,
+        { variant: value ? trueColor : falseColor },
+        value ? trueLabel : falseLabel
+      )
+    },
+  }
+}
+
+// ============================================================================
+// PHONE COLUMN
+// ============================================================================
+
+interface PhoneColumnOptions extends BaseColumnOptions {
+  /** Show phone icon before the number. Default: true */
+  showIcon?: boolean
+}
+
+/**
+ * Creates a phone number column with optional icon.
+ *
+ * @example
+ * phoneColumn("phone", "Phone")
+ * phoneColumn("person.phone", "Contact", { showIcon: false })
+ */
+export function phoneColumn(
+  field: string,
+  label: string,
+  options: PhoneColumnOptions = {}
+): Column<AnyRecord> {
+  const {
+    key,
+    header,
+    width = "secondary",
+    sortable = true,
+    canHide = true,
+    defaultVisible = true,
+    showIcon = true,
+    ...rest
+  } = options
+
+  return {
+    key: key || field,
+    header: header || label,
+    width,
+    sortable,
+    canHide,
+    defaultVisible,
+    ...rest,
+    render: (row: AnyRecord) => {
+      const value = resolveField(row, field) as string | undefined
+      if (!value) {
+        return React.createElement("span", { className: "text-muted-foreground" }, "\u2014")
+      }
+      if (showIcon) {
+        const { Phone } = require("lucide-react")
+        return React.createElement("div", { className: "flex items-center gap-1.5" },
+          React.createElement(Phone, { className: "h-3.5 w-3.5 text-muted-foreground shrink-0" }),
+          React.createElement("span", null, value)
+        )
+      }
+      return value
+    },
+  }
+}
+
+// ============================================================================
+// EMAIL COLUMN
+// ============================================================================
+
+interface EmailColumnOptions extends BaseColumnOptions {
+  /** Max width in characters before truncation. Default: 28 */
+  maxLength?: number
+}
+
+/**
+ * Creates an email column that truncates long addresses.
+ *
+ * @example
+ * emailColumn("email", "Email")
+ * emailColumn("person.email", "Email", { maxLength: 20 })
+ */
+export function emailColumn(
+  field: string,
+  label: string,
+  options: EmailColumnOptions = {}
+): Column<AnyRecord> {
+  const {
+    key,
+    header,
+    width = "secondary",
+    sortable = true,
+    canHide = true,
+    defaultVisible = true,
+    maxLength = 28,
+    ...rest
+  } = options
+
+  return {
+    key: key || field,
+    header: header || label,
+    width,
+    sortable,
+    canHide,
+    defaultVisible,
+    ...rest,
+    render: (row: AnyRecord) => {
+      const value = resolveField(row, field) as string | undefined
+      if (!value) {
+        return React.createElement("span", { className: "text-muted-foreground" }, "\u2014")
+      }
+      if (value.length > maxLength) {
+        return React.createElement("span", {
+          className: "truncate block",
+          title: value,
+        }, value)
+      }
+      return value
+    },
+  }
+}
+
+// ============================================================================
+// TIME COLUMN
+// ============================================================================
+
+type TimeColumnOptions = BaseColumnOptions
+
+/**
+ * Creates a time-only column (HH:MM) from a datetime string.
+ *
+ * @example
+ * timeColumn("check_in_time", "Check-in")
+ * timeColumn("created_at", "Time")
+ */
+export function timeColumn(
+  field: string,
+  label: string,
+  options: TimeColumnOptions = {}
+): Column<AnyRecord> {
+  const {
+    key,
+    header,
+    width = "tertiary",
+    sortable = true,
+    sortType = "date",
+    canHide = true,
+    defaultVisible = true,
+    ...rest
+  } = options
+
+  return {
+    key: key || field,
+    header: header || label,
+    width,
+    sortable,
+    sortType,
+    canHide,
+    defaultVisible,
+    ...rest,
+    render: (row: AnyRecord) => {
+      const value = row[field] as string | undefined
+      if (!value) {
+        return React.createElement("span", { className: "text-muted-foreground" }, "\u2014")
+      }
+      const date = new Date(value)
+      const hours = date.getHours().toString().padStart(2, "0")
+      const minutes = date.getMinutes().toString().padStart(2, "0")
+      return React.createElement("span", { className: "tabular-nums" }, `${hours}:${minutes}`)
+    },
+  }
+}
+
+// ============================================================================
+// TIME AGO COLUMN
+// ============================================================================
+
+type TimeAgoColumnOptions = BaseColumnOptions
+
+/**
+ * Creates a relative time column ("2 hours ago", "3 days ago").
+ *
+ * Uses formatTimeAgo from @/lib/format.
+ *
+ * @example
+ * timeAgoColumn("created_at", "Added")
+ * timeAgoColumn("last_login", "Last Seen")
+ */
+export function timeAgoColumn(
+  field: string,
+  label: string,
+  options: TimeAgoColumnOptions = {}
+): Column<AnyRecord> {
+  const {
+    key,
+    header,
+    width = "secondary",
+    sortable = true,
+    sortType = "date",
+    canHide = true,
+    defaultVisible = true,
+    ...rest
+  } = options
+
+  return {
+    key: key || field,
+    header: header || label,
+    width,
+    sortable,
+    sortType,
+    canHide,
+    defaultVisible,
+    ...rest,
+    render: (row: AnyRecord) => {
+      const value = row[field] as string | undefined
+      if (!value) {
+        return React.createElement("span", { className: "text-muted-foreground" }, "\u2014")
+      }
+      const formatted = formatTimeAgo(value)
+      return React.createElement("span", {
+        className: "text-muted-foreground",
+        title: formatDate(value),
+      }, formatted)
+    },
+  }
+}
+
+// ============================================================================
+// COUNT COLUMN
+// ============================================================================
+
+interface CountColumnOptions extends BaseColumnOptions {
+  /** Icon to display before the count */
+  icon?: LucideIcon
+  /** Suffix text after the number (e.g., "hrs", "seats") */
+  suffix?: string
+}
+
+/**
+ * Creates a numeric count column with Indian number formatting.
+ *
+ * @example
+ * countColumn("total_beds", "Beds")
+ * countColumn("hours_balance", "Hours", { suffix: "h", icon: Clock })
+ * countColumn("occupied_beds", "Occupied", { icon: Users })
+ */
+export function countColumn(
+  field: string,
+  label: string,
+  options: CountColumnOptions = {}
+): Column<AnyRecord> {
+  const {
+    key,
+    header,
+    width = "tertiary",
+    sortable = true,
+    sortType = "number",
+    canHide = true,
+    defaultVisible = true,
+    icon,
+    suffix,
+    ...rest
+  } = options
+
+  return {
+    key: key || field,
+    header: header || label,
+    width,
+    sortable,
+    sortType,
+    canHide,
+    defaultVisible,
+    ...rest,
+    render: (row: AnyRecord) => {
+      const value = row[field]
+      if (value == null) {
+        return React.createElement("span", { className: "text-muted-foreground" }, "\u2014")
+      }
+      const formatted = Number(value).toLocaleString("en-IN")
+      const text = suffix ? `${formatted} ${suffix}` : formatted
+
+      if (icon) {
+        return React.createElement("div", { className: "flex items-center gap-1.5" },
+          React.createElement(icon, { className: "h-3.5 w-3.5 text-muted-foreground shrink-0" }),
+          React.createElement("span", { className: "tabular-nums" }, text)
+        )
+      }
+      return React.createElement("span", { className: "tabular-nums" }, text)
     },
   }
 }

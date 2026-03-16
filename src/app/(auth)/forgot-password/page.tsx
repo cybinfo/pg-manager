@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, ArrowLeft } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
 import { AuthCardLayout } from "@/components/auth/auth-card-layout"
 import { SubmitButton } from "@/components/ui/submit-button"
+import { brandGradient } from "@/lib/design-tokens"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -23,17 +24,11 @@ export default function ForgotPasswordPage() {
 
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
 
-      if (error) {
-        showError(error.message)
-        return
-      }
-
       setSuccess(true)
-      showSuccess("Password reset email sent!")
     } catch {
       showError("An unexpected error occurred")
     } finally {
@@ -43,7 +38,7 @@ export default function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
+      <div className={`min-h-screen flex items-center justify-center ${brandGradient.pageBg} px-4`}>
         <Card className="w-full max-w-md text-center shadow-lg">
           <CardHeader>
             <div className="flex justify-center mb-4">
@@ -52,10 +47,10 @@ export default function ForgotPasswordPage() {
             <CardTitle>Check your email</CardTitle>
             <CardDescription className="space-y-2">
               <p>
-                We&apos;ve sent a password reset link to <strong>{email}</strong>
+                If an account with that email exists, we&apos;ve sent a password reset link.
               </p>
               <p className="text-sm">
-                Click the link in the email to reset your password. The link will expire in 1 hour.
+                Check your inbox and spam folder. The link will expire in 1 hour.
               </p>
             </CardDescription>
           </CardHeader>

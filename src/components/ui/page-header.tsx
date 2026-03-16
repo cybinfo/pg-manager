@@ -3,6 +3,7 @@ import Link from "next/link"
 import { ArrowLeft, ChevronRight, Home, LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { brandGradient } from "@/lib/design-tokens"
 
 export interface BreadcrumbItem {
   label: string
@@ -74,7 +75,7 @@ export function PageHeader({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {Icon && (
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-500 shadow-lg shadow-primary/20">
+            <div className={`p-2.5 rounded-xl ${brandGradient.solid} shadow-lg shadow-primary/20`}>
               <Icon className="h-5 w-5 text-white" />
             </div>
           )}

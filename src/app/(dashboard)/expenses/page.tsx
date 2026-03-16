@@ -7,21 +7,21 @@
 
 "use client"
 
-import { Receipt, TrendingDown, Calendar, BarChart3, Wallet, Download } from "lucide-react"
+import { Receipt, TrendingDown, Calendar, BarChart3, Wallet } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { currencyColumn, dateColumn, badgeColumn } from "@/lib/column-builders"
-import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { EXPENSE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createThisMonthSumMetric, createLastMonthSumMetric, createYearToDateSumMetric, createTopValueByAmountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, PAYMENT_METHOD_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { numberFilterColumn, selectFilterColumn, dateFilterColumn, textFilterColumn } from "@/lib/advanced-filter-builders"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { showSuccess } from "@/lib/toast-helpers"
 import { PAYMENT_METHODS } from "@/lib/status"
-import { getTodayISO } from "@/lib/date-helpers"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, currencyExportColumn, labelMapColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -170,37 +170,10 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 const advancedFilterColumns: FilterableColumn[] = [
-  {
-    key: "amount",
-    header: "Amount",
-    filterType: "number",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "payment_method",
-    header: "Payment Method",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "cash", label: "Cash" },
-      { value: "upi", label: "UPI" },
-      { value: "bank_transfer", label: "Bank Transfer" },
-      { value: "card", label: "Card" },
-      { value: "cheque", label: "Cheque" },
-    ],
-  },
-  {
-    key: "expense_date",
-    header: "Expense Date",
-    filterType: "date",
-    filterOperators: ["eq", "neq", "gt", "gte", "lt", "lte", "between"],
-  },
-  {
-    key: "vendor_name",
-    header: "Vendor",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "starts"],
-  },
+  numberFilterColumn("amount", "Amount"),
+  selectFilterColumn("payment_method", "Payment Method", PAYMENT_METHOD_FILTER.options!),
+  dateFilterColumn("expense_date", "Expense Date"),
+  textFilterColumn("vendor_name", "Vendor"),
 ]
 
 // ============================================
@@ -217,50 +190,19 @@ const metrics: MetricConfig<Expense>[] = [
 ]
 
 // ============================================
-// Export Function
+// Export Columns
 // ============================================
 
-function ExportButton({ expenses }: { expenses: Expense[] }) {
-  const exportToCSV = () => {
-    const headers = [
-      "Date",
-      "Category",
-      "Description",
-      "Vendor",
-      "Property",
-      "Amount",
-      "Payment Method",
-      "Reference",
-    ]
-    const rows = expenses.map((e) => [
-      e.expense_date,
-      e.expense_type?.name || "",
-      e.description || "",
-      e.vendor_name || "",
-      e.property?.name || "All Properties",
-      e.amount,
-      PAYMENT_METHODS[e.payment_method] || e.payment_method,
-      e.reference_number || "",
-    ])
-
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n")
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `expenses-${getTodayISO()}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-    showSuccess("Expenses exported to CSV")
-  }
-
-  return (
-    <Button variant="outline" size="sm" onClick={exportToCSV}>
-      <Download className="h-4 w-4 mr-2" />
-      Export
-    </Button>
-  )
-}
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "description" as keyof Record<string, unknown>, header: "Description", format: (v) => String(v ?? "") },
+  currencyExportColumn("amount", "Amount"),
+  nestedColumn("category", "Category", "expense_type.name"),
+  dateExportColumn("expense_date", "Date"),
+  labelMapColumn("payment_method", "Payment Method", PAYMENT_METHODS),
+  nestedColumn("property_name", "Property", "property.name", (val) => String(val || "General")),
+  { key: "vendor_name" as keyof Record<string, unknown>, header: "Vendor", format: (v) => String(v ?? "") },
+  { key: "reference_number" as keyof Record<string, unknown>, header: "Reference", format: (v) => String(v ?? "") },
+]
 
 // ============================================
 // Page Component
@@ -284,6 +226,8 @@ export default function ExpensesPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      exportColumns={exportColumns}
+      exportFilename="expenses"
       createHref="/expenses/new"
       createLabel="Add Expense"
       createPermission="expenses.create"

@@ -26,6 +26,12 @@ export {
   dateColumn,
   badgeColumn,
   personNameWithAvatarColumn,
+  booleanColumn,
+  phoneColumn,
+  emailColumn,
+  timeColumn,
+  timeAgoColumn,
+  countColumn,
 } from "./builders"
 
 // Generic typed column factories

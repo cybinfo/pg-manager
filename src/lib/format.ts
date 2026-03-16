@@ -106,6 +106,23 @@ export const formatPercent = (value: number | null | undefined, decimals = 1): s
   return `${(value * 100).toFixed(decimals)}%`
 }
 
+/**
+ * Parse a value as a positive number.
+ * Returns the number if it is finite and > 0, or null otherwise.
+ *
+ * @example parsePositiveNumber(150)        => 150
+ * @example parsePositiveNumber("99.5")     => 99.5
+ * @example parsePositiveNumber(0)          => null
+ * @example parsePositiveNumber(-10)        => null
+ * @example parsePositiveNumber("abc")      => null
+ * @example parsePositiveNumber(null)       => null
+ */
+export const parsePositiveNumber = (value: unknown): number | null => {
+  const num = Number(value)
+  if (isNaN(num) || num <= 0) return null
+  return num
+}
+
 // ============================================
 // DATE FORMATTING
 // ============================================

@@ -146,6 +146,11 @@ export default function DailySpendDetailPage({
             subtitle={entry.product?.name_hi}
             backHref={backHref}
             backLabel={backLabel}
+            breadcrumbs={[
+              { label: "Expenses", href: "/expenses" },
+              { label: "Daily Spend", href: "/expenses/daily-spend" },
+              { label: entry.product?.name || entry.product_name || "Details" },
+            ]}
             avatar={
               <div className="p-3 bg-warning/10 rounded-lg">
                 <ShoppingBag className="h-8 w-8 text-warning" />

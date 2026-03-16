@@ -3,13 +3,18 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
 import { getNowISO } from "@/lib/date-helpers"
+import { parsePositiveNumber } from "@/lib/format"
 
 interface AutoBillingSettings {
   enabled: boolean
   billing_day: number
   due_day_offset: number
   include_pending_charges: boolean
+  included_charge_types?: Record<string, boolean>
+  grace_period_days?: number
   auto_send_notification: boolean
+  auto_reminder_enabled?: boolean
+  reminder_days_before?: number
   last_generated_month: string | null
 }
 
@@ -94,8 +99,8 @@ export const GET = (request: Request) =>
         for (const tenant of tenants || []) {
           try {
             // CQ-006: Validate tenant has monthly rent set
-            const monthlyRent = Number(tenant.monthly_rent)
-            if (!tenant.monthly_rent || isNaN(monthlyRent) || monthlyRent <= 0) {
+            const monthlyRent = parsePositiveNumber(tenant.monthly_rent)
+            if (!monthlyRent) {
               cronLogger.warn("Tenant missing valid monthly rent, skipping", {
                 tenantId: tenant.id,
                 tenantName: tenant.name,
@@ -123,15 +128,15 @@ export const GET = (request: Request) =>
             if (settings.include_pending_charges) {
               const { data: charges } = await supabaseAdmin
                 .from("charges")
-                .select("amount, charge_type:charge_types(name), for_period")
+                .select("amount, charge_type:charge_types(name, code), for_period")
                 .eq("tenant_id", tenant.id)
                 .eq("status", "pending")
                 .is("bill_id", null)
 
               for (const charge of charges || []) {
                 // CQ-006: Skip charges with invalid amounts
-                const chargeAmount = Number(charge.amount)
-                if (isNaN(chargeAmount) || chargeAmount <= 0) {
+                const chargeAmount = parsePositiveNumber(charge.amount)
+                if (!chargeAmount) {
                   cronLogger.debug("Skipping charge with invalid amount", {
                     tenantId: tenant.id,
                     chargeAmount: charge.amount,
@@ -139,7 +144,19 @@ export const GET = (request: Request) =>
                   continue
                 }
                 // Use transformJoin for consistent handling of Supabase joins
-                const chargeType = transformJoin(charge.charge_type) as { name?: string } | null
+                const chargeType = transformJoin(charge.charge_type) as { name?: string; code?: string } | null
+
+                // Skip charge types excluded by per-type settings
+                if (settings.included_charge_types && chargeType?.code) {
+                  if (settings.included_charge_types[chargeType.code] === false) {
+                    cronLogger.debug("Skipping excluded charge type", {
+                      tenantId: tenant.id,
+                      chargeTypeCode: chargeType.code,
+                    })
+                    continue
+                  }
+                }
+
                 lineItems.push({
                   type: chargeType?.name || "Charge",
                   description: charge.for_period || currentMonth,
@@ -162,17 +179,18 @@ export const GET = (request: Request) =>
             // CQ-006: Safely calculate previous balance with null checks
             const previousBalance = (unpaidBills || []).reduce(
               (sum, bill) => {
-                const balanceDue = Number(bill.balance_due)
-                return sum + (isNaN(balanceDue) ? 0 : balanceDue)
+                const balanceDue = parsePositiveNumber(bill.balance_due)
+                return sum + (balanceDue ?? 0)
               },
               0
             )
 
             const totalAmountDue = subtotal + previousBalance
 
-            // Calculate due date
+            // Calculate due date and grace period deadline
             const dueDate = new Date(today)
             dueDate.setDate(dueDate.getDate() + settings.due_day_offset)
+            const gracePeriodDays = settings.grace_period_days ?? 7
 
             // Calculate period
             const periodStart = new Date(today.getFullYear(), today.getMonth(), 1)

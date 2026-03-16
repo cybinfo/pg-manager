@@ -176,15 +176,9 @@ export type { FilterConfig, FilterOption, ListPageFiltersProps } from "./list-pa
 
 // Design Tokens (centralized styling constants)
 export {
+  brandGradient,
   colors,
   statusColors,
-  spacing,
-  typography,
-  borders,
-  shadows,
-  animations,
-  presets,
-  iconSizes,
   zIndex,
 } from "@/lib/design-tokens"
 

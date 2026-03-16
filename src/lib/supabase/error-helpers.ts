@@ -16,6 +16,9 @@
 
 import { PostgrestError, PostgrestSingleResponse } from "@supabase/supabase-js"
 import { notFound, internalError, badRequest } from "@/lib/api-response"
+import { logger } from "@/lib/logger"
+
+const log = logger.child("supabase")
 
 // ============================================================================
 // TYPES
@@ -64,7 +67,7 @@ export async function handleQueryResult<T>(
     const { data, error } = await query
 
     if (error) {
-      console.error(`[${entityName}] Query error:`, error)
+      log.error(`[${entityName}] Query error:`, { ...error })
 
       // Handle specific error codes
       if (error.code === "PGRST116") {
@@ -90,7 +93,7 @@ export async function handleQueryResult<T>(
 
     return { success: true, data }
   } catch (err) {
-    console.error(`[${entityName}] Unexpected error:`, err)
+    log.error(`[${entityName}] Unexpected error:`, { error: err })
     return {
       success: false,
       response: internalError(`Unexpected error fetching ${entityName.toLowerCase()}`),
@@ -117,7 +120,7 @@ export async function handleListResult<T>(
     const { data, error } = await query
 
     if (error) {
-      console.error(`[${entityName}] List query error:`, error)
+      log.error(`[${entityName}] List query error:`, { ...error })
       return {
         success: false,
         response: internalError(`Failed to fetch ${entityName.toLowerCase()}`),
@@ -126,7 +129,7 @@ export async function handleListResult<T>(
 
     return { success: true, data: data ?? [] }
   } catch (err) {
-    console.error(`[${entityName}] Unexpected error:`, err)
+    log.error(`[${entityName}] Unexpected error:`, { error: err })
     return {
       success: false,
       response: internalError(`Unexpected error fetching ${entityName.toLowerCase()}`),
@@ -158,7 +161,7 @@ export async function handleMutationResult<T>(
     const { data, error } = await query
 
     if (error) {
-      console.error(`[${entityName}] ${operation} error:`, error)
+      log.error(`[${entityName}] ${operation} error:`, { ...error })
 
       // Handle specific error codes
       if (error.code === "23505") {
@@ -200,7 +203,7 @@ export async function handleMutationResult<T>(
 
     return { success: true, data: data as T }
   } catch (err) {
-    console.error(`[${entityName}] Unexpected ${operation} error:`, err)
+    log.error(`[${entityName}] Unexpected ${operation} error:`, { error: err })
     return {
       success: false,
       response: internalError(`Unexpected error during ${operation}`),

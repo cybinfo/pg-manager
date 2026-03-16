@@ -20,6 +20,7 @@ import { ArrowLeft, Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getNowISO } from "@/lib/date-helpers"
+import { PermissionGuard } from "@/components/auth"
 
 interface MemberOption {
   id: string
@@ -46,6 +47,14 @@ interface SeatOption {
 }
 
 export default function NewLibraryAttendancePage() {
+  return (
+    <PermissionGuard permission="library_attendance.create">
+      <NewLibraryAttendanceContent />
+    </PermissionGuard>
+  )
+}
+
+function NewLibraryAttendanceContent() {
   const [loadingData, setLoadingData] = useState(true)
   const [members, setMembers] = useState<MemberOption[]>([])
   const [libraries, setLibraries] = useState<LibraryOption[]>([])

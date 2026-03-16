@@ -25,14 +25,13 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
-import { dateColumn } from "@/lib/column-builders"
+import { dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PEOPLE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { Avatar } from "@/components/ui/avatar"
 import { formatDate } from "@/lib/format"
 import { PERSON_TAG_COLORS } from "@/lib/status-config"
 import { useEffect, useState, useCallback } from "react"
@@ -87,45 +86,15 @@ const TagBadge = ({ tag }: { tag: string }) => (
 // ============================================
 
 const columns: Column<Person>[] = [
-  {
-    key: "name",
-    header: "Person",
-    width: "primary",
-    sortable: true,
-    canHide: false,
+  personNameWithAvatarColumn("Person", {
+    nameField: "name",
+    personNameField: "name",
+    photoField: "photo_url",
+    subtitleField: "phone",
     editable: true,
     editType: "text",
     editValidation: { required: true },
-    render: (person) => (
-      <div className="flex items-center gap-3">
-        <Avatar
-          name={person.name}
-          src={person.photo_url}
-          size="sm"
-          className={person.is_blocked ? "opacity-50" : ""}
-        />
-        <div className="min-w-0">
-          <div className="font-medium flex items-center gap-2">
-            {person.name}
-            {person.is_verified && (
-              <BadgeCheck className="h-4 w-4 text-success shrink-0" />
-            )}
-            {person.is_blocked && (
-              <Ban className="h-4 w-4 text-destructive shrink-0" />
-            )}
-          </div>
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            {person.phone && (
-              <>
-                <Phone className="h-3 w-3" />
-                {person.phone}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    ),
-  },
+  }),
   {
     key: "email",
     header: "Contact",

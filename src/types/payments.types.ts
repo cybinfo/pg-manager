@@ -10,16 +10,7 @@ import { Person } from "./people.types"
 // ENUMS AND CONSTANTS
 // ============================================================================
 
-export type PaymentMethod = "cash" | "upi" | "bank_transfer" | "cheque" | "card" | "other"
-
-export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: "cash", label: "Cash" },
-  { value: "upi", label: "UPI" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "cheque", label: "Cheque" },
-  { value: "card", label: "Card" },
-  { value: "other", label: "Other" },
-]
+export type PaymentMethod = "cash" | "upi" | "bank_transfer" | "cheque" | "card" | "paytm" | "dd" | "credit" | "other"
 
 export const PAYMENT_METHOD_CONFIG: Record<PaymentMethod, { label: string; icon: string }> = {
   cash: { label: "Cash", icon: "Banknote" },
@@ -27,6 +18,9 @@ export const PAYMENT_METHOD_CONFIG: Record<PaymentMethod, { label: string; icon:
   bank_transfer: { label: "Bank Transfer", icon: "Building2" },
   cheque: { label: "Cheque", icon: "FileText" },
   card: { label: "Card", icon: "CreditCard" },
+  paytm: { label: "Paytm", icon: "Smartphone" },
+  dd: { label: "Demand Draft", icon: "FileText" },
+  credit: { label: "Credit", icon: "Wallet" },
   other: { label: "Other", icon: "Wallet" },
 }
 

@@ -19,8 +19,21 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
+import { PermissionGuard } from "@/components/auth"
 
 export default function EditLibraryPlanPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  return (
+    <PermissionGuard permission="library_members.edit">
+      <EditLibraryPlanContent params={params} />
+    </PermissionGuard>
+  )
+}
+
+function EditLibraryPlanContent({
   params,
 }: {
   params: Promise<{ id: string }>

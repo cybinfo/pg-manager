@@ -28,6 +28,7 @@ import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency } from "@/lib/format"
 import { withCreatedBy } from "@/lib/audit"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PermissionGuard } from "@/components/auth"
 import { cn } from "@/lib/utils"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
@@ -796,8 +797,10 @@ function LoadingFallback() {
 
 export default function NewBillPage() {
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <NewBillContent />
-    </Suspense>
+    <PermissionGuard permission="bills.create">
+      <Suspense fallback={<LoadingFallback />}>
+        <NewBillContent />
+      </Suspense>
+    </PermissionGuard>
   )
 }

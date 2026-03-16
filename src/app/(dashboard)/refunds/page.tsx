@@ -23,12 +23,14 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { REFUND_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { PROPERTY_FILTER, createStatusFilter } from "@/lib/filter-presets"
+import { PROPERTY_FILTER, REFUND_STATUS_FILTER, REFUND_TYPE_FILTER, PAYMENT_METHOD_FILTER } from "@/lib/filter-presets"
+import { REFUND_STATUS_OPTIONS, REFUND_TYPE_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { REFUND_STATUS } from "@/lib/status-config"
 import { numberFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import { brandGradient } from "@/lib/design-tokens"
 
 // ============================================
 // Types
@@ -68,7 +70,7 @@ const columns: Column<Refund>[] = [
     photoField: "tenant.photo_url",
     subtitleField: "tenant.phone",
     sortKey: "tenant.name",
-    avatarClassName: "bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0",
+    avatarClassName: `${brandGradient.solid} text-white shrink-0`,
   }) as Column<Refund>,
   {
     key: "property",
@@ -223,25 +225,8 @@ const columns: Column<Refund>[] = [
 
 const filters: FilterConfig[] = [
   PROPERTY_FILTER,
-  createStatusFilter([
-    { value: "pending", label: "Pending" },
-    { value: "processing", label: "Processing" },
-    { value: "completed", label: "Completed" },
-    { value: "failed", label: "Failed" },
-    { value: "cancelled", label: "Cancelled" },
-  ]),
-  {
-    id: "refund_type",
-    label: "Type",
-    type: "select",
-    placeholder: "All Types",
-    options: [
-      { value: "deposit_refund", label: "Deposit Refund" },
-      { value: "overpayment", label: "Overpayment" },
-      { value: "adjustment", label: "Adjustment" },
-      { value: "other", label: "Other" },
-    ],
-  },
+  REFUND_STATUS_FILTER,
+  REFUND_TYPE_FILTER,
 ]
 
 // ============================================
@@ -263,25 +248,9 @@ const groupByOptions: GroupByOption[] = [
 
 const advancedFilterColumns: FilterableColumn[] = [
   numberFilterColumn("amount", "Amount"),
-  statusFilterColumn([
-    { value: "pending", label: "Pending" },
-    { value: "processing", label: "Processing" },
-    { value: "completed", label: "Completed" },
-    { value: "failed", label: "Failed" },
-    { value: "cancelled", label: "Cancelled" },
-  ]),
-  selectFilterColumn("refund_type", "Type", [
-    { value: "deposit_refund", label: "Deposit Refund" },
-    { value: "overpayment", label: "Overpayment" },
-    { value: "adjustment", label: "Adjustment" },
-    { value: "other", label: "Other" },
-  ]),
-  selectFilterColumn("payment_mode", "Payment Mode", [
-    { value: "cash", label: "Cash" },
-    { value: "upi", label: "UPI" },
-    { value: "bank_transfer", label: "Bank Transfer" },
-    { value: "cheque", label: "Cheque" },
-  ]),
+  statusFilterColumn(REFUND_STATUS_OPTIONS),
+  selectFilterColumn("refund_type", "Type", REFUND_TYPE_OPTIONS),
+  selectFilterColumn("payment_mode", "Payment Mode", PAYMENT_METHOD_FILTER.options!),
   dateFilterColumn("refund_date", "Refund Date"),
 ]
 

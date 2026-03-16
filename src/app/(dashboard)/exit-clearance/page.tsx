@@ -12,18 +12,19 @@
 
 import { LogOut, Clock, CheckCircle, AlertCircle } from "lucide-react"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
-import { dateColumn, currencyColumn } from "@/lib/column-builders"
+import { dateColumn, currencyColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { EXIT_CLEARANCE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { PROPERTY_FILTER, EXIT_CLEARANCE_STATUS_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
+import { EXIT_CLEARANCE_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
-import { Avatar } from "@/components/ui/avatar"
+import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { formatCurrency } from "@/lib/format"
 import { EXIT_CLEARANCE_STATUS } from "@/lib/status-config"
 import { TenantsOnNoticeAlert } from "./_components/TenantsOnNoticeAlert"
+import { brandGradient } from "@/lib/design-tokens"
 
 // ============================================
 // Types
@@ -55,30 +56,15 @@ interface ExitClearance {
 // ============================================
 
 const columns: Column<ExitClearance>[] = [
-  {
+  personNameWithAvatarColumn("Tenant", {
     key: "tenant",
-    header: "Tenant",
-    width: "primary",
-    sortable: true,
+    nameField: "tenant.name",
+    personNameField: "tenant.name",
+    photoField: "tenant.profile_photo",
+    subtitleField: "tenant.phone",
     sortKey: "tenant.name",
-    canHide: false,
-    render: (clearance) => (
-      <div className="flex items-center gap-3">
-        <Avatar
-          name={clearance.tenant?.name || ""}
-          src={clearance.tenant?.profile_photo || clearance.tenant?.photo_url}
-          size="sm"
-          className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white shrink-0"
-        />
-        <div className="min-w-0">
-          {clearance.tenant && (
-            <TenantLink id={clearance.tenant.id} name={clearance.tenant.name} showIcon={false} />
-          )}
-          <div className="text-xs text-muted-foreground">{clearance.tenant?.phone}</div>
-        </div>
-      </div>
-    ),
-  },
+    avatarClassName: `${brandGradient.solid} text-white shrink-0`,
+  }),
   {
     key: "property",
     header: "Property",
@@ -202,11 +188,7 @@ const columns: Column<ExitClearance>[] = [
 
 const filters: FilterConfig[] = [
   PROPERTY_FILTER,
-  createStatusFilter([
-    { value: "initiated", label: "Initiated" },
-    { value: "pending_payment", label: "Pending Payment" },
-    { value: "cleared", label: "Cleared" },
-  ], { id: "settlement_status" }),
+  EXIT_CLEARANCE_STATUS_FILTER,
   createDateRangeFilter("expected_exit_date", "Exit Date"),
 ]
 
@@ -235,11 +217,7 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Status",
     filterType: "select",
     filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "initiated", label: "Initiated" },
-      { value: "pending_payment", label: "Pending Payment" },
-      { value: "cleared", label: "Cleared" },
-    ],
+    filterOptions: EXIT_CLEARANCE_STATUS_OPTIONS,
   },
   {
     key: "final_amount",

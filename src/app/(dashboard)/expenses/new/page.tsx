@@ -7,8 +7,9 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
 import {
   Loader2,
   ArrowLeft,
@@ -19,6 +20,8 @@ import {
 import { showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
+import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import { PermissionGuard } from "@/components/auth"
 
 interface ExpenseType {
   id: string
@@ -32,6 +35,14 @@ interface Property {
 }
 
 export default function NewExpensePage() {
+  return (
+    <PermissionGuard permission="expenses.create">
+      <NewExpenseContent />
+    </PermissionGuard>
+  )
+}
+
+function NewExpenseContent() {
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingData, setLoadingData] = useState(true)
@@ -43,6 +54,8 @@ export default function NewExpensePage() {
     saving,
     user,
     router,
+    errors,
+    validateField,
   } = useFormPage({
     table: "expenses",
     initialData: {
@@ -61,11 +74,10 @@ export default function NewExpensePage() {
     errorMessage: "Failed to add expense",
     useCreatedBy: false, // We manually add owner_id and created_by in transform
     addOwnerId: false,
-    validate: (data) => {
-      if (!data.expense_type_id) return "Please select an expense category"
-      if (!data.amount || Number(data.amount) <= 0) return "Please enter a valid amount"
-      if (!data.expense_date) return "Please select a date"
-      return null
+    validationSchema: {
+      expense_type_id: requiredSelect("Category"),
+      amount: requiredAmount("Amount"),
+      expense_date: requiredDate("Date"),
     },
     transform: (data, userId) => ({
       owner_id: userId,
@@ -175,24 +187,21 @@ export default function NewExpensePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="expense_type_id">Category *</Label>
+              <FormField label="Category" htmlFor="expense_type_id" required error={errors.expense_type_id}>
                 <Select
                   id="expense_type_id"
                   name="expense_type_id"
                   value={formData.expense_type_id as string}
                   onChange={handleChange}
-                  required
                   placeholder="Select category"
                   options={expenseTypes.map((type) => ({
                     value: type.id,
                     label: type.name,
                   }))}
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="property_id">Property</Label>
+              <FormField label="Property" htmlFor="property_id" hint="Leave empty for expenses that apply to all properties">
                 <Select
                   id="property_id"
                   name="property_id"
@@ -204,15 +213,11 @@ export default function NewExpensePage() {
                     label: prop.name,
                   }))}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty for expenses that apply to all properties
-                </p>
-              </div>
+              </FormField>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (₹) *</Label>
+              <FormField label="Amount (₹)" htmlFor="amount" required error={errors.amount}>
                 <Input
                   id="amount"
                   name="amount"
@@ -222,21 +227,19 @@ export default function NewExpensePage() {
                   placeholder="0.00"
                   value={formData.amount as string}
                   onChange={handleChange}
-                  required
+                  onBlur={() => validateField("amount")}
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="expense_date">Date *</Label>
+              <FormField label="Date" htmlFor="expense_date" required error={errors.expense_date}>
                 <Input
                   id="expense_date"
                   name="expense_date"
                   type="date"
                   value={formData.expense_date as string}
                   onChange={handleChange}
-                  required
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="space-y-2">
@@ -297,13 +300,7 @@ export default function NewExpensePage() {
                 name="payment_method"
                 value={formData.payment_method as string}
                 onChange={handleChange}
-                options={[
-                  { value: "cash", label: "Cash" },
-                  { value: "upi", label: "UPI" },
-                  { value: "bank_transfer", label: "Bank Transfer" },
-                  { value: "card", label: "Card" },
-                  { value: "cheque", label: "Cheque" },
-                ]}
+                options={EXPENSE_PAYMENT_MODE_OPTIONS}
               />
             </div>
           </CardContent>

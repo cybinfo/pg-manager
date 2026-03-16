@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { BrandLogo } from "@/components/ui/brand-logo"
+import { brandGradient } from "@/lib/design-tokens"
 
 /**
  * AuthCardLayout Component
@@ -47,7 +48,7 @@ export function AuthCardLayout({
   verticalPadding = false,
 }: AuthCardLayoutProps) {
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4${verticalPadding ? " py-8" : ""}`}>
+    <div className={`min-h-screen flex items-center justify-center ${brandGradient.pageBg} px-4${verticalPadding ? " py-8" : ""}`}>
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">

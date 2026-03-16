@@ -21,6 +21,7 @@ import { ArrowLeft, Users, Loader2, Clock } from "lucide-react"
 import { showError } from "@/lib/toast-helpers"
 import { PageLoading } from "@/components/ui/loading"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
+import { PermissionGuard } from "@/components/auth"
 import { TIME_SLOTS } from "@/types/library.types"
 
 interface LibraryOption {
@@ -31,6 +32,14 @@ interface LibraryOption {
 }
 
 export default function AddToWaitlistPage() {
+  return (
+    <PermissionGuard permission="library_waitlist.create">
+      <AddToWaitlistContent />
+    </PermissionGuard>
+  )
+}
+
+function AddToWaitlistContent() {
   const [loadingData, setLoadingData] = useState(true)
   const [libraries, setLibraries] = useState<LibraryOption[]>([])
 

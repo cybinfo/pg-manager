@@ -8,10 +8,13 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle, Library } from "lucide-react"
+import { requiredField } from "@/lib/validation"
+import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
 import { PageSkeleton } from "@/components/ui/loading"
+import { PermissionGuard } from "@/components/auth"
 
 interface Property {
   id: string
@@ -91,6 +94,8 @@ function NewComplaintForm() {
     handleSubmit,
     saving,
     searchParams,
+    errors,
+    validateField,
   } = useFormPage({
     table: "complaints",
     initialData: {
@@ -109,12 +114,20 @@ function NewComplaintForm() {
     successMessage: "Complaint logged successfully",
     errorMessage: "Failed to create complaint",
     useCreatedBy: false,
-    validate: (data) => {
-      const hasLocation = data.entity_type === "property" ? data.property_id : data.library_id
-      if (!hasLocation || !data.title || !data.category) {
-        return "Please fill in all required fields"
-      }
-      return null
+    validationSchema: {
+      title: requiredField("Title"),
+      property_id: (value: unknown, formData): ValidatorResult => {
+        if (formData.entity_type === "property" && !String(value ?? "").trim()) {
+          return { isValid: false, error: "Please select a property" }
+        }
+        return null
+      },
+      library_id: (value: unknown, formData): ValidatorResult => {
+        if (formData.entity_type === "library" && !String(value ?? "").trim()) {
+          return { isValid: false, error: "Please select a library" }
+        }
+        return null
+      },
     },
     transform: (data, userId) => ({
       owner_id: userId,
@@ -347,14 +360,12 @@ function NewComplaintForm() {
             {formData.entity_type === "property" && (
               <>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="property_id">Property *</Label>
+                  <FormField label="Property" htmlFor="property_id" required error={errors.property_id}>
                     <Select
                       id="property_id"
                       name="property_id"
                       value={formData.property_id as string}
                       onChange={handleChange}
-                      required
                       disabled={saving}
                       placeholder="Select property"
                       options={properties.map((property) => ({
@@ -362,7 +373,7 @@ function NewComplaintForm() {
                         label: property.name,
                       }))}
                     />
-                  </div>
+                  </FormField>
                   <div className="space-y-2">
                     <Label htmlFor="room_id">Room (Optional)</Label>
                     <Select
@@ -401,14 +412,12 @@ function NewComplaintForm() {
             {/* Library Fields */}
             {formData.entity_type === "library" && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="library_id">Library *</Label>
+                <FormField label="Library" htmlFor="library_id" required error={errors.library_id}>
                   <Select
                     id="library_id"
                     name="library_id"
                     value={formData.library_id as string}
                     onChange={handleChange}
-                    required
                     disabled={saving}
                     placeholder="Select library"
                     options={libraries.map((library) => ({
@@ -416,7 +425,7 @@ function NewComplaintForm() {
                       label: library.name,
                     }))}
                   />
-                </div>
+                </FormField>
 
                 <div className="space-y-2">
                   <Label htmlFor="member_id">Reported By (Optional)</Label>
@@ -485,18 +494,17 @@ function NewComplaintForm() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+            <FormField label="Title" htmlFor="title" required error={errors.title}>
               <Input
                 id="title"
                 name="title"
                 placeholder="Brief description of the issue"
                 value={formData.title as string}
                 onChange={handleChange}
-                required
+                onBlur={() => validateField("title")}
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             <div className="space-y-2">
               <Label htmlFor="description">Detailed Description</Label>
@@ -553,14 +561,16 @@ function NewComplaintForm() {
 
 export default function NewComplaintPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      }
-    >
-      <NewComplaintForm />
-    </Suspense>
+    <PermissionGuard permission="complaints.create">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        }
+      >
+        <NewComplaintForm />
+      </Suspense>
+    </PermissionGuard>
   )
 }

@@ -56,6 +56,7 @@ export const SOFT_DELETABLE_TABLES = [
   "library_lockers",
   "library_locker_assignments",
   "library_payments",
+  "library_waitlist",
 ] as const
 
 /**

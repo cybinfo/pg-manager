@@ -47,6 +47,7 @@ import {
 import { FeatureGuard } from "@/components/auth/feature-guard"
 import { InfoBanner } from "@/components/ui/info-banner"
 import { formatCurrency } from "@/lib/format"
+import { brandGradient } from "@/lib/design-tokens"
 
 interface DashboardStats {
   properties: number
@@ -404,7 +405,7 @@ export default function DashboardPage() {
       {/* Welcome header with greeting */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-teal-500/20 animate-float">
+          <div className={`h-12 w-12 rounded-2xl ${brandGradient.solid} flex items-center justify-center shadow-lg ${brandGradient.shadow} animate-float`}>
             <GreetingIcon className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -675,7 +676,7 @@ export default function DashboardPage() {
         <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b bg-muted/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+              <div className={`h-8 w-8 rounded-lg ${brandGradient.solid} flex items-center justify-center`}>
                 <CheckCircle className="h-4 w-4 text-white" />
               </div>
               <div>
@@ -688,7 +689,7 @@ export default function DashboardPage() {
             {/* Progress bar */}
             <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500"
+                className={`h-full ${brandGradient.horizontal} transition-all duration-500`}
                 style={{ width: `${(completedTasks / gettingStarted.length) * 100}%` }}
               />
             </div>
@@ -704,7 +705,7 @@ export default function DashboardPage() {
               >
                 <div className="flex items-center gap-3">
                   {item.done ? (
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
+                    <div className={`h-5 w-5 rounded-full ${brandGradient.solid} flex items-center justify-center`}>
                       <CheckCircle className="h-3 w-3 text-white" />
                     </div>
                   ) : (
@@ -741,7 +742,7 @@ export default function DashboardPage() {
       {/* Empty state for new users */}
       {stats.properties === 0 && !loading && (
         <div className="bg-card rounded-xl border shadow-sm p-8 text-center">
-          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-500/20">
+          <div className={`h-16 w-16 rounded-2xl ${brandGradient.solid} flex items-center justify-center mx-auto mb-4 shadow-lg ${brandGradient.shadow}`}>
             <Building2 className="h-8 w-8 text-white" />
           </div>
           <h3 className="font-semibold text-lg mb-1">Welcome to ManageKar!</h3>

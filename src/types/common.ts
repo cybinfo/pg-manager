@@ -212,11 +212,9 @@ export interface WorkspaceOwned {
 
 /**
  * Generic status with label and variant
+ * Canonical type is StatusConfig in @/lib/status/shared — re-exported here as alias
  */
-export interface StatusInfo {
-  label: string
-  variant: "success" | "warning" | "error" | "muted" | "default"
-}
+export type { StatusConfig as StatusInfo } from "@/lib/status/shared"
 
 /**
  * Active/Inactive status

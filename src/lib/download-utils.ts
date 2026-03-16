@@ -163,7 +163,10 @@ export function downloadCSV<T extends Record<string, unknown>>(
   filename: string
 ): void {
   const csv = buildCSV(data, columns)
-  downloadContent(csv, "text/csv", filename)
+  // Add BOM for Excel compatibility with Unicode (Indian names, ₹ symbol)
+  const csvWithBOM = "\uFEFF" + csv
+  const blob = new Blob([csvWithBOM], { type: "text/csv;charset=utf-8" })
+  downloadBlob(blob, sanitizeFilename(filename))
 }
 
 /**

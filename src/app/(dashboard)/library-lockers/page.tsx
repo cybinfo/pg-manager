@@ -17,6 +17,8 @@ import { LIBRARY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { LIBRARY_LOCKER_STATUS_CONFIG, LIBRARY_LOCKER_SIZE_CONFIG } from "@/types/library.types"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { textFilterColumn, statusFilterColumn, selectFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 
 // ============================================
 // Types
@@ -190,6 +192,31 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("locker_number", "Locker Number"),
+  selectFilterColumn("size", "Size", [
+    { value: "small", label: "Small" },
+    { value: "medium", label: "Medium" },
+    { value: "large", label: "Large" },
+  ]),
+  statusFilterColumn([
+    { value: "available", label: "Available" },
+    { value: "occupied", label: "Occupied" },
+    { value: "maintenance", label: "Maintenance" },
+  ]),
+  numberFilterColumn("floor", "Floor"),
+  numberFilterColumn("monthly_rent", "Monthly Rent"),
+  numberFilterColumn("deposit_amount", "Deposit Amount"),
+  textFilterColumn("section", "Section"),
+  dateFilterColumn("assigned_from", "Assigned From", ["is_null", "is_not_null"]),
+  dateFilterColumn("assigned_until", "Assigned Until", ["is_null", "is_not_null"]),
+  dateFilterColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -220,6 +247,9 @@ export default function LibraryLockersPage() {
       columns={columns}
       searchPlaceholder="Search by locker number, library..."
       enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/library-lockers/new"
       createLabel="Add Locker"
       createPermission="library_lockers.create"

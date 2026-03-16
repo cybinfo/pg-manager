@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Building2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { brandGradient } from "@/lib/design-tokens"
 
 /**
  * BrandLogo Component
@@ -69,7 +70,7 @@ export function BrandLogo({
       <span
         className={cn(
           config.icon,
-          "bg-gradient-to-br from-teal-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-md"
+          `${brandGradient.solid} rounded-xl flex items-center justify-center shadow-md`
         )}
       >
         <Building2 className={cn(config.iconInner, "text-white")} />
@@ -78,7 +79,7 @@ export function BrandLogo({
         <span
           className={cn(
             config.text,
-            "font-bold bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent"
+            `font-bold ${brandGradient.text}`
           )}
         >
           ManageKar

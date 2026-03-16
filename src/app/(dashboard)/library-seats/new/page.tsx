@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
 import { ArrowLeft, Armchair, Loader2 } from "lucide-react"
+import { PermissionGuard } from "@/components/auth"
 
 interface Section {
   id: string
@@ -25,6 +26,14 @@ interface Section {
 }
 
 export default function NewLibrarySeatPage() {
+  return (
+    <PermissionGuard permission="library_seats.create">
+      <NewLibrarySeatContent />
+    </PermissionGuard>
+  )
+}
+
+function NewLibrarySeatContent() {
   const [sections, setSections] = useState<Section[]>([])
   const [loadingSections, setLoadingSections] = useState(true)
 

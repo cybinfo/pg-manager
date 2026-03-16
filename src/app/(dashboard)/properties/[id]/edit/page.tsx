@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
+import { PermissionGuard } from "@/components/auth"
 
 import {
   PropertyDetailsTab,
@@ -60,6 +61,14 @@ const defaultTenantFeatures: TenantFeatures = {
 }
 
 export default function EditPropertyPage() {
+  return (
+    <PermissionGuard permission="properties.edit">
+      <EditPropertyContent />
+    </PermissionGuard>
+  )
+}
+
+function EditPropertyContent() {
   const params = useParams()
   const router = useRouter()
   const [loading, setLoading] = useState(false)

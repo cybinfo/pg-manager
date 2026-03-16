@@ -306,6 +306,8 @@ export function useFormPage<T extends FormData>(
     async (e: React.FormEvent) => {
       e.preventDefault()
 
+      if (saving) return
+
       // Auth check
       if (!user) {
         showError("Session expired. Please login again.")
@@ -663,6 +665,8 @@ export function useFormEditPage<T extends FormData>(
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault()
+
+      if (saving) return
 
       if (!user) {
         showError("Session expired. Please login again.")

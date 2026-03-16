@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
 import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
+import { PermissionGuard } from "@/components/auth"
 
 interface Library {
   id: string
@@ -25,6 +26,14 @@ interface Library {
 }
 
 export default function NewLibrarySectionPage() {
+  return (
+    <PermissionGuard permission="library_sections.create">
+      <NewLibrarySectionContent />
+    </PermissionGuard>
+  )
+}
+
+function NewLibrarySectionContent() {
   const [libraries, setLibraries] = useState<Library[]>([])
   const [loadingLibraries, setLoadingLibraries] = useState(true)
 

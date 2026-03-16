@@ -3,6 +3,7 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { brandGradient } from "@/lib/design-tokens"
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:scale-[0.98]",
@@ -20,7 +21,7 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         gradient:
-          "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-lg shadow-teal-500/25 hover:from-teal-600 hover:to-emerald-600 hover:shadow-xl hover:shadow-teal-500/30",
+          `${brandGradient.horizontal} text-white shadow-lg ${brandGradient.shadowLg} hover:from-teal-600 hover:to-emerald-600 hover:shadow-xl hover:shadow-teal-500/30`,
         "gradient-outline":
           "relative bg-card text-teal-600 border-2 border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-950",
       },

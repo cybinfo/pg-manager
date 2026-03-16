@@ -17,6 +17,9 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { Currency } from "@/components/ui/currency"
 import { createClient } from "@/lib/supabase/client"
+import { GroupByOption } from "@/lib/hooks/useListPage"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { textFilterColumn, numberFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 
 // ============================================
 // Types
@@ -92,6 +95,29 @@ function useEnrollmentStats() {
 
   return stats
 }
+
+// ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("name", "Plan Name", ["contains", "eq", "neq", "starts", "ends"]),
+  numberFilterColumn("base_price", "Base Price"),
+  numberFilterColumn("hours_included", "Hours Included"),
+  numberFilterColumn("validity_days", "Validity Days"),
+  booleanFilterColumn("is_active", "Status", { trueLabel: "Active", falseLabel: "Inactive" }),
+  numberFilterColumn("sort_order", "Sort Order"),
+  dateFilterColumn("created_at", "Added On"),
+]
+
+// ============================================
+// Group By Options
+// ============================================
+
+const groupByOptions: GroupByOption[] = [
+  { value: "is_active", label: "Status" },
+  { value: "validity_days", label: "Validity Period" },
+]
 
 // ============================================
 // Page Component (wraps ListPageTemplate)
@@ -301,10 +327,14 @@ export default function LibraryPlansPage() {
       feature="library"
       config={LIBRARY_PLAN_LIST_CONFIG}
       filters={filters}
+      groupByOptions={groupByOptions}
       metrics={metrics}
       columns={columns}
       searchPlaceholder="Search by plan name..."
       enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/library-plans/new"
       createLabel="Add Plan"
       createPermission="library.create"

@@ -10,6 +10,11 @@ import { CreditCard, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getTodayISO } from "@/lib/date-helpers"
+import { labelsToOptions, PAYMENT_METHODS } from "@/lib/status"
+
+const BILL_PAYMENT_METHOD_OPTIONS = labelsToOptions(PAYMENT_METHODS, [
+  "cash", "upi", "bank_transfer", "cheque", "other",
+])
 
 interface BillPaymentFormProps {
   billId: string
@@ -122,13 +127,7 @@ export function BillPaymentForm({
               id="payment_method"
               value={paymentData.payment_method}
               onChange={(e) => setPaymentData({ ...paymentData, payment_method: e.target.value })}
-              options={[
-                { value: "cash", label: "Cash" },
-                { value: "upi", label: "UPI" },
-                { value: "bank_transfer", label: "Bank Transfer" },
-                { value: "cheque", label: "Cheque" },
-                { value: "other", label: "Other" },
-              ]}
+              options={BILL_PAYMENT_METHOD_OPTIONS}
             />
           </div>
         </div>

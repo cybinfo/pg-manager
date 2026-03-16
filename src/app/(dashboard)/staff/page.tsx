@@ -11,25 +11,20 @@ import Link from "next/link"
 import {
   Users,
   Shield,
-  Mail,
-  Phone,
   CheckCircle,
   XCircle,
   UserCog,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
-import { dateColumn } from "@/lib/column-builders"
+import { Column, TableBadge } from "@/components/ui/data-table"
+import { dateColumn, personNameWithAvatarColumn, booleanColumn, phoneColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { STAFF_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createBooleanMetric, createNullCheckMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { Avatar } from "@/components/ui/avatar"
-import { PersonAvatarCell } from "@/components/ui/column-renders"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { formatDate } from "@/lib/format"
 
 // ============================================
 // Types
@@ -78,57 +73,16 @@ const transformStaffRoles = (staff: StaffMember) => {
 // ============================================
 
 const columns: Column<StaffMember>[] = [
-  {
-    key: "name",
-    header: "Staff Member",
-    width: "primary",
-    sortable: true,
-    canHide: false,
-    render: (staff) => {
-      const roles = transformStaffRoles(staff)
-      // Use person.name (live data) with fallback to staff.name (denormalized)
-      const displayName = staff.person?.name || staff.name
-
-      return (
-        <div className="flex items-center gap-3">
-          <Avatar
-            name={displayName}
-            src={staff.person?.photo_url}
-            size="md"
-            className={staff.is_active ? "" : "bg-muted text-muted-foreground"}
-          />
-          <div className={!staff.is_active ? "opacity-60" : ""}>
-            <div className="font-medium flex items-center gap-2">
-              {displayName}
-              {!staff.is_active && (
-                <TableBadge variant="muted">Inactive</TableBadge>
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <Mail className="h-3 w-3" />
-              {staff.email}
-            </div>
-          </div>
-        </div>
-      )
-    },
-  },
-  {
-    key: "phone",
-    header: "Phone",
+  personNameWithAvatarColumn("Staff Member", {
+    nameField: "name",
+    personNameField: "person.name",
+    photoField: "person.photo_url",
+    subtitleField: "email",
+  }),
+  phoneColumn("phone", "Phone", {
     width: "tertiary",
     hideOnMobile: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (staff) => staff.phone ? (
-      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-        <Phone className="h-3 w-3" />
-        {staff.phone}
-      </div>
-    ) : (
-      <span className="text-muted-foreground">-</span>
-    ),
-  },
+  }),
   {
     key: "roles",
     header: "Roles",
@@ -156,24 +110,16 @@ const columns: Column<StaffMember>[] = [
       )
     },
   },
-  {
+  booleanColumn("is_active", "Status", {
     key: "status",
-    header: "Status",
+    trueLabel: "Active",
+    falseLabel: "Inactive",
     width: "status",
-    sortable: true,
     sortKey: "is_active",
-    canHide: true,
-    defaultVisible: true,
     editable: true,
     editType: "boolean",
     editField: "is_active",
-    render: (staff) => (
-      <StatusDot
-        status={staff.is_active ? "success" : "muted"}
-        label={staff.is_active ? "Active" : "Inactive"}
-      />
-    ),
-  },
+  }),
   // Hidden by default columns
   {
     key: "email",
@@ -184,19 +130,9 @@ const columns: Column<StaffMember>[] = [
     defaultVisible: false,
     render: (staff) => staff.email,
   },
-  {
-    key: "user_id",
-    header: "Has Login",
-    width: "badge",
-    canHide: true,
+  booleanColumn("user_id", "Has Login", {
     defaultVisible: false,
-    render: (staff) => (
-      <StatusDot
-        status={staff.user_id ? "success" : "muted"}
-        label={staff.user_id ? "Yes" : "No"}
-      />
-    ),
-  },
+  }),
   dateColumn("created_at", "Joined", { defaultVisible: false }),
 ]
 

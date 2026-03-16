@@ -25,8 +25,17 @@ import {
 import { PageLoading } from "@/components/ui/loading"
 
 import type { BillCategory } from "@/types/expense-enhanced.types"
+import { PermissionGuard } from "@/components/auth"
 
 export default function NewVendorPage() {
+  return (
+    <PermissionGuard permission="expenses.create">
+      <NewVendorContent />
+    </PermissionGuard>
+  )
+}
+
+function NewVendorContent() {
   const { workspaceId } = useAuthContext()
   const [categories, setCategories] = useState<BillCategory[]>([])
   const [loadingData, setLoadingData] = useState(true)

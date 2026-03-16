@@ -16,6 +16,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, createDateFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 
 // ============================================
 // Types
@@ -214,13 +215,7 @@ const filters: FilterConfig[] = [
     label: "Payment",
     type: "select",
     placeholder: "All Modes",
-    options: [
-      { value: "cash", label: "Cash" },
-      { value: "upi", label: "UPI" },
-      { value: "card", label: "Card" },
-      { value: "bank_transfer", label: "Bank Transfer" },
-      { value: "credit", label: "Credit" },
-    ],
+    options: EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS,
   },
   createDateFilter("spend_date", "Date"),
 ]
@@ -265,13 +260,7 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Payment Mode",
     filterType: "select",
     filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "cash", label: "Cash" },
-      { value: "upi", label: "UPI" },
-      { value: "card", label: "Card" },
-      { value: "bank_transfer", label: "Bank Transfer" },
-      { value: "credit", label: "Credit" },
-    ],
+    filterOptions: EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS,
   },
 ]
 

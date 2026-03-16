@@ -7,8 +7,9 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { requiredField } from "@/lib/validation"
 import {
   ArrowLeft,
   Bell,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
+import { PermissionGuard } from "@/components/auth"
 
 interface Property {
   id: string
@@ -53,7 +55,7 @@ const audiences = [
   { value: "specific_rooms", label: "Specific Rooms", description: "Select specific rooms" },
 ]
 
-export default function NewNoticePage() {
+function NewNoticeContent() {
   const [loadingData, setLoadingData] = useState(true)
   const [properties, setProperties] = useState<Property[]>([])
   const [libraries, setLibraries] = useState<LibraryItem[]>([])
@@ -66,6 +68,8 @@ export default function NewNoticePage() {
     handleChange,
     handleSubmit,
     saving,
+    errors,
+    validateField,
   } = useFormPage({
     table: "notices",
     initialData: {
@@ -84,8 +88,11 @@ export default function NewNoticePage() {
     errorMessage: "Failed to create notice",
     useCreatedBy: false,
     addOwnerId: false,
+    validationSchema: {
+      title: requiredField("Title"),
+      content: requiredField("Content"),
+    },
     validate: (data) => {
-      if (!data.title || !data.content) return "Please fill in title and content"
       if (data.target_audience === "specific_rooms" && selectedRooms.length === 0) {
         return "Please select at least one room"
       }
@@ -441,33 +448,31 @@ export default function NewNoticePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+            <FormField label="Title" htmlFor="title" required error={errors.title}>
               <Input
                 id="title"
                 name="title"
                 placeholder="Notice title"
                 value={formData.title as string}
                 onChange={handleChange}
-                required
+                onBlur={() => validateField("title")}
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="content">Content *</Label>
+            <FormField label="Content" htmlFor="content" required error={errors.content}>
               <textarea
                 id="content"
                 name="content"
                 placeholder="Write your notice content here..."
                 value={formData.content as string}
                 onChange={handleChange}
-                required
+                onBlur={() => validateField("content")}
                 disabled={saving}
                 rows={6}
                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -528,5 +533,13 @@ export default function NewNoticePage() {
         </div>
       </form>
     </div>
+  )
+}
+
+export default function NewNoticePage() {
+  return (
+    <PermissionGuard permission="notices.create">
+      <NewNoticeContent />
+    </PermissionGuard>
   )
 }

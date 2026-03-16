@@ -13,6 +13,7 @@ import { showError } from "@/lib/toast-helpers"
 import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { AuthCardLayout } from "@/components/auth/auth-card-layout"
 import { SubmitButton } from "@/components/ui/submit-button"
+import { brandGradient } from "@/lib/design-tokens"
 
 function ResetPasswordForm() {
   const { handleSuccess } = useFormSubmit({
@@ -59,8 +60,23 @@ function ResetPasswordForm() {
       return
     }
 
-    if (password.length < 6) {
-      showError("Password must be at least 6 characters")
+    if (password.length < 8) {
+      showError("Password must be at least 8 characters")
+      return
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      showError("Password must contain at least one uppercase letter")
+      return
+    }
+
+    if (!/[a-z]/.test(password)) {
+      showError("Password must contain at least one lowercase letter")
+      return
+    }
+
+    if (!/[0-9]/.test(password)) {
+      showError("Password must contain at least one digit")
       return
     }
 
@@ -88,7 +104,7 @@ function ResetPasswordForm() {
 
   if (verifying) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
+      <div className={`min-h-screen flex items-center justify-center ${brandGradient.pageBg} px-4`}>
         <Card className="w-full max-w-md text-center shadow-lg">
           <CardHeader>
             <div className="flex justify-center mb-4">
@@ -106,7 +122,7 @@ function ResetPasswordForm() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
+      <div className={`min-h-screen flex items-center justify-center ${brandGradient.pageBg} px-4`}>
         <Card className="w-full max-w-md text-center shadow-lg">
           <CardHeader>
             <div className="flex justify-center mb-4">
@@ -132,7 +148,7 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950 px-4">
+      <div className={`min-h-screen flex items-center justify-center ${brandGradient.pageBg} px-4`}>
         <Card className="w-full max-w-md text-center shadow-lg">
           <CardHeader>
             <div className="flex justify-center mb-4">
@@ -166,12 +182,12 @@ function ResetPasswordForm() {
             <Input
               id="password"
               type="password"
-              placeholder="Create a password (min 6 characters)"
+              placeholder="Min 8 chars, uppercase, lowercase, digit"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={loading}
-              minLength={6}
+              minLength={8}
             />
           </div>
           <div className="space-y-2">

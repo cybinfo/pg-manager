@@ -32,6 +32,7 @@ import {
 } from "lucide-react"
 import { formatDistanceToNow, format } from "date-fns"
 import { formatCurrency } from "@/lib/format"
+import { brandGradient } from "@/lib/design-tokens"
 
 interface Workspace {
   id: string
@@ -403,7 +404,7 @@ export default function AdminExplorerPage() {
                     {workspaceDetails.tenants.slice(0, 5).map((tenant) => (
                       <div key={tenant.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium">
+                          <div className={`h-8 w-8 rounded-full ${brandGradient.solid} flex items-center justify-center text-white text-xs font-medium`}>
                             {tenant.name[0].toUpperCase()}
                           </div>
                           <div>

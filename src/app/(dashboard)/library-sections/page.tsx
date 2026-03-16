@@ -15,6 +15,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_FILTER, ACTIVE_STATUS_FILTER, LIBRARY_AC_TYPE_FILTER } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { textFilterColumn, numberFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 
 // ============================================
 // Types
@@ -189,6 +191,23 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("name", "Section Name", ["contains", "eq", "neq", "starts", "ends"]),
+  numberFilterColumn("total_seats", "Total Seats"),
+  numberFilterColumn("occupied_seats", "Occupied Seats"),
+  booleanFilterColumn("is_ac", "AC/Non-AC", { trueLabel: "AC", falseLabel: "Non-AC" }),
+  booleanFilterColumn("is_active", "Status", { trueLabel: "Active", falseLabel: "Inactive" }),
+  booleanFilterColumn("has_power_outlets", "Power Outlets"),
+  numberFilterColumn("floor", "Floor"),
+  numberFilterColumn("hourly_rate", "Hourly Rate"),
+  numberFilterColumn("monthly_rate", "Monthly Rate"),
+  dateFilterColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -229,6 +248,9 @@ export default function LibrarySectionsPage() {
       columns={columns}
       searchPlaceholder="Search by section name, library..."
       enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/library-sections/new"
       createLabel="Add Section"
       createPermission="library_sections.create"

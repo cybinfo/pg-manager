@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Receipt,
-  ArrowLeft,
   Edit,
   Trash2,
   Calendar,
@@ -17,6 +16,8 @@ import {
   Building2,
   AlertCircle,
   Check,
+  Home,
+  ChevronRight,
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
@@ -180,14 +181,19 @@ export default function BillPaymentDetailPage({
       <PermissionGuard permission="expenses.view">
         <div className="container py-6">
           {ConfirmDialogElement}
-          {/* Back Link */}
-          <Link
-            href="/expenses/bills"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Bills
-          </Link>
+          {/* Breadcrumbs */}
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6">
+            <Link href="/dashboard" className="flex items-center gap-1 hover:text-foreground transition-colors">
+              <Home className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only">Dashboard</span>
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+            <Link href="/expenses" className="hover:text-foreground transition-colors">Expenses</Link>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+            <Link href="/expenses/bills" className="hover:text-foreground transition-colors">Bills</Link>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+            <span className="text-foreground font-medium">Details</span>
+          </nav>
 
           {/* Hero Section */}
           <div className="flex items-start justify-between mb-6">

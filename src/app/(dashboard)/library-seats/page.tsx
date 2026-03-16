@@ -16,6 +16,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { LIBRARY_SEAT_STATUS_CONFIG } from "@/types/library.types"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { textFilterColumn, statusFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 
 // ============================================
 // Types
@@ -149,6 +151,25 @@ const groupByOptions: GroupByOption[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("seat_number", "Seat Number"),
+  statusFilterColumn([
+    { value: "available", label: "Available" },
+    { value: "occupied", label: "Occupied" },
+    { value: "reserved", label: "Reserved" },
+    { value: "maintenance", label: "Maintenance" },
+  ]),
+  textFilterColumn("row_number", "Row Number"),
+  booleanFilterColumn("has_power_outlet", "Power Outlet"),
+  booleanFilterColumn("has_lamp", "Lamp"),
+  booleanFilterColumn("is_window_seat", "Window Seat"),
+  dateFilterColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -179,6 +200,9 @@ export default function LibrarySeatsPage() {
       columns={columns}
       searchPlaceholder="Search by seat number, section..."
       enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
       createHref="/library-seats/new"
       createLabel="Add Seat"
       createPermission="library_seats.create"

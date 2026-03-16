@@ -700,7 +700,7 @@ export const LIBRARY_ATTENDANCE_LIST_CONFIG: ListPageConfig<Record<string, unkno
   table: "library_attendance",
   select: `
     *,
-    member:library_members(id, name, member_code, person:people(id, name, photo_url)),
+    member:library_members!library_attendance_member_id_fkey(id, name, member_code, person:people(id, name, photo_url)),
     seat:library_seats(id, seat_number)
   `,
   defaultOrderBy: "check_in_time",

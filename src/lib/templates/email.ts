@@ -103,11 +103,35 @@ export const emailSubjects = {
   libraryLowHours: (data: { libraryName: string }): string =>
     `Low Hours Alert - ${data.libraryName}`,
 
+  libraryRenewalReminder: (data: { libraryName: string }): string =>
+    `Renewal Reminder - ${data.libraryName}`,
+
   libraryExpiringMembership: (data: { libraryName: string }): string =>
     `Membership Expiring Soon - ${data.libraryName}`,
 
   libraryExpiredMembership: (data: { libraryName: string }): string =>
     `Membership Expired - ${data.libraryName}`,
+
+  tenantWelcome: (data: { propertyName: string }): string =>
+    `Welcome to ${data.propertyName}!`,
+
+  libraryMemberWelcome: (data: { libraryName: string }): string =>
+    `Welcome to ${data.libraryName}!`,
+
+  libraryPaymentReceipt: (data: { receiptNumber: string; libraryName: string }): string =>
+    `Payment Receipt ${data.receiptNumber} - ${data.libraryName}`,
+
+  complaintResolved: (data: { complaintTitle: string }): string =>
+    `Complaint Resolved - ${data.complaintTitle}`,
+
+  refundProcessed: (data: { amount: number }): string =>
+    `Refund of ${formatCurrency(data.amount)} Processed`,
+
+  waitlistSeatAvailable: (data: { libraryName: string }): string =>
+    `Seat Available - ${data.libraryName}`,
+
+  monthlyAttendanceSummary: (data: { month: string; year: number; libraryName: string }): string =>
+    `${data.month} ${data.year} Attendance Summary - ${data.libraryName}`,
 }
 
 // ============================================================================
@@ -188,6 +212,17 @@ interface TestEmailBody {
   ownerName: string
 }
 
+interface LibraryRenewalReminderBody {
+  memberName: string
+  memberCode?: string
+  libraryName: string
+  expiryDate: Date
+  daysRemaining: number
+  planName: string
+  hoursRemaining: number
+  ownerPhone?: string
+}
+
 interface LibraryLowHoursBody {
   memberName: string
   memberCode?: string
@@ -216,6 +251,81 @@ interface LibraryExpiredMembershipBody {
   libraryName: string
   expiryDate: Date
   planName: string
+  hoursRemaining: number
+  ownerPhone?: string
+}
+
+interface TenantWelcomeBody {
+  tenantName: string
+  propertyName: string
+  roomNumber: string
+  moveInDate: Date
+  monthlyRent: number
+  ownerName: string
+  ownerPhone?: string
+}
+
+interface LibraryMemberWelcomeBody {
+  memberName: string
+  libraryName: string
+  memberCode: string
+  planName?: string
+  hoursIncluded?: number
+  seatNumber?: string
+  timeSlot?: string
+  ownerPhone?: string
+}
+
+interface LibraryPaymentReceiptBody {
+  memberName: string
+  libraryName: string
+  amount: number
+  paymentMethod: string
+  paymentType: string
+  receiptNumber: string
+  paymentDate: Date
+  ownerPhone?: string
+}
+
+interface ComplaintResolvedBody {
+  recipientName: string
+  complaintTitle: string
+  category: string
+  resolutionNotes: string | null
+  resolvedDate: Date
+  propertyName?: string
+  ownerPhone?: string
+}
+
+interface RefundProcessedBody {
+  tenantName: string
+  amount: number
+  refundType: string
+  paymentMode: string
+  reason: string | null
+  referenceNumber: string | null
+  refundDate: Date
+  propertyName?: string
+  ownerName: string
+  ownerPhone?: string
+}
+
+interface WaitlistSeatAvailableBody {
+  personName: string
+  libraryName: string
+  queuePosition: number
+  ownerPhone?: string
+}
+
+interface MonthlyAttendanceSummaryBody {
+  memberName: string
+  libraryName: string
+  memberCode?: string
+  month: string
+  year: number
+  totalDaysAttended: number
+  totalHours: number
+  averageHoursPerDay: number
   hoursRemaining: number
   ownerPhone?: string
 }
@@ -731,6 +841,70 @@ export const emailBodyTemplates = {
     return emailWrapper(content)
   },
 
+  libraryRenewalReminder: (data: LibraryRenewalReminderBody): string => {
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #DBEAFE; color: #1D4ED8; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Renewal Reminder
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.memberName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Your membership at <strong style="color: #10B981;">${data.libraryName}</strong> will expire in <strong>${data.daysRemaining} days</strong>. Renew now to continue uninterrupted access.
+    </p>
+
+    <!-- Expiry Card -->
+    <div style="background: #DBEAFE; border: 1px solid #93C5FD; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="color: #1D4ED8; font-size: 14px; margin: 0 0 8px 0;">Expiry Date</p>
+      <p style="color: #1E40AF; font-size: 28px; font-weight: bold; margin: 0;">${formatDate(data.expiryDate)}</p>
+      <p style="color: #2563EB; font-size: 16px; font-weight: 600; margin: 8px 0 0 0;">${data.daysRemaining} days remaining</p>
+    </div>
+
+    <!-- Membership Details -->
+    <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        ${data.memberCode ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Member Code</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right; font-family: monospace;">${data.memberCode}</td>
+        </tr>
+        ` : ""}
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Current Plan</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.planName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Hours Remaining</td>
+          <td style="padding: 8px 0; color: #10B981; font-weight: 500; text-align: right;">${data.hoursRemaining.toFixed(1)}h</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Visit the library to renew your subscription. Early renewal ensures you keep your current seat and time slot.
+    </p>
+
+    ${data.ownerPhone ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 0;">
+      Contact library for renewal: <strong>${data.ownerPhone}</strong>
+    </p>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Thank you for being a valued member,<br>
+        <strong style="color: #111827;">${data.libraryName}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
   libraryExpiringMembership: (data: LibraryExpiringMembershipBody): string => {
     const content = `
     <div style="text-align: center; margin-bottom: 24px;">
@@ -857,6 +1031,479 @@ export const emailBodyTemplates = {
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
       <p style="color: #6B7280; margin: 0; font-size: 14px;">
         We hope to see you back soon!<br>
+        <strong style="color: #111827;">${data.libraryName}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
+  // ---- Welcome Email Templates ----
+
+  tenantWelcome: (data: TenantWelcomeBody): string => {
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #D1FAE5; color: #059669; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Welcome!
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.tenantName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Welcome to <strong style="color: #10B981;">${data.propertyName}</strong>! We are glad to have you as a tenant.
+    </p>
+
+    <!-- Details Card -->
+    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Property</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.propertyName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Room</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.roomNumber}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Move-in Date</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${formatDate(data.moveInDate)}</td>
+        </tr>
+        <tr style="border-top: 1px solid #BBF7D0;">
+          <td style="padding: 16px 0 8px 0; color: #6B7280; font-size: 14px;">Monthly Rent</td>
+          <td style="padding: 16px 0 8px 0; color: #059669; font-weight: bold; font-size: 24px; text-align: right;">${formatCurrency(data.monthlyRent)}</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      You can access your tenant portal at <a href="${CONTACT.APP_URL}/tenant" style="color: #10B981; text-decoration: none; font-weight: 500;">${CONTACT.APP_URL}/tenant</a> to view your bills, payments, submit complaints, and more.
+    </p>
+
+    ${data.ownerPhone ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 0 0 24px 0;">
+      For any queries, contact: <strong>${data.ownerPhone}</strong>
+    </p>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Thank you,<br>
+        <strong style="color: #111827;">${data.ownerName}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
+  libraryMemberWelcome: (data: LibraryMemberWelcomeBody): string => {
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #D1FAE5; color: #059669; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Welcome!
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.memberName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Welcome to <strong style="color: #10B981;">${data.libraryName}</strong>! Your membership is now active.
+    </p>
+
+    <!-- Membership Details Card -->
+    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Member Code</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right; font-family: monospace;">${data.memberCode}</td>
+        </tr>
+        ${data.planName ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Plan</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.planName}</td>
+        </tr>
+        ` : ""}
+        ${data.hoursIncluded ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Hours Included</td>
+          <td style="padding: 8px 0; color: #10B981; font-weight: bold; text-align: right;">${data.hoursIncluded}h</td>
+        </tr>
+        ` : ""}
+        ${data.seatNumber ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Seat</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.seatNumber}</td>
+        </tr>
+        ` : ""}
+        ${data.timeSlot ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Time Slot</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.timeSlot}</td>
+        </tr>
+        ` : ""}
+      </table>
+    </div>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      You can access your member portal at <a href="${CONTACT.APP_URL}/member" style="color: #10B981; text-decoration: none; font-weight: 500;">${CONTACT.APP_URL}/member</a> to check your hours balance, attendance history, and more.
+    </p>
+
+    ${data.ownerPhone ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 0 0 24px 0;">
+      For any queries, contact: <strong>${data.ownerPhone}</strong>
+    </p>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Happy studying!<br>
+        <strong style="color: #111827;">${data.libraryName}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
+  // ---- Library Payment Receipt ----
+
+  libraryPaymentReceipt: (data: LibraryPaymentReceiptBody): string => {
+    const paymentTypeLabels: Record<string, string> = {
+      subscription: "Subscription",
+      locker_rent: "Locker Rent",
+      locker_deposit: "Locker Deposit",
+      fine: "Fine",
+      other: "Other",
+    }
+
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #D1FAE5; color: #059669; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Payment Received
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.memberName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Thank you! Your payment to <strong style="color: #10B981;">${data.libraryName}</strong> has been received.
+    </p>
+
+    <!-- Receipt Card -->
+    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <div style="text-align: center; margin-bottom: 16px;">
+        <p style="color: #6B7280; font-size: 12px; margin: 0;">Receipt Number</p>
+        <p style="color: #111827; font-size: 18px; font-weight: bold; margin: 4px 0 0 0;">${data.receiptNumber}</p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Payment Date</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${formatDate(data.paymentDate)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Payment Type</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${paymentTypeLabels[data.paymentType] || data.paymentType}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Payment Method</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${PAYMENT_METHODS[data.paymentMethod] || data.paymentMethod}</td>
+        </tr>
+        <tr style="border-top: 1px solid #BBF7D0;">
+          <td style="padding: 16px 0 8px 0; color: #6B7280; font-size: 14px;">Amount Paid</td>
+          <td style="padding: 16px 0 8px 0; color: #059669; font-weight: bold; font-size: 24px; text-align: right;">${formatCurrency(data.amount)}</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="color: #6B7280; font-size: 14px; text-align: center; margin: 0;">
+      This is an auto-generated receipt. Please keep it for your records.
+    </p>
+
+    ${data.ownerPhone ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 24px 0 0 0;">
+      Contact library: <strong>${data.ownerPhone}</strong>
+    </p>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Thank you,<br>
+        <strong style="color: #111827;">${data.libraryName}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
+  // ---- Complaint Resolved ----
+
+  complaintResolved: (data: ComplaintResolvedBody): string => {
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #D1FAE5; color: #059669; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Complaint Resolved
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.recipientName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Your complaint has been resolved. Here are the details:
+    </p>
+
+    <!-- Complaint Details Card -->
+    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Complaint</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.complaintTitle}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Category</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.category}</td>
+        </tr>
+        ${data.propertyName ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Property</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.propertyName}</td>
+        </tr>
+        ` : ""}
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Resolved On</td>
+          <td style="padding: 8px 0; color: #059669; font-weight: 500; text-align: right;">${formatDate(data.resolvedDate)}</td>
+        </tr>
+      </table>
+    </div>
+
+    ${data.resolutionNotes ? `
+    <div style="background: #F9FAFB; border-left: 4px solid #10B981; padding: 16px; margin-bottom: 24px;">
+      <p style="color: #6B7280; font-size: 14px; margin: 0 0 8px 0;">Resolution Notes:</p>
+      <p style="color: #111827; margin: 0; white-space: pre-wrap;">${data.resolutionNotes}</p>
+    </div>
+    ` : ""}
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      If you have any further concerns, please do not hesitate to raise a new complaint.
+    </p>
+
+    ${data.ownerPhone ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 0;">
+      For queries, contact: <strong>${data.ownerPhone}</strong>
+    </p>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Thank you for your patience,<br>
+        <strong style="color: #111827;">ManageKar</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
+  // ---- Refund Processed ----
+
+  refundProcessed: (data: RefundProcessedBody): string => {
+    const refundTypeLabels: Record<string, string> = {
+      deposit_refund: "Security Deposit Refund",
+      overpayment: "Overpayment Refund",
+      adjustment: "Adjustment",
+      security_deposit: "Security Deposit",
+      advance_rent: "Advance Rent",
+      other: "Other",
+    }
+
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #D1FAE5; color: #059669; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Refund Processed
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.tenantName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      A refund has been processed for you. Here are the details:
+    </p>
+
+    <!-- Refund Details Card -->
+    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Refund Type</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${refundTypeLabels[data.refundType] || data.refundType}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Payment Mode</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${PAYMENT_METHODS[data.paymentMode] || data.paymentMode}</td>
+        </tr>
+        ${data.referenceNumber ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Reference No.</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right; font-family: monospace;">${data.referenceNumber}</td>
+        </tr>
+        ` : ""}
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Refund Date</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${formatDate(data.refundDate)}</td>
+        </tr>
+        ${data.propertyName ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Property</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.propertyName}</td>
+        </tr>
+        ` : ""}
+        <tr style="border-top: 1px solid #BBF7D0;">
+          <td style="padding: 16px 0 8px 0; color: #6B7280; font-size: 14px;">Refund Amount</td>
+          <td style="padding: 16px 0 8px 0; color: #059669; font-weight: bold; font-size: 24px; text-align: right;">${formatCurrency(data.amount)}</td>
+        </tr>
+      </table>
+    </div>
+
+    ${data.reason ? `
+    <div style="background: #F9FAFB; border-left: 4px solid #10B981; padding: 16px; margin-bottom: 24px;">
+      <p style="color: #6B7280; font-size: 14px; margin: 0 0 8px 0;">Reason:</p>
+      <p style="color: #111827; margin: 0;">${data.reason}</p>
+    </div>
+    ` : ""}
+
+    ${data.ownerPhone ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 0;">
+      For queries, contact: <strong>${data.ownerPhone}</strong>
+    </p>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Thank you,<br>
+        <strong style="color: #111827;">${data.ownerName}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
+  // ---- Waitlist Seat Available ----
+
+  waitlistSeatAvailable: (data: WaitlistSeatAvailableBody): string => {
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #DBEAFE; color: #2563EB; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Seat Available!
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.personName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Great news! A seat has become available at <strong style="color: #10B981;">${data.libraryName}</strong>.
+    </p>
+
+    <!-- Info Card -->
+    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="color: #2563EB; font-size: 14px; margin: 0 0 8px 0;">Your Queue Position</p>
+      <p style="color: #1D4ED8; font-size: 36px; font-weight: bold; margin: 0;">#${data.queuePosition}</p>
+    </div>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Please contact the library as soon as possible to confirm your seat. Seats are allocated on a first-come, first-served basis.
+    </p>
+
+    ${data.ownerPhone ? `
+    <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
+      <p style="color: #065F46; font-size: 14px; font-weight: 600; margin: 0 0 4px 0;">Contact Library</p>
+      <p style="color: #6B7280; font-size: 14px; margin: 0;">
+        Call: <strong style="color: #10B981;">${data.ownerPhone}</strong>
+      </p>
+    </div>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        We look forward to having you!<br>
+        <strong style="color: #111827;">${data.libraryName}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
+  // ---- Monthly Attendance Summary ----
+
+  monthlyAttendanceSummary: (data: MonthlyAttendanceSummaryBody): string => {
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #DBEAFE; color: #2563EB; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Monthly Summary
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.memberName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Here is your attendance summary for <strong>${data.month} ${data.year}</strong> at <strong style="color: #10B981;">${data.libraryName}</strong>.
+    </p>
+
+    <!-- Stats Cards -->
+    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 20px; margin-bottom: 12px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Days Attended</td>
+          <td style="padding: 8px 0; color: #2563EB; font-weight: bold; font-size: 18px; text-align: right;">${data.totalDaysAttended}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Total Hours</td>
+          <td style="padding: 8px 0; color: #2563EB; font-weight: bold; font-size: 18px; text-align: right;">${data.totalHours.toFixed(1)}h</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Avg. Hours/Day</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.averageHoursPerDay.toFixed(1)}h</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="background: ${data.hoursRemaining <= 2 ? "#FEF3C7" : "#F0FDF4"}; border: 1px solid ${data.hoursRemaining <= 2 ? "#FCD34D" : "#BBF7D0"}; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
+      <p style="color: #6B7280; font-size: 14px; margin: 0 0 4px 0;">Hours Remaining</p>
+      <p style="color: ${data.hoursRemaining <= 2 ? "#D97706" : "#059669"}; font-size: 28px; font-weight: bold; margin: 0;">${data.hoursRemaining.toFixed(1)}h</p>
+    </div>
+
+    ${data.memberCode ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 0 0 24px 0;">
+      Member Code: <strong style="font-family: monospace;">${data.memberCode}</strong>
+    </p>
+    ` : ""}
+
+    ${data.ownerPhone ? `
+    <p style="color: #6B7280; font-size: 14px; margin: 0;">
+      Contact library: <strong>${data.ownerPhone}</strong>
+    </p>
+    ` : ""}
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Keep up the great work!<br>
         <strong style="color: #111827;">${data.libraryName}</strong>
       </p>
     </div>

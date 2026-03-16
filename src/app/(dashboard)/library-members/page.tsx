@@ -2,20 +2,41 @@
  * Library Members List Page
  *
  * Displays all library members with subscription and hours info.
+ * Supports bulk import via CSV and bulk status updates.
  */
 
 "use client"
 
-import { Users, Library, Clock, CreditCard, AlertTriangle, CalendarClock } from "lucide-react"
-import { Column, StatusDot } from "@/components/ui/data-table"
+import { useState } from "react"
+import Link from "next/link"
+import { Users, Clock, AlertTriangle, CalendarClock, Upload, RefreshCw, Loader2 } from "lucide-react"
+import { Column } from "@/components/ui/data-table"
 import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
-import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
+import { ListPageTemplate, BulkActionConfig } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_MEMBER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_FILTER, TIME_SLOT_FILTER, createStatusFilter } from "@/lib/filter-presets"
-import { formatDate } from "@/lib/format"
 import { LIBRARY_MEMBER_STATUS_CONFIG } from "@/types/library.types"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn, formatDecimalForExport } from "@/lib/export-columns"
+import { Button } from "@/components/ui/button"
+import { Select } from "@/components/ui/form-components"
+import { PermissionGate } from "@/components/auth"
+import { createClient } from "@/lib/supabase/client"
+import { showSuccess, showError } from "@/lib/toast-helpers"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 // ============================================
 // Types
@@ -64,7 +85,7 @@ const columns: Column<LibraryMemberItem>[] = [
     sortable: true,
     canHide: true,
     defaultVisible: true,
-    render: (member) => member.library?.name || "—",
+    render: (member) => member.library?.name || "\u2014",
   },
   {
     key: "hours_balance",
@@ -94,7 +115,7 @@ const columns: Column<LibraryMemberItem>[] = [
       <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
         {member.preferred_slot}
       </span>
-    ) : "—",
+    ) : "\u2014",
   },
   statusColumn(LIBRARY_MEMBER_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
   // Hidden by default
@@ -104,7 +125,7 @@ const columns: Column<LibraryMemberItem>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    render: (member) => member.phone || "—",
+    render: (member) => member.phone || "\u2014",
   },
   {
     key: "email",
@@ -112,7 +133,7 @@ const columns: Column<LibraryMemberItem>[] = [
     width: "secondary",
     canHide: true,
     defaultVisible: false,
-    render: (member) => member.email || "—",
+    render: (member) => member.email || "\u2014",
   },
   {
     key: "assigned_seat",
@@ -125,7 +146,7 @@ const columns: Column<LibraryMemberItem>[] = [
         {member.assigned_seat.seat_number}
         {member.assigned_seat.section && ` (${member.assigned_seat.section.name})`}
       </span>
-    ) : "—",
+    ) : "\u2014",
   },
   {
     key: "hours_used",
@@ -147,7 +168,7 @@ const columns: Column<LibraryMemberItem>[] = [
     canHide: true,
     defaultVisible: false,
     render: (member) => {
-      if (!member.expiry_date) return "—"
+      if (!member.expiry_date) return "\u2014"
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       const expiry = new Date(member.expiry_date)
@@ -168,13 +189,13 @@ const columns: Column<LibraryMemberItem>[] = [
     canHide: true,
     defaultVisible: false,
     render: (member) => {
-      if (!member.expiry_date) return "—"
+      if (!member.expiry_date) return "\u2014"
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       const expiry = new Date(member.expiry_date)
       expiry.setHours(0, 0, 0, 0)
       const diff = Math.ceil((today.getTime() - expiry.getTime()) / (1000 * 60 * 60 * 24))
-      if (diff <= 0) return "—"
+      if (diff <= 0) return "\u2014"
       return <span className="text-destructive font-medium">{diff}d</span>
     },
   },
@@ -205,6 +226,34 @@ const groupByOptions: GroupByOption[] = [
   { value: "preferred_slot", label: "Time Slot" },
   { value: "join_month", label: "Join Month" },
   { value: "overdue_status", label: "Overdue Status" },
+]
+
+// ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("name", "Member Name", ["contains", "eq", "neq", "starts", "ends"]),
+  textFilterColumn("phone", "Phone"),
+  textFilterColumn("email", "Email", ["contains", "eq", "neq", "starts", "is_null", "is_not_null"]),
+  textFilterColumn("member_code", "Member Code"),
+  statusFilterColumn([
+    { value: "active", label: "Active" },
+    { value: "expired", label: "Expired" },
+    { value: "suspended", label: "Suspended" },
+    { value: "cancelled", label: "Cancelled" },
+  ]),
+  numberFilterColumn("hours_balance", "Hours Balance"),
+  numberFilterColumn("hours_used", "Hours Used"),
+  selectFilterColumn("preferred_slot", "Preferred Slot", [
+    { value: "Morning", label: "Morning" },
+    { value: "Evening", label: "Evening" },
+    { value: "Night", label: "Night" },
+    { value: "24 Hours", label: "24 Hours" },
+  ]),
+  dateFilterColumn("join_date", "Join Date"),
+  dateFilterColumn("expiry_date", "Expiry Date", ["is_null", "is_not_null"]),
+  dateFilterColumn("created_at", "Added On"),
 ]
 
 // ============================================
@@ -242,6 +291,156 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  {
+    key: "name" as keyof Record<string, unknown>,
+    header: "Name",
+    format: (_, row) => {
+      const person = row.person as Record<string, unknown> | null
+      return String(person?.name || row.name || "")
+    },
+  },
+  { key: "phone" as keyof Record<string, unknown>, header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email" as keyof Record<string, unknown>, header: "Email", format: (v) => String(v ?? "") },
+  { key: "status" as keyof Record<string, unknown>, header: "Status", format: (v) => String(v ?? "") },
+  { key: "preferred_slot" as keyof Record<string, unknown>, header: "Slot", format: (v) => String(v ?? "") },
+  { key: "hours_balance" as keyof Record<string, unknown>, header: "Hours Balance", format: (v) => v ? formatDecimalForExport(v) : "0" },
+  dateExportColumn("expiry_date", "Expiry Date"),
+  { key: "member_code" as keyof Record<string, unknown>, header: "Member Code", format: (v) => String(v ?? "") },
+]
+
+// ============================================
+// Bulk Status Update Component
+// ============================================
+
+function BulkStatusActions({
+  selectedIds,
+  clearSelection,
+  refetch,
+}: {
+  selectedIds: string[]
+  clearSelection: () => void
+  refetch: () => void
+}) {
+  const [targetStatus, setTargetStatus] = useState("")
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [updating, setUpdating] = useState(false)
+
+  const handleBulkUpdate = async () => {
+    if (!targetStatus || selectedIds.length === 0) return
+
+    setUpdating(true)
+    try {
+      const supabase = createClient()
+
+      const { error } = await supabase
+        .from("library_members")
+        .update({
+          status: targetStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .in("id", selectedIds)
+
+      if (error) {
+        showError("Failed to update members", error.message)
+      } else {
+        showSuccess(
+          `Updated ${selectedIds.length} member${selectedIds.length !== 1 ? "s" : ""} to ${targetStatus}`
+        )
+        clearSelection()
+        refetch()
+      }
+    } catch {
+      showError("Failed to update members")
+    } finally {
+      setUpdating(false)
+      setConfirmOpen(false)
+      setTargetStatus("")
+    }
+  }
+
+  const statusLabel: Record<string, string> = {
+    active: "Active",
+    suspended: "Suspended",
+    cancelled: "Cancelled",
+  }
+
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <Select
+          value={targetStatus}
+          onChange={(e) => setTargetStatus(e.target.value)}
+          disabled={updating}
+          options={[
+            { value: "", label: "Update Status..." },
+            { value: "active", label: "Active" },
+            { value: "suspended", label: "Suspended" },
+            { value: "cancelled", label: "Cancelled" },
+          ]}
+        />
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!targetStatus || updating}
+          onClick={() => setConfirmOpen(true)}
+        >
+          {updating ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4 mr-1" />
+          )}
+          Apply
+        </Button>
+      </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Bulk Status Update</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to update {selectedIds.length} member{selectedIds.length !== 1 ? "s" : ""}{" "}
+              to <strong>{statusLabel[targetStatus] || targetStatus}</strong>? This action will be applied immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); handleBulkUpdate() }} disabled={updating}>
+              {updating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                `Update ${selectedIds.length} Member${selectedIds.length !== 1 ? "s" : ""}`
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+}
+
+// ============================================
+// Bulk Actions Config
+// ============================================
+
+const bulkActions: BulkActionConfig = {
+  permission: "library_members.edit",
+  renderActions: (selectedIds, clearSelection, refetch) => (
+    <BulkStatusActions
+      selectedIds={selectedIds}
+      clearSelection={clearSelection}
+      refetch={refetch}
+    />
+  ),
+}
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -261,12 +460,28 @@ export default function LibraryMembersPage() {
       columns={columns}
       searchPlaceholder="Search by name, phone, member code..."
       enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="library-members"
       createHref="/library-members/new"
       createLabel="Add Member"
       createPermission="library_members.create"
+      headerActions={
+        <PermissionGate permission="library_members.create" hide>
+          <Link href="/library-members/import">
+            <Button variant="outline" size="sm">
+              <Upload className="mr-2 h-4 w-4" />
+              Bulk Import
+            </Button>
+          </Link>
+        </PermissionGate>
+      }
       detailHref={(member) => `/library-members/${member.id}`}
       emptyTitle="No members found"
       emptyDescription="Add your first member to start tracking subscriptions"
+      bulkActions={bulkActions}
     />
   )
 }

@@ -7,17 +7,19 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { LIBRARY_WAITLIST_LIST_CONFIG } from "@/lib/hooks/useListPage"
+import { LIBRARY_WAITLIST_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { ListPageTemplate } from "@/components/shared"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { createStatusFilter } from "@/lib/filter-presets"
+import { createStatusFilter, TIME_SLOT_FILTER } from "@/lib/filter-presets"
 import { Users, Clock, Check, Phone } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist } from "@/types/library.types"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 
 // Metric configurations
 const metrics: MetricConfig<Record<string, unknown>>[] = [
@@ -36,18 +38,34 @@ const filters: FilterConfig[] = [
     { value: "converted", label: "Converted" },
     { value: "cancelled", label: "Cancelled" },
   ]),
-  {
-    id: "preferred_slot",
-    label: "Slot",
-    type: "select",
-    options: [
-      { value: "all", label: "All Slots" },
-      { value: "Morning", label: "Morning" },
-      { value: "Evening", label: "Evening" },
-      { value: "Night", label: "Night" },
-      { value: "24 Hours", label: "24 Hours" },
-    ],
-  },
+  TIME_SLOT_FILTER,
+]
+
+// ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("name", "Name", ["contains", "eq", "neq", "starts", "ends"]),
+  textFilterColumn("phone", "Phone"),
+  textFilterColumn("email", "Email", ["contains", "eq", "is_null", "is_not_null"]),
+  statusFilterColumn([
+    { value: "waiting", label: "Waiting" },
+    { value: "contacted", label: "Contacted" },
+    { value: "converted", label: "Converted" },
+    { value: "cancelled", label: "Cancelled" },
+  ]),
+  selectFilterColumn("preferred_slot", "Preferred Slot", TIME_SLOT_FILTER.options!),
+  dateFilterColumn("created_at", "Joined On"),
+]
+
+// ============================================
+// Group By Options
+// ============================================
+
+const groupByOptions: GroupByOption[] = [
+  { value: "status", label: "Status" },
+  { value: "preferred_slot", label: "Preferred Slot" },
 ]
 
 // Column definitions
@@ -120,6 +138,11 @@ export default function LibraryWaitlistPage() {
       permission="library_waitlist.view"
       feature="library"
       searchPlaceholder="Search by name, phone, email..."
+      enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
+      groupByOptions={groupByOptions}
       onRowClick={(item) => router.push(`/library-waitlist/${item.id}`)}
       createHref="/library-waitlist/new"
       createLabel="Add to Waitlist"

@@ -27,6 +27,8 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PermissionGuard } from "@/components/auth"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { brandGradient } from "@/lib/design-tokens"
+import { REFUND_TYPE_OPTIONS, REFUND_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 
 interface Tenant {
   id: string
@@ -196,6 +198,43 @@ export default function NewRefundPage() {
             .eq("id", exitClearanceId)
         }
 
+        // Send refund processed email (fire and forget)
+        if (selectedTenant && formData.refund_date) {
+          try {
+            const { data: tenantData } = await supabase
+              .from("tenants")
+              .select("email, person:people(email)")
+              .eq("id", formData.tenant_id)
+              .single()
+
+            const email = tenantData?.person?.email || tenantData?.email
+            if (email) {
+              const { sendRefundProcessedEmail } = await import("@/lib/email")
+              const { data: ownerProfile } = await supabase
+                .from("user_profiles")
+                .select("full_name, phone")
+                .eq("user_id", session.user.id)
+                .single()
+
+              sendRefundProcessedEmail({
+                to: email,
+                tenantName: selectedTenant.name,
+                amount: parseFloat(formData.amount),
+                refundType: formData.refund_type,
+                paymentMode: formData.payment_mode,
+                reason: formData.reason || null,
+                referenceNumber: formData.reference_number || null,
+                refundDate: new Date(formData.refund_date),
+                propertyName: selectedTenant.property?.name,
+                ownerName: ownerProfile?.full_name || "Management",
+                ownerPhone: ownerProfile?.phone || undefined,
+              }).catch(() => {}) // non-blocking
+            }
+          } catch {
+            // Non-blocking: email failure should not affect refund recording
+          }
+        }
+
         router.push("/refunds")
       }
     } catch (err) {
@@ -253,7 +292,7 @@ export default function NewRefundPage() {
                         name={selectedTenant.name}
                         src={selectedTenant.photo_url}
                         size="lg"
-                        className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white"
+                        className={`${brandGradient.solid} text-white`}
                       />
                       <div>
                         <p className="font-semibold">{selectedTenant.name}</p>
@@ -284,12 +323,7 @@ export default function NewRefundPage() {
                     <Select
                       value={formData.refund_type}
                       onChange={(e) => setFormData({ ...formData, refund_type: e.target.value })}
-                      options={[
-                        { value: "deposit_refund", label: "Security Deposit Refund" },
-                        { value: "overpayment", label: "Overpayment Refund" },
-                        { value: "adjustment", label: "Adjustment" },
-                        { value: "other", label: "Other" },
-                      ]}
+                      options={REFUND_TYPE_OPTIONS}
                     />
                   </div>
 
@@ -320,12 +354,7 @@ export default function NewRefundPage() {
                     <Select
                       value={formData.payment_mode}
                       onChange={(e) => setFormData({ ...formData, payment_mode: e.target.value })}
-                      options={[
-                        { value: "cash", label: "Cash" },
-                        { value: "upi", label: "UPI" },
-                        { value: "bank_transfer", label: "Bank Transfer" },
-                        { value: "cheque", label: "Cheque" },
-                      ]}
+                      options={REFUND_PAYMENT_MODE_OPTIONS}
                     />
                   </div>
 

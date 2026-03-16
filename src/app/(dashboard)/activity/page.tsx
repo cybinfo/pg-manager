@@ -34,6 +34,7 @@ import {
 } from "lucide-react"
 import { formatDistanceToNow, format } from "date-fns"
 import { getEntityName } from "@/lib/entity-names"
+import { brandGradient } from "@/lib/design-tokens"
 
 // ============================================
 // Types
@@ -219,7 +220,7 @@ const columns: Column<AuditEvent>[] = [
     hideOnMobile: true,
     render: (event) => (
       <div className="flex items-center gap-2">
-        <div className="h-7 w-7 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-white text-xs font-medium">
+        <div className={`h-7 w-7 rounded-full ${brandGradient.solid} flex items-center justify-center text-white text-xs font-medium`}>
           {(event.actor_name || event.actor_email || "S")[0].toUpperCase()}
         </div>
         <div>

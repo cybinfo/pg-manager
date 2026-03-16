@@ -118,7 +118,15 @@ export interface AutoBillingSettings {
   billing_day: number
   due_day_offset: number
   include_pending_charges: boolean
+  /** Per-charge-type inclusion flags (e.g., { rent: true, electricity: true }) */
+  included_charge_types?: Record<string, boolean>
+  /** Days after due date before a bill is marked overdue */
+  grace_period_days: number
   auto_send_notification: boolean
+  /** Enable/disable automatic payment reminders before due date */
+  auto_reminder_enabled: boolean
+  /** Days before due date to send payment reminder */
+  reminder_days_before: number
   last_generated_month: string | null
 }
 
@@ -179,7 +187,11 @@ export const DEFAULT_AUTO_BILLING_SETTINGS: AutoBillingSettings = {
   billing_day: 1,
   due_day_offset: 10,
   include_pending_charges: true,
+  included_charge_types: {},
+  grace_period_days: 7,
   auto_send_notification: true,
+  auto_reminder_enabled: true,
+  reminder_days_before: 5,
   last_generated_month: null,
 }
 

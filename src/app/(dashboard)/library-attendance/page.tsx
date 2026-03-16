@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Clock, Users, Armchair, LogIn, LogOut, RefreshCw, QrCode } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
+import { personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { FeatureGuard } from "@/components/auth"
 import { LIBRARY_ATTENDANCE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -27,6 +28,10 @@ import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { withCreatedBy } from "@/lib/audit"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, formatTimeForExport, formatDecimalForExport } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -365,28 +370,14 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
 // ============================================
 
 const columns: Column<AttendanceItem>[] = [
-  {
+  personNameWithAvatarColumn("Member", {
     key: "member",
-    header: "Member",
-    width: "primary",
+    nameField: "member.name",
+    personNameField: "member.person.name",
+    photoField: "member.person.photo_url",
+    subtitleField: "member.member_code",
     sortable: false,
-    canHide: false,
-    render: (att) => {
-      const displayName = att.member?.person?.name || att.member?.name || "Unknown"
-      const photoUrl = att.member?.person?.photo_url
-      return (
-        <div className="flex items-center gap-3">
-          <Avatar name={displayName} src={photoUrl} size="sm" />
-          <div>
-            <div className="font-medium">{displayName}</div>
-            <div className="text-xs text-muted-foreground">
-              {att.member?.member_code || "—"}
-            </div>
-          </div>
-        </div>
-      )
-    },
-  },
+  }),
   {
     key: "check_in_time",
     header: "Check In",
@@ -581,6 +572,31 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 import { Calendar } from "lucide-react"
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  dateFilterColumn("attendance_date", "Date"),
+  dateFilterColumn("check_in_time", "Check-in Time"),
+  dateFilterColumn("check_out_time", "Check-out Time", ["is_null", "is_not_null"]),
+  numberFilterColumn("hours_spent", "Hours Spent"),
+]
+
+// ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  nestedColumn("member_name", "Member Name", "member.person.name", (val, row) => {
+    return String(val || (row as Record<string, unknown>).member && ((row as Record<string, unknown>).member as Record<string, unknown>)?.name || "")
+  }),
+  dateExportColumn("attendance_date", "Date"),
+  { key: "check_in_time" as keyof Record<string, unknown>, header: "Check In", format: (v) => formatTimeForExport(v) },
+  { key: "check_out_time" as keyof Record<string, unknown>, header: "Check Out", format: (v) => v ? formatTimeForExport(v) : "Active" },
+  { key: "hours_spent" as keyof Record<string, unknown>, header: "Hours", format: (v) => v ? formatDecimalForExport(v) : "" },
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -614,6 +630,11 @@ export default function LibraryAttendancePage() {
         columns={columns}
         searchPlaceholder="Search by member name or code..."
         enableColumnManager={true}
+        enableAdvancedFilters={true}
+        advancedFilterColumns={advancedFilterColumns}
+        enableInlineEdit={true}
+        exportColumns={exportColumns}
+        exportFilename="library-attendance"
         detailHref={(att) => `/library-attendance/${att.id}`}
         emptyTitle="No attendance records"
         emptyDescription="Check in members to start tracking attendance"

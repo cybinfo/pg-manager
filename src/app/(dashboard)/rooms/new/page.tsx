@@ -6,15 +6,17 @@ import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Home, Loader2, Building2, Info } from "lucide-react"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
+import { Label } from "@/components/ui/label"
+import { requiredField, requiredSelect, requiredAmount } from "@/lib/validation"
 import { formatCurrency } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 
 // Shared form components
 import { PhotoGallery } from "@/components/forms"
+import { PermissionGuard } from "@/components/auth"
 
 interface Property {
   id: string
@@ -60,6 +62,14 @@ const availableAmenities = [
 ]
 
 export default function NewRoomPage() {
+  return (
+    <PermissionGuard permission="rooms.create">
+      <NewRoomContent />
+    </PermissionGuard>
+  )
+}
+
+function NewRoomContent() {
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProperties, setLoadingProperties] = useState(true)
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
@@ -69,6 +79,8 @@ export default function NewRoomPage() {
     handleChange,
     handleSubmit,
     saving,
+    errors,
+    validateField,
   } = useFormPage({
     table: "rooms",
     initialData: {
@@ -96,11 +108,10 @@ export default function NewRoomPage() {
     successMessage: "Room created successfully!",
     errorMessage: "Failed to create room",
     useCreatedBy: false,
-    validate: (data) => {
-      if (!data.property_id || !data.room_number || !data.rent_amount) {
-        return "Please fill in all required fields"
-      }
-      return null
+    validationSchema: {
+      property_id: requiredSelect("Property"),
+      room_number: requiredField("Room number"),
+      rent_amount: requiredAmount("Monthly rent"),
     },
     transform: (data, userId) => {
       // Build amenities array from checkboxes
@@ -265,35 +276,32 @@ export default function NewRoomPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Property Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="property_id">Property *</Label>
+            <FormField label="Property" htmlFor="property_id" required error={errors.property_id}>
               <Select
                 id="property_id"
                 name="property_id"
                 value={formData.property_id as string}
                 onChange={handlePropertyChange}
-                required
                 disabled={saving}
                 options={properties.map((property) => ({
                   value: property.id,
                   label: property.name,
                 }))}
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="room_number">Room Number *</Label>
+              <FormField label="Room Number" htmlFor="room_number" required error={errors.room_number}>
                 <Input
                   id="room_number"
                   name="room_number"
                   placeholder="e.g., 101, A1, G-01"
                   value={formData.room_number as string}
                   onChange={handleChange}
-                  required
+                  onBlur={() => validateField("room_number")}
                   disabled={saving}
                 />
-              </div>
+              </FormField>
               <div className="space-y-2">
                 <Label htmlFor="room_type">Room Type</Label>
                 <Select
@@ -351,8 +359,7 @@ export default function NewRoomPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rent_amount">Monthly Rent *</Label>
+                <FormField label="Monthly Rent" htmlFor="rent_amount" required error={errors.rent_amount} hint={`Default: ${formatCurrency(currentRoomType?.default_rent || 0)}`}>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rs.</span>
                     <Input
@@ -364,14 +371,11 @@ export default function NewRoomPage() {
                       className="pl-8"
                       value={formData.rent_amount as string}
                       onChange={handleChange}
-                      required
+                      onBlur={() => validateField("rent_amount")}
                       disabled={saving}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Default: {formatCurrency(currentRoomType?.default_rent || 0)}
-                  </p>
-                </div>
+                </FormField>
                 <div className="space-y-2">
                   <Label htmlFor="deposit_amount">Security Deposit</Label>
                   <div className="relative">

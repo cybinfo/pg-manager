@@ -14,3 +14,7 @@ export { validateDateRange, validateDate } from "./date"
 export { validateAmount, validatePositiveAmount, validateNonNegativeAmount, validatePercentage } from "./amount"
 export { validatePassword, validatePasswordMatch } from "./password"
 export { validateRequired, hasRequiredFields } from "./required"
+export {
+  requiredField, requiredSelect, requiredAmount, optionalAmount,
+  requiredDate, requiredPhone, optionalEmail, requiredPositiveInt,
+} from "./field-validators"

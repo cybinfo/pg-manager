@@ -17,14 +17,15 @@ import {
   CreditCard,
   Building2,
   Users,
-  Calendar,
 } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
+import { timeAgoColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { NOTICE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createCountMetric, createExpiringMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { PROPERTY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
+import { PROPERTY_FILTER, ACTIVE_STATUS_FILTER, NOTICE_TYPE_FILTER } from "@/lib/filter-presets"
+import { NOTICE_TYPE_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatTimeAgo } from "@/lib/format"
@@ -135,22 +136,10 @@ const columns: Column<Notice>[] = [
       </div>
     ),
   },
-  {
-    key: "created_at",
-    header: "Posted",
+  timeAgoColumn("created_at", "Posted", {
     width: "date",
-    sortable: true,
-    sortType: "date",
     hideOnMobile: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (notice) => (
-      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-        <Calendar className="h-3 w-3" />
-        {formatTimeAgo(notice.created_at)}
-      </div>
-    ),
-  },
+  }),
   // Hidden by default columns
   {
     key: "content",
@@ -208,18 +197,7 @@ const columns: Column<Notice>[] = [
 
 const filters: FilterConfig[] = [
   PROPERTY_FILTER,
-  {
-    id: "type",
-    label: "Type",
-    type: "select",
-    placeholder: "All Types",
-    options: [
-      { value: "general", label: "General" },
-      { value: "maintenance", label: "Maintenance" },
-      { value: "payment_reminder", label: "Payment Reminder" },
-      { value: "emergency", label: "Emergency" },
-    ],
-  },
+  NOTICE_TYPE_FILTER,
   ACTIVE_STATUS_FILTER,
 ]
 
@@ -242,12 +220,7 @@ const groupByOptions: GroupByOption[] = [
 
 const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("title", "Title"),
-  selectFilterColumn("type", "Type", [
-    { value: "general", label: "General" },
-    { value: "maintenance", label: "Maintenance" },
-    { value: "payment_reminder", label: "Payment Reminder" },
-    { value: "emergency", label: "Emergency" },
-  ]),
+  selectFilterColumn("type", "Type", NOTICE_TYPE_OPTIONS),
   booleanFilterColumn("is_active", "Status", { trueLabel: "Active", falseLabel: "Inactive" }),
   selectFilterColumn("target_audience", "Audience", [
     { value: "all", label: "All Residents" },

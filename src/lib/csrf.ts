@@ -17,13 +17,11 @@
 
 import { cookies } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
+import { CSRF_TOKEN_EXPIRY_MS } from "@/lib/constants"
 
 // Cookie name for CSRF token
 export const CSRF_COOKIE_NAME = "__csrf"
 export const CSRF_HEADER_NAME = "x-csrf-token"
-
-// Token expiry (24 hours)
-const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000
 
 interface CsrfToken {
   token: string
@@ -73,7 +71,7 @@ export function generateCsrfToken(): string {
 export function createCsrfTokenData(): CsrfToken {
   return {
     token: generateCsrfToken(),
-    expires: Date.now() + TOKEN_EXPIRY_MS,
+    expires: Date.now() + CSRF_TOKEN_EXPIRY_MS,
   }
 }
 
@@ -114,7 +112,7 @@ export function setCsrfCookie(response: NextResponse): { response: NextResponse;
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
-    maxAge: TOKEN_EXPIRY_MS / 1000,
+    maxAge: CSRF_TOKEN_EXPIRY_MS / 1000,
   })
 
   return { response, token: tokenData.token }

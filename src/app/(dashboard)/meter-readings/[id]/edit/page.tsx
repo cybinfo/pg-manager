@@ -12,8 +12,17 @@ import { ArrowLeft, Gauge, Loader2, Calculator, Zap, Droplets, Building2, Home }
 import { showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { PermissionGuard } from "@/components/auth"
 
 export default function EditMeterReadingPage() {
+  return (
+    <PermissionGuard permission="meter_readings.edit">
+      <EditMeterReadingContent />
+    </PermissionGuard>
+  )
+}
+
+function EditMeterReadingContent() {
   const params = useParams()
   const id = params.id as string
   const [calculatedUnits, setCalculatedUnits] = useState<number | null>(null)

@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
+import { PermissionGuard } from "@/components/auth"
 
 interface Library {
   id: string
@@ -25,6 +26,14 @@ interface Library {
 }
 
 export default function NewLibraryLockerPage() {
+  return (
+    <PermissionGuard permission="library_lockers.create">
+      <NewLibraryLockerContent />
+    </PermissionGuard>
+  )
+}
+
+function NewLibraryLockerContent() {
   const [libraries, setLibraries] = useState<Library[]>([])
   const [loadingLibraries, setLoadingLibraries] = useState(true)
 

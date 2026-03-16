@@ -24,6 +24,7 @@ export interface UseListPageFiltersOptions<T> {
   initialSort: SortConfig[]
   initialHiddenColumns: string[]
   initialAdvancedFilters: FilterGroup
+  tableKey?: string // Used for persisting column visibility to localStorage
 }
 
 export interface UseListPageFiltersReturn<T> {
@@ -74,6 +75,7 @@ export function useListPageFilters<T>(
     initialSort,
     initialHiddenColumns,
     initialAdvancedFilters,
+    tableKey,
   } = options
 
   // Filter state
@@ -92,8 +94,20 @@ export function useListPageFilters<T>(
   const [sortConfig, setSortConfig] = useState<SortConfig[]>(initialSort)
   const sortConfigRef = useRef(sortConfig)
 
-  // Column visibility state
-  const [hiddenColumns, setHiddenColumnsState] = useState<string[]>(initialHiddenColumns)
+  // Column visibility state — load from localStorage if tableKey is provided
+  const [hiddenColumns, setHiddenColumnsState] = useState<string[]>(() => {
+    if (tableKey && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`column-visibility:${tableKey}`)
+        if (stored) {
+          return JSON.parse(stored) as string[]
+        }
+      } catch {
+        // Ignore errors (e.g., private browsing mode)
+      }
+    }
+    return initialHiddenColumns
+  })
 
   // Stable refs to avoid dependency issues
   const configRef = useRef(config)
@@ -114,6 +128,17 @@ export function useListPageFilters<T>(
   useEffect(() => {
     sortConfigRef.current = sortConfig
   }, [sortConfig])
+
+  // Persist column visibility to localStorage when changed
+  useEffect(() => {
+    if (tableKey && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`column-visibility:${tableKey}`, JSON.stringify(hiddenColumns))
+      } catch {
+        // Ignore errors (e.g., private browsing, storage full)
+      }
+    }
+  }, [hiddenColumns, tableKey])
 
   // Fetch filter options - uses ref to avoid dependency issues
   const fetchFilterOptions = useCallback(async () => {

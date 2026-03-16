@@ -46,6 +46,7 @@ import {
   Hash,
   FileText,
 } from "lucide-react"
+import { brandGradient } from "@/lib/design-tokens"
 
 interface Refund {
   id: string
@@ -163,7 +164,12 @@ export default function RefundDetailPage() {
   }
 
   if (loading) return <PageLoading message="Loading refund details..." />
-  if (!refund) return null
+  if (!refund) return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+      </div>
+    )
 
   const tenantPhoto = refund.tenant?.person?.photo_url || refund.tenant?.profile_photo || refund.tenant?.photo_url
 
@@ -246,7 +252,7 @@ export default function RefundDetailPage() {
                   name={refund.tenant.name}
                   src={tenantPhoto}
                   size="lg"
-                  className="bg-gradient-to-br from-teal-500 to-emerald-500 text-white"
+                  className={`${brandGradient.solid} text-white`}
                 />
                 <div>
                   <TenantLink id={refund.tenant.id} name={refund.tenant.name} />

@@ -12,14 +12,17 @@ import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
+import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Loader2, CreditCard, UserCheck } from "lucide-react"
+import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { formatCurrency } from "@/lib/format"
 import { TIME_SLOTS } from "@/types/library.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { LIBRARY_PAYMENT_METHOD_FULL_OPTIONS } from "@/lib/status"
+import { PermissionGuard } from "@/components/auth"
 
 interface Library {
   id: string
@@ -36,6 +39,14 @@ interface Plan {
 }
 
 export default function NewLibraryMemberPage() {
+  return (
+    <PermissionGuard permission="library_members.create">
+      <NewLibraryMemberContent />
+    </PermissionGuard>
+  )
+}
+
+function NewLibraryMemberContent() {
   const [libraries, setLibraries] = useState<Library[]>([])
   const [plans, setPlans] = useState<Plan[]>([])
   const [loadingData, setLoadingData] = useState(true)
@@ -47,6 +58,8 @@ export default function NewLibraryMemberPage() {
     saving,
     searchParams,
     workspaceId,
+    errors,
+    validateField,
   } = useFormPage({
     table: "library_members",
     initialData: {
@@ -72,11 +85,10 @@ export default function NewLibraryMemberPage() {
     redirectTo: "/library-members",
     successMessage: "Member registered successfully!",
     errorMessage: "Failed to register member",
-    validate: (data) => {
-      if (!data.library_id || !data.name || !data.phone) {
-        return "Please fill in required fields (Library, Name, Phone)"
-      }
-      return null
+    validationSchema: {
+      library_id: requiredSelect("Library"),
+      name: requiredField("Full name"),
+      phone: requiredPhone("Phone number"),
     },
     customSubmit: async (data, userId, supabase): Promise<string | void> => {
       // Get library's owner_id
@@ -231,6 +243,25 @@ export default function NewLibraryMemberPage() {
         }
       }
 
+      // Send welcome email (non-blocking - don't fail creation if email fails)
+      if (data.email) {
+        import("@/lib/email").then(({ sendLibraryMemberWelcomeEmail }) => {
+          sendLibraryMemberWelcomeEmail({
+            to: data.email as string,
+            memberName: memberName,
+            libraryName: library.name,
+            memberCode: memberCode,
+            planName: selectedPlan?.name,
+            hoursIncluded: selectedPlan?.hours_included || undefined,
+            timeSlot: (data.preferred_slot as string) || undefined,
+          }).catch((err: unknown) => {
+            console.warn("[NewLibraryMember] Failed to send welcome email:", err)
+          })
+        }).catch((err: unknown) => {
+          console.warn("[NewLibraryMember] Failed to load email module:", err)
+        })
+      }
+
       // If converting from waitlist, update the waitlist entry
       if (typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search)
@@ -377,8 +408,7 @@ export default function NewLibraryMemberPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Library Selection */}
-              <div className="space-y-2">
-                <Label>Library *</Label>
+              <FormField label="Library" required error={errors.library_id}>
                 <Combobox
                   options={libraryOptions}
                   value={formData.library_id as string}
@@ -388,36 +418,34 @@ export default function NewLibraryMemberPage() {
                   emptyText="No libraries found"
                   disabled={saving || loadingData || !!preselectedLibrary}
                 />
-              </div>
+              </FormField>
 
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name *</Label>
+                <FormField label="Full Name" htmlFor="name" required error={errors.name}>
                   <Input
                     id="name"
                     name="name"
                     placeholder="e.g., Rahul Sharma"
                     value={formData.name as string}
                     onChange={handleChange}
-                    required
+                    onBlur={() => validateField("name")}
                     disabled={saving}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number *</Label>
+                </FormField>
+                <FormField label="Phone Number" htmlFor="phone" required error={errors.phone}>
                   <Input
                     id="phone"
                     name="phone"
                     placeholder="e.g., 9876543210"
                     value={formData.phone as string}
                     onChange={handleChange}
-                    required
+                    onBlur={() => validateField("phone")}
                     disabled={saving}
                     type="tel"
                     maxLength={10}
                   />
-                </div>
+                </FormField>
               </div>
 
               <div className="space-y-2">
@@ -614,13 +642,7 @@ export default function NewLibraryMemberPage() {
                     onChange={handleChange}
                     name="payment_method"
                     disabled={saving}
-                    options={[
-                      { value: "cash", label: "Cash" },
-                      { value: "upi", label: "UPI" },
-                      { value: "card", label: "Card" },
-                      { value: "bank_transfer", label: "Bank Transfer" },
-                      { value: "cheque", label: "Cheque" },
-                    ]}
+                    options={LIBRARY_PAYMENT_METHOD_FULL_OPTIONS}
                   />
                 </div>
                 <div className="space-y-2">

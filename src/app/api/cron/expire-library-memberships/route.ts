@@ -13,6 +13,7 @@ import { baseCronHandler, logCronAudit } from "@/lib/cron-handler"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { sendWaitlistSeatAvailableEmail } from "@/lib/email"
 
 export const GET = (request: Request) =>
   baseCronHandler(request, {
@@ -48,6 +49,7 @@ export const GET = (request: Request) =>
 
       let membershipsExpired = 0
       let membersUpdated = 0
+      let waitlistNotificationsSent = 0
       const errors: { membership_id: string; error: string }[] = []
 
       // Batch query: find which members have other active memberships (not in the expired set)
@@ -235,13 +237,80 @@ export const GET = (request: Request) =>
         }
       }
 
+      // 3. Notify waitlisted members when seats become available (members just expired)
+      if (membersUpdated > 0) {
+        try {
+          // Get unique library IDs from expired members
+          const libraryIdsFromExpired = new Set<string>()
+          for (const membership of expiredMemberships || []) {
+            const member = transformJoin(membership.member)
+            if (member?.library_id) {
+              libraryIdsFromExpired.add(member.library_id)
+            }
+          }
+
+          for (const libraryId of libraryIdsFromExpired) {
+            // Fetch waitlisted people for this library who have email
+            const { data: waitlistEntries } = await supabaseAdmin
+              .from("library_waitlist")
+              .select(`
+                id,
+                queue_position,
+                person:people(id, name, email),
+                library:libraries(id, name, phone)
+              `)
+              .eq("library_id", libraryId)
+              .eq("status", "waiting")
+              .is("deleted_at", null)
+              .order("queue_position", { ascending: true })
+              .limit(5)
+
+            if (waitlistEntries && waitlistEntries.length > 0) {
+              for (const entry of waitlistEntries) {
+                const person = transformJoin(entry.person)
+                const library = transformJoin(entry.library)
+
+                if (!person?.email || !library) continue
+
+                try {
+                  const result = await sendWaitlistSeatAvailableEmail({
+                    to: person.email,
+                    personName: person.name,
+                    libraryName: library.name,
+                    queuePosition: entry.queue_position || 1,
+                    ownerPhone: library.phone || undefined,
+                  })
+
+                  if (result.success) {
+                    waitlistNotificationsSent++
+                    cronLogger.debug("Sent waitlist seat available email", {
+                      personName: person.name,
+                      libraryId,
+                      queuePosition: entry.queue_position,
+                    })
+                  }
+                } catch (err) {
+                  cronLogger.warn("Failed to send waitlist email", {
+                    waitlistId: entry.id,
+                    ...extractErrorMeta(err),
+                  })
+                }
+              }
+            }
+          }
+        } catch (err) {
+          cronLogger.warn("Error processing waitlist notifications", extractErrorMeta(err))
+        }
+      }
+
       return {
         data: {
           membershipsExpired,
           membersUpdated,
+          waitlistNotificationsSent,
           errors: errors.length > 0 ? errors : undefined,
         },
-        message: `Expired ${membershipsExpired} memberships, updated ${membersUpdated} members`,
+        message: `Expired ${membershipsExpired} memberships, updated ${membersUpdated} members, sent ${waitlistNotificationsSent} waitlist notifications`,
       }
     },
   })

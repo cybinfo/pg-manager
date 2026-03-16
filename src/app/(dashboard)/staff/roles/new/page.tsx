@@ -14,8 +14,17 @@ import {
   Check
 } from "lucide-react"
 import { PERMISSION_GROUPS as permissionGroups } from "@/lib/auth/permission-groups"
+import { PermissionGuard } from "@/components/auth"
 
 export default function NewRolePage() {
+  return (
+    <PermissionGuard permission="staff.create">
+      <NewRoleContent />
+    </PermissionGuard>
+  )
+}
+
+function NewRoleContent() {
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
 
   const {

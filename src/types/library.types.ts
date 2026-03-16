@@ -30,149 +30,17 @@ export type LibraryPaymentStatus = "completed" | "pending" | "refunded"
 
 export type LibraryTimeSlot = "Morning" | "Evening" | "Night" | "24 Hours"
 
-export const LIBRARY_MEMBER_STATUS_CONFIG = {
-  active: {
-    label: "Active",
-    variant: "success" as const,
-  },
-  expired: {
-    label: "Expired",
-    variant: "warning" as const,
-  },
-  suspended: {
-    label: "Suspended",
-    variant: "error" as const,
-  },
-  cancelled: {
-    label: "Cancelled",
-    variant: "muted" as const,
-  },
-} as const
-
-export const LIBRARY_SEAT_STATUS_CONFIG = {
-  available: {
-    label: "Available",
-    variant: "success" as const,
-  },
-  occupied: {
-    label: "Occupied",
-    variant: "warning" as const,
-  },
-  reserved: {
-    label: "Reserved",
-    variant: "muted" as const,
-  },
-  maintenance: {
-    label: "Maintenance",
-    variant: "error" as const,
-  },
-} as const
-
-export const LIBRARY_LOCKER_STATUS_CONFIG = {
-  available: {
-    label: "Available",
-    variant: "success" as const,
-  },
-  occupied: {
-    label: "Occupied",
-    variant: "warning" as const,
-  },
-  maintenance: {
-    label: "Maintenance",
-    variant: "muted" as const,
-  },
-} as const
-
-export const LIBRARY_LOCKER_SIZE_CONFIG = {
-  small: {
-    label: "Small",
-    variant: "muted" as const,
-  },
-  medium: {
-    label: "Medium",
-    variant: "warning" as const,
-  },
-  large: {
-    label: "Large",
-    variant: "success" as const,
-  },
-} as const
-
-export const LIBRARY_MEMBERSHIP_STATUS_CONFIG = {
-  active: {
-    label: "Active",
-    variant: "success" as const,
-  },
-  expired: {
-    label: "Expired",
-    variant: "warning" as const,
-  },
-  cancelled: {
-    label: "Cancelled",
-    variant: "muted" as const,
-  },
-  upgraded: {
-    label: "Upgraded",
-    variant: "success" as const,
-  },
-} as const
-
-export const LIBRARY_PAYMENT_TYPE_CONFIG = {
-  subscription: {
-    label: "Subscription",
-    variant: "success" as const,
-  },
-  locker_rent: {
-    label: "Locker Rent",
-    variant: "warning" as const,
-  },
-  locker_deposit: {
-    label: "Locker Deposit",
-    variant: "muted" as const,
-  },
-  fine: {
-    label: "Fine",
-    variant: "error" as const,
-  },
-  other: {
-    label: "Other",
-    variant: "muted" as const,
-  },
-} as const
-
-export const LIBRARY_PAYMENT_METHOD_CONFIG = {
-  cash: {
-    label: "Cash",
-    variant: "success" as const,
-  },
-  upi: {
-    label: "UPI",
-    variant: "success" as const,
-  },
-  card: {
-    label: "Card",
-    variant: "warning" as const,
-  },
-  bank_transfer: {
-    label: "Bank Transfer",
-    variant: "muted" as const,
-  },
-} as const
-
-export const LIBRARY_PAYMENT_STATUS_CONFIG = {
-  completed: {
-    label: "Completed",
-    variant: "success" as const,
-  },
-  pending: {
-    label: "Pending",
-    variant: "warning" as const,
-  },
-  refunded: {
-    label: "Refunded",
-    variant: "muted" as const,
-  },
-} as const
+// Re-export status configs from canonical source (lib/status/library)
+export {
+  LIBRARY_MEMBER_STATUS_CONFIG,
+  LIBRARY_SEAT_STATUS_CONFIG,
+  LIBRARY_LOCKER_STATUS_CONFIG,
+  LIBRARY_LOCKER_SIZE_CONFIG,
+  LIBRARY_MEMBERSHIP_STATUS_CONFIG,
+  LIBRARY_PAYMENT_TYPE_CONFIG,
+  LIBRARY_PAYMENT_METHOD_CONFIG,
+  LIBRARY_PAYMENT_STATUS_CONFIG,
+} from "@/lib/status/library"
 
 export const TIME_SLOTS: { value: LibraryTimeSlot; label: string }[] = [
   { value: "Morning", label: "Morning (6 AM - 2 PM)" },
@@ -595,12 +463,8 @@ export interface LibraryMemberSummary {
 
 export type LibraryWaitlistStatus = "waiting" | "contacted" | "converted" | "cancelled"
 
-export const LIBRARY_WAITLIST_STATUS_CONFIG = {
-  waiting: { label: "Waiting", variant: "warning" as const },
-  contacted: { label: "Contacted", variant: "muted" as const },
-  converted: { label: "Converted", variant: "success" as const },
-  cancelled: { label: "Cancelled", variant: "error" as const },
-}
+// Re-export waitlist status config from canonical source
+export { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/lib/status/library"
 
 export interface LibraryWaitlist extends AuditableEntity {
   id: string

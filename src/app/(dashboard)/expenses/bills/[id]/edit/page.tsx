@@ -21,15 +21,8 @@ import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 
+import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { BillPayment, Vendor, BillCategory, BillPaymentFormData } from "@/types/expense-enhanced.types"
-
-const PAYMENT_MODE_OPTIONS = [
-  { value: "cash", label: "Cash" },
-  { value: "upi", label: "UPI" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "card", label: "Card" },
-  { value: "cheque", label: "Cheque" },
-]
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Pending" },

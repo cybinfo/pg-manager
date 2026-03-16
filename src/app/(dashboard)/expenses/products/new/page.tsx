@@ -12,6 +12,7 @@ import { Package } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { PermissionGuard } from "@/components/auth"
 
 import {
   FormPageTemplate,
@@ -40,6 +41,14 @@ const UNIT_OPTIONS = [
 ]
 
 export default function NewProductPage() {
+  return (
+    <PermissionGuard permission="expenses.create">
+      <NewProductContent />
+    </PermissionGuard>
+  )
+}
+
+function NewProductContent() {
   const { workspaceId } = useAuthContext()
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)

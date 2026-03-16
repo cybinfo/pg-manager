@@ -16,6 +16,7 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO } from "@/lib/date-helpers"
+import { PermissionGuard } from "@/components/auth"
 
 interface ChargeType {
   id: string
@@ -48,7 +49,7 @@ interface Meter {
   }
 }
 
-export default function NewMeterReadingPage() {
+function NewMeterReadingContent() {
   const [loadingData, setLoadingData] = useState(true)
   const [loadingLastReading, setLoadingLastReading] = useState(false)
 
@@ -663,5 +664,13 @@ export default function NewMeterReadingPage() {
         </div>
       </form>
     </div>
+  )
+}
+
+export default function NewMeterReadingPage() {
+  return (
+    <PermissionGuard permission="meter_readings.create">
+      <NewMeterReadingContent />
+    </PermissionGuard>
   )
 }

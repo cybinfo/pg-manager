@@ -37,6 +37,7 @@ import {
   Trash2,
   Gauge,
   FileText,
+  MessageCircle,
 } from "lucide-react"
 import { PrintButton } from "@/components/ui/print-button"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -202,7 +203,12 @@ export default function TenantDetailPage() {
   }
 
   if (!tenant) {
-    return null
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+          <h2 className="text-lg font-semibold">Not Found</h2>
+          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+        </div>
+      )
   }
 
   // Map status to StatusBadge status
@@ -253,6 +259,28 @@ export default function TenantDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Quick Actions: Call, WhatsApp, Email */}
+            {(tenant.person?.phone || tenant.phone) && (
+              <a href={`tel:${tenant.person?.phone || tenant.phone}`}>
+                <Button variant="outline" size="icon" className="h-9 w-9" title="Call">
+                  <Phone className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
+            {(tenant.person?.phone || tenant.phone) && (
+              <a href={`https://wa.me/91${(tenant.person?.phone || tenant.phone || "").replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="icon" className="h-9 w-9 text-green-600 hover:text-green-700" title="WhatsApp">
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
+            {(tenant.person?.email || tenant.email) && (
+              <a href={`mailto:${tenant.person?.email || tenant.email}`}>
+                <Button variant="outline" size="icon" className="h-9 w-9" title="Email">
+                  <Mail className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
             <PrintButton />
             {tenant.person_id && (
               <Link href={`/people/${tenant.person_id}`}>

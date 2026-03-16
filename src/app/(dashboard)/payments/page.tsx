@@ -7,7 +7,7 @@
 
 "use client"
 
-import { CreditCard, IndianRupee, Receipt, Wallet, Banknote, Bell } from "lucide-react"
+import { CreditCard, IndianRupee, Receipt, Wallet, Banknote, Bell, Users, Link2 } from "lucide-react"
 import Link from "next/link"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { currencyColumn, dateColumn, badgeColumn } from "@/lib/column-builders"
@@ -19,12 +19,15 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, PAYMENT_METHOD_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
+import { PermissionGate } from "@/components/auth"
 import { WhatsAppIconButton } from "@/components/whatsapp-button"
 import { messageTemplates } from "@/lib/notifications"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PAYMENT_METHODS } from "@/lib/status-config"
 import { textFilterColumn, selectFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import { NullDisplay } from "@/components/ui/null-display"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, currencyExportColumn, labelMapColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -137,6 +140,18 @@ const columns: Column<Payment>[] = [
     ) : <NullDisplay />,
   },
   {
+    key: "reconciliation_status",
+    header: "Reconciled",
+    width: "tertiary",
+    canHide: true,
+    defaultVisible: false,
+    render: (payment) => payment.bill ? (
+      <TableBadge variant="success">Reconciled</TableBadge>
+    ) : (
+      <TableBadge variant="warning">Unreconciled</TableBadge>
+    ),
+  },
+  {
     key: "charge_type",
     header: "Charge Type",
     width: "secondary",
@@ -199,13 +214,7 @@ const groupByOptions: GroupByOption[] = [
 
 const advancedFilterColumns: FilterableColumn[] = [
   numberFilterColumn("amount", "Amount"),
-  selectFilterColumn("payment_method", "Payment Method", [
-    { value: "cash", label: "Cash" },
-    { value: "upi", label: "UPI" },
-    { value: "bank_transfer", label: "Bank Transfer" },
-    { value: "cheque", label: "Cheque" },
-    { value: "card", label: "Card" },
-  ], ["eq", "neq", "in", "not_in"]),
+  selectFilterColumn("payment_method", "Payment Method", PAYMENT_METHOD_FILTER.options!, ["eq", "neq", "in", "not_in"]),
   dateFilterColumn("payment_date", "Payment Date"),
   textFilterColumn("reference_number", "Reference Number"),
 ]
@@ -221,6 +230,19 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
   createTopValueMetric("payment_method", "top_method", "Top Method", Banknote, {
     labelMap: PAYMENT_METHODS,
   }),
+]
+
+// ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  nestedColumn("tenant_name", "Tenant Name", "tenant.name"),
+  currencyExportColumn("amount", "Amount"),
+  labelMapColumn("payment_method", "Method", PAYMENT_METHODS),
+  dateExportColumn("payment_date", "Date"),
+  nestedColumn("bill_number", "Bill Number", "bill.bill_number"),
+  { key: "receipt_number" as keyof Record<string, unknown>, header: "Receipt #", format: (v) => String(v ?? "") },
 ]
 
 // ============================================
@@ -245,6 +267,8 @@ export default function PaymentsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="payments"
       createHref="/payments/new"
       createLabel="Record Payment"
       createPermission="payments.create"
@@ -252,12 +276,30 @@ export default function PaymentsPage() {
       emptyTitle="No payments found"
       emptyDescription="Start recording payments from your tenants"
       headerActions={
-        <Link href="/payments/reminders">
-          <Button variant="outline" size="sm">
-            <Bell className="mr-2 h-4 w-4" />
-            Reminders
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <PermissionGate permission="payments.edit" hide>
+            <Link href="/payments/reconcile">
+              <Button variant="outline" size="sm">
+                <Link2 className="mr-2 h-4 w-4" />
+                Reconcile
+              </Button>
+            </Link>
+          </PermissionGate>
+          <PermissionGate permission="payments.create" hide>
+            <Link href="/payments/bulk">
+              <Button variant="outline" size="sm">
+                <Users className="mr-2 h-4 w-4" />
+                Bulk Payment
+              </Button>
+            </Link>
+          </PermissionGate>
+          <Link href="/payments/reminders">
+            <Button variant="outline" size="sm">
+              <Bell className="mr-2 h-4 w-4" />
+              Reminders
+            </Button>
+          </Link>
+        </div>
       }
     />
   )

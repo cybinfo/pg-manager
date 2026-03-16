@@ -4,19 +4,32 @@ import Link from "next/link"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FormField } from "@/components/ui/form-components"
+import { Label } from "@/components/ui/label"
 import { ArrowLeft, Building2, Loader2 } from "lucide-react"
+import { requiredField } from "@/lib/validation"
 
 // Shared form components
 import { PropertyAddressInput, CoverImageUpload, PhotoGallery } from "@/components/forms"
+import { PermissionGuard } from "@/components/auth"
 
 export default function NewPropertyPage() {
+  return (
+    <PermissionGuard permission="properties.create">
+      <NewPropertyContent />
+    </PermissionGuard>
+  )
+}
+
+function NewPropertyContent() {
   const {
     formData, setFormData,
     handleChange,
     handleSubmit,
     saving,
+    errors,
+    validateField,
   } = useFormPage({
     table: "properties",
     initialData: {
@@ -35,11 +48,9 @@ export default function NewPropertyPage() {
     successMessage: "Property created successfully!",
     errorMessage: "Failed to create property",
     useCreatedBy: false,
-    validate: (data) => {
-      if (!data.name || !data.city) {
-        return "Please fill in required fields"
-      }
-      return null
+    validationSchema: {
+      name: requiredField("Property name"),
+      city: requiredField("City"),
     },
     transform: (data, userId) => {
       // Combine address lines into single address field
@@ -98,18 +109,17 @@ export default function NewPropertyPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Property Name *</Label>
+            <FormField label="Property Name" htmlFor="name" required error={errors.name}>
               <Input
                 id="name"
                 name="name"
                 placeholder="e.g., Sunrise PG, Main Building"
                 value={formData.name as string}
                 onChange={handleChange}
-                required
+                onBlur={() => validateField("name")}
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             {/* Address Section - Using shared component */}
             <PropertyAddressInput

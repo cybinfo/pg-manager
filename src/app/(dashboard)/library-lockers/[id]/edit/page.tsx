@@ -18,8 +18,21 @@ import { ArrowLeft, Lock, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getNowISO } from "@/lib/date-helpers"
+import { PermissionGuard } from "@/components/auth"
 
 export default function EditLibraryLockerPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  return (
+    <PermissionGuard permission="library_lockers.edit">
+      <EditLibraryLockerContent params={params} />
+    </PermissionGuard>
+  )
+}
+
+function EditLibraryLockerContent({
   params,
 }: {
   params: Promise<{ id: string }>

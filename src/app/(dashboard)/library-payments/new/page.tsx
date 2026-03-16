@@ -12,14 +12,17 @@ import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
+import { Label } from "@/components/ui/label"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
+import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
 import { Currency } from "@/components/ui/currency"
 import { getTodayISO } from "@/lib/date-helpers"
+import { LIBRARY_PAYMENT_METHOD_OPTIONS } from "@/lib/status"
+import { PermissionGuard } from "@/components/auth"
 
 interface Member {
   id: string
@@ -32,6 +35,14 @@ interface Member {
 }
 
 export default function NewLibraryPaymentPage() {
+  return (
+    <PermissionGuard permission="library_payments.create">
+      <NewLibraryPaymentContent />
+    </PermissionGuard>
+  )
+}
+
+function NewLibraryPaymentContent() {
   const [members, setMembers] = useState<Member[]>([])
   const [loadingMembers, setLoadingMembers] = useState(true)
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
@@ -43,6 +54,8 @@ export default function NewLibraryPaymentPage() {
     saving,
     searchParams,
     workspaceId,
+    errors,
+    validateField,
   } = useFormPage({
     table: "library_payments",
     initialData: {
@@ -57,14 +70,10 @@ export default function NewLibraryPaymentPage() {
     redirectTo: "/library-payments",
     successMessage: "Payment recorded!",
     errorMessage: "Failed to record payment",
-    validate: (data) => {
-      if (!data.member_id || !data.amount) {
-        return "Please fill in required fields (Member, Amount)"
-      }
-      if (!selectedMember) {
-        return "Please select a member"
-      }
-      return null
+    validationSchema: {
+      member_id: requiredSelect("Member"),
+      amount: requiredAmount("Amount"),
+      payment_date: requiredDate("Payment date"),
     },
     customSubmit: async (data, userId, supabase): Promise<string | void> => {
       if (!selectedMember) {
@@ -106,6 +115,38 @@ export default function NewLibraryPaymentPage() {
 
       if (error) {
         throw new Error(error.message)
+      }
+
+      // Send receipt email (fire and forget)
+      try {
+        // Fetch member email from people table
+        const { data: personData } = await supabase
+          .from("library_members")
+          .select("email, person:people(email), library:libraries(name, phone)")
+          .eq("id", data.member_id)
+          .single()
+
+        const email = personData?.person?.email || personData?.email
+        if (email) {
+          const { sendLibraryPaymentReceiptEmail } = await import("@/lib/email")
+          const displayName = selectedMember.person?.name || selectedMember.name
+          const libraryName = personData?.library?.name || "Library"
+          const ownerPhone = personData?.library?.phone || undefined
+
+          sendLibraryPaymentReceiptEmail({
+            to: email,
+            memberName: displayName,
+            libraryName,
+            amount: Number(data.amount),
+            paymentMethod: data.payment_method as string,
+            paymentType: data.payment_type as string,
+            receiptNumber,
+            paymentDate: new Date(data.payment_date as string),
+            ownerPhone,
+          }).catch(() => {}) // non-blocking
+        }
+      } catch {
+        // Non-blocking: email failure should not affect payment recording
       }
 
       // Redirect to member detail if came from there
@@ -201,8 +242,7 @@ export default function NewLibraryPaymentPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Member Selection */}
-            <div className="space-y-2">
-              <Label>Member *</Label>
+            <FormField label="Member" required error={errors.member_id} hint={selectedMember ? `Hours Balance: ${selectedMember.hours_balance.toFixed(1)}h` : undefined}>
               <Combobox
                 options={memberOptions}
                 value={formData.member_id as string}
@@ -212,29 +252,21 @@ export default function NewLibraryPaymentPage() {
                 emptyText="No members found"
                 disabled={saving || loadingMembers || !!preselectedMember}
               />
-              {selectedMember && (
-                <p className="text-xs text-muted-foreground">
-                  Hours Balance: {selectedMember.hours_balance.toFixed(1)}h
-                </p>
-              )}
-            </div>
+            </FormField>
 
             {/* Payment Info */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="payment_date">Payment Date *</Label>
+              <FormField label="Payment Date" htmlFor="payment_date" required error={errors.payment_date}>
                 <Input
                   id="payment_date"
                   name="payment_date"
                   type="date"
                   value={formData.payment_date as string}
                   onChange={handleChange}
-                  required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (Rs.) *</Label>
+              </FormField>
+              <FormField label="Amount (Rs.)" htmlFor="amount" required error={errors.amount}>
                 <Input
                   id="amount"
                   name="amount"
@@ -242,12 +274,12 @@ export default function NewLibraryPaymentPage() {
                   placeholder="e.g., 1000"
                   value={formData.amount as string}
                   onChange={handleChange}
-                  required
+                  onBlur={() => validateField("amount")}
                   disabled={saving}
                   min={1}
                   step="0.01"
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -274,12 +306,7 @@ export default function NewLibraryPaymentPage() {
                   onChange={handleChange}
                   name="payment_method"
                   disabled={saving}
-                  options={[
-                    { value: "cash", label: "Cash" },
-                    { value: "upi", label: "UPI" },
-                    { value: "card", label: "Card" },
-                    { value: "bank_transfer", label: "Bank Transfer" },
-                  ]}
+                  options={LIBRARY_PAYMENT_METHOD_OPTIONS}
                 />
               </div>
             </div>

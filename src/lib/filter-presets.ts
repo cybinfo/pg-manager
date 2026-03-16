@@ -19,6 +19,16 @@
  */
 
 import type { FilterConfig } from "@/components/ui/list-page-filters"
+import {
+  EXIT_CLEARANCE_STATUS_OPTIONS,
+  APPROVAL_STATUS_OPTIONS,
+  COMPLAINT_STATUS_OPTIONS,
+  NOTICE_TYPE_OPTIONS,
+  REFUND_STATUS_OPTIONS,
+  REFUND_TYPE_OPTIONS,
+  BILL_STATUS_OPTIONS,
+} from "@/lib/filters/common-filters"
+import { COMPLAINT_CATEGORIES } from "@/lib/status-config"
 
 // ============================================
 // PG Module Filters
@@ -225,6 +235,165 @@ export const PRIORITY_FILTER: FilterConfig = {
     { value: "medium", label: "Medium" },
     { value: "low", label: "Low" },
   ],
+}
+
+// ============================================
+// Exit Clearance Filters
+// ============================================
+
+/**
+ * Exit clearance settlement status filter.
+ * Used by: exit-clearance
+ */
+export const EXIT_CLEARANCE_STATUS_FILTER: FilterConfig = {
+  id: "settlement_status",
+  label: "Status",
+  type: "select",
+  placeholder: "All Status",
+  options: EXIT_CLEARANCE_STATUS_OPTIONS,
+}
+
+// ============================================
+// Approval Filters
+// ============================================
+
+/**
+ * Approval status filter.
+ * Used by: approvals
+ */
+export const APPROVAL_STATUS_FILTER: FilterConfig = {
+  id: "status",
+  label: "Status",
+  type: "select",
+  placeholder: "All Status",
+  options: APPROVAL_STATUS_OPTIONS.filter((o) => o.value !== "cancelled"),
+}
+
+/**
+ * Approval priority filter.
+ * Used by: approvals
+ */
+export const APPROVAL_PRIORITY_FILTER: FilterConfig = {
+  id: "priority",
+  label: "Priority",
+  type: "select",
+  placeholder: "All Priority",
+  options: [
+    { value: "low", label: "Low" },
+    { value: "normal", label: "Normal" },
+    { value: "high", label: "High" },
+    { value: "urgent", label: "Urgent" },
+  ],
+}
+
+// ============================================
+// Library Payment Filters
+// ============================================
+
+/**
+ * Library payment type filter.
+ * Used by: library-payments
+ */
+export const LIBRARY_PAYMENT_TYPE_FILTER: FilterConfig = {
+  id: "payment_type",
+  label: "Type",
+  type: "select",
+  placeholder: "All Types",
+  options: [
+    { value: "subscription", label: "Subscription" },
+    { value: "locker_rent", label: "Locker Rent" },
+    { value: "locker_deposit", label: "Locker Deposit" },
+    { value: "fine", label: "Fine" },
+    { value: "other", label: "Other" },
+  ],
+}
+
+// ============================================
+// Complaint Filters
+// ============================================
+
+/**
+ * Complaint status filter.
+ * Used by: complaints
+ */
+export const COMPLAINT_STATUS_FILTER: FilterConfig = {
+  id: "status",
+  label: "Status",
+  type: "select",
+  placeholder: "All Status",
+  options: COMPLAINT_STATUS_OPTIONS,
+}
+
+/**
+ * Complaint category filter (derived from COMPLAINT_CATEGORIES constant).
+ * Used by: complaints
+ */
+export const COMPLAINT_CATEGORY_FILTER: FilterConfig = {
+  id: "category",
+  label: "Category",
+  type: "select",
+  placeholder: "All Categories",
+  options: Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label })),
+}
+
+// ============================================
+// Notice Filters
+// ============================================
+
+/**
+ * Notice type filter.
+ * Used by: notices
+ */
+export const NOTICE_TYPE_FILTER: FilterConfig = {
+  id: "type",
+  label: "Type",
+  type: "select",
+  placeholder: "All Types",
+  options: NOTICE_TYPE_OPTIONS,
+}
+
+// ============================================
+// Refund Filters
+// ============================================
+
+/**
+ * Refund status filter.
+ * Used by: refunds
+ */
+export const REFUND_STATUS_FILTER: FilterConfig = {
+  id: "status",
+  label: "Status",
+  type: "select",
+  placeholder: "All Status",
+  options: REFUND_STATUS_OPTIONS,
+}
+
+/**
+ * Refund type filter.
+ * Used by: refunds
+ */
+export const REFUND_TYPE_FILTER: FilterConfig = {
+  id: "refund_type",
+  label: "Type",
+  type: "select",
+  placeholder: "All Types",
+  options: REFUND_TYPE_OPTIONS,
+}
+
+// ============================================
+// Bill Filters
+// ============================================
+
+/**
+ * Bill status filter.
+ * Used by: bills
+ */
+export const BILL_STATUS_FILTER: FilterConfig = {
+  id: "status",
+  label: "Status",
+  type: "select",
+  placeholder: "All Status",
+  options: BILL_STATUS_OPTIONS,
 }
 
 // ============================================

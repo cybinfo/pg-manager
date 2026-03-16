@@ -16,8 +16,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
 import { ArrowLeft, Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
+import { PermissionGuard } from "@/components/auth"
 
 export default function EditLibraryPage() {
+  return (
+    <PermissionGuard permission="library.edit">
+      <EditLibraryContent />
+    </PermissionGuard>
+  )
+}
+
+function EditLibraryContent() {
   const params = useParams()
   const id = params.id as string
 

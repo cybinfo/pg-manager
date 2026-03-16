@@ -7,17 +7,20 @@
 "use client"
 
 import { CreditCard, Users, Calendar, Receipt } from "lucide-react"
-import { Column, StatusDot } from "@/components/ui/data-table"
-import { statusColumn, dateColumn } from "@/lib/column-builders"
+import { Column } from "@/components/ui/data-table"
+import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, createTodayCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { LIBRARY_PAYMENT_METHOD_FILTER, createStatusFilter } from "@/lib/filter-presets"
+import { LIBRARY_PAYMENT_METHOD_FILTER, LIBRARY_PAYMENT_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
-import { Avatar } from "@/components/ui/avatar"
 import { LIBRARY_PAYMENT_TYPE_CONFIG, LIBRARY_PAYMENT_METHOD_CONFIG, LIBRARY_PAYMENT_STATUS_CONFIG } from "@/types/library.types"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, currencyExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -51,28 +54,14 @@ interface PaymentItem {
 // ============================================
 
 const columns: Column<PaymentItem>[] = [
-  {
+  personNameWithAvatarColumn("Member", {
     key: "member",
-    header: "Member",
-    width: "primary",
+    nameField: "member.name",
+    personNameField: "member.person.name",
+    photoField: "member.person.photo_url",
+    subtitleField: "member.member_code",
     sortable: false,
-    canHide: false,
-    render: (payment) => {
-      const displayName = payment.member?.person?.name || payment.member?.name || "Unknown"
-      const photoUrl = payment.member?.person?.photo_url
-      return (
-        <div className="flex items-center gap-3">
-          <Avatar name={displayName} src={photoUrl} size="sm" />
-          <div>
-            <div className="font-medium">{displayName}</div>
-            <div className="text-xs text-muted-foreground">
-              {payment.member?.member_code || "—"}
-            </div>
-          </div>
-        </div>
-      )
-    },
-  },
+  }),
   {
     key: "receipt_number",
     header: "Receipt",
@@ -172,19 +161,7 @@ const filters: FilterConfig[] = [
     type: "select",
     placeholder: "All Members",
   },
-  {
-    id: "payment_type",
-    label: "Type",
-    type: "select",
-    placeholder: "All Types",
-    options: [
-      { value: "subscription", label: "Subscription" },
-      { value: "locker_rent", label: "Locker Rent" },
-      { value: "locker_deposit", label: "Locker Deposit" },
-      { value: "fine", label: "Fine" },
-      { value: "other", label: "Other" },
-    ],
-  },
+  LIBRARY_PAYMENT_TYPE_FILTER,
   LIBRARY_PAYMENT_METHOD_FILTER,
   createStatusFilter([
     { value: "completed", label: "Completed" },
@@ -202,6 +179,25 @@ const groupByOptions: GroupByOption[] = [
   { value: "payment_method", label: "Method" },
   { value: "status", label: "Status" },
   { value: "payment_date", label: "Date" },
+]
+
+// ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  numberFilterColumn("amount", "Amount"),
+  selectFilterColumn("payment_method", "Payment Method", LIBRARY_PAYMENT_METHOD_FILTER.options!),
+  selectFilterColumn("payment_type", "Payment Type", LIBRARY_PAYMENT_TYPE_FILTER.options!),
+  statusFilterColumn([
+    { value: "completed", label: "Completed" },
+    { value: "pending", label: "Pending" },
+    { value: "refunded", label: "Refunded" },
+  ]),
+  dateFilterColumn("payment_date", "Payment Date"),
+  textFilterColumn("receipt_number", "Receipt Number"),
+  textFilterColumn("payment_reference", "Reference", ["contains", "eq", "is_null", "is_not_null"]),
+  dateFilterColumn("created_at", "Recorded On"),
 ]
 
 // ============================================
@@ -228,6 +224,29 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const PAYMENT_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(LIBRARY_PAYMENT_TYPE_CONFIG).map(([k, v]) => [k, v.label])
+)
+const PAYMENT_METHOD_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(LIBRARY_PAYMENT_METHOD_CONFIG).map(([k, v]) => [k, v.label])
+)
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  nestedColumn("member_name", "Member Name", "member.person.name", (val, row) => {
+    return String(val || (row.member as Record<string, unknown>)?.name || "")
+  }),
+  currencyExportColumn("amount", "Amount"),
+  { key: "payment_method" as keyof Record<string, unknown>, header: "Method", format: (v) => PAYMENT_METHOD_LABELS[String(v)] || String(v ?? "") },
+  { key: "payment_type" as keyof Record<string, unknown>, header: "Type", format: (v) => PAYMENT_TYPE_LABELS[String(v)] || String(v ?? "") },
+  dateExportColumn("payment_date", "Date"),
+  { key: "receipt_number" as keyof Record<string, unknown>, header: "Receipt Number", format: (v) => String(v ?? "") },
+  { key: "status" as keyof Record<string, unknown>, header: "Status", format: (v) => String(v ?? "") },
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -247,6 +266,11 @@ export default function LibraryPaymentsPage() {
       columns={columns}
       searchPlaceholder="Search by receipt number, member..."
       enableColumnManager={true}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="library-payments"
       createHref="/library-payments/new"
       createLabel="Record Payment"
       createPermission="library_payments.create"

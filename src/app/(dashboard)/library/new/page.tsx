@@ -15,8 +15,17 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
+import { PermissionGuard } from "@/components/auth"
 
 export default function NewLibraryPage() {
+  return (
+    <PermissionGuard permission="library.create">
+      <NewLibraryContent />
+    </PermissionGuard>
+  )
+}
+
+function NewLibraryContent() {
   const {
     formData, setFormData,
     handleChange,

@@ -22,7 +22,8 @@ import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { APPROVALS_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createStatusMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
-import { createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { APPROVAL_STATUS_FILTER, APPROVAL_PRIORITY_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
+import { APPROVAL_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import {
   ClipboardCheck, CheckCircle, XCircle, Clock,
   User, AlertTriangle, FileText, ChevronRight,
@@ -32,6 +33,8 @@ import { formatDate } from "@/lib/format"
 import { APPROVAL_PRIORITY, APPROVAL_TYPE_LABELS, getStatusInfo as getApprovalStatusInfo } from "@/lib/status-config"
 import { ApprovalReviewDialog } from "./_components/ApprovalReviewDialog"
 import type { ApprovalData } from "./_components/ApprovalReviewDialog"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 
 // ============================================
 // Types
@@ -79,24 +82,26 @@ const metrics: MetricConfig<any>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  createStatusFilter([
-    { value: "pending", label: "Pending" },
-    { value: "approved", label: "Approved" },
-    { value: "rejected", label: "Rejected" },
-  ]),
-  {
-    id: "priority",
-    label: "Priority",
-    type: "select",
-    placeholder: "All Priority",
-    options: [
-      { value: "low", label: "Low" },
-      { value: "normal", label: "Normal" },
-      { value: "high", label: "High" },
-      { value: "urgent", label: "Urgent" },
-    ],
-  },
+  APPROVAL_STATUS_FILTER,
+  APPROVAL_PRIORITY_FILTER,
   createDateRangeFilter("created_at", "Submitted"),
+]
+
+// ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  selectFilterColumn("type", "Request Type", [
+    { value: "room_change", label: "Room Change" },
+    { value: "maintenance", label: "Maintenance" },
+    { value: "complaint", label: "Complaint" },
+    { value: "notice", label: "Notice" },
+    { value: "other", label: "Other" },
+  ]),
+  statusFilterColumn(APPROVAL_STATUS_OPTIONS.filter((o) => o.value !== "cancelled")),
+  selectFilterColumn("priority", "Priority", APPROVAL_PRIORITY_FILTER.options!),
+  dateFilterColumn("created_at", "Submitted On"),
 ]
 
 // ============================================
@@ -225,6 +230,9 @@ export default function ApprovalsPage() {
         groupByOptions={groupByOptions}
         metrics={metrics}
         searchPlaceholder="Search requests..."
+        enableAdvancedFilters={true}
+        advancedFilterColumns={advancedFilterColumns}
+        enableInlineEdit={true}
         onRowClick={handleRowClick}
         emptyTitle="No requests found"
         emptyDescription="No approval requests to review"

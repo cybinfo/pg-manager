@@ -147,6 +147,7 @@ export interface UseListPageOptions<T> {
   initialPageSize?: number
   initialViewConfig?: TableViewConfig // Apply a saved view configuration
   enabled?: boolean
+  tableKey?: string // Used for persisting column visibility to localStorage
 }
 
 export interface UseListPageReturn<T> {

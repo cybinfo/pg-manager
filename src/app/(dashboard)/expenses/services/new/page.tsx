@@ -20,15 +20,8 @@ import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
 import { getTodayISO } from "@/lib/date-helpers"
+import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { ServiceProvider, ServiceCategory, ServicePaymentFormData, TdsSection, PaymentMode } from "@/types/expense-enhanced.types"
-
-const PAYMENT_MODE_OPTIONS = [
-  { value: "cash", label: "Cash" },
-  { value: "upi", label: "UPI" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "card", label: "Card" },
-  { value: "cheque", label: "Cheque" },
-]
 
 const TDS_SECTION_OPTIONS = [
   { value: "194C", label: "194C - Contractor (1%)" },

@@ -51,6 +51,7 @@ import {
 } from "@/types/exit-clearance.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { PermissionGate } from "@/components/auth"
 
 export default function ExitClearanceDetailPage() {
   const params = useParams()
@@ -226,7 +227,12 @@ export default function ExitClearanceDetailPage() {
     return <PageLoading message="Loading exit clearance..." />
   }
 
-  if (!clearance) return null
+  if (!clearance) return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+      </div>
+    )
 
   const finalAmount = computeFinalAmount()
   const isRefund = isRefundDue(finalAmount)
@@ -253,10 +259,12 @@ export default function ExitClearanceDetailPage() {
         status={<StatusBadge variant={statusConfig.variant} label={statusConfig.label} />}
         actions={
           !isCleared && (
-            <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Save
-            </Button>
+            <PermissionGate permission="exit_clearance.edit" hide>
+              <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Save
+              </Button>
+            </PermissionGate>
           )
         }
       />
@@ -521,42 +529,44 @@ export default function ExitClearanceDetailPage() {
 
         {/* Actions */}
         {!isCleared && (
-          <DetailSection
-            title="Actions"
-            description="Complete the clearance"
-            icon={CheckCircle}
-          >
-            <div className="space-y-3">
-              {clearance.settlement_status === "initiated" && (
+          <PermissionGate permission="exit_clearance.edit" hide>
+            <DetailSection
+              title="Actions"
+              description="Complete the clearance"
+              icon={CheckCircle}
+            >
+              <div className="space-y-3">
+                {clearance.settlement_status === "initiated" && (
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    onClick={handleMarkPending}
+                    disabled={saving}
+                  >
+                    <AlertCircle className="mr-2 h-4 w-4" />
+                    Mark Pending Payment
+                  </Button>
+                )}
                 <Button
                   className="w-full"
-                  variant="outline"
-                  onClick={handleMarkPending}
-                  disabled={saving}
+                  onClick={handleComplete}
+                  disabled={saving || !formData.room_inspection_done || !formData.key_returned}
                 >
-                  <AlertCircle className="mr-2 h-4 w-4" />
-                  Mark Pending Payment
+                  {saving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                  )}
+                  Complete Clearance
                 </Button>
-              )}
-              <Button
-                className="w-full"
-                onClick={handleComplete}
-                disabled={saving || !formData.room_inspection_done || !formData.key_returned}
-              >
-                {saving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <CheckCircle className="mr-2 h-4 w-4" />
+                {(!formData.room_inspection_done || !formData.key_returned) && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Complete checklist items to enable
+                  </p>
                 )}
-                Complete Clearance
-              </Button>
-              {(!formData.room_inspection_done || !formData.key_returned) && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Complete checklist items to enable
-                </p>
-              )}
-            </div>
-          </DetailSection>
+              </div>
+            </DetailSection>
+          </PermissionGate>
         )}
 
         {/* Cleared Badge */}
