@@ -685,7 +685,7 @@ export const LIBRARY_DETAIL_CONFIG: DetailPageConfig = {
     {
       key: "lockers",
       table: "library_lockers",
-      select: "id, locker_number, size, status, monthly_rent, current_member:library_members(id, name)",
+      select: "id, locker_number, size, status, monthly_rent, current_member:library_members!fk_lockers_current_member(id, name)",
       foreignKey: "library_id",
       joinFields: ["current_member"],
       orderBy: "locker_number",
@@ -719,7 +719,7 @@ export const LIBRARY_SECTION_DETAIL_CONFIG: DetailPageConfig = {
     {
       key: "seats",
       table: "library_seats",
-      select: "id, seat_number, row_number, status, has_power_outlet, current_member:library_members(id, name, member_code)",
+      select: "id, seat_number, row_number, status, has_power_outlet, current_member:library_members!fk_seats_current_member(id, name, member_code)",
       foreignKey: "section_id",
       joinFields: ["current_member"],
       orderBy: "seat_number",
@@ -734,7 +734,7 @@ export const LIBRARY_SEAT_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     section:library_sections(id, name, library:libraries(id, name)),
-    current_member:library_members(id, name, member_code, phone)
+    current_member:library_members!fk_seats_current_member(id, name, member_code, phone)
   `,
   joinFields: ["section", "current_member"],
   redirectOnNotFound: "/library-sections",
@@ -812,7 +812,7 @@ export const LIBRARY_LOCKER_DETAIL_CONFIG: DetailPageConfig = {
   select: `
     *,
     library:libraries(id, name),
-    current_member:library_members(id, name, member_code, phone)
+    current_member:library_members!fk_lockers_current_member(id, name, member_code, phone)
   `,
   joinFields: ["library", "current_member"],
   redirectOnNotFound: "/library-lockers",
