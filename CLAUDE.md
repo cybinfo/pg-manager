@@ -128,6 +128,7 @@ src/
 | Waitlist | `/library-waitlist` | Prospective members queue |
 | Attendance | `/library-attendance` | Check-in/check-out |
 | Lockers | `/library-lockers` | Locker rental |
+| Subscriptions | `/library-subscriptions` | All memberships with payment tracking |
 | Library Payments | `/library-payments` | Subscription payments |
 | Library Reports | `/library-reports` | Revenue & occupancy analytics |
 | Plans | `/library-plans` | Subscription plans |
@@ -188,6 +189,12 @@ locker:library_lockers!library_members_locker_id_fkey(id, locker_number)
 | `library_members` | `library_seats` | `!library_members_assigned_seat_id_fkey` |
 | `library_members` | `library_lockers` | `!library_members_locker_id_fkey` |
 | `library_attendance` | `library_members` | `!library_attendance_member_id_fkey` |
+| `library_memberships` | `library_members` | `!library_memberships_member_id_fkey` |
+| `library_lockers` | `library_members` | `!fk_lockers_current_member` |
+| `library_seats` | `library_members` | `!fk_seats_current_member` |
+| `library_payments` | `library_memberships` | `!library_payments_membership_id_fkey` |
+
+**IMPORTANT:** Check ALL three config locations: `list-page/configs.ts`, `detail-page/types.ts` (main select AND relatedQueries), and inline queries. When in doubt, add the hint — it never hurts.
 
 **How to find the FK name:** Check the migration SQL or run `\d+ table_name` in psql.
 
@@ -292,31 +299,44 @@ const metrics: MetricConfig<EntityType>[] = [
 **Use column builder functions** from `src/lib/columns/builders.ts` instead of inline column definitions:
 
 ```typescript
-import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
+import {
+  statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn,
+  booleanColumn, phoneColumn, emailColumn, timeColumn, timeAgoColumn, countColumn, badgeColumn,
+} from "@/lib/columns"
 
 const columns = [
-  // Avatar + Name column (supports live person data pattern)
-  personNameWithAvatarColumn("Tenant", {
-    // All optional — smart defaults resolve person.name, person.photo_url, phone
-    subtitleField: ["member_code", "phone"],  // fallback chain
-    nameField: "tenant.name",                 // dot-notation for joins
-  }),
+  personNameWithAvatarColumn("Tenant", { subtitleField: ["member_code", "phone"] }),
   statusColumn("Status"),
   currencyColumn("Amount", "amount"),
   dateColumn("Date", "created_at"),
+  booleanColumn("is_active", "Active", { trueLabel: "Active", falseLabel: "Inactive" }),
+  phoneColumn("phone", "Phone"),
+  emailColumn("email", "Email"),
+  timeColumn("check_in_time", "Check In"),
+  timeAgoColumn("created_at", "Created"),
+  countColumn("total_seats", "Seats", { icon: Armchair }),
+  badgeColumn("room_type", "Type", ROOM_TYPE_LABELS),
 ]
 ```
 
-### 3.9 Centralized Option Lists (NEVER HARDCODE)
+### 3.9 Centralized Option Lists & Filter Presets (NEVER HARDCODE)
 
 **NEVER hardcode option arrays** (payment methods, room types, etc.) inline. Import from centralized configs:
 
 ```typescript
-// Payment methods, refund types, notice types, meter types
-import { PAYMENT_METHODS, REFUND_TYPE_LABELS, NOTICE_TYPES } from "@/lib/status"
+// Status labels, payment methods, refund types, notice types
+import { PAYMENT_METHODS, PAYMENT_METHOD_OPTIONS, REFUND_TYPE_OPTIONS, NOTICE_TYPE_OPTIONS } from "@/lib/status"
 
 // Room types, amenities, ID proof types
 import { ROOM_TYPE_OPTIONS, AVAILABLE_AMENITIES, ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
+
+// Filter presets (for list pages) — 22 available
+import {
+  PROPERTY_FILTER, LIBRARY_FILTER, TIME_SLOT_FILTER, PAYMENT_METHOD_FILTER,
+  COMPLAINT_STATUS_FILTER, NOTICE_TYPE_FILTER, REFUND_TYPE_FILTER,
+  EXIT_CLEARANCE_STATUS_FILTER, BILL_STATUS_FILTER, APPROVAL_STATUS_FILTER,
+  createStatusFilter, createDateRangeFilter,
+} from "@/lib/filter-presets"
 ```
 
 ### 3.10 Library Member Detail Pattern
@@ -364,9 +384,25 @@ npx tsx scripts/migrate-library-data.ts  # Migrate Google Sheets → Supabase
 - Use `createClient(URL, SERVICE_ROLE_KEY)` to bypass RLS
 - Clean up circular FKs before deletion (e.g., `library_members.locker_id` ↔ `library_lockers.current_member_id`)
 - Tag migrated people records with `tags: ["library_member"]` for clean re-runs
-- `universal_audit_trigger` blocks service-role inserts to tables with audit triggers — skip status logs during migration
+- `universal_audit_trigger` now handles NULL `auth.uid()` gracefully (migration 069) — sets `actor_user_id = NULL` and `actor_type = 'system'`
 
-### 3.12 List Page Architecture
+### 3.12 List Page Architecture (MANDATORY FEATURES)
+
+**Every list page MUST have ALL of these features** (100% parity across all pages):
+
+| Feature | Required | Notes |
+|---------|----------|-------|
+| `ListPageTemplate` | YES | No custom list implementations |
+| `enableAdvancedFilters` | YES | Advanced filter builder on all pages |
+| `enableInlineEdit` | YES | Except Activity Log (immutable audit) |
+| `enableColumnManager` | YES | Column visibility + persistence |
+| `groupByOptions` | YES | At least 2-3 grouping options |
+| Metric factories | YES | Never inline compute functions |
+| Column builders | YES | Never inline render for standard patterns |
+| Filter presets | YES | Never inline option arrays |
+| `exportColumns` | YES | CSV export on all data pages |
+| `PermissionGuard` | YES | Permission prop on template |
+| `FeatureGuard` | YES | For feature-flagged modules |
 
 All list pages use the centralized `ListPageTemplate` + `useListPage` hook pattern:
 
@@ -448,8 +484,8 @@ const result = await cascadeSoftDelete(propertyId, user.id, [
 ])
 ```
 
-**Soft-deletable tables** (17 total):
-`tenants`, `bills`, `payments`, `expenses`, `refunds`, `complaints`, `notices`, `visitors`, `meter_readings`, `exit_clearance`, `properties`, `rooms`, `people`, `meters`, `staff_members`, `visitor_contacts`, `library_waitlist`
+**Soft-deletable tables** (18 total):
+`tenants`, `bills`, `payments`, `expenses`, `refunds`, `complaints`, `notices`, `visitors`, `meter_readings`, `exit_clearance`, `properties`, `rooms`, `people`, `meters`, `staff_members`, `visitor_contacts`, `library_waitlist`, plus all library module tables in `SOFT_DELETABLE_TABLES` constant
 
 #### 3.10.3 Detail Page Audit Display
 
@@ -721,17 +757,24 @@ const filteredNav = filterNavigation(DASHBOARD_NAVIGATION, {
 
 ### Adding a New Navigation Item
 
+**IMPORTANT: Navigation exists in TWO places — update BOTH:**
+
 ```typescript
-// In src/lib/navigation/config.ts
+// 1. In src/lib/navigation/config.ts (DASHBOARD_NAVIGATION + ROUTE_CONFIGS)
 {
   name: "New Module",
   href: "/new-module",
   icon: NewIcon,
   permission: "new_module.view",
   feature: "newModule",  // or null if always visible
-  dividerBefore: true,   // optional divider
 }
+
+// 2. In src/app/(dashboard)/layout.tsx (~line 80, navigation const)
+// Add to the correct parent group's children[] array
+{ name: "New Module", href: "/new-module", icon: NewIcon, permission: "new_module.view", feature: "newModule" },
 ```
+
+**If you only update config.ts, the item will NOT appear in the sidebar.** The layout.tsx navigation array is the actual source for the rendered sidebar.
 
 ---
 
@@ -762,24 +805,38 @@ const filteredNav = filterNavigation(DASHBOARD_NAVIGATION, {
 
 ### 11.1 Adding a New Dashboard Page
 
-**List Page:**
+**List Page (ALL features mandatory — 100% parity with existing pages):**
 1. Create `src/app/(dashboard)/[module]/page.tsx`
-2. Define config with `ListPageConfig` type
-3. Define metrics using **metric factories** from `src/lib/metric-factories.ts` (not inline compute)
-4. Define columns using **column builders** from `src/lib/columns` (not inline render)
-5. Use `ListPageTemplate` with all required props
-6. Add to navigation in `src/lib/navigation/config.ts`
-7. Add permissions in `src/lib/auth/types.ts`
-8. Import option lists from `@/lib/status` or `@/lib/constants/form-options` (never hardcode)
+2. Define config with `ListPageConfig` type (with FK hints on all library joins)
+3. Define metrics using **metric factories** from `src/lib/metric-factories.ts`
+4. Define columns using **column builders** from `src/lib/columns` (11 available)
+5. Define filters using **filter presets** from `src/lib/filter-presets.ts` (22 available)
+6. Define `advancedFilterColumns` with filter column helpers
+7. Define `groupByOptions` (at least 2-3 options)
+8. Define `exportColumns` for CSV export
+9. Use `ListPageTemplate` with: `enableAdvancedFilters`, `enableInlineEdit`, `enableColumnManager`
+10. Add to navigation in **BOTH** `config.ts` AND `layout.tsx`
+11. Wrap with `PermissionGuard` + `FeatureGuard` (if feature-flagged)
+12. Import all options from `@/lib/status` or `@/lib/constants/form-options`
 
 **Detail Page:**
 1. Create `src/app/(dashboard)/[module]/[id]/page.tsx`
-2. Use `useDetailPage` hook for data fetching
-3. Use `<DetailPageTemplate>` for consistent layout
-4. Use `<DetailListSection>` for lists with "View All"
-5. **ALWAYS add breadcrumbs** to `<DetailHero>` — `breadcrumbs={[{ label: "Module", href: "/module" }, { label: "Details" }]}`
-6. **ALWAYS wrap edit/delete buttons** with `<PermissionGate permission="module.edit" hide>`
-7. Use `personNameWithAvatarColumn()` for person name columns in embedded tables
+2. Use `useDetailPage` hook for data fetching (NEVER custom useEffect + createClient)
+3. Use `<DetailPageTemplate>` for consistent layout (auto-adds audit section)
+4. **ALWAYS add breadcrumbs** to `<DetailHero>`
+5. **ALWAYS wrap edit/delete buttons** with `<PermissionGate permission="module.edit" hide>`
+6. **ALWAYS show Not Found UI** when entity is missing (never `return null`)
+7. Add **Quick Actions** (Call/WhatsApp/Email) if entity has phone/email
+8. Use `<DetailListSection>` for related entity tables with "View All"
+9. Use FK hints on all library cross-table joins
+
+**Form Page:**
+1. Use `useFormPage` / `useFormEditPage` for standard CRUD (custom only for complex workflows)
+2. **ALWAYS wrap with `<PermissionGuard>`** — create pages use `.create`, edit pages use `.edit`
+3. Use `FormField` wrapper with `error` prop for field-level validation
+4. Use `validationSchema` with field validators from `@/lib/validation`
+5. Import all dropdown options from `@/lib/status` (never hardcode)
+6. Use `withCreatedBy` for inserts via the hook
 
 ### 11.2 Adding a New Database Table
 
@@ -854,13 +911,21 @@ git add . && git commit -m "description" && git push && vercel --prod
 - Include `compute` function (required)
 - Use `serverFilter` for server-side counting
 
-### Recently Fixed Issues
-- **personNameWithAvatarColumn**: Now applied to 8/8 list pages (was 3/8)
-- **Form submit debouncing**: Added to `useFormPage` hook to prevent double submissions
-- **Detail page "Not Found" UI**: Detail pages now show a proper "Not Found" message instead of a blank screen
-- **Column visibility persistence**: DataTable column visibility is persisted to localStorage per table
-- **Password strength**: Upgraded to 8+ characters with complexity requirements (uppercase, lowercase, number)
-- **Email enumeration**: Fixed on forgot-password page (consistent response regardless of email existence)
+### Recently Fixed Issues (2026-03-16)
+- **Full list page unification**: ALL 27 pages now have advanced filters, inline edit, column builders, filter presets, CSV export
+- **PermissionGuard on ALL forms**: 52/52 form pages now have permission guards (was ~16)
+- **11 column builders**: Added boolean, phone, email, time, timeAgo, count (was 5)
+- **22 filter presets**: Centralized all inline option definitions (was ~12)
+- **Library hours model**: Fixed from pool (depleting) to per-day (daily allowance) — migration 070
+- **Library Subscriptions page**: New `/library-subscriptions` with detail page + partial payment support
+- **FK hints complete**: All ambiguous library joins have FK hints in list, detail, AND related query configs
+- **Navigation dual-source**: Both `config.ts` and `layout.tsx` now in sync
+- **Type consolidation**: PAYMENT_METHODS, library status configs, StatusInfo→StatusConfig unified
+- **Brand gradient centralized**: 24 files now use `brandGradient` from design-tokens
+- **Welcome emails**: Tenant + library member welcome on creation
+- **Bulk operations**: Payment recording, member import (CSV), member status updates
+- **Payment reconciliation**: 2-panel matching UI with auto-match algorithm
+- **6 notification emails**: Receipts, resolution, refund, waitlist, monthly summary
 
 ---
 
