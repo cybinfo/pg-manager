@@ -23,7 +23,6 @@ import { Combobox } from "@/components/ui/combobox"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { ArrowLeft, Loader2, Clock, RefreshCw, Calendar, AlertTriangle } from "lucide-react"
 import { showError } from "@/lib/toast-helpers"
-import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
@@ -60,23 +59,6 @@ interface CurrentMembership {
   plan_id: string | null
   plan_name: string
   time_slot: string | null
-}
-
-/** Time slot presets for quick selection */
-const TIME_PRESETS = [
-  { label: "Morning (6 AM - 2 PM)", startTime: "06:00", endTime: "14:00", slot: "Morning" },
-  { label: "Evening (2 PM - 10 PM)", startTime: "14:00", endTime: "22:00", slot: "Evening" },
-  { label: "Night (10 PM - 6 AM)", startTime: "22:00", endTime: "06:00", slot: "Night" },
-  { label: "Full Day (24 Hours)", startTime: "00:00", endTime: "23:59", slot: "24 Hours" },
-] as const
-
-/**
- * Derive the time_slot name from start/end times for backward compatibility.
- * Returns the matching preset name or "Custom".
- */
-function deriveTimeSlot(startTime: string, endTime: string): string {
-  const match = TIME_PRESETS.find((p) => p.startTime === startTime && p.endTime === endTime)
-  return match ? match.slot : "Custom"
 }
 
 /**
@@ -143,8 +125,6 @@ export default function RenewLibraryMemberPage({
     plan_id: "",
     start_date: getTodayISO(),
     end_date: "",
-    start_time: "06:00",
-    end_time: "14:00",
     add_to_existing: true,
   })
 
@@ -187,15 +167,9 @@ export default function RenewLibraryMemberPage({
       // Smart start date
       const smartStartDate = computeDefaultStartDate(memberData.expiry_date, memberData.status)
 
-      // Determine initial time slot from preferred_slot
-      const preferredSlot = memberData.preferred_slot || "Morning"
-      const matchingPreset = TIME_PRESETS.find((p) => p.slot === preferredSlot)
-
       setFormData((prev) => ({
         ...prev,
         start_date: smartStartDate,
-        start_time: matchingPreset?.startTime || "06:00",
-        end_time: matchingPreset?.endTime || "14:00",
       }))
 
       // Fetch plans
@@ -221,27 +195,14 @@ export default function RenewLibraryMemberPage({
         const smartStartDate = formData.start_date
         const newEndDate = computeEndDate(smartStartDate, matchingPlan.validity_days)
 
-        // Set time from current membership slot
-        const slotPreset = TIME_PRESETS.find((p) => p.slot === currentMembership.time_slot)
-
         setFormData((prev) => ({
           ...prev,
           plan_id: matchingPlan.id,
           end_date: newEndDate,
-          start_time: slotPreset?.startTime || prev.start_time,
-          end_time: slotPreset?.endTime || prev.end_time,
         }))
       }
     }
   }, [currentMembership, plans, formData.plan_id, formData.start_date])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }))
-  }
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStartDate = e.target.value
@@ -275,14 +236,6 @@ export default function RenewLibraryMemberPage({
     }))
   }
 
-  const handleTimePreset = (preset: typeof TIME_PRESETS[number]) => {
-    setFormData((prev) => ({
-      ...prev,
-      start_time: preset.startTime,
-      end_time: preset.endTime,
-    }))
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -306,7 +259,6 @@ export default function RenewLibraryMemberPage({
       const hoursToAdd = selectedPlan?.hours_included || 0
 
       const amount = selectedPlan?.base_price || 0
-      const timeSlot = deriveTimeSlot(formData.start_time, formData.end_time)
 
       // Create new membership record
       const membershipData = withCreatedBy({
@@ -319,7 +271,7 @@ export default function RenewLibraryMemberPage({
         amount: amount,
         discount_amount: 0,
         final_amount: amount,
-        time_slot: timeSlot,
+        time_slot: null,
         start_date: formData.start_date,
         end_date: formData.end_date,
         hours_remaining: hoursToAdd || null,
@@ -406,12 +358,6 @@ export default function RenewLibraryMemberPage({
   const durationDays = formData.start_date && formData.end_date
     ? computeDurationDays(formData.start_date, formData.end_date)
     : null
-
-  // Derive current time slot label
-  const currentTimeSlot = deriveTimeSlot(formData.start_time, formData.end_time)
-  const timeLabel = currentTimeSlot !== "Custom"
-    ? currentTimeSlot
-    : `${formData.start_time} - ${formData.end_time}`
 
   const planOptions = plans.map((plan) => ({
     value: plan.id,
@@ -562,52 +508,6 @@ export default function RenewLibraryMemberPage({
                 </div>
               </div>
 
-              {/* Time Selection */}
-              <div className="space-y-3">
-                <Label>Daily Time</Label>
-                <div className="flex flex-wrap gap-2">
-                  {TIME_PRESETS.map((preset) => {
-                    const isActive = formData.start_time === preset.startTime && formData.end_time === preset.endTime
-                    return (
-                      <Button
-                        key={preset.slot}
-                        type="button"
-                        variant={isActive ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleTimePreset(preset)}
-                        disabled={loading}
-                      >
-                        {preset.label}
-                      </Button>
-                    )
-                  })}
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_time">Start Time</Label>
-                    <Input
-                      id="start_time"
-                      name="start_time"
-                      type="time"
-                      value={formData.start_time}
-                      onChange={handleChange}
-                      disabled={loading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="end_time">End Time</Label>
-                    <Input
-                      id="end_time"
-                      name="end_time"
-                      type="time"
-                      value={formData.end_time}
-                      onChange={handleChange}
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-              </div>
-
               {/* Summary */}
               <div className="border-t pt-4 bg-muted/50 rounded-lg p-4 mt-4">
                 <h3 className="font-medium mb-3">Summary</h3>
@@ -632,10 +532,6 @@ export default function RenewLibraryMemberPage({
                   <div className="flex justify-between">
                     <span>Daily Hours</span>
                     <span className="font-medium">{selectedPlan?.hours_included || 0}h</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Time</span>
-                    <span className="font-medium">{timeLabel}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Amount</span>

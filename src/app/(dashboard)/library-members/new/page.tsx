@@ -24,7 +24,6 @@ import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
-import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
 import { withCreatedBy } from "@/lib/audit"
 
 interface Library {
@@ -39,22 +38,6 @@ interface Plan {
   hours_included: number | null
   validity_days: number
   base_price: number
-}
-
-/** Time slot presets for quick selection */
-const TIME_PRESETS = [
-  { label: "Morning (6 AM - 2 PM)", startTime: "06:00", endTime: "14:00", slot: "Morning" },
-  { label: "Evening (2 PM - 10 PM)", startTime: "14:00", endTime: "22:00", slot: "Evening" },
-  { label: "Night (10 PM - 6 AM)", startTime: "22:00", endTime: "06:00", slot: "Night" },
-  { label: "Full Day (24 Hours)", startTime: "00:00", endTime: "23:59", slot: "24 Hours" },
-] as const
-
-/**
- * Derive the time_slot name from start/end times for backward compatibility.
- */
-function deriveTimeSlot(startTime: string, endTime: string): string {
-  const match = TIME_PRESETS.find((p) => p.startTime === startTime && p.endTime === endTime)
-  return match ? match.slot : "Custom"
 }
 
 /**
@@ -109,8 +92,6 @@ function NewLibraryMemberContent() {
     plan_id: "",
     start_date: getTodayISO(),
     end_date: "",
-    start_time: "06:00",
-    end_time: "14:00",
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -141,12 +122,6 @@ function NewLibraryMemberContent() {
     if (prefilledEmail && !formData.email) updates.email = prefilledEmail
     if (prefilledSlot && formData.preferred_slot === "Morning") {
       updates.preferred_slot = prefilledSlot
-      // Also set time preset based on slot
-      const matchingPreset = TIME_PRESETS.find((p) => p.slot === prefilledSlot)
-      if (matchingPreset) {
-        updates.start_time = matchingPreset.startTime
-        updates.end_time = matchingPreset.endTime
-      }
     }
     if (Object.keys(updates).length > 0) {
       setFormData((prev) => ({ ...prev, ...updates }))
@@ -226,14 +201,6 @@ function NewLibraryMemberContent() {
     }))
   }
 
-  const handleTimePreset = (preset: typeof TIME_PRESETS[number]) => {
-    setFormData((prev) => ({
-      ...prev,
-      start_time: preset.startTime,
-      end_time: preset.endTime,
-    }))
-  }
-
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
 
@@ -309,7 +276,6 @@ function NewLibraryMemberContent() {
         : computeEndDate(formData.start_date, 30))
 
       const amount = selectedPlan?.base_price || 0
-      const timeSlot = deriveTimeSlot(formData.start_time, formData.end_time)
 
       // Auto-uppercase name
       const memberName = formData.name.toUpperCase()
@@ -325,7 +291,7 @@ function NewLibraryMemberContent() {
         member_code: memberCode,
         id_proof_type: formData.id_proof_type || null,
         id_proof_number: formData.id_proof_number || null,
-        preferred_slot: timeSlot !== "Custom" ? timeSlot : formData.preferred_slot,
+        preferred_slot: formData.preferred_slot || null,
         notes: formData.notes || null,
         status: "active",
         join_date: formData.start_date,
@@ -355,7 +321,7 @@ function NewLibraryMemberContent() {
         amount: amount,
         discount_amount: 0,
         final_amount: amount,
-        time_slot: timeSlot,
+        time_slot: null,
         start_date: formData.start_date,
         end_date: endDate,
         hours_remaining: selectedPlan?.hours_included || null,
@@ -411,7 +377,6 @@ function NewLibraryMemberContent() {
             memberCode: memberCode,
             planName: selectedPlan?.name,
             hoursIncluded: selectedPlan?.hours_included || undefined,
-            timeSlot: timeSlot || undefined,
           }).catch((err: unknown) => {
             console.warn("[NewLibraryMember] Failed to send welcome email:", err)
           })
@@ -707,51 +672,6 @@ function NewLibraryMemberContent() {
                 </div>
               </div>
 
-              {/* Time Selection */}
-              <div className="space-y-3">
-                <Label>Daily Time</Label>
-                <div className="flex flex-wrap gap-2">
-                  {TIME_PRESETS.map((preset) => {
-                    const isActive = formData.start_time === preset.startTime && formData.end_time === preset.endTime
-                    return (
-                      <Button
-                        key={preset.slot}
-                        type="button"
-                        variant={isActive ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleTimePreset(preset)}
-                        disabled={saving}
-                      >
-                        {preset.label}
-                      </Button>
-                    )
-                  })}
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_time">Start Time</Label>
-                    <Input
-                      id="start_time"
-                      name="start_time"
-                      type="time"
-                      value={formData.start_time}
-                      onChange={handleChange}
-                      disabled={saving}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="end_time">End Time</Label>
-                    <Input
-                      id="end_time"
-                      name="end_time"
-                      type="time"
-                      value={formData.end_time}
-                      onChange={handleChange}
-                      disabled={saving}
-                    />
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>
