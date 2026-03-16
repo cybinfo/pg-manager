@@ -257,6 +257,19 @@ export default function RenewLibraryMemberPage({
       return
     }
 
+    // Validate access time window doesn't exceed plan hours
+    const plan = plans.find((p) => p.id === formData.plan_id)
+    if (formData.start_time && formData.end_time && plan?.hours_included) {
+      const [sh, sm] = formData.start_time.split(":").map(Number)
+      const [eh, em] = formData.end_time.split(":").map(Number)
+      let windowHours = (eh * 60 + em - sh * 60 - sm) / 60
+      if (windowHours < 0) windowHours += 24 // overnight
+      if (windowHours > plan.hours_included) {
+        showError(`Access time window (${windowHours.toFixed(1)}h) exceeds plan limit (${plan.hours_included}h/day)`)
+        return
+      }
+    }
+
     setLoading(true)
 
     try {
@@ -559,6 +572,24 @@ export default function RenewLibraryMemberPage({
                   Leave empty for full day access (no time restriction).
                 </p>
               )}
+              {formData.start_time && formData.end_time && selectedPlan?.hours_included && (() => {
+                const [sh, sm] = formData.start_time.split(":").map(Number)
+                const [eh, em] = formData.end_time.split(":").map(Number)
+                let windowH = (eh * 60 + em - sh * 60 - sm) / 60
+                if (windowH < 0) windowH += 24
+                if (windowH > selectedPlan.hours_included) {
+                  return (
+                    <p className="text-xs text-destructive font-medium">
+                      Access window ({windowH.toFixed(1)}h) exceeds plan limit ({selectedPlan.hours_included}h/day)
+                    </p>
+                  )
+                }
+                return (
+                  <p className="text-xs text-muted-foreground">
+                    Access window: {windowH.toFixed(1)}h (plan allows {selectedPlan.hours_included}h/day)
+                  </p>
+                )
+              })()}
 
               {/* Amount & Discount */}
               <div className="grid grid-cols-2 gap-4">

@@ -270,6 +270,20 @@ function NewLibraryMemberContent() {
 
       // Calculate subscription dates
       const selectedPlan = plans.find((p) => p.id === formData.plan_id)
+
+      // Validate access time window doesn't exceed plan hours
+      if (formData.start_time && formData.end_time && selectedPlan?.hours_included) {
+        const [sh, sm] = formData.start_time.split(":").map(Number)
+        const [eh, em] = formData.end_time.split(":").map(Number)
+        let windowHours = (eh * 60 + em - sh * 60 - sm) / 60
+        if (windowHours < 0) windowHours += 24
+        if (windowHours > selectedPlan.hours_included) {
+          showError(`Access time window (${windowHours.toFixed(1)}h) exceeds plan limit (${selectedPlan.hours_included}h/day)`)
+          setSaving(false)
+          return
+        }
+      }
+
       const endDate = computeEndDate(formData.start_date, formData.duration_months)
 
       const finalAmount = formData.amount - formData.discount
@@ -721,6 +735,24 @@ function NewLibraryMemberContent() {
                   Leave empty for full day access (no time restriction).
                 </p>
               )}
+              {formData.start_time && formData.end_time && selectedPlan?.hours_included && (() => {
+                const [sh, sm] = formData.start_time.split(":").map(Number)
+                const [eh, em] = formData.end_time.split(":").map(Number)
+                let windowH = (eh * 60 + em - sh * 60 - sm) / 60
+                if (windowH < 0) windowH += 24
+                if (windowH > selectedPlan.hours_included) {
+                  return (
+                    <p className="text-xs text-destructive font-medium">
+                      Access window ({windowH.toFixed(1)}h) exceeds plan limit ({selectedPlan.hours_included}h/day)
+                    </p>
+                  )
+                }
+                return (
+                  <p className="text-xs text-muted-foreground">
+                    Access window: {windowH.toFixed(1)}h (plan allows {selectedPlan.hours_included}h/day)
+                  </p>
+                )
+              })()}
 
               {/* Amount & Discount */}
               <div className="grid grid-cols-2 gap-4">
