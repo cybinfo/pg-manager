@@ -54,7 +54,7 @@ const LIBRARY_PDF_CONFIG: PdfRouteConfig<LibraryReceiptData> = {
     const membership = transformJoin(payment.membership)
 
     const receiptNumber = payment.receipt_number ||
-      `LIB-${new Date(payment.payment_date).getFullYear()}-${String(payment.id).slice(0, 8).toUpperCase()}`
+      `PYMT-LIB-${new Date(payment.payment_date).getFullYear()}-${String(payment.id).slice(0, 8).toUpperCase()}`
 
     return {
       receiptNumber,

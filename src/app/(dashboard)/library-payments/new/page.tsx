@@ -90,10 +90,10 @@ function NewLibraryPaymentContent() {
 
       let nextNumber = 1
       if (lastPayment?.receipt_number) {
-        const match = lastPayment.receipt_number.match(/LIB-(\d+)/)
+        const match = lastPayment.receipt_number.match(/(?:PYMT-)?LIB-(\d+)/)
         if (match) nextNumber = parseInt(match[1], 10) + 1
       }
-      const receiptNumber = `LIB-${nextNumber.toString().padStart(6, "0")}`
+      const receiptNumber = `PYMT-LIB-${nextNumber.toString().padStart(6, "0")}`
 
       const { withCreatedBy } = await import("@/lib/audit")
 

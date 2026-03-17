@@ -774,6 +774,9 @@ async function migrate() {
       const paymentDate = parseDate(pd.dop) || parseDate(pd.add_datetime) || new Date().toISOString().split("T")[0]
       const method = methodMap[(pd.mop || "cash").toLowerCase()] || "cash"
 
+      paymentCount++
+      const receiptNumber = `PYMT-LIB-${paymentCount.toString().padStart(6, "0")}`
+
       const { error: payErr } = await supabase
         .from("library_payments")
         .insert({
@@ -781,6 +784,7 @@ async function migrate() {
           workspace_id: workspaceId,
           member_id: memberId,
           membership_id: membershipId || null,
+          receipt_number: receiptNumber,
           payment_date: paymentDate,
           amount: amount,
           payment_type: "subscription",
@@ -790,9 +794,8 @@ async function migrate() {
         })
 
       if (payErr) {
-        if (paymentCount === 0) console.warn(`  First payment error: ${payErr.message} | ${payErr.code}`)
-      } else {
-        paymentCount++
+        if (paymentCount === 1) console.warn(`  First payment error: ${payErr.message} | ${payErr.code}`)
+        paymentCount-- // Undo pre-increment on failure
       }
     }
 
@@ -975,6 +978,78 @@ async function migrate() {
   }
 
   console.log(`✓ Linked ${linkedCount} members to subscriptions`)
+
+  // ── Step 10: Link orphan payments to memberships ──
+  console.log("\n🔗 Linking payments to memberships...")
+
+  // Fetch all payments without membership_id for this owner
+  const { data: orphanPayments } = await supabase
+    .from("library_payments")
+    .select("id, member_id, payment_date, amount")
+    .eq("owner_id", ownerId)
+    .is("membership_id", null)
+
+  let linkPaymentCount = 0
+  if (orphanPayments && orphanPayments.length > 0) {
+    // Fetch all memberships for this owner (grouped by member)
+    const { data: allMemberships } = await supabase
+      .from("library_memberships")
+      .select("id, member_id, start_date, end_date, final_amount")
+      .eq("owner_id", ownerId)
+      .order("start_date", { ascending: true })
+
+    if (allMemberships && allMemberships.length > 0) {
+      // Build a map of member_id → memberships
+      const memberMemberships = new Map<string, typeof allMemberships>()
+      for (const ms of allMemberships) {
+        if (!memberMemberships.has(ms.member_id)) memberMemberships.set(ms.member_id, [])
+        memberMemberships.get(ms.member_id)!.push(ms)
+      }
+
+      for (const payment of orphanPayments) {
+        const memberships = memberMemberships.get(payment.member_id)
+        if (!memberships || memberships.length === 0) continue
+
+        // Find best matching membership:
+        // 1. Payment date falls within membership period (start_date to end_date)
+        // 2. If multiple matches, prefer one where amount is close to final_amount
+        let bestMatch: typeof allMemberships[0] | null = null
+        let bestAmountDiff = Infinity
+
+        for (const ms of memberships) {
+          const pDate = payment.payment_date
+          if (pDate >= ms.start_date && pDate <= ms.end_date) {
+            const amountDiff = Math.abs(payment.amount - ms.final_amount)
+            if (!bestMatch || amountDiff < bestAmountDiff) {
+              bestMatch = ms
+              bestAmountDiff = amountDiff
+            }
+          }
+        }
+
+        // If no date-range match, try closest membership by start_date before payment
+        if (!bestMatch) {
+          for (const ms of [...memberships].reverse()) {
+            if (ms.start_date <= payment.payment_date) {
+              bestMatch = ms
+              break
+            }
+          }
+        }
+
+        if (bestMatch) {
+          const { error: linkErr } = await supabase
+            .from("library_payments")
+            .update({ membership_id: bestMatch.id })
+            .eq("id", payment.id)
+
+          if (!linkErr) linkPaymentCount++
+        }
+      }
+    }
+  }
+
+  console.log(`✓ Linked ${linkPaymentCount} orphan payments to memberships (of ${orphanPayments?.length || 0} total)`)
 
   // ── Summary ──
   console.log("\n" + "=".repeat(60))
