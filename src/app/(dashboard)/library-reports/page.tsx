@@ -242,11 +242,11 @@ export default function LibraryReportsPage() {
         attendanceRes,
       ] = await Promise.all([
         supabase.from("libraries").select("id, name, total_seats, occupied_seats"),
-        supabase.from("library_seats").select("id, section_id, status, section:library_sections!library_seats_section_id_fkey(library_id)"),
-        supabase.from("library_members").select("id, library_id, status, hours_balance, hours_used, join_date, expiry_date, preferred_slot, created_at"),
-        supabase.from("library_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:library_members!library_memberships_member_id_fkey(library_id)"),
-        supabase.from("library_payments").select("id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(library_id)"),
-        supabase.from("library_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:library_members!library_attendance_member_id_fkey(library_id)"),
+        supabase.from("library_seats").select("id, section_id, status, section:library_sections!library_seats_section_id_fkey(library_id)").limit(5000),
+        supabase.from("library_members").select("id, library_id, status, hours_balance, hours_used, join_date, expiry_date, preferred_slot, created_at").limit(5000),
+        supabase.from("library_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:library_members!library_memberships_member_id_fkey(library_id)").limit(10000),
+        supabase.from("library_payments").select("id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(library_id)").limit(10000),
+        supabase.from("library_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:library_members!library_attendance_member_id_fkey(library_id)").limit(10000),
       ])
 
       // Log query results for debugging
@@ -482,11 +482,11 @@ export default function LibraryReportsPage() {
       const [paymentsRes, membersRes, membershipsRes] = await Promise.all([
         supabase.from("library_payments").select(
           "id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(id, library_id, name, member_code)"
-        ),
-        supabase.from("library_members").select("id, library_id, status"),
+        ).limit(10000),
+        supabase.from("library_members").select("id, library_id, status").limit(5000),
         supabase.from("library_memberships").select(
           "id, member_id, final_amount, status, member:library_members!library_memberships_member_id_fkey(library_id)"
-        ),
+        ).limit(10000),
       ])
 
       const paymentsData = (paymentsRes.data || []).map((p: any) => ({
