@@ -249,6 +249,11 @@ export default function LibraryReportsPage() {
         supabase.from("library_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:library_members!library_attendance_member_id_fkey(library_id)"),
       ])
 
+      // Log query results for debugging
+      console.log("[Reports] Payments:", paymentsRes.data?.length || 0, "error:", paymentsRes.error?.message || "none")
+      console.log("[Reports] Members:", membersRes.data?.length || 0, "error:", membersRes.error?.message || "none")
+      console.log("[Reports] Memberships:", membershipsRes.data?.length || 0, "error:", membershipsRes.error?.message || "none")
+
       const librariesData = librariesRes.data || []
       const seatsData = (seatsRes.data || []).map((s: any) => ({
         ...s,
