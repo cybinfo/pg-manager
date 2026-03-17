@@ -39,12 +39,12 @@ export function formatCurrency(amount: number): string {
 }
 
 /**
- * Default date range: start of current month to now
+ * Default date range: last 6 months to now
  */
 export function getDefaultDateRange(): DateRange {
   const now = new Date()
-  const start = new Date(now.getFullYear(), now.getMonth(), 1)
-  return { from: start, to: now, label: "This month" }
+  const start = new Date(now.getFullYear(), now.getMonth() - 6, 1)
+  return { from: start, to: now, label: "Last 6 months" }
 }
 
 /**
