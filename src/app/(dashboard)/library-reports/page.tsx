@@ -227,12 +227,32 @@ export default function LibraryReportsPage() {
     }
   }, [selectedLibrary, dateRange, paymentGroupBy])
 
+  // Paginated fetch to bypass Supabase max-rows-per-request limit (default 1000)
+  const fetchAllRows = async (
+    query: ReturnType<ReturnType<typeof createClient>["from"]>,
+    pageSize = 1000
+  ): Promise<{ data: any[]; error: any }> => {
+    const allData: any[] = []
+    let from = 0
+    let hasMore = true
+    let lastError = null
+    while (hasMore) {
+      const { data, error } = await (query as any).range(from, from + pageSize - 1)
+      if (error) { lastError = error; break }
+      if (!data || data.length === 0) { hasMore = false; break }
+      allData.push(...data)
+      if (data.length < pageSize) { hasMore = false; break }
+      from += pageSize
+    }
+    return { data: allData, error: lastError }
+  }
+
   const fetchReportData = async () => {
     setLoading(true)
     const supabase = createClient()
 
     try {
-      // Fetch all required data in parallel
+      // Fetch all required data in parallel with pagination
       const [
         librariesRes,
         seatsRes,
@@ -242,11 +262,11 @@ export default function LibraryReportsPage() {
         attendanceRes,
       ] = await Promise.all([
         supabase.from("libraries").select("id, name, total_seats, occupied_seats"),
-        supabase.from("library_seats").select("id, section_id, status, section:library_sections!library_seats_section_id_fkey(library_id)").limit(5000),
-        supabase.from("library_members").select("id, library_id, status, hours_balance, hours_used, join_date, expiry_date, preferred_slot, created_at").limit(5000),
-        supabase.from("library_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:library_members!library_memberships_member_id_fkey(library_id)").limit(10000),
-        supabase.from("library_payments").select("id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(library_id)").limit(10000),
-        supabase.from("library_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:library_members!library_attendance_member_id_fkey(library_id)").limit(10000),
+        fetchAllRows(supabase.from("library_seats").select("id, section_id, status, section:library_sections!library_seats_section_id_fkey(library_id)")),
+        fetchAllRows(supabase.from("library_members").select("id, library_id, status, hours_balance, hours_used, join_date, expiry_date, preferred_slot, created_at")),
+        fetchAllRows(supabase.from("library_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:library_members!library_memberships_member_id_fkey(library_id)")),
+        fetchAllRows(supabase.from("library_payments").select("id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(library_id)")),
+        fetchAllRows(supabase.from("library_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:library_members!library_attendance_member_id_fkey(library_id)")),
       ])
 
       // Log query results for debugging
@@ -480,13 +500,13 @@ export default function LibraryReportsPage() {
 
     try {
       const [paymentsRes, membersRes, membershipsRes] = await Promise.all([
-        supabase.from("library_payments").select(
+        fetchAllRows(supabase.from("library_payments").select(
           "id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(id, library_id, name, member_code)"
-        ).limit(10000),
-        supabase.from("library_members").select("id, library_id, status").limit(5000),
-        supabase.from("library_memberships").select(
+        )),
+        fetchAllRows(supabase.from("library_members").select("id, library_id, status")),
+        fetchAllRows(supabase.from("library_memberships").select(
           "id, member_id, final_amount, status, member:library_members!library_memberships_member_id_fkey(library_id)"
-        ).limit(10000),
+        )),
       ])
 
       const paymentsData = (paymentsRes.data || []).map((p: any) => ({
