@@ -448,11 +448,25 @@ async function migrate() {
     return "Morning"
   }
 
-  // Get timing description for a subscription
+  // Get timing description for a subscription (legacy format)
   function getTimingDesc(paymentId: string): string | null {
     const timings = subTimings.get(paymentId)
     if (!timings || timings.length === 0) return null
     return timings.map((t) => `${t.fromTime.slice(0, 5)}-${t.toTime.slice(0, 5)}`).join(", ")
+  }
+
+  // Build JSON time_slot from timing data (new multi-slot format)
+  function buildTimeSlotJson(paymentId: string): string | null {
+    const timings = subTimings.get(paymentId)
+    if (!timings || timings.length === 0) return null
+    const slots = timings
+      .filter((t) => t.fromTime && t.toTime)
+      .map((t) => ({
+        start: t.fromTime.slice(0, 5), // "HH:MM"
+        end: t.toTime.slice(0, 5),
+      }))
+    if (slots.length === 0) return null
+    return JSON.stringify(slots)
   }
 
   // Check which users are "left" (have a leftUsers record)
@@ -684,8 +698,8 @@ async function migrate() {
       const price = parseInt(sub.price) || 0
       const isExpired = new Date(endDate) < new Date()
 
-      // Get timing info for this subscription
-      const timingDesc = getTimingDesc(sub.payment_id)
+      // Get timing info for this subscription — store actual times as JSON
+      const timeSlotJson = buildTimeSlotJson(sub.payment_id)
       const subTimingList = subTimings.get(sub.payment_id)
       const subSlot = subTimingList?.length ? deriveSlot(subTimingList[0].fromTime) : "Morning"
 
@@ -695,12 +709,12 @@ async function migrate() {
           owner_id: ownerId,
           workspace_id: workspaceId,
           member_id: memberId,
-          plan_name: hours ? `${hours}h ${subSlot}` : "Custom",
+          plan_name: hours ? `${hours} Hours` : "Custom",
           hours_included: hours,
           amount: price,
           discount_amount: 0,
           final_amount: price,
-          time_slot: subSlot,
+          time_slot: timeSlotJson || subSlot,
           start_date: startDate,
           end_date: endDate,
           hours_remaining: hours,
@@ -712,8 +726,9 @@ async function migrate() {
         .single()
 
       if (msErr || !membership) {
-        if (msErr && membershipCount < 3) console.warn(`  Membership error [${sub.payment_id}] user=${sub.user_id} member=${memberId}: ${msErr.message} | ${msErr.code} | ${msErr.details}`)
-        if (!msErr && !membership && membershipCount < 3) console.warn(`  Membership no data [${sub.payment_id}] user=${sub.user_id} member=${memberId}: no error but no data returned`)
+        if (msErr && membershipCount < 10) console.warn(`  Membership error [${sub.payment_id}] user=${sub.user_id} member=${memberId}: ${msErr.message} | ${msErr.code} | ${msErr.details}`)
+        if (!msErr && !membership) console.warn(`  Membership no data [${sub.payment_id}] user=${sub.user_id} member=${memberId}: no error but no data returned`)
+        if (msErr) console.warn(`  Membership ERROR [${sub.payment_id}]: ${msErr.message} | code=${msErr.code} | hint=${msErr.hint}`)
         continue
       }
 
