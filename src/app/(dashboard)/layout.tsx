@@ -342,7 +342,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   // Redirect to setup if user has no contexts (new owner without workspace)
-  if (contexts.length === 0) {
+  // Only redirect if user also has no profile (truly new user) — avoids race condition
+  // where contexts load slower than the auth state
+  if (contexts.length === 0 && !profile) {
     router.push("/setup")
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
