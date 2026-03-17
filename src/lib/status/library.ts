@@ -116,3 +116,9 @@ export const LIBRARY_PAYMENT_METHOD_FULL_OPTIONS = labelsToOptions({
   ...LIBRARY_PAYMENT_METHOD_LABELS,
   cheque: "Cheque",
 })
+
+/** Library payment type options for forms */
+export const LIBRARY_PAYMENT_TYPE_OPTIONS = labelsToOptions(LIBRARY_PAYMENT_TYPE_LABELS)
+
+/** Library payment status options for forms */
+export const LIBRARY_PAYMENT_STATUS_OPTIONS = labelsToOptions(LIBRARY_PAYMENT_STATUS_LABELS)

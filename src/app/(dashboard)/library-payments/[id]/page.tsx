@@ -6,9 +6,13 @@
 
 "use client"
 
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useDetailPage, LIBRARY_PAYMENT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { useAuth } from "@/lib/auth"
+import { softDelete } from "@/lib/audit"
+import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -21,6 +25,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
+import { PermissionGate } from "@/components/auth"
 import {
   CreditCard,
   Users,
@@ -30,6 +35,8 @@ import {
   Hash,
   Wallet,
   Download,
+  Pencil,
+  Trash2,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -42,6 +49,9 @@ import type { LibraryPayment } from "@/types/library.types"
 
 export default function LibraryPaymentDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
   const {
     data: payment,
@@ -52,6 +62,29 @@ export default function LibraryPaymentDetailPage() {
   })
 
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-payments", defaultLabel: "All Payments" })
+
+  const handleDelete = () => {
+    if (!user?.id) return
+
+    confirm({
+      title: "Delete Payment",
+      description: "Are you sure you want to delete this payment? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("library_payments", params.id as string, user.id)
+          if (!result.error) {
+            showSuccess("Payment deleted successfully")
+            router.push("/library-payments")
+          } else {
+            showError(result.error.message || "Failed to delete payment")
+          }
+        } catch {
+          showError("Failed to delete payment")
+        }
+      },
+    })
+  }
 
   if (loading) {
     return <PageLoading message="Loading payment details..." />
@@ -119,6 +152,20 @@ export default function LibraryPaymentDetailPage() {
                 </Button>
               </Link>
             )}
+            <PermissionGate permission="library_payments.edit" hide>
+              <Link href={`/library-payments/${payment.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
+            <PermissionGate permission="library_payments.edit" hide>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </PermissionGate>
           </div>
         }
       />
@@ -273,6 +320,8 @@ export default function LibraryPaymentDetailPage() {
           </DetailSection>
         )}
       </DetailPageTemplate>
+
+      {ConfirmDialogElement}
     </div>
   )
 }
