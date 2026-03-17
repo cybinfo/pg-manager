@@ -147,6 +147,7 @@ const columns: Column<PaymentItem>[] = [
       </span>
     ) : "—",
   },
+  dateColumn("payment_date", "Payment Date"),
   dateColumn("created_at", "Recorded On", { defaultVisible: false }),
 ]
 
