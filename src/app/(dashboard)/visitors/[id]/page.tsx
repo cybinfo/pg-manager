@@ -44,6 +44,7 @@ import {
   Ban,
   Mail,
   MessageCircle,
+  Edit,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getNowISO } from "@/lib/date-helpers"
@@ -323,6 +324,14 @@ export default function VisitorDetailPage() {
                 Convert to Tenant
               </Button>
             )}
+            <PermissionGate permission="visitors.edit" hide>
+              <Link href={`/visitors/${params.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             <PermissionGate permission="visitors.delete" hide>
               <Button
                 variant="destructive"

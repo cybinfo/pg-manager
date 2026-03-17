@@ -6,9 +6,14 @@
 
 "use client"
 
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useDetailPage, LIBRARY_SECTION_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { useAuth } from "@/lib/auth"
+import { softDelete } from "@/lib/audit"
+import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PermissionGate } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -25,6 +30,7 @@ import {
   Armchair,
   Plus,
   Pencil,
+  Trash2,
   Plug,
   Lightbulb,
 } from "lucide-react"
@@ -34,6 +40,31 @@ import type { LibrarySection, LibrarySeat } from "@/types/library.types"
 
 export default function LibrarySectionDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
+
+  const handleDelete = () => {
+    if (!user?.id) return
+    confirm({
+      title: "Delete Section",
+      description: "Are you sure you want to delete this section? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("library_sections", params.id as string, user.id)
+          if (!result.error) {
+            showSuccess("Section deleted successfully")
+            router.push("/library-sections")
+          } else {
+            showError(result.error.message || "Failed to delete section")
+          }
+        } catch {
+          showError("Failed to delete section")
+        }
+      },
+    })
+  }
 
   const {
     data: section,
@@ -109,12 +140,20 @@ export default function LibrarySectionDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
-            <Link href={`/library-sections/${section.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
+            <PermissionGate permission="library_sections.edit" hide>
+              <Link href={`/library-sections/${section.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
+            <PermissionGate permission="library_sections.edit" hide>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
               </Button>
-            </Link>
+            </PermissionGate>
             <Link href={`/library-sections/${section.id}/seats/new`}>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
@@ -272,6 +311,8 @@ export default function LibrarySectionDetailPage() {
           </DetailSection>
         )}
       </DetailPageTemplate>
+
+      {ConfirmDialogElement}
     </div>
   )
 }

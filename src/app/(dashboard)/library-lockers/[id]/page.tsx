@@ -10,6 +10,10 @@ import { useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useDetailPage, LIBRARY_LOCKER_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { useAuth } from "@/lib/auth"
+import { softDelete } from "@/lib/audit"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PermissionGate } from "@/components/auth"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
@@ -39,6 +43,7 @@ import {
   Users,
   Calendar,
   Pencil,
+  Trash2,
   MapPin,
   Wallet,
   Package,
@@ -60,6 +65,8 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 export default function LibraryLockerDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { user } = useAuth()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const searchParams = useSearchParams()
   const forMemberId = searchParams.get("for_member")
   const [unassigning, setUnassigning] = useState(false)
@@ -236,12 +243,44 @@ export default function LibraryLockerDetailPage() {
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Link href={`/library-lockers/${locker.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
+            <PermissionGate permission="library_lockers.edit" hide>
+              <Link href={`/library-lockers/${locker.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
+            <PermissionGate permission="library_lockers.edit" hide>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (!user?.id) return
+                  confirm({
+                    title: "Delete Locker",
+                    description: "Are you sure you want to delete this locker? This action cannot be undone.",
+                    destructive: true,
+                    onConfirm: async () => {
+                      try {
+                        const result = await softDelete("library_lockers", params.id as string, user.id)
+                        if (!result.error) {
+                          showSuccess("Locker deleted successfully")
+                          router.push("/library-lockers")
+                        } else {
+                          showError(result.error.message || "Failed to delete locker")
+                        }
+                      } catch {
+                        showError("Failed to delete locker")
+                      }
+                    },
+                  })
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
               </Button>
-            </Link>
+            </PermissionGate>
           </div>
         }
       />
@@ -394,6 +433,8 @@ export default function LibraryLockerDetailPage() {
           emptyText="No assignment history"
         />
       </DetailPageTemplate>
+
+      {ConfirmDialogElement}
     </div>
   )
 }

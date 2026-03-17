@@ -9,6 +9,10 @@
 import { useState, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth"
+import { softDelete } from "@/lib/audit"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PermissionGate } from "@/components/auth"
 import { createClient } from "@/lib/supabase/client"
 import { useDetailPage } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
@@ -55,6 +59,8 @@ import {
   X,
   Check,
   Hash,
+  Trash2,
+  Edit,
 } from "lucide-react"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -83,6 +89,8 @@ export default function WaitlistDetailPage({
 }) {
   const { id } = use(params)
   const router = useRouter()
+  const { user } = useAuth()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [updating, setUpdating] = useState(false)
   const [contactDialogOpen, setContactDialogOpen] = useState(false)
   const [contactNotes, setContactNotes] = useState("")
@@ -296,6 +304,44 @@ export default function WaitlistDetailPage({
                 </AlertDialog>
               </>
             )}
+            <PermissionGate permission="library_waitlist.edit" hide>
+              <Link href={`/library-waitlist/${id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
+            <PermissionGate permission="library_waitlist.edit" hide>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (!user?.id) return
+                  confirm({
+                    title: "Delete Waitlist Entry",
+                    description: "Are you sure you want to delete this waitlist entry? This action cannot be undone.",
+                    destructive: true,
+                    onConfirm: async () => {
+                      try {
+                        const result = await softDelete("library_waitlist", id, user.id)
+                        if (!result.error) {
+                          showSuccess("Waitlist entry deleted successfully")
+                          router.push("/library-waitlist")
+                        } else {
+                          showError(result.error.message || "Failed to delete waitlist entry")
+                        }
+                      } catch {
+                        showError("Failed to delete waitlist entry")
+                      }
+                    },
+                  })
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </PermissionGate>
           </div>
         }
       />
@@ -437,6 +483,8 @@ export default function WaitlistDetailPage({
           </DetailSection>
         )}
       </DetailPageTemplate>
+
+      {ConfirmDialogElement}
     </div>
   )
 }

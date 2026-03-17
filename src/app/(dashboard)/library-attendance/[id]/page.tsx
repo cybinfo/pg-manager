@@ -7,9 +7,13 @@
 "use client"
 
 import { useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useDetailPage, LIBRARY_ATTENDANCE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { useAuth } from "@/lib/auth"
+import { softDelete } from "@/lib/audit"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PermissionGate } from "@/components/auth"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
@@ -30,6 +34,8 @@ import {
   LogIn,
   LogOut,
   Loader2,
+  Trash2,
+  Edit,
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -40,6 +46,9 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function LibraryAttendanceDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [checkingOut, setCheckingOut] = useState(false)
 
   const {
@@ -224,6 +233,44 @@ export default function LibraryAttendanceDetailPage() {
                 </Button>
               </Link>
             )}
+            <PermissionGate permission="library_attendance.edit" hide>
+              <Link href={`/library-attendance/${params.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
+            <PermissionGate permission="library_attendance.edit" hide>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (!user?.id) return
+                  confirm({
+                    title: "Delete Attendance Record",
+                    description: "Are you sure you want to delete this attendance record? This action cannot be undone.",
+                    destructive: true,
+                    onConfirm: async () => {
+                      try {
+                        const result = await softDelete("library_attendance", params.id as string, user.id)
+                        if (!result.error) {
+                          showSuccess("Attendance record deleted successfully")
+                          router.push("/library-attendance")
+                        } else {
+                          showError(result.error.message || "Failed to delete attendance record")
+                        }
+                      } catch {
+                        showError("Failed to delete attendance record")
+                      }
+                    },
+                  })
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            </PermissionGate>
           </div>
         }
       />
@@ -347,6 +394,8 @@ export default function LibraryAttendanceDetailPage() {
           </DetailSection>
         )}
       </DetailPageTemplate>
+
+      {ConfirmDialogElement}
     </div>
   )
 }

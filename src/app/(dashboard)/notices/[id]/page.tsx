@@ -28,6 +28,7 @@ import {
   Calendar,
   Eye,
   EyeOff,
+  Edit,
   Save,
   Trash2,
   Clock,
@@ -269,6 +270,14 @@ export default function NoticeDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2">
+            <PermissionGate permission="notices.edit" hide>
+              <Link href={`/notices/${params.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             <Button
               variant="outline"
               size="sm"

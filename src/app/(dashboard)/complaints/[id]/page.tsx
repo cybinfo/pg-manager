@@ -1,8 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { useAuth } from "@/lib/auth"
+import { softDelete } from "@/lib/audit"
+import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import Link from "next/link"
 import { useDetailPage, COMPLAINT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Complaint } from "@/types/complaints.types"
@@ -31,6 +35,7 @@ import {
   Edit2,
   Save,
   X,
+  Trash2,
   MapPin,
   FileText,
   ClipboardList,
@@ -53,6 +58,9 @@ const statusFlow = ["open", "acknowledged", "in_progress", "resolved", "closed"]
 
 export default function ComplaintDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [editing, setEditing] = useState(false)
 
   const [editData, setEditData] = useState({
@@ -195,12 +203,46 @@ export default function ComplaintDetailPage() {
         }
         actions={
           !editing ? (
-            <PermissionGate permission="complaints.edit" hide>
-              <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                <Edit2 className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </PermissionGate>
+            <div className="flex items-center gap-2">
+              <PermissionGate permission="complaints.edit" hide>
+                <Link href={`/complaints/${params.id}/edit`}>
+                  <Button variant="outline" size="sm">
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                </Link>
+              </PermissionGate>
+              <PermissionGate permission="complaints.edit" hide>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    if (!user?.id) return
+                    confirm({
+                      title: "Delete Complaint",
+                      description: "Are you sure you want to delete this complaint? This action cannot be undone.",
+                      destructive: true,
+                      onConfirm: async () => {
+                        try {
+                          const result = await softDelete("complaints", params.id as string, user.id)
+                          if (!result.error) {
+                            showSuccess("Complaint deleted successfully")
+                            router.push("/complaints")
+                          } else {
+                            showError(result.error.message || "Failed to delete complaint")
+                          }
+                        } catch {
+                          showError("Failed to delete complaint")
+                        }
+                      },
+                    })
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </Button>
+              </PermissionGate>
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditing(false)} disabled={isSaving}>
@@ -420,6 +462,8 @@ export default function ComplaintDetailPage() {
           )}
 
       </DetailPageTemplate>
+
+      {ConfirmDialogElement}
     </div>
   )
 }

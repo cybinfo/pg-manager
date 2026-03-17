@@ -28,6 +28,7 @@ import {
   CheckCircle,
   Download,
   Trash2,
+  Edit,
   Receipt,
   IndianRupee,
 } from "lucide-react"
@@ -209,6 +210,14 @@ export default function PaymentReceiptPage() {
                 Download PDF
               </Button>
               <PrintButton label="Print Receipt" />
+              <PermissionGate permission="payments.edit" hide>
+                <Link href={`/payments/${params.id}/edit`}>
+                  <Button variant="outline" size="sm">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                </Link>
+              </PermissionGate>
               <PermissionGate permission="payments.delete" hide>
                 <Button
                   variant="destructive"

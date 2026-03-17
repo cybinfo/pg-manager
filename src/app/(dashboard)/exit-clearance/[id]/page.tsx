@@ -35,6 +35,7 @@ import {
   Wallet,
   Receipt,
   IndianRupee,
+  Edit,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -259,12 +260,22 @@ export default function ExitClearanceDetailPage() {
         status={<StatusBadge variant={statusConfig.variant} label={statusConfig.label} />}
         actions={
           !isCleared && (
-            <PermissionGate permission="exit_clearance.edit" hide>
-              <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Save
-              </Button>
-            </PermissionGate>
+            <div className="flex items-center gap-2">
+              <PermissionGate permission="exit_clearance.edit" hide>
+                <Link href={`/exit-clearance/${clearance.id}/edit`}>
+                  <Button variant="outline" size="sm">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+                </Link>
+              </PermissionGate>
+              <PermissionGate permission="exit_clearance.edit" hide>
+                <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Save
+                </Button>
+              </PermissionGate>
+            </div>
           )
         }
       />

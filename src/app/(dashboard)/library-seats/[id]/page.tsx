@@ -6,9 +6,14 @@
 
 "use client"
 
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useDetailPage, LIBRARY_SEAT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { useAuth } from "@/lib/auth"
+import { softDelete } from "@/lib/audit"
+import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { PermissionGate } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -24,6 +29,7 @@ import {
   Users,
   Grid3X3,
   Pencil,
+  Trash2,
   Zap,
   Lightbulb,
   Square,
@@ -35,6 +41,31 @@ import type { LibrarySeat } from "@/types/library.types"
 
 export default function LibrarySeatDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
+
+  const handleDelete = () => {
+    if (!user?.id) return
+    confirm({
+      title: "Delete Seat",
+      description: "Are you sure you want to delete this seat? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("library_seats", params.id as string, user.id)
+          if (!result.error) {
+            showSuccess("Seat deleted successfully")
+            router.push("/library-seats")
+          } else {
+            showError(result.error.message || "Failed to delete seat")
+          }
+        } catch {
+          showError("Failed to delete seat")
+        }
+      },
+    })
+  }
 
   const {
     data: seat,
@@ -100,12 +131,20 @@ export default function LibrarySeatDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
-            <Link href={`/library-seats/${seat.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
+            <PermissionGate permission="library_seats.edit" hide>
+              <Link href={`/library-seats/${seat.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
+            <PermissionGate permission="library_seats.edit" hide>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
               </Button>
-            </Link>
+            </PermissionGate>
           </div>
         }
       />
@@ -220,6 +259,8 @@ export default function LibrarySeatDetailPage() {
           </DetailSection>
         )}
       </DetailPageTemplate>
+
+      {ConfirmDialogElement}
     </div>
   )
 }

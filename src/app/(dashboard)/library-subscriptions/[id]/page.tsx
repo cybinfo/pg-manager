@@ -8,9 +8,11 @@
 "use client"
 
 import { useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useDetailPage, LIBRARY_SUBSCRIPTION_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { softDelete } from "@/lib/audit"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { useAuth } from "@/lib/auth"
 import { createClient } from "@/lib/supabase/client"
 import {
@@ -45,6 +47,8 @@ import {
   AlertTriangle,
   User,
   IndianRupee,
+  Edit,
+  Trash2,
 } from "lucide-react"
 
 // ============================================
@@ -519,6 +523,14 @@ function LibrarySubscriptionDetailContent() {
                 View Member
               </Button>
             </Link>
+            <PermissionGate permission="library_members.edit" hide>
+              <Link href={`/library-subscriptions/${subscription.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
           </div>
         }
       />

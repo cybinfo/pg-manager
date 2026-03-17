@@ -21,6 +21,7 @@ import {
   Plus,
   Send,
   Trash2,
+  Edit,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -171,6 +172,14 @@ ManageKar`
                 Record Payment
               </Button>
             )}
+            <PermissionGate permission="bills.edit" hide>
+              <Link href={`/bills/${billId}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             <PermissionGate permission="bills.delete" hide>
               <Button
                 variant="destructive"

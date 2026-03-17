@@ -297,6 +297,14 @@ export default function StaffDetailPage() {
                 </Button>
               </a>
             )}
+            <PermissionGate permission="staff.edit" hide>
+              <Link href={`/staff/${params.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             {staff.person_id && (
               <Link href={`/people/${staff.person_id}`}>
                 <Button variant="outline" size="sm">

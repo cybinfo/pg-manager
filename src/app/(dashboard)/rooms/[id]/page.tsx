@@ -1,9 +1,13 @@
 "use client"
 
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, ROOM_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
+import { useAuth } from "@/lib/auth"
+import { softDelete } from "@/lib/audit"
+import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { Room, RoomTenant, RoomMeterAssignment, RoomComplaint } from "@/types/rooms.types"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,6 +27,7 @@ import {
   Bed,
   IndianRupee,
   Pencil,
+  Trash2,
   Users,
   Phone,
   Plus,
@@ -56,6 +61,31 @@ const meterTypeConfig: Record<string, typeof METER_TYPE_ICON_CONFIG[keyof typeof
 
 export default function RoomDetailPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
+
+  const handleDelete = () => {
+    if (!user?.id) return
+    confirm({
+      title: "Delete Room",
+      description: "Are you sure you want to delete this room? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("rooms", params.id as string, user.id)
+          if (!result.error) {
+            showSuccess("Room deleted successfully")
+            router.push("/rooms")
+          } else {
+            showError(result.error.message || "Failed to delete room")
+          }
+        } catch {
+          showError("Failed to delete room")
+        }
+      },
+    })
+  }
 
   const {
     data: room,
@@ -129,6 +159,12 @@ export default function RoomDetailPage() {
                   Edit
                 </Button>
               </Link>
+            </PermissionGate>
+            <PermissionGate permission="rooms.edit" hide>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
             </PermissionGate>
             {availableBeds > 0 && (
               <Link href={`/tenants/new?room=${room.id}`}>
@@ -446,6 +482,8 @@ export default function RoomDetailPage() {
         />
 
       </DetailPageTemplate>
+
+      {ConfirmDialogElement}
     </div>
   )
 }

@@ -203,10 +203,12 @@ export default function RefundDetailPage() {
             !editing ? (
               <div className="flex gap-2">
                 <PermissionGate permission="refunds.edit" hide>
-                  <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
+                  <Link href={`/refunds/${params.id}/edit`}>
+                    <Button variant="outline" size="sm">
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
+                  </Link>
                 </PermissionGate>
                 <PermissionGate permission="refunds.delete" hide>
                   <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>

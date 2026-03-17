@@ -48,6 +48,7 @@ import {
   Droplets,
   UserMinus,
   Loader2,
+  Trash2,
 } from "lucide-react"
 import {
   AlertDialog,
@@ -63,6 +64,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MemberHoursCard, MemberQRCode } from "@/components/library"
 import { formatDate } from "@/lib/format"
+import { softDelete } from "@/lib/audit"
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { LIBRARY_MEMBER_STATUS_CONFIG, LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
 import { createClient } from "@/lib/supabase/client"
@@ -132,7 +135,30 @@ export default function LibraryMemberDetailPage() {
     id: params.id as string,
   })
 
+  const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/library-members", defaultLabel: "All Members" })
+
+  const handleDelete = () => {
+    if (!user?.id) return
+    confirm({
+      title: "Delete Member",
+      description: "Are you sure you want to delete this member? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const result = await softDelete("library_members", params.id as string, user.id)
+          if (!result.error) {
+            showSuccess("Member deleted successfully")
+            router.push("/library-members")
+          } else {
+            showError(result.error.message || "Failed to delete member")
+          }
+        } catch {
+          showError("Failed to delete member")
+        }
+      },
+    })
+  }
 
   // Mark as Left dialog state
   const [markLeftOpen, setMarkLeftOpen] = useState(false)
@@ -345,6 +371,12 @@ export default function LibraryMemberDetailPage() {
                   Edit
                 </Button>
               </Link>
+            </PermissionGate>
+            <PermissionGate permission="library_members.edit" hide>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
             </PermissionGate>
             <Link href={`/library-payments/new?member=${member.id}`}>
               <Button size="sm">
@@ -781,6 +813,8 @@ export default function LibraryMemberDetailPage() {
           </DetailSection>
         )}
       </DetailPageTemplate>
+
+      {ConfirmDialogElement}
 
       {/* Mark as Left Dialog */}
       <AlertDialog open={markLeftOpen} onOpenChange={setMarkLeftOpen}>
