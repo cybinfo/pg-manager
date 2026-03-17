@@ -397,6 +397,8 @@ export default function LibrarySubscriptionDetailPage() {
 
 function LibrarySubscriptionDetailContent() {
   const params = useParams()
+  const router = useRouter()
+  const { user } = useAuth()
 
   const {
     data: subscription,
@@ -412,6 +414,26 @@ function LibrarySubscriptionDetailContent() {
     defaultHref: "/library-subscriptions",
     defaultLabel: "All Subscriptions",
   })
+
+  const { confirm: confirmDelete, ConfirmDialogElement } = useConfirmDialog()
+
+  const handleDelete = () => {
+    confirmDelete({
+      title: "Delete Subscription",
+      description: "Are you sure you want to delete this subscription? This action cannot be undone.",
+      destructive: true,
+      onConfirm: async () => {
+        if (!user) return
+        const { error } = await softDelete("library_memberships", params.id as string, user.id)
+        if (!error) {
+          showSuccess("Subscription deleted")
+          router.push("/library-subscriptions")
+        } else {
+          showError("Failed to delete subscription")
+        }
+      },
+    })
+  }
 
   if (loading) {
     return <PageLoading message="Loading subscription details..." />
@@ -530,6 +552,12 @@ function LibrarySubscriptionDetailContent() {
                   Edit
                 </Button>
               </Link>
+            </PermissionGate>
+            <PermissionGate permission="library_members.edit" hide>
+              <Button variant="destructive" size="sm" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
             </PermissionGate>
           </div>
         }
@@ -729,6 +757,7 @@ function LibrarySubscriptionDetailContent() {
           </DetailSection>
         )}
       </DetailPageTemplate>
+      {ConfirmDialogElement}
     </div>
   )
 }
