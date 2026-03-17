@@ -187,6 +187,9 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("member.name", "Member Name"),
+  textFilterColumn("member.phone", "Member Phone"),
+  textFilterColumn("member.member_code", "Member Code"),
   numberFilterColumn("amount", "Amount"),
   selectFilterColumn("payment_method", "Payment Method", LIBRARY_PAYMENT_METHOD_FILTER.options!),
   selectFilterColumn("payment_type", "Payment Type", LIBRARY_PAYMENT_TYPE_FILTER.options!),

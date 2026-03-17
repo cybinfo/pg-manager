@@ -749,11 +749,11 @@ export const LIBRARY_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>
   table: "library_payments",
   select: `
     *,
-    member:library_members(id, name, member_code, person:people(id, name, photo_url))
+    member:library_members(id, name, member_code, phone, person:people(id, name, photo_url))
   `,
   defaultOrderBy: "payment_date",
   defaultOrderDirection: "desc",
-  searchFields: ["receipt_number", "member.name", "member.member_code"],
+  searchFields: ["receipt_number", "member.name", "member.member_code", "member.phone"],
   joinFields: ["member"],
   computedFields: (item) => {
     const paymentDate = item.payment_date ? new Date(item.payment_date as string) : new Date()

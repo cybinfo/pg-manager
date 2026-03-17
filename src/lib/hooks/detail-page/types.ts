@@ -775,7 +775,7 @@ export const LIBRARY_MEMBER_DETAIL_CONFIG: DetailPageConfig = {
     {
       key: "payments",
       table: "library_payments",
-      select: "id, amount, payment_date, payment_type, payment_method, receipt_number",
+      select: "id, amount, payment_date, payment_type, payment_method, receipt_number, membership_id, status",
       foreignKey: "member_id",
       orderBy: "payment_date",
       orderDirection: "desc",
