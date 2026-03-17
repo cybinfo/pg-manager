@@ -328,8 +328,8 @@ export default function LibraryReportsPage() {
       const activeMembers = filteredMembers.filter((m) => m.status === "active").length
       const expiredMembers = filteredMembers.filter((m) => m.status === "expired").length
       const newMembersThisMonth = filteredMembers.filter((m) => {
-        const createdAt = new Date(m.created_at)
-        return createdAt >= startDate && createdAt <= endDate
+        const joinDate = new Date(m.join_date || m.created_at)
+        return joinDate >= startDate && joinDate <= endDate
       }).length
       const churnsThisMonth = filteredMembers.filter((m) => {
         if (!m.expiry_date) return false
@@ -410,8 +410,8 @@ export default function LibraryReportsPage() {
           return paymentDate >= monthStart && paymentDate <= monthEnd
         })
         const monthNewMembers = filteredMembers.filter((m) => {
-          const createdAt = new Date(m.created_at)
-          return createdAt >= monthStart && createdAt <= monthEnd
+          const joinDate = new Date(m.join_date || m.created_at)
+          return joinDate >= monthStart && joinDate <= monthEnd
         }).length
         monthlyRevenue.push({
           month: MONTH_NAMES[monthStart.getMonth()],
@@ -953,8 +953,8 @@ export default function LibraryReportsPage() {
                         <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
                         <Tooltip
                           formatter={(value, name) => [
-                            name === "revenue" ? formatCurrency(Number(value)) : value,
-                            name === "revenue" ? "Revenue" : "New Members",
+                            name === "Revenue" ? formatCurrency(Number(value)) : value,
+                            name,
                           ]}
                         />
                         <Legend />
