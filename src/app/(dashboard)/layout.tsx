@@ -48,6 +48,8 @@ import {
   Library,
   BookOpen,
   Armchair,
+  BarChart3,
+  ListOrdered,
   Clock,
   Lock,
 } from "lucide-react"
@@ -113,11 +115,13 @@ const navigation: NavItem[] = [
       { name: "Sections", href: "/library-sections", icon: Grid3X3, permission: "library_sections.view", feature: "library" },
       { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", feature: "library" },
       { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
+      { name: "Waitlist", href: "/library-waitlist", icon: ListOrdered, permission: "library_waitlist.view", feature: "library" },
       { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", feature: "library" },
       { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", feature: "library" },
       { name: "Subscriptions", href: "/library-subscriptions", icon: BookOpen, permission: "library_members.view", feature: "library" },
       { name: "Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
       { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", feature: "library" },
+      { name: "Reports", href: "/library-reports", icon: BarChart3, permission: "library.view", feature: "library" },
     ]
   },
 
