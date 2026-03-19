@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -183,6 +183,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   const [sidebarEditMode, setSidebarEditMode] = useState(false)
+  const [setupRedirectReady, setSetupRedirectReady] = useState(false)
   const { applyOrder, reorderMain, reorderChildren, resetOrder, isLoaded: orderLoaded } = useSidebarOrder()
 
   // Toggle expanded state for a menu
@@ -212,6 +213,17 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   // Use feature flags
   const { isEnabled: isFeatureEnabled } = useFeatures()
+
+  // Delayed setup redirect — wait 3 seconds after auth loads to let contexts populate
+  // This prevents the race condition where contexts are empty momentarily during init
+  useEffect(() => {
+    if (!isLoading && user && contexts.length === 0) {
+      const timer = setTimeout(() => setSetupRedirectReady(true), 3000)
+      return () => clearTimeout(timer)
+    }
+    // If contexts loaded successfully, never redirect to setup
+    if (contexts.length > 0) setSetupRedirectReady(false)
+  }, [isLoading, user, contexts.length])
 
   // Filter navigation based on permissions AND feature flags
   const filterNavItem = (item: NavItem): NavItem | null => {
@@ -345,10 +357,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Redirect to setup if user has no contexts (new owner without workspace)
-  // Only redirect if user also has no profile (truly new user) — avoids race condition
-  // where contexts load slower than the auth state
-  if (contexts.length === 0 && !profile) {
+  // Redirect to setup only for truly new users (no contexts after auth fully loaded)
+  // Uses a delayed check to avoid race condition where contexts load slower than auth
+  if (contexts.length === 0 && !isLoading && user && setupRedirectReady) {
     router.push("/setup")
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
