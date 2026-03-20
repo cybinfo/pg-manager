@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select } from "@/components/ui/form-components"
 import { ArrowLeft, Users, Loader2 } from "lucide-react"
+import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -44,6 +45,7 @@ function EditLibraryMemberContent({
 
   const {
     formData,
+    setFormData,
     handleChange,
     handleSubmit,
     loading,
@@ -52,11 +54,12 @@ function EditLibraryMemberContent({
   } = useFormEditPage({
     table: "library_members",
     id,
-    select: "*, library:libraries(id, name), person:people(id, name)",
+    select: "*, library:libraries(id, name), person:people(id, name, photo_url)",
     initialData: {
       name: "",
       phone: "",
       email: "",
+      photo_url: "",
       id_proof_type: "aadhar",
       id_proof_number: "",
       preferred_slot: "Morning",
@@ -67,17 +70,20 @@ function EditLibraryMemberContent({
     redirectTo: `/library-members/${id}`,
     successMessage: "Member updated successfully!",
     errorMessage: "Failed to update member",
-    mapToForm: (rec) => ({
+    mapToForm: (rec) => {
+      const person = transformJoin(rec.person as Record<string, unknown>) as Record<string, unknown> | null
+      return {
       name: (rec.name as string) || "",
       phone: (rec.phone as string) || "",
       email: (rec.email as string) || "",
+      photo_url: (person?.photo_url as string) || "",
       id_proof_type: (rec.id_proof_type as string) || "aadhar",
       id_proof_number: (rec.id_proof_number as string) || "",
       preferred_slot: (rec.preferred_slot as string) || "Morning",
       left_date: (rec.left_date as string) || "",
       notes: (rec.notes as string) || "",
       status: (rec.status as string) || "active",
-    }),
+    }},
     validate: (data) => {
       if (!data.name || !data.phone) {
         return "Please fill in required fields (Name, Phone)"
@@ -115,6 +121,7 @@ function EditLibraryMemberContent({
           name: data.name,
           phone: data.phone || null,
           email: data.email || null,
+          photo_url: data.photo_url || null,
           updated_at: getNowISO(),
         }
 
@@ -173,6 +180,18 @@ function EditLibraryMemberContent({
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Photo Upload */}
+            <div className="flex justify-center">
+              <ProfilePhotoUpload
+                bucket="person-photos"
+                folder="profiles"
+                value={(formData.photo_url as string) || ""}
+                onChange={(url) => setFormData((prev) => ({ ...prev, photo_url: url }))}
+                size="lg"
+                placeholder="Update Photo"
+              />
+            </div>
+
             {/* Basic Info */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
