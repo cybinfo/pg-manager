@@ -348,7 +348,7 @@ export default function LibraryMemberDetailPage() {
                 </Link>
               </PermissionGate>
             )}
-            {member.status === "active" && !member.left_date && (
+            {(member.status === "active" || member.status === "expired") && !member.left_date && (
               <PermissionGate permission="library_members.edit" hide>
                 <Button
                   variant="outline"
