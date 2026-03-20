@@ -355,11 +355,35 @@ function NewLibraryMemberContent() {
       // Auto-uppercase name
       const memberName = formData.name.toUpperCase()
 
-      // Create member
+      // Create person record first (central registry)
+      const personData = withCreatedBy({
+        owner_id: library.owner_id,
+        workspace_id: workspaceId,
+        name: memberName,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        gender: formData.gender || null,
+        date_of_birth: formData.date_of_birth || null,
+        tags: ["library_member"],
+      }, user.id)
+
+      const { data: person, error: personError } = await supabase
+        .from("people")
+        .insert(personData)
+        .select("id")
+        .single()
+
+      if (personError) {
+        console.error("Error creating person:", personError)
+        // Continue without person_id — non-blocking
+      }
+
+      // Create member linked to person
       const memberData = withCreatedBy({
         owner_id: library.owner_id,
         workspace_id: workspaceId,
         library_id: formData.library_id,
+        person_id: person?.id || null,
         name: memberName,
         phone: formData.phone,
         email: formData.email || null,
