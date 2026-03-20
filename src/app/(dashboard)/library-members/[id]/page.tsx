@@ -378,6 +378,14 @@ export default function LibraryMemberDetailPage() {
                 Delete
               </Button>
             </PermissionGate>
+            {member.person_id && (
+              <Link href={`/people/${member.person_id}`}>
+                <Button variant="outline" size="sm">
+                  <User className="mr-2 h-4 w-4" />
+                  View Person
+                </Button>
+              </Link>
+            )}
             <Link href={`/library-payments/new?member=${member.id}`}>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />
