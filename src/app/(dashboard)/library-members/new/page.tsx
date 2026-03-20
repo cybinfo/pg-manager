@@ -360,7 +360,6 @@ function NewLibraryMemberContent() {
       // Create person record first (central registry)
       const personData = withCreatedBy({
         owner_id: library.owner_id,
-        workspace_id: workspaceId,
         name: memberName,
         phone: formData.phone || null,
         email: formData.email || null,
