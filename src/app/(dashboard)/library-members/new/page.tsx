@@ -19,7 +19,8 @@ import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { Currency } from "@/components/ui/currency"
-import { ArrowLeft, Users, Loader2, CreditCard, UserCheck, Trash2, Plus } from "lucide-react"
+import { ArrowLeft, Users, Loader2, CreditCard, UserCheck, Trash2, Plus, Camera } from "lucide-react"
+import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { formatDate } from "@/lib/format"
@@ -135,6 +136,7 @@ function NewLibraryMemberContent() {
     name: "",
     phone: "",
     email: "",
+    photo_url: "",
     gender: "",
     father_name: "",
     date_of_birth: "",
@@ -362,6 +364,7 @@ function NewLibraryMemberContent() {
         name: memberName,
         phone: formData.phone || null,
         email: formData.email || null,
+        photo_url: formData.photo_url || null,
         gender: formData.gender || null,
         date_of_birth: formData.date_of_birth || null,
         tags: ["library_member"],
@@ -607,6 +610,18 @@ function NewLibraryMemberContent() {
                   disabled={saving || loadingData || !!preselectedLibrary}
                 />
               </FormField>
+
+              {/* Photo Upload */}
+              <div className="flex justify-center">
+                <ProfilePhotoUpload
+                  bucket="person-photos"
+                  folder="profiles"
+                  value={formData.photo_url || ""}
+                  onChange={(url) => setFormData((prev) => ({ ...prev, photo_url: url }))}
+                  size="lg"
+                  placeholder="Add Photo"
+                />
+              </div>
 
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
