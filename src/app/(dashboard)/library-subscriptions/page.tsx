@@ -61,13 +61,6 @@ interface SubscriptionItem {
 // Column Definitions
 // ============================================
 
-const TIME_SLOT_BADGE_CONFIG: Record<string, { label: string; variant: string }> = {
-  Morning: { label: "Morning", variant: "warning" },
-  Evening: { label: "Evening", variant: "default" },
-  Night: { label: "Night", variant: "muted" },
-  "24 Hours": { label: "24 Hours", variant: "success" },
-}
-
 const columns: Column<SubscriptionItem>[] = [
   personNameWithAvatarColumn("Member", {
     key: "member",
@@ -88,7 +81,38 @@ const columns: Column<SubscriptionItem>[] = [
       <span className="font-medium">{sub.plan_name}</span>
     ),
   },
-  badgeColumn("time_slot", "Slot", TIME_SLOT_BADGE_CONFIG, { defaultVisible: true }),
+  {
+    key: "time_slot",
+    header: "Slot",
+    canHide: true,
+    defaultVisible: true,
+    render: (sub) => {
+      const raw = sub.time_slot as string | null
+      if (!raw) return <span className="text-muted-foreground">Full Day</span>
+      // Handle legacy preset names
+      if (!raw.startsWith("[")) {
+        return <span className="px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">{raw}</span>
+      }
+      // Parse JSON time slots
+      try {
+        const slots = JSON.parse(raw) as { start: string; end: string }[]
+        const fmt = (t: string) => {
+          const [h, m] = t.split(":").map(Number)
+          const ampm = h >= 12 ? "PM" : "AM"
+          return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${ampm}`
+        }
+        return (
+          <div className="text-xs space-y-0.5">
+            {slots.map((s, i) => (
+              <div key={i}>{fmt(s.start)} - {fmt(s.end)}</div>
+            ))}
+          </div>
+        )
+      } catch {
+        return <span className="text-muted-foreground text-xs">{raw}</span>
+      }
+    },
+  },
   dateColumn("start_date", "Start Date"),
   dateColumn("end_date", "End Date"),
   currencyColumn("final_amount", "Amount", { color: "text-success", prefix: "" }),
@@ -200,7 +224,15 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
     return String(val || (row.member as Record<string, unknown>)?.name || "")
   }),
   { key: "plan_name" as keyof Record<string, unknown>, header: "Plan", format: (v) => String(v ?? "") },
-  { key: "time_slot" as keyof Record<string, unknown>, header: "Time Slot", format: (v) => String(v ?? "") },
+  { key: "time_slot" as keyof Record<string, unknown>, header: "Time Slot", format: (v) => {
+    const raw = String(v ?? "")
+    if (!raw || raw === "null") return "Full Day"
+    if (!raw.startsWith("[")) return raw
+    try {
+      const slots = JSON.parse(raw) as { start: string; end: string }[]
+      return slots.map(s => `${s.start}-${s.end}`).join(", ")
+    } catch { return raw }
+  }},
   dateExportColumn("start_date", "Start Date"),
   dateExportColumn("end_date", "End Date"),
   currencyExportColumn("final_amount", "Amount"),
