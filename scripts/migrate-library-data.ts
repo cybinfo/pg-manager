@@ -626,7 +626,11 @@ async function migrate() {
       const firstProof = proofs[0]
 
       memberCount++
-      const memberCode = `NGH-${memberYear}-${String(memberCount).padStart(4, "0")}`
+      // Use client's original user_id as the member code suffix (preserves their reference)
+      const clientId = user.user_id.replace(/\D/g, "") // Extract digits from original ID
+      const memberCode = clientId
+        ? `NGH-${String(clientId).padStart(4, "0")}`
+        : `NGH-${memberYear}-${String(memberCount).padStart(4, "0")}`
 
       // Derive slot from latest timing data
       const preferredSlot = getUserSlot(user.user_id)

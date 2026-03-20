@@ -327,14 +327,26 @@ function BulkImportContent() {
     }
 
     // Get current member count for code generation
-    const { count: existingCount } = await supabase
-      .from("library_members")
-      .select("*", { count: "exact", head: true })
-      .eq("library_id", selectedLibrary)
-
-    let memberIndex = (existingCount || 0) + 1
     const libraryCode = library.code || library.name.slice(0, 3).toUpperCase()
-    const year = new Date().getFullYear()
+
+    // Find highest existing member code number
+    const { data: existingMembers } = await supabase
+      .from("library_members")
+      .select("member_code")
+      .eq("library_id", selectedLibrary)
+      .not("member_code", "is", null)
+      .order("member_code", { ascending: false })
+      .limit(100)
+
+    let maxNum = 0
+    for (const m of existingMembers || []) {
+      const match = (m.member_code as string)?.match(/(\d+)$/)
+      if (match) {
+        const num = parseInt(match[1], 10)
+        if (num > maxNum) maxNum = num
+      }
+    }
+    let memberIndex = maxNum + 1
 
     for (let i = 0; i < validRows.length; i++) {
       const row = validRows[i]
@@ -366,7 +378,7 @@ function BulkImportContent() {
           : null
 
         // Generate member code
-        const memberCode = `${libraryCode}-${year}-${String(memberIndex).padStart(4, "0")}`
+        const memberCode = `${libraryCode}-${String(memberIndex).padStart(4, "0")}`
         memberIndex++
 
         // Calculate dates

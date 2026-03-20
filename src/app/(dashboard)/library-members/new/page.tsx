@@ -309,15 +309,27 @@ function NewLibraryMemberContent() {
 
       const workspaceId = context?.workspace_id
 
-      // Generate member code
+      // Generate member code — find highest existing number and increment
       const libraryCode = library.code || library.name.slice(0, 3).toUpperCase()
-      const year = new Date().getFullYear()
-      const { count } = await supabase
+      const { data: existingMembers } = await supabase
         .from("library_members")
-        .select("*", { count: "exact", head: true })
+        .select("member_code")
         .eq("library_id", formData.library_id)
+        .not("member_code", "is", null)
+        .order("member_code", { ascending: false })
+        .limit(100)
 
-      const memberCode = `${libraryCode}-${year}-${String((count || 0) + 1).padStart(4, "0")}`
+      // Extract the highest numeric suffix from existing codes (e.g., "NGH-0497" → 497)
+      let maxNum = 0
+      for (const m of existingMembers || []) {
+        const match = m.member_code?.match(/(\d+)$/)
+        if (match) {
+          const num = parseInt(match[1], 10)
+          if (num > maxNum) maxNum = num
+        }
+      }
+      const nextNum = maxNum + 1
+      const memberCode = `${libraryCode}-${String(nextNum).padStart(4, "0")}`
 
       // Calculate subscription dates
       const selectedPlan = plans.find((p) => p.id === formData.plan_id)
