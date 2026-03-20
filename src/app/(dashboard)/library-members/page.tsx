@@ -9,7 +9,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Users, Clock, AlertTriangle, CalendarClock, Upload, RefreshCw, Loader2 } from "lucide-react"
+import { Users, Clock, AlertTriangle, CalendarClock, Upload, RefreshCw, Loader2, UserMinus } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
 import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate, BulkActionConfig } from "@/components/shared/ListPageTemplate"
@@ -269,16 +269,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
   createCountMetric("low_hours", "Low Today (<2h)", Clock,
     (item) => (Number(item.hours_balance) || 0) < 2 && item.status === "active"
   ),
-  createCountMetric("overdue", "Overdue", AlertTriangle,
-    (item) => {
-      if (!item.expiry_date || item.status !== "active") return false
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const expiry = new Date(item.expiry_date as string)
-      expiry.setHours(0, 0, 0, 0)
-      return expiry < today
-    }
-  ),
+  createStatusMetric("suspended", "Suspended", UserMinus),
   createCountMetric("expiring_soon", "Expiring Soon", CalendarClock,
     (item) => {
       if (!item.expiry_date || item.status !== "active") return false
