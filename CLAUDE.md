@@ -1,7 +1,7 @@
 # ManageKar - AI Development Guide
 
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-03-16
+> **Last Updated**: 2026-03-20
 
 ---
 
@@ -12,7 +12,7 @@
 | **Production URL** | https://managekar.com |
 | **Stack** | Next.js 16 + TypeScript + Supabase + Tailwind + shadcn/ui |
 | **Database** | PostgreSQL with Row Level Security (RLS) |
-| **Migrations** | 70 total (001-070) |
+| **Migrations** | 72 total (001-072) |
 
 ```bash
 npm run dev          # Development server at localhost:3000
@@ -54,8 +54,10 @@ Indian "libraries" in this context are **study spaces** (not book-lending), wher
 - They get assigned **seats** (similar to beds in PG)
 - Attendance is tracked via check-in/check-out
 - Lockers are rented separately
-- Time slots (Morning/Evening/Night/24 Hours) determine access
+- Access schedule is defined as **multi-slot time windows** (e.g., 9AM-12PM + 4PM-6PM), stored as JSON
 - **Per-day hours model**: `hours_balance` = daily allowance minus today's usage (resets each day)
+- **Subscription = Plan + Duration (months) + Access Schedule + Amount** — payment recorded separately
+- **People table is single source** for name/phone/email/photo — members always link via `person_id`
 
 ---
 
@@ -243,9 +245,22 @@ OR is_platform_admin(auth.uid())
 const isPlatformAdmin = await checkPlatformAdmin(userId)
 ```
 
-### 3.6 Live Person Data Pattern (IMPORTANT)
+### 3.6 Live Person Data Pattern (MANDATORY)
 
-Entities with a `person_id` FK should display **live data from the `people` table**, not denormalized copies. This ensures name/phone/photo updates in People are immediately reflected everywhere.
+Entities with a `person_id` FK **MUST** have a linked `people` record. The `people` table is the **single source of truth** for name, phone, email, and photo.
+
+**When creating a new member/tenant:**
+1. Create a `people` record FIRST (with name, phone, email, photo_url, tags)
+2. Then create the member/tenant with `person_id` linked
+3. Note: `people` table does NOT have `workspace_id` — don't include it
+
+**When editing name/phone/email:**
+1. Update BOTH the entity table (denormalized fallback) AND the `people` table
+2. Photo always saves to `people.photo_url` only
+
+**When displaying:**
+1. Always use fallback pattern: `entity.person?.name || entity.name`
+2. Never assume `person_id` exists — use optional chaining
 
 ```typescript
 // In list page configs - ALWAYS include person.name in select
@@ -644,6 +659,8 @@ import { Select } from "@/components/ui/form-components"
 | 068 | library_plans_audit_and_indexes.sql | Library plans audit trigger + indexes |
 | 069 | fix_audit_trigger_service_role.sql | Fix audit trigger for service role (NULL auth.uid) |
 | 070 | fix_hours_per_day_model.sql | Switch hours tracking from pool to per-day model |
+| 071 | add_library_member_left_date.sql | Track when member explicitly left |
+| 072 | widen_time_slot_column.sql | VARCHAR(20) → TEXT for JSON multi-slot storage |
 
 ---
 
@@ -911,13 +928,19 @@ git add . && git commit -m "description" && git push && vercel --prod
 - Include `compute` function (required)
 - Use `serverFilter` for server-side counting
 
-### Recently Fixed Issues (2026-03-16)
+### Recently Fixed Issues (2026-03-20)
 - **Full list page unification**: ALL 27 pages now have advanced filters, inline edit, column builders, filter presets, CSV export
 - **PermissionGuard on ALL forms**: 52/52 form pages now have permission guards (was ~16)
-- **11 column builders**: Added boolean, phone, email, time, timeAgo, count (was 5)
-- **22 filter presets**: Centralized all inline option definitions (was ~12)
-- **Library hours model**: Fixed from pool (depleting) to per-day (daily allowance) — migration 070
-- **Library Subscriptions page**: New `/library-subscriptions` with detail page + partial payment support
+- **Full CRUD**: All data modules have Create + Read + Edit + Delete (12 new edit pages, 8 new delete buttons)
+- **People = single source of truth**: New members always get a person record; edits update both tables; photo on people
+- **Subscription redesign**: Duration in months, multi-slot access schedule (JSON), no forced payment at creation
+- **Library hours model**: Per-day (daily allowance), not depleting pool — migration 070
+- **Library Subscriptions page**: `/library-subscriptions` with detail page + partial payment support
+- **Payment Report**: New tab in Library Reports with group by day/week/month/year, charts, CSV export
+- **Paginated data fetch**: Reports bypass Supabase 1000-row API cap via fetchAllRows()
+- **Member codes**: Preserve client's original IDs (NGH-2001) not generated (NGH-2026-0001)
+- **Payment receipts**: Format PYMT-LIB-000001, linked to memberships for balance tracking
+- **Setup wizard**: Removed false redirect from dashboard layout — setup page self-protects
 - **FK hints complete**: All ambiguous library joins have FK hints in list, detail, AND related query configs
 - **Navigation dual-source**: Both `config.ts` and `layout.tsx` now in sync
 - **Type consolidation**: PAYMENT_METHODS, library status configs, StatusInfo→StatusConfig unified
@@ -937,4 +960,4 @@ git add . && git commit -m "description" && git push && vercel --prod
 
 ---
 
-*Last Updated: 2026-03-16*
+*Last Updated: 2026-03-20*
