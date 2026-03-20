@@ -72,6 +72,7 @@ export const GET = (request: Request) =>
           member_code,
           hours_balance,
           preferred_slot,
+          person:people(name),
           library:libraries(id, name, phone),
           current_subscription:library_memberships(hours_included)
         `)
@@ -90,12 +91,14 @@ export const GET = (request: Request) =>
           try {
             const library = transformJoin(member.library)
             const subscription = transformJoin(member.current_subscription)
+            const person = transformJoin(member.person)
+            const memberName = (person?.name as string) || member.name
 
             if (!member.email || !library) continue
 
             const result = await sendLibraryLowHoursWarning({
               to: member.email,
-              memberName: member.name,
+              memberName,
               memberCode: member.member_code || undefined,
               libraryName: library.name,
               hoursRemaining: member.hours_balance,
@@ -108,7 +111,7 @@ export const GET = (request: Request) =>
               results.lowHoursWarnings++
               cronLogger.debug("Sent low hours warning", {
                 memberId: member.id,
-                memberName: member.name,
+                memberName,
                 hoursBalance: member.hours_balance,
               })
             } else {
@@ -133,6 +136,7 @@ export const GET = (request: Request) =>
             name,
             email,
             member_code,
+            person:people(name),
             library:libraries(id, name, phone)
           )
         `)
@@ -152,10 +156,12 @@ export const GET = (request: Request) =>
 
             const library = transformJoin(member.library)
             if (!library) continue
+            const renewalPerson = transformJoin(member.person)
+            const renewalMemberName = (renewalPerson?.name as string) || member.name
 
             const result = await sendLibraryRenewalReminder({
               to: member.email,
-              memberName: member.name,
+              memberName: renewalMemberName,
               memberCode: member.member_code || undefined,
               libraryName: library.name,
               expiryDate: new Date(membership.end_date),
@@ -169,7 +175,7 @@ export const GET = (request: Request) =>
               results.renewalReminders++
               cronLogger.debug("Sent renewal reminder", {
                 membershipId: membership.id,
-                memberName: member.name,
+                memberName: renewalMemberName,
                 expiryDate: membership.end_date,
               })
             } else {
@@ -195,6 +201,7 @@ export const GET = (request: Request) =>
             name,
             email,
             member_code,
+            person:people(name),
             library:libraries(id, name, phone)
           )
         `)
@@ -214,10 +221,12 @@ export const GET = (request: Request) =>
 
             const library = transformJoin(member.library)
             if (!library) continue
+            const expiringPerson = transformJoin(member.person)
+            const expiringMemberName = (expiringPerson?.name as string) || member.name
 
             const result = await sendLibraryExpiringMembership({
               to: member.email,
-              memberName: member.name,
+              memberName: expiringMemberName,
               memberCode: member.member_code || undefined,
               libraryName: library.name,
               expiryDate: new Date(membership.end_date),
@@ -232,7 +241,7 @@ export const GET = (request: Request) =>
               results.expiringNotifications++
               cronLogger.debug("Sent expiring membership notification", {
                 membershipId: membership.id,
-                memberName: member.name,
+                memberName: expiringMemberName,
                 expiryDate: membership.end_date,
               })
             } else {
@@ -259,6 +268,7 @@ export const GET = (request: Request) =>
             name,
             email,
             member_code,
+            person:people(name),
             library:libraries(id, name, phone)
           )
         `)
@@ -278,10 +288,12 @@ export const GET = (request: Request) =>
 
             const library = transformJoin(member.library)
             if (!library) continue
+            const expiredPerson = transformJoin(member.person)
+            const expiredMemberName = (expiredPerson?.name as string) || member.name
 
             const result = await sendLibraryExpiredMembership({
               to: member.email,
-              memberName: member.name,
+              memberName: expiredMemberName,
               memberCode: member.member_code || undefined,
               libraryName: library.name,
               expiryDate: new Date(membership.end_date),
@@ -294,7 +306,7 @@ export const GET = (request: Request) =>
               results.expiredNotifications++
               cronLogger.debug("Sent expired membership notification", {
                 membershipId: membership.id,
-                memberName: member.name,
+                memberName: expiredMemberName,
                 expiryDate: membership.end_date,
               })
             } else {
@@ -328,6 +340,7 @@ export const GET = (request: Request) =>
             email,
             member_code,
             hours_balance,
+            person:people(name),
             library:libraries(id, name, phone)
           `)
           .eq("status", "active")
@@ -342,6 +355,8 @@ export const GET = (request: Request) =>
           for (const member of activeMembers) {
             try {
               const library = transformJoin(member.library)
+              const memberPerson = transformJoin(member.person)
+              const memberDisplayName = (memberPerson?.name as string) || member.name
               if (!member.email || !library) continue
 
               // Fetch attendance records for this member in the previous month
@@ -369,7 +384,7 @@ export const GET = (request: Request) =>
 
               const result = await sendMonthlyAttendanceSummary({
                 to: member.email,
-                memberName: member.name,
+                memberName: memberDisplayName,
                 libraryName: library.name,
                 memberCode: member.member_code || undefined,
                 month: summaryMonth,
@@ -385,7 +400,7 @@ export const GET = (request: Request) =>
                 results.monthlySummaries++
                 cronLogger.debug("Sent monthly attendance summary", {
                   memberId: member.id,
-                  memberName: member.name,
+                  memberName: memberDisplayName,
                   totalDays,
                   totalHours: totalHours.toFixed(1),
                 })

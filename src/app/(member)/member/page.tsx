@@ -156,7 +156,7 @@ export default function MemberHomePage() {
       {/* Welcome Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold">
-          Welcome, {member.name.split(" ")[0]}!
+          Welcome, {(member.person?.name || member.name || "").split(" ")[0] || "Member"}!
         </h1>
         <p className="text-muted-foreground">Here&apos;s your membership overview</p>
       </div>

@@ -9,6 +9,7 @@
 import { use } from "react"
 import Link from "next/link"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
+import { createClient } from "@/lib/supabase/client"
 import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -51,7 +52,7 @@ function EditLibraryMemberContent({
   } = useFormEditPage({
     table: "library_members",
     id,
-    select: "*, library:libraries(id, name)",
+    select: "*, library:libraries(id, name), person:people(id, name)",
     initialData: {
       name: "",
       phone: "",
@@ -83,18 +84,51 @@ function EditLibraryMemberContent({
       }
       return null
     },
-    transform: (data): Record<string, unknown> => ({
-      name: data.name,
-      phone: data.phone || null,
-      email: data.email || null,
-      id_proof_type: data.id_proof_type || null,
-      id_proof_number: data.id_proof_number || null,
-      preferred_slot: data.preferred_slot || null,
-      left_date: data.left_date || null,
-      notes: data.notes || null,
-      status: data.status,
-      updated_at: getNowISO(),
-    }),
+    customSubmit: async (data, userId, recordId, supabase) => {
+      // Update library_members (denormalized copy)
+      const memberUpdate: Record<string, unknown> = {
+        name: data.name,
+        phone: data.phone || null,
+        email: data.email || null,
+        id_proof_type: data.id_proof_type || null,
+        id_proof_number: data.id_proof_number || null,
+        preferred_slot: data.preferred_slot || null,
+        left_date: data.left_date || null,
+        notes: data.notes || null,
+        status: data.status,
+        updated_at: getNowISO(),
+      }
+
+      const { error: memberError } = await supabase
+        .from("library_members")
+        .update(memberUpdate)
+        .eq("id", recordId)
+
+      if (memberError) {
+        throw new Error(memberError.message)
+      }
+
+      // Also update the people record (single source of truth) if person_id exists
+      const personId = record?.person_id as string | null
+      if (personId) {
+        const personUpdate: Record<string, unknown> = {
+          name: data.name,
+          phone: data.phone || null,
+          email: data.email || null,
+          updated_at: getNowISO(),
+        }
+
+        const { error: personError } = await supabase
+          .from("people")
+          .update(personUpdate)
+          .eq("id", personId)
+
+        if (personError) {
+          // Log but don't fail — the member record was already updated
+          console.error("Failed to update people record:", personError.message)
+        }
+      }
+    },
   })
 
   // Get library name from record for display

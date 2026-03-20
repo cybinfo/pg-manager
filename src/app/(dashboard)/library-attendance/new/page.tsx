@@ -30,6 +30,12 @@ interface MemberOption {
   hours_balance: number
   library_id: string
   current_subscription_id: string | null
+  person?: { name: string } | null
+}
+
+/** Get display name from person (live) or member (fallback) */
+function getMemberDisplayName(m: MemberOption): string {
+  return m.person?.name || m.name
 }
 
 interface LibraryOption {
@@ -171,7 +177,7 @@ function NewLibraryAttendanceContent() {
       const selectedSeat = seats.find(s => s.id === data.seat_id)
       const seatInfo = selectedSeat ? ` at seat ${selectedSeat.seat_number}` : ""
       const { showSuccess } = await import("@/lib/toast-helpers")
-      showSuccess(`${selectedMember.name} checked in${seatInfo} successfully!`)
+      showSuccess(`${getMemberDisplayName(selectedMember)} checked in${seatInfo} successfully!`)
 
       return `/library-attendance/${newAttendance.id}`
     },
@@ -196,16 +202,21 @@ function NewLibraryAttendanceContent() {
 
       setLibraries(librariesData || [])
 
-      // Fetch active members
+      // Fetch active members with person data for live name
       const { data: membersData } = await supabase
         .from("library_members")
-        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id")
+        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id, person:people(name)")
         .eq("workspace_id", workspaceId)
         .eq("status", "active")
         .is("deleted_at", null)
         .order("name")
 
-      setMembers(membersData || [])
+      // Transform person joins for live name data
+      const transformedMembers = (membersData || []).map((m: Record<string, unknown>) => ({
+        ...m,
+        person: transformJoin(m.person as Record<string, unknown> | Record<string, unknown>[] | null),
+      })) as unknown as MemberOption[]
+      setMembers(transformedMembers)
 
       // If preselected member, set form data
       if (preselectedMember && membersData) {
@@ -302,7 +313,7 @@ function NewLibraryAttendanceContent() {
 
   const memberOptions: ComboboxOption[] = members.map((m) => ({
     value: m.id,
-    label: m.name + (m.member_code ? ` (${m.member_code})` : "") + ` - ${m.hours_balance.toFixed(1)}h remaining`,
+    label: getMemberDisplayName(m) + (m.member_code ? ` (${m.member_code})` : "") + ` - ${m.hours_balance.toFixed(1)}h remaining`,
   }))
 
   return (
@@ -377,7 +388,7 @@ function NewLibraryAttendanceContent() {
                     <Clock className="h-5 w-5 text-success mt-0.5" />
                   )}
                   <div>
-                    <p className="font-medium">{selectedMember.name}</p>
+                    <p className="font-medium">{getMemberDisplayName(selectedMember)}</p>
                     {selectedMember.member_code && (
                       <p className="text-sm text-muted-foreground font-mono">{selectedMember.member_code}</p>
                     )}

@@ -18,6 +18,7 @@ import { ArrowLeft, Camera, CheckCircle, XCircle, Loader2, Users, Clock, AlertCi
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"
+import { transformJoin } from "@/lib/supabase/transforms"
 import { Avatar } from "@/components/ui/avatar"
 
 interface QRPayload {
@@ -65,10 +66,10 @@ export default function QRScannerPage() {
     try {
       const supabase = createClient()
 
-      // Get member details
+      // Get member details with person data for live name
       const { data: member, error: memberError } = await supabase
         .from("library_members")
-        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id")
+        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id, person:people(id, name)")
         .eq("id", payload.member_id)
         .single()
 
@@ -86,18 +87,22 @@ export default function QRScannerPage() {
         return
       }
 
+      // Use person.name (live data) with fallback to denormalized copy
+      const person = transformJoin(member.person as Record<string, unknown> | Record<string, unknown>[] | null)
+      const displayName: string = (person?.name as string) || member.name
+
       // Check if member is active
       if (member.status !== "active") {
         const result: CheckInResult = {
           success: false,
-          memberName: member.name,
+          memberName: displayName,
           memberCode: member.member_code,
           hoursBalance: member.hours_balance,
           message: `Member is ${member.status}`,
           timestamp: new Date(),
         }
         setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-        showError(`Member ${member.name} is ${member.status}`)
+        showError(`Member ${displayName} is ${member.status}`)
         return
       }
 
@@ -105,14 +110,14 @@ export default function QRScannerPage() {
       if (member.hours_balance <= 0) {
         const result: CheckInResult = {
           success: false,
-          memberName: member.name,
+          memberName: displayName,
           memberCode: member.member_code,
           hoursBalance: member.hours_balance,
           message: "No hours remaining",
           timestamp: new Date(),
         }
         setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-        showError(`${member.name} has no hours remaining`)
+        showError(`${displayName} has no hours remaining`)
         return
       }
 
@@ -128,14 +133,14 @@ export default function QRScannerPage() {
       if (activeCheckIn) {
         const result: CheckInResult = {
           success: false,
-          memberName: member.name,
+          memberName: displayName,
           memberCode: member.member_code,
           hoursBalance: member.hours_balance,
           message: "Already checked in",
           timestamp: new Date(),
         }
         setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-        showWarning(`${member.name} is already checked in`)
+        showWarning(`${displayName} is already checked in`)
         return
       }
 
@@ -178,14 +183,14 @@ export default function QRScannerPage() {
 
       const result: CheckInResult = {
         success: true,
-        memberName: member.name,
+        memberName: displayName,
         memberCode: member.member_code,
         hoursBalance: member.hours_balance,
         message: "Checked in successfully",
         timestamp: new Date(),
       }
       setRecentCheckIns((prev) => [result, ...prev.slice(0, 9)])
-      showSuccess(`${member.name} checked in! (${member.hours_balance.toFixed(1)}h remaining)`)
+      showSuccess(`${displayName} checked in! (${member.hours_balance.toFixed(1)}h remaining)`)
 
       // Play success sound (optional)
       try {

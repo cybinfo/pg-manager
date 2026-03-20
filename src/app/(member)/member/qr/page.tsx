@@ -15,6 +15,9 @@ interface MemberData {
   library: {
     name: string
   } | null
+  person: {
+    name: string
+  } | null
 }
 
 export default function MemberQRPage() {
@@ -35,7 +38,8 @@ export default function MemberQRPage() {
           name,
           member_code,
           library_id,
-          library:libraries(name)
+          library:libraries(name),
+          person:people(name)
         `)
         .eq("user_id", user.id)
         .eq("status", "active")
@@ -45,10 +49,14 @@ export default function MemberQRPage() {
         const library = Array.isArray(memberData.library)
           ? memberData.library[0]
           : memberData.library
+        const person = Array.isArray(memberData.person)
+          ? memberData.person[0]
+          : memberData.person
 
         setMember({
           ...memberData,
           library,
+          person,
         })
       }
       setLoading(false)
@@ -71,6 +79,8 @@ export default function MemberQRPage() {
     )
   }
 
+  const displayName = member.person?.name || member.name
+
   return (
     <div className="space-y-6">
       <div>
@@ -82,7 +92,7 @@ export default function MemberQRPage() {
       <div className="flex justify-center">
         <MemberQRCode
           memberId={member.id}
-          memberName={member.name}
+          memberName={displayName}
           memberCode={member.member_code}
           libraryId={member.library_id}
           size={250}
@@ -131,7 +141,7 @@ export default function MemberQRPage() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Member Name</p>
-              <p className="font-medium">{member.name}</p>
+              <p className="font-medium">{displayName}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Member Code</p>

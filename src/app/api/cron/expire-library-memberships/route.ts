@@ -36,7 +36,8 @@ export const GET = (request: Request) =>
             library_id,
             current_subscription_id,
             owner_id,
-            workspace_id
+            workspace_id,
+            person:people(name)
           )
         `)
         .eq("status", "active")
@@ -80,6 +81,8 @@ export const GET = (request: Request) =>
       for (const membership of expiredMemberships || []) {
         try {
           const member = transformJoin(membership.member)
+          const memberPerson = member ? transformJoin(member.person) : null
+          const memberDisplayName = (memberPerson?.name as string) || member?.name || "Unknown"
 
           // Update membership status to expired
           const { error: updateError } = await supabaseAdmin
@@ -98,7 +101,7 @@ export const GET = (request: Request) =>
 
           cronLogger.debug("Expired membership", {
             membershipId: membership.id,
-            memberName: member?.name,
+            memberName: memberDisplayName,
             endDate: membership.end_date,
             planName: membership.plan_name,
           })
@@ -130,7 +133,7 @@ export const GET = (request: Request) =>
                 membersUpdated++
                 cronLogger.info("Member expired", {
                   memberId: membership.member_id,
-                  memberName: member.name,
+                  memberName: memberDisplayName,
                 })
               }
 
