@@ -66,16 +66,28 @@ export default function SetupPage() {
   const [propertyAddress, setPropertyAddress] = useState("")
   const [propertyCity, setPropertyCity] = useState("")
 
+  const [checkingExisting, setCheckingExisting] = useState(true)
+
   useEffect(() => {
-    const fetchUser = async () => {
+    const checkUser = async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user?.user_metadata?.full_name) {
         setUserName(user.user_metadata.full_name)
       }
+
+      // Check if user already has a workspace — redirect to dashboard if so
+      if (user) {
+        const { data: contexts } = await supabase.rpc("get_user_contexts", { p_user_id: user.id })
+        if (contexts && contexts.length > 0) {
+          router.push("/dashboard")
+          return
+        }
+      }
+      setCheckingExisting(false)
     }
-    fetchUser()
-  }, [])
+    checkUser()
+  }, [router])
 
   const handleComplete = async () => {
     if (!propertyName || !propertyCity) {
@@ -366,6 +378,15 @@ export default function SetupPage() {
       default:
         return null
     }
+  }
+
+  // Show loading while checking if user already has a workspace
+  if (checkingExisting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
