@@ -662,6 +662,46 @@ Indian business owners and staff are predominantly mobile users on 4G networks t
 
 Any session that suggests building a native app is in violation of this principle.
 
+### D8. 100% Confidence Before Any Code Change
+
+**No line of code is added, modified, or deleted without 100% confidence.** This is the non-negotiable standard for every AI session on this platform.
+
+Grep results, pattern assumptions, and "likely" conclusions are research tools — not proof. A grep that finds a pattern in 10 files does not confirm it applies to all 30. A file that looks standard from the outside may have a non-obvious dependency inside. Partial knowledge is not sufficient to act on.
+
+#### What 100% Confidence Requires
+
+Before touching any file, the AI must be able to answer **all** of the following with certainty:
+
+- **What does this file currently do?** — Read it in full, not just the relevant section
+- **What will change?** — Every line added, modified, or removed is accounted for
+- **What depends on this?** — Every file that imports, calls, or inherits from this code is identified
+- **What could break?** — Every downstream effect is understood, not assumed
+- **Is this pattern consistent?** — The same pattern has been verified in existing code, not inferred from one example
+
+#### What Is NOT 100% Confidence
+
+| What AI might say | Why it is not enough |
+| --- | --- |
+| "The pattern is probably the same as..." | Probably is not certainly. Read the file. |
+| "Grep found X in Y files, so it applies here" | Grep finds occurrences, not intent. Read each file. |
+| "This follows the standard pattern" | Standards drift. Verify the actual implementation. |
+| "The audit identified this as a gap" | Audits are research. Verify before acting on them. |
+| "Based on the architecture, I expect..." | Expectations are assumptions. Read the code. |
+
+#### The Rule in Practice
+
+1. **Before any change:** Read every file that will be affected — in full, not by skimming
+2. **Before any delete:** Confirm nothing imports, extends, or depends on what is being removed — by reading the dependents, not by assuming
+3. **Before any new code:** Read existing patterns in at least 3 similar implementations to ensure consistency
+4. **If uncertain at any point:** Stop. Investigate further. Ask the human. Never proceed on a guess.
+5. **After any change:** Re-read the modified file to confirm the change is exactly what was intended — no unintended edits, no missing context
+
+#### Why This Principle Exists
+
+An AI that acts on 80% confidence causes bugs that look correct. A wrong but plausible-looking change is harder to catch than an obvious error. On a platform built entirely by AI, the only safeguard against accumulated wrong-but-plausible changes is absolute verification before every action.
+
+> *Speed is not a virtue here. A change made with 100% confidence in 10 minutes is worth more than a change made with 80% confidence in 2 minutes. The cost of a wrong change — debugging, data corruption, broken trust — always exceeds the cost of a slower, certain one.*
+
 ---
 
 ## E. Security & Compliance
@@ -1062,7 +1102,7 @@ Every list page that fetches related entities must use joins or batch queries �
 
 ## Principle Test — Run Before Every Change
 
-Every AI session must answer all 41 questions before proceeding. These are not a checklist — they are the AI's obligation to the platform:
+Every AI session must answer all 43 questions before proceeding. These are not a checklist — they are the AI's obligation to the platform:
 
 | # | Question | Ref |
 | --- | --- | --- |
@@ -1107,7 +1147,10 @@ Every AI session must answer all 41 questions before proceeding. These are not a
 | 39 | Did I run existing tests before making changes — and do they still pass after? | G2 |
 | 40 | Have I written tests covering happy path, edge cases, permissions, RLS, and error states? | G2 |
 | 41 | Does this meet performance standards — FCT < 2s, API < 500ms, no N+1 queries? | G3 |
+| 42 | **Have I read every file I am about to change in full — with 100% confidence, not assumptions?** | D8 |
+| 43 | **Have I identified every file that depends on what I am changing or deleting?** | D8 |
 
+> **Q42–43: 100% confidence before every change. Read every file. Know every dependent. Never guess.**
 > Q24: AI must operate as architect, not task executor.
 > Q25: Solutions must serve the broadest possible set of business types.
 > Q36–38: Default state must be simple, role-aware, and expandable — always.

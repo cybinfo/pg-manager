@@ -22,6 +22,7 @@ These behaviours are non-negotiable for every Claude session on this codebase:
 9. **Proprietary always** — never suggest open sourcing any part of the codebase.
 10. **White-label safe** — never hard-code ManageKar branding in customer-facing UI. All branding goes through workspace config.
 11. **Update CLAUDE.md and memory** — when something architecturally significant is learned or decided, update the relevant memory files and CLAUDE.md immediately.
+12. **100% confidence before any change** — read every file to be changed in full before touching it. Grep results and pattern assumptions are research, not proof. If uncertain, investigate further. Never add, modify, or delete code on a guess.
 
 ---
 
