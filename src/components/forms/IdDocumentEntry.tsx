@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/ui/file-upload"
+import { Select } from "@/components/ui/form-components"
 import { Trash2, FileText, ImageIcon } from "lucide-react"
 
 export interface IdDocumentData {
@@ -74,16 +75,13 @@ export function IdDocumentEntry({
   return (
     <div className="p-3 border rounded-lg bg-muted/30 space-y-3">
       <div className="flex items-center gap-2">
-        <select
+        <Select
           value={value.type}
           onChange={(e) => onChange("type", e.target.value)}
-          className="h-10 px-3 rounded-md border bg-background text-sm"
+          options={ID_DOCUMENT_TYPES.map((t) => ({ value: t, label: t }))}
           disabled={disabled}
-        >
-          {ID_DOCUMENT_TYPES.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
+          className="w-auto"
+        />
         <Input
           placeholder="Document Number (e.g., XXXX-XXXX-XXXX)"
           value={value.number}

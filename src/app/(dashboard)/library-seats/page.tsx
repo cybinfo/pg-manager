@@ -18,6 +18,8 @@ import { formatDate } from "@/lib/format"
 import { LIBRARY_SEAT_STATUS_CONFIG } from "@/types/library.types"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, labelMapColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -181,6 +183,31 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const SEAT_STATUS_LABELS: Record<string, string> = {
+  available: "Available",
+  occupied: "Occupied",
+  reserved: "Reserved",
+  maintenance: "Maintenance",
+}
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "seat_number", header: "Seat Number" },
+  nestedColumn("section_name", "Section", "section.name"),
+  nestedColumn("library_name", "Library", "section.library.name"),
+  { key: "row_number", header: "Row", format: (v) => String(v ?? "") },
+  labelMapColumn("status", "Status", SEAT_STATUS_LABELS),
+  nestedColumn("member_name", "Assigned To", "current_member.name"),
+  nestedColumn("member_code", "Member Code", "current_member.member_code"),
+  { key: "has_power_outlet", header: "Power Outlet", format: (v) => (v ? "Yes" : "No") },
+  { key: "has_lamp", header: "Lamp", format: (v) => (v ? "Yes" : "No") },
+  { key: "is_window_seat", header: "Window Seat", format: (v) => (v ? "Yes" : "No") },
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -203,6 +230,8 @@ export default function LibrarySeatsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="library-seats"
       createHref="/library-seats/new"
       createLabel="Add Seat"
       createPermission="library_seats.create"

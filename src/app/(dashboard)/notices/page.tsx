@@ -31,6 +31,8 @@ import { PropertyLink } from "@/components/ui/entity-link"
 import { formatTimeAgo } from "@/lib/format"
 import { NOTICE_TYPE_CONFIG, NOTICE_AUDIENCES } from "@/lib/status-config"
 import { textFilterColumn, selectFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn, labelMapColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -247,6 +249,32 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const NOTICE_TYPE_LABELS: Record<string, string> = {
+  general: "General",
+  maintenance: "Maintenance",
+  payment_reminder: "Payment Reminder",
+  emergency: "Emergency",
+}
+
+const AUDIENCE_LABELS: Record<string, string> = {
+  all: "All Residents",
+  tenants_only: "Tenants Only",
+  specific_rooms: "Specific Rooms",
+}
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "title", header: "Title" },
+  labelMapColumn("type", "Type", NOTICE_TYPE_LABELS),
+  labelMapColumn("target_audience", "Audience", AUDIENCE_LABELS),
+  { key: "is_active", header: "Active", format: (v) => (v ? "Yes" : "No") },
+  dateExportColumn("expires_at", "Expires At"),
+  dateExportColumn("created_at", "Posted On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -269,6 +297,8 @@ export default function NoticesPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="notices"
       createHref="/notices/new"
       createLabel="New Notice"
       createPermission="notices.create"

@@ -19,6 +19,14 @@
     {
       "path": "/api/cron/daily-summaries",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/purge-soft-deleted",
+      "schedule": "0 2 * * 0"
+    },
+    {
+      "path": "/api/cron/purge-audit-logs",
+      "schedule": "0 3 1 * *"
     }
   ]
 }

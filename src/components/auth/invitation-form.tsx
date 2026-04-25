@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Invitation, Role, CONTEXT_TYPE_CONFIG } from '@/lib/auth/types'
 import { withCreatedBy } from '@/lib/audit'
 import { Phone, Send, Loader2, UserPlus } from 'lucide-react'
-import { EmailInput } from '@/components/ui/form-components'
+import { EmailInput, Select } from '@/components/ui/form-components'
 import { showSuccess, showError } from '@/lib/toast-helpers'
 import { getNowISO } from '@/lib/date-helpers'
 
@@ -63,7 +63,7 @@ export function InvitationForm({
       if (!user) throw new Error('Not authenticated')
 
       // Check if user already exists
-      const { data: existingUser } = await (supabase.rpc as Function)('find_user_by_identity', {
+      const { data: existingUser } = await (supabase.rpc as (fn: string, args: Record<string, string | null>) => Promise<{ data: Array<{ user_id: string }> }>)('find_user_by_identity', {
         p_email: formData.email || null,
         p_phone: formData.phone || null,
       })
@@ -126,9 +126,9 @@ export function InvitationForm({
         showSuccess('Invitation created successfully')
         onSuccess?.(invitation as Invitation)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating invitation:', error)
-      showError(error.message || 'Failed to create invitation')
+      showError((error as { message?: string }).message || 'Failed to create invitation')
     } finally {
       setIsLoading(false)
     }
@@ -192,18 +192,14 @@ export function InvitationForm({
           {contextType === 'staff' && roles.length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <select
+              <Select
                 id="role"
                 value={formData.role_id}
                 onChange={(e) => setFormData(prev => ({ ...prev, role_id: e.target.value }))}
-                className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                options={roles.map((role) => ({ value: role.id, label: role.name }))}
+                placeholder="Select a role"
                 disabled={isLoading}
-              >
-                <option value="">Select a role</option>
-                {roles.map((role) => (
-                  <option key={role.id} value={role.id}>{role.name}</option>
-                ))}
-              </select>
+              />
             </div>
           )}
 

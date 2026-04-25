@@ -9,6 +9,7 @@
 import { Resend } from "resend"
 import { emailSubjects, emailBodyTemplates } from "@/lib/templates"
 import { logger, extractErrorMeta } from "@/lib/logger"
+import { CONTACT } from "@/lib/constants/contact"
 
 const emailLogger = logger.child("email")
 
@@ -27,7 +28,7 @@ function getResendClient(): Resend {
 }
 
 // Default sender email (update after domain verification)
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "ManageKar <onboarding@resend.dev>"
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || `${CONTACT.APP_NAME} <onboarding@resend.dev>`
 
 export interface PaymentReminderData {
   to: string

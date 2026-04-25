@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Select } from "@/components/ui/form-components"
 import { Trash2 } from "lucide-react"
 
 export interface GuardianData {
@@ -47,16 +48,13 @@ export function GuardianEntry({
   return (
     <div className="p-3 border rounded-lg bg-muted/30 space-y-3">
       <div className="flex items-center gap-2">
-        <select
+        <Select
           value={value.relation}
           onChange={(e) => onChange("relation", e.target.value)}
-          className="h-10 px-3 rounded-md border bg-background text-sm"
+          options={RELATION_TYPES.map((r) => ({ value: r, label: r }))}
           disabled={disabled}
-        >
-          {RELATION_TYPES.map((r) => (
-            <option key={r} value={r}>{r}</option>
-          ))}
-        </select>
+          className="w-auto"
+        />
         <Input
           placeholder="Name"
           value={value.name}

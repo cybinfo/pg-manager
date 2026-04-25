@@ -7,6 +7,57 @@ import { Upload, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
 
+/** Compress an image file using Canvas API. Non-image files pass through unchanged. */
+async function compressImage(file: File, maxKB: number, maxDimension: number): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif") return file
+
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+
+      let { width, height } = img
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width)
+          width = maxDimension
+        } else {
+          width = Math.round((width * maxDimension) / height)
+          height = maxDimension
+        }
+      }
+
+      const canvas = document.createElement("canvas")
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext("2d")!
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // Try quality 0.85 first, drop to 0.7 if still over limit
+      const tryQuality = (quality: number) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { resolve(file); return }
+            if (blob.size > maxKB * 1024 && quality > 0.5) {
+              tryQuality(quality - 0.15)
+            } else {
+              resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }))
+            }
+          },
+          "image/jpeg",
+          quality
+        )
+      }
+      tryQuality(0.85)
+    }
+
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
+    img.src = url
+  })
+}
+
 interface FileUploadProps {
   bucket: string // Supabase storage bucket name
   folder?: string // Optional folder path within bucket
@@ -66,7 +117,10 @@ export function FileUpload({
         const supabase = createClient()
         const uploadedUrls: string[] = []
 
-        for (const file of filesToUpload) {
+        for (const rawFile of filesToUpload) {
+          // Compress images before upload (max 500KB, 1200px — C6 principle)
+          const file = await compressImage(rawFile, 500, 1200)
+
           // Generate unique filename
           const timestamp = Date.now()
           const randomId = Math.random().toString(36).substring(2, 8)
@@ -369,11 +423,16 @@ export function ProfilePhotoUpload({
       const timestamp = Date.now()
       const randomId = Math.random().toString(36).substring(2, 8)
       const filename = `${timestamp}-${randomId}.jpg`
+
+      // Compress profile photo to max 200KB, 800px (C6 principle)
+      const rawFile = new File([croppedBlob], filename, { type: "image/jpeg" })
+      const compressed = await compressImage(rawFile, 200, 800)
+
       const path = folder ? `${folder}/${filename}` : filename
 
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(path, croppedBlob, {
+        .upload(path, compressed, {
           cacheControl: "3600",
           upsert: false,
           contentType: "image/jpeg"

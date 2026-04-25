@@ -10,7 +10,7 @@ import { Library, Users, Armchair, MapPin, Phone, Clock } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createBooleanMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -281,18 +281,8 @@ const advancedFilterColumns: FilterableColumn[] = [
 const metrics: MetricConfig<Record<string, unknown>>[] = [
   createTotalMetric({ label: "Libraries", icon: Library }),
   createBooleanMetric("is_active", true, "Active", Library, { id: "active" }),
-  {
-    id: "total_seats",
-    label: "Total Seats",
-    icon: Armchair,
-    compute: (items) => items.reduce((sum: number, l) => sum + (Number(l.total_seats) || 0), 0),
-  },
-  {
-    id: "occupied_seats",
-    label: "Occupied",
-    icon: Users,
-    compute: (items) => items.reduce((sum: number, l) => sum + (Number(l.occupied_seats) || 0), 0),
-  },
+  createSumMetric("total_seats", "total_seats", "Total Seats", Armchair, { format: "number" }),
+  createSumMetric("occupied_seats", "occupied_seats", "Occupied", Users, { format: "number" }),
 ]
 
 // ============================================

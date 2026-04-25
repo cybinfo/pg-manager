@@ -20,6 +20,8 @@ import { createClient } from "@/lib/supabase/client"
 import { GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, numberFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -90,7 +92,8 @@ function useEnrollmentStats() {
   }, [])
 
   useEffect(() => {
-    fetchStats()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchStats()
   }, [fetchStats])
 
   return stats
@@ -108,6 +111,21 @@ const advancedFilterColumns: FilterableColumn[] = [
   booleanFilterColumn("is_active", "Status", { trueLabel: "Active", falseLabel: "Inactive" }),
   numberFilterColumn("sort_order", "Sort Order"),
   dateFilterColumn("created_at", "Added On"),
+]
+
+// ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Plan Name" },
+  { key: "description", header: "Description", format: (v) => String(v ?? "") },
+  { key: "hours_included", header: "Hours/Day", format: (v) => (v ? String(v) : "Unlimited") },
+  { key: "validity_days", header: "Validity (Days)", format: (v) => String(v ?? "") },
+  currencyExportColumn("base_price", "Price"),
+  { key: "is_active", header: "Status", format: (v) => (v ? "Active" : "Inactive") },
+  { key: "sort_order", header: "Sort Order", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Added On"),
 ]
 
 // ============================================
@@ -335,6 +353,8 @@ export default function LibraryPlansPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="library-plans"
       createHref="/library-plans/new"
       createLabel="Add Plan"
       createPermission="library.create"

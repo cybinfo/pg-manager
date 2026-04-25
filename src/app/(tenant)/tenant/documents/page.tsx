@@ -106,11 +106,12 @@ export default function TenantDocumentsPage() {
       owner_id: ownerId,
     })
 
-    // Fetch documents
+    // Fetch documents — exclude soft-deleted
     const { data: docs } = await supabase
       .from("tenant_documents")
       .select("*")
       .eq("tenant_id", tenant.id)
+      .is("deleted_at", null)
       .order("uploaded_at", { ascending: false })
 
     setDocuments(docs || [])
@@ -118,7 +119,8 @@ export default function TenantDocumentsPage() {
   }
 
   useEffect(() => {
-    fetchDocuments()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchDocuments()
   }, [])
 
   const handleDelete = async () => {
@@ -126,22 +128,12 @@ export default function TenantDocumentsPage() {
 
     setDeleting(true)
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    // Delete from storage first
-    try {
-      const url = new URL(documentToDelete.file_url)
-      const path = url.pathname.split("/storage/v1/object/public/tenant-documents/")[1]
-      if (path) {
-        await supabase.storage.from("tenant-documents").remove([path])
-      }
-    } catch (e) {
-      console.error("Error deleting file from storage:", e)
-    }
-
-    // Delete from database
+    // Soft delete — set deleted_at/deleted_by, never hard delete (E4 principle)
     const { error } = await supabase
       .from("tenant_documents")
-      .delete()
+      .update({ deleted_at: new Date().toISOString(), deleted_by: user?.id ?? null })
       .eq("id", documentToDelete.id)
 
     setDeleting(false)
@@ -326,7 +318,7 @@ export default function TenantDocumentsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Document?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{documentToDelete?.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{documentToDelete?.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -10,13 +10,15 @@ import { Grid3X3, Armchair, Library } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_SECTION_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createBooleanMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_FILTER, ACTIVE_STATUS_FILTER, LIBRARY_AC_TYPE_FILTER } from "@/lib/filter-presets"
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, numberFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, currencyExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -213,19 +215,28 @@ const advancedFilterColumns: FilterableColumn[] = [
 
 const metrics: MetricConfig<Record<string, unknown>>[] = [
   createTotalMetric({ label: "Sections", icon: Grid3X3 }),
-  {
-    id: "total_seats",
-    label: "Total Seats",
-    icon: Armchair,
-    compute: (items) => items.reduce((sum: number, s) => sum + (Number(s.total_seats) || 0), 0),
-  },
-  {
-    id: "occupied",
-    label: "Occupied",
-    icon: Armchair,
-    compute: (items) => items.reduce((sum: number, s) => sum + (Number(s.occupied_seats) || 0), 0),
-  },
+  createSumMetric("total_seats", "total_seats", "Total Seats", Armchair, { format: "number" }),
+  createSumMetric("occupied_seats", "occupied", "Occupied", Armchair, { format: "number" }),
   createBooleanMetric("is_ac", true, "AC Sections", Grid3X3, { id: "ac_sections" }),
+]
+
+// ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Section Name" },
+  nestedColumn("library_name", "Library", "library.name"),
+  { key: "section_number", header: "Section #", format: (v) => String(v ?? "") },
+  { key: "floor", header: "Floor", format: (v) => String(v ?? "0") },
+  { key: "total_seats", header: "Total Seats", format: (v) => String(v ?? "0") },
+  { key: "occupied_seats", header: "Occupied Seats", format: (v) => String(v ?? "0") },
+  { key: "is_ac", header: "AC", format: (v) => (v ? "AC" : "Non-AC") },
+  { key: "has_power_outlets", header: "Power Outlets", format: (v) => (v ? "Yes" : "No") },
+  currencyExportColumn("hourly_rate", "Hourly Rate"),
+  currencyExportColumn("monthly_rate", "Monthly Rate"),
+  { key: "is_active", header: "Status", format: (v) => (v ? "Active" : "Inactive") },
+  dateExportColumn("created_at", "Added On"),
 ]
 
 // ============================================
@@ -251,6 +262,8 @@ export default function LibrarySectionsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="library-sections"
       createHref="/library-sections/new"
       createLabel="Add Section"
       createPermission="library_sections.create"

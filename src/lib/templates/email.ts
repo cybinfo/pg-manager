@@ -30,7 +30,7 @@ function formatDate(date: Date): string {
   })
 }
 
-/** Base email wrapper - standard ManageKar email chrome */
+/** Base email wrapper - standard app email chrome */
 function emailWrapper(content: string): string {
   return `
 <!DOCTYPE html>
@@ -38,13 +38,13 @@ function emailWrapper(content: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ManageKar</title>
+  <title>${CONTACT.APP_NAME}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <!-- Header -->
     <div style="background: linear-gradient(135deg, #14B8A6, #10B981); padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">ManageKar</h1>
+      <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">${CONTACT.APP_NAME}</h1>
       <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">Smart PG Management</p>
     </div>
 
@@ -55,7 +55,7 @@ function emailWrapper(content: string): string {
 
     <!-- Footer -->
     <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
-      <p style="margin: 0;">Sent via ManageKar - Smart PG Management Software</p>
+      <p style="margin: 0;">Sent via ${CONTACT.APP_NAME} - Smart PG Management Software</p>
       <p style="margin: 8px 0 0 0;">
         <a href="${CONTACT.APP_URL}" style="color: #10B981; text-decoration: none;">managekar.com</a>
       </p>
@@ -82,14 +82,14 @@ export const emailSubjects = {
 
   invitation: (data: { workspaceName: string; contextType: string }): string => {
     const roleLabel = getEntityName(data.contextType || "tenant")
-    return `You're invited to join ${data.workspaceName} as ${roleLabel} - ManageKar`
+    return `You're invited to join ${data.workspaceName} as ${roleLabel} - ${CONTACT.APP_NAME}`
   },
 
   testEmail: (): string =>
-    "ManageKar - Test Email",
+    `${CONTACT.APP_NAME} - Test Email`,
 
   emailVerification: (): string =>
-    "Verify your email - ManageKar",
+    `Verify your email - ${CONTACT.APP_NAME}`,
 
   dailySummary: (data: { date: Date; businessName?: string }): string => {
     const dateStr = data.date.toLocaleDateString("en-IN", {
@@ -97,7 +97,7 @@ export const emailSubjects = {
       month: "long",
       year: "numeric",
     })
-    return `Daily Summary for ${dateStr} - ${data.businessName || "ManageKar"}`
+    return `Daily Summary for ${dateStr} - ${data.businessName || CONTACT.APP_NAME}`
   },
 
   libraryLowHours: (data: { libraryName: string }): string =>
@@ -530,7 +530,7 @@ export const emailBodyTemplates = {
     }
 
     const roleDescriptions: Record<string, string> = {
-      staff: "As a staff member, you'll be able to help manage the property through the ManageKar dashboard.",
+      staff: `As a staff member, you'll be able to help manage the property through the ${CONTACT.APP_NAME} dashboard.`,
       tenant: "As a tenant, you'll have access to your personal portal where you can view your bills, payments, submit complaints, and more.",
     }
 
@@ -616,7 +616,7 @@ export const emailBodyTemplates = {
     </h2>
 
     <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
-      Please verify your email address to complete your ManageKar account setup and access all features.
+      Please verify your email address to complete your ${CONTACT.APP_NAME} account setup and access all features.
     </p>
 
     <!-- Verification Card -->
@@ -646,7 +646,7 @@ export const emailBodyTemplates = {
 
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
       <p style="color: #6B7280; margin: 0; font-size: 14px;">
-        Thank you for using ManageKar!
+        Thank you for using ${CONTACT.APP_NAME}!
       </p>
     </div>
   `
@@ -658,20 +658,20 @@ export const emailBodyTemplates = {
     return `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #14B8A6, #10B981); padding: 20px; border-radius: 8px 8px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 24px;">ManageKar</h1>
+            <h1 style="color: white; margin: 0; font-size: 24px;">${CONTACT.APP_NAME}</h1>
           </div>
           <div style="padding: 30px; background: #f9fafb; border-radius: 0 0 8px 8px;">
             <h2 style="color: #111827; margin-top: 0;">Test Email Successful!</h2>
             <p style="color: #6b7280; line-height: 1.6;">
               Hi ${data.ownerName},<br><br>
-              This is a test email from ManageKar to confirm your email notification settings are working correctly.
+              This is a test email from ${CONTACT.APP_NAME} to confirm your email notification settings are working correctly.
             </p>
             <p style="color: #6b7280; line-height: 1.6;">
               You will receive payment reminders and alerts at this email address when enabled.
             </p>
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
               <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                This email was sent from ManageKar - Smart PG Management Software
+                This email was sent from ${CONTACT.APP_NAME} - Smart PG Management Software
               </p>
             </div>
           </div>
@@ -772,7 +772,7 @@ export const emailBodyTemplates = {
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
       <p style="color: #6B7280; margin: 0; font-size: 14px;">
         Stay on top of your PG business!<br>
-        <strong style="color: #111827;">ManageKar</strong>
+        <strong style="color: #111827;">${CONTACT.APP_NAME}</strong>
       </p>
     </div>
   `
@@ -1307,7 +1307,7 @@ export const emailBodyTemplates = {
     <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
       <p style="color: #6B7280; margin: 0; font-size: 14px;">
         Thank you for your patience,<br>
-        <strong style="color: #111827;">ManageKar</strong>
+        <strong style="color: #111827;">${CONTACT.APP_NAME}</strong>
       </p>
     </div>
   `

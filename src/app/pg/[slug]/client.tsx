@@ -5,6 +5,7 @@ import { getTodayISO } from "@/lib/date-helpers"
 import Link from "next/link"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
+import { brandGradient } from "@/lib/design-tokens"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -604,7 +605,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
                 <div className="grid md:grid-cols-2 gap-4">
                   {Object.entries(roomsByType).map(([type, data]) => (
                     <Card key={type} className="overflow-hidden">
-                      <div className="bg-gradient-to-r from-teal-500 to-emerald-500 p-4 text-white">
+                      <div className={`${brandGradient.horizontal} p-4 text-white`}>
                         <h3 className="text-lg font-semibold capitalize">{type} Room</h3>
                         <p className="text-white/80 text-sm">
                           {data.rooms.length} {data.rooms.length === 1 ? "room" : "rooms"}

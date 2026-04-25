@@ -34,6 +34,8 @@ import {
   EnquiryStatus,
 } from "@/types/visitors.types"
 import { VISITOR_STATUS, getStatusInfo as getVisitorStatusInfo } from "@/lib/status-config"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, labelMapColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -316,6 +318,36 @@ const advancedFilterColumns: FilterableColumn[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const VISITOR_TYPE_EXPORT_LABELS: Record<string, string> = {
+  tenant_visitor: "Tenant Visitor",
+  enquiry: "Enquiry",
+  service_provider: "Service Provider",
+  general: "General",
+}
+
+const VISITOR_STATUS_LABELS: Record<string, string> = {
+  checked_in: "Inside",
+  checked_out: "Left",
+}
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "visitor_name", header: "Visitor Name" },
+  { key: "visitor_phone", header: "Phone", format: (v) => String(v ?? "") },
+  labelMapColumn("visitor_type", "Type", VISITOR_TYPE_EXPORT_LABELS),
+  labelMapColumn("status", "Status", VISITOR_STATUS_LABELS),
+  nestedColumn("tenant_name", "Tenant", "tenant.name"),
+  nestedColumn("property_name", "Property", "property.name"),
+  { key: "purpose", header: "Purpose", format: (v) => String(v ?? "") },
+  { key: "company_name", header: "Company", format: (v) => String(v ?? "") },
+  dateExportColumn("check_in_date", "Check In"),
+  dateExportColumn("check_out_date", "Check Out"),
+  { key: "total_visits", header: "Total Visits", format: (v) => String(v ?? "0") },
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -351,6 +383,8 @@ export default function VisitorsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="visitors"
       createHref="/visitors/new"
       createLabel="Check In Visitor"
       createPermission="visitors.create"

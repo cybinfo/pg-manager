@@ -19,6 +19,8 @@ import { Currency } from "@/components/ui/currency"
 import { LIBRARY_LOCKER_STATUS_CONFIG, LIBRARY_LOCKER_SIZE_CONFIG } from "@/types/library.types"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, currencyExportColumn, labelMapColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -228,6 +230,38 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const LOCKER_SIZE_LABELS: Record<string, string> = {
+  small: "Small",
+  medium: "Medium",
+  large: "Large",
+}
+
+const LOCKER_STATUS_LABELS: Record<string, string> = {
+  available: "Available",
+  occupied: "Occupied",
+  maintenance: "Maintenance",
+}
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "locker_number", header: "Locker Number" },
+  nestedColumn("library_name", "Library", "library.name"),
+  labelMapColumn("size", "Size", LOCKER_SIZE_LABELS),
+  labelMapColumn("status", "Status", LOCKER_STATUS_LABELS),
+  currencyExportColumn("monthly_rent", "Monthly Rent"),
+  currencyExportColumn("deposit_amount", "Deposit"),
+  { key: "floor", header: "Floor", format: (v) => (Number(v) === 0 ? "Ground" : `Floor ${v}`) },
+  { key: "section", header: "Section", format: (v) => String(v ?? "") },
+  nestedColumn("member_name", "Assigned To", "current_member.name"),
+  nestedColumn("member_code", "Member Code", "current_member.member_code"),
+  dateExportColumn("assigned_from", "Assigned From"),
+  dateExportColumn("assigned_until", "Assigned Until"),
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -250,6 +284,8 @@ export default function LibraryLockersPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="library-lockers"
       createHref="/library-lockers/new"
       createLabel="Add Locker"
       createPermission="library_lockers.create"

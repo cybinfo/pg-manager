@@ -57,6 +57,8 @@ export const SOFT_DELETABLE_TABLES = [
   "library_locker_assignments",
   "library_payments",
   "library_waitlist",
+  // Tenant portal tables
+  "tenant_documents",
 ] as const
 
 /**

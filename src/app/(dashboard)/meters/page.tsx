@@ -27,6 +27,8 @@ import { PROPERTY_FILTER, METER_TYPE_FILTER, createStatusFilter } from "@/lib/fi
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, labelMapColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -264,6 +266,36 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const METER_TYPE_LABELS: Record<string, string> = {
+  electricity: "Electricity",
+  water: "Water",
+  gas: "Gas",
+}
+
+const METER_STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  faulty: "Faulty",
+  replaced: "Replaced",
+  retired: "Retired",
+}
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "meter_number", header: "Meter Number" },
+  labelMapColumn("meter_type", "Type", METER_TYPE_LABELS),
+  nestedColumn("property_name", "Property", "property.name"),
+  { key: "initial_reading", header: "Initial Reading", format: (v) => String(v ?? "") },
+  labelMapColumn("status", "Status", METER_STATUS_LABELS),
+  { key: "make", header: "Make", format: (v) => String(v ?? "") },
+  { key: "model", header: "Model", format: (v) => String(v ?? "") },
+  dateExportColumn("installation_date", "Installed On"),
+  { key: "notes", header: "Notes", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -285,6 +317,8 @@ export default function MetersPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="meters"
       createHref="/meters/new"
       createLabel="Add Meter"
       createPermission="meters.create"

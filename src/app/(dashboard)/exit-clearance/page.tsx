@@ -25,6 +25,8 @@ import { formatCurrency } from "@/lib/format"
 import { EXIT_CLEARANCE_STATUS } from "@/lib/status-config"
 import { TenantsOnNoticeAlert } from "./_components/TenantsOnNoticeAlert"
 import { brandGradient } from "@/lib/design-tokens"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, currencyExportColumn, labelMapColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -265,6 +267,33 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const SETTLEMENT_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  partial: "Partial",
+  completed: "Completed",
+}
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  nestedColumn("tenant_name", "Tenant", "tenant.name"),
+  nestedColumn("tenant_phone", "Phone", "tenant.phone"),
+  nestedColumn("property_name", "Property", "property.name"),
+  nestedColumn("room_number", "Room", "room.room_number"),
+  dateExportColumn("expected_exit_date", "Exit Date"),
+  dateExportColumn("actual_exit_date", "Actual Exit"),
+  dateExportColumn("notice_given_date", "Notice Date"),
+  currencyExportColumn("total_dues", "Total Dues"),
+  currencyExportColumn("total_refundable", "Refundable"),
+  currencyExportColumn("final_amount", "Final Amount"),
+  labelMapColumn("settlement_status", "Status", SETTLEMENT_STATUS_LABELS),
+  { key: "room_inspection_done", header: "Inspection Done", format: (v) => (v ? "Yes" : "No") },
+  { key: "key_returned", header: "Key Returned", format: (v) => (v ? "Yes" : "No") },
+  dateExportColumn("created_at", "Initiated On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -289,6 +318,8 @@ export default function ExitClearancePage() {
         enableAdvancedFilters={true}
         advancedFilterColumns={advancedFilterColumns}
         enableInlineEdit={true}
+        exportColumns={exportColumns}
+        exportFilename="exit-clearance"
         createHref="/exit-clearance/new"
         createLabel="Initiate Checkout"
         createPermission="exit_clearance.initiate"

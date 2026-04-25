@@ -20,6 +20,8 @@ import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist } from "@/types/library.types"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn, labelMapColumn } from "@/lib/export-columns"
 
 // Metric configurations
 const metrics: MetricConfig<Record<string, unknown>>[] = [
@@ -66,6 +68,27 @@ const advancedFilterColumns: FilterableColumn[] = [
 const groupByOptions: GroupByOption[] = [
   { value: "status", label: "Status" },
   { value: "preferred_slot", label: "Preferred Slot" },
+]
+
+// ============================================
+// Export Columns
+// ============================================
+
+const WAITLIST_STATUS_LABELS: Record<string, string> = {
+  waiting: "Waiting",
+  contacted: "Contacted",
+  converted: "Converted",
+  cancelled: "Cancelled",
+}
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "position", header: "Position", format: (v) => String(v ?? "") },
+  { key: "name", header: "Name" },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email", header: "Email", format: (v) => String(v ?? "") },
+  labelMapColumn("status", "Status", WAITLIST_STATUS_LABELS),
+  { key: "preferred_slot", header: "Preferred Slot", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Joined On"),
 ]
 
 // Column definitions
@@ -142,6 +165,8 @@ export default function LibraryWaitlistPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="library-waitlist"
       groupByOptions={groupByOptions}
       onRowClick={(item) => router.push(`/library-waitlist/${item.id}`)}
       createHref="/library-waitlist/new"

@@ -26,6 +26,8 @@ import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { formatDate } from "@/lib/format"
 import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -282,6 +284,23 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  nestedColumn("meter_number", "Meter Number", "meter.meter_number"),
+  nestedColumn("meter_type", "Meter Type", "meter.meter_type"),
+  nestedColumn("property_name", "Property", "property.name"),
+  nestedColumn("room_number", "Room", "room.room_number"),
+  dateExportColumn("reading_date", "Reading Date"),
+  { key: "reading_value", header: "Reading", format: (v) => String(v ?? "") },
+  { key: "previous_reading", header: "Previous", format: (v) => String(v ?? "") },
+  { key: "units_consumed", header: "Consumed", format: (v) => String(v ?? "") },
+  { key: "notes", header: "Notes", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Recorded On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -304,6 +323,8 @@ export default function MeterReadingsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="meter-readings"
       createHref="/meter-readings/new"
       createLabel="Record Reading"
       createPermission="meter_readings.create"

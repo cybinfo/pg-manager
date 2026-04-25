@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Select } from "@/components/ui/form-components"
 import { Trash2 } from "lucide-react"
 
 export interface AddressData {
@@ -61,16 +62,13 @@ export function AddressInput({
         {(showType || showPrimary || onRemove) && (
           <div className="flex items-center gap-2">
             {showType && (
-              <select
+              <Select
                 value={value.type || "Permanent"}
                 onChange={(e) => updateField("type", e.target.value)}
-                className="h-10 px-3 rounded-md border bg-background text-sm"
+                options={ADDRESS_TYPES.map((t) => ({ value: t, label: t }))}
                 disabled={disabled}
-              >
-                {ADDRESS_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+                className="w-auto"
+              />
             )}
             {showPrimary && onPrimaryChange && (
               <label className="flex items-center gap-1 text-sm whitespace-nowrap ml-auto">
