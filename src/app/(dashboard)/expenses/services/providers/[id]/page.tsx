@@ -5,7 +5,6 @@
 "use client"
 
 import { use, useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Wrench,
@@ -20,13 +19,9 @@ import {
   ChevronRight,
 } from "lucide-react"
 
+import { useDetailPage, SERVICE_PROVIDER_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { softDelete } from "@/lib/audit"
-import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { handleClientError } from "@/lib/error-handler"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
@@ -48,59 +43,32 @@ export default function ServiceProviderDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuth()
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
-  const [loading, setLoading] = useState(true)
-  const [provider, setProvider] = useState<ServiceProvider | null>(null)
-  const [recentPayments, setRecentPayments] = useState<ServicePayment[]>([])
   const [stats, setStats] = useState({
     totalPaid: 0,
     totalTds: 0,
     avgRating: 0,
   })
 
-  // Load provider and payment history
+  const {
+    data: provider,
+    loading,
+    related,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<ServiceProvider>({
+    config: SERVICE_PROVIDER_DETAIL_CONFIG,
+    id,
+  })
+
+  // Load aggregate stats (not covered by relatedQueries)
   useEffect(() => {
-    async function loadData() {
+    if (!id) return
+
+    async function loadStats() {
       const supabase = createClient()
 
-      // Load provider
-      const { data: providerData, error } = await supabase
-        .from("service_providers")
-        .select(`
-          *,
-          category:service_categories(id, name, name_hi)
-        `)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
-
-      if (error || !providerData) {
-        setLoading(false)
-        return
-      }
-
-      const transformed = {
-        ...providerData,
-        category: transformJoin(providerData.category),
-      } as ServiceProvider
-
-      setProvider(transformed)
-
-      // Load recent payments
-      const { data: paymentsData } = await supabase
-        .from("service_payments")
-        .select("*")
-        .eq("provider_id", id)
-        .is("deleted_at", null)
-        .order("service_date", { ascending: false })
-        .limit(5)
-
-      setRecentPayments(paymentsData || [])
-
-      // Calculate stats
       interface StatsRow {
         net_amount: number
         tds_amount: number
@@ -116,42 +84,26 @@ export default function ServiceProviderDetailPage({
         const rows = statsData as StatsRow[]
         const totalPaid = rows.reduce((sum: number, p: StatsRow) => sum + Number(p.net_amount), 0)
         const totalTds = rows.reduce((sum: number, p: StatsRow) => sum + Number(p.tds_amount), 0)
-
-        setStats({
-          totalPaid,
-          totalTds,
-          avgRating: transformed.rating || 0,
-        })
+        setStats({ totalPaid, totalTds, avgRating: 0 })
       }
-
-      setLoading(false)
     }
 
-    loadData()
+    loadStats()
   }, [id])
 
   const handleDelete = () => {
-    if (!user?.id) return
-
     confirm({
       title: "Delete Provider",
       description: `Are you sure you want to delete "${provider?.name}"? This action cannot be undone.`,
       destructive: true,
       onConfirm: async () => {
-        try {
-          const result = await softDelete("service_providers", id, user.id)
-          if (!result.error) {
-            showSuccess("Provider deleted successfully")
-            router.push("/expenses/services/providers")
-          } else {
-            showError(result.error.message || "Failed to delete provider")
-          }
-        } catch (error) {
-          handleClientError(error, "Deleting provider")
-        }
+        await deleteRecord({ confirm: false })
       },
     })
   }
+
+  // Use related data from the hook (recentServices from relatedQueries config)
+  const recentPayments = (related.recentServices || []) as ServicePayment[]
 
   if (loading) return <PageLoading />
 
@@ -232,7 +184,7 @@ export default function ServiceProviderDetailPage({
                   Edit
                 </Link>
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </Button>

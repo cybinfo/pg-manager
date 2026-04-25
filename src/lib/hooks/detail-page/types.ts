@@ -595,7 +595,7 @@ export const BILL_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
     category:bill_categories(id, name, name_hi)
   `,
   joinFields: ["property", "vendor", "category"],
-  redirectOnNotFound: "/expenses/bill-payments",
+  redirectOnNotFound: "/expenses/bills",
   notFoundMessage: "Bill payment not found",
 }
 
@@ -635,7 +635,7 @@ export const SERVICE_PAYMENT_DETAIL_CONFIG: DetailPageConfig = {
     complaint:complaints(id, title, status)
   `,
   joinFields: ["property", "room", "provider", "category", "complaint"],
-  redirectOnNotFound: "/expenses/service-payments",
+  redirectOnNotFound: "/expenses/services",
   notFoundMessage: "Service payment not found",
 }
 
@@ -650,6 +650,18 @@ export const KITCHEN_WASTAGE_DETAIL_CONFIG: DetailPageConfig = {
   joinFields: ["property", "product"],
   redirectOnNotFound: "/expenses/kitchen/wastage",
   notFoundMessage: "Wastage entry not found",
+}
+
+// Misc Transaction Detail Config
+export const MISC_TRANSACTION_DETAIL_CONFIG: DetailPageConfig = {
+  table: "misc_transactions",
+  select: `
+    *,
+    category:misc_transaction_categories(id, name, name_hi, default_type)
+  `,
+  joinFields: ["category"],
+  redirectOnNotFound: "/expenses/misc",
+  notFoundMessage: "Transaction not found",
 }
 
 // ============================================

@@ -4,8 +4,7 @@
 
 "use client"
 
-import { use, useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { use } from "react"
 import Link from "next/link"
 import {
   Hammer,
@@ -20,13 +19,8 @@ import {
   ChevronRight,
 } from "lucide-react"
 
-import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { softDelete } from "@/lib/audit"
-import { useAuth } from "@/lib/auth"
+import { useDetailPage, SERVICE_PAYMENT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { handleClientError } from "@/lib/error-handler"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PAYMENT_METHODS } from "@/lib/status"
 
@@ -49,66 +43,26 @@ export default function ServicePaymentDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuth()
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
-  const [loading, setLoading] = useState(true)
-  const [payment, setPayment] = useState<ServicePayment | null>(null)
 
-  // Load payment
-  useEffect(() => {
-    async function loadData() {
-      const supabase = createClient()
-
-      const { data, error } = await supabase
-        .from("service_payments")
-        .select(`
-          *,
-          provider:service_providers(id, name, phone, rating),
-          category:service_categories(id, name, name_hi)
-        `)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
-
-      if (error || !data) {
-        setLoading(false)
-        return
-      }
-
-      const transformed = {
-        ...data,
-        provider: transformJoin(data.provider),
-        category: transformJoin(data.category),
-      } as ServicePayment
-
-      setPayment(transformed)
-      setLoading(false)
-    }
-
-    loadData()
-  }, [id])
+  const {
+    data: payment,
+    loading,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<ServicePayment>({
+    config: SERVICE_PAYMENT_DETAIL_CONFIG,
+    id,
+  })
 
   const handleDelete = () => {
-    if (!user?.id) return
-
     confirm({
       title: "Delete Service Payment",
       description: "Are you sure you want to delete this service payment? This action cannot be undone.",
       destructive: true,
       onConfirm: async () => {
-        try {
-          const result = await softDelete("service_payments", id, user.id)
-          if (!result.error) {
-            showSuccess("Service payment deleted")
-            router.push("/expenses/services")
-          } else {
-            showError(result.error.message || "Failed to delete")
-          }
-        } catch (error) {
-          handleClientError(error, "Deleting service payment")
-        }
+        await deleteRecord({ confirm: false })
       },
     })
   }
@@ -194,7 +148,7 @@ export default function ServicePaymentDetailPage({
                   Edit
                 </Link>
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </Button>

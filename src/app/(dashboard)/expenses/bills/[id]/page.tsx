@@ -4,8 +4,7 @@
 
 "use client"
 
-import { use, useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { use } from "react"
 import Link from "next/link"
 import {
   Receipt,
@@ -20,16 +19,14 @@ import {
   ChevronRight,
 } from "lucide-react"
 
-import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { softDelete } from "@/lib/audit"
-import { useAuth } from "@/lib/auth"
+import { useDetailPage, BILL_PAYMENT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { handleClientError } from "@/lib/error-handler"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PAYMENT_METHODS, BILL_STATUS } from "@/lib/status"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { createClient } from "@/lib/supabase/client"
+import { showSuccess } from "@/lib/toast-helpers"
+import { handleClientError } from "@/lib/error-handler"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
@@ -50,73 +47,34 @@ export default function BillPaymentDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuth()
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
-  const [loading, setLoading] = useState(true)
-  const [bill, setBill] = useState<BillPayment | null>(null)
 
-  // Load bill
-  useEffect(() => {
-    async function loadData() {
-      const supabase = createClient()
-
-      const { data, error } = await supabase
-        .from("bill_payments")
-        .select(`
-          *,
-          vendor:vendors(id, name, upi_id),
-          category:bill_categories(id, name, name_hi)
-        `)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
-
-      if (error || !data) {
-        setLoading(false)
-        return
-      }
-
-      const transformed = {
-        ...data,
-        vendor: transformJoin(data.vendor),
-        category: transformJoin(data.category),
-      } as BillPayment
-
-      setBill(transformed)
-      setLoading(false)
-    }
-
-    loadData()
-  }, [id])
+  const {
+    data: bill,
+    loading,
+    deleteRecord,
+    isDeleting,
+    refetch,
+  } = useDetailPage<BillPayment>({
+    config: BILL_PAYMENT_DETAIL_CONFIG,
+    id,
+  })
 
   const handleDelete = () => {
-    if (!user?.id) return
-
     confirm({
       title: "Delete Bill",
       description: "Are you sure you want to delete this bill? This action cannot be undone.",
       destructive: true,
       onConfirm: async () => {
-        try {
-          const result = await softDelete("bill_payments", id, user.id)
-          if (!result.error) {
-            showSuccess("Bill deleted successfully")
-            router.push("/expenses/bills")
-          } else {
-            showError(result.error.message || "Failed to delete bill")
-          }
-        } catch (error) {
-          handleClientError(error, "Deleting bill")
-        }
+        await deleteRecord({ confirm: false })
       },
     })
   }
 
   // Record quick payment
   const handleMarkPaid = async () => {
-    if (!user?.id || !bill) return
+    if (!bill) return
 
     try {
       const supabase = createClient()
@@ -133,17 +91,7 @@ export default function BillPaymentDetailPage({
       if (error) throw error
 
       showSuccess("Bill marked as paid")
-      // Refresh data
-      setBill((prev) =>
-        prev
-          ? {
-              ...prev,
-              paid_amount: prev.bill_amount,
-              payment_date: getTodayISO(),
-              status: "paid",
-            }
-          : null
-      )
+      await refetch()
     } catch (error) {
       handleClientError(error, "Updating bill")
     }
@@ -232,7 +180,7 @@ export default function BillPaymentDetailPage({
                   Edit
                 </Link>
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </Button>

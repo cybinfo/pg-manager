@@ -7,7 +7,6 @@
 "use client"
 
 import { use, useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Package,
@@ -23,13 +22,9 @@ import {
   ChevronRight,
 } from "lucide-react"
 
+import { useDetailPage, PRODUCT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { softDelete } from "@/lib/audit"
-import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { handleClientError } from "@/lib/error-handler"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
@@ -61,88 +56,58 @@ export default function ProductDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuth()
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
-  const [loading, setLoading] = useState(true)
-  const [product, setProduct] = useState<Product | null>(null)
   const [priceHistory, setPriceHistory] = useState<ProductPriceHistory[]>([])
   const [recentSpend, setRecentSpend] = useState<DailySpendItem[]>([])
 
-  // Load product and related data
+  const {
+    data: product,
+    loading,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<Product>({
+    config: PRODUCT_DETAIL_CONFIG,
+    id,
+  })
+
+  // Load price history and recent spend (not covered by the config's relatedQueries)
   useEffect(() => {
-    async function loadData() {
+    if (!id) return
+
+    async function loadRelatedData() {
       const supabase = createClient()
 
-      // Load product
-      const { data: productData, error } = await supabase
-        .from("products")
-        .select(`
-          *,
-          category:product_categories(id, name, name_hi)
-        `)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
-
-      if (error || !productData) {
-        setLoading(false)
-        return
-      }
-
-      const transformed = {
-        ...productData,
-        category: transformJoin(productData.category),
-      } as Product
-
-      setProduct(transformed)
-
-      // Load price history
-      const { data: historyData } = await supabase
-        .from("product_price_history")
-        .select("*")
-        .eq("product_id", id)
-        .order("recorded_date", { ascending: false })
-        .limit(10)
+      const [{ data: historyData }, { data: spendData }] = await Promise.all([
+        supabase
+          .from("product_price_history")
+          .select("*")
+          .eq("product_id", id)
+          .order("recorded_date", { ascending: false })
+          .limit(10),
+        supabase
+          .from("daily_spend")
+          .select("id, spend_date, quantity, unit, rate, total, vendor_name")
+          .eq("product_id", id)
+          .is("deleted_at", null)
+          .order("spend_date", { ascending: false })
+          .limit(5),
+      ])
 
       setPriceHistory(historyData || [])
-
-      // Load recent purchases
-      const { data: spendData } = await supabase
-        .from("daily_spend")
-        .select("id, spend_date, quantity, unit, rate, total, vendor_name")
-        .eq("product_id", id)
-        .is("deleted_at", null)
-        .order("spend_date", { ascending: false })
-        .limit(5)
-
       setRecentSpend(spendData || [])
-      setLoading(false)
     }
 
-    loadData()
+    loadRelatedData()
   }, [id])
 
   const handleDelete = () => {
-    if (!user?.id) return
-
     confirm({
       title: "Delete Product",
       description: `Are you sure you want to delete "${product?.name}"? This action cannot be undone.`,
       destructive: true,
       onConfirm: async () => {
-        try {
-          const result = await softDelete("products", id, user.id)
-          if (!result.error) {
-            showSuccess("Product deleted successfully")
-            router.push("/expenses/products")
-          } else {
-            showError(result.error.message || "Failed to delete product")
-          }
-        } catch (error) {
-          handleClientError(error, "Deleting product")
-        }
+        await deleteRecord({ confirm: false })
       },
     })
   }
@@ -151,13 +116,13 @@ export default function ProductDetailPage({
   const priceStats = {
     current: product?.default_rate || (priceHistory[0]?.rate || 0),
     average: priceHistory.length > 0
-      ? priceHistory.reduce((sum, p) => sum + Number(p.rate), 0) / priceHistory.length
+      ? priceHistory.reduce((sum: number, p: ProductPriceHistory) => sum + Number(p.rate), 0) / priceHistory.length
       : 0,
     min: priceHistory.length > 0
-      ? Math.min(...priceHistory.map((p) => Number(p.rate)))
+      ? Math.min(...priceHistory.map((p: ProductPriceHistory) => Number(p.rate)))
       : 0,
     max: priceHistory.length > 0
-      ? Math.max(...priceHistory.map((p) => Number(p.rate)))
+      ? Math.max(...priceHistory.map((p: ProductPriceHistory) => Number(p.rate)))
       : 0,
   }
 
@@ -234,7 +199,7 @@ export default function ProductDetailPage({
                   Edit
                 </Link>
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </Button>

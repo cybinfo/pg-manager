@@ -7,8 +7,7 @@
 
 "use client"
 
-import { use, useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { use } from "react"
 import Link from "next/link"
 import {
   ShoppingBag,
@@ -20,12 +19,8 @@ import {
   IndianRupee,
 } from "lucide-react"
 
-import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { softDelete } from "@/lib/audit"
-import { useAuth } from "@/lib/auth"
+import { useDetailPage, DAILY_SPEND_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PAYMENT_METHODS } from "@/lib/status"
 
@@ -51,71 +46,27 @@ export default function DailySpendDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuth()
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/expenses/daily-spend", defaultLabel: "Back to Daily Spend" })
-  const [loading, setLoading] = useState(true)
-  const [entry, setEntry] = useState<DailySpend | null>(null)
 
-  // Load entry
-  useEffect(() => {
-    async function loadData() {
-      const supabase = createClient()
-
-      const { data, error } = await supabase
-        .from("daily_spend")
-        .select(`
-          *,
-          product:products(id, name, name_hi, default_unit, category:product_categories(id, name, name_hi))
-        `)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
-
-      if (error || !data) {
-        setLoading(false)
-        return
-      }
-
-      // Get category from product's nested category
-      const product = transformJoin(data.product)
-      const category = product?.category ? transformJoin(product.category) : null
-
-      const transformed = {
-        ...data,
-        product,
-        category,
-      } as DailySpend
-
-      setEntry(transformed)
-      setLoading(false)
-    }
-
-    loadData()
-  }, [id])
+  const {
+    data: entry,
+    loading,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<DailySpend>({
+    config: DAILY_SPEND_DETAIL_CONFIG,
+    id,
+  })
 
   const handleDelete = () => {
-    if (!user?.id) return
-
     confirm({
       title: "Delete Expense Entry",
       description: "Are you sure you want to delete this expense entry? This action cannot be undone.",
       destructive: true,
       onConfirm: async () => {
-        try {
-          const result = await softDelete("daily_spend", id, user.id)
-          if (!result.error) {
-            showSuccess("Entry deleted successfully")
-            router.push("/expenses/daily-spend")
-          } else {
-            showError(result.error.message || "Failed to delete entry")
-          }
-        } catch (error) {
-          console.error("Failed to delete entry:", error)
-          showError("Failed to delete entry")
-        }
+        await deleteRecord({ confirm: false })
       },
     })
   }
@@ -182,7 +133,7 @@ export default function DailySpendDetailPage({
                     Edit
                   </Link>
                 </Button>
-                <Button variant="destructive" onClick={handleDelete}>
+                <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
                 </Button>

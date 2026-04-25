@@ -4,8 +4,7 @@
 
 "use client"
 
-import { use, useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { use } from "react"
 import Link from "next/link"
 import {
   ArrowLeftRight,
@@ -21,12 +20,8 @@ import {
   ChevronRight,
 } from "lucide-react"
 
-import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { softDelete } from "@/lib/audit"
-import { useAuth } from "@/lib/auth"
+import { useDetailPage, MISC_TRANSACTION_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PAYMENT_METHODS } from "@/lib/status"
 
@@ -45,65 +40,26 @@ export default function MiscTransactionDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuth()
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
-  const [loading, setLoading] = useState(true)
-  const [transaction, setTransaction] = useState<MiscTransaction | null>(null)
 
-  // Load transaction
-  useEffect(() => {
-    async function loadData() {
-      const supabase = createClient()
-
-      const { data, error } = await supabase
-        .from("misc_transactions")
-        .select(`
-          *,
-          category:misc_transaction_categories(id, name, name_hi, default_type)
-        `)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
-
-      if (error || !data) {
-        setLoading(false)
-        return
-      }
-
-      const transformed = {
-        ...data,
-        category: transformJoin(data.category),
-      } as MiscTransaction
-
-      setTransaction(transformed)
-      setLoading(false)
-    }
-
-    loadData()
-  }, [id])
+  const {
+    data: transaction,
+    loading,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<MiscTransaction>({
+    config: MISC_TRANSACTION_DETAIL_CONFIG,
+    id,
+  })
 
   const handleDelete = () => {
-    if (!user?.id) return
-
     confirm({
       title: "Delete Transaction",
       description: "Are you sure you want to delete this transaction? This action cannot be undone.",
       destructive: true,
       onConfirm: async () => {
-        try {
-          const result = await softDelete("misc_transactions", id, user.id)
-          if (!result.error) {
-            showSuccess("Transaction deleted")
-            router.push("/expenses/misc")
-          } else {
-            showError(result.error.message || "Failed to delete")
-          }
-        } catch (error) {
-          console.error("Failed to delete:", error)
-          showError("Failed to delete")
-        }
+        await deleteRecord({ confirm: false })
       },
     })
   }
@@ -184,7 +140,7 @@ export default function MiscTransactionDetailPage({
                   Edit
                 </Link>
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </Button>

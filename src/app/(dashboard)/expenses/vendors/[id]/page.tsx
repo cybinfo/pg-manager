@@ -7,7 +7,6 @@
 "use client"
 
 import { use, useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Building2,
@@ -23,13 +22,9 @@ import {
   ChevronRight,
 } from "lucide-react"
 
+import { useDetailPage, VENDOR_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { softDelete } from "@/lib/audit"
-import { useAuth } from "@/lib/auth"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { showSuccess, showError } from "@/lib/toast-helpers"
-import { handleClientError } from "@/lib/error-handler"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
@@ -51,13 +46,8 @@ export default function VendorDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const router = useRouter()
-  const { user } = useAuth()
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
-  const [loading, setLoading] = useState(true)
-  const [vendor, setVendor] = useState<Vendor | null>(null)
-  const [recentPayments, setRecentPayments] = useState<BillPayment[]>([])
   const [stats, setStats] = useState({
     totalPaid: 0,
     totalBills: 0,
@@ -65,46 +55,24 @@ export default function VendorDetailPage({
     lastPaymentDate: null as string | null,
   })
 
-  // Load vendor and payment history
+  const {
+    data: vendor,
+    loading,
+    related,
+    deleteRecord,
+    isDeleting,
+  } = useDetailPage<Vendor>({
+    config: VENDOR_DETAIL_CONFIG,
+    id,
+  })
+
+  // Load aggregate stats (not covered by relatedQueries)
   useEffect(() => {
-    async function loadData() {
+    if (!id) return
+
+    async function loadStats() {
       const supabase = createClient()
 
-      // Load vendor
-      const { data: vendorData, error } = await supabase
-        .from("vendors")
-        .select(`
-          *,
-          category:bill_categories(id, name, name_hi)
-        `)
-        .eq("id", id)
-        .is("deleted_at", null)
-        .single()
-
-      if (error || !vendorData) {
-        setLoading(false)
-        return
-      }
-
-      const transformed = {
-        ...vendorData,
-        category: transformJoin(vendorData.category),
-      } as Vendor
-
-      setVendor(transformed)
-
-      // Load recent payments
-      const { data: paymentsData } = await supabase
-        .from("bill_payments")
-        .select("*")
-        .eq("vendor_id", id)
-        .is("deleted_at", null)
-        .order("payment_date", { ascending: false })
-        .limit(5)
-
-      setRecentPayments(paymentsData || [])
-
-      // Calculate stats
       interface StatsRow {
         bill_amount: number
         paid_amount: number | null
@@ -136,35 +104,24 @@ export default function VendorDetailPage({
           lastPaymentDate: lastPayment?.payment_date || null,
         })
       }
-
-      setLoading(false)
     }
 
-    loadData()
+    loadStats()
   }, [id])
 
   const handleDelete = () => {
-    if (!user?.id) return
-
     confirm({
       title: "Delete Vendor",
       description: `Are you sure you want to delete "${vendor?.name}"? This action cannot be undone.`,
       destructive: true,
       onConfirm: async () => {
-        try {
-          const result = await softDelete("vendors", id, user.id)
-          if (!result.error) {
-            showSuccess("Vendor deleted successfully")
-            router.push("/expenses/vendors")
-          } else {
-            showError(result.error.message || "Failed to delete vendor")
-          }
-        } catch (error) {
-          handleClientError(error, "Deleting vendor")
-        }
+        await deleteRecord({ confirm: false })
       },
     })
   }
+
+  // Use related data from the hook (recentPayments from relatedQueries config)
+  const recentPayments = (related.recentPayments || []) as BillPayment[]
 
   if (loading) return <PageLoading />
 
@@ -232,7 +189,7 @@ export default function VendorDetailPage({
                   Edit
                 </Link>
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
               </Button>
