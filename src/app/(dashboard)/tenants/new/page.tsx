@@ -25,6 +25,7 @@ import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/w
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
 
 
 interface Property {
@@ -775,12 +776,7 @@ export default function NewTenantPage() {
                 value={formData.police_verification_status}
                 onChange={handleChange}
                 disabled={loading}
-                options={[
-                  { value: "pending", label: "Pending" },
-                  { value: "submitted", label: "Submitted" },
-                  { value: "verified", label: "Verified" },
-                  { value: "na", label: "N/A" },
-                ]}
+                options={POLICE_VERIFICATION_STATUS_OPTIONS}
               />
             </div>
 

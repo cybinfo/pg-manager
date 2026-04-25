@@ -128,6 +128,26 @@ export function getAvailableBeds(room: Room): number {
 }
 
 // ============================================================================
+// CONFIGURABLE ROOM TYPE (from workspace Settings)
+// ============================================================================
+
+export interface ConfigurableRoomType {
+  code: string
+  name: string
+  default_rent: number
+  default_deposit: number
+  is_enabled: boolean
+  display_order: number
+}
+
+export const defaultConfigurableRoomTypes: ConfigurableRoomType[] = [
+  { code: "single", name: "Single", default_rent: 8000, default_deposit: 8000, is_enabled: true, display_order: 1 },
+  { code: "double", name: "Double Sharing", default_rent: 6000, default_deposit: 6000, is_enabled: true, display_order: 2 },
+  { code: "triple", name: "Triple Sharing", default_rent: 5000, default_deposit: 5000, is_enabled: true, display_order: 3 },
+  { code: "dormitory", name: "Dormitory", default_rent: 4000, default_deposit: 4000, is_enabled: false, display_order: 4 },
+]
+
+// ============================================================================
 // ROOM DETAIL RELATED TYPES
 // ============================================================================
 

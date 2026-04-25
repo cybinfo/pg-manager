@@ -41,7 +41,15 @@ export const POLICE_VERIFICATION_STATUS: Record<string, StatusConfig> = {
   pending: { label: "Pending", variant: "warning" },
   submitted: { label: "Submitted", variant: "default" },
   verified: { label: "Verified", variant: "success" },
+  na: { label: "N/A", variant: "muted" },
 }
+
+export const POLICE_VERIFICATION_STATUS_OPTIONS = [
+  { value: "pending", label: "Pending" },
+  { value: "submitted", label: "Submitted" },
+  { value: "verified", label: "Verified" },
+  { value: "na", label: "N/A" },
+]
 
 export const REFUND_TYPE_LABELS: Record<string, string> = {
   security_deposit: "Security Deposit",

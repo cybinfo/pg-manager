@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/loading"
 import { cn } from "@/lib/utils"
 import { useActivityHistory } from "@/lib/hooks/useActivityHistory"
-import type { AuditEvent, ChangedField } from "@/lib/hooks/useActivityHistory"
+import type { AuditEventRecord, ChangedField } from "@/lib/hooks/useActivityHistory"
 
 // ── Display constants ──────────────────────────────────────────────────────
 
@@ -35,12 +35,12 @@ const actionColors: Record<string, string> = {
 // ── Shared timeline rendering ──────────────────────────────────────────────
 
 interface TimelineProps {
-  events: AuditEvent[]
+  events: AuditEventRecord[]
   showChanges: boolean
   expanded: Set<string>
   toggleExpanded: (eventId: string) => void
   getUserDisplayName: (actorId: string | null) => string
-  formatChanges: (changes: AuditEvent["changes"]) => ChangedField[] | null
+  formatChanges: (changes: AuditEventRecord["changes"]) => ChangedField[] | null
   formatFieldName: (field: string) => string
   formatValue: (value: unknown) => string
 }

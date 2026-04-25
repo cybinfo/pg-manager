@@ -58,7 +58,7 @@ export interface UseEntityMutationOptions {
   }
 }
 
-export interface MutationOptions {
+export interface HookMutationOptions {
   skipAudit?: boolean
   skipNotifications?: boolean
   notifications?: NotificationPayload[]
@@ -67,12 +67,12 @@ export interface MutationOptions {
 }
 
 export interface UseEntityMutationReturn<T> {
-  create: (data: Partial<T>, options?: MutationOptions) => Promise<ServiceResult<T>>
-  update: (id: string, data: Partial<T>, options?: MutationOptions) => Promise<ServiceResult<T>>
-  remove: (id: string, options?: MutationOptions) => Promise<ServiceResult<void>>
-  bulkCreate: (items: Partial<T>[], options?: MutationOptions) => Promise<ServiceResult<T[]>>
-  bulkUpdate: (updates: { id: string; data: Partial<T> }[], options?: MutationOptions) => Promise<ServiceResult<T[]>>
-  bulkDelete: (ids: string[], options?: MutationOptions) => Promise<ServiceResult<void>>
+  create: (data: Partial<T>, options?: HookMutationOptions) => Promise<ServiceResult<T>>
+  update: (id: string, data: Partial<T>, options?: HookMutationOptions) => Promise<ServiceResult<T>>
+  remove: (id: string, options?: HookMutationOptions) => Promise<ServiceResult<void>>
+  bulkCreate: (items: Partial<T>[], options?: HookMutationOptions) => Promise<ServiceResult<T[]>>
+  bulkUpdate: (updates: { id: string; data: Partial<T> }[], options?: HookMutationOptions) => Promise<ServiceResult<T[]>>
+  bulkDelete: (ids: string[], options?: HookMutationOptions) => Promise<ServiceResult<void>>
   loading: boolean
   error: Error | null
 }
@@ -115,7 +115,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   // ============================================
 
   const create = useCallback(
-    async (data: Partial<T>, mutationOptions?: MutationOptions): Promise<ServiceResult<T>> => {
+    async (data: Partial<T>, mutationOptions?: HookMutationOptions): Promise<ServiceResult<T>> => {
       setLoading(true)
       setError(null)
 
@@ -190,7 +190,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   // ============================================
 
   const update = useCallback(
-    async (id: string, data: Partial<T>, mutationOptions?: MutationOptions): Promise<ServiceResult<T>> => {
+    async (id: string, data: Partial<T>, mutationOptions?: HookMutationOptions): Promise<ServiceResult<T>> => {
       setLoading(true)
       setError(null)
 
@@ -269,7 +269,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   // ============================================
 
   const remove = useCallback(
-    async (id: string, mutationOptions?: MutationOptions): Promise<ServiceResult<void>> => {
+    async (id: string, mutationOptions?: HookMutationOptions): Promise<ServiceResult<void>> => {
       setLoading(true)
       setError(null)
 
@@ -343,7 +343,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   // ============================================
 
   const bulkCreate = useCallback(
-    async (items: Partial<T>[], mutationOptions?: MutationOptions): Promise<ServiceResult<T[]>> => {
+    async (items: Partial<T>[], mutationOptions?: HookMutationOptions): Promise<ServiceResult<T[]>> => {
       setLoading(true)
       setError(null)
 
@@ -410,7 +410,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   const bulkUpdate = useCallback(
     async (
       updates: { id: string; data: Partial<T> }[],
-      mutationOptions?: MutationOptions
+      mutationOptions?: HookMutationOptions
     ): Promise<ServiceResult<T[]>> => {
       setLoading(true)
       setError(null)
@@ -477,7 +477,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
   // ============================================
 
   const bulkDelete = useCallback(
-    async (ids: string[], mutationOptions?: MutationOptions): Promise<ServiceResult<void>> => {
+    async (ids: string[], mutationOptions?: HookMutationOptions): Promise<ServiceResult<void>> => {
       setLoading(true)
       setError(null)
 

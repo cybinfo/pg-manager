@@ -19,24 +19,13 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import type { SortConfig, TableViewConfig } from "./list-page/types"
+
+export type { SortConfig, TableViewConfig }
 
 // ============================================
 // Types
 // ============================================
-
-// Sort configuration for multi-column sorting
-export interface SortConfig {
-  key: string
-  direction: "asc" | "desc"
-}
-
-export interface TableViewConfig {
-  sort?: SortConfig[]  // Array for multi-column sorting
-  filters?: Record<string, string>
-  groupBy?: string[]
-  pageSize?: number
-  hiddenColumns?: string[]
-}
 
 export interface TableView {
   id: string

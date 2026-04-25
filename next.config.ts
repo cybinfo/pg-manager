@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import withPWA from "@ducanh2912/next-pwa";
 
 // Security headers for all routes
 const securityHeaders = [
@@ -44,6 +45,7 @@ const securityHeaders = [
       "img-src 'self' data: https: blob:",
       "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.resend.com",
+      "worker-src 'self'",
       "frame-ancestors 'self'",
       "form-action 'self'",
       "base-uri 'self'",
@@ -68,4 +70,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 };
 
-export default nextConfig;
+export default withPWA({
+  dest: "public",
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === "development",
+})(nextConfig);

@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
+import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
 
 interface Property {
   id: string
@@ -339,12 +340,7 @@ function EditTenantContent() {
                   name="police_verification_status"
                   value={formData.police_verification_status as string}
                   onChange={handleChange}
-                  options={[
-                    { value: "pending", label: "Pending" },
-                    { value: "submitted", label: "Submitted" },
-                    { value: "verified", label: "Verified" },
-                    { value: "na", label: "N/A" },
-                  ]}
+                  options={POLICE_VERIFICATION_STATUS_OPTIONS}
                   disabled={saving}
                 />
               </div>

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-export interface AuditEvent {
+export interface AuditEventRecord {
   id: string
   entity_type: string
   entity_id: string
@@ -40,13 +40,13 @@ export interface UseActivityHistoryOptions {
 }
 
 export interface UseActivityHistoryReturn {
-  events: AuditEvent[]
+  events: AuditEventRecord[]
   loading: boolean
   error: string | null
   expanded: Set<string>
   toggleExpanded: (eventId: string) => void
   getUserDisplayName: (actorId: string | null) => string
-  formatChanges: (changes: AuditEvent["changes"]) => ChangedField[] | null
+  formatChanges: (changes: AuditEventRecord["changes"]) => ChangedField[] | null
   formatFieldName: (field: string) => string
   formatValue: (value: unknown) => string
 }
@@ -82,7 +82,7 @@ export function formatValue(value: unknown): string {
 }
 
 export function formatChanges(
-  changes: AuditEvent["changes"]
+  changes: AuditEventRecord["changes"]
 ): ChangedField[] | null {
   if (!changes) return null
 
@@ -128,7 +128,7 @@ export function useActivityHistory({
   entityId,
   maxItems = 10,
 }: UseActivityHistoryOptions): UseActivityHistoryReturn {
-  const [events, setEvents] = useState<AuditEvent[]>([])
+  const [events, setEvents] = useState<AuditEventRecord[]>([])
   const [users, setUsers] = useState<Map<string, UserInfo>>(new Map())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -157,7 +157,7 @@ export function useActivityHistory({
 
         // Fetch user info for all actors
         const allActorIds = (auditEvents || [])
-          .map((e: AuditEvent) => e.actor_id)
+          .map((e: AuditEventRecord) => e.actor_id)
           .filter((id: string | null): id is string => id !== null)
         const actorIds = Array.from(new Set(allActorIds))
 

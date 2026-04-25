@@ -661,6 +661,33 @@ export async function sendWaitlistSeatAvailableEmail(
   }
 }
 
+// Cron job failure alert email (to platform admin)
+export async function sendCronFailureAlert(data: {
+  cronName: string
+  error: string
+  timestamp: string
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const client = getResendClient()
+    const { error: sendError } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: "sethrajat0711@gmail.com",
+      subject: `[ManageKar] Cron job failed: ${data.cronName}`,
+      html: `
+        <h2 style="color:#dc2626">Cron Job Failure Alert</h2>
+        <p><strong>Job:</strong> ${data.cronName}</p>
+        <p><strong>Time:</strong> ${data.timestamp}</p>
+        <p><strong>Error:</strong> <code style="background:#f3f4f6;padding:4px 8px;border-radius:4px">${data.error}</code></p>
+        <p style="color:#6b7280;font-size:12px">ManageKar — automated alert</p>
+      `,
+    })
+    if (sendError) return { success: false, error: sendError.message }
+    return { success: true }
+  } catch (err) {
+    return { success: false, error: String(err) }
+  }
+}
+
 // Monthly attendance summary email
 export async function sendMonthlyAttendanceSummary(
   data: MonthlyAttendanceSummaryData

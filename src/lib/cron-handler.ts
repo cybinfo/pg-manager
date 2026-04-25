@@ -32,6 +32,7 @@ import { validateCronRequest } from "@/lib/api-middleware"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { apiSuccess, internalError } from "@/lib/api-response"
 import { getNowISO } from "@/lib/date-helpers"
+import { sendCronFailureAlert } from "@/lib/email"
 
 // ============================================================================
 // TYPES
@@ -98,6 +99,12 @@ export async function baseCronHandler<T = Record<string, unknown>>(
     return apiSuccess(result.data, { message: result.message })
   } catch (error) {
     cronLogger.error(`${config.name} cron error`, extractErrorMeta(error))
+    // Non-blocking admin alert — ignore if email fails
+    sendCronFailureAlert({
+      cronName: config.name,
+      error: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString(),
+    }).catch(() => {})
     return internalError("Internal server error")
   }
 }
