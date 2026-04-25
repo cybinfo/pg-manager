@@ -13,10 +13,14 @@ import {
   Users,
   Trash2,
   Edit,
-  Lock
+  Lock,
+  Download,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { downloadCSV } from "@/lib/download-utils"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn } from "@/lib/export-columns"
 
 interface Role {
   id: string
@@ -46,11 +50,34 @@ const permissionGroups = {
   "Settings": ["settings.view", "settings.edit"],
 }
 
+const rolesExportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Role Name", format: (v) => String(v ?? "") },
+  { key: "description", header: "Description", format: (v) => String(v ?? "") },
+  { key: "is_system_role", header: "System Role", format: (v) => (v ? "Yes" : "No") },
+  {
+    key: "permissions",
+    header: "Permission Count",
+    format: (v) => {
+      const perms = v as string[] | null
+      return String(perms?.length ?? 0)
+    },
+  },
+  dateExportColumn("created_at", "Created On"),
+]
+
 export default function RolesPage() {
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [roles, setRoles] = useState<Role[]>([])
   const [deleting, setDeleting] = useState<string | null>(null)
+
+  const handleExport = () => {
+    downloadCSV(
+      roles as unknown as Record<string, unknown>[],
+      rolesExportColumns,
+      "roles.csv"
+    )
+  }
 
   useEffect(() => {
     fetchRoles()
@@ -159,12 +186,18 @@ export default function RolesPage() {
             <p className="text-muted-foreground">Manage access levels for your staff</p>
           </div>
         </div>
-        <Link href="/staff/roles/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Role
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleExport} disabled={roles.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
           </Button>
-        </Link>
+          <Link href="/staff/roles/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Role
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}

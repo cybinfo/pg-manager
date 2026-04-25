@@ -35,6 +35,8 @@ import { ApprovalReviewDialog } from "./_components/ApprovalReviewDialog"
 import type { ApprovalData } from "./_components/ApprovalReviewDialog"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -196,6 +198,23 @@ const columns: Column<Approval>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "title", header: "Title", format: (v) => String(v ?? "") },
+  { key: "type", header: "Request Type", format: (v) => APPROVAL_TYPE_LABELS[String(v)] || String(v ?? "") },
+  { key: "priority", header: "Priority", format: (v) => String(v ?? "") },
+  { key: "status", header: "Status", format: (v) => String(v ?? "") },
+  nestedColumn("requester_tenant", "Tenant", "requester_tenant.name"),
+  nestedColumn("property", "Property", "property.name"),
+  nestedColumn("room", "Room", "room.room_number"),
+  { key: "description", header: "Description", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Submitted On"),
+  dateExportColumn("reviewed_at", "Reviewed On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -233,6 +252,8 @@ export default function ApprovalsPage() {
         enableAdvancedFilters={true}
         advancedFilterColumns={advancedFilterColumns}
         enableInlineEdit={true}
+        exportColumns={exportColumns}
+        exportFilename="approvals"
         onRowClick={handleRowClick}
         emptyTitle="No requests found"
         emptyDescription="No approval requests to review"

@@ -15,6 +15,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatDate } from "@/lib/format"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -286,6 +288,29 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Library Name", format: (v) => String(v ?? "") },
+  { key: "code", header: "Code", format: (v) => String(v ?? "") },
+  { key: "address", header: "Address", format: (v) => String(v ?? "") },
+  { key: "city", header: "City", format: (v) => String(v ?? "") },
+  { key: "state", header: "State", format: (v) => String(v ?? "") },
+  { key: "pincode", header: "Pincode", format: (v) => String(v ?? "") },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "total_seats", header: "Total Seats", format: (v) => String(v ?? "0") },
+  { key: "occupied_seats", header: "Occupied Seats", format: (v) => String(v ?? "0") },
+  { key: "total_sections", header: "Sections", format: (v) => String(v ?? "0") },
+  { key: "is_active", header: "Status", format: (v) => (v ? "Active" : "Inactive") },
+  { key: "has_ac", header: "AC", format: (v) => (v ? "Yes" : "No") },
+  { key: "has_wifi", header: "WiFi", format: (v) => (v ? "Yes" : "No") },
+  { key: "has_lockers", header: "Lockers", format: (v) => (v ? "Yes" : "No") },
+  { key: "has_parking", header: "Parking", format: (v) => (v ? "Yes" : "No") },
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -307,6 +332,8 @@ export default function LibrariesPage() {
       enableColumnManager={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
+      exportColumns={exportColumns}
+      exportFilename="libraries"
       createHref="/library/new"
       createLabel="Add Library"
       createPermission="library.create"

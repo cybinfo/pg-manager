@@ -35,6 +35,8 @@ import {
 import { formatDistanceToNow, format } from "date-fns"
 import { getEntityName } from "@/lib/entity-names"
 import { brandGradient } from "@/lib/design-tokens"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateTimeExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -239,6 +241,19 @@ const columns: Column<AuditEvent>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "actor_name", header: "User", format: (v) => String(v ?? "System") },
+  { key: "actor_email", header: "Email", format: (v) => String(v ?? "") },
+  { key: "action", header: "Action", format: (v) => ACTION_CONFIG[String(v)]?.label || String(v ?? "") },
+  { key: "entity_type", header: "Entity Type", format: (v) => getEntityName(String(v ?? "").toLowerCase()) },
+  { key: "entity_id", header: "Entity ID", format: (v) => String(v ?? "") },
+  dateTimeExportColumn("occurred_at", "Occurred At"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -256,6 +271,8 @@ export default function ActivityLogPage() {
       groupByOptions={groupByOptions}
       metrics={metrics}
       searchPlaceholder="Search activity..."
+      exportColumns={exportColumns}
+      exportFilename="activity-log"
       emptyTitle="No activity yet"
       emptyDescription="Activity will appear here as changes are made"
     />

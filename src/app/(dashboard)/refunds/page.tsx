@@ -31,6 +31,8 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { REFUND_STATUS } from "@/lib/status-config"
 import { numberFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import { brandGradient } from "@/lib/design-tokens"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -272,6 +274,24 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  nestedColumn("tenant", "Tenant", "tenant.name"),
+  nestedColumn("property", "Property", "property.name"),
+  currencyExportColumn("amount", "Amount"),
+  { key: "refund_type", header: "Refund Type", format: (v) => String(v ?? "").replace(/_/g, " ") },
+  { key: "payment_mode", header: "Payment Mode", format: (v) => String(v ?? "").replace(/_/g, " ") },
+  { key: "status", header: "Status", format: (v) => String(v ?? "") },
+  { key: "reference_number", header: "Reference", format: (v) => String(v ?? "") },
+  { key: "reason", header: "Reason", format: (v) => String(v ?? "") },
+  dateExportColumn("refund_date", "Refund Date"),
+  dateExportColumn("due_date", "Due Date"),
+  dateExportColumn("created_at", "Created On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -293,6 +313,8 @@ export default function RefundsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="refunds"
       createHref="/refunds/new"
       createLabel="New Refund"
       createPermission="refunds.create"
