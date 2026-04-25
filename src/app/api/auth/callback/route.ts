@@ -1,22 +1,40 @@
-import { createClient } from "@/lib/supabase/server"
-import { NextResponse } from "next/server"
+import { createServerClient } from "@supabase/ssr"
+import { NextResponse, type NextRequest } from "next/server"
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
 
   // On Vercel, use x-forwarded-host to get the canonical domain (e.g. managekar.com)
-  // instead of the deployment subdomain
   const forwardedHost = request.headers.get("x-forwarded-host")
-  const host = forwardedHost
-    ? `https://${forwardedHost}`
-    : origin
+  const host = forwardedHost ? `https://${forwardedHost}` : origin
 
   if (code) {
-    const supabase = await createClient()
+    // Build the redirect response first so we can attach session cookies to it.
+    // Using cookieStore.set() from next/headers does NOT carry over to a
+    // NextResponse.redirect() — cookies must be set on the response directly.
+    const supabaseResponse = NextResponse.redirect(`${host}/login`)
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            )
+          },
+        },
+      }
+    )
+
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(`${host}/login`)
+      return supabaseResponse
     }
   }
 
