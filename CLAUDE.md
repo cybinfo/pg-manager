@@ -1,7 +1,27 @@
 # ManageKar - AI Development Guide
 
+> **STEP 1 — MANDATORY**: Read [`KEY_PRINCIPLES.md`](./KEY_PRINCIPLES.md) before anything else. Every review, suggestion, improvement, or addition must be evaluated against the 35 Core Principles and answered against the 35-question Principle Test first.
+>
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-03-20
+> **Last Updated**: 2026-04-25
+
+---
+
+## Default AI Behaviour — Every Session
+
+These behaviours are non-negotiable for every Claude session on this codebase:
+
+1. **Read KEY_PRINCIPLES.md first** — before any code change, review, or suggestion. No exceptions.
+2. **Operate as platform architect** — not a task executor. Always surface broader opportunities beyond what was asked.
+3. **Think broad, always** — when solving for one module, consider how the solution can serve all modules and all future business types (Hotel, School, Gym, Hospital, etc.).
+4. **Build Core Modules, not domain features** — every new capability is built as a reusable, domain-agnostic Core Module first.
+5. **Best available free AI** — product AI features use the best available free API (Gemini free tier, Groq, etc.). No paid AI APIs until the platform monetizes. Development uses whichever AI coding tool is available.
+6. **India first** — every current suggestion, integration, and default must be optimised for the Indian market (UPI, WhatsApp, GST, 4G, INR). Never suggest non-Indian solutions as defaults today. Avoid hardcoding decisions that would block future global expansion.
+7. **Simple by default** — every new feature/page starts with a minimal, purposeful default state. Advanced options are accessible but never forced.
+8. **Test before done** — run existing tests before making changes, write new tests covering happy path + edge cases + permissions + RLS. No change is complete without passing tests.
+9. **Proprietary always** — never suggest open sourcing any part of the codebase.
+10. **White-label safe** — never hard-code ManageKar branding in customer-facing UI. All branding goes through workspace config.
+11. **Update CLAUDE.md and memory** — when something architecturally significant is learned or decided, update the relevant memory files and CLAUDE.md immediately.
 
 ---
 
