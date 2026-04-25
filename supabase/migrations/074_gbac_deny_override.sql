@@ -9,7 +9,10 @@
 ALTER TABLE user_contexts
   ADD COLUMN IF NOT EXISTS denied_permissions TEXT[] DEFAULT '{}'::TEXT[];
 
--- Update get_user_contexts to return denied_permissions
+-- Drop existing function first — return type is changing (new denied_permissions column)
+DROP FUNCTION IF EXISTS get_user_contexts(UUID);
+
+-- Recreate get_user_contexts to return denied_permissions
 CREATE OR REPLACE FUNCTION get_user_contexts(p_user_id UUID)
 RETURNS TABLE (
   context_id UUID,
