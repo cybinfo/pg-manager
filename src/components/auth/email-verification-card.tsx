@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Mail, CheckCircle, XCircle, Loader2, Send } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
+import { formatDate } from "@/lib/format"
 
 interface EmailVerificationCardProps {
   userId: string
@@ -96,7 +97,7 @@ export function EmailVerificationCard({
             <p className="text-sm font-medium">{email}</p>
             {emailVerified && emailVerifiedAt && (
               <p className="text-xs text-muted-foreground">
-                Verified on {new Date(emailVerifiedAt).toLocaleDateString()}
+                Verified on {formatDate(emailVerifiedAt)}
               </p>
             )}
           </div>

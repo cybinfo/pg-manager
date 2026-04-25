@@ -244,3 +244,39 @@ export const EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS = labelsToOptions(PAYMENT_
 export const EXPENSE_MISC_PAYMENT_MODE_OPTIONS = labelsToOptions(PAYMENT_METHODS, [
   "cash", "upi", "paytm", "bank_transfer", "card", "cheque", "other",
 ])
+
+/** Payment status options for payment records */
+export const PAYMENT_STATUS_OPTIONS = [
+  { value: "completed", label: "Completed" },
+  { value: "pending", label: "Pending" },
+  { value: "failed", label: "Failed" },
+  { value: "refunded", label: "Refunded" },
+]
+
+/** Expense bill payment status options */
+export const EXPENSE_BILL_STATUS_OPTIONS = [
+  { value: "pending", label: "Pending" },
+  { value: "partial", label: "Partial Payment" },
+  { value: "paid", label: "Paid" },
+  { value: "overdue", label: "Overdue" },
+]
+
+/** Unit options for products and daily-spend expense entries */
+export const UNIT_OPTIONS = [
+  { value: "Kg", label: "Kilogram (Kg)" },
+  { value: "g", label: "Gram (g)" },
+  { value: "Ltr", label: "Litre (Ltr)" },
+  { value: "ml", label: "Millilitre (ml)" },
+  { value: "Pcs", label: "Pieces (Pcs)" },
+  { value: "Dozen", label: "Dozen" },
+  { value: "Packet", label: "Packet" },
+  { value: "Box", label: "Box" },
+  { value: "Bundle", label: "Bundle" },
+  { value: "Bottle", label: "Bottle" },
+  { value: "Bag", label: "Bag" },
+  { value: "Meter", label: "Meter" },
+  { value: "Feet", label: "Feet" },
+  { value: "Set", label: "Set" },
+  { value: "Pair", label: "Pair" },
+  { value: "Other", label: "Other" },
+]

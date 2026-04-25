@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ContextWithDetails, CONTEXT_TYPE_CONFIG } from '@/lib/auth/types'
 import { Building2, Crown, Users, Home, Clock, ChevronRight, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatDate } from '@/lib/format'
 
 interface ContextPickerProps {
   contexts: ContextWithDetails[]
@@ -48,7 +49,7 @@ export function ContextPicker({ contexts, onSelect, userName }: ContextPickerPro
     if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
-    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+    return formatDate(d)
   }
 
   return (

@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { FinancialSummary as FinancialSummaryType } from "@/types/journey.types"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 // ============================================
 // Financial Summary Component
@@ -34,14 +35,6 @@ export function FinancialSummary({
   className,
 }: FinancialSummaryProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
 
   const hasOutstanding = financial.total_outstanding > 0
   const hasOverdue = financial.total_overdue > 0
@@ -184,10 +177,7 @@ export function FinancialSummary({
                   <p className="text-xs text-primary font-medium">Next Due</p>
                   <p className="text-sm text-foreground">
                     {formatCurrency(financial.next_due_amount)} on{" "}
-                    {new Date(financial.next_due_date).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                    })}
+                    {formatDate(financial.next_due_date)}
                   </p>
                 </div>
                 <Link href={`/payments/new?tenant=${tenantId}`}>
@@ -318,14 +308,6 @@ interface CompactFinancialCardProps {
 }
 
 export function CompactFinancialCard({ financial, className }: CompactFinancialCardProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
   return (
     <div className={cn("bg-card rounded-lg border border-border p-4", className)}>
       <div className="flex items-center justify-between mb-3">

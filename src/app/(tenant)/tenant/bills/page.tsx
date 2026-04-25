@@ -147,7 +147,7 @@ export default function TenantBillsPage() {
   // Group bills by month
   const groupedBills = filteredBills.reduce((groups, bill) => {
     const date = new Date(bill.bill_date)
-    const monthYear = date.toLocaleDateString("en-IN", { month: "long", year: "numeric" })
+    const monthYear = formatMonthYear(date)
     if (!groups[monthYear]) {
       groups[monthYear] = []
     }

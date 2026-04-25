@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users, Zap, Droplets, Plus } from "lucide-react"
 import { Select } from "@/components/ui/form-components"
 import { showWarning } from "@/lib/toast-helpers"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatCurrency, formatDate, formatMonthYear, formatNumber} from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO } from "@/lib/date-helpers"
@@ -164,7 +164,7 @@ function NewMeterReadingContent() {
 
           const readingDate = new Date(data.reading_date as string)
           const dueDate = new Date(readingDate.getFullYear(), readingDate.getMonth() + 1, 0)
-          const forPeriod = readingDate.toLocaleDateString("en-IN", { month: "long", year: "numeric" })
+          const forPeriod = formatMonthYear(readingDate)
 
           const chargeInserts = roomTenants.map((tenant: Tenant) => ({
             owner_id: userId,
@@ -509,7 +509,7 @@ function NewMeterReadingContent() {
               ) : lastReading ? (
                 <div className="p-3 bg-info/10 border border-info/20 rounded-lg">
                   <p className="text-sm text-info">
-                    <strong>Previous Reading:</strong> {lastReading.reading_value.toLocaleString()}
+                    <strong>Previous Reading:</strong> {formatNumber(lastReading.reading_value)}
                     {lastReading.reading_date === "Assignment Start"
                       ? " (Assignment Start)"
                       : ` on ${formatDate(lastReading.reading_date)}`}
@@ -547,7 +547,7 @@ function NewMeterReadingContent() {
                     <div>
                       <p className="text-sm text-success">Units Consumed</p>
                       <p className="text-2xl font-bold text-success">
-                        {calculatedUnits.toLocaleString()} {selectedMeter.meter_type === "electricity" ? "kWh" : selectedMeter.meter_type === "water" ? "L" : selectedMeter.meter_type === "gas" ? "m\u00B3" : "units"}
+                        {formatNumber(calculatedUnits)} {selectedMeter.meter_type === "electricity" ? "kWh" : selectedMeter.meter_type === "water" ? "L" : selectedMeter.meter_type === "gas" ? "m\u00B3" : "units"}
                       </p>
                     </div>
                   </div>

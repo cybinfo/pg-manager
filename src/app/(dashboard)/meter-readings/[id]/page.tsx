@@ -37,7 +37,7 @@ import {
 } from "lucide-react"
 import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
+import { formatCurrency, formatDate, formatDateTime, formatMonthYear, formatNumber} from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -180,7 +180,7 @@ export default function MeterReadingDetailPage() {
 
       const readingDate = new Date(reading.reading_date)
       const dueDate = new Date(readingDate.getFullYear(), readingDate.getMonth() + 1, 0)
-      const forPeriod = readingDate.toLocaleDateString("en-IN", { month: "long", year: "numeric" })
+      const forPeriod = formatMonthYear(readingDate)
 
       const chargeInserts = tenants.map((tenant: { id: string; name: string }) => ({
         owner_id: user.id,
@@ -325,17 +325,17 @@ export default function MeterReadingDetailPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <InfoCard
           label="Current Reading"
-          value={reading.reading_value.toLocaleString()}
+          value={formatNumber(reading.reading_value)}
           icon={Gauge}
         />
         <InfoCard
           label="Previous Reading"
-          value={reading.previous_reading !== null ? reading.previous_reading.toLocaleString() : "N/A"}
+          value={reading.previous_reading !== null ? formatNumber(reading.previous_reading) : "N/A"}
           icon={Gauge}
         />
         <InfoCard
           label="Units Consumed"
-          value={reading.units_consumed !== null ? `${reading.units_consumed.toLocaleString()} ${config.unit}` : "N/A"}
+          value={reading.units_consumed !== null ? `${formatNumber(reading.units_consumed)} ${config.unit}` : "N/A"}
           icon={Calculator}
           variant="success"
         />

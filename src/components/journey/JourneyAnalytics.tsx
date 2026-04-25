@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { JourneyAnalytics as JourneyAnalyticsType } from "@/types/journey.types"
+import { formatCurrencyCompact } from "@/lib/format"
 
 // ============================================
 // Journey Analytics Component
@@ -23,16 +24,6 @@ interface JourneyAnalyticsProps {
 }
 
 export function JourneyAnalytics({ analytics, className }: JourneyAnalyticsProps) {
-  const formatCurrency = (amount: number) => {
-    if (amount >= 100000) {
-      return `${(amount / 100000).toFixed(1)}L`
-    }
-    if (amount >= 1000) {
-      return `${(amount / 1000).toFixed(0)}K`
-    }
-    return amount.toString()
-  }
-
   const formatDays = (days: number) => {
     if (days >= 365) {
       const years = Math.floor(days / 365)
@@ -56,7 +47,7 @@ export function JourneyAnalytics({ analytics, className }: JourneyAnalyticsProps
     },
     {
       title: "Total Revenue",
-      value: `₹${formatCurrency(analytics.total_revenue)}`,
+      value: formatCurrencyCompact(analytics.total_revenue),
       subtitle: `${analytics.total_payments} payments`,
       icon: CreditCard,
       color: "emerald",
@@ -167,7 +158,7 @@ export function DetailedAnalytics({ analytics, className }: DetailedAnalyticsPro
       title: "Financial",
       icon: CreditCard,
       stats: [
-        { label: "Total Revenue", value: formatFullCurrency(analytics.total_revenue) },
+        { label: "Total Revenue", value: formatCurrencyCompact(analytics.total_revenue) },
         { label: "Total Bills", value: analytics.total_bills_generated.toString() },
         { label: "Bills Paid", value: analytics.total_bills_paid.toString() },
         { label: "Avg Days to Pay", value: `${analytics.average_days_to_pay} days` },
@@ -308,14 +299,6 @@ function getEventsBreakdown(analytics: JourneyAnalyticsType): string {
     return "Journey started"
   }
   return parts.join(", ")
-}
-
-function formatFullCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount)
 }
 
 export default JourneyAnalytics

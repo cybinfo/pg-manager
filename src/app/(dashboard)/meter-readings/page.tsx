@@ -24,7 +24,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, METER_TYPE_FILTER, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink, RoomLink } from "@/components/ui/entity-link"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatNumber} from "@/lib/format"
 import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 import type { CSVColumn } from "@/lib/download-utils"
 import { nestedColumn, dateExportColumn } from "@/lib/export-columns"
@@ -133,7 +133,7 @@ const columns: Column<MeterReading>[] = [
     editType: "number",
     editValidation: { min: 0 },
     render: (reading) => (
-      <span className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</span>
+      <span className="font-semibold tabular-nums">{formatNumber(reading.reading_value)}</span>
     ),
   },
   {
@@ -150,7 +150,7 @@ const columns: Column<MeterReading>[] = [
       return (
         <div className={`flex items-center gap-1 font-medium ${hasIncrease ? "text-warning" : "text-success"}`}>
           {hasIncrease ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-          {reading.units_consumed.toLocaleString()}
+          {formatNumber(reading.units_consumed)}
         </div>
       )
     },
@@ -165,7 +165,7 @@ const columns: Column<MeterReading>[] = [
     canHide: true,
     defaultVisible: false,
     render: (reading) => reading.previous_reading !== null ? (
-      <span className="font-mono text-sm">{reading.previous_reading.toLocaleString()}</span>
+      <span className="font-mono text-sm">{formatNumber(reading.previous_reading)}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
   {

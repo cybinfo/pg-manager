@@ -27,7 +27,7 @@ import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
 import { Currency } from "@/components/ui/currency"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatNumber} from "@/lib/format"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
 interface MemberData {
@@ -426,7 +426,7 @@ export default function RenewLibraryMemberPage({
 
   // Price calculation display
   const priceCalcDisplay = selectedPlan && formData.duration_months
-    ? `\u20B9${selectedPlan.base_price.toLocaleString("en-IN")}/month \u00D7 ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = \u20B9${(selectedPlan.base_price * formData.duration_months).toLocaleString("en-IN")}`
+    ? `\u20B9${formatNumber(selectedPlan.base_price)}/month \u00D7 ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = \u20B9${(formatNumber(selectedPlan.base_price * formData.duration_months))}`
     : null
 
   const planOptions = plans.map((plan) => ({

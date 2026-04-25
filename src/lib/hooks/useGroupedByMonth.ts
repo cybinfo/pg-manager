@@ -18,7 +18,8 @@
  * ))}
  */
 
-"use client"
+import { formatMonthYear } from "@/lib/format"
+
 
 import { useMemo } from "react"
 
@@ -79,7 +80,7 @@ export function useGroupedByMonth<T extends Record<string, unknown>>(
     const getMonthLabel = (monthKey: string): string => {
       const [year, month] = monthKey.split("-")
       const date = new Date(Number(year), Number(month) - 1)
-      return date.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+      return formatMonthYear(date)
     }
 
     return {
@@ -158,7 +159,7 @@ export function useGroupedByMonthWithTotals<T extends Record<string, unknown>>(
     const getMonthLabel = (monthKey: string): string => {
       const [year, month] = monthKey.split("-")
       const date = new Date(Number(year), Number(month) - 1)
-      return date.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+      return formatMonthYear(date)
     }
 
     return {

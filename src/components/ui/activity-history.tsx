@@ -1,7 +1,7 @@
 "use client"
 
-import { format, formatDistanceToNow } from "date-fns"
 import { History, Plus, Pencil, Trash2, User, ChevronDown, ChevronUp, LucideIcon } from "lucide-react"
+import { formatDateTime, formatTimeAgo } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/loading"
@@ -90,7 +90,7 @@ function ActivityTimeline({
                   {getUserDisplayName(event.actor_id)}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
+                  {formatTimeAgo(event.created_at)}
                 </span>
               </div>
 
@@ -141,7 +141,7 @@ function ActivityTimeline({
 
               {/* Timestamp tooltip */}
               <p className="text-xs text-muted-foreground mt-1">
-                {format(new Date(event.created_at), "MMM d, yyyy 'at' h:mm a")}
+                {formatDateTime(event.created_at)}
               </p>
             </div>
           </div>

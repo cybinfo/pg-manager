@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { formatNumber } from "@/lib/format"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
@@ -200,7 +201,7 @@ function EditMeterReadingContent() {
             {previousReading !== null && (
               <div className="p-3 bg-info/10 border border-info/20 rounded-lg">
                 <p className="text-sm text-info">
-                  <strong>Previous Reading:</strong> {previousReading.toLocaleString()}
+                  <strong>Previous Reading:</strong> {formatNumber(previousReading)}
                 </p>
               </div>
             )}
@@ -235,7 +236,7 @@ function EditMeterReadingContent() {
                   <div>
                     <p className="text-sm text-success">Units Consumed</p>
                     <p className="text-2xl font-bold text-success">
-                      {calculatedUnits.toLocaleString()} {meterType === "electricity" ? "kWh" : meterType === "water" ? "L" : meterType === "gas" ? "m3" : "units"}
+                      {formatNumber(calculatedUnits)} {meterType === "electricity" ? "kWh" : meterType === "water" ? "L" : meterType === "gas" ? "m3" : "units"}
                     </p>
                   </div>
                 </div>

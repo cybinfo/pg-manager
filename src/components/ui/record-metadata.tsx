@@ -1,7 +1,7 @@
 "use client"
 
-import { format } from "date-fns"
 import { User, Calendar, Clock, Trash2, AlertTriangle } from "lucide-react"
+import { formatDate, formatDateTime } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
@@ -73,14 +73,6 @@ export function RecordMetadata({
 
     fetchUserInfo()
   }, [record.created_by, record.deleted_by])
-
-  const formatDate = (date: string) => {
-    return format(new Date(date), "MMM d, yyyy")
-  }
-
-  const formatDateTime = (date: string) => {
-    return format(new Date(date), "MMM d, yyyy 'at' h:mm a")
-  }
 
   const getUserDisplayName = (user: UserInfo | null, userId?: string) => {
     if (loading) return "Loading..."
@@ -261,10 +253,6 @@ export function RecordMetadataContent({
 
     fetchUserInfo()
   }, [record.created_by, record.deleted_by])
-
-  const formatDateTime = (date: string) => {
-    return format(new Date(date), "MMM d, yyyy 'at' h:mm a")
-  }
 
   const getUserDisplayName = (user: UserInfo | null, userId?: string) => {
     if (loading) return "Loading..."

@@ -14,7 +14,7 @@ import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "luc
 import { Select } from "@/components/ui/form-components"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatMonthYear } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import { getTodayISO } from "@/lib/date-helpers"
@@ -210,10 +210,7 @@ function NewPaymentForm() {
 
   // Generate current month period
   useEffect(() => {
-    const now = new Date()
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"]
-    const currentPeriod = `${monthNames[now.getMonth()]} ${now.getFullYear()}`
+    const currentPeriod = formatMonthYear(new Date())
     setFormData((prev) => ({ ...prev, for_period: currentPeriod }))
   }, [])
 

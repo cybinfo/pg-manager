@@ -3,7 +3,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
 import { getNowISO } from "@/lib/date-helpers"
-import { parsePositiveNumber } from "@/lib/format"
+import { parsePositiveNumber, formatMonthYear} from "@/lib/format"
 
 interface AutoBillingSettings {
   enabled: boolean
@@ -29,7 +29,7 @@ export const GET = (request: Request) =>
     name: "auto-billing",
     execute: async (supabaseAdmin, today) => {
       const currentDay = today.getDate()
-      const currentMonth = today.toLocaleString("en-US", { month: "long", year: "numeric" })
+      const currentMonth = formatMonthYear(today)
 
       // Get all owners with auto-billing settings
       const { data: configs, error: configError } = await supabaseAdmin

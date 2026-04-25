@@ -22,24 +22,8 @@ import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 
-import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, UNIT_OPTIONS } from "@/lib/status"
 import type { Product, DailySpend, Vendor } from "@/types/expense-enhanced.types"
-
-// Common units for kitchen items
-const UNIT_OPTIONS = [
-  { value: "Kg", label: "Kilogram (Kg)" },
-  { value: "g", label: "Gram (g)" },
-  { value: "Ltr", label: "Litre (Ltr)" },
-  { value: "ml", label: "Millilitre (ml)" },
-  { value: "Pcs", label: "Pieces (Pcs)" },
-  { value: "Dozen", label: "Dozen" },
-  { value: "Packet", label: "Packet" },
-  { value: "Box", label: "Box" },
-  { value: "Bundle", label: "Bundle" },
-  { value: "Bottle", label: "Bottle" },
-]
-
-// PAYMENT_MODE_OPTIONS imported from @/lib/status
 
 interface FormData {
   spend_date: string

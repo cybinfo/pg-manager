@@ -5,6 +5,7 @@ import { ChevronDown, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { JourneyEvent } from "@/types/journey.types"
+import { formatDate, formatMonthYear } from "@/lib/format"
 import { TimelineEvent } from "./TimelineEvent"
 import { EmptyState } from "@/components/ui/empty-state"
 
@@ -87,7 +88,7 @@ export function Timeline({
         label = "This Month"
       } else if (eventDate.getFullYear() === today.getFullYear()) {
         dateKey = `month_${eventDate.getMonth()}`
-        label = eventDate.toLocaleDateString("en-IN", { month: "long" })
+        label = formatMonthYear(eventDate)
       } else {
         dateKey = `year_${eventDate.getFullYear()}`
         label = eventDate.getFullYear().toString()
@@ -284,10 +285,7 @@ function MiniTimelineEvent({ event }: MiniTimelineEventProps) {
       <div className="flex-1 min-w-0">
         <p className="text-foreground truncate">{event.title}</p>
         <p className="text-xs text-muted-foreground">
-          {new Date(event.timestamp).toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "short",
-          })}
+          {formatDate(event.timestamp)}
         </p>
       </div>
       {event.amount !== undefined && event.amount > 0 && (

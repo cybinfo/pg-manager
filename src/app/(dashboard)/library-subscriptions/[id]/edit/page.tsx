@@ -10,6 +10,7 @@ import { use } from "react"
 import Link from "next/link"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { getNowISO } from "@/lib/date-helpers"
+import { formatCurrency } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -207,7 +208,7 @@ function EditSubscriptionContent({
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Final Amount:</span>
                   <span className="font-semibold">
-                    Rs. {(Number(formData.amount) - (Number(formData.discount_amount) || 0)).toLocaleString("en-IN")}
+                    {formatCurrency((Number(formData.amount) - (Number(formData.discount_amount) || 0)))}
                   </span>
                 </div>
               </div>

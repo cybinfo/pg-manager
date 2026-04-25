@@ -20,8 +20,8 @@ import {
 } from "@/lib/services"
 import { buildWelcomeNotification, buildBillNotification } from "@/lib/services/notification.service"
 import { createAuditEvent } from "@/lib/services/audit.service"
-import { formatCurrency } from "@/lib/format"
-import { softDelete } from "@/lib/audit"
+import { formatCurrency, formatMonthYear } from "@/lib/format"
+import { softDelete, softDeleteBatch } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"
 
 // ============================================
@@ -531,15 +531,11 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           document_ids: data.map((d: { id: string }) => d.id),
         })
       },
-      // Rollback: Delete saved documents
+      // Rollback: Soft-delete saved documents (tenant_documents is auditable)
       rollback: async (context, input, stepResult) => {
         const result = stepResult as { document_ids?: string[] }
         if (!result?.document_ids || result.document_ids.length === 0) return
-        const supabase = createClient()
-        await supabase
-          .from("tenant_documents")
-          .delete()
-          .in("id", result.document_ids)
+        await softDeleteBatch("tenant_documents", result.document_ids, context.actor_id)
           .catch((err: unknown) => console.warn("[TenantCreate] Rollback documents failed:", err))
       },
       optional: true, // Documents are optional
@@ -560,7 +556,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
 
         // Calculate first month charges
         const now = new Date()
-        const billMonth = now.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+        const billMonth = formatMonthYear(now)
         const dueDate = new Date(now.getFullYear(), now.getMonth() + 1, 5) // 5th of next month
 
         const lineItems = [
@@ -708,7 +704,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           bill_id: billResult.bill_id as string,
           bill_number: billResult.bill_number as string,
           amount: formatCurrency(billResult.total_amount as number),
-          month: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          month: formatMonthYear(new Date()),
         })
       )
     }

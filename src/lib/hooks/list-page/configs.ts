@@ -6,7 +6,7 @@
  */
 
 import type { ListPageConfig } from "./types"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatMonthYear, formatDate } from "@/lib/format"
 import {
   NOTICE_TYPE_LABELS,
   REFUND_STATUS_LABELS,
@@ -47,7 +47,7 @@ export const TENANT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   computedFields: (item) => {
     const date = item.check_in_date ? new Date(item.check_in_date as string) : new Date()
     return {
-      checkin_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      checkin_month: formatMonthYear(date),
       checkin_year: date.getFullYear().toString(),
     }
   },
@@ -69,7 +69,7 @@ export const PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   computedFields: (item) => {
     const date = item.payment_date ? new Date(item.payment_date as string) : new Date()
     return {
-      payment_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      payment_month: formatMonthYear(date),
       payment_year: date.getFullYear().toString(),
     }
   },
@@ -89,7 +89,7 @@ export const BILL_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   computedFields: (item) => {
     const date = item.bill_date ? new Date(item.bill_date as string) : new Date()
     return {
-      bill_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      bill_month: formatMonthYear(date),
       bill_year: date.getFullYear().toString(),
     }
   },
@@ -109,7 +109,7 @@ export const EXPENSE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   computedFields: (item) => {
     const date = item.expense_date ? new Date(item.expense_date as string) : new Date()
     return {
-      expense_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      expense_month: formatMonthYear(date),
       expense_year: date.getFullYear().toString(),
     }
   },
@@ -130,7 +130,7 @@ export const COMPLAINT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
     return {
-      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_month: formatMonthYear(date),
       created_year: date.getFullYear().toString(),
     }
   },
@@ -153,7 +153,7 @@ export const VISITOR_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     const contact = item.visitor_contact as { visit_count?: number; is_frequent?: boolean; is_blocked?: boolean } | null
     return {
       check_in_date: date.toISOString().split("T")[0],
-      check_in_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      check_in_month: formatMonthYear(date),
       check_in_year: date.getFullYear().toString(),
       status: item.check_out_time ? "checked_out" : "checked_in",
       total_visits: contact?.visit_count || 1,
@@ -186,7 +186,7 @@ export const STAFF_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
       status_label: item.is_active ? "Active" : "Inactive",
       primary_role: firstRole?.name || "No Role",
       account_status: item.user_id ? "Has Login" : "Pending Invite",
-      joined_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      joined_month: formatMonthYear(date),
       joined_year: date.getFullYear().toString(),
     }
   },
@@ -241,7 +241,7 @@ export const EXIT_CLEARANCE_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
   computedFields: (item) => {
     const date = item.expected_exit_date ? new Date(item.expected_exit_date as string) : new Date()
     return {
-      exit_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      exit_month: formatMonthYear(date),
       exit_year: date.getFullYear().toString(),
       inspection_label: item.room_inspection_done ? "Inspected" : "Pending Inspection",
       key_label: item.key_returned ? "Returned" : "Not Returned",
@@ -263,7 +263,7 @@ export const NOTICE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
     const isExpired = item.expires_at ? new Date(item.expires_at as string) < new Date() : false
     return {
-      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_month: formatMonthYear(date),
       created_year: date.getFullYear().toString(),
       active_label: item.is_active && !isExpired ? "Active" : "Inactive",
       type_label: NOTICE_TYPE_LABELS[item.type as string] || (item.type as string),
@@ -289,7 +289,7 @@ export const METER_READING_LIST_CONFIG: ListPageConfig<Record<string, unknown>> 
     const date = item.reading_date ? new Date(item.reading_date as string) : new Date()
     const meter = item.meter as Record<string, unknown> | null
     return {
-      reading_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      reading_month: formatMonthYear(date),
       reading_year: date.getFullYear().toString(),
       meter_type: meter?.meter_type as string || ((item.charge_type as Record<string, unknown>)?.name as string)?.toLowerCase() || "electricity",
     }
@@ -324,7 +324,7 @@ export const REFUND_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
     return {
-      refund_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      refund_month: formatMonthYear(date),
       refund_year: date.getFullYear().toString(),
       status_label: REFUND_STATUS_LABELS[item.status as string] || (item.status as string),
       type_label: REFUND_TYPE_LABELS[item.refund_type as string] || (item.refund_type as string),
@@ -342,7 +342,7 @@ export const PEOPLE_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
     const tags = (item.tags as string[]) || []
     return {
-      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_month: formatMonthYear(date),
       created_year: date.getFullYear().toString(),
       status_label: item.is_blocked ? "Blocked" : item.is_verified ? "Verified" : "Active",
       is_tenant: tags.includes("tenant"),
@@ -366,7 +366,7 @@ export const METER_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
     return {
-      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_month: formatMonthYear(date),
       created_year: date.getFullYear().toString(),
       status_label: METER_STATUS_LABELS[item.status as string] || (item.status as string),
       type_label: METER_TYPE_LABELS[item.meter_type as string] || (item.meter_type as string),
@@ -387,7 +387,7 @@ export const INQUIRY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
     return {
-      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_month: formatMonthYear(date),
       created_year: date.getFullYear().toString(),
       status_label: INQUIRY_STATUS_LABELS[item.status as string] || (item.status as string),
       source_label: INQUIRY_SOURCE_LABELS[item.source as string] || (item.source as string),
@@ -429,7 +429,7 @@ export const DAILY_SPEND_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = 
   computedFields: (item) => {
     const date = item.spend_date ? new Date(item.spend_date as string) : new Date()
     return {
-      spend_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      spend_month: formatMonthYear(date),
       spend_year: date.getFullYear().toString(),
       display_amount: formatCurrency(item.total as number),
       display_qty: `${item.quantity} ${item.unit}`,
@@ -473,7 +473,7 @@ export const BILL_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> =
     const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : null
 
     return {
-      payment_month: paymentDate?.toLocaleDateString("en-US", { month: "long", year: "numeric" }) || "",
+      payment_month: formatMonthYear(paymentDate) || "",
       payment_year: paymentDate?.getFullYear().toString() || "",
       days_until_due: daysUntilDue,
       is_overdue: dueDate && today > dueDate && item.status !== "paid",
@@ -528,7 +528,7 @@ export const SERVICE_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>
     }
 
     return {
-      service_month: serviceDate?.toLocaleDateString("en-US", { month: "long", year: "numeric" }) || "",
+      service_month: formatMonthYear(serviceDate) || "",
       service_year: serviceDate?.getFullYear().toString() || "",
       warranty_status: warrantyStatus,
       display_gross: formatCurrency(item.gross_amount as number),
@@ -553,7 +553,7 @@ export const KITCHEN_WASTAGE_LIST_CONFIG: ListPageConfig<Record<string, unknown>
   computedFields: (item) => {
     const date = item.wastage_date ? new Date(item.wastage_date as string) : new Date()
     return {
-      wastage_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      wastage_month: formatMonthYear(date),
       wastage_year: date.getFullYear().toString(),
       reason_label: KITCHEN_WASTAGE_REASON_LABELS[item.reason as string]?.label || item.reason,
       reason_label_hi: KITCHEN_WASTAGE_REASON_LABELS[item.reason as string]?.labelHi || item.reason,
@@ -578,7 +578,7 @@ export const MISC_TRANSACTION_LIST_CONFIG: ListPageConfig<Record<string, unknown
   computedFields: (item) => {
     const date = item.transaction_date ? new Date(item.transaction_date as string) : new Date()
     return {
-      transaction_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      transaction_month: formatMonthYear(date),
       transaction_year: date.getFullYear().toString(),
       type_label: item.transaction_type === "in" ? "Money In" : "Money Out",
       display_amount: formatCurrency(item.amount as number),
@@ -660,7 +660,7 @@ export const LIBRARY_MEMBER_LIST_CONFIG: ListPageConfig<Record<string, unknown>>
   computedFields: (item) => {
     const joinDate = item.join_date ? new Date(item.join_date as string) : new Date()
     return {
-      join_month: joinDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      join_month: formatMonthYear(joinDate),
       join_year: joinDate.getFullYear().toString(),
       status_label: LIBRARY_MEMBER_STATUS_LABELS[item.status as string] || (item.status as string),
       display_name: (item.person as { name?: string })?.name || item.name,
@@ -685,7 +685,7 @@ export const LIBRARY_MEMBERSHIP_LIST_CONFIG: ListPageConfig<Record<string, unkno
     const endDate = item.end_date ? new Date(item.end_date as string) : null
     const today = new Date()
     return {
-      start_month: startDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      start_month: formatMonthYear(startDate),
       start_year: startDate.getFullYear().toString(),
       status_label: LIBRARY_MEMBERSHIP_STATUS_LABELS[item.status as string] || (item.status as string),
       is_expired: endDate && today > endDate,
@@ -712,7 +712,7 @@ export const LIBRARY_ATTENDANCE_LIST_CONFIG: ListPageConfig<Record<string, unkno
     const checkIn = item.check_in_time ? new Date(item.check_in_time as string) : new Date()
     const checkOut = item.check_out_time ? new Date(item.check_out_time as string) : null
     return {
-      attendance_month: checkIn.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      attendance_month: formatMonthYear(checkIn),
       attendance_year: checkIn.getFullYear().toString(),
       is_checked_in: !checkOut,
       check_in_display: checkIn.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
@@ -758,7 +758,7 @@ export const LIBRARY_PAYMENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>
   computedFields: (item) => {
     const paymentDate = item.payment_date ? new Date(item.payment_date as string) : new Date()
     return {
-      payment_month: paymentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      payment_month: formatMonthYear(paymentDate),
       payment_year: paymentDate.getFullYear().toString(),
       type_label: LIBRARY_PAYMENT_TYPE_LABELS[item.payment_type as string] || (item.payment_type as string),
       status_label: LIBRARY_PAYMENT_STATUS_LABELS[item.status as string] || (item.status as string),
@@ -821,7 +821,7 @@ export const APPROVALS_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
     return {
       type_label: APPROVAL_TYPE_LABELS[item.type as string] || (item.type as string),
       priority_label: (item.priority as string)?.charAt(0).toUpperCase() + (item.priority as string)?.slice(1),
-      created_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      created_month: formatMonthYear(date),
       created_year: date.getFullYear().toString(),
       has_docs_label: (item.document_ids && (item.document_ids as string[]).length > 0) ? "With Documents" : "No Documents",
     }
@@ -842,8 +842,8 @@ export const AUDIT_EVENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = 
   computedFields: (item: Record<string, unknown>) => {
     const date = item.occurred_at ? new Date(item.occurred_at as string) : new Date()
     return {
-      event_date: date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-      event_month: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      event_date: formatDate(date),
+      event_month: formatMonthYear(date),
     }
   },
 }

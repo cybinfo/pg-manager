@@ -13,7 +13,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Users, Plus, ArrowLeft, Building2 } from "lucide-react"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatCurrency} from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 
 interface Tenant {
@@ -158,7 +158,7 @@ export default function PropertyTenantsPage() {
       <div className="space-y-6">
         <PageHeader
           title={`Tenants in ${property.name}`}
-          description={`${activeTenants} active tenants • Total rent: ₹${totalRent.toLocaleString('en-IN')}/month`}
+          description={`${activeTenants} active tenants • Total rent: ${formatCurrency(totalRent)}/month`}
           icon={Users}
           breadcrumbs={[
             { label: "Properties", href: "/properties" },

@@ -22,6 +22,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { QuickActionLink } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
+import { brandGradient } from "@/lib/design-tokens"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 
 interface DashboardExtra {
@@ -162,7 +163,7 @@ export default function MemberHomePage() {
       </div>
 
       {/* Today's Hours Card - Per-Day Model */}
-      <Card className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
+      <Card className={`${brandGradient.memberSolid} text-white`}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>

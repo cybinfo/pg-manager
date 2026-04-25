@@ -27,6 +27,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PermissionGuard } from "@/components/auth"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { withCreatedBy } from "@/lib/audit"
 import { brandGradient } from "@/lib/design-tokens"
 import { REFUND_TYPE_OPTIONS, REFUND_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 
@@ -157,9 +158,8 @@ export default function NewRefundPage() {
         return
       }
 
-      const refundData = {
+      const refundData = withCreatedBy({
         owner_id: session.user.id,
-        created_by: session.user.id,
         tenant_id: formData.tenant_id,
         property_id: selectedTenant?.property_id || null,
         exit_clearance_id: exitClearanceId || null,
@@ -173,7 +173,7 @@ export default function NewRefundPage() {
         notes: formData.notes || null,
         processed_by: formData.refund_date ? session.user.id : null,
         processed_at: formData.refund_date ? getNowISO() : null,
-      }
+      }, session.user.id)
 
       const { data, error } = await supabase
         .from("refunds")

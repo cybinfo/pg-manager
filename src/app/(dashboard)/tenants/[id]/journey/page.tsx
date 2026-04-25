@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback, use } from "react"
+import { formatDate } from "@/lib/format"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -312,11 +313,7 @@ function PreTenantVisitsCard({ visits }: PreTenantVisitsCardProps) {
               Visited {visit.visited_tenant_name}
             </p>
             <p className="text-muted-foreground">
-              {new Date(visit.visit_date).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
+              {formatDate(new Date(visit.visit_date))}
               {" • "}
               {visit.days_before_joining} days before joining
             </p>
@@ -363,10 +360,7 @@ function LinkedVisitorsCard({ visitors }: LinkedVisitorsCardProps) {
               <p className="text-xs text-muted-foreground">{visitor.relationship}</p>
             </div>
             <span className="text-xs text-muted-foreground">
-              {new Date(visitor.visit_date).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-              })}
+              {formatDate(new Date(visitor.visit_date))}
             </span>
           </div>
         ))}

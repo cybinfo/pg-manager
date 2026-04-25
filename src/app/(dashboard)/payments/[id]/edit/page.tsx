@@ -19,15 +19,8 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Receipt, Loader2 } from "lucide-react"
 import { requiredAmount, requiredDate } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
-import { PAYMENT_METHOD_OPTIONS } from "@/lib/status"
+import { PAYMENT_METHOD_OPTIONS, PAYMENT_STATUS_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
-
-const PAYMENT_STATUS_OPTIONS = [
-  { value: "completed", label: "Completed" },
-  { value: "pending", label: "Pending" },
-  { value: "failed", label: "Failed" },
-  { value: "refunded", label: "Refunded" },
-]
 
 export default function EditPaymentPage({
   params,

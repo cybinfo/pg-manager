@@ -13,7 +13,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { CreditCard, Plus, ArrowLeft, User } from "lucide-react"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatCurrency} from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 
 interface Payment {
@@ -161,7 +161,7 @@ export default function TenantPaymentsPage() {
       <div className="space-y-6">
         <PageHeader
           title={`Payments from ${tenant.name}`}
-          description={`Total paid: ₹${totalPaid.toLocaleString('en-IN')} • ${tenant.property?.name || ''} ${tenant.room ? `• Room ${tenant.room.room_number}` : ''}`}
+          description={`Total paid: ${formatCurrency(totalPaid)} • ${tenant.property?.name || ''} ${tenant.room ? `• Room ${tenant.room.room_number}` : ''}`}
           icon={CreditCard}
           breadcrumbs={[
             { label: "Tenants", href: "/tenants" },

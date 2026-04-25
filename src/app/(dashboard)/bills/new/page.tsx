@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatMonthYear, formatDate} from "@/lib/format"
 import { withCreatedBy } from "@/lib/audit"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
@@ -93,7 +93,7 @@ function NewBillContent() {
   const [billingCycleMode, setBillingCycleMode] = useState<'calendar_month' | 'checkin_anniversary'>('calendar_month')
 
   const [formData, setFormData] = useState({
-    for_month: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    for_month: formatMonthYear(new Date()),
     bill_date: getTodayISO(),
     due_date: "",
     previous_balance: 0,
@@ -518,7 +518,7 @@ function NewBillContent() {
                       {tenant.check_in_date && (
                         <div>
                           <span className="text-muted-foreground">Check-in:</span>
-                          <span className="ml-2 font-medium">{new Date(tenant.check_in_date).toLocaleDateString()}</span>
+                          <span className="ml-2 font-medium">{formatDate(tenant.check_in_date)}</span>
                         </div>
                       )}
                     </div>

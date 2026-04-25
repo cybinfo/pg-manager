@@ -250,6 +250,41 @@ export const toTitleCase = (text: string | null | undefined): string => {
 }
 
 // ============================================
+// NUMBER TO WORDS (Indian system: Lakh, Crore)
+// ============================================
+
+/**
+ * Convert a number to Indian English words (for cheque/receipt printing)
+ * @example numberToWords(150000) => "One Lakh Fifty Thousand"
+ */
+export const numberToWords = (num: number): string => {
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen']
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+
+  if (num === 0) return 'Zero'
+
+  const convertLessThanThousand = (n: number): string => {
+    if (n === 0) return ''
+    if (n < 20) return ones[n]
+    if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '')
+    return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' + convertLessThanThousand(n % 100) : '')
+  }
+
+  if (num < 1000) return convertLessThanThousand(num)
+  if (num < 100000) {
+    return convertLessThanThousand(Math.floor(num / 1000)) + ' Thousand' +
+      (num % 1000 ? ' ' + convertLessThanThousand(num % 1000) : '')
+  }
+  if (num < 10000000) {
+    return convertLessThanThousand(Math.floor(num / 100000)) + ' Lakh' +
+      (num % 100000 ? ' ' + numberToWords(num % 100000) : '')
+  }
+  return convertLessThanThousand(Math.floor(num / 10000000)) + ' Crore' +
+    (num % 10000000 ? ' ' + numberToWords(num % 10000000) : '')
+}
+
+// ============================================
 // FILENAME FORMATTING (SEC-018)
 // ============================================
 

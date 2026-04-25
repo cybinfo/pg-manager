@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server"
+import { formatMonthYear } from "@/lib/format"
 import { RentReceiptPDF, type ReceiptData } from "@/lib/pdf/receipt"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { handlePdfGeneration, type PdfRouteConfig } from "@/lib/pdf/handler"
@@ -53,10 +54,7 @@ const PG_PDF_CONFIG: PdfRouteConfig<ReceiptData> = {
       amount: Number(payment.amount),
       paymentMethod: payment.payment_method || "Cash",
       forPeriod: payment.for_month
-        ? new Date(payment.for_month + "-01").toLocaleDateString("en-IN", {
-            month: "long",
-            year: "numeric",
-          })
+        ? formatMonthYear(new Date(payment.for_month + "-01"))
         : undefined,
       description: payment.notes || undefined,
       ownerName: owner?.business_name || owner?.name || "Property Owner",

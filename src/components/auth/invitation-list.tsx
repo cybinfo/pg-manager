@@ -7,6 +7,7 @@ import { Invitation, CONTEXT_TYPE_CONFIG } from '@/lib/auth/types'
 import { Clock, Copy, Loader2, RefreshCw, Trash2 } from 'lucide-react'
 import { showSuccess, showError } from '@/lib/toast-helpers'
 import { cn } from '@/lib/utils'
+import { formatDate } from '@/lib/format'
 
 // ============================================
 // Invitation List Component
@@ -123,7 +124,7 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
                     <span className="text-destructive">Expired</span>
                   ) : (
                     <span>
-                      Expires {new Date(inv.expires_at).toLocaleDateString('en-IN')}
+                      Expires {formatDate(inv.expires_at)}
                     </span>
                   )}
                 </div>

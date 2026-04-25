@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { User, Bed } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate} from "@/lib/format"
 import type { ArchRoom } from "./RoomGrid"
 
 interface ArchTenant {
@@ -85,7 +85,7 @@ export function BedView({ room, tenants }: BedViewProps) {
                     {isOccupied && tenant && (
                       <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                         <div>{tenant.phone}</div>
-                        <div>Since: {new Date(tenant.check_in_date).toLocaleDateString()}</div>
+                        <div>Since: {formatDate(tenant.check_in_date)}</div>
                       </div>
                     )}
                   </CardContent>

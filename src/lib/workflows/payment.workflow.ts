@@ -23,7 +23,7 @@ import {
 } from "@/lib/services"
 import { buildPaymentNotification } from "@/lib/services/notification.service"
 import { createAuditEvent } from "@/lib/services/audit.service"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate } from "@/lib/format"
 import { softDelete } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"
 import { sendPaymentReceipt } from "@/lib/email"
@@ -528,7 +528,7 @@ export const refundPaymentWorkflow: WorkflowDefinition<RefundPaymentInput, Refun
           await supabase
             .from("payments")
             .update({
-              notes: `${payment.notes || ""}\nREFUND: ${formatCurrency(input.refund_amount)} on ${new Date().toLocaleDateString()} - ${input.refund_reason}`,
+              notes: `${payment.notes || ""}\nREFUND: ${formatCurrency(input.refund_amount)} on ${formatDate(new Date())} - ${input.refund_reason}`,
               status: "refunded",
               updated_at: getNowISO(),
             })

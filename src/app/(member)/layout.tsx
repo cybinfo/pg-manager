@@ -5,6 +5,7 @@ import { BookOpen } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { PortalLayout } from "@/components/portal"
 import { LIBRARY_MEMBER_NAVIGATION } from "@/lib/navigation/config"
+import { brandGradient } from "@/lib/design-tokens"
 
 interface MemberPortalInfo {
   id: string
@@ -88,7 +89,7 @@ export default function MemberLayout({
   return (
     <PortalLayout
       portalType="member"
-      brandGradient="from-purple-500 to-indigo-500"
+      brandGradient={brandGradient.memberValues}
       brandIconColor="text-primary"
       icon={BookOpen}
       portalName="Member Portal"

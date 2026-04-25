@@ -25,7 +25,7 @@ import {
   Bell
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatDate} from "@/lib/format"
 import { handleClientError } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
@@ -439,7 +439,7 @@ function InitiateCheckoutForm() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>Since: {new Date(selectedTenant.check_in_date).toLocaleDateString("en-IN")}</span>
+                    <span>Since: {formatDate(new Date(selectedTenant.check_in_date))}</span>
                   </div>
                 </div>
                 <div className="pt-2 border-t mt-2">
@@ -516,11 +516,11 @@ function InitiateCheckoutForm() {
                 <div className="mt-3 pt-3 border-t border-current/20 text-sm">
                   <div className="flex justify-between">
                     <span>Notice Date:</span>
-                    <span className="font-medium">{new Date(formData.notice_given_date).toLocaleDateString("en-IN")}</span>
+                    <span className="font-medium">{formatDate(new Date(formData.notice_given_date))}</span>
                   </div>
                   <div className="flex justify-between mt-1">
                     <span>Exit Date:</span>
-                    <span className="font-medium">{new Date(formData.expected_exit_date).toLocaleDateString("en-IN")}</span>
+                    <span className="font-medium">{formatDate(new Date(formData.expected_exit_date))}</span>
                   </div>
                   <div className="flex justify-between mt-1">
                     <span>Required Notice:</span>

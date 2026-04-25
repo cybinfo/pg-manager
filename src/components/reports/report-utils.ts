@@ -6,7 +6,7 @@
 import { DateRange } from "@/components/ui/date-range-picker"
 import { showError } from "@/lib/toast-helpers"
 import { DemoAction } from "@/lib/demo-mode"
-import { formatNumber } from "@/lib/format"
+import { formatCurrencyCompact } from "@/lib/format"
 
 export const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -25,18 +25,7 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   other: "Other",
 }
 
-/**
- * Format currency in Indian style with Cr/L abbreviations
- */
-export function formatCurrency(amount: number): string {
-  if (amount >= 10000000) {
-    return `\u20B9${(amount / 10000000).toFixed(2)} Cr`
-  }
-  if (amount >= 100000) {
-    return `\u20B9${(amount / 100000).toFixed(2)} L`
-  }
-  return `\u20B9${formatNumber(amount)}`
-}
+export { formatCurrencyCompact as formatCurrency }
 
 /**
  * Default date range: last 6 months to now

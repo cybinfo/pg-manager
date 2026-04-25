@@ -24,6 +24,10 @@ export const brandGradient = {
   button: "bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600",
   /** Gradient direction values only (no bg-gradient prefix) — for configs that compose their own prefix */
   values: "from-teal-500 to-emerald-500",
+  /** Member/library portal gradient values — purple/indigo distinguishes library from PG */
+  memberValues: "from-purple-500 to-indigo-500",
+  /** Member/library portal solid gradient (full class) */
+  memberSolid: "bg-gradient-to-r from-purple-500 to-indigo-500",
   /** Brand shadow accent */
   shadow: "shadow-teal-500/20",
   /** Larger brand shadow accent */

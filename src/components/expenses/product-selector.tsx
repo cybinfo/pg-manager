@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { showInfo, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
+import { UNIT_OPTIONS } from "@/lib/status"
 import { cn } from "@/lib/utils"
 import type { Product, ProductCategory } from "@/types/expense-enhanced.types"
 import {
@@ -52,18 +53,6 @@ interface ProductSelectorProps {
 
 const PRODUCT_SELECT = "*, category:product_categories(id, name, name_hi)"
 
-const UNIT_OPTIONS = [
-  { value: "Kg", label: "Kilogram (Kg)" },
-  { value: "g", label: "Gram (g)" },
-  { value: "Ltr", label: "Litre (Ltr)" },
-  { value: "ml", label: "Millilitre (ml)" },
-  { value: "Pcs", label: "Pieces (Pcs)" },
-  { value: "Dozen", label: "Dozen" },
-  { value: "Packet", label: "Packet" },
-  { value: "Box", label: "Box" },
-  { value: "Bundle", label: "Bundle" },
-  { value: "Bottle", label: "Bottle" },
-]
 
 // ============================================================================
 // HELPER RENDERERS

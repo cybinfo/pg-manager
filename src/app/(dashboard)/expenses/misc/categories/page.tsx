@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
-import { softDelete } from "@/lib/audit"
+import { softDelete, withCreatedBy } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -143,14 +143,13 @@ export default function MiscCategoriesPage() {
 
         const { error } = await supabase
           .from("misc_transaction_categories")
-          .insert({
+          .insert(withCreatedBy({
             workspace_id: workspaceId,
             name: formData.name.trim(),
             name_hi: formData.name_hi.trim() || null,
             default_type: formData.default_type,
             sort_order: maxSort + 1,
-            created_by: user.id,
-          })
+          }, user.id))
 
         if (error) throw error
         showSuccess("Category created")

@@ -22,14 +22,8 @@ import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
 import { getTodayISO } from "@/lib/date-helpers"
-import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, EXPENSE_BILL_STATUS_OPTIONS as STATUS_OPTIONS } from "@/lib/status"
 import type { Vendor, BillCategory, BillPaymentFormData } from "@/types/expense-enhanced.types"
-
-const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending" },
-  { value: "partial", label: "Partial Payment" },
-  { value: "paid", label: "Paid" },
-]
 
 export default function NewBillPaymentPage() {
   const router = useRouter()

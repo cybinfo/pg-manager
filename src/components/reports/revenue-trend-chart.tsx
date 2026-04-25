@@ -17,7 +17,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import { Download } from "lucide-react"
-import { formatCurrency as defaultFormatCurrency } from "@/lib/format"
+import { formatCurrency as defaultFormatCurrency, formatCurrencyCompact } from "@/lib/format"
 
 interface MonthlyRevenue {
   month: string
@@ -59,12 +59,7 @@ export function RevenueTrendChart({
               <YAxis
                 tick={{ fontSize: 11 }}
                 width={55}
-                tickFormatter={(value: number) => {
-                  if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`
-                  if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`
-                  if (value >= 1000) return `₹${(value / 1000).toFixed(0)}k`
-                  return `₹${value}`
-                }}
+                tickFormatter={(value: number) => formatCurrencyCompact(value)}
               />
               <Tooltip
                 formatter={(value) => [formatCurrency(Number(value)), ""]}

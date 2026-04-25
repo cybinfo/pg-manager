@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Bell } from "lucide-react"
 import { getTodayISO } from "@/lib/date-helpers"
+import { formatDate } from "@/lib/format"
 
 interface NoticePeriodDialogProps {
   tenantName: string
@@ -94,7 +95,7 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
               <p className="text-info">
                 <strong>Notice Period:</strong>{" "}
                 {Math.ceil((new Date(noticeData.expected_exit_date).getTime() - new Date(noticeData.notice_date).getTime()) / (1000 * 60 * 60 * 24))} days
-                {" "}(from {new Date(noticeData.notice_date).toLocaleDateString("en-IN")} to {new Date(noticeData.expected_exit_date).toLocaleDateString("en-IN")})
+                {" "}(from {formatDate(noticeData.notice_date)} to {formatDate(noticeData.expected_exit_date)})
               </p>
             </div>
           )}

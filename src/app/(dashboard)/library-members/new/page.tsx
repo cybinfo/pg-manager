@@ -23,7 +23,7 @@ import { ArrowLeft, Users, Loader2, CreditCard, UserCheck, Trash2, Plus, Camera 
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatNumber} from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -533,7 +533,7 @@ function NewLibraryMemberContent() {
 
   // Price calculation display
   const priceCalcDisplay = selectedPlan && formData.duration_months
-    ? `\u20B9${selectedPlan.base_price.toLocaleString("en-IN")}/month \u00D7 ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = \u20B9${(selectedPlan.base_price * formData.duration_months).toLocaleString("en-IN")}`
+    ? `\u20B9${formatNumber(selectedPlan.base_price)}/month \u00D7 ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = \u20B9${(formatNumber(selectedPlan.base_price * formData.duration_months))}`
     : null
 
   const libraryOptions = libraries.map((lib) => ({

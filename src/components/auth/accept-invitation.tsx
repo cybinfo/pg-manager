@@ -9,6 +9,7 @@ import { Invitation, CONTEXT_TYPE_CONFIG } from '@/lib/auth/types'
 import { Clock, Check, X, Loader2 } from 'lucide-react'
 import { showSuccess, showError } from '@/lib/toast-helpers'
 import { cn } from '@/lib/utils'
+import { formatDate } from '@/lib/format'
 
 // ============================================
 // Accept Invitation Component
@@ -152,11 +153,7 @@ export function AcceptInvitation({ token }: AcceptInvitationProps) {
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             <span>
-              Expires {new Date(invitation.expires_at).toLocaleDateString('en-IN', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })}
+              Expires {formatDate(invitation.expires_at)}
             </span>
           </div>
         </div>

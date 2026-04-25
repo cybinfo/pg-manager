@@ -23,25 +23,9 @@ import { PageLoading } from "@/components/ui/loading"
 import { VendorSelector } from "@/components/expenses/vendor-selector"
 import { getTodayISO } from "@/lib/date-helpers"
 import { ProductSelector } from "@/components/expenses/product-selector"
-import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, UNIT_OPTIONS } from "@/lib/status"
 
 import type { Product, ProductCategory, Vendor } from "@/types/expense-enhanced.types"
-
-// Common units for kitchen items
-const UNIT_OPTIONS = [
-  { value: "Kg", label: "Kilogram (Kg)" },
-  { value: "g", label: "Gram (g)" },
-  { value: "Ltr", label: "Litre (Ltr)" },
-  { value: "ml", label: "Millilitre (ml)" },
-  { value: "Pcs", label: "Pieces (Pcs)" },
-  { value: "Dozen", label: "Dozen" },
-  { value: "Packet", label: "Packet" },
-  { value: "Box", label: "Box" },
-  { value: "Bundle", label: "Bundle" },
-  { value: "Bottle", label: "Bottle" },
-]
-
-// PAYMENT_MODE_OPTIONS imported from @/lib/status
 
 interface SpendLineItem {
   id: string

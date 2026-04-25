@@ -130,7 +130,7 @@ export default function TenantDetailPage() {
 
     setActionLoading(true)
     const noticeDate = new Date(data.notice_date)
-    const noteDateStr = noticeDate.toLocaleDateString("en-IN")
+    const noteDateStr = formatDate(noticeDate)
 
     const success = await updateFields({
       status: "notice_period",
@@ -153,7 +153,7 @@ export default function TenantDetailPage() {
     if (!tenant) return
 
     setActionLoading(true)
-    const today = new Date().toLocaleDateString("en-IN")
+    const today = formatDate(new Date())
 
     const success = await updateFields({
       status: "active",

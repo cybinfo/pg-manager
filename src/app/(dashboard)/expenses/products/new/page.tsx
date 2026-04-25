@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { PermissionGuard } from "@/components/auth"
+import { UNIT_OPTIONS } from "@/lib/status"
 
 import {
   FormPageTemplate,
@@ -26,19 +27,6 @@ import { PageLoading } from "@/components/ui/loading"
 
 import type { ProductCategory } from "@/types/expense-enhanced.types"
 
-// Common units for kitchen items
-const UNIT_OPTIONS = [
-  { value: "Kg", label: "Kilogram (Kg)" },
-  { value: "g", label: "Gram (g)" },
-  { value: "Ltr", label: "Litre (Ltr)" },
-  { value: "ml", label: "Millilitre (ml)" },
-  { value: "Pcs", label: "Pieces (Pcs)" },
-  { value: "Dozen", label: "Dozen" },
-  { value: "Packet", label: "Packet" },
-  { value: "Box", label: "Box" },
-  { value: "Bundle", label: "Bundle" },
-  { value: "Bottle", label: "Bottle" },
-]
 
 export default function NewProductPage() {
   return (

@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { formatDistanceToNow } from "date-fns"
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react"
+import { formatCurrency, formatDate, formatTimeAgo } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { JourneyEvent, EVENT_CATEGORY_CONFIG } from "@/types/journey.types"
@@ -165,11 +165,7 @@ interface AmountBadgeProps {
 }
 
 function AmountBadge({ amount, type }: AmountBadgeProps) {
-  const formatted = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(amount)
+  const formatted = formatCurrency(amount)
 
   const colorClasses = {
     credit: "bg-success/10 text-success",
@@ -205,11 +201,7 @@ function EventDetails({ metadata }: EventDetailsProps) {
     if (typeof value === "boolean") return value ? "Yes" : "No"
     if (typeof value === "number") {
       if (key.includes("amount") || key.includes("rent") || key.includes("deposit") || key.includes("fee")) {
-        return new Intl.NumberFormat("en-IN", {
-          style: "currency",
-          currency: "INR",
-          maximumFractionDigits: 0,
-        }).format(value)
+        return formatCurrency(value)
       }
       return value.toString()
     }
@@ -219,11 +211,7 @@ function EventDetails({ metadata }: EventDetailsProps) {
         try {
           const date = new Date(value)
           if (!isNaN(date.getTime())) {
-            return date.toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
+            return formatDate(date)
           }
         } catch {
           // Not a date, return as is
@@ -308,21 +296,14 @@ function formatEventTime(timestamp: string): string {
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
 
   if (diffDays < 1) {
-    return formatDistanceToNow(date, { addSuffix: true })
+    return formatTimeAgo(date)
   }
 
   if (diffDays < 7) {
-    return `${formatDistanceToNow(date, { addSuffix: true })} • ${date.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-    })}`
+    return `${formatTimeAgo(date)} • ${formatDate(date)}`
   }
 
-  return date.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-  })
+  return formatDate(date)
 }
 
 // ============================================
@@ -359,11 +340,7 @@ export function CompactTimelineEvent({ event, onClick, className }: CompactTimel
             )}
           >
             {event.amount_type === "credit" ? "+" : ""}
-            {new Intl.NumberFormat("en-IN", {
-              style: "currency",
-              currency: "INR",
-              maximumFractionDigits: 0,
-            }).format(event.amount)}
+            {formatCurrency(event.amount)}
           </p>
         )}
       </div>

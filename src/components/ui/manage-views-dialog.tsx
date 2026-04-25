@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { TableView, TableViewConfig } from "@/lib/hooks/useTableViews"
-import { formatDistanceToNow } from "date-fns"
+import { formatTimeAgo } from "@/lib/format"
 
 // ============================================
 // Types
@@ -217,7 +217,7 @@ export function ManageViewsDialog({
                             <p className="text-xs text-muted-foreground mt-1">
                               Used {view.use_count} time{view.use_count !== 1 ? "s" : ""}
                               {view.last_used_at && (
-                                <> · Last used {formatDistanceToNow(new Date(view.last_used_at), { addSuffix: true })}</>
+                                <> · Last used {formatTimeAgo(view.last_used_at)}</>
                               )}
                             </p>
                           </>

@@ -16,6 +16,7 @@
  */
 
 import { createClient } from "@/lib/supabase/client"
+import { formatDate } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 import {
   WorkflowDefinition,
@@ -521,7 +522,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       await supabase
         .from("tenants")
         .update({
-          notes: `${(approval.tenant as Record<string, unknown>)?.notes || ""}\nISSUE RESOLVED [${new Date().toLocaleDateString()}]: ${issueType} - ${input.decision_notes || "Resolved"}`,
+          notes: `${(approval.tenant as Record<string, unknown>)?.notes || ""}\nISSUE RESOLVED [${formatDate(new Date())}]: ${issueType} - ${input.decision_notes || "Resolved"}`,
           updated_at: getNowISO(),
         })
         .eq("id", approval.requester_tenant_id)
@@ -588,7 +589,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
       await supabase
         .from("rooms")
         .update({
-          notes: `${room?.notes || ""}\nISSUE RESOLVED [${new Date().toLocaleDateString()}]: ${issueType} - ${input.decision_notes || "Resolved"}`,
+          notes: `${room?.notes || ""}\nISSUE RESOLVED [${formatDate(new Date())}]: ${issueType} - ${input.decision_notes || "Resolved"}`,
           updated_at: getNowISO(),
         })
         .eq("id", roomId)

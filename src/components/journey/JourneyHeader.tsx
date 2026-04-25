@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { TenantJourneyData } from "@/types/journey.types"
+import { formatDate } from "@/lib/format"
 
 // ============================================
 // Journey Header Component
@@ -156,11 +157,7 @@ export function JourneyHeader({
           <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground flex-wrap">
             <span>
               Joined{" "}
-              {new Date(journey.check_in_date).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
+              {formatDate(journey.check_in_date)}
             </span>
             <span className="text-muted-foreground/50">•</span>
             <span className="font-medium text-primary">{stayDuration}</span>
