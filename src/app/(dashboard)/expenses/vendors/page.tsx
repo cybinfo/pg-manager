@@ -16,6 +16,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -264,6 +266,22 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Vendor Name" },
+  { key: "contact_name", header: "Contact Name", format: (v) => String(v ?? "") },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email", header: "Email", format: (v) => String(v ?? "") },
+  { key: "gstin", header: "GSTIN", format: (v) => String(v ?? "") },
+  { key: "pan", header: "PAN", format: (v) => String(v ?? "") },
+  { key: "upi_id", header: "UPI ID", format: (v) => String(v ?? "") },
+  { key: "is_active", header: "Status", format: (v) => (v ? "Active" : "Inactive") },
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -290,6 +308,8 @@ export default function VendorsPage() {
       createLabel="Add Vendor"
       createPermission="expenses.create"
       detailHref={(vendor) => `/expenses/vendors/${vendor.id}`}
+      exportColumns={exportColumns}
+      exportFilename="vendors"
       emptyTitle="No vendors found"
       emptyDescription="Add vendors to track bill payments and recurring expenses"
     />

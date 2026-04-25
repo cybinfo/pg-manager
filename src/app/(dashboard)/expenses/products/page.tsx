@@ -16,6 +16,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
+import type { CSVColumn } from "@/lib/download-utils"
+import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -249,6 +251,19 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Product Name" },
+  { key: "name_hi", header: "Hindi Name", format: (v) => String(v ?? "") },
+  { key: "default_unit", header: "Unit", format: (v) => String(v ?? "") },
+  currencyExportColumn("default_rate", "Default Rate"),
+  { key: "is_active", header: "Status", format: (v) => (v ? "Active" : "Inactive") },
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -275,6 +290,8 @@ export default function ProductsPage() {
       createLabel="Add Product"
       createPermission="expenses.create"
       detailHref={(product) => `/expenses/products/${product.id}`}
+      exportColumns={exportColumns}
+      exportFilename="products"
       emptyTitle="No products found"
       emptyDescription="Add products to track kitchen and daily purchases"
     />

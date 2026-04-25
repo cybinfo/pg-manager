@@ -17,6 +17,8 @@ import { EXPENSE_CATEGORY_FILTER, createStatusFilter } from "@/lib/filter-preset
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { BILL_STATUS } from "@/lib/status"
+import type { CSVColumn } from "@/lib/download-utils"
+import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -314,6 +316,23 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "vendor_name", header: "Vendor Name" },
+  { key: "bill_number", header: "Bill Number", format: (v) => String(v ?? "") },
+  currencyExportColumn("bill_amount", "Bill Amount"),
+  currencyExportColumn("paid_amount", "Paid Amount"),
+  dateExportColumn("due_date", "Due Date"),
+  dateExportColumn("payment_date", "Paid On"),
+  { key: "status", header: "Status", format: (v) => String(v ?? "") },
+  { key: "bill_period", header: "Period", format: (v) => String(v ?? "") },
+  { key: "payment_mode", header: "Payment Mode", format: (v) => String(v ?? "").replace(/_/g, " ") },
+  dateExportColumn("created_at", "Recorded On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -340,6 +359,8 @@ export default function BillPaymentsPage() {
       createLabel="Add Bill"
       createPermission="expenses.create"
       detailHref={(bill) => `/expenses/bills/${bill.id}`}
+      exportColumns={exportColumns}
+      exportFilename="expense-bills"
       emptyTitle="No bills found"
       emptyDescription="Start tracking your recurring bills and vendor payments"
     />

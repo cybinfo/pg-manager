@@ -16,6 +16,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
+import type { CSVColumn } from "@/lib/download-utils"
+import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -342,6 +344,25 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  dateExportColumn("service_date", "Date"),
+  { key: "provider_name", header: "Provider" },
+  { key: "description", header: "Service" },
+  { key: "category_name", header: "Category", format: (v) => String(v ?? "") },
+  currencyExportColumn("gross_amount", "Gross Amount"),
+  currencyExportColumn("tds_amount", "TDS Amount"),
+  currencyExportColumn("net_amount", "Net Amount"),
+  { key: "tds_applicable", header: "TDS Applicable", format: (v) => (v ? "Yes" : "No") },
+  { key: "payment_mode", header: "Payment Mode", format: (v) => String(v ?? "").replace(/_/g, " ") },
+  { key: "warranty_months", header: "Warranty (Months)", format: (v) => String(v ?? "") },
+  dateExportColumn("warranty_expiry", "Warranty Expiry"),
+  dateExportColumn("created_at", "Recorded On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -368,6 +389,8 @@ export default function ServicePaymentsPage() {
       createLabel="Add Service"
       createPermission="expenses.create"
       detailHref={(payment) => `/expenses/services/${payment.id}`}
+      exportColumns={exportColumns}
+      exportFilename="services"
       emptyTitle="No service payments found"
       emptyDescription="Start tracking your maintenance and repair expenses"
     />

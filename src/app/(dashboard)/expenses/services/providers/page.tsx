@@ -16,6 +16,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatDate } from "@/lib/format"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -291,6 +293,23 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Provider Name" },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email", header: "Email", format: (v) => String(v ?? "") },
+  { key: "pan", header: "PAN", format: (v) => String(v ?? "") },
+  { key: "tds_applicable", header: "TDS Applicable", format: (v) => (v ? "Yes" : "No") },
+  { key: "tds_section", header: "TDS Section", format: (v) => String(v ?? "") },
+  { key: "rating", header: "Rating", format: (v) => (v != null ? String(v) : "") },
+  { key: "total_jobs", header: "Total Jobs", format: (v) => String(v ?? "") },
+  { key: "is_active", header: "Status", format: (v) => (v ? "Active" : "Inactive") },
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -317,6 +336,8 @@ export default function ServiceProvidersPage() {
       createLabel="Add Provider"
       createPermission="expenses.create"
       detailHref={(provider) => `/expenses/services/providers/${provider.id}`}
+      exportColumns={exportColumns}
+      exportFilename="service-providers"
       emptyTitle="No service providers found"
       emptyDescription="Add service providers to track maintenance and repair expenses"
     />

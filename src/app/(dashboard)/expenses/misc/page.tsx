@@ -27,6 +27,8 @@ import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PAYMENT_METHODS, EXPENSE_MISC_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { Button } from "@/components/ui/button"
+import type { CSVColumn } from "@/lib/download-utils"
+import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -314,6 +316,23 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  dateExportColumn("transaction_date", "Date"),
+  { key: "transaction_type", header: "Type", format: (v) => v === "in" ? "Money In" : "Money Out" },
+  { key: "person_name", header: "Person", format: (v) => String(v ?? "") },
+  { key: "description", header: "Description", format: (v) => String(v ?? "") },
+  { key: "category_name", header: "Category", format: (v) => String(v ?? "") },
+  currencyExportColumn("amount", "Amount"),
+  { key: "payment_mode", header: "Payment Mode", format: (v) => PAYMENT_METHODS[v as string] || String(v ?? "") },
+  { key: "payment_reference", header: "Reference", format: (v) => String(v ?? "") },
+  { key: "notes", header: "Notes", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Recorded On"),
+]
+
+// ============================================
 // Custom Header Actions
 // ============================================
 
@@ -352,6 +371,8 @@ export default function MiscTransactionsPage() {
       createLabel="New Transaction"
       createPermission="expenses.create"
       detailHref={(item) => `/expenses/misc/${item.id}`}
+      exportColumns={exportColumns}
+      exportFilename="misc-expenses"
       emptyTitle="No transactions found"
       emptyDescription="Start recording your miscellaneous money in and out"
       headerActions={<HeaderActions />}

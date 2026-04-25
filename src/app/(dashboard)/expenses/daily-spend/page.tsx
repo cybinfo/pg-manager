@@ -17,6 +17,8 @@ import { EXPENSE_CATEGORY_FILTER, createDateFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import type { CSVColumn } from "@/lib/download-utils"
+import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -280,6 +282,23 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  dateExportColumn("spend_date", "Date"),
+  { key: "product_name", header: "Item" },
+  { key: "quantity", header: "Quantity", format: (v) => String(v ?? "") },
+  { key: "unit", header: "Unit", format: (v) => String(v ?? "") },
+  currencyExportColumn("rate", "Rate"),
+  currencyExportColumn("total", "Amount"),
+  { key: "payment_mode", header: "Payment Mode", format: (v) => String(v ?? "").toUpperCase() },
+  { key: "vendor_name", header: "Vendor", format: (v) => String(v ?? "") },
+  { key: "notes", header: "Notes", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Recorded On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -306,6 +325,8 @@ export default function DailySpendPage() {
       createLabel="Add Entry"
       createPermission="expenses.create"
       detailHref={(item) => `/expenses/daily-spend/${item.id}`}
+      exportColumns={exportColumns}
+      exportFilename="daily-spend"
       emptyTitle="No daily spend entries"
       emptyDescription="Start tracking your daily kitchen and household expenses"
     />
