@@ -68,6 +68,9 @@ const nextConfig: NextConfig = {
 
   // Disable x-powered-by header to reduce fingerprinting
   poweredByHeader: false,
+
+  // Silence Turbopack/webpack coexistence warning from next-pwa
+  turbopack: {},
 };
 
 export default withPWA({
