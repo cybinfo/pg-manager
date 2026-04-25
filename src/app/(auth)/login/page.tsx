@@ -17,13 +17,14 @@ import { SubmitButton } from "@/components/ui/submit-button"
 import { ContextWithDetails } from "@/lib/auth/types"
 import { brandGradient } from "@/lib/design-tokens"
 
-type LoginStep = 'credentials' | 'otp-verification' | 'context-picker'
+type LoginStep = 'credentials' | 'email-sent' | 'context-picker'
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect")
   const inviteToken = searchParams.get("invite")
+  const authError = searchParams.get("error")
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -31,11 +32,7 @@ function LoginForm() {
   const [step, setStep] = useState<LoginStep>('credentials')
   const [contexts, setContexts] = useState<ContextWithDetails[]>([])
   const [userName, setUserName] = useState<string>('')
-  // OTP verification state
-  const [otpCode, setOtpCode] = useState("")
-  const [otpLoading, setOtpLoading] = useState(false)
-  const [pendingContexts, setPendingContexts] = useState<ContextWithDetails[]>([])
-  const [pendingUserName, setPendingUserName] = useState<string>('')
+  const [resendLoading, setResendLoading] = useState(false)
 
   const supabase = createClient()
   const mountedRef = useRef(true)
@@ -120,35 +117,25 @@ function LoginForm() {
         return
       }
 
-      // Fetch user contexts while we have an authenticated session
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-      const { data: userContexts } = await (supabase.rpc as Function)('get_user_contexts', {
-        p_user_id: data.user.id
-      })
-
-      const contextsArray = (userContexts || []) as ContextWithDetails[]
-      const resolvedName = data.user.user_metadata?.name || data.user.email?.split('@')[0] || ''
-
-      // Store for use after OTP verification
-      setPendingContexts(contextsArray)
-      setPendingUserName(resolvedName)
-
-      // Sign out the password session — user must verify via OTP (E1 principle)
+      // Sign out the password session — user must verify via email link (E1 principle)
       await supabase.auth.signOut()
 
-      // Send OTP to the user's email
+      // Send magic link to the user's email, routing back through our callback
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: false },
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: window.location.origin + '/api/auth/callback',
+        },
       })
 
       if (otpError) {
-        showError("Failed to send verification code. Please try again.")
+        showError("Failed to send verification email. Please try again.")
         return
       }
 
-      showSuccess("Verification code sent to your email")
-      setStep('otp-verification')
+      showSuccess("Verification email sent")
+      setStep('email-sent')
     } catch {
       showError("An unexpected error occurred")
     } finally {
@@ -156,62 +143,21 @@ function LoginForm() {
     }
   }
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setOtpLoading(true)
-
+  const handleResendLink = async () => {
+    setResendLoading(true)
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        token: otpCode,
-        type: 'email',
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: window.location.origin + '/api/auth/callback',
+        },
       })
-
-      if (error) {
-        showError("Invalid or expired code. Please try again.")
-        return
-      }
-
-      // OTP verified — proceed using contexts stored from password auth
-      if (pendingContexts.length === 0) {
-        showSuccess("Welcome back!")
-        router.push(redirectTo || '/dashboard')
-      } else if (pendingContexts.length === 1) {
-        const ctx = pendingContexts[0]
-        try {
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-            await (supabase.rpc as Function)('switch_context', {
-              p_user_id: user.id,
-              p_to_context_id: ctx.context_id,
-              p_from_context_id: null,
-            })
-            localStorage.setItem('currentContextId', ctx.context_id)
-          }
-        } catch { /* non-critical, redirect anyway */ }
-        showSuccess("Welcome back!")
-        router.push(ctx.context_type === 'tenant' ? '/tenant' : redirectTo || '/dashboard')
-      } else {
-        setContexts(pendingContexts)
-        setUserName(pendingUserName)
-        setStep('context-picker')
-        showSuccess("Welcome back!")
-      }
-    } catch {
-      showError("An unexpected error occurred")
+      if (error) showError("Failed to resend. Please try again.")
+      else showSuccess("New link sent to your email")
     } finally {
-      setOtpLoading(false)
+      setResendLoading(false)
     }
-  }
-
-  const handleResendOtp = async () => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: false },
-    })
-    if (error) showError("Failed to resend code. Please try again.")
-    else showSuccess("New code sent to your email")
   }
 
   const handleContextSelect = async (contextId: string, remember: boolean) => {
@@ -256,58 +202,38 @@ function LoginForm() {
     }
   }
 
-  // Show OTP verification step
-  if (step === 'otp-verification') {
+  // Show email sent step
+  if (step === 'email-sent') {
     return (
       <AuthCardLayout
-        title="Verify your identity"
-        description={`Enter the 6-digit code sent to ${email}`}
+        title="Check your email"
+        description={`We sent a login link to ${email}`}
       >
-        <form onSubmit={handleVerifyOtp}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="otp">Verification Code</Label>
-              <Input
-                id="otp"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="000000"
-                maxLength={6}
-                className="text-center text-2xl tracking-[0.5em] font-mono"
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                required
-                disabled={otpLoading}
-                autoFocus
-              />
-            </div>
-            <p className="text-sm text-muted-foreground text-center">
-              Didn&apos;t receive a code?{" "}
-              <button
-                type="button"
-                onClick={handleResendOtp}
-                className="text-primary hover:underline"
-                disabled={otpLoading}
-              >
-                Resend
-              </button>
-            </p>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3">
-            <SubmitButton loading={otpLoading} className="w-full" loadingText="Verifying...">
-              Verify &amp; Sign in
-            </SubmitButton>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground text-center">
+            Click the link in the email to complete sign in. Check your spam folder if you don&apos;t see it.
+          </p>
+          <p className="text-sm text-muted-foreground text-center">
+            Didn&apos;t receive it?{" "}
             <button
               type="button"
-              onClick={() => { setStep('credentials'); setOtpCode("") }}
-              className="text-sm text-muted-foreground hover:text-primary"
-              disabled={otpLoading}
+              onClick={handleResendLink}
+              className="text-primary hover:underline"
+              disabled={resendLoading}
             >
-              Back to sign in
+              {resendLoading ? "Sending..." : "Resend link"}
             </button>
-          </CardFooter>
-        </form>
+          </p>
+        </CardContent>
+        <CardFooter>
+          <button
+            type="button"
+            onClick={() => setStep('credentials')}
+            className="w-full text-sm text-muted-foreground hover:text-primary"
+          >
+            Back to sign in
+          </button>
+        </CardFooter>
       </AuthCardLayout>
     )
   }
@@ -349,11 +275,17 @@ function LoginForm() {
     <AuthCardLayout
       title="Welcome back"
       description="Enter your credentials to access your account"
-      headerExtra={inviteToken ? (
-        <div className="mt-2 p-2 bg-success/10 text-success text-sm rounded-lg">
-          Sign in to accept your invitation
-        </div>
-      ) : undefined}
+      headerExtra={
+        authError === 'link_expired' ? (
+          <div className="mt-2 p-2 bg-destructive/10 text-destructive text-sm rounded-lg">
+            That login link has expired. Please sign in again.
+          </div>
+        ) : inviteToken ? (
+          <div className="mt-2 p-2 bg-success/10 text-success text-sm rounded-lg">
+            Sign in to accept your invitation
+          </div>
+        ) : undefined
+      }
     >
       <form onSubmit={handleLogin}>
         <CardContent className="space-y-4">
