@@ -19,6 +19,7 @@ import {
   Send
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { withCreatedBy } from "@/lib/audit"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -104,7 +105,7 @@ export default function TenantComplaintsPage() {
 
       const { data, error } = await supabase
         .from("complaints")
-        .insert({
+        .insert(withCreatedBy({
           owner_id: property.owner_id,
           tenant_id: tenantContext.id,
           property_id: tenantContext.property_id,
@@ -114,8 +115,7 @@ export default function TenantComplaintsPage() {
           description: formData.description || null,
           status: "open",
           priority: "medium",
-          created_by: user?.id,
-        })
+        }, user?.id ?? ""))
         .select()
         .single()
 
