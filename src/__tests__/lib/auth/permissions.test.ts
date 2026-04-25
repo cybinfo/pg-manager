@@ -66,6 +66,7 @@ function createMockContext(overrides: Partial<ContextWithDetails> = {}): Context
     context_type: 'owner',
     role_name: null,
     permissions: [],
+    denied_permissions: [],
     is_default: true,
     last_accessed_at: null,
     ...overrides,

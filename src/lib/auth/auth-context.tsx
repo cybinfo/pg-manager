@@ -107,11 +107,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sync from global state on mount
   useLayoutEffect(() => {
     if (globalAuthState.initialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(globalAuthState.user)
+       
       setProfile(globalAuthState.profile)
+       
       setContexts(globalAuthState.contexts)
+       
       setCurrentContext(globalAuthState.currentContext)
+       
       setIsPlatformAdmin(globalAuthState.isPlatformAdmin)
+       
       setIsLoading(false)
     }
   }, [])
@@ -236,6 +242,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       // The RPC function also validates access server-side
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       const { error } = await (supabase.rpc as Function)('switch_context', {
         p_user_id: user.id,
         p_to_context_id: contextId,
@@ -264,6 +271,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Set default context
   const setDefaultContext = useCallback(async (contextId: string): Promise<boolean> => {
     if (!user) return false
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     const { error } = await (supabase.rpc as Function)('set_default_context', {
       p_user_id: user.id,
       p_context_id: contextId,
@@ -312,10 +320,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         authLogger.warn("Invalid permission (will fail silently in production)", { permission })
       }
     }
-    // Platform Admin (Super User) - Full access to everything
+    // Platform Admin (Super User) - Full access to everything (deny override does not apply)
     if (isPlatformAdmin) return true
     // No context means no permissions
     if (!currentContext) return false
+    // E2: GBAC individual deny override — explicit deny beats any role grant
+    if (currentContext.denied_permissions?.includes(permission)) return false
     // Owner - Full access to their workspace
     if (currentContext.context_type === 'owner') return true
     // Tenant - Limited hardcoded permissions
@@ -447,10 +457,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // If already initialized with valid data, just sync state
     if (globalAuthState.initialized && globalAuthState.user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(globalAuthState.user)
+       
       setProfile(globalAuthState.profile)
+       
       setContexts(globalAuthState.contexts)
+       
       setCurrentContext(globalAuthState.currentContext)
+       
       setIsLoading(false)
       return
     }

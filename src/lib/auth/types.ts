@@ -89,6 +89,7 @@ export interface ContextWithDetails {
   context_type: ContextType
   role_name: string | null
   permissions: string[]
+  denied_permissions: string[]
   is_default: boolean
   last_accessed_at: string | null
 }
