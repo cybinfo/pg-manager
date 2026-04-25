@@ -34,6 +34,8 @@ import { createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatDate } from "@/lib/format"
 import { PERSON_TAG_COLORS } from "@/lib/status-config"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn } from "@/lib/export-columns"
 import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 
@@ -357,6 +359,22 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Name" },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email", header: "Email", format: (v) => String(v ?? "") },
+  { key: "occupation", header: "Occupation", format: (v) => String(v ?? "") },
+  { key: "company_name", header: "Company", format: (v) => String(v ?? "") },
+  { key: "tags", header: "Roles", format: (v) => (Array.isArray(v) ? (v as string[]).join(", ") : String(v ?? "")) },
+  { key: "is_verified", header: "Verified", format: (v) => (v ? "Yes" : "No") },
+  { key: "is_blocked", header: "Blocked", format: (v) => (v ? "Yes" : "No") },
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Duplicate Count Hook
 // ============================================
 
@@ -408,6 +426,8 @@ export default function PeoplePage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="people"
       // Actions
       createHref="/people/new"
       createLabel="Add Person"

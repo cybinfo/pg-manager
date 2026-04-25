@@ -25,6 +25,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { transformJoin } from "@/lib/supabase/transforms"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -203,6 +205,18 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Name" },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email", header: "Email", format: (v) => String(v ?? "") },
+  { key: "is_active", header: "Status", format: (v) => (v ? "Active" : "Inactive") },
+  dateExportColumn("created_at", "Joined On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -224,6 +238,8 @@ export default function StaffPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="staff"
       createHref="/staff/new"
       createLabel="Add Staff"
       createPermission="staff.create"

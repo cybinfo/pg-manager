@@ -20,6 +20,8 @@ import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { textFilterColumn, statusFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import type { CSVColumn } from "@/lib/download-utils"
+import { currencyExportColumn, dateExportColumn, nestedColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -229,6 +231,24 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "bill_number", header: "Bill Number" },
+  nestedColumn("tenant_name", "Tenant", "tenant.name"),
+  nestedColumn("property_name", "Property", "property.name"),
+  { key: "for_month", header: "Period", format: (v) => String(v ?? "") },
+  currencyExportColumn("total_amount", "Total Amount"),
+  currencyExportColumn("paid_amount", "Paid Amount"),
+  currencyExportColumn("balance_due", "Balance Due"),
+  dateExportColumn("due_date", "Due Date"),
+  dateExportColumn("bill_date", "Bill Date"),
+  { key: "status", header: "Status", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Created On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -256,6 +276,8 @@ export default function BillsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="bills"
       createHref="/bills/new"
       createLabel="Generate Bill"
       createPermission="bills.create"

@@ -22,6 +22,8 @@ import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
 import { COMPLAINT_STATUS, COMPLAINT_PRIORITY, COMPLAINT_CATEGORIES, getStatusInfo as getComplaintStatusInfo } from "@/lib/status-config"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import { NullDisplay } from "@/components/ui/null-display"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn, nestedColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -222,6 +224,22 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "title", header: "Title" },
+  { key: "category", header: "Category", format: (v) => COMPLAINT_CATEGORIES[String(v)] || String(v ?? "") },
+  { key: "status", header: "Status", format: (v) => String(v ?? "") },
+  { key: "priority", header: "Priority", format: (v) => COMPLAINT_PRIORITY[String(v)]?.label || String(v ?? "") },
+  nestedColumn("tenant_name", "Tenant", "tenant.name"),
+  nestedColumn("property_name", "Property", "property.name"),
+  nestedColumn("room_number", "Room", "room.room_number"),
+  dateExportColumn("created_at", "Created On"),
+  dateExportColumn("resolved_at", "Resolved On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -244,6 +262,8 @@ export default function ComplaintsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="complaints"
       createHref="/complaints/new"
       createLabel="New Complaint"
       createPermission="complaints.create"

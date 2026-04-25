@@ -17,6 +17,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { brandGradient } from "@/lib/design-tokens"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -261,6 +263,27 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Property Name" },
+  { key: "address", header: "Address", format: (v) => String(v ?? "") },
+  { key: "city", header: "City", format: (v) => String(v ?? "") },
+  { key: "state", header: "State", format: (v) => String(v ?? "") },
+  { key: "pincode", header: "Pincode", format: (v) => String(v ?? "") },
+  { key: "property_type", header: "Type", format: (v) => String(v ?? "") },
+  { key: "total_floors", header: "Total Floors", format: (v) => String(v ?? "") },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email", header: "Email", format: (v) => String(v ?? "") },
+  { key: "manager_name", header: "Manager Name", format: (v) => String(v ?? "") },
+  { key: "manager_phone", header: "Manager Phone", format: (v) => String(v ?? "") },
+  { key: "website_enabled", header: "Website Enabled", format: (v) => (v ? "Yes" : "No") },
+  { key: "is_active", header: "Active", format: (v) => (v ? "Yes" : "No") },
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -282,6 +305,8 @@ export default function PropertiesPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="properties"
       createHref="/properties/new"
       createLabel="Add Property"
       createPermission="properties.create"

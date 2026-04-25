@@ -18,6 +18,8 @@ import { PROPERTY_FILTER, ROOM_TYPE_FILTER, createStatusFilter } from "@/lib/fil
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { ROOM_TYPES } from "@/types/rooms.types"
+import type { CSVColumn } from "@/lib/download-utils"
+import { currencyExportColumn, dateExportColumn, nestedColumn } from "@/lib/export-columns"
 
 // Room type labels for badgeColumn
 const ROOM_TYPE_LABELS: Record<string, string> = Object.fromEntries(
@@ -275,6 +277,24 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "room_number", header: "Room Number" },
+  nestedColumn("property_name", "Property", "property.name"),
+  { key: "floor", header: "Floor Number", format: (v) => String(v ?? "") },
+  { key: "room_type", header: "Room Type", format: (v) => ROOM_TYPE_LABELS[String(v)] || String(v ?? "") },
+  { key: "total_beds", header: "Total Beds", format: (v) => String(v ?? "") },
+  { key: "occupied_beds", header: "Occupied Beds", format: (v) => String(v ?? "") },
+  currencyExportColumn("rent_amount", "Rent Amount"),
+  currencyExportColumn("deposit_amount", "Deposit Amount"),
+  { key: "status", header: "Status", format: (v) => String(v ?? "") },
+  { key: "is_active", header: "Active", format: (v) => (v ? "Yes" : "No") },
+  dateExportColumn("created_at", "Added On"),
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -296,6 +316,8 @@ export default function RoomsPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename="rooms"
       createHref="/rooms/new"
       createLabel="Add Room"
       createPermission="rooms.create"
