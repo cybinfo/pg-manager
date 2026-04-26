@@ -124,6 +124,19 @@ describe("createCountInMetric", () => {
     )
     expect(metric.serverFilter?.operator).toBe("in")
   })
+
+  it("calls highlight function when provided", () => {
+    const metric = createCountInMetric<Item>(
+      "unpaid",
+      "Unpaid",
+      undefined,
+      "status",
+      ["active", "overdue"],
+      { highlight: (v) => v > 2 }
+    )
+    expect(metric.highlight?.(3)).toBe(true)
+    expect(metric.highlight?.(1)).toBe(false)
+  })
 })
 
 // ============================================================================
@@ -157,6 +170,14 @@ describe("createSumMetric", () => {
     })
     const result = metric.compute(ITEMS, ITEMS.length)
     expect(result).toBe(6500)
+  })
+
+  it("calls highlight function when provided", () => {
+    const metric = createSumMetric<Item>("total", "Total", undefined, "amount", {
+      highlight: (v) => v !== "₹0",
+    })
+    expect(metric.highlight?.("₹6,500")).toBe(true)
+    expect(metric.highlight?.("₹0")).toBe(false)
   })
 })
 
@@ -313,6 +334,21 @@ describe("createFilteredSumMetric", () => {
     })
   })
 
+  describe("unknown operator falls through to default (returns true)", () => {
+    it("includes all items when operator is unrecognized", () => {
+      const metric = createFilteredSumMetric<Item>(
+        "all",
+        "All",
+        undefined,
+        "amount",
+        { column: "type", operator: "unknown_op" as never, value: "cash" }
+      )
+      // default: returns true for every item → all amounts summed
+      const result = metric.compute(ITEMS, ITEMS.length)
+      expect(String(result)).toContain("6,500") // 1000 + 2000 + 500 + 3000
+    })
+  })
+
   it("uses server data when available", () => {
     const metric = createFilteredSumMetric<Item>(
       "cash",
@@ -336,6 +372,19 @@ describe("createFilteredSumMetric", () => {
     )
     const result = metric.compute(ITEMS, ITEMS.length)
     expect(String(result)).toContain("1,000")
+  })
+
+  it("calls highlight function when provided", () => {
+    const metric = createFilteredSumMetric<Item>(
+      "cash",
+      "Cash",
+      undefined,
+      "amount",
+      { column: "type", operator: "eq", value: "cash" },
+      { highlight: (v) => v !== "₹0" }
+    )
+    expect(metric.highlight?.("₹1,500")).toBe(true)
+    expect(metric.highlight?.("₹0")).toBe(false)
   })
 })
 

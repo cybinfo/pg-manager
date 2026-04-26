@@ -98,6 +98,14 @@ describe("validatePhone", () => {
       expect(result.isValid).toBe(false)
       expect(result.error).toContain("too long")
     })
+
+    it("returns generic invalid format error when number length is valid but format is wrong", () => {
+      // "+91" prefix + 8 digits = 11 chars total (length OK), but regex fails
+      // firstDigit after removing "+91" = "9" (valid set) → falls through to generic error
+      const result = validatePhone("+9198765432")
+      expect(result.isValid).toBe(false)
+      expect(result.error).toBe("Invalid Indian mobile number format")
+    })
   })
 })
 
