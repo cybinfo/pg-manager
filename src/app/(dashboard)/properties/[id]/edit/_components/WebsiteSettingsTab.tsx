@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Globe,
@@ -214,8 +214,7 @@ export function WebsiteSettingsTab({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Property Type</Label>
+                <FormField label="Property Type">
                   <Select
                     value={websiteData.website_config.property_type}
                     onChange={(e) => onWebsiteChange("property_type", e.target.value)}
@@ -225,9 +224,8 @@ export function WebsiteSettingsTab({
                       { value: "coliving", label: "Co-Living Space" },
                     ]}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>Established Year</Label>
+                </FormField>
+                <FormField label="Established Year">
                   <Input
                     type="number"
                     placeholder="e.g., 2020"
@@ -236,21 +234,19 @@ export function WebsiteSettingsTab({
                     min="1990"
                     max={new Date().getFullYear()}
                   />
-                </div>
+                </FormField>
               </div>
 
-              <div className="space-y-2">
-                <Label>Tagline</Label>
+              <FormField label="Tagline">
                 <Input
                   placeholder="e.g., Your Home Away From Home"
                   value={websiteData.website_config.tagline}
                   onChange={(e) => onWebsiteChange("tagline", e.target.value)}
                   maxLength={100}
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label>Description</Label>
+              <FormField label="Description">
                 <textarea
                   className="w-full min-h-[120px] px-3 py-2 rounded-md border bg-background resize-none"
                   placeholder="Tell potential tenants about your PG - facilities, environment, what makes it special..."
@@ -261,7 +257,7 @@ export function WebsiteSettingsTab({
                 <p className="text-xs text-muted-foreground text-right">
                   {websiteData.website_config.description.length}/1000
                 </p>
-              </div>
+              </FormField>
             </CardContent>
           </Card>
 
@@ -344,14 +340,13 @@ export function WebsiteSettingsTab({
               <CardTitle className="text-lg">Location Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Google Maps URL</Label>
+              <FormField label="Google Maps URL">
                 <Input
                   placeholder="https://maps.google.com/..."
                   value={websiteData.website_config.google_maps_url}
                   onChange={(e) => onWebsiteChange("google_maps_url", e.target.value)}
                 />
-              </div>
+              </FormField>
 
               <div className="space-y-2">
                 <Label>Nearby Landmarks</Label>
@@ -396,24 +391,22 @@ export function WebsiteSettingsTab({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>WhatsApp Number</Label>
+                <FormField label="WhatsApp Number">
                   <Input
                     type="tel"
                     placeholder="e.g., 9876543210"
                     value={websiteData.website_config.contact_whatsapp}
                     onChange={(e) => onWebsiteChange("contact_whatsapp", e.target.value)}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
+                </FormField>
+                <FormField label="Email">
                   <Input
                     type="email"
                     placeholder="contact@yourpg.com"
                     value={websiteData.website_config.contact_email}
                     onChange={(e) => onWebsiteChange("contact_email", e.target.value)}
                   />
-                </div>
+                </FormField>
               </div>
             </CardContent>
           </Card>
