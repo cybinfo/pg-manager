@@ -141,6 +141,13 @@ describe('createBooleanMetric', () => {
     const metric = createBooleanMetric('is_active', true, 'Active', MockIcon, { id: 'custom' })
     expect(metric.id).toBe('custom')
   })
+
+  it('calls highlight when highlight option is provided', () => {
+    const metric = createBooleanMetric('is_active', true, 'Active', MockIcon, { highlight: true })
+    expect(typeof metric.highlight).toBe('function')
+    expect(metric.highlight!(3, [])).toBe(true)
+    expect(metric.highlight!(0, [])).toBe(false)
+  })
 })
 
 describe('createNullCheckMetric', () => {
@@ -175,6 +182,13 @@ describe('createNullCheckMetric', () => {
     expect(nullMetric.id).toBe('user_id_null')
     const notNullMetric = createNullCheckMetric('user_id', false, 'Has Login', MockIcon)
     expect(notNullMetric.id).toBe('user_id_not_null')
+  })
+
+  it('calls highlight when highlight option is provided', () => {
+    const metric = createNullCheckMetric('user_id', true, 'No Login', MockIcon, { highlight: true })
+    expect(typeof metric.highlight).toBe('function')
+    expect(metric.highlight!(2, [])).toBe(true)
+    expect(metric.highlight!(0, [])).toBe(false)
   })
 })
 
@@ -211,6 +225,44 @@ describe('createSumMetric', () => {
     ]
     const metric = createSumMetric('amount', 'total', 'Total', MockIcon, { format: 'number' })
     expect(metric.compute(sparseItems, 3, {})).toBe(1000)
+  })
+
+  it('uses fallbackCompute when no serverData and no items sum applies', () => {
+    const fallbackCompute = jest.fn().mockReturnValue(9999)
+    const metric = createSumMetric('amount', 'total', 'Total', MockIcon, {
+      format: 'number',
+      fallbackCompute,
+    })
+    const result = metric.compute(items, 3, {})
+    expect(fallbackCompute).toHaveBeenCalledWith(items)
+    expect(result).toBe(9999)
+  })
+
+  it('formats fallbackCompute result as currency when format=currency', () => {
+    const metric = createSumMetric('amount', 'total', 'Total', MockIcon, {
+      fallbackCompute: () => 5000,
+    })
+    const result = metric.compute(items, 3, {})
+    expect(String(result)).toContain('5,000')
+  })
+
+  it('highlight=true returns true for non-zero currency value', () => {
+    const metric = createSumMetric('amount', 'revenue', 'Revenue', MockIcon, { highlight: true })
+    expect(metric.highlight?.('₹3,500', [])).toBe(true)
+  })
+
+  it('highlight=true returns false for zero currency value', () => {
+    const metric = createSumMetric('amount', 'revenue', 'Revenue', MockIcon, { highlight: true })
+    expect(metric.highlight?.('₹0', [])).toBe(false)
+  })
+
+  it('highlight=true with number format returns true for positive value', () => {
+    const metric = createSumMetric('amount', 'total', 'Total', MockIcon, {
+      format: 'number',
+      highlight: true,
+    })
+    expect(metric.highlight?.(5, [])).toBe(true)
+    expect(metric.highlight?.(0, [])).toBe(false)
   })
 })
 

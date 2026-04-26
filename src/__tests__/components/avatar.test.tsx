@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { Avatar, AvatarGroup, getAvatarUrl } from '@/components/ui/avatar'
 
 // next/image is mocked globally by __mocks__/nextImage.js
@@ -96,6 +96,34 @@ describe('Avatar', () => {
       fireEvent.click(screen.getByAltText('Alice'))
       // No lightbox should appear — dialog should not be in document
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    it('opens lightbox on click when clickable=true and src is provided', async () => {
+      render(<Avatar name="Alice" src="photo.jpg" clickable />)
+
+      await act(async () => {
+        fireEvent.click(screen.getByAltText('Alice'))
+      })
+
+      // Close button should appear in the lightbox
+      expect(screen.getByLabelText('Close')).toBeInTheDocument()
+    })
+
+    it('closes lightbox when close button is clicked', async () => {
+      render(<Avatar name="Alice" src="photo.jpg" clickable />)
+
+      await act(async () => {
+        fireEvent.click(screen.getByAltText('Alice'))
+      })
+
+      const closeButton = screen.getByLabelText('Close')
+      expect(closeButton).toBeInTheDocument()
+
+      await act(async () => {
+        fireEvent.click(closeButton)
+      })
+
+      expect(screen.queryByLabelText('Close')).not.toBeInTheDocument()
     })
   })
 })

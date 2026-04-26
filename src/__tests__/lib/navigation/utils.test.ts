@@ -16,6 +16,7 @@ import {
   isNewPage,
   isEditPage,
   getParentListPath,
+  scrollNavItemIntoView,
 } from "@/lib/navigation/utils"
 
 // ============================================================================
@@ -290,5 +291,45 @@ describe("getParentListPath", () => {
 
   it("returns /dashboard from /dashboard", () => {
     expect(getParentListPath("/dashboard")).toBe("/dashboard")
+  })
+})
+
+// ============================================================================
+// scrollNavItemIntoView
+// ============================================================================
+
+describe("scrollNavItemIntoView", () => {
+  it("calls scrollIntoView on the active item when both elements exist", () => {
+    const scrollIntoView = jest.fn()
+    const container = document.createElement("div")
+    const activeItem = document.createElement("a")
+    activeItem.scrollIntoView = scrollIntoView
+    document.body.appendChild(container)
+    document.body.appendChild(activeItem)
+
+    container.className = "nav-container"
+    activeItem.className = "nav-active"
+
+    const containerSpy = jest.spyOn(document, "querySelector").mockImplementation((sel) => {
+      if (sel === ".nav-container") return container
+      if (sel === ".nav-active") return activeItem
+      return null
+    })
+
+    scrollNavItemIntoView(".nav-container", ".nav-active")
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "nearest" })
+
+    containerSpy.mockRestore()
+  })
+
+  it("does nothing when container is not found", () => {
+    const scrollIntoView = jest.fn()
+    jest.spyOn(document, "querySelector").mockReturnValue(null)
+
+    expect(() => scrollNavItemIntoView(".missing", ".nav-active")).not.toThrow()
+    expect(scrollIntoView).not.toHaveBeenCalled()
+
+    jest.restoreAllMocks()
   })
 })

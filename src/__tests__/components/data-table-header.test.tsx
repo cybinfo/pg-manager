@@ -102,6 +102,14 @@ describe('DataTableHeader', () => {
       expect(amountHeader).not.toHaveAttribute('tabIndex')
     })
 
+    it('calls onSort on mouse click for sortable column', async () => {
+      const user = userEvent.setup()
+      const { onSort } = setup()
+      const nameSpan = screen.getByText('Name').closest('[role="columnheader"]') as HTMLElement
+      await user.click(nameSpan)
+      expect(onSort).toHaveBeenCalledWith(columns[0], expect.anything())
+    })
+
     it('calls onSort on Enter key for sortable column', async () => {
       const user = userEvent.setup()
       const { onSort } = setup()
