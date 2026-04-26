@@ -59,6 +59,20 @@ jest.mock('@/lib/services/notification.service', () => ({
   sendNotifications: jest.fn().mockResolvedValue({ success: true, data: ['notif-1'] }),
 }))
 
+// Mock audit lib (for softDelete / isSoftDeletableTable used by applyCascadeEffect)
+const mockSoftDelete = jest.fn().mockResolvedValue({ success: true })
+const mockIsSoftDeletableTable = jest.fn().mockReturnValue(false)
+
+jest.mock('@/lib/audit', () => ({
+  softDelete: (...args: unknown[]) => mockSoftDelete(...args),
+  isSoftDeletableTable: (...args: unknown[]) => mockIsSoftDeletableTable(...args),
+  withCreatedBy: jest.fn((data: unknown) => data),
+}))
+
+jest.mock('@/lib/date-helpers', () => ({
+  getNowISO: jest.fn(() => '2026-01-01T00:00:00.000Z'),
+}))
+
 // ============================================
 // Test Data
 // ============================================
@@ -680,5 +694,251 @@ describe('Edge Cases', () => {
 
     expect(result.success).toBe(true)
     expect(result.data?.value).toBeNull()
+  })
+})
+
+// ============================================
+// Idempotency Tests
+// ============================================
+
+describe('Idempotency', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { createClient } = require('@/lib/supabase/client')
+
+  const simpleWorkflow: WorkflowDefinition<Record<string, never>, { done: boolean }> = {
+    name: 'idempotent_workflow',
+    steps: [{ name: 'step1', execute: async () => createSuccessResult({ done: true }) }],
+    buildOutput: () => ({ done: true }),
+  }
+
+  it('returns cached result when idempotency key detects duplicate', async () => {
+    const cachedResult = { success: true, data: { done: true }, workflow_id: 'wf_cached', steps_completed: 1, steps_total: 1, audit_events: [], notifications_sent: [] }
+    ;(createClient as jest.Mock).mockReturnValueOnce({
+      rpc: jest.fn().mockResolvedValue({
+        data: [{ is_duplicate: true, cached_result: cachedResult }],
+        error: null,
+      }),
+      from: jest.fn(),
+    })
+
+    const result = await executeWorkflow(
+      simpleWorkflow, {}, testActorId, testActorType, testWorkspaceId,
+      { idempotency_key: 'test-key-duplicate' }
+    )
+
+    expect(result.workflow_id).toBe('wf_cached')
+  })
+
+  it('proceeds normally and stores result when no duplicate', async () => {
+    // Default mock returns is_duplicate: false — stores result async
+    const result = await executeWorkflow(
+      simpleWorkflow, {}, testActorId, testActorType, testWorkspaceId,
+      { idempotency_key: 'test-key-new' }
+    )
+
+    expect(result.success).toBe(true)
+    expect(result.data?.done).toBe(true)
+  })
+
+  it('proceeds normally when rpc returns an error (falls back gracefully)', async () => {
+    ;(createClient as jest.Mock).mockReturnValueOnce({
+      rpc: jest.fn().mockResolvedValue({ data: null, error: { message: 'rpc not found' } }),
+      from: jest.fn(),
+    })
+
+    const result = await executeWorkflow(
+      simpleWorkflow, {}, testActorId, testActorType, testWorkspaceId,
+      { idempotency_key: 'test-key-error' }
+    )
+
+    expect(result.success).toBe(true)
+  })
+
+  it('proceeds normally when rpc throws (falls back gracefully)', async () => {
+    ;(createClient as jest.Mock).mockReturnValueOnce({
+      rpc: jest.fn().mockRejectedValue(new Error('network error')),
+      from: jest.fn(),
+    })
+
+    const result = await executeWorkflow(
+      simpleWorkflow, {}, testActorId, testActorType, testWorkspaceId,
+      { idempotency_key: 'test-key-throw' }
+    )
+
+    expect(result.success).toBe(true)
+  })
+
+  it('continues when storeIdempotencyResult createClient throws (non-fatal)', async () => {
+    // First call: checkIdempotency returns no-duplicate
+    ;(createClient as jest.Mock).mockReturnValueOnce({
+      rpc: jest.fn().mockResolvedValue({ data: [{ is_duplicate: false }], error: null }),
+      from: jest.fn(),
+    })
+    // Second call: storeIdempotencyResult throws
+    ;(createClient as jest.Mock).mockImplementationOnce(() => { throw new Error('store error') })
+
+    const result = await executeWorkflow(
+      simpleWorkflow, {}, testActorId, testActorType, testWorkspaceId,
+      { idempotency_key: 'test-key-store-throw' }
+    )
+
+    // Flush microtask queue so the fire-and-forget promise settles
+    await new Promise(r => setTimeout(r, 0))
+    expect(result.success).toBe(true)
+  })
+})
+
+// ============================================
+// Cascades + AuditEvents + Notifications data paths
+// ============================================
+
+describe('executeWorkflow — cascades, auditEvents data, notifications data', () => {
+  interface TI { name: string }
+  interface TO { result: string }
+
+  it('executes cascade effects when definition.cascades is provided', async () => {
+    const cascadesFn = jest.fn().mockReturnValue([{
+      action: 'status_change',
+      entity_type: 'tenant',
+      entity_id: 'ten-1',
+      data: { status: 'checked_out' },
+    }])
+
+    const workflow: WorkflowDefinition<TI, TO> = {
+      name: 'cascade_workflow',
+      steps: [{ name: 'step1', execute: async () => createSuccessResult({}) }],
+      cascades: cascadesFn,
+      buildOutput: () => ({ result: 'done' }),
+    }
+
+    const result = await executeWorkflow(
+      workflow, { name: 'x' }, testActorId, testActorType, testWorkspaceId
+    )
+
+    expect(result.success).toBe(true)
+    expect(cascadesFn).toHaveBeenCalled()
+  })
+
+  it('stores auditEventIds when logAuditEvents returns data', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { logAuditEvents } = require('@/lib/services/audit.service')
+    ;(logAuditEvents as jest.Mock).mockResolvedValueOnce({ success: true, data: ['audit-x', 'audit-y'] })
+
+    const workflow: WorkflowDefinition<TI, TO> = {
+      name: 'audit_data_workflow',
+      steps: [{ name: 'step1', execute: async () => createSuccessResult({}) }],
+      auditEvents: () => [{ entity_type: 'tenant' as never, entity_id: 'ten-1', action: 'update' as never, actor_id: testActorId, actor_type: testActorType, workspace_id: testWorkspaceId }],
+      buildOutput: () => ({ result: 'done' }),
+    }
+
+    const result = await executeWorkflow(
+      workflow, { name: 'x' }, testActorId, testActorType, testWorkspaceId
+    )
+
+    expect(result.audit_events).toEqual(['audit-x', 'audit-y'])
+  })
+
+  it('stores notificationIds when sendNotifications returns data', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { sendNotifications } = require('@/lib/services/notification.service')
+    ;(sendNotifications as jest.Mock).mockResolvedValueOnce({ success: true, data: ['notif-a'] })
+
+    const workflow: WorkflowDefinition<TI, TO> = {
+      name: 'notif_data_workflow',
+      steps: [{ name: 'step1', execute: async () => createSuccessResult({}) }],
+      notifications: () => [{ type: 'welcome', recipient_id: '123', recipient_type: 'tenant' as never, channels: ['email'] as never, data: {} }],
+      buildOutput: () => ({ result: 'done' }),
+    }
+
+    const result = await executeWorkflow(
+      workflow, { name: 'x' }, testActorId, testActorType, testWorkspaceId
+    )
+
+    expect(result.notifications_sent).toEqual(['notif-a'])
+  })
+})
+
+// ============================================
+// applyCascadeEffect (via executeWorkflow + definition.cascades)
+// ============================================
+
+describe('applyCascadeEffect — cascade actions', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { createClient } = require('@/lib/supabase/client')
+
+  const makeWorkflowWithCascade = (cascade: unknown) => ({
+    name: 'cascade_test',
+    steps: [{ name: 's1', execute: async () => createSuccessResult({}) }],
+    cascades: () => [cascade],
+    buildOutput: () => ({}),
+  })
+
+  beforeEach(() => {
+    mockSoftDelete.mockReset().mockResolvedValue({ success: true })
+    mockIsSoftDeletableTable.mockReset().mockReturnValue(false)
+  })
+
+  it('handles update action', async () => {
+    const result = await executeWorkflow(
+      makeWorkflowWithCascade({ action: 'update', entity_type: 'tenant', entity_id: 'ten-1', data: { name: 'New' } }) as never,
+      {}, testActorId, testActorType, testWorkspaceId
+    )
+    expect(result.success).toBe(true)
+  })
+
+  it('handles status_change action', async () => {
+    const result = await executeWorkflow(
+      makeWorkflowWithCascade({ action: 'status_change', entity_type: 'tenant', entity_id: 'ten-1', data: { status: 'active' } }) as never,
+      {}, testActorId, testActorType, testWorkspaceId
+    )
+    expect(result.success).toBe(true)
+  })
+
+  it('handles delete action on soft-deletable table', async () => {
+    mockIsSoftDeletableTable.mockReturnValue(true)
+
+    const result = await executeWorkflow(
+      makeWorkflowWithCascade({ action: 'delete', entity_type: 'tenant', entity_id: 'ten-1' }) as never,
+      {}, testActorId, testActorType, testWorkspaceId
+    )
+
+    expect(result.success).toBe(true)
+    expect(mockSoftDelete).toHaveBeenCalled()
+  })
+
+  it('handles delete action on non-soft-deletable table (hard delete)', async () => {
+    mockIsSoftDeletableTable.mockReturnValue(false)
+
+    const result = await executeWorkflow(
+      makeWorkflowWithCascade({ action: 'delete', entity_type: 'tenant', entity_id: 'ten-1' }) as never,
+      {}, testActorId, testActorType, testWorkspaceId
+    )
+
+    expect(result.success).toBe(true)
+    expect(mockSoftDelete).not.toHaveBeenCalled()
+  })
+
+  it('handles unknown cascade action (logs and continues)', async () => {
+    const result = await executeWorkflow(
+      makeWorkflowWithCascade({ action: 'unknown_action', entity_type: 'tenant', entity_id: 'ten-1' }) as never,
+      {}, testActorId, testActorType, testWorkspaceId
+    )
+    expect(result.success).toBe(true)
+  })
+
+  it('handles cascade error gracefully without failing workflow', async () => {
+    ;(createClient as jest.Mock).mockReturnValueOnce({
+      rpc: jest.fn().mockResolvedValue({ data: [{ is_duplicate: false }], error: null }),
+      from: jest.fn(() => ({
+        update: jest.fn(() => ({ eq: jest.fn().mockRejectedValue(new Error('cascade error')) })),
+        delete: jest.fn(() => ({ eq: jest.fn().mockResolvedValue({ data: null, error: null }) })),
+      })),
+    })
+
+    const result = await executeWorkflow(
+      makeWorkflowWithCascade({ action: 'update', entity_type: 'tenant', entity_id: 'ten-1', data: {} }) as never,
+      {}, testActorId, testActorType, testWorkspaceId
+    )
+    expect(result.success).toBe(true)
   })
 })
