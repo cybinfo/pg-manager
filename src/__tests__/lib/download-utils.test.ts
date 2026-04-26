@@ -577,40 +577,125 @@ describe('Server-Side Response Helpers', () => {
 })
 
 // ============================================================================
-// CLIENT-SIDE: BLOB DOWNLOAD (DOM-dependent, limited testing)
+// CLIENT-SIDE: BLOB/CSV/JSON/TEXT DOWNLOAD (DOM-mocked)
 // ============================================================================
 
-describe('Client-side download functions (DOM-dependent)', () => {
-  // These functions require DOM APIs (document.createElement, URL.createObjectURL)
-  // We test that they are importable and the types are correct
+import {
+  downloadBlob,
+  downloadContent,
+  downloadCSV,
+  downloadSimpleCSV,
+  downloadJSON,
+  downloadText,
+} from '@/lib/download-utils'
 
-  it('exports downloadBlob function', async () => {
-    const mod = await import('@/lib/download-utils')
-    expect(typeof mod.downloadBlob).toBe('function')
+describe('Client-side download functions', () => {
+  let clickSpy: jest.SpyInstance
+
+  beforeEach(() => {
+    global.URL.createObjectURL = jest.fn(() => 'blob:fake-url')
+    global.URL.revokeObjectURL = jest.fn()
+    clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
   })
 
-  it('exports downloadContent function', async () => {
-    const mod = await import('@/lib/download-utils')
-    expect(typeof mod.downloadContent).toBe('function')
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
-  it('exports downloadCSV function', async () => {
-    const mod = await import('@/lib/download-utils')
-    expect(typeof mod.downloadCSV).toBe('function')
+  describe('downloadBlob', () => {
+    it('creates an object URL and triggers a click', () => {
+      const blob = new Blob(['hello'], { type: 'text/plain' })
+      downloadBlob(blob, 'test.txt')
+
+      expect(global.URL.createObjectURL).toHaveBeenCalledWith(blob)
+      expect(clickSpy).toHaveBeenCalled()
+    })
+
+    it('sets the download attribute on the link', () => {
+      const links: HTMLAnchorElement[] = []
+      const origCreate = document.createElement.bind(document)
+      jest.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+        const el = origCreate(tag)
+        if (tag === 'a') links.push(el as HTMLAnchorElement)
+        return el
+      })
+
+      downloadBlob(new Blob(['data']), 'report.txt')
+
+      expect(links[0]?.download).toBe('report.txt')
+    })
+
+    it('revokes the object URL after a delay', () => {
+      jest.useFakeTimers()
+      const blob = new Blob(['x'])
+      downloadBlob(blob, 'x.txt')
+
+      expect(global.URL.revokeObjectURL).not.toHaveBeenCalled()
+      jest.advanceTimersByTime(100)
+      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:fake-url')
+      jest.useRealTimers()
+    })
   })
 
-  it('exports downloadSimpleCSV function', async () => {
-    const mod = await import('@/lib/download-utils')
-    expect(typeof mod.downloadSimpleCSV).toBe('function')
+  describe('downloadContent', () => {
+    it('creates a blob with the given MIME type and triggers download', () => {
+      downloadContent('col1,col2\n1,2', 'text/csv', 'data.csv')
+
+      expect(global.URL.createObjectURL).toHaveBeenCalled()
+      expect(clickSpy).toHaveBeenCalled()
+    })
   })
 
-  it('exports downloadJSON function', async () => {
-    const mod = await import('@/lib/download-utils')
-    expect(typeof mod.downloadJSON).toBe('function')
+  describe('downloadCSV', () => {
+    it('builds CSV and triggers download', () => {
+      const data = [{ name: 'Alice', age: 30 }]
+      const columns = [
+        { key: 'name' as const, header: 'Name' },
+        { key: 'age' as const, header: 'Age' },
+      ]
+      downloadCSV(data, columns, 'export.csv')
+
+      expect(clickSpy).toHaveBeenCalled()
+    })
   })
 
-  it('exports downloadText function', async () => {
-    const mod = await import('@/lib/download-utils')
-    expect(typeof mod.downloadText).toBe('function')
+  describe('downloadSimpleCSV', () => {
+    it('calls downloadContent for empty data (early-return branch)', () => {
+      downloadSimpleCSV([], 'empty.csv')
+
+      expect(clickSpy).toHaveBeenCalled()
+    })
+
+    it('auto-detects columns from first row and downloads (capitalizes headers)', () => {
+      const data = [
+        { first_name: 'Alice', age: 25 },
+        { first_name: 'Bob', age: 30 },
+      ]
+      downloadSimpleCSV(data, 'people.csv')
+
+      expect(clickSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('downloadJSON', () => {
+    it('downloads pretty JSON by default', () => {
+      downloadJSON({ key: 'value' }, 'data.json')
+
+      expect(clickSpy).toHaveBeenCalled()
+    })
+
+    it('downloads compact JSON when pretty=false', () => {
+      downloadJSON([1, 2, 3], 'data.json', false)
+
+      expect(clickSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('downloadText', () => {
+    it('downloads text content', () => {
+      downloadText('log line 1\nlog line 2', 'debug.txt')
+
+      expect(clickSpy).toHaveBeenCalled()
+    })
   })
 })
