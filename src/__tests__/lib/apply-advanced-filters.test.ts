@@ -251,6 +251,62 @@ describe("applyAdvancedFilters", () => {
       expect(q.gte).toHaveBeenCalledWith("amount", "5000")
     })
   })
+
+  describe("not_in operator", () => {
+    it("applies not_in with comma-separated string via query.not()", () => {
+      const q = makeMockQuery()
+      applyAdvancedFilters(
+        q,
+        makeGroup({ filters: [makeFilter({ conditions: [{ operator: "not_in", value: "active,pending" }] })] })
+      )
+      expect(q.not).toHaveBeenCalledWith("status", "in", "(active,pending)")
+    })
+
+    it("applies not_in with array value", () => {
+      const q = makeMockQuery()
+      applyAdvancedFilters(
+        q,
+        makeGroup({ filters: [makeFilter({ conditions: [{ operator: "not_in", value: ["x", "y"] }] })] })
+      )
+      expect(q.not).toHaveBeenCalledWith("status", "in", "(x,y)")
+    })
+  })
+
+  describe("OR combineMode within a single filter (multiple conditions)", () => {
+    it("calls .or() combining conditions from a single filter with combineMode=or", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "and",
+        filters: [
+          {
+            id: "f1",
+            column: "status",
+            combineMode: "or",
+            conditions: [
+              { operator: "eq", value: "active" },
+              { operator: "eq", value: "pending" },
+            ],
+          },
+        ],
+      }
+      applyAdvancedFilters(q, group)
+      expect(q.or).toHaveBeenCalledWith("status.eq.active,status.eq.pending")
+    })
+  })
+
+  describe("OR group with not_in condition (buildConditionString)", () => {
+    it("builds correct not_in string in OR mode", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "or",
+        filters: [
+          makeFilter({ column: "status", conditions: [{ operator: "not_in", value: "a,b" }] }),
+        ],
+      }
+      applyAdvancedFilters(q, group)
+      expect(q.or).toHaveBeenCalledWith(expect.stringContaining("status.not.in.(a,b)"))
+    })
+  })
 })
 
 // ============================================================================
