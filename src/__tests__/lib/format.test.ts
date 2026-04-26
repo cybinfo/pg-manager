@@ -250,3 +250,55 @@ describe('Filename Sanitization (SEC-018)', () => {
     })
   })
 })
+
+// ============================================================================
+// numberToWords — Indian number system (Lakh/Crore)
+// ============================================================================
+
+import { numberToWords } from '@/lib/format'
+
+describe('numberToWords', () => {
+  it('returns Zero for 0', () => {
+    expect(numberToWords(0)).toBe('Zero')
+  })
+
+  it('converts single digits', () => {
+    expect(numberToWords(1)).toBe('One')
+    expect(numberToWords(9)).toBe('Nine')
+  })
+
+  it('converts teens', () => {
+    expect(numberToWords(11)).toBe('Eleven')
+    expect(numberToWords(19)).toBe('Nineteen')
+  })
+
+  it('converts tens', () => {
+    expect(numberToWords(20)).toBe('Twenty')
+    expect(numberToWords(45)).toBe('Forty Five')
+  })
+
+  it('converts hundreds', () => {
+    expect(numberToWords(100)).toBe('One Hundred')
+    expect(numberToWords(250)).toBe('Two Hundred Fifty')
+  })
+
+  it('converts thousands', () => {
+    expect(numberToWords(1000)).toBe('One Thousand')
+    expect(numberToWords(5000)).toBe('Five Thousand')
+    expect(numberToWords(12500)).toBe('Twelve Thousand Five Hundred')
+  })
+
+  it('converts lakhs (Indian system)', () => {
+    expect(numberToWords(100000)).toBe('One Lakh')
+    expect(numberToWords(500000)).toBe('Five Lakh')
+  })
+
+  it('converts crores (Indian system)', () => {
+    expect(numberToWords(10000000)).toBe('One Crore')
+  })
+
+  it('converts a typical rent amount', () => {
+    // 8500 = Eight Thousand Five Hundred
+    expect(numberToWords(8500)).toBe('Eight Thousand Five Hundred')
+  })
+})
