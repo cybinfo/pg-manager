@@ -307,6 +307,14 @@ describe('useDebounceCallback', () => {
     expect(callback).not.toHaveBeenCalled()
   })
 
+  it('unmount is safe when no pending timer (false branch of cleanup line 86)', () => {
+    const callback = jest.fn()
+    const { unmount } = renderHook(() => useDebounceCallback(callback, 300))
+    // Unmount without any pending call — timeoutRef.current is null → false branch
+    expect(() => { unmount() }).not.toThrow()
+    expect(callback).not.toHaveBeenCalled()
+  })
+
   it('uses default delay when none provided', () => {
     const callback = jest.fn()
     const { result } = renderHook(() => useDebounceCallback(callback))
@@ -336,6 +344,17 @@ describe('useDebouncedCallback', () => {
     jest.useRealTimers()
   })
 
+  it('uses default delay when no delay argument provided (line 123 default param)', () => {
+    const callback = jest.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback))
+
+    act(() => { result.current.debouncedCallback('default-delay') })
+    act(() => { jest.advanceTimersByTime(299) })
+    expect(callback).not.toHaveBeenCalled()
+    act(() => { jest.advanceTimersByTime(1) })
+    expect(callback).toHaveBeenCalledWith('default-delay')
+  })
+
   it('debounces the callback', () => {
     const callback = jest.fn()
     const { result } = renderHook(() => useDebouncedCallback(callback, 300))
@@ -351,6 +370,22 @@ describe('useDebouncedCallback', () => {
     })
 
     expect(callback).toHaveBeenCalledWith('test')
+  })
+
+  it('clears pending timer when called again before delay (line 146)', () => {
+    const callback = jest.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 300))
+
+    // First call — sets timer
+    act(() => { result.current.debouncedCallback('first') })
+    // Second call before timer fires — clears old timer (line 146), sets new one
+    act(() => { result.current.debouncedCallback('second') })
+
+    act(() => { jest.advanceTimersByTime(300) })
+
+    // Only fired once with the last arg
+    expect(callback).toHaveBeenCalledTimes(1)
+    expect(callback).toHaveBeenCalledWith('second')
   })
 
   it('flush executes pending callback immediately', () => {
@@ -398,6 +433,14 @@ describe('useDebouncedCallback', () => {
       jest.advanceTimersByTime(300)
     })
 
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('cancel is safe when no pending timer (false branch of cancel line 169)', () => {
+    const callback = jest.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 300))
+    // cancel() with no pending call — timeoutRef.current is null → false branch
+    expect(() => { act(() => { result.current.cancel() }) }).not.toThrow()
     expect(callback).not.toHaveBeenCalled()
   })
 

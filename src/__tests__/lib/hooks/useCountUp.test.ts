@@ -138,4 +138,50 @@ describe("useCountUp (animated, normal motion)", () => {
     // No new rAF scheduled when target unchanged
     expect(callCountAfter).toBe(callCountBefore)
   })
+
+  it("skips animation when end equals prevEnd (duration change, same end)", () => {
+    // After animation completes, prevEnd.current === end.
+    // Changing duration re-runs the effect — but end === start → early return (line 42)
+    const { result, rerender } = renderHook(
+      ({ end, duration }) => useCountUp(end, { duration }),
+      { initialProps: { end: 30, duration: 500 } }
+    )
+    runAnimationToCompletion(500)
+    expect(result.current).toBe(30)
+
+    const callCountBefore = (global.requestAnimationFrame as jest.Mock).mock.calls.length
+    // Change duration but keep end the same — effect re-runs, hits line 42 early return
+    act(() => { rerender({ end: 30, duration: 800 }) })
+    const callCountAfter = (global.requestAnimationFrame as jest.Mock).mock.calls.length
+    // Line 42: if (end === start) return — no new rAF
+    expect(callCountAfter).toBe(callCountBefore)
+  })
+
+  it("cancels in-progress animation when end changes (cleanup line 64 truthy branch)", () => {
+    const { result, rerender } = renderHook(({ end }) => useCountUp(end), {
+      initialProps: { end: 100 },
+    })
+    // Animation is in progress (rAF scheduled but not fired)
+    expect(rafCallbacks.size).toBeGreaterThan(0)
+
+    // Change end while animation is in progress — cleanup runs, cancelAnimationFrame called (line 64)
+    act(() => { rerender({ end: 200 }) })
+
+    // New animation should have started for the new end value
+    runAnimationToCompletion(500)
+    expect(result.current).toBe(200)
+  })
+
+  it("cleanup is safe when no animation was scheduled (line 64 false branch)", () => {
+    // Render with end=0 — prevEnd.current starts at 0 too, so end===start at line 42 → early return, no rAF
+    const { rerender } = renderHook(
+      ({ end, duration }) => useCountUp(end, { duration }),
+      { initialProps: { end: 0, duration: 500 } }
+    )
+    // No rAF was scheduled (end===start===0 early return)
+    expect(rafCallbacks.size).toBe(0)
+
+    // Change duration — cleanup runs with frameRef.current === undefined → false branch of line 64
+    expect(() => { act(() => { rerender({ end: 0, duration: 800 }) }) }).not.toThrow()
+  })
 })

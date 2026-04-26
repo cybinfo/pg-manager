@@ -162,4 +162,33 @@ describe('useFormValidation', () => {
       expect(result.current.errors).toEqual({})
     })
   })
+
+  describe('|| "Invalid" fallback (validator returns isValid:false without error message)', () => {
+    const schemaNoMsg: ValidationSchema<TestForm> = {
+      name: () => ({ isValid: false }),
+    }
+
+    it('validateField uses "Invalid" when validator has no error message', () => {
+      const { result } = renderHook(() => useFormValidation(schemaNoMsg, emptyData))
+      act(() => { result.current.validateField('name') })
+      expect(result.current.errors.name).toBe('Invalid')
+    })
+
+    it('validateAll uses "Invalid" when validator has no error message', () => {
+      const { result } = renderHook(() => useFormValidation(schemaNoMsg, emptyData))
+      act(() => { result.current.validateAll(emptyData) })
+      expect(result.current.errors.name).toBe('Invalid')
+    })
+
+    it('validateAll skips fields whose schema entry is undefined', () => {
+      const schemaWithGap: ValidationSchema<TestForm> = {
+        name: (v) => (String(v ?? '').trim() ? null : { isValid: false, error: 'Required' }),
+        amount: undefined,
+      }
+      const { result } = renderHook(() => useFormValidation(schemaWithGap, emptyData))
+      act(() => { result.current.validateAll(emptyData) })
+      expect(result.current.errors.name).toBe('Required')
+      expect(result.current.errors.amount).toBeUndefined()
+    })
+  })
 })

@@ -119,6 +119,13 @@ describe('useCopyToClipboard', () => {
       expect(result.current.copied).toBe(false)
     })
 
+    it('is safe to call reset() with no pending timer (false branch of line 92)', () => {
+      const { result } = renderHook(() => useCopyToClipboard())
+      // No prior copy — timeoutRef.current is null → hits the false branch of if (timeoutRef.current)
+      expect(() => { act(() => { result.current.reset() }) }).not.toThrow()
+      expect(result.current.copied).toBe(false)
+    })
+
     it('cancels the auto-reset timer', async () => {
       const { result } = renderHook(() => useCopyToClipboard({ resetDelay: 2000 }))
       await act(async () => { await result.current.copy('Hello') })
@@ -138,6 +145,21 @@ describe('useCopyToClipboard', () => {
       act(() => { jest.advanceTimersByTime(1999) })
       expect(result.current.copied).toBe(true)
       act(() => { jest.advanceTimersByTime(1) })
+      expect(result.current.copied).toBe(false)
+    })
+
+    it('cancels pending reset timer when copy is called again before delay expires', async () => {
+      const { result } = renderHook(() => useCopyToClipboard({ resetDelay: 2000 }))
+      // First copy — starts a reset timer
+      await act(async () => { await result.current.copy('first') })
+      expect(result.current.copied).toBe(true)
+
+      // Second copy before timer fires — should clear the old timer (line 65)
+      await act(async () => { await result.current.copy('second') })
+      expect(result.current.copied).toBe(true)
+
+      // Timer from second copy fires
+      act(() => { jest.advanceTimersByTime(2000) })
       expect(result.current.copied).toBe(false)
     })
   })

@@ -101,6 +101,48 @@ describe("useActivityHistory", () => {
     expect(calls).not.toContain("user_profiles")
   })
 
+  it("throws when audit_events query returns an error object (line 154)", async () => {
+    const fetchError = new Error("RLS denied")
+    const errorChain = makeChain({ data: null, error: fetchError })
+    mockFrom.mockReturnValue(errorChain)
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.error).toBe("Failed to load activity history")
+  })
+
+  it("handles null data with no error — setEvents falls back to [] (lines 156-159)", async () => {
+    const chain = makeChain({ data: null, error: null })
+    mockFrom.mockReturnValue(chain)
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.events).toEqual([])
+    expect(result.current.error).toBeNull()
+  })
+
+  it("handles null userData from user_profiles query (line 170)", async () => {
+    const auditChain = makeChain({ data: [sampleAuditEvent], error: null })
+    const userChain = makeChain({ data: null, error: null })
+    mockFrom.mockImplementation((table: string) =>
+      table === "audit_events" ? auditChain : userChain
+    )
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    // No crash even though userData is null — users map stays empty
+    expect(result.current.getUserDisplayName("usr-1")).toContain("usr-1")
+  })
+
   it("toggleExpanded adds and removes event id from expanded set", async () => {
     const auditChain = makeChain({ data: [], error: null })
     mockFrom.mockReturnValue(auditChain)
@@ -332,6 +374,14 @@ describe("formatChanges", () => {
       const result = formatChanges(changes)
       const fields = result?.map((c) => c.field)
       expect(fields).not.toContain("email")
+    })
+  })
+
+  describe("no-op (neither before nor after)", () => {
+    it("returns empty array when changes has neither before nor after (line 106 false branch)", () => {
+      const changes = {} as AuditEventRecord["changes"]
+      const result = formatChanges(changes)
+      expect(result).toEqual([])
     })
   })
 })
