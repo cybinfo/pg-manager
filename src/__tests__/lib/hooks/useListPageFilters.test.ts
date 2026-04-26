@@ -242,4 +242,159 @@ describe("useListPageFilters — localStorage", () => {
     // Should fall back to initialHiddenColumns when JSON.parse fails
     expect(result.current.hiddenColumns).toEqual(["fallback"])
   })
+
+  it("ignores localStorage.setItem errors (catch block)", async () => {
+    const spy = jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage full")
+    })
+
+    const { result } = renderHook(() =>
+      useListPageFilters(makeOptions({ tableKey: "tenants" }))
+    )
+
+    // Should not throw even though setItem fails
+    await act(async () => { result.current.setHiddenColumnsState(["email"]) })
+
+    expect(result.current.hiddenColumns).toEqual(["email"])
+    spy.mockRestore()
+  })
+})
+
+// ============================================================================
+// fetchFilterOptions
+// ============================================================================
+
+describe("useListPageFilters — fetchFilterOptions", () => {
+  it("populates filterOptions from filterConfig.options (static options)", async () => {
+    const filterConfigs = [
+      {
+        id: "status",
+        label: "Status",
+        type: "select" as const,
+        options: [
+          { value: "active", label: "Active" },
+          { value: "inactive", label: "Inactive" },
+        ],
+      },
+    ]
+
+    const { result } = renderHook(() =>
+      useListPageFilters(makeOptions({ filterConfigs }))
+    )
+
+    await act(async () => { await result.current.fetchFilterOptions() })
+
+    expect(result.current.filterOptions["status"]).toHaveLength(2)
+    expect(result.current.filterOptions["status"][0]).toEqual({ value: "active", label: "Active" })
+  })
+
+  it("fetches filter options from Supabase when optionsQuery is defined (no order/filter)", async () => {
+    const mockSelect = jest.fn().mockResolvedValue({
+      data: [{ id: "p-1", name: "Property A" }],
+      error: null,
+    })
+    const mockFrom = jest.fn().mockReturnValue({ select: mockSelect })
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    ;(require("@/lib/supabase/client").createClient as jest.Mock).mockReturnValue({
+      from: mockFrom,
+    })
+
+    const filterConfigs = [
+      {
+        id: "property",
+        label: "Property",
+        type: "select" as const,
+        optionsQuery: {
+          table: "properties",
+          valueField: "id",
+          labelField: "name",
+        },
+      },
+    ]
+
+    const { result } = renderHook(() =>
+      useListPageFilters(makeOptions({ filterConfigs }))
+    )
+
+    await act(async () => { await result.current.fetchFilterOptions() })
+
+    expect(result.current.filterOptions["property"]).toEqual([{ value: "p-1", label: "Property A" }])
+  })
+
+  it("applies orderBy when defined in optionsQuery", async () => {
+    const mockEq = jest.fn().mockResolvedValue({ data: [], error: null })
+    const mockOrder = jest.fn().mockReturnValue({ eq: mockEq })
+    const mockSelect = jest.fn().mockReturnValue({ order: mockOrder })
+    const mockFrom = jest.fn().mockReturnValue({ select: mockSelect })
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    ;(require("@/lib/supabase/client").createClient as jest.Mock).mockReturnValue({ from: mockFrom })
+
+    const filterConfigs = [
+      {
+        id: "property",
+        label: "Property",
+        type: "select" as const,
+        optionsQuery: {
+          table: "properties",
+          valueField: "id",
+          labelField: "name",
+          orderBy: "name",
+        },
+      },
+    ]
+
+    const { result } = renderHook(() =>
+      useListPageFilters(makeOptions({ filterConfigs }))
+    )
+
+    await act(async () => { await result.current.fetchFilterOptions() })
+    expect(mockOrder).toHaveBeenCalledWith("name")
+  })
+
+  it("applies filter entries when defined in optionsQuery", async () => {
+    const mockResult = jest.fn().mockResolvedValue({ data: [], error: null })
+    const mockEq = jest.fn().mockReturnValue(mockResult)
+    const mockSelect = jest.fn().mockReturnValue({ eq: mockEq })
+    const mockFrom = jest.fn().mockReturnValue({ select: mockSelect })
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    ;(require("@/lib/supabase/client").createClient as jest.Mock).mockReturnValue({ from: mockFrom })
+
+    const filterConfigs = [
+      {
+        id: "room",
+        label: "Room",
+        type: "select" as const,
+        optionsQuery: {
+          table: "rooms",
+          valueField: "id",
+          labelField: "room_number",
+          filter: { property_id: "prop-1" },
+        },
+      },
+    ]
+
+    const { result } = renderHook(() =>
+      useListPageFilters(makeOptions({ filterConfigs }))
+    )
+
+    await act(async () => { await result.current.fetchFilterOptions() })
+    expect(mockEq).toHaveBeenCalledWith("property_id", "prop-1")
+  })
+
+  it("skips filterConfig with neither options nor optionsQuery", async () => {
+    const filterConfigs = [
+      {
+        id: "search_only",
+        label: "Search",
+        type: "text" as const,
+      },
+    ]
+
+    const { result } = renderHook(() =>
+      useListPageFilters(makeOptions({ filterConfigs }))
+    )
+
+    await act(async () => { await result.current.fetchFilterOptions() })
+    expect(result.current.filterOptions["search_only"]).toBeUndefined()
+  })
 })
