@@ -16,7 +16,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { BILL_STATUS } from "@/lib/status"
+import { BILL_STATUS, EXPENSE_BILL_STATUS_OPTIONS } from "@/lib/status"
 import type { CSVColumn } from "@/lib/download-utils"
 import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
@@ -154,12 +154,7 @@ const columns: Column<BillPaymentListItem>[] = [
     defaultVisible: true,
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "pending", label: "Pending" },
-      { value: "partial", label: "Partial" },
-      { value: "paid", label: "Paid" },
-      { value: "overdue", label: "Overdue" },
-    ],
+    editOptions: EXPENSE_BILL_STATUS_OPTIONS,
     render: (bill) => {
       const config = BILL_STATUS[bill.status] || { variant: "muted", label: bill.status }
 

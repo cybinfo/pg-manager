@@ -16,6 +16,7 @@ import { BILL_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { BILL_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency } from "@/lib/format"
@@ -131,14 +132,7 @@ const columns: Column<Bill>[] = [
   statusColumn(getStatusInfo, {
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "draft", label: "Draft" },
-      { value: "sent", label: "Sent" },
-      { value: "partial", label: "Partial" },
-      { value: "paid", label: "Paid" },
-      { value: "overdue", label: "Overdue" },
-      { value: "cancelled", label: "Cancelled" },
-    ],
+    editOptions: BILL_STATUS_OPTIONS,
   }),
   // Hidden by default columns
   currencyColumn("paid_amount", "Paid Amount", { defaultVisible: false, color: "text-success", bold: false }),

@@ -158,12 +158,7 @@ const columns: Column<Refund>[] = [
     style: "badge",
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "pending", label: "Pending" },
-      { value: "approved", label: "Approved" },
-      { value: "processed", label: "Processed" },
-      { value: "rejected", label: "Rejected" },
-    ],
+    editOptions: REFUND_STATUS_OPTIONS,
   }),
   // Hidden by default columns
   {

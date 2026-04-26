@@ -21,6 +21,8 @@ import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { TENANT_STATUS_OPTIONS } from "@/lib/filters/common-filters"
+import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn, booleanFilterColumn } from "@/lib/advanced-filter-builders"
@@ -106,11 +108,7 @@ const columns: ExtendedColumn<Tenant>[] = [
     ...statusColumn((status) => getTenantStatusInfo("tenant", status), {
       editable: true,
       editType: "select",
-      editOptions: [
-        { value: "active", label: "Active" },
-        { value: "notice_period", label: "Notice Period" },
-        { value: "checked_out", label: "Checked Out" },
-      ],
+      editOptions: TENANT_STATUS_OPTIONS,
     }),
     groupable: true,
     groupKey: "status",
@@ -152,13 +150,7 @@ const columns: ExtendedColumn<Tenant>[] = [
     groupable: true,
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "pending", label: "Pending" },
-      { value: "submitted", label: "Submitted" },
-      { value: "verified", label: "Verified" },
-      { value: "rejected", label: "Rejected" },
-      { value: "not_required", label: "Not Required" },
-    ],
+    editOptions: POLICE_VERIFICATION_STATUS_OPTIONS,
     render: (tenant) => {
       const statusMap: Record<string, { label: string; className: string }> = {
         pending: { label: "Pending", className: "text-warning bg-warning/10" },

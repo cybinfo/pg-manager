@@ -105,7 +105,7 @@ describe('DataTableHeader', () => {
     it('calls onSort on Enter key for sortable column', async () => {
       const user = userEvent.setup()
       const { onSort } = setup()
-      const nameHeader = screen.getByText('Name').closest('[role="columnheader"]')!
+      const nameHeader = screen.getByText('Name').closest('[role="columnheader"]') as HTMLElement
       nameHeader.focus()
       await user.keyboard('{Enter}')
       expect(onSort).toHaveBeenCalledWith(columns[0], expect.anything())
@@ -114,7 +114,7 @@ describe('DataTableHeader', () => {
     it('calls onSort on Space key for sortable column', async () => {
       const user = userEvent.setup()
       const { onSort } = setup()
-      const nameHeader = screen.getByText('Name').closest('[role="columnheader"]')!
+      const nameHeader = screen.getByText('Name').closest('[role="columnheader"]') as HTMLElement
       nameHeader.focus()
       await user.keyboard('{ }')
       expect(onSort).toHaveBeenCalledWith(columns[0], expect.anything())

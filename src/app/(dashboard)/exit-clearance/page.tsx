@@ -119,11 +119,7 @@ const columns: Column<ExitClearance>[] = [
     defaultVisible: true,
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "pending", label: "Pending" },
-      { value: "partial", label: "Partial" },
-      { value: "completed", label: "Completed" },
-    ],
+    editOptions: EXIT_CLEARANCE_STATUS_OPTIONS,
     render: (clearance) => {
       const status = EXIT_CLEARANCE_STATUS[clearance.settlement_status] || {
         variant: "muted" as const,

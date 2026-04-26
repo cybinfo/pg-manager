@@ -14,6 +14,7 @@ import { PRODUCT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
+import { UNIT_OPTIONS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -90,16 +91,7 @@ const columns: Column<Product>[] = [
     defaultVisible: true,
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "kg", label: "Kilogram (kg)" },
-      { value: "g", label: "Gram (g)" },
-      { value: "l", label: "Litre (l)" },
-      { value: "ml", label: "Millilitre (ml)" },
-      { value: "pcs", label: "Pieces (pcs)" },
-      { value: "pkt", label: "Packet (pkt)" },
-      { value: "dz", label: "Dozen (dz)" },
-      { value: "box", label: "Box" },
-    ],
+    editOptions: UNIT_OPTIONS,
     render: (product) => (
       <TableBadge variant="muted">
         {product.default_unit || "—"}

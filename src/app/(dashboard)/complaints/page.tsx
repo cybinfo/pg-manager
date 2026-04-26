@@ -95,12 +95,7 @@ const columns: Column<Complaint>[] = [
   statusColumn((status) => getComplaintStatusInfo("complaint", status), {
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "open", label: "Open" },
-      { value: "in_progress", label: "In Progress" },
-      { value: "resolved", label: "Resolved" },
-      { value: "closed", label: "Closed" },
-    ],
+    editOptions: COMPLAINT_STATUS_OPTIONS,
   }),
   timeAgoColumn("created_at", "Created", {
     width: "date",
@@ -121,12 +116,7 @@ const columns: Column<Complaint>[] = [
     defaultVisible: false,
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "low", label: "Low" },
-      { value: "medium", label: "Medium" },
-      { value: "high", label: "High" },
-      { value: "urgent", label: "Urgent" },
-    ],
+    editOptions: PRIORITY_OPTIONS,
   }),
   {
     key: "category",

@@ -14,6 +14,7 @@ import { INQUIRY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { INQUIRY_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDate, formatPhone } from "@/lib/format"
@@ -138,13 +139,7 @@ const columns: Column<Inquiry>[] = [
     sortable: true,
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "new", label: "New" },
-      { value: "contacted", label: "Contacted" },
-      { value: "scheduled", label: "Scheduled" },
-      { value: "converted", label: "Converted" },
-      { value: "lost", label: "Lost" },
-    ],
+    editOptions: INQUIRY_STATUS_OPTIONS,
     render: (inquiry) => <StatusBadge status={inquiry.status} label={inquiry.status_label} />,
   },
   {

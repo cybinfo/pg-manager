@@ -15,6 +15,7 @@ import { ROOM_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, ROOM_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
+import { ROOM_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { ROOM_TYPES } from "@/types/rooms.types"
@@ -127,12 +128,7 @@ const columns: Column<Room>[] = [
   statusColumn(getStatusInfo, {
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "available", label: "Available" },
-      { value: "occupied", label: "Occupied" },
-      { value: "maintenance", label: "Maintenance" },
-      { value: "blocked", label: "Blocked" },
-    ],
+    editOptions: ROOM_STATUS_OPTIONS,
   }),
   // Hidden by default columns
   {

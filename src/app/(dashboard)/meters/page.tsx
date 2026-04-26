@@ -20,6 +20,7 @@ import { METER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, METER_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
+import { METER_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
@@ -135,11 +136,7 @@ const columns: Column<Meter>[] = [
     style: "badge",
     editable: true,
     editType: "select",
-    editOptions: [
-      { value: "active", label: "Active" },
-      { value: "inactive", label: "Inactive" },
-      { value: "faulty", label: "Faulty" },
-    ],
+    editOptions: METER_STATUS_OPTIONS,
   }),
   // Hidden by default columns
   {

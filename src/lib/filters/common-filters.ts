@@ -84,9 +84,8 @@ export const PRIORITY_OPTIONS: FilterOption[] = [
 // ============================================================================
 
 export const BILL_STATUS_OPTIONS: FilterOption[] = [
-  { value: "draft", label: "Draft" },
   { value: "pending", label: "Pending" },
-  { value: "partially_paid", label: "Partially Paid" },
+  { value: "partial", label: "Partial" },
   { value: "paid", label: "Paid" },
   { value: "overdue", label: "Overdue" },
   { value: "cancelled", label: "Cancelled" },
@@ -168,12 +167,45 @@ export const NOTICE_TYPE_OPTIONS: FilterOption[] = [
 ]
 
 // ============================================================================
-// ACTIVE STATUS OPTIONS (for staff, meters, etc.)
+// ACTIVE STATUS OPTIONS (for staff, etc.)
 // ============================================================================
 
 export const ACTIVE_STATUS_OPTIONS: FilterOption[] = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
+]
+
+// ============================================================================
+// METER STATUS OPTIONS
+// ============================================================================
+
+export const METER_STATUS_OPTIONS: FilterOption[] = [
+  { value: "active", label: "Active" },
+  { value: "faulty", label: "Faulty" },
+  { value: "replaced", label: "Replaced" },
+  { value: "retired", label: "Retired" },
+]
+
+// ============================================================================
+// ROOM STATUS OPTIONS
+// ============================================================================
+
+export const ROOM_STATUS_OPTIONS: FilterOption[] = [
+  { value: "available", label: "Available" },
+  { value: "occupied", label: "Occupied" },
+  { value: "partially_occupied", label: "Partially Occupied" },
+  { value: "maintenance", label: "Maintenance" },
+]
+
+// ============================================================================
+// INQUIRY STATUS OPTIONS
+// ============================================================================
+
+export const INQUIRY_STATUS_OPTIONS: FilterOption[] = [
+  { value: "new", label: "New" },
+  { value: "contacted", label: "Contacted" },
+  { value: "converted", label: "Converted" },
+  { value: "closed", label: "Closed" },
 ]
 
 // ============================================================================
