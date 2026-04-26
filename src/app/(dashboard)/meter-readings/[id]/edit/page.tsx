@@ -14,6 +14,7 @@ import { ArrowLeft, Gauge, Loader2, Calculator, Zap, Droplets, Building2, Home }
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
+import type { ValidatorResult } from "@/lib/validation"
 
 export default function EditMeterReadingPage() {
   return (
@@ -36,6 +37,7 @@ function EditMeterReadingContent() {
     loading,
     saving,
     record,
+    errors,
   } = useFormEditPage({
     table: "meter_readings",
     id,
@@ -53,15 +55,14 @@ function EditMeterReadingContent() {
       reading_value: rec.reading_value?.toString() || "",
       notes: (rec.notes as string) || "",
     }),
-    validate: (data) => {
-      if (!data.reading_value) {
-        return "Please enter a reading value"
-      }
-      const readingValue = parseFloat(data.reading_value as string)
-      if (isNaN(readingValue) || readingValue < 0) {
-        return "Please enter a valid reading value"
-      }
-      return null
+    validationSchema: {
+      reading_value: (value: unknown): ValidatorResult => {
+        const num = parseFloat(String(value ?? ""))
+        if (!value || isNaN(num) || num < 0) {
+          return { isValid: false, error: "Please enter a valid reading value" }
+        }
+        return null
+      },
     },
     customSubmit: async (data, _userId, recordId, supabase) => {
       const readingValue = parseFloat(data.reading_value as string)
@@ -207,7 +208,7 @@ function EditMeterReadingContent() {
               </div>
             )}
 
-            <FormField label="Current Reading" required>
+            <FormField label="Current Reading" required error={errors.reading_value}>
               <div className="relative">
                 <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input

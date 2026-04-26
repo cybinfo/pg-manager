@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users, Zap, Droplets, Plus } from "lucide-react"
 import { Select, FormField } from "@/components/ui/form-components"
+import { requiredSelect } from "@/lib/validation"
+import type { ValidatorResult } from "@/lib/validation"
 import { showWarning } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate, formatMonthYear, formatNumber} from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -72,6 +74,7 @@ function NewMeterReadingContent() {
     handleChange,
     handleSubmit,
     saving,
+    errors,
     ownerId,
     searchParams,
   } = useFormPage({
@@ -85,19 +88,22 @@ function NewMeterReadingContent() {
     redirectTo: "/meter-readings",
     successMessage: "Meter reading recorded successfully!",
     errorMessage: "Failed to record meter reading",
+    validationSchema: {
+      meter_id: requiredSelect("Meter"),
+      reading_value: (value: unknown): ValidatorResult => {
+        const num = parseFloat(String(value ?? ""))
+        if (!value || isNaN(num) || num < 0) {
+          return { isValid: false, error: "Please enter a valid reading value" }
+        }
+        return null
+      },
+    },
     validate: (data) => {
-      if (!data.meter_id || !selectedMeter) {
-        return "Please select a meter"
-      }
-      if (!data.reading_value) {
-        return "Please enter a reading value"
-      }
-      const readingValue = parseFloat(data.reading_value as string)
-      if (isNaN(readingValue) || readingValue < 0) {
-        return "Please enter a valid reading value"
-      }
-      if (lastReading && readingValue < lastReading.reading_value) {
-        return "Current reading cannot be less than the previous reading"
+      if (lastReading && data.reading_value) {
+        const readingValue = parseFloat(data.reading_value as string)
+        if (!isNaN(readingValue) && readingValue < lastReading.reading_value) {
+          return "Current reading cannot be less than the previous reading"
+        }
       }
       return null
     },
@@ -434,7 +440,7 @@ function NewMeterReadingContent() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField label="Meter" required>
+            <FormField label="Meter" required error={errors.meter_id}>
               <Select
                 id="meter_id"
                 value={formData.meter_id as string}
@@ -518,7 +524,7 @@ function NewMeterReadingContent() {
                 </div>
               ) : null}
 
-              <FormField label="Current Reading" required>
+              <FormField label="Current Reading" required error={errors.reading_value}>
                 <div className="relative">
                   <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
