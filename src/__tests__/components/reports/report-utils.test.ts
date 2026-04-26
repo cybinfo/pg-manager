@@ -2,7 +2,7 @@
  * Tests for pure utility functions in src/components/reports/report-utils.ts
  *
  * Covers: calculateGrowth, buildPaymentMethodBreakdown, buildMonthlyTrend,
- *         getDefaultDateRange
+ *         getDefaultDateRange, exportCSV
  */
 
 import {
@@ -10,6 +10,7 @@ import {
   buildPaymentMethodBreakdown,
   buildMonthlyTrend,
   getDefaultDateRange,
+  exportCSV,
   MONTH_NAMES,
   PAYMENT_METHOD_LABELS,
 } from "@/components/reports/report-utils"
@@ -213,5 +214,54 @@ describe("getDefaultDateRange", () => {
 
   it("'from' date is the 1st of its month", () => {
     expect(getDefaultDateRange().from.getDate()).toBe(1)
+  })
+})
+
+// ============================================================================
+// exportCSV (lines 111-121)
+// ============================================================================
+
+jest.mock("@/lib/toast-helpers", () => ({ showError: jest.fn() }))
+
+describe("exportCSV", () => {
+  const canAlways = () => true
+  const canNever = () => false
+  const getDemoMsg = () => "Demo mode: export blocked"
+
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { showError: mockShowError } = require("@/lib/toast-helpers") as { showError: jest.Mock }
+
+  beforeEach(() => {
+    mockShowError.mockClear()
+    global.URL.createObjectURL = jest.fn(() => "blob:fake-url")
+    global.URL.revokeObjectURL = jest.fn()
+  })
+
+  it("calls showError and returns early when canPerformAction is false (lines 111-114)", () => {
+    exportCSV([["Name", "Amount"], ["Ravi", "5000"]], "report.csv", canNever, getDemoMsg)
+    expect(mockShowError).toHaveBeenCalledWith("Demo mode: export blocked")
+  })
+
+  it("creates a blob and triggers download when allowed (lines 116-121)", () => {
+    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+    exportCSV([["Name", "Amount"], ["Ravi", "5000"]], "report.csv", canAlways, getDemoMsg)
+    expect(mockShowError).not.toHaveBeenCalled()
+    expect(global.URL.createObjectURL).toHaveBeenCalled()
+    expect(clickSpy).toHaveBeenCalled()
+    clickSpy.mockRestore()
+  })
+
+  it("sets correct filename on the link", () => {
+    const links: HTMLAnchorElement[] = []
+    const origCreate = document.createElement.bind(document)
+    jest.spyOn(document, "createElement").mockImplementation((tag: string) => {
+      const el = origCreate(tag)
+      if (tag === "a") links.push(el as HTMLAnchorElement)
+      return el
+    })
+    jest.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {})
+    exportCSV([["col"]], "my-export.csv", canAlways, getDemoMsg)
+    expect(links[0]?.download).toBe("my-export.csv")
+    jest.restoreAllMocks()
   })
 })

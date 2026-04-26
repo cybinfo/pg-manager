@@ -171,6 +171,15 @@ describe("applyAdvancedFilters", () => {
       expect(q.in).toHaveBeenCalledWith("status", ["active", "inactive"])
     })
 
+    it("applies in with array value directly (line 161 Array.isArray true branch)", () => {
+      const q = makeMockQuery()
+      applyAdvancedFilters(
+        q,
+        makeGroup({ filters: [makeFilter({ conditions: [{ operator: "in", value: ["active", "inactive"] }] })] })
+      )
+      expect(q.in).toHaveBeenCalledWith("status", ["active", "inactive"])
+    })
+
     it("applies is_null", () => {
       const q = makeMockQuery()
       applyAdvancedFilters(
@@ -305,6 +314,165 @@ describe("applyAdvancedFilters", () => {
       }
       applyAdvancedFilters(q, group)
       expect(q.or).toHaveBeenCalledWith(expect.stringContaining("status.not.in.(a,b)"))
+    })
+  })
+
+  describe("OR group with in operator and array value (line 269 Array.isArray true branch)", () => {
+    it("builds correct in string in OR mode when value is already an array", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "or",
+        filters: [
+          makeFilter({ column: "status", conditions: [{ operator: "in", value: ["a", "b"] }] }),
+        ],
+      }
+      applyAdvancedFilters(q, group)
+      expect(q.or).toHaveBeenCalledWith(expect.stringContaining("status.in.(a,b)"))
+    })
+  })
+
+  describe("applyFilter — OR filter where all condition strings are empty (line 102)", () => {
+    it("returns query unchanged when OR filter has multiple conditions all with empty values", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "and",
+        filters: [
+          makeFilter({ column: "status", conditions: [{ operator: "eq", value: "active" }] }),
+          {
+            id: "f2",
+            column: "type",
+            combineMode: "or",
+            conditions: [
+              { operator: "eq", value: "" },
+              { operator: "eq", value: "" },
+            ],
+          },
+        ],
+      }
+      applyAdvancedFilters(q, group)
+      // OR filter with empty conditions does nothing — line 102 returns query
+      expect(q.or).not.toHaveBeenCalled()
+      expect(q.eq).toHaveBeenCalledWith("status", "active")
+    })
+  })
+
+  describe("applyFilter — AND multiple conditions per filter (lines 102-107)", () => {
+    it("chains AND conditions for a filter with combineMode=and and 2+ conditions", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "and",
+        filters: [{
+          id: "f1",
+          column: "amount",
+          combineMode: "and",
+          conditions: [
+            { operator: "gte", value: "100" },
+            { operator: "lte", value: "5000" },
+          ],
+        }],
+      }
+      applyAdvancedFilters(q, group)
+      expect(q.gte).toHaveBeenCalledWith("amount", "100")
+      expect(q.lte).toHaveBeenCalledWith("amount", "5000")
+    })
+  })
+
+  describe("applyFilter — empty conditions when another valid filter exists (line 85)", () => {
+    it("skips filter with empty conditions without crashing in AND reduce", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "and",
+        filters: [
+          makeFilter({ column: "status", conditions: [{ operator: "eq", value: "active" }] }),
+          makeFilter({ id: "f2", column: "type", conditions: [] }),
+        ],
+      }
+      applyAdvancedFilters(q, group)
+      // Only the valid filter fires — no error from empty-conditions filter
+      expect(q.eq).toHaveBeenCalledWith("status", "active")
+    })
+  })
+
+  describe("applyCondition — returns query when value is empty (line 123)", () => {
+    it("skips condition with empty value when a valid filter also exists", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "and",
+        filters: [
+          makeFilter({ column: "status", conditions: [{ operator: "eq", value: "active" }] }),
+          makeFilter({ id: "f2", column: "type", conditions: [{ operator: "eq", value: "" }] }),
+        ],
+      }
+      applyAdvancedFilters(q, group)
+      // eq called once (status), NOT a second time (type had empty value)
+      expect(q.eq).toHaveBeenCalledTimes(1)
+      expect(q.eq).toHaveBeenCalledWith("status", "active")
+    })
+  })
+
+  describe("applyCondition — returns query when between secondValue is empty (line 128)", () => {
+    it("skips between condition when secondValue is empty and another valid filter exists", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "and",
+        filters: [
+          makeFilter({ column: "status", conditions: [{ operator: "eq", value: "active" }] }),
+          makeFilter({ id: "f2", column: "amount", conditions: [{ operator: "between", value: "100", secondValue: "" }] }),
+        ],
+      }
+      applyAdvancedFilters(q, group)
+      expect(q.gte).not.toHaveBeenCalled()
+      expect(q.eq).toHaveBeenCalledWith("status", "active")
+    })
+  })
+
+  describe("applyCondition — default case for unknown operator (line 184)", () => {
+    it("returns query unchanged for unknown operator when another valid filter exists", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "and",
+        filters: [
+          makeFilter({ column: "status", conditions: [{ operator: "eq", value: "active" }] }),
+          makeFilter({ id: "f2", column: "type", conditions: [{ operator: "custom_op" as "eq", value: "x" }] }),
+        ],
+      }
+      applyAdvancedFilters(q, group)
+      expect(q.eq).toHaveBeenCalledWith("status", "active")
+    })
+  })
+
+  describe("buildFilterString — returns and(...) for multiple AND conditions (line 218)", () => {
+    it("OR group with a filter that has multiple AND conditions calls .or() with and(...) string", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "or",
+        filters: [{
+          id: "f1",
+          column: "amount",
+          combineMode: "and",
+          conditions: [
+            { operator: "gte", value: "100" },
+            { operator: "lte", value: "5000" },
+          ],
+        }],
+      }
+      applyAdvancedFilters(q, group)
+      expect(q.or).toHaveBeenCalledWith(expect.stringContaining("and(amount.gte.100,amount.lte.5000)"))
+    })
+  })
+
+  describe("buildConditionString — default case for unknown operator (line 291)", () => {
+    it("OR group with unknown operator returns null from buildConditionString — query unchanged", () => {
+      const q = makeMockQuery()
+      const group: FilterGroup = {
+        combineMode: "or",
+        filters: [
+          makeFilter({ column: "status", conditions: [{ operator: "custom_op" as "eq", value: "x" }] }),
+        ],
+      }
+      applyAdvancedFilters(q, group)
+      // buildConditionString returns null → filterStrings is empty → early return
+      expect(q.or).not.toHaveBeenCalled()
     })
   })
 })
