@@ -571,13 +571,75 @@ describe("useDetailPageData — related filter", () => {
 })
 
 describe("useDetailPageData — related query error", () => {
-  it("sets related key to [] on error", async () => {
+  it("sets related key to [] on error (returned error object)", async () => {
     mockCreateClient.mockReturnValue(
       buildClient(
         { data: { id: "t1" }, error: null },
         { payments: { data: null, error: { message: "db error" } } }
       )
     )
+    const { result } = renderData({
+      config: {
+        relatedQueries: [{ key: "payments", table: "payments", select: "*", foreignKey: "tenant_id" }],
+      },
+    })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.related.payments).toEqual([])
+  })
+
+  it("sets related key to [] when related query THROWS an Error (inner catch — lines 195-201)", async () => {
+    // Make the related query throw instead of returning an error object
+    const thrownError = new Error("network timeout")
+    const throwingProxy: Record<string, unknown> = {}
+    for (const m of ["select", "eq", "in", "is", "order", "limit"]) {
+      throwingProxy[m] = jest.fn().mockReturnValue(throwingProxy)
+    }
+    throwingProxy.then = (_onFulfilled: unknown, onRejected: (e: unknown) => unknown) =>
+      Promise.reject(thrownError).catch(onRejected)
+
+    const throwingFrom = jest.fn((table: string) => {
+      if (table === "tenants") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: { id: "t1" }, error: null }) }),
+          }),
+        }
+      }
+      return throwingProxy
+    })
+    mockCreateClient.mockReturnValue({ from: throwingFrom })
+
+    const { result } = renderData({
+      config: {
+        relatedQueries: [{ key: "payments", table: "payments", select: "*", foreignKey: "tenant_id" }],
+      },
+    })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.related.payments).toEqual([])
+  })
+
+  it("sets related key to [] when related query throws a non-Error object (JSON.stringify branch)", async () => {
+    const throwingProxy: Record<string, unknown> = {}
+    for (const m of ["select", "eq", "in", "is", "order", "limit"]) {
+      throwingProxy[m] = jest.fn().mockReturnValue(throwingProxy)
+    }
+    // Throw a plain object (not an Error instance)
+    const plainObjectError = { code: "PGRST200", details: "constraint violation" }
+    throwingProxy.then = (_onFulfilled: unknown, onRejected: (e: unknown) => unknown) =>
+      Promise.reject(plainObjectError).catch(onRejected)
+
+    const throwingFrom = jest.fn((table: string) => {
+      if (table === "tenants") {
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({ single: jest.fn().mockResolvedValue({ data: { id: "t1" }, error: null }) }),
+          }),
+        }
+      }
+      return throwingProxy
+    })
+    mockCreateClient.mockReturnValue({ from: throwingFrom })
+
     const { result } = renderData({
       config: {
         relatedQueries: [{ key: "payments", table: "payments", select: "*", foreignKey: "tenant_id" }],

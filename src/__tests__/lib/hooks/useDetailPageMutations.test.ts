@@ -437,6 +437,48 @@ describe("useDetailPageMutations — deleteRecord", () => {
     expect(global.window.confirm).not.toHaveBeenCalled()
   })
 
+  it("logs console.error when cascadeSoftDelete returns errors (line 183)", async () => {
+    global.window.confirm = jest.fn().mockReturnValue(true)
+    const client = makeSupabaseClient({})
+    mockCreateClient.mockReturnValue(client)
+    mockIsSoftDeletableTable.mockImplementation((table: string) => table === "tenants" || table === "bills")
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {})
+    // cascadeSoftDelete returns errors array (non-empty)
+    mockCascadeSoftDelete.mockResolvedValue({ errors: [{ table: "bills", error: "FK violation" }] })
+    mockSoftDelete.mockResolvedValue({ error: null })
+
+    const { result } = renderMutations({ config: { table: "tenants" } })
+    await act(async () => {
+      await result.current.deleteRecord({
+        confirm: true,
+        cascadeDeletes: [{ table: "bills", foreignKey: "tenant_id" }],
+      })
+    })
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Cascade soft delete errors"),
+      expect.any(Array)
+    )
+    consoleSpy.mockRestore()
+  })
+
+  it("throws and returns false when hard delete (non-soft-deletable main table) returns error (line 212)", async () => {
+    global.window.confirm = jest.fn().mockReturnValue(true)
+    const eqMock = jest.fn().mockResolvedValue({ error: { message: "Cannot delete" } })
+    const deleteMock = jest.fn().mockReturnValue({ eq: eqMock })
+    const fromMock = jest.fn().mockReturnValue({ delete: deleteMock })
+    const getUserMock = jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } })
+    mockCreateClient.mockReturnValue({ from: fromMock, auth: { getUser: getUserMock } })
+    mockIsSoftDeletableTable.mockReturnValue(false)
+
+    const { result } = renderMutations()
+    let success: boolean | undefined
+    await act(async () => {
+      success = await result.current.deleteRecord({ confirm: false })
+    })
+    expect(success).toBe(false)
+    expect(mockShowError).toHaveBeenCalled()
+  })
+
   it("calls cascadeSoftDelete for soft-deletable cascade tables", async () => {
     global.window.confirm = jest.fn().mockReturnValue(true)
     const client = makeSupabaseClient({})

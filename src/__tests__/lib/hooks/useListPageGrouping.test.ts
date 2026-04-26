@@ -329,6 +329,29 @@ describe("fetchGroupCounts — error", () => {
     await act(async () => { await result.current.fetchGroupCounts(["status"]) })
     expect(result.current.groupCounts).toEqual({})
   })
+
+  it("catches thrown exceptions and does not update groupCounts (line 129 catch)", async () => {
+    // Make the thenable THROW instead of returning { data, error }
+    const throwingThenable = {
+      select: jest.fn().mockReturnThis(),
+      then: (_onFulfilled: unknown, onRejected: (e: unknown) => unknown) =>
+        Promise.reject(new Error("unexpected throw")).catch(onRejected),
+    }
+    mockFrom.mockReturnValue(throwingThenable)
+    mockApplyBase.mockImplementation(() => throwingThenable)
+
+    const { configRef, filterConfigsRef } = makeRefs()
+    const { result } = renderHook(() =>
+      useListPageGrouping(
+        { groupByOptions: GROUP_OPTIONS, initialGroups: [], configRef, filterConfigsRef },
+        EMPTY_FILTERS,
+        EMPTY_SEARCH
+      )
+    )
+    await act(async () => { await result.current.fetchGroupCounts(["status"]) })
+    // Catch block should prevent groupCounts from being updated
+    expect(result.current.groupCounts).toEqual({})
+  })
 })
 
 // ============================================================================
