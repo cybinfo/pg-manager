@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Plus, Trash2, Home, Bed } from "lucide-react"
 import { showError } from "@/lib/toast-helpers"
@@ -109,28 +110,25 @@ export function RoomTypeSettings({
             <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
               <h4 className="font-medium">Add Custom Room Type</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="roomtype_name">Name</Label>
+                <FormField label="Name" htmlFor="roomtype_name">
                   <Input
                     id="roomtype_name"
                     placeholder="e.g., AC Single"
                     value={newRoomType.name}
                     onChange={(e) => setNewRoomType({ ...newRoomType, name: e.target.value })}
                   />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="roomtype_code">Code</Label>
+                </FormField>
+                <FormField label="Code" htmlFor="roomtype_code">
                   <Input
                     id="roomtype_code"
                     placeholder="e.g., ac_single"
                     value={newRoomType.code}
                     onChange={(e) => setNewRoomType({ ...newRoomType, code: e.target.value })}
                   />
-                </div>
+                </FormField>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="roomtype_rent">Default Rent</Label>
+                <FormField label="Default Rent" htmlFor="roomtype_rent">
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                     <Input
@@ -143,9 +141,8 @@ export function RoomTypeSettings({
                       onChange={(e) => setNewRoomType({ ...newRoomType, default_rent: parseInt(e.target.value) || 0 })}
                     />
                   </div>
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="roomtype_deposit">Default Deposit</Label>
+                </FormField>
+                <FormField label="Default Deposit" htmlFor="roomtype_deposit">
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                     <Input
@@ -158,7 +155,7 @@ export function RoomTypeSettings({
                       onChange={(e) => setNewRoomType({ ...newRoomType, default_deposit: parseInt(e.target.value) || 0 })}
                     />
                   </div>
-                </div>
+                </FormField>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={addRoomType}>Add</Button>
