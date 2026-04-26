@@ -23,6 +23,7 @@
 import { z, type ZodType } from "zod"
 import { badRequest } from "./api-response"
 import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
+export type { ValidatorResult }
 
 // ============================================================================
 // FIELD-LEVEL VALIDATORS (for useFormPage validationSchema)
