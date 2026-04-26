@@ -1,13 +1,12 @@
 /**
- * Tests for computeMetrics from src/lib/hooks/list-page/useListPageMetrics.ts
+ * Tests for useListPageMetrics hook.
  *
- * Covers: compute function invocation, return shape, highlight flag,
- * serverFilter path (when serverCounts populated vs empty).
- *
- * Note: fetchServerCounts / fetchServerSums require Supabase and are skipped.
+ * Covers: computeMetrics (shape, compute fn, highlight, serverFilter path),
+ * fetchServerCounts (happy path, early-return, error, throw),
+ * fetchServerSums (happy path, early-return, with/without sumFilter, throw).
  */
 
-import { renderHook } from "@testing-library/react"
+import { renderHook, act, waitFor } from "@testing-library/react"
 import { useListPageMetrics } from "@/lib/hooks/list-page/useListPageMetrics"
 import type { ListPageConfig, MetricConfig, FilterConfig } from "@/lib/hooks/list-page/types"
 
@@ -15,9 +14,29 @@ import type { ListPageConfig, MetricConfig, FilterConfig } from "@/lib/hooks/lis
 // Mocks
 // ============================================================================
 
+const mockCreateClient = jest.fn()
+
 jest.mock("@/lib/supabase/client", () => ({
-  createClient: jest.fn(),
+  createClient: (...args: unknown[]) => mockCreateClient(...args),
 }))
+
+// Build a fully chainable Proxy that resolves `result` when awaited.
+function makeProxy(result: unknown) {
+  const handler: ProxyHandler<object> = {
+    get(_target, prop) {
+      if (prop === "then") {
+        return (resolve: (v: unknown) => void) => resolve(result)
+      }
+      return (..._args: unknown[]) => proxy
+    },
+  }
+  const proxy = new Proxy({}, handler)
+  return proxy
+}
+
+function makeSupabase(result: unknown) {
+  return { from: () => makeProxy(result) }
+}
 
 // ============================================================================
 // Helpers
@@ -201,5 +220,243 @@ describe("useListPageMetrics — initial state", () => {
   it("serverCountsLoading starts false", () => {
     const { result } = makeHook()
     expect(result.current.serverCountsLoading).toBe(false)
+  })
+})
+
+// ============================================================================
+// fetchServerCounts
+// ============================================================================
+
+describe("useListPageMetrics — fetchServerCounts", () => {
+  beforeEach(() => { mockCreateClient.mockReset() })
+
+  it("returns early without calling supabase when no metrics have serverFilter", async () => {
+    const { result } = makeHook([makeMetric({ id: "total" })])
+    await act(async () => {
+      await result.current.fetchServerCounts()
+    })
+    expect(mockCreateClient).not.toHaveBeenCalled()
+  })
+
+  it("populates serverCounts on happy path", async () => {
+    const metric = makeMetric({
+      id: "active",
+      serverFilter: { column: "status", operator: "eq", value: "active" },
+      compute: jest.fn().mockReturnValue(0),
+    })
+    mockCreateClient.mockReturnValue(makeSupabase({ count: 7, error: null }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerCounts()
+    })
+
+    await waitFor(() => expect(result.current.serverCounts["active"]).toBe(7))
+  })
+
+  it("does not set count when response has an error", async () => {
+    const metric = makeMetric({
+      id: "active",
+      serverFilter: { column: "status", operator: "eq", value: "active" },
+      compute: jest.fn().mockReturnValue(0),
+    })
+    mockCreateClient.mockReturnValue(makeSupabase({ count: null, error: { message: "db error" } }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerCounts()
+    })
+
+    expect(result.current.serverCounts["active"]).toBeUndefined()
+  })
+
+  it("accepts explicit fetchFilters and fetchSearchQuery args", async () => {
+    const metric = makeMetric({
+      id: "active",
+      serverFilter: { column: "status", operator: "eq", value: "active" },
+      compute: jest.fn().mockReturnValue(0),
+    })
+    mockCreateClient.mockReturnValue(makeSupabase({ count: 5, error: null }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerCounts({ status: "active" }, "query text")
+    })
+    await waitFor(() => expect(result.current.serverCounts["active"]).toBe(5))
+  })
+
+  it("handles thrown error gracefully (no unhandled rejection)", async () => {
+    const metric = makeMetric({
+      id: "active",
+      serverFilter: { column: "status", operator: "eq", value: "active" },
+      compute: jest.fn().mockReturnValue(0),
+    })
+    mockCreateClient.mockImplementation(() => { throw new Error("connection refused") })
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerCounts()
+    })
+
+    expect(result.current.serverCountsLoading).toBe(false)
+    expect(result.current.serverCounts).toEqual({})
+  })
+
+  it("sets serverCountsLoading=true while fetching and false after", async () => {
+    const metric = makeMetric({
+      id: "active",
+      serverFilter: { column: "status", operator: "eq", value: "active" },
+      compute: jest.fn().mockReturnValue(0),
+    })
+    mockCreateClient.mockReturnValue(makeSupabase({ count: 3, error: null }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerCounts()
+    })
+
+    expect(result.current.serverCountsLoading).toBe(false)
+  })
+
+  it("uses serverCount directly in computeMetrics once populated", async () => {
+    const metric = makeMetric({
+      id: "active",
+      serverFilter: { column: "status", operator: "eq", value: "active" },
+      compute: jest.fn().mockReturnValue(0),
+    })
+    mockCreateClient.mockReturnValue(makeSupabase({ count: 42, error: null }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerCounts()
+    })
+
+    await waitFor(() => expect(result.current.serverCounts["active"]).toBe(42))
+
+    const computed = result.current.computeMetrics([], 100, [metric])
+    // serverCounts is populated, so compute fn is bypassed
+    expect(computed[0].value).toBe(42)
+    expect(metric.compute).not.toHaveBeenCalled()
+  })
+})
+
+// ============================================================================
+// fetchServerSums
+// ============================================================================
+
+describe("useListPageMetrics — fetchServerSums", () => {
+  beforeEach(() => { mockCreateClient.mockReset() })
+
+  it("returns early without calling supabase when no metrics have serverSum", async () => {
+    const { result } = makeHook([makeMetric({ id: "total" })])
+    await act(async () => {
+      await result.current.fetchServerSums()
+    })
+    expect(mockCreateClient).not.toHaveBeenCalled()
+  })
+
+  it("computes sum from returned data rows", async () => {
+    const metric: MetricConfig<Item> = {
+      id: "revenue",
+      label: "Revenue",
+      compute: (_items, _total, serverData) => serverData["revenue"] ?? 0,
+      serverSum: { column: "amount" },
+    }
+    const rows = [{ amount: 100 }, { amount: 200 }, { amount: 50 }]
+    mockCreateClient.mockReturnValue(makeSupabase({ data: rows, error: null }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerSums()
+    })
+
+    await waitFor(() => expect(result.current.serverSums["revenue"]).toBe(350))
+  })
+
+  it("applies sumFilter when defined", async () => {
+    const metric: MetricConfig<Item> = {
+      id: "paid_revenue",
+      label: "Paid",
+      compute: (_items, _total, serverData) => serverData["paid_revenue"] ?? 0,
+      serverSum: {
+        column: "amount",
+        filter: { column: "status", operator: "eq", value: "paid" },
+      },
+    }
+    mockCreateClient.mockReturnValue(makeSupabase({ data: [{ amount: 500 }], error: null }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerSums()
+    })
+
+    await waitFor(() => expect(result.current.serverSums["paid_revenue"]).toBe(500))
+  })
+
+  it("does not set sum when response has an error", async () => {
+    const metric: MetricConfig<Item> = {
+      id: "revenue",
+      label: "Revenue",
+      compute: jest.fn().mockReturnValue(0),
+      serverSum: { column: "amount" },
+    }
+    mockCreateClient.mockReturnValue(makeSupabase({ data: null, error: { message: "db err" } }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerSums()
+    })
+
+    expect(result.current.serverSums["revenue"]).toBeUndefined()
+  })
+
+  it("handles non-numeric values gracefully (coerces to 0)", async () => {
+    const metric: MetricConfig<Item> = {
+      id: "revenue",
+      label: "Revenue",
+      compute: (_items, _total, serverData) => serverData["revenue"] ?? 0,
+      serverSum: { column: "amount" },
+    }
+    mockCreateClient.mockReturnValue(makeSupabase({ data: [{ amount: "abc" }, { amount: null }], error: null }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerSums()
+    })
+
+    await waitFor(() => expect(result.current.serverSums["revenue"]).toBe(0))
+  })
+
+  it("accepts explicit fetchFilters and fetchSearchQuery args", async () => {
+    const metric: MetricConfig<Item> = {
+      id: "revenue",
+      label: "Revenue",
+      compute: (_items, _total, serverData) => serverData["revenue"] ?? 0,
+      serverSum: { column: "amount" },
+    }
+    mockCreateClient.mockReturnValue(makeSupabase({ data: [{ amount: 100 }], error: null }))
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerSums({ status: "paid" }, "search")
+    })
+    await waitFor(() => expect(result.current.serverSums["revenue"]).toBe(100))
+  })
+
+  it("handles thrown error gracefully", async () => {
+    const metric: MetricConfig<Item> = {
+      id: "revenue",
+      label: "Revenue",
+      compute: jest.fn().mockReturnValue(0),
+      serverSum: { column: "amount" },
+    }
+    mockCreateClient.mockImplementation(() => { throw new Error("timeout") })
+
+    const { result } = makeHook([metric])
+    await act(async () => {
+      await result.current.fetchServerSums()
+    })
+
+    expect(result.current.serverSums).toEqual({})
   })
 })
