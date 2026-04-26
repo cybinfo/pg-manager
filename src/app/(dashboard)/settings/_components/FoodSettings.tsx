@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Check, UtensilsCrossed } from "lucide-react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
@@ -121,8 +121,7 @@ export function FoodSettings({ foodSettings, setFoodSettings, configId }: FoodSe
               </div>
 
               {/* Billing Frequency */}
-              <div className="space-y-2">
-                <Label>Billing Frequency</Label>
+              <FormField label="Billing Frequency" hint="How often food charges are added to tenant bills">
                 <Select
                   value={foodSettings.billing_frequency}
                   onChange={(e) => setFoodSettings({
@@ -135,10 +134,7 @@ export function FoodSettings({ foodSettings, setFoodSettings, configId }: FoodSe
                     { value: "monthly", label: "Monthly" },
                   ]}
                 />
-                <p className="text-xs text-muted-foreground">
-                  How often food charges are added to tenant bills
-                </p>
-              </div>
+              </FormField>
             </>
           )}
 

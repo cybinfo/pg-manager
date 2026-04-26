@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, Shield, Check, Loader2 } from "lucide-react"
 import { requiredField } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
@@ -214,8 +213,7 @@ function EditRoleContent({
               />
             </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <FormField label="Description" htmlFor="description">
               <textarea
                 id="description"
                 name="description"
@@ -225,7 +223,7 @@ function EditRoleContent({
                 disabled={saving}
                 className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

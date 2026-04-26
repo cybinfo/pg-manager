@@ -376,8 +376,7 @@ function NewComplaintForm() {
                       }))}
                     />
                   </FormField>
-                  <div className="space-y-2">
-                    <Label htmlFor="room_id">Room (Optional)</Label>
+                  <FormField label="Room" htmlFor="room_id" hint="Optional">
                     <Select
                       id="room_id"
                       name="room_id"
@@ -390,11 +389,10 @@ function NewComplaintForm() {
                         label: `Room ${room.room_number}`,
                       }))}
                     />
-                  </div>
+                  </FormField>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="tenant_id">Reported By (Optional)</Label>
+                <FormField label="Reported By" htmlFor="tenant_id" hint="Optional">
                   <Select
                     id="tenant_id"
                     name="tenant_id"
@@ -407,7 +405,7 @@ function NewComplaintForm() {
                       label: `${tenant.name} - Room ${tenant.room?.room_number}`,
                     }))}
                   />
-                </div>
+                </FormField>
               </>
             )}
 
@@ -429,8 +427,7 @@ function NewComplaintForm() {
                   />
                 </FormField>
 
-                <div className="space-y-2">
-                  <Label htmlFor="member_id">Reported By (Optional)</Label>
+                <FormField label="Reported By" htmlFor="member_id" hint="Optional">
                   <Select
                     id="member_id"
                     name="member_id"
@@ -443,7 +440,7 @@ function NewComplaintForm() {
                       label: `${member.name}${member.member_code ? ` (${member.member_code})` : ""}`,
                     }))}
                   />
-                </div>
+                </FormField>
               </>
             )}
           </CardContent>
@@ -464,8 +461,7 @@ function NewComplaintForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
+              <FormField label="Category" htmlFor="category" required>
                 <Select
                   id="category"
                   name="category"
@@ -478,9 +474,8 @@ function NewComplaintForm() {
                     label: cat.label,
                   }))}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority *</Label>
+              </FormField>
+              <FormField label="Priority" htmlFor="priority" required>
                 <Select
                   id="priority"
                   name="priority"
@@ -493,7 +488,7 @@ function NewComplaintForm() {
                     label: p.label,
                   }))}
                 />
-              </div>
+              </FormField>
             </div>
 
             <FormField label="Title" htmlFor="title" required error={errors.title}>
@@ -508,8 +503,7 @@ function NewComplaintForm() {
               />
             </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Detailed Description</Label>
+            <FormField label="Detailed Description" htmlFor="description">
               <textarea
                 id="description"
                 name="description"
@@ -520,7 +514,7 @@ function NewComplaintForm() {
                 rows={4}
                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
               />
-            </div>
+            </FormField>
 
             {/* Priority Info */}
             <div className="p-3 bg-muted rounded-lg text-sm">

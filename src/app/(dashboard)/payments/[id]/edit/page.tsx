@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, Receipt, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredAmount, requiredDate } from "@/lib/validation"
@@ -156,8 +155,7 @@ function EditPaymentContent({
 
             {/* Method & Status */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="payment_method">Payment Method</Label>
+              <FormField label="Payment Method" htmlFor="payment_method">
                 <Select
                   value={formData.payment_method as string}
                   onChange={handleChange}
@@ -165,9 +163,8 @@ function EditPaymentContent({
                   disabled={saving}
                   options={PAYMENT_METHOD_OPTIONS}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+              </FormField>
+              <FormField label="Status" htmlFor="status">
                 <Select
                   value={formData.status as string}
                   onChange={handleChange}
@@ -175,12 +172,11 @@ function EditPaymentContent({
                   disabled={saving}
                   options={PAYMENT_STATUS_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Reference Number */}
-            <div className="space-y-2">
-              <Label htmlFor="transaction_reference">Reference Number</Label>
+            <FormField label="Reference Number" htmlFor="transaction_reference" hint="Optional: UPI reference, cheque number, or transaction ID">
               <Input
                 id="transaction_reference"
                 name="transaction_reference"
@@ -189,14 +185,10 @@ function EditPaymentContent({
                 onChange={handleChange}
                 disabled={saving}
               />
-              <p className="text-xs text-muted-foreground">
-                Optional: UPI reference, cheque number, or transaction ID
-              </p>
-            </div>
+            </FormField>
 
             {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes" htmlFor="notes">
               <Textarea
                 id="notes"
                 name="notes"
@@ -206,7 +198,7 @@ function EditPaymentContent({
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

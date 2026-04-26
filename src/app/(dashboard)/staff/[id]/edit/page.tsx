@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, User, Loader2 } from "lucide-react"
 import { requiredField } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
@@ -183,8 +182,7 @@ function EditStaffContent({
                   disabled={saving}
                 />
               </FormField>
-              <div className="space-y-2">
-                <Label htmlFor="is_active">Status</Label>
+              <FormField label="Status" htmlFor="is_active">
                 <Select
                   value={formData.is_active as string}
                   onChange={handleChange}
@@ -192,11 +190,10 @@ function EditStaffContent({
                   disabled={saving}
                   options={IS_ACTIVE_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes" htmlFor="notes">
               <Textarea
                 id="notes"
                 name="notes"
@@ -206,7 +203,7 @@ function EditStaffContent({
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

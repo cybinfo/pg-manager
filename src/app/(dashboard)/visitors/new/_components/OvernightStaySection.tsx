@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Moon, IndianRupee, Calendar, FileText } from "lucide-react"
 import { formatCurrency } from "@/lib/format"
@@ -61,8 +62,7 @@ export function OvernightStaySection({
         {formData.is_overnight && (
           <div className="space-y-4 pt-2 border-t">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="num_nights">Number of Nights *</Label>
+              <FormField label="Number of Nights" htmlFor="num_nights" required>
                 <Input
                   id="num_nights"
                   name="num_nights"
@@ -73,9 +73,8 @@ export function OvernightStaySection({
                   onChange={onChange}
                   disabled={loading}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="charge_per_night">Charge per Night</Label>
+              </FormField>
+              <FormField label="Charge per Night" htmlFor="charge_per_night">
                 <div className="relative">
                   <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -90,11 +89,10 @@ export function OvernightStaySection({
                     className="pl-9"
                   />
                 </div>
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="expected_checkout_date">Expected Checkout Date</Label>
+            <FormField label="Expected Checkout Date" htmlFor="expected_checkout_date" hint="Auto-calculated if not specified based on number of nights">
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -108,10 +106,7 @@ export function OvernightStaySection({
                   min={getTodayISO()}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Auto-calculated if not specified based on number of nights
-              </p>
-            </div>
+            </FormField>
 
             {totalCharge > 0 && formData.visitor_type === "tenant_visitor" && formData.tenant_id && (
               <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">

@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
 import { requiredDate, requiredAmount } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
@@ -217,8 +216,7 @@ function EditSubscriptionContent({
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="time_slot">Time Slot</Label>
+              <FormField label="Time Slot" htmlFor="time_slot">
                 <Select
                   value={formData.time_slot as string}
                   onChange={handleChange}
@@ -226,9 +224,8 @@ function EditSubscriptionContent({
                   disabled={saving}
                   options={SLOT_OPTIONS}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+              </FormField>
+              <FormField label="Status" htmlFor="status">
                 <Select
                   value={formData.status as string}
                   onChange={handleChange}
@@ -236,11 +233,10 @@ function EditSubscriptionContent({
                   disabled={saving}
                   options={MEMBERSHIP_STATUS_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes" htmlFor="notes">
               <Textarea
                 id="notes"
                 name="notes"
@@ -250,7 +246,7 @@ function EditSubscriptionContent({
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

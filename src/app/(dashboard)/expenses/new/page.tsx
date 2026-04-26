@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
 import {
   Loader2,
@@ -245,8 +244,7 @@ function NewExpenseContent() {
               </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <FormField label="Description" htmlFor="description">
               <Input
                 id="description"
                 name="description"
@@ -254,7 +252,7 @@ function NewExpenseContent() {
                 value={formData.description as string}
                 onChange={handleChange}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 
@@ -273,8 +271,7 @@ function NewExpenseContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="vendor_name">Vendor / Payee</Label>
+              <FormField label="Vendor / Payee" htmlFor="vendor_name">
                 <Input
                   id="vendor_name"
                   name="vendor_name"
@@ -282,10 +279,9 @@ function NewExpenseContent() {
                   value={formData.vendor_name as string}
                   onChange={handleChange}
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="reference_number">Reference / Invoice #</Label>
+              <FormField label="Reference / Invoice #" htmlFor="reference_number">
                 <Input
                   id="reference_number"
                   name="reference_number"
@@ -293,11 +289,10 @@ function NewExpenseContent() {
                   value={formData.reference_number as string}
                   onChange={handleChange}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="payment_method">Payment Method</Label>
+            <FormField label="Payment Method" htmlFor="payment_method">
               <Select
                 id="payment_method"
                 name="payment_method"
@@ -305,7 +300,7 @@ function NewExpenseContent() {
                 onChange={handleChange}
                 options={EXPENSE_PAYMENT_MODE_OPTIONS}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

@@ -170,8 +170,7 @@ function NewLibraryPlanContent() {
               </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <FormField label="Description" htmlFor="description">
               <Textarea
                 id="description"
                 name="description"
@@ -181,11 +180,10 @@ function NewLibraryPlanContent() {
                 disabled={saving}
                 rows={2}
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="hours_included">Hours Included</Label>
+              <FormField label="Hours Included" htmlFor="hours_included" hint="Leave empty for unlimited hours">
                 <Input
                   id="hours_included"
                   name="hours_included"
@@ -196,10 +194,7 @@ function NewLibraryPlanContent() {
                   disabled={saving}
                   min={1}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty for unlimited hours
-                </p>
-              </div>
+              </FormField>
               <FormField label="Validity (Days)" htmlFor="validity_days" required error={errors.validity_days}>
                 <Input
                   id="validity_days"
@@ -241,8 +236,7 @@ function NewLibraryPlanContent() {
             {/* Status & Order */}
             <div className="border-t pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sort_order">Sort Order</Label>
+                <FormField label="Sort Order" htmlFor="sort_order">
                   <Input
                     id="sort_order"
                     name="sort_order"
@@ -253,7 +247,7 @@ function NewLibraryPlanContent() {
                     disabled={saving}
                     min={0}
                   />
-                </div>
+                </FormField>
                 <div className="flex items-center space-x-2 pt-8">
                   <Checkbox
                     id="is_active"

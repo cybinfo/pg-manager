@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, DoorOpen, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredDate } from "@/lib/validation"
@@ -127,8 +126,7 @@ function EditExitClearanceContent({
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="settlement_status">Settlement Status</Label>
+              <FormField label="Settlement Status" htmlFor="settlement_status">
                 <Select
                   value={formData.settlement_status as string}
                   onChange={handleChange}
@@ -136,7 +134,7 @@ function EditExitClearanceContent({
                   disabled={saving}
                   options={SETTLEMENT_STATUS_OPTIONS}
                 />
-              </div>
+              </FormField>
               <FormField label="Settlement Amount (Rs.)" htmlFor="settlement_amount">
                 <Input
                   id="settlement_amount"
@@ -163,8 +161,7 @@ function EditExitClearanceContent({
               />
             </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="room_condition_notes">Room Condition Notes</Label>
+            <FormField label="Room Condition Notes" htmlFor="room_condition_notes">
               <Textarea
                 id="room_condition_notes"
                 name="room_condition_notes"
@@ -174,7 +171,7 @@ function EditExitClearanceContent({
                 disabled={saving}
                 rows={4}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

@@ -650,8 +650,7 @@ export default function NewTenantPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Property *</Label>
+              <FormField label="Property" required>
                 <Combobox
                   options={properties.map((p): ComboboxOption => ({
                     value: p.id,
@@ -663,7 +662,7 @@ export default function NewTenantPage() {
                   searchPlaceholder="Search properties..."
                   disabled={loading}
                 />
-              </div>
+              </FormField>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Room *</Label>

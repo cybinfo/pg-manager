@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, Building2, Loader2 } from "lucide-react"
 import { requiredField } from "@/lib/validation"
 
@@ -159,8 +158,7 @@ function NewPropertyContent() {
             <div className="border-t pt-4 mt-4">
               <h3 className="font-medium mb-3">Property Manager (Optional)</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="manager_name">Manager Name</Label>
+                <FormField label="Manager Name" htmlFor="manager_name">
                   <Input
                     id="manager_name"
                     name="manager_name"
@@ -169,9 +167,8 @@ function NewPropertyContent() {
                     onChange={handleChange}
                     disabled={saving}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="manager_phone">Manager Phone</Label>
+                </FormField>
+                <FormField label="Manager Phone" htmlFor="manager_phone">
                   <Input
                     id="manager_phone"
                     name="manager_phone"
@@ -181,7 +178,7 @@ function NewPropertyContent() {
                     disabled={saving}
                     type="tel"
                   />
-                </div>
+                </FormField>
               </div>
             </div>
           </CardContent>

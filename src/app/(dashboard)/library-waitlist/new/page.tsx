@@ -13,7 +13,6 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -203,8 +202,7 @@ function AddToWaitlistContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Library Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="library_id">Library *</Label>
+            <FormField label="Library" htmlFor="library_id" required>
               <Combobox
                 options={libraryOptions}
                 value={formData.library_id as string}
@@ -213,7 +211,7 @@ function AddToWaitlistContent() {
                 emptyText="No libraries found"
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             {/* Contact Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -1,7 +1,7 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2 } from "lucide-react"
 import { PropertyAddressInput, CoverImageUpload, PhotoGallery } from "@/components/forms"
@@ -41,8 +41,7 @@ export function PropertyDetailsTab({ formData, onChange, setFormData, loading }:
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Property Name *</Label>
+        <FormField label="Property Name" htmlFor="name" required>
           <Input
             id="name"
             name="name"
@@ -52,7 +51,7 @@ export function PropertyDetailsTab({ formData, onChange, setFormData, loading }:
             required
             disabled={loading}
           />
-        </div>
+        </FormField>
 
         {/* Address Section - Using shared component */}
         <PropertyAddressInput
@@ -92,8 +91,7 @@ export function PropertyDetailsTab({ formData, onChange, setFormData, loading }:
         <div className="border-t pt-4 mt-4">
           <h3 className="font-medium mb-3">Property Manager (Optional)</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="manager_name">Manager Name</Label>
+            <FormField label="Manager Name" htmlFor="manager_name">
               <Input
                 id="manager_name"
                 name="manager_name"
@@ -102,9 +100,8 @@ export function PropertyDetailsTab({ formData, onChange, setFormData, loading }:
                 onChange={onChange}
                 disabled={loading}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="manager_phone">Manager Phone</Label>
+            </FormField>
+            <FormField label="Manager Phone" htmlFor="manager_phone">
               <Input
                 id="manager_phone"
                 name="manager_phone"
@@ -114,7 +111,7 @@ export function PropertyDetailsTab({ formData, onChange, setFormData, loading }:
                 disabled={loading}
                 type="tel"
               />
-            </div>
+            </FormField>
           </div>
         </div>
       </CardContent>

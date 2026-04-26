@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Home, Loader2, Building2, Info } from "lucide-react"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField, requiredSelect, requiredAmount } from "@/lib/validation"
 import { formatCurrency } from "@/lib/format"
@@ -288,8 +287,7 @@ function NewRoomContent() {
                   disabled={saving}
                 />
               </FormField>
-              <div className="space-y-2">
-                <Label htmlFor="room_type">Room Type</Label>
+              <FormField label="Room Type" htmlFor="room_type">
                 <Select
                   id="room_type"
                   name="room_type"
@@ -301,12 +299,11 @@ function NewRoomContent() {
                     label: `${rt.name} (${roomTypeBedCounts[rt.code] || 1} bed${(roomTypeBedCounts[rt.code] || 1) > 1 ? 's' : ''})`,
                   }))}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="floor">Floor</Label>
+              <FormField label="Floor" htmlFor="floor">
                 <Input
                   id="floor"
                   name="floor"
@@ -317,9 +314,8 @@ function NewRoomContent() {
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="total_beds">Total Beds</Label>
+              </FormField>
+              <FormField label="Total Beds" htmlFor="total_beds" hint="Auto-set based on room type (adjustable)">
                 <Input
                   id="total_beds"
                   name="total_beds"
@@ -330,10 +326,7 @@ function NewRoomContent() {
                   onChange={handleChange}
                   disabled={saving}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Auto-set based on room type (adjustable)
-                </p>
-              </div>
+              </FormField>
             </div>
 
             <div className="border-t pt-4 mt-4">
@@ -362,8 +355,7 @@ function NewRoomContent() {
                     />
                   </div>
                 </FormField>
-                <div className="space-y-2">
-                  <Label htmlFor="deposit_amount">Security Deposit</Label>
+                <FormField label="Security Deposit" htmlFor="deposit_amount" hint={`Default: ${formatCurrency(currentRoomType?.default_deposit || 0)}`}>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rs.</span>
                     <Input
@@ -378,10 +370,7 @@ function NewRoomContent() {
                       disabled={saving}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Default: {formatCurrency(currentRoomType?.default_deposit || 0)}
-                  </p>
-                </div>
+                </FormField>
               </div>
             </div>
 

@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Mail, Bell, Send, MailCheck, Phone } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -102,8 +101,7 @@ export function NotificationSettings({
               <div className="space-y-4">
                 <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Reminder Schedule</h4>
 
-                <div className="space-y-2">
-                  <Label htmlFor="reminder_days">Days Before Due Date</Label>
+                <FormField label="Days Before Due Date" htmlFor="reminder_days" hint="Send reminder this many days before rent is due">
                   <Select
                     id="reminder_days"
                     value={notificationSettings.reminder_days_before.toString()}
@@ -116,10 +114,7 @@ export function NotificationSettings({
                       label: `${days} day${days > 1 ? "s" : ""} before`,
                     }))}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Send reminder this many days before rent is due
-                  </p>
-                </div>
+                </FormField>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
@@ -171,8 +166,7 @@ export function NotificationSettings({
                 </div>
 
                 {notificationSettings.send_overdue_alerts && (
-                  <div className="space-y-2">
-                    <Label htmlFor="overdue_frequency">Overdue Alert Frequency</Label>
+                  <FormField label="Overdue Alert Frequency" htmlFor="overdue_frequency">
                     <Select
                       id="overdue_frequency"
                       value={notificationSettings.overdue_alert_frequency}
@@ -185,7 +179,7 @@ export function NotificationSettings({
                         { value: "weekly", label: "Weekly" },
                       ]}
                     />
-                  </div>
+                  </FormField>
                 )}
               </div>
             </>

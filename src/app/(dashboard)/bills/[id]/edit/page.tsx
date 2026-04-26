@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, FileText, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredDate } from "@/lib/validation"
@@ -131,8 +130,7 @@ function EditBillContent({
           <CardContent className="space-y-6">
             {/* Status & Due Date */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+              <FormField label="Status" htmlFor="status">
                 <Select
                   value={formData.status as string}
                   onChange={handleChange}
@@ -140,7 +138,7 @@ function EditBillContent({
                   disabled={saving}
                   options={BILL_STATUS_OPTIONS}
                 />
-              </div>
+              </FormField>
               <FormField label="Due Date" htmlFor="due_date" required error={errors.due_date}>
                 <Input
                   id="due_date"
@@ -156,8 +154,7 @@ function EditBillContent({
 
             {/* Billing Period */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="billing_period_start">Period Start</Label>
+              <FormField label="Period Start" htmlFor="billing_period_start">
                 <Input
                   id="billing_period_start"
                   name="billing_period_start"
@@ -166,9 +163,8 @@ function EditBillContent({
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="billing_period_end">Period End</Label>
+              </FormField>
+              <FormField label="Period End" htmlFor="billing_period_end">
                 <Input
                   id="billing_period_end"
                   name="billing_period_end"
@@ -177,12 +173,11 @@ function EditBillContent({
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes" htmlFor="notes">
               <Textarea
                 id="notes"
                 name="notes"
@@ -192,7 +187,7 @@ function EditBillContent({
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

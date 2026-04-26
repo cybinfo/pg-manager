@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Plus, Trash2, IndianRupee } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -129,24 +129,22 @@ export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTy
             <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
               <h4 className="font-medium">Add Expense Category</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="expense_name">Name</Label>
+                <FormField label="Name" htmlFor="expense_name">
                   <Input
                     id="expense_name"
                     placeholder="e.g., Pest Control"
                     value={newExpenseType.name}
                     onChange={(e) => setNewExpenseType({ ...newExpenseType, name: e.target.value })}
                   />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="expense_code">Code</Label>
+                </FormField>
+                <FormField label="Code" htmlFor="expense_code">
                   <Input
                     id="expense_code"
                     placeholder="e.g., pest_control"
                     value={newExpenseType.code}
                     onChange={(e) => setNewExpenseType({ ...newExpenseType, code: e.target.value })}
                   />
-                </div>
+                </FormField>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={addExpenseType} disabled={saving}>

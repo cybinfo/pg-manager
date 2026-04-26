@@ -2,8 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, Check } from "lucide-react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
@@ -49,8 +48,7 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="default_rent_due_day">Rent Due Day</Label>
+            <FormField label="Rent Due Day" htmlFor="default_rent_due_day" hint="Day when rent becomes due">
               <Select
                 id="default_rent_due_day"
                 value={configForm.default_rent_due_day.toString()}
@@ -60,13 +58,9 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
                   label: `${day}${day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month`,
                 }))}
               />
-              <p className="text-xs text-muted-foreground">
-                Day when rent becomes due
-              </p>
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="default_grace_period">Grace Period (Days)</Label>
+            <FormField label="Grace Period (Days)" htmlFor="default_grace_period" hint="Days after due date before late fee">
               <Input
                 id="default_grace_period"
                 type="number"
@@ -75,14 +69,10 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
                 value={configForm.default_grace_period}
                 onChange={(e) => setConfigForm({ ...configForm, default_grace_period: parseInt(e.target.value) || 0 })}
               />
-              <p className="text-xs text-muted-foreground">
-                Days after due date before late fee
-              </p>
-            </div>
+            </FormField>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="default_notice_period">Notice Period (Days)</Label>
+          <FormField label="Notice Period (Days)" htmlFor="default_notice_period" hint="Required notice before tenant checkout">
             <Select
               id="default_notice_period"
               value={configForm.default_notice_period.toString()}
@@ -94,10 +84,7 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
                 { value: "60", label: "60 days (2 months)" },
               ]}
             />
-            <p className="text-xs text-muted-foreground">
-              Required notice before tenant checkout
-            </p>
-          </div>
+          </FormField>
 
           <Button onClick={saveConfig} disabled={saving}>
             {saving ? (

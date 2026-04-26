@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, AlertTriangle, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
@@ -157,8 +156,7 @@ function EditComplaintContent({
             </FormField>
 
             {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <FormField label="Description" htmlFor="description">
               <Textarea
                 id="description"
                 name="description"
@@ -168,12 +166,11 @@ function EditComplaintContent({
                 disabled={saving}
                 rows={4}
               />
-            </div>
+            </FormField>
 
             {/* Category & Priority */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+              <FormField label="Category" htmlFor="category">
                 <Select
                   value={formData.category as string}
                   onChange={handleChange}
@@ -181,9 +178,8 @@ function EditComplaintContent({
                   disabled={saving}
                   options={CATEGORY_OPTIONS}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
+              </FormField>
+              <FormField label="Priority" htmlFor="priority">
                 <Select
                   value={formData.priority as string}
                   onChange={handleChange}
@@ -191,12 +187,11 @@ function EditComplaintContent({
                   disabled={saving}
                   options={PRIORITY_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Status */}
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+            <FormField label="Status" htmlFor="status">
               <Select
                 value={formData.status as string}
                 onChange={handleChange}
@@ -204,11 +199,10 @@ function EditComplaintContent({
                 disabled={saving}
                 options={STATUS_OPTIONS}
               />
-            </div>
+            </FormField>
 
             {/* Resolution Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="resolution_notes">Resolution Notes</Label>
+            <FormField label="Resolution Notes" htmlFor="resolution_notes">
               <Textarea
                 id="resolution_notes"
                 name="resolution_notes"
@@ -218,7 +212,7 @@ function EditComplaintContent({
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

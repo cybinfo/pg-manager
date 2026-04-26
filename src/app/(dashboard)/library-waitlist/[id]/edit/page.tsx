@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Loader2 } from "lucide-react"
 import { requiredField } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
@@ -187,8 +186,7 @@ function EditWaitlistContent({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="preferred_slot">Preferred Time Slot</Label>
+              <FormField label="Preferred Time Slot" htmlFor="preferred_slot">
                 <Select
                   value={formData.preferred_slot as string}
                   onChange={handleChange}
@@ -196,9 +194,8 @@ function EditWaitlistContent({
                   disabled={saving}
                   options={SLOT_OPTIONS}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
+              </FormField>
+              <FormField label="Priority" htmlFor="priority">
                 <Select
                   value={formData.priority as string}
                   onChange={handleChange}
@@ -206,11 +203,10 @@ function EditWaitlistContent({
                   disabled={saving}
                   options={PRIORITY_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+            <FormField label="Status" htmlFor="status">
               <Select
                 value={formData.status as string}
                 onChange={handleChange}
@@ -218,10 +214,9 @@ function EditWaitlistContent({
                 disabled={saving}
                 options={WAITLIST_STATUS_OPTIONS}
               />
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes" htmlFor="notes">
               <Textarea
                 id="notes"
                 name="notes"
@@ -231,7 +226,7 @@ function EditWaitlistContent({
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

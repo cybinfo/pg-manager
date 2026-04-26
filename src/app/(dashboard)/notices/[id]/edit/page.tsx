@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, Megaphone, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
@@ -165,8 +164,7 @@ function EditNoticeContent({
 
             {/* Type & Audience */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="type">Notice Type</Label>
+              <FormField label="Notice Type" htmlFor="type">
                 <Select
                   value={formData.type as string}
                   onChange={handleChange}
@@ -174,9 +172,8 @@ function EditNoticeContent({
                   disabled={saving}
                   options={NOTICE_TYPE_OPTIONS}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="target_audience">Audience</Label>
+              </FormField>
+              <FormField label="Audience" htmlFor="target_audience">
                 <Select
                   value={formData.target_audience as string}
                   onChange={handleChange}
@@ -184,13 +181,12 @@ function EditNoticeContent({
                   disabled={saving}
                   options={NOTICE_AUDIENCE_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Priority & Active */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
+              <FormField label="Priority" htmlFor="priority">
                 <Select
                   value={formData.priority as string}
                   onChange={handleChange}
@@ -198,9 +194,8 @@ function EditNoticeContent({
                   disabled={saving}
                   options={PRIORITY_OPTIONS}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="is_active">Status</Label>
+              </FormField>
+              <FormField label="Status" htmlFor="is_active">
                 <Select
                   value={formData.is_active as string}
                   onChange={handleChange}
@@ -211,12 +206,11 @@ function EditNoticeContent({
                     { value: "false", label: "Inactive" },
                   ]}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Expiry Date */}
-            <div className="space-y-2">
-              <Label htmlFor="expires_at">Expires On</Label>
+            <FormField label="Expires On" htmlFor="expires_at" hint="Leave empty for no expiry">
               <Input
                 id="expires_at"
                 name="expires_at"
@@ -225,10 +219,7 @@ function EditNoticeContent({
                 onChange={handleChange}
                 disabled={saving}
               />
-              <p className="text-xs text-muted-foreground">
-                Leave empty for no expiry
-              </p>
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

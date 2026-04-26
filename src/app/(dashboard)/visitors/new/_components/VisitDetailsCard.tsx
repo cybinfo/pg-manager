@@ -2,8 +2,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { UserPlus, Car } from "lucide-react"
+import { FormField } from "@/components/ui/form-components"
+import { UserPlus } from "lucide-react"
 import { PersonSearchResult } from "@/types/people.types"
 
 interface VisitDetailsCardProps {
@@ -37,11 +37,7 @@ export function VisitDetailsCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="vehicle_number">
-            <Car className="h-4 w-4 inline mr-1" />
-            Vehicle Number
-          </Label>
+        <FormField label="Vehicle Number" htmlFor="vehicle_number">
           <Input
             id="vehicle_number"
             name="vehicle_number"
@@ -50,10 +46,9 @@ export function VisitDetailsCard({
             onChange={onChange}
             disabled={loading}
           />
-        </div>
+        </FormField>
 
-        <div className="space-y-2">
-          <Label htmlFor="purpose">Purpose of Visit</Label>
+        <FormField label="Purpose of Visit" htmlFor="purpose">
           <textarea
             id="purpose"
             name="purpose"
@@ -63,7 +58,7 @@ export function VisitDetailsCard({
             disabled={loading}
             className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
           />
-        </div>
+        </FormField>
 
         {/* Note about ID documents */}
         {selectedPerson && !selectedPerson.id_documents?.length && (

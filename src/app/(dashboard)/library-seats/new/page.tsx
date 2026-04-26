@@ -183,8 +183,7 @@ function NewLibrarySeatContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Section Selection */}
-            <div className="space-y-2">
-              <Label>Section *</Label>
+            <FormField label="Section" required>
               <Combobox
                 options={sectionOptions}
                 value={formData.section_id as string}
@@ -194,7 +193,7 @@ function NewLibrarySeatContent() {
                 emptyText="No sections found"
                 disabled={saving || loadingSections || !!preselectedSection}
               />
-            </div>
+            </FormField>
 
             {/* Seat Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

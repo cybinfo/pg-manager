@@ -17,7 +17,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
 import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
 import { getTodayISO } from "@/lib/date-helpers"
@@ -284,8 +283,7 @@ function NewLibraryPaymentContent() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="payment_type">Payment Type</Label>
+              <FormField label="Payment Type" htmlFor="payment_type">
                 <Select
                   value={formData.payment_type as string}
                   onChange={handleChange}
@@ -299,9 +297,8 @@ function NewLibraryPaymentContent() {
                     { value: "other", label: "Other" },
                   ]}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="payment_method">Payment Method</Label>
+              </FormField>
+              <FormField label="Payment Method" htmlFor="payment_method">
                 <Select
                   value={formData.payment_method as string}
                   onChange={handleChange}
@@ -309,11 +306,10 @@ function NewLibraryPaymentContent() {
                   disabled={saving}
                   options={LIBRARY_PAYMENT_METHOD_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="payment_reference">Reference Number</Label>
+            <FormField label="Reference Number" htmlFor="payment_reference" hint="Optional: UPI reference, cheque number, or transaction ID">
               <Input
                 id="payment_reference"
                 name="payment_reference"
@@ -322,13 +318,9 @@ function NewLibraryPaymentContent() {
                 onChange={handleChange}
                 disabled={saving}
               />
-              <p className="text-xs text-muted-foreground">
-                Optional: UPI reference, cheque number, or transaction ID
-              </p>
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes" htmlFor="notes">
               <Textarea
                 id="notes"
                 name="notes"
@@ -338,7 +330,7 @@ function NewLibraryPaymentContent() {
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

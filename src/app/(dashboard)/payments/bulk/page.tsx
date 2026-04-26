@@ -8,9 +8,8 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PermissionGuard } from "@/components/auth"
 import { ArrowLeft, CreditCard, Loader2, Users, IndianRupee, CheckCircle2 } from "lucide-react"
@@ -304,8 +303,7 @@ function BulkPaymentForm() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="payment_date">Payment Date</Label>
+                <FormField label="Payment Date" htmlFor="payment_date">
                   <Input
                     id="payment_date"
                     type="date"
@@ -313,9 +311,8 @@ function BulkPaymentForm() {
                     onChange={(e) => setPaymentDate(e.target.value)}
                     disabled={submitting}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="global_method">Default Payment Method</Label>
+                </FormField>
+                <FormField label="Default Payment Method" htmlFor="global_method">
                   <Select
                     id="global_method"
                     value={globalMethod}
@@ -323,7 +320,7 @@ function BulkPaymentForm() {
                     options={paymentMethodOptions}
                     disabled={submitting}
                   />
-                </div>
+                </FormField>
                 <div className="flex items-end">
                   <Button
                     type="button"

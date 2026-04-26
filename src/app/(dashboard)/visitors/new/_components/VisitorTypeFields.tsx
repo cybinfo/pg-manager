@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Wrench, Briefcase, Search, Calendar, User } from "lucide-react"
 import { PersonSearchResult } from "@/types/people.types"
@@ -77,8 +77,7 @@ export function VisitorTypeFields({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="tenant_id">Tenant *</Label>
+          <FormField label="Tenant" htmlFor="tenant_id" required>
             <Select
               id="tenant_id"
               name="tenant_id"
@@ -92,10 +91,9 @@ export function VisitorTypeFields({
                 label: `${tenant.name} (Room ${tenant.room?.room_number})`,
               }))}
             />
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <Label htmlFor="relation">Relation</Label>
+          <FormField label="Relation" htmlFor="relation">
             <Select
               id="relation"
               name="relation"
@@ -108,7 +106,7 @@ export function VisitorTypeFields({
                 label: rel,
               }))}
             />
-          </div>
+          </FormField>
         </CardContent>
       </Card>
     )
@@ -206,8 +204,7 @@ export function VisitorTypeFields({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="enquiry_source">How did they find you?</Label>
+            <FormField label="How did they find you?" htmlFor="enquiry_source">
               <Select
                 id="enquiry_source"
                 name="enquiry_source"
@@ -220,7 +217,7 @@ export function VisitorTypeFields({
                   label: ENQUIRY_SOURCE_LABELS[source],
                 }))}
               />
-            </div>
+            </FormField>
             <div className="space-y-2">
               <Label htmlFor="follow_up_date">
                 <Calendar className="h-4 w-4 inline mr-1" />
@@ -280,8 +277,7 @@ export function VisitorTypeFields({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="host_name">Meeting With (Host Name)</Label>
+            <FormField label="Meeting With (Host Name)" htmlFor="host_name">
               <Input
                 id="host_name"
                 name="host_name"
@@ -290,9 +286,8 @@ export function VisitorTypeFields({
                 onChange={onChange}
                 disabled={loading}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
+            </FormField>
+            <FormField label="Department" htmlFor="department">
               <Input
                 id="department"
                 name="department"
@@ -301,7 +296,7 @@ export function VisitorTypeFields({
                 onChange={onChange}
                 disabled={loading}
               />
-            </div>
+            </FormField>
           </div>
         </CardContent>
       </Card>

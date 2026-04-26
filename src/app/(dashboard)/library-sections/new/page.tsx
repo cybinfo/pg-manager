@@ -188,8 +188,7 @@ function NewLibrarySectionContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Library Selection */}
-            <div className="space-y-2">
-              <Label>Library *</Label>
+            <FormField label="Library" required>
               <Combobox
                 options={libraryOptions}
                 value={formData.library_id as string}
@@ -199,7 +198,7 @@ function NewLibrarySectionContent() {
                 emptyText="No libraries found"
                 disabled={saving || loadingLibraries || !!preselectedLibrary}
               />
-            </div>
+            </FormField>
 
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

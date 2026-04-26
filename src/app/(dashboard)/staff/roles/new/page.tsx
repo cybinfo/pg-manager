@@ -7,7 +7,6 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -158,8 +157,7 @@ function NewRoleContent() {
               />
             </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <FormField label="Description" htmlFor="description">
               <textarea
                 id="description"
                 name="description"
@@ -169,7 +167,7 @@ function NewRoleContent() {
                 disabled={saving}
                 className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

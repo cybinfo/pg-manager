@@ -303,8 +303,7 @@ function NewNoticeContent() {
 
             {/* Property Selection */}
             {formData.entity_type === "property" && (
-              <div className="space-y-2">
-                <Label htmlFor="property_id">Property *</Label>
+              <FormField label="Property" htmlFor="property_id" required>
                 <Select
                   id="property_id"
                   name="property_id"
@@ -318,13 +317,12 @@ function NewNoticeContent() {
                     label: property.name,
                   }))}
                 />
-              </div>
+              </FormField>
             )}
 
             {/* Library Selection */}
             {formData.entity_type === "library" && (
-              <div className="space-y-2">
-                <Label htmlFor="library_id">Library *</Label>
+              <FormField label="Library" htmlFor="library_id" required>
                 <Select
                   id="library_id"
                   name="library_id"
@@ -338,12 +336,11 @@ function NewNoticeContent() {
                     label: library.name,
                   }))}
                 />
-              </div>
+              </FormField>
             )}
 
             {formData.entity_type === "all" && libraries.length === 0 && (
-              <div className="space-y-2">
-                <Label htmlFor="property_id">Property (Optional)</Label>
+              <FormField label="Property" htmlFor="property_id" hint="Leave empty to send to all properties">
                 <Select
                   id="property_id"
                   name="property_id"
@@ -356,10 +353,7 @@ function NewNoticeContent() {
                     label: property.name,
                   }))}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty to send to all properties
-                </p>
-              </div>
+              </FormField>
             )}
 
             <div className="space-y-2">
@@ -476,8 +470,7 @@ function NewNoticeContent() {
             </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expires_at">Expires On (Optional)</Label>
+              <FormField label="Expires On" htmlFor="expires_at" hint="Leave empty for no expiration">
                 <Input
                   id="expires_at"
                   name="expires_at"
@@ -487,10 +480,7 @@ function NewNoticeContent() {
                   disabled={saving}
                   min={getTodayISO()}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty for no expiration
-                </p>
-              </div>
+              </FormField>
 
               <div className="space-y-2">
                 <Label>Status</Label>

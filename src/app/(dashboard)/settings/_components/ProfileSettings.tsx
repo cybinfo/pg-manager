@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -65,31 +65,25 @@ export function ProfileSettings({ owner, setOwner, userId, profile }: ProfileSet
           <CardDescription>Your business information displayed on receipts</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="business_name">Business Name</Label>
+          <FormField label="Business Name" htmlFor="business_name" hint="This will appear on receipts and notices">
             <Input
               id="business_name"
               placeholder="e.g., Sunrise PG Accommodations"
               value={profileForm.business_name}
               onChange={(e) => setProfileForm({ ...profileForm, business_name: e.target.value })}
             />
-            <p className="text-xs text-muted-foreground">
-              This will appear on receipts and notices
-            </p>
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <Label htmlFor="name">Your Name</Label>
+          <FormField label="Your Name" htmlFor="name">
             <Input
               id="name"
               placeholder="Your full name"
               value={profileForm.name}
               onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
             />
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+          <FormField label="Email" htmlFor="email" hint="Email cannot be changed">
             <Input
               id="email"
               type="email"
@@ -97,13 +91,9 @@ export function ProfileSettings({ owner, setOwner, userId, profile }: ProfileSet
               disabled
               className="bg-muted"
             />
-            <p className="text-xs text-muted-foreground">
-              Email cannot be changed
-            </p>
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+          <FormField label="Phone Number" htmlFor="phone">
             <Input
               id="phone"
               type="tel"
@@ -111,7 +101,7 @@ export function ProfileSettings({ owner, setOwner, userId, profile }: ProfileSet
               value={profileForm.phone}
               onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
             />
-          </div>
+          </FormField>
 
           <Button onClick={saveProfile} disabled={saving}>
             {saving ? (

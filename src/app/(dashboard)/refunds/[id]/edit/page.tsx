@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
 import { ArrowLeft, Wallet, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredAmount } from "@/lib/validation"
@@ -158,8 +157,7 @@ function EditRefundContent({
                   step="0.01"
                 />
               </FormField>
-              <div className="space-y-2">
-                <Label htmlFor="refund_type">Refund Type</Label>
+              <FormField label="Refund Type" htmlFor="refund_type">
                 <Select
                   value={formData.refund_type as string}
                   onChange={handleChange}
@@ -167,13 +165,12 @@ function EditRefundContent({
                   disabled={saving}
                   options={REFUND_TYPE_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Payment Mode & Status */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="payment_mode">Payment Mode</Label>
+              <FormField label="Payment Mode" htmlFor="payment_mode">
                 <Select
                   value={formData.payment_mode as string}
                   onChange={handleChange}
@@ -181,9 +178,8 @@ function EditRefundContent({
                   disabled={saving}
                   options={REFUND_PAYMENT_MODE_OPTIONS}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+              </FormField>
+              <FormField label="Status" htmlFor="status">
                 <Select
                   value={formData.status as string}
                   onChange={handleChange}
@@ -191,13 +187,12 @@ function EditRefundContent({
                   disabled={saving}
                   options={REFUND_STATUS_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Date & Reference */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="refund_date">Refund Date</Label>
+              <FormField label="Refund Date" htmlFor="refund_date">
                 <Input
                   id="refund_date"
                   name="refund_date"
@@ -206,9 +201,8 @@ function EditRefundContent({
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reference_number">Reference Number</Label>
+              </FormField>
+              <FormField label="Reference Number" htmlFor="reference_number">
                 <Input
                   id="reference_number"
                   name="reference_number"
@@ -217,12 +211,11 @@ function EditRefundContent({
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes" htmlFor="notes">
               <Textarea
                 id="notes"
                 name="notes"
@@ -232,7 +225,7 @@ function EditRefundContent({
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

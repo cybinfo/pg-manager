@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Lock, Loader2, Users } from "lucide-react"
@@ -286,8 +286,7 @@ export default function AssignLockerPage({
             </div>
 
             {/* Member Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="member_id">Select Member *</Label>
+            <FormField label="Select Member" htmlFor="member_id" required>
               {members.length > 0 ? (
                 <Combobox
                   options={memberOptions}
@@ -305,12 +304,11 @@ export default function AssignLockerPage({
                   </p>
                 </div>
               )}
-            </div>
+            </FormField>
 
             {/* Dates */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start_date">Start Date *</Label>
+              <FormField label="Start Date" htmlFor="start_date" required>
                 <Input
                   id="start_date"
                   name="start_date"
@@ -320,9 +318,8 @@ export default function AssignLockerPage({
                   required
                   disabled={loading}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="end_date">End Date (Optional)</Label>
+              </FormField>
+              <FormField label="End Date" htmlFor="end_date" hint="Leave empty for ongoing assignment">
                 <Input
                   id="end_date"
                   name="end_date"
@@ -332,18 +329,14 @@ export default function AssignLockerPage({
                   disabled={loading}
                   min={formData.start_date}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty for ongoing assignment
-                </p>
-              </div>
+              </FormField>
             </div>
 
             {/* Pricing */}
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Pricing</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rent_amount">Monthly Rent (₹)</Label>
+                <FormField label="Monthly Rent (₹)" htmlFor="rent_amount">
                   <Input
                     id="rent_amount"
                     name="rent_amount"
@@ -354,9 +347,8 @@ export default function AssignLockerPage({
                     disabled={loading}
                     min={0}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="deposit_amount">Deposit (₹)</Label>
+                </FormField>
+                <FormField label="Deposit (₹)" htmlFor="deposit_amount">
                   <Input
                     id="deposit_amount"
                     name="deposit_amount"
@@ -367,7 +359,7 @@ export default function AssignLockerPage({
                     disabled={loading}
                     min={0}
                   />
-                </div>
+                </FormField>
               </div>
             </div>
           </CardContent>
