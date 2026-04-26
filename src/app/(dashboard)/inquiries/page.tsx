@@ -19,6 +19,8 @@ import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDate, formatPhone } from "@/lib/format"
 import { INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_COLORS } from "@/lib/status-config"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn } from "@/lib/export-columns"
 
 // ============================================
 // Types
@@ -237,6 +239,23 @@ const advancedFilterColumns: FilterableColumn[] = [
 ]
 
 // ============================================
+// Export Columns
+// ============================================
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Name" },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email", header: "Email", format: (v) => String(v ?? "") },
+  nestedColumn("property_name", "Property", "property.name"),
+  { key: "source_label", header: "Source" },
+  { key: "status_label", header: "Status" },
+  { key: "preferred_room_type", header: "Preferred Room Type", format: (v) => String(v ?? "") },
+  dateExportColumn("expected_move_in", "Expected Move-in"),
+  { key: "notes", header: "Notes", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Received Date"),
+]
+
+// ============================================
 // Metrics Configuration
 // ============================================
 
@@ -269,6 +288,7 @@ export default function InquiriesPage() {
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
+      exportColumns={exportColumns}
       detailHref={(inquiry) => `/inquiries/${inquiry.id}`}
       createHref="/inquiries/new"
       createLabel="Log Inquiry"
