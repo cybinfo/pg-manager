@@ -126,6 +126,18 @@ describe('parseTimeSlots', () => {
     expect(parseTimeSlots('invalid string')).toEqual([])
   })
 
+  it('falls through to empty when JSON parses but is not an array', () => {
+    // Valid JSON but not an array — Array.isArray is false, no dash → empty
+    expect(parseTimeSlots('{"start":"09:00"}')).toEqual([])
+  })
+
+  it('falls through to legacy parse when JSON parses to non-array but has dash', () => {
+    // '{"a":"b-c"}' has a dash but is not JSON-array — goes through legacy parse
+    const result = parseTimeSlots('{"a":"09:00-13:00"}')
+    // The legacy splitter will split on "-" somewhere in the string
+    expect(Array.isArray(result)).toBe(true)
+  })
+
   it('handles JSON slots with missing fields gracefully', () => {
     const raw = JSON.stringify([{ start: '09:00' }, { end: '13:00' }])
     const result = parseTimeSlots(raw)

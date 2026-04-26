@@ -7,6 +7,11 @@ import {
   createCountMetric,
   createTodayCountMetric,
   createThisMonthCountMetric,
+  createThisMonthSumMetric,
+  createLastMonthSumMetric,
+  createYearToDateSumMetric,
+  createTopValueMetric,
+  createTopValueByAmountMetric,
   createAverageMetric,
   createExpiringMetric,
 } from '@/lib/metric-factories'
@@ -359,5 +364,179 @@ describe('createExpiringMetric', () => {
     const items: Item[] = [{ expires_at: null }, { expires_at: undefined }]
     const metric = createExpiringMetric('expires_at', 7, 'Expiring Soon', MockIcon)
     expect(metric.compute(items, 2, {})).toBe(0)
+  })
+})
+
+// ============================================================================
+// createThisMonthSumMetric
+// ============================================================================
+
+describe('createThisMonthSumMetric', () => {
+  const thisMonthDate = new Date().toISOString()
+  const lastYearDate = new Date(new Date().getFullYear() - 1, 0, 1).toISOString()
+
+  it('sums items from the current month and formats as currency', () => {
+    const items: Item[] = [
+      { amount: 5000, created_at: thisMonthDate },
+      { amount: 3000, created_at: lastYearDate }, // old, excluded
+    ]
+    const metric = createThisMonthSumMetric<Item>('amount', 'created_at', 'This Month', MockIcon)
+    const result = metric.compute(items, items.length, {})
+    expect(String(result)).toContain('5,000')
+  })
+
+  it('returns ₹0 when no items are from this month', () => {
+    const items: Item[] = [{ amount: 1000, created_at: lastYearDate }]
+    const metric = createThisMonthSumMetric<Item>('amount', 'created_at', 'This Month', MockIcon)
+    const result = String(metric.compute(items, 1, {}))
+    expect(result).toContain('0')
+  })
+
+  it('uses custom id when provided', () => {
+    const metric = createThisMonthSumMetric<Item>('amount', 'date', 'Month Sum', MockIcon, { id: 'month_revenue' })
+    expect(metric.id).toBe('month_revenue')
+  })
+})
+
+// ============================================================================
+// createLastMonthSumMetric
+// ============================================================================
+
+describe('createLastMonthSumMetric', () => {
+  const lastMonthDate = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 15).toISOString()
+  const thisMonthDate = new Date().toISOString()
+
+  it('sums items from last month only', () => {
+    const items: Item[] = [
+      { amount: 4000, created_at: lastMonthDate },
+      { amount: 2000, created_at: thisMonthDate }, // this month, excluded
+    ]
+    const metric = createLastMonthSumMetric<Item>('amount', 'created_at', 'Last Month', MockIcon)
+    const result = String(metric.compute(items, items.length, {}))
+    expect(result).toContain('4,000')
+  })
+
+  it('returns ₹0 when no items from last month', () => {
+    const items: Item[] = [{ amount: 500, created_at: thisMonthDate }]
+    const metric = createLastMonthSumMetric<Item>('amount', 'created_at', 'Last Month', MockIcon)
+    const result = String(metric.compute(items, 1, {}))
+    expect(result).toContain('0')
+  })
+
+  it('defaults id to last_month', () => {
+    const metric = createLastMonthSumMetric<Item>('amount', 'date', 'Last Month', MockIcon)
+    expect(metric.id).toBe('last_month')
+  })
+})
+
+// ============================================================================
+// createYearToDateSumMetric
+// ============================================================================
+
+describe('createYearToDateSumMetric', () => {
+  const thisYearDate = new Date(new Date().getFullYear(), 0, 15).toISOString()
+  const lastYearDate = new Date(new Date().getFullYear() - 1, 11, 31).toISOString()
+
+  it('sums items from this year', () => {
+    const items: Item[] = [
+      { amount: 10000, created_at: thisYearDate },
+      { amount: 5000, created_at: lastYearDate }, // last year, excluded
+    ]
+    const metric = createYearToDateSumMetric<Item>('amount', 'created_at', 'YTD', MockIcon)
+    const result = String(metric.compute(items, items.length, {}))
+    expect(result).toContain('10,000')
+  })
+
+  it('defaults id to ytd', () => {
+    const metric = createYearToDateSumMetric<Item>('amount', 'date', 'YTD', MockIcon)
+    expect(metric.id).toBe('ytd')
+  })
+})
+
+// ============================================================================
+// createTopValueMetric
+// ============================================================================
+
+describe('createTopValueMetric', () => {
+  it('returns the most frequent value', () => {
+    const items: Item[] = [
+      { method: 'cash' },
+      { method: 'upi' },
+      { method: 'upi' },
+      { method: 'cash' },
+      { method: 'cash' },
+    ]
+    const metric = createTopValueMetric<Item>('method', 'top_method', 'Top Method', MockIcon)
+    expect(metric.compute(items, 5, {})).toBe('cash')
+  })
+
+  it('maps value to label when labelMap is provided', () => {
+    const items: Item[] = [{ method: 'upi' }, { method: 'upi' }]
+    const metric = createTopValueMetric<Item>('method', 'top_method', 'Top Method', MockIcon, {
+      labelMap: { upi: 'UPI', cash: 'Cash' },
+    })
+    expect(metric.compute(items, 2, {})).toBe('UPI')
+  })
+
+  it('returns em dash when no items', () => {
+    const metric = createTopValueMetric<Item>('method', 'top_method', 'Top Method', MockIcon)
+    expect(metric.compute([], 0, {})).toBe('—')
+  })
+
+  it('uses custom emptyValue', () => {
+    const metric = createTopValueMetric<Item>('method', 'top_method', 'Top Method', MockIcon, { emptyValue: 'N/A' })
+    expect(metric.compute([], 0, {})).toBe('N/A')
+  })
+
+  it('skips items where field value is falsy', () => {
+    const items: Item[] = [{ method: null }, { method: '' }, { method: 'cash' }]
+    const metric = createTopValueMetric<Item>('method', 'top_method', 'Top Method', MockIcon)
+    expect(metric.compute(items, 3, {})).toBe('cash')
+  })
+})
+
+// ============================================================================
+// createTopValueByAmountMetric
+// ============================================================================
+
+describe('createTopValueByAmountMetric', () => {
+  it('returns the group with the highest total amount', () => {
+    const items: Item[] = [
+      { category: 'Food', amount: 500 },
+      { category: 'Rent', amount: 15000 },
+      { category: 'Food', amount: 800 },
+    ]
+    const metric = createTopValueByAmountMetric<Item>('category', 'amount', 'top_cat', 'Top Category', MockIcon)
+    expect(metric.compute(items, 3, {})).toBe('Rent')
+  })
+
+  it('supports nested groupField via dot notation', () => {
+    const items: Item[] = [
+      { type: { name: 'Grocery' }, amount: 200 },
+      { type: { name: 'Travel' }, amount: 5000 },
+    ]
+    const metric = createTopValueByAmountMetric<Item>('type.name', 'amount', 'top', 'Top', MockIcon)
+    expect(metric.compute(items, 2, {})).toBe('Travel')
+  })
+
+  it('returns em dash when no items', () => {
+    const metric = createTopValueByAmountMetric<Item>('category', 'amount', 'top', 'Top', MockIcon)
+    expect(metric.compute([], 0, {})).toBe('—')
+  })
+
+  it('scopes to current month when dateField is provided', () => {
+    const thisMonthDate = new Date().toISOString()
+    const lastYearDate = new Date(new Date().getFullYear() - 1, 0, 1).toISOString()
+    const items: Item[] = [
+      { category: 'OldCategory', amount: 99999, date: lastYearDate }, // excluded
+      { category: 'NewCategory', amount: 100, date: thisMonthDate },
+    ]
+    const metric = createTopValueByAmountMetric<Item>('category', 'amount', 'top', 'Top', MockIcon, { dateField: 'date' })
+    expect(metric.compute(items, 2, {})).toBe('NewCategory')
+  })
+
+  it('uses custom emptyValue when no items', () => {
+    const metric = createTopValueByAmountMetric<Item>('category', 'amount', 'top', 'Top', MockIcon, { emptyValue: 'None' })
+    expect(metric.compute([], 0, {})).toBe('None')
   })
 })
