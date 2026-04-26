@@ -9,7 +9,7 @@ import { useDetailPage, NOTICE_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import {
   DetailHero,
   DetailSection,
@@ -370,8 +370,7 @@ export default function NoticeDetailPage() {
         icon={Target}
       >
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="property_id">Property</Label>
+          <FormField label="Property" htmlFor="property_id">
             <Select
               id="property_id"
               name="property_id"
@@ -384,10 +383,9 @@ export default function NoticeDetailPage() {
                 label: property.name,
               }))}
             />
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <Label>Audience</Label>
+          <FormField label="Audience">
             <Select
               name="target_audience"
               value={formData.target_audience}
@@ -399,7 +397,7 @@ export default function NoticeDetailPage() {
                 { value: "specific_rooms", label: "Specific Rooms" },
               ]}
             />
-          </div>
+          </FormField>
 
           {/* Room Selection */}
           {formData.target_audience === "specific_rooms" && formData.property_id && (
@@ -443,8 +441,7 @@ export default function NoticeDetailPage() {
         icon={FileText}
       >
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
+          <FormField label="Title" htmlFor="title" required>
             <Input
               id="title"
               name="title"
@@ -454,10 +451,9 @@ export default function NoticeDetailPage() {
               required
               disabled={saving}
             />
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <Label htmlFor="content">Content *</Label>
+          <FormField label="Content" htmlFor="content" required>
             <textarea
               id="content"
               name="content"
@@ -469,11 +465,10 @@ export default function NoticeDetailPage() {
               rows={6}
               className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
             />
-          </div>
+          </FormField>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="expires_at">Expires On</Label>
+            <FormField label="Expires On" htmlFor="expires_at">
               <Input
                 id="expires_at"
                 name="expires_at"
@@ -482,7 +477,7 @@ export default function NoticeDetailPage() {
                 onChange={handleChange}
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             <div className="space-y-2">
               <Label>Status</Label>

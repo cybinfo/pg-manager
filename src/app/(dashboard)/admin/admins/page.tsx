@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Badge } from "@/components/ui/badge"
 import { Avatar } from "@/components/ui/avatar"
 import { withCreatedBy } from "@/lib/audit"
@@ -477,8 +478,7 @@ export default function PlatformAdminsPage() {
           )}
 
           {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="admin-notes">Notes (optional)</Label>
+          <FormField label="Notes (optional)" htmlFor="admin-notes">
             <textarea
               id="admin-notes"
               className="w-full min-h-[80px] px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
@@ -487,7 +487,7 @@ export default function PlatformAdminsPage() {
               onChange={(e) => setNotes(e.target.value)}
               disabled={granting}
             />
-          </div>
+          </FormField>
 
           {/* Grant button */}
           <div className="flex justify-end">
