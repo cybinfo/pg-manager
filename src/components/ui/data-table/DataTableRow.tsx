@@ -30,6 +30,8 @@ export function DataTableRow<T extends object>({
 }: DataTableRowProps<T>) {
   return (
     <div
+      role="row"
+      aria-selected={selectable ? !!isSelected : undefined}
       className={cn(
         "px-4 py-3 transition-colors",
         isClickable && "cursor-pointer hover:bg-muted",
@@ -43,7 +45,7 @@ export function DataTableRow<T extends object>({
         style={{ gridTemplateColumns: gridTemplate }}
       >
         {selectable && (
-          <div className="flex items-center justify-center">
+          <div role="gridcell" className="flex items-center justify-center">
             <input
               type="checkbox"
               checked={!!isSelected}
@@ -58,15 +60,15 @@ export function DataTableRow<T extends object>({
           </div>
         )}
         {visibleColumns.map((column) => (
-          <div key={column.key} className={cn("text-sm min-w-0", column.className)}>
+          <div role="gridcell" key={column.key} className={cn("text-sm min-w-0", column.className)}>
             {column.render
               ? column.render(row)
               : String((row as Record<string, unknown>)[column.key] ?? "")}
           </div>
         ))}
         {isClickable && (
-          <div className="flex justify-end">
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <div role="gridcell" className="flex justify-end">
+            <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </div>
         )}
       </div>

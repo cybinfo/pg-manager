@@ -379,7 +379,7 @@ export function DataTable<T extends object>({
         />
       )}
 
-      <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
+      <div role="grid" aria-label="Data table" className="bg-card rounded-xl border shadow-sm overflow-hidden">
         {/* Group Controls - shown when grouping is active */}
         {groupedData && collapsibleGroups && (
           <DataTableGroupControls
@@ -423,7 +423,7 @@ export function DataTable<T extends object>({
 
         {/* Data Rows */}
         {!loading && processedData.length > 0 && (
-          <div className="divide-y">
+          <div role="rowgroup" className="divide-y">
             {groupedData ? (
               // Grouped rendering - recursive for nested groups
               <NestedGroupRenderer

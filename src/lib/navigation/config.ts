@@ -170,6 +170,8 @@ export const LIBRARY_MEMBER_NAVIGATION: SimpleNavItem[] = [
   { name: "Attendance", href: "/member/attendance", icon: Clock },
   { name: "My Locker", href: "/member/locker", icon: Lock },
   { name: "Payments", href: "/member/payments", icon: CreditCard },
+  { name: "Complaints", href: "/member/complaints", icon: MessageSquare },
+  { name: "Notices", href: "/member/notices", icon: Bell },
   { name: "My QR Code", href: "/member/qr", icon: QrCode },
 ]
 

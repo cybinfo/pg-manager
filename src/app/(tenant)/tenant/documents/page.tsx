@@ -191,7 +191,7 @@ export default function TenantDocumentsPage() {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold">{documents.length}</p>
