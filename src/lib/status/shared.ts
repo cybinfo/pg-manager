@@ -52,6 +52,7 @@ export const INQUIRY_SOURCE_LABELS: Record<string, string> = {
   website: "Website Form",
   whatsapp: "WhatsApp",
   phone: "Phone Call",
+  walk_in: "Walk-in",
 }
 
 export const INQUIRY_STATUS_COLORS: Record<string, string> = {
@@ -65,6 +66,7 @@ export const INQUIRY_SOURCE_COLORS: Record<string, string> = {
   website: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
   whatsapp: "bg-success/10 text-success",
   phone: "bg-warning/10 text-warning",
+  walk_in: "bg-info/10 text-info",
 }
 
 // ============================================================================

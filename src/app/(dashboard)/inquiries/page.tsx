@@ -178,6 +178,7 @@ const filters: FilterConfig[] = [
       { value: "website", label: "Website" },
       { value: "whatsapp", label: "WhatsApp" },
       { value: "phone", label: "Phone" },
+      { value: "walk_in", label: "Walk-in" },
     ],
   },
   PROPERTY_FILTER,
@@ -228,6 +229,7 @@ const advancedFilterColumns: FilterableColumn[] = [
       { value: "website", label: "Website" },
       { value: "whatsapp", label: "WhatsApp" },
       { value: "phone", label: "Phone" },
+      { value: "walk_in", label: "Walk-in" },
     ],
   },
   {
