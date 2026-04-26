@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 
 // ============================================
 // Types
@@ -324,15 +324,14 @@ export function ApprovalReviewDialog({
 
             {/* Decision Notes */}
             {approval.status === "pending" && (
-              <div className="space-y-2">
-                <Label htmlFor="notes">Decision Notes {approval.status === "pending" && "(required for rejection)"}</Label>
+              <FormField label={`Decision Notes${approval.status === "pending" ? " (required for rejection)" : ""}`} htmlFor="notes">
                 <Textarea
                   id="notes"
                   placeholder="Add notes about your decision..."
                   value={decisionNotes}
                   onChange={(e) => setDecisionNotes(e.target.value)}
                 />
-              </div>
+              </FormField>
             )}
 
             {/* Previous Decision */}

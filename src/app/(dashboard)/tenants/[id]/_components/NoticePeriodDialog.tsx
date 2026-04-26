@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Loader2, Bell } from "lucide-react"
 import { getTodayISO } from "@/lib/date-helpers"
 import { formatDate } from "@/lib/format"
@@ -52,8 +52,7 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="notice_date">Notice Given Date *</Label>
+            <FormField label="Notice Given Date" htmlFor="notice_date" required hint="When did/will the tenant give notice?">
               <Input
                 id="notice_date"
                 type="date"
@@ -70,13 +69,9 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
                 }}
                 required
               />
-              <p className="text-xs text-muted-foreground">
-                When did/will the tenant give notice?
-              </p>
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="expected_exit_date">Expected Exit Date *</Label>
+            <FormField label="Expected Exit Date" htmlFor="expected_exit_date" required hint="Last day of stay">
               <Input
                 id="expected_exit_date"
                 type="date"
@@ -84,10 +79,7 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
                 onChange={(e) => setNoticeData({ ...noticeData, expected_exit_date: e.target.value })}
                 required
               />
-              <p className="text-xs text-muted-foreground">
-                Last day of stay
-              </p>
-            </div>
+            </FormField>
           </div>
 
           {noticeData.notice_date && noticeData.expected_exit_date && (
@@ -100,15 +92,14 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="notice_notes">Reason / Notes (Optional)</Label>
+          <FormField label="Reason / Notes (Optional)" htmlFor="notice_notes">
             <Input
               id="notice_notes"
               value={noticeData.notice_notes}
               onChange={(e) => setNoticeData({ ...noticeData, notice_notes: e.target.value })}
               placeholder="e.g., Job relocation, personal reasons..."
             />
-          </div>
+          </FormField>
         </CardContent>
         <div className="flex justify-end gap-2 p-4 pt-0">
           <Button variant="outline" onClick={onClose} disabled={loading}>
