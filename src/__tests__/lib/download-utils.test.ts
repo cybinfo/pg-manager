@@ -699,3 +699,18 @@ describe('Client-side download functions', () => {
     })
   })
 })
+
+// ============================================================================
+// api-download-helpers (deprecated re-export of download-utils)
+// ============================================================================
+
+describe("api-download-helpers re-exports", () => {
+  it("re-exports all server response helpers from the deprecated path", async () => {
+    const deprecated = await import("@/lib/api-download-helpers")
+    expect(typeof deprecated.createPDFResponse).toBe("function")
+    expect(typeof deprecated.createCSVResponse).toBe("function")
+    expect(typeof deprecated.createJSONResponse).toBe("function")
+    expect(typeof deprecated.createFileResponse).toBe("function")
+    expect(typeof deprecated.createStreamingResponse).toBe("function")
+  })
+})
