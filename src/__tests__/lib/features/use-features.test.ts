@@ -2,8 +2,8 @@
  * Tests for feature flags system
  *
  * Tests the pure functions from the features index module
- * (getDefaultFeatureFlags, isFeatureEnabled, getFeaturesByCategory, featureDisabledError)
- * and the cache invalidation from use-features.
+ * (getDefaultFeatureFlags, isFeatureEnabled, getFeaturesByCategory, featureDisabledError,
+ * checkFeatureEnabled) and the cache invalidation from use-features.
  */
 
 import {
@@ -13,6 +13,7 @@ import {
   getFeaturesByCategory,
   CATEGORY_LABELS,
   featureDisabledError,
+  checkFeatureEnabled,
 } from '@/lib/features/index'
 
 import type { FeatureFlags, FeatureFlagKey } from '@/lib/features/index'
@@ -332,6 +333,61 @@ describe('Feature Flags System', () => {
       const result = featureDisabledError('demoMode')
 
       expect(result.error).toMatch(/The ".*" feature is not enabled for this workspace/)
+    })
+  })
+
+  describe('checkFeatureEnabled', () => {
+    function makeSupabase(result: unknown) {
+      const proxy: Record<string, jest.Mock> = {}
+      proxy.from = jest.fn().mockReturnValue(proxy)
+      proxy.select = jest.fn().mockReturnValue(proxy)
+      proxy.eq = jest.fn().mockReturnValue(proxy)
+      proxy.single = jest.fn().mockResolvedValue(result)
+      return proxy as unknown as import('@supabase/supabase-js').SupabaseClient
+    }
+
+    it('returns true when feature flag is enabled in workspace settings', async () => {
+      const supabase = makeSupabase({ data: { settings: { features: { food: true } } }, error: null })
+      const result = await checkFeatureEnabled(supabase, 'ws-1', 'food')
+      expect(result).toBe(true)
+    })
+
+    it('returns false when feature flag is disabled in workspace settings', async () => {
+      const supabase = makeSupabase({ data: { settings: { features: { approvals: false } } }, error: null })
+      const result = await checkFeatureEnabled(supabase, 'ws-1', 'approvals')
+      expect(result).toBe(false)
+    })
+
+    it('falls back to default when feature not in settings', async () => {
+      const supabase = makeSupabase({ data: { settings: { features: {} } }, error: null })
+      // approvals defaults to true
+      expect(await checkFeatureEnabled(supabase, 'ws-1', 'approvals')).toBe(true)
+      // food defaults to false
+      expect(await checkFeatureEnabled(supabase, 'ws-1', 'food')).toBe(false)
+    })
+
+    it('falls back to default when workspace not found (error)', async () => {
+      const supabase = makeSupabase({ data: null, error: { message: 'not found' } })
+      // approvals defaults to true
+      expect(await checkFeatureEnabled(supabase, 'ws-missing', 'approvals')).toBe(true)
+    })
+
+    it('falls back to default when workspace data is null', async () => {
+      const supabase = makeSupabase({ data: null, error: null })
+      expect(await checkFeatureEnabled(supabase, 'ws-1', 'food')).toBe(false)
+    })
+
+    it('falls back to default when settings.features is null', async () => {
+      const supabase = makeSupabase({ data: { settings: null }, error: null })
+      expect(await checkFeatureEnabled(supabase, 'ws-1', 'approvals')).toBe(true)
+    })
+
+    it('returns false on thrown exception (fallback)', async () => {
+      const proxy = {
+        from: jest.fn().mockImplementation(() => { throw new Error('db crash') }),
+      } as unknown as import('@supabase/supabase-js').SupabaseClient
+      // food defaults to false
+      expect(await checkFeatureEnabled(proxy, 'ws-1', 'food')).toBe(false)
     })
   })
 
