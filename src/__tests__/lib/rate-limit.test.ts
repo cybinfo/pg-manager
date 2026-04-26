@@ -3,7 +3,7 @@
  * Tests for rate limiter utility functions
  */
 
-import { createRateLimiter, getClientIdentifier, rateLimitHeaders } from "@/lib/rate-limit"
+import { createRateLimiter, getClientIdentifier, rateLimitHeaders, withRateLimit } from "@/lib/rate-limit"
 
 describe("Rate Limiting", () => {
   describe("createRateLimiter", () => {
@@ -231,6 +231,69 @@ describe("Rate Limiting", () => {
       const headers = rateLimitHeaders(result) as Record<string, string | undefined>
 
       expect(headers["Retry-After"]).toBeUndefined()
+    })
+  })
+
+  describe("cleanup (triggered after CLEANUP_INTERVAL)", () => {
+    it("removes expired entries when more than 1 minute has passed", async () => {
+      const limiter = createRateLimiter({
+        windowMs: 50, // very short window — entries expire quickly
+        max: 1,
+        prefix: "cleanup-test",
+      })
+
+      // Create an entry by checking
+      await limiter.check("cleanup-user")
+
+      // Advance Date.now past CLEANUP_INTERVAL (60s) so cleanup fires next check
+      const realNow = Date.now()
+      jest.spyOn(Date, "now").mockReturnValue(realNow + 61000)
+
+      // This check triggers cleanup; the previous entry should be purged
+      // (since its resetTime = realNow + 50ms < realNow + 61000)
+      const result = await limiter.check("cleanup-user")
+
+      // New window started, so it should succeed
+      expect(result.success).toBe(true)
+
+      jest.spyOn(Date, "now").mockRestore()
+    })
+  })
+
+  describe("withRateLimit", () => {
+    it("returns 429 when rate limit is exceeded", async () => {
+      const limiter = createRateLimiter({ windowMs: 60000, max: 1, prefix: "wrl-block" })
+
+      const req = new Request("https://example.com", { headers: { "x-forwarded-for": "1.2.3.4" } })
+
+      // Exhaust the limit
+      await limiter.check("1.2.3.4")
+
+      const response = await withRateLimit(req, limiter, async () => new Response("OK"))
+
+      expect(response.status).toBe(429)
+      const body = await response.json()
+      expect(body.error).toBe("TOO_MANY_REQUESTS")
+    })
+
+    it("calls handler and returns its response when under limit", async () => {
+      const limiter = createRateLimiter({ windowMs: 60000, max: 10, prefix: "wrl-ok" })
+      const req = new Request("https://example.com", { headers: { "x-forwarded-for": "5.6.7.8" } })
+
+      const handler = jest.fn().mockResolvedValue(new Response("Hello", { status: 200 }))
+      const response = await withRateLimit(req, limiter, handler)
+
+      expect(handler).toHaveBeenCalled()
+      expect(response.status).toBe(200)
+    })
+
+    it("returns 200 with the handler's body", async () => {
+      const limiter = createRateLimiter({ windowMs: 60000, max: 5, prefix: "wrl-headers-2" })
+      const req = new Request("https://example.com", { headers: { "x-forwarded-for": "10.0.0.1" } })
+
+      const response = await withRateLimit(req, limiter, async () => new Response("Hello", { status: 200 }))
+
+      expect(response.status).toBe(200)
     })
   })
 })
