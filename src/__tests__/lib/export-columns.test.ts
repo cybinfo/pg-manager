@@ -11,6 +11,11 @@ import {
   formatCurrencyForExport,
   formatDecimalForExport,
   resolveNestedValue,
+  nestedColumn,
+  dateExportColumn,
+  dateTimeExportColumn,
+  currencyExportColumn,
+  labelMapColumn,
 } from "@/lib/export-columns"
 
 // ============================================================================
@@ -217,5 +222,148 @@ describe("resolveNestedValue", () => {
   it("returns numeric values as-is", () => {
     const row = { stats: { count: 42 } }
     expect(resolveNestedValue(row, "stats.count")).toBe(42)
+  })
+})
+
+// ============================================================================
+// nestedColumn
+// ============================================================================
+
+describe("nestedColumn", () => {
+  type Row = { person: { name: string; phone?: string }; amount: number }
+
+  it("resolves a nested path and stringifies the value", () => {
+    const col = nestedColumn<Row>("person_name", "Name", "person.name")
+    const result = col.format!(undefined, { person: { name: "Rajat" }, amount: 0 })
+    expect(result).toBe("Rajat")
+  })
+
+  it("returns empty string when nested path is missing", () => {
+    const col = nestedColumn<Row>("person_phone", "Phone", "person.phone")
+    const result = col.format!(undefined, { person: { name: "Rajat" }, amount: 0 })
+    expect(result).toBe("")
+  })
+
+  it("applies a custom format function when provided", () => {
+    const col = nestedColumn<Row>(
+      "person_name",
+      "Name (Upper)",
+      "person.name",
+      (val) => String(val).toUpperCase()
+    )
+    const result = col.format!(undefined, { person: { name: "rajat" }, amount: 0 })
+    expect(result).toBe("RAJAT")
+  })
+
+  it("sets key and header correctly", () => {
+    const col = nestedColumn<Row>("person_name", "Person Name", "person.name")
+    expect(col.key).toBe("person_name")
+    expect(col.header).toBe("Person Name")
+  })
+})
+
+// ============================================================================
+// dateExportColumn
+// ============================================================================
+
+describe("dateExportColumn", () => {
+  type Row = { created_at: string }
+
+  it("formats the field value as DD/MM/YYYY", () => {
+    const col = dateExportColumn<Row>("created_at", "Created At")
+    const result = col.format!("2024-06-15", { created_at: "2024-06-15" })
+    expect(result).toBe("15/06/2024")
+  })
+
+  it("returns empty string for null value", () => {
+    const col = dateExportColumn<Row>("created_at", "Created At")
+    const result = col.format!(null, { created_at: "" })
+    expect(result).toBe("")
+  })
+
+  it("sets key and header correctly", () => {
+    const col = dateExportColumn<Row>("created_at", "Date")
+    expect(col.key).toBe("created_at")
+    expect(col.header).toBe("Date")
+  })
+})
+
+// ============================================================================
+// dateTimeExportColumn
+// ============================================================================
+
+describe("dateTimeExportColumn", () => {
+  type Row = { updated_at: string }
+
+  it("formats the field value with date and time", () => {
+    const col = dateTimeExportColumn<Row>("updated_at", "Updated At")
+    const result = col.format!("2024-06-15T10:30:00Z", { updated_at: "2024-06-15T10:30:00Z" })
+    expect(result).toMatch(/\d{2}\/\d{2}\/\d{4}/)
+  })
+
+  it("returns empty string for null value", () => {
+    const col = dateTimeExportColumn<Row>("updated_at", "Updated At")
+    const result = col.format!(null, { updated_at: "" })
+    expect(result).toBe("")
+  })
+})
+
+// ============================================================================
+// currencyExportColumn
+// ============================================================================
+
+describe("currencyExportColumn", () => {
+  type Row = { amount: number }
+
+  it("formats the value with ₹ prefix", () => {
+    const col = currencyExportColumn<Row>("amount", "Amount")
+    const result = col.format!(5000, { amount: 5000 })
+    expect(result).toContain("₹")
+    expect(result).toContain("5,000")
+  })
+
+  it("returns empty string for null value", () => {
+    const col = currencyExportColumn<Row>("amount", "Amount")
+    const result = col.format!(null, { amount: 0 })
+    expect(result).toBe("")
+  })
+
+  it("sets key and header correctly", () => {
+    const col = currencyExportColumn<Row>("amount", "Payment Amount")
+    expect(col.key).toBe("amount")
+    expect(col.header).toBe("Payment Amount")
+  })
+})
+
+// ============================================================================
+// labelMapColumn
+// ============================================================================
+
+describe("labelMapColumn", () => {
+  type Row = { status: string }
+  const STATUS_LABELS = { active: "Active", checked_out: "Checked Out", notice_period: "Notice Period" }
+
+  it("maps a known key to its label", () => {
+    const col = labelMapColumn<Row>("status", "Status", STATUS_LABELS)
+    const result = col.format!("active", { status: "active" })
+    expect(result).toBe("Active")
+  })
+
+  it("falls back to the raw value for unknown keys", () => {
+    const col = labelMapColumn<Row>("status", "Status", STATUS_LABELS)
+    const result = col.format!("unknown_status", { status: "unknown_status" })
+    expect(result).toBe("unknown_status")
+  })
+
+  it("returns empty string for null value", () => {
+    const col = labelMapColumn<Row>("status", "Status", STATUS_LABELS)
+    const result = col.format!(null, { status: "" })
+    expect(result).toBe("")
+  })
+
+  it("sets key and header correctly", () => {
+    const col = labelMapColumn<Row>("status", "Status", STATUS_LABELS)
+    expect(col.key).toBe("status")
+    expect(col.header).toBe("Status")
   })
 })
