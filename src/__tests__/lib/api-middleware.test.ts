@@ -76,6 +76,7 @@ import {
   validateSensitiveRequest,
   checkTenantAccess,
   validateTenantRequest,
+  withApiMiddleware,
 } from "@/lib/api-middleware"
 
 // Helper to extract JSON body from a response
@@ -992,6 +993,168 @@ describe("API Middleware Utilities", () => {
       expect(result.success).toBe(true)
       expect(result.tenant).toEqual(tenantData)
       expect(result.user).toEqual({ id: userId, email: "owner@test.com" })
+    })
+  })
+
+  // ==========================================================================
+  // withApiMiddleware (lines 434-492)
+  // ==========================================================================
+
+  describe("withApiMiddleware", () => {
+    const makeRequest = (method = "GET", body?: object) =>
+      new Request("https://example.com/api/test", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      }) as unknown as import("next/server").NextRequest
+
+    it("calls handler and returns its response when auth passes", async () => {
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1", email: "test@example.com" } } })
+
+      const handler = jest.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }))
+      const response = await withApiMiddleware(makeRequest(), {}, handler)
+
+      expect(handler).toHaveBeenCalledWith(
+        expect.objectContaining({ user: { id: "user-1", email: "test@example.com" } })
+      )
+      expect(response.status).toBe(200)
+    })
+
+    it("returns 429 when rate limit is exceeded", async () => {
+      mockApiCheck.mockResolvedValue({ success: false, limit: 100, remaining: 0, reset: 1700000000, retryAfter: 30 })
+
+      const handler = jest.fn()
+      const response = await withApiMiddleware(makeRequest(), {}, handler)
+
+      expect(response.status).toBe(429)
+      expect(handler).not.toHaveBeenCalled()
+    })
+
+    it("returns 403 when CSRF validation fails (requireCsrf: true)", async () => {
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+      mockValidateCsrfToken.mockReturnValue({ valid: false, error: "CSRF failed" })
+
+      const handler = jest.fn()
+      const response = await withApiMiddleware(makeRequest("POST"), { requireCsrf: true }, handler)
+
+      expect(response.status).toBe(403)
+      expect(handler).not.toHaveBeenCalled()
+    })
+
+    it("uses fallback CSRF error message when error field is undefined (line 453 false branch)", async () => {
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+      mockValidateCsrfToken.mockReturnValue({ valid: false, error: undefined })
+
+      const handler = jest.fn()
+      const response = await withApiMiddleware(makeRequest("POST"), { requireCsrf: true }, handler)
+
+      expect(response.status).toBe(403)
+      const body = await getResponseBody(response)
+      const error = body.error as Record<string, unknown>
+      expect(error.message).toBe("CSRF validation failed")
+    })
+
+    it("passes CSRF check and calls handler when token is valid (requireCsrf: true)", async () => {
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+      mockValidateCsrfToken.mockReturnValue({ valid: true })
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1", email: "test@example.com" } } })
+
+      const handler = jest.fn().mockResolvedValue(new Response(null, { status: 200 }))
+      const response = await withApiMiddleware(makeRequest("POST"), { requireCsrf: true }, handler)
+
+      expect(mockValidateCsrfToken).toHaveBeenCalled()
+      expect(handler).toHaveBeenCalled()
+      expect(response.status).toBe(200)
+    })
+
+    it("returns 401 when auth is required but user is not authenticated", async () => {
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+      mockGetUser.mockResolvedValue({ data: { user: null } })
+
+      const handler = jest.fn()
+      const response = await withApiMiddleware(makeRequest(), { requireAuth: true }, handler)
+
+      expect(response.status).toBe(401)
+      expect(handler).not.toHaveBeenCalled()
+    })
+
+    it("skips auth when requireAuth is false", async () => {
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+
+      const handler = jest.fn().mockResolvedValue(new Response(null, { status: 200 }))
+      const response = await withApiMiddleware(makeRequest(), { requireAuth: false }, handler)
+
+      expect(mockGetUser).not.toHaveBeenCalled()
+      expect(handler).toHaveBeenCalled()
+      expect(response.status).toBe(200)
+    })
+
+    it("validates request body and passes parsed data to handler", async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { z } = require("zod")
+      const schema = z.object({ name: z.string() })
+
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1", email: "test@example.com" } } })
+
+      const handler = jest.fn().mockResolvedValue(new Response(null, { status: 200 }))
+      const response = await withApiMiddleware(makeRequest("POST", { name: "Alice" }), { bodySchema: schema }, handler)
+
+      expect(handler).toHaveBeenCalledWith(expect.objectContaining({ body: { name: "Alice" } }))
+      expect(response.status).toBe(200)
+    })
+
+    it("returns 400 when body validation fails", async () => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { z } = require("zod")
+      const schema = z.object({ name: z.string().min(1) })
+
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1", email: "test@example.com" } } })
+
+      const handler = jest.fn()
+      const response = await withApiMiddleware(makeRequest("POST", { name: "" }), { bodySchema: schema }, handler)
+
+      expect(response.status).toBe(400)
+      expect(handler).not.toHaveBeenCalled()
+    })
+
+    it("returns 500 with error message when handler throws an Error", async () => {
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1", email: "test@example.com" } } })
+
+      const handler = jest.fn().mockRejectedValue(new Error("Unexpected failure"))
+      const response = await withApiMiddleware(makeRequest(), {}, handler)
+
+      expect(response.status).toBe(500)
+      const body = await getResponseBody(response)
+      const error = body.error as Record<string, unknown>
+      expect(error.message).toBe("Unexpected failure")
+    })
+
+    it("returns 500 with generic message when handler throws a non-Error", async () => {
+      mockApiCheck.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: 1700000000 })
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1", email: "test@example.com" } } })
+
+      const handler = jest.fn().mockRejectedValue("string error")
+      const response = await withApiMiddleware(makeRequest(), {}, handler)
+
+      expect(response.status).toBe(500)
+      const body = await getResponseBody(response)
+      const error = body.error as Record<string, unknown>
+      expect(error.message).toBe("Internal server error")
+    })
+
+    it("uses 'sensitive' limiter when specified in options", async () => {
+      mockSensitiveCheck.mockResolvedValue({ success: true, limit: 3, remaining: 2, reset: 1700000000 })
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+
+      const handler = jest.fn().mockResolvedValue(new Response(null, { status: 200 }))
+      await withApiMiddleware(makeRequest(), { limiter: "sensitive" }, handler)
+
+      expect(mockSensitiveCheck).toHaveBeenCalled()
+      expect(mockApiCheck).not.toHaveBeenCalled()
     })
   })
 })
