@@ -15,7 +15,7 @@
   --popover-foreground: 224 71% 4%;
 
   /* Primary - Teal (Brand Color) */
-  --primary: 160 84% 39%;
+  --primary: 160 84% 28%;
   --primary-foreground: 0 0% 100%;
 
   /* Secondary */
@@ -24,20 +24,20 @@
 
   /* Muted */
   --muted: 220 14% 96%;
-  --muted-foreground: 220 9% 46%;
+  --muted-foreground: 220 9% 35%;
 
   /* Accent - Amber */
   --accent: 38 92% 50%;
   --accent-foreground: 0 0% 0%;
 
   /* Destructive */
-  --destructive: 0 84% 60%;
+  --destructive: 0 84% 50%;
   --destructive-foreground: 0 0% 100%;
 
   /* Border & Input */
   --border: 220 13% 91%;
   --input: 220 13% 91%;
-  --ring: 160 84% 39%;
+  --ring: 160 84% 36%;
 
   /* Radius */
   --radius: 0.5rem;
@@ -51,19 +51,19 @@
   --z-toast: 200;
 
   /* Semantic Colors */
-  --success: 142 76% 36%;
+  --success: 142 76% 30%;
   --success-foreground: 0 0% 100%;
-  --warning: 38 92% 50%;
+  --warning: 38 92% 33%;
   --warning-foreground: 0 0% 0%;
-  --info: 199 89% 48%;
+  --info: 199 89% 37%;
   --info-foreground: 0 0% 100%;
 
   /* Chart Colors */
-  --chart-1: 160 84% 39%;
-  --chart-2: 38 92% 50%;
+  --chart-1: 160 84% 36%;
+  --chart-2: 38 92% 42%;
   --chart-3: 262 83% 58%;
-  --chart-4: 199 89% 48%;
-  --chart-5: 0 84% 60%;
+  --chart-4: 199 89% 46%;
+  --chart-5: 0 84% 50%;
 }
 
 .dark {
