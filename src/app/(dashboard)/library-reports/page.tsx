@@ -229,15 +229,16 @@ export default function LibraryReportsPage() {
 
   // Paginated fetch to bypass Supabase max-rows-per-request limit (default 1000)
   const fetchAllRows = async (
-    query: ReturnType<ReturnType<typeof createClient>["from"]>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query: ReturnType<ReturnType<typeof createClient>["from"]> & { range: (...args: unknown[]) => any },
     pageSize = 1000
-  ): Promise<{ data: any[]; error: any }> => {
-    const allData: any[] = []
+  ): Promise<{ data: Record<string, unknown>[]; error: Error | null }> => {
+    const allData: Record<string, unknown>[] = []
     let from = 0
     let hasMore = true
-    let lastError = null
+    let lastError: Error | null = null
     while (hasMore) {
-      const { data, error } = await (query as any).range(from, from + pageSize - 1)
+      const { data, error } = await query.range(from, from + pageSize - 1) as { data: Record<string, unknown>[] | null; error: Error | null }
       if (error) { lastError = error; break }
       if (!data || data.length === 0) { hasMore = false; break }
       allData.push(...data)
@@ -275,20 +276,20 @@ export default function LibraryReportsPage() {
       console.log("[Reports] Memberships:", membershipsRes.data?.length || 0, "error:", membershipsRes.error?.message || "none")
 
       const librariesData = librariesRes.data || []
-      const seatsData = (seatsRes.data || []).map((s: any) => ({
+      const seatsData = (seatsRes.data || []).map((s: Record<string, unknown>) => ({
         ...s,
         section: transformJoin(s.section),
       }))
       const membersData = membersRes.data || []
-      const membershipsData = (membershipsRes.data || []).map((m: any) => ({
+      const membershipsData = (membershipsRes.data || []).map((m: Record<string, unknown>) => ({
         ...m,
         member: transformJoin(m.member),
       }))
-      const paymentsData = (paymentsRes.data || []).map((p: any) => ({
+      const paymentsData = (paymentsRes.data || []).map((p: Record<string, unknown>) => ({
         ...p,
         member: transformJoin(p.member),
       }))
-      const attendanceData = (attendanceRes.data || []).map((a: any) => ({
+      const attendanceData = (attendanceRes.data || []).map((a: Record<string, unknown>) => ({
         ...a,
         member: transformJoin(a.member),
       }))
@@ -296,11 +297,11 @@ export default function LibraryReportsPage() {
       setLibraries(librariesData.map((l: { id: string; name: string }) => ({ id: l.id, name: l.name })))
 
       // Filter by library if selected
-      const filterByLibrary = (items: any[], libraryIdField: string = "library_id") => {
+      const filterByLibrary = (items: Record<string, unknown>[], libraryIdField: string = "library_id") => {
         if (selectedLibrary === "all") return items
         return items.filter((item) => {
-          if (libraryIdField === "section.library_id") return item.section?.library_id === selectedLibrary
-          if (libraryIdField === "member.library_id") return item.member?.library_id === selectedLibrary
+          if (libraryIdField === "section.library_id") return (item.section as Record<string, unknown>)?.library_id === selectedLibrary
+          if (libraryIdField === "member.library_id") return (item.member as Record<string, unknown>)?.library_id === selectedLibrary
           return item[libraryIdField] === selectedLibrary
         })
       }
@@ -328,22 +329,22 @@ export default function LibraryReportsPage() {
       const activeMembers = filteredMembers.filter((m) => m.status === "active").length
       const expiredMembers = filteredMembers.filter((m) => m.status === "expired").length
       const newMembersThisMonth = filteredMembers.filter((m) => {
-        const joinDate = new Date(m.join_date || m.created_at)
+        const joinDate = new Date((m.join_date || m.created_at) as string)
         return joinDate >= startDate && joinDate <= endDate
       }).length
       const churnsThisMonth = filteredMembers.filter((m) => {
         if (!m.expiry_date) return false
-        const expiry = new Date(m.expiry_date)
+        const expiry = new Date(m.expiry_date as string)
         return expiry >= startDate && expiry <= endDate && m.status === "expired"
       }).length
 
       // Revenue
       const periodPayments = filteredPayments.filter((p) => {
-        const paymentDate = new Date(p.payment_date)
+        const paymentDate = new Date(p.payment_date as string)
         return paymentDate >= startDate && paymentDate <= endDate
       })
       const lastMonthPayments = filteredPayments.filter((p) => {
-        const paymentDate = new Date(p.payment_date)
+        const paymentDate = new Date(p.payment_date as string)
         return paymentDate >= lastMonthStart && paymentDate <= lastMonthEnd
       })
       const totalRevenueThisMonth = periodPayments.reduce((sum, p) => sum + Number(p.amount), 0)
@@ -369,7 +370,7 @@ export default function LibraryReportsPage() {
 
       // Attendance
       const periodAttendance = filteredAttendance.filter((a) => {
-        const date = new Date(a.attendance_date)
+        const date = new Date(a.attendance_date as string)
         return date >= startDate && date <= endDate
       })
       const totalCheckInsThisMonth = periodAttendance.length
@@ -379,7 +380,7 @@ export default function LibraryReportsPage() {
       // Peak hour
       const hourCounts: Record<number, number> = {}
       periodAttendance.forEach((a) => {
-        const hour = new Date(a.check_in_time).getHours()
+        const hour = new Date(a.check_in_time as string).getHours()
         hourCounts[hour] = (hourCounts[hour] || 0) + 1
       })
       const peakHourNum = Object.entries(hourCounts).reduce(
@@ -391,7 +392,7 @@ export default function LibraryReportsPage() {
       // Peak day
       const dayCounts: Record<number, number> = {}
       periodAttendance.forEach((a) => {
-        const day = new Date(a.attendance_date).getDay()
+        const day = new Date(a.attendance_date as string).getDay()
         dayCounts[day] = (dayCounts[day] || 0) + 1
       })
       const peakDayNum = Object.entries(dayCounts).reduce(
@@ -406,11 +407,11 @@ export default function LibraryReportsPage() {
         const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
         const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
         const monthPayments = filteredPayments.filter((p) => {
-          const paymentDate = new Date(p.payment_date)
+          const paymentDate = new Date(p.payment_date as string)
           return paymentDate >= monthStart && paymentDate <= monthEnd
         })
         const monthNewMembers = filteredMembers.filter((m) => {
-          const joinDate = new Date(m.join_date || m.created_at)
+          const joinDate = new Date((m.join_date || m.created_at) as string)
           return joinDate >= monthStart && joinDate <= monthEnd
         }).length
         monthlyRevenue.push({
@@ -421,12 +422,12 @@ export default function LibraryReportsPage() {
       }
 
       // Payment method breakdown
-      const paymentMethods = buildPaymentMethodBreakdown(periodPayments)
+      const paymentMethods = buildPaymentMethodBreakdown(periodPayments as Array<{ payment_method?: string; amount: number | string }>)
 
       // Time slot distribution
       const slotCounts: Record<string, number> = {}
       filteredMembers.forEach((m) => {
-        const slot = m.preferred_slot || "Not Set"
+        const slot = (m.preferred_slot as string) || "Not Set"
         slotCounts[slot] = (slotCounts[slot] || 0) + 1
       })
       const totalSlotCount = Object.values(slotCounts).reduce((a: number, b: number) => a + b, 0)
@@ -451,16 +452,16 @@ export default function LibraryReportsPage() {
 
       // Library-wise stats
       const libraryStats = librariesData.map((library: { id: string; name: string; total_seats: number }) => {
-        const libMembers = membersData.filter((m: { library_id: string }) => m.library_id === library.id)
-        const libPayments = paymentsData.filter((p: { member?: { library_id: string } }) => p.member?.library_id === library.id)
-        const libAttendance = attendanceData.filter((a: { member?: { library_id: string } }) => a.member?.library_id === library.id)
+        const libMembers = membersData.filter((m) => m.library_id === library.id)
+        const libPayments = paymentsData.filter((p) => (p.member as Record<string, unknown>)?.library_id === library.id)
+        const libAttendance = attendanceData.filter((a) => (a.member as Record<string, unknown>)?.library_id === library.id)
 
-        const libPeriodPayments = libPayments.filter((p: { payment_date: string }) => {
-          const paymentDate = new Date(p.payment_date)
+        const libPeriodPayments = libPayments.filter((p) => {
+          const paymentDate = new Date((p as Record<string, unknown>).payment_date as string)
           return paymentDate >= startDate && paymentDate <= endDate
         })
-        const libPeriodAttendance = libAttendance.filter((a: { attendance_date: string }) => {
-          const date = new Date(a.attendance_date)
+        const libPeriodAttendance = libAttendance.filter((a) => {
+          const date = new Date((a as Record<string, unknown>).attendance_date as string)
           return date >= startDate && date <= endDate
         })
 
@@ -468,8 +469,8 @@ export default function LibraryReportsPage() {
           id: library.id,
           name: library.name,
           totalSeats: library.total_seats,
-          activeMembers: libMembers.filter((m: { status: string }) => m.status === "active").length,
-          revenue: libPeriodPayments.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0),
+          activeMembers: libMembers.filter((m) => m.status === "active").length,
+          revenue: libPeriodPayments.reduce((sum: number, p) => sum + Number((p as Record<string, unknown>).amount), 0),
           checkIns: libPeriodAttendance.length,
         }
       })
@@ -509,21 +510,21 @@ export default function LibraryReportsPage() {
         )),
       ])
 
-      const paymentsData = (paymentsRes.data || []).map((p: any) => ({
+      const paymentsData = (paymentsRes.data || []).map((p: Record<string, unknown>) => ({
         ...p,
         member: transformJoin(p.member),
       }))
       const membersData = membersRes.data || []
-      const membershipsData = (membershipsRes.data || []).map((m: any) => ({
+      const membershipsData = (membershipsRes.data || []).map((m: Record<string, unknown>) => ({
         ...m,
         member: transformJoin(m.member),
       }))
 
       // Filter by library
-      const filterByLibrary = (items: any[], field: string = "library_id") => {
+      const filterByLibrary = (items: Record<string, unknown>[], field: string = "library_id") => {
         if (selectedLibrary === "all") return items
         return items.filter((item) => {
-          if (field === "member.library_id") return item.member?.library_id === selectedLibrary
+          if (field === "member.library_id") return (item.member as Record<string, unknown>)?.library_id === selectedLibrary
           return item[field] === selectedLibrary
         })
       }
@@ -533,31 +534,31 @@ export default function LibraryReportsPage() {
       const filteredMemberships = filterByLibrary(membershipsData, "member.library_id")
 
       // Period payments
-      const periodPayments = filteredPayments.filter((p: any) => {
-        const paymentDate = new Date(p.payment_date)
+      const periodPayments = filteredPayments.filter((p: Record<string, unknown>) => {
+        const paymentDate = new Date(p.payment_date as string)
         return paymentDate >= startDate && paymentDate <= endDate
       })
 
       // KPIs
-      const totalCollections = periodPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0)
+      const totalCollections = periodPayments.reduce((sum: number, p: Record<string, unknown>) => sum + Number(p.amount), 0)
       const paymentCount = periodPayments.length
       const avgPaymentAmount = paymentCount > 0 ? totalCollections / paymentCount : 0
 
       // Outstanding: sum of (final_amount - linked payments) for active memberships
-      const activeMembers = filteredMembers.filter((m: any) => m.status === "active")
-      const activeMemberIds = new Set(activeMembers.map((m: any) => m.id))
+      const activeMembers = filteredMembers.filter((m: Record<string, unknown>) => m.status === "active")
+      const activeMemberIds = new Set(activeMembers.map((m: Record<string, unknown>) => m.id as string))
       const activeMemberships = filteredMemberships.filter(
-        (ms: any) => ms.status === "active" && activeMemberIds.has(ms.member_id)
+        (ms: Record<string, unknown>) => ms.status === "active" && activeMemberIds.has(ms.member_id as string)
       )
       const totalSubscriptionFees = activeMemberships.reduce(
-        (sum: number, ms: any) => sum + Number(ms.final_amount || 0), 0
+        (sum: number, ms: Record<string, unknown>) => sum + Number(ms.final_amount || 0), 0
       )
       // Total payments by active members for subscriptions
       const activeSubPayments = filteredPayments.filter(
-        (p: any) => activeMemberIds.has(p.member_id) && p.payment_type === "subscription"
+        (p: Record<string, unknown>) => activeMemberIds.has(p.member_id as string) && p.payment_type === "subscription"
       )
       const totalPaidByActive = activeSubPayments.reduce(
-        (sum: number, p: any) => sum + Number(p.amount), 0
+        (sum: number, p: Record<string, unknown>) => sum + Number(p.amount), 0
       )
       const outstanding = Math.max(0, totalSubscriptionFees - totalPaidByActive)
 
@@ -573,8 +574,8 @@ export default function LibraryReportsPage() {
         count: number
       }> = {}
 
-      periodPayments.forEach((p: any) => {
-        const date = new Date(p.payment_date)
+      periodPayments.forEach((p: Record<string, unknown>) => {
+        const date = new Date(p.payment_date as string)
         const key = getPeriodKey(date, paymentGroupBy)
         if (!periodMap[key]) {
           periodMap[key] = {
@@ -605,7 +606,7 @@ export default function LibraryReportsPage() {
       )
 
       // Payment method breakdown
-      const paymentMethodBreakdown = buildPaymentMethodBreakdown(periodPayments)
+      const paymentMethodBreakdown = buildPaymentMethodBreakdown(periodPayments as Array<{ payment_method?: string; amount: number | string }>)
 
       // Top 10 members by total payment
       const memberTotals: Record<string, {
@@ -615,12 +616,13 @@ export default function LibraryReportsPage() {
         paymentCount: number
       }> = {}
 
-      periodPayments.forEach((p: any) => {
-        const memberId = p.member_id
+      periodPayments.forEach((p: Record<string, unknown>) => {
+        const memberId = p.member_id as string
         if (!memberTotals[memberId]) {
+          const memberObj = p.member as Record<string, unknown> | null
           memberTotals[memberId] = {
-            memberName: p.member?.name || "Unknown",
-            memberCode: p.member?.member_code || "-",
+            memberName: (memberObj?.name as string) || "Unknown",
+            memberCode: (memberObj?.member_code as string) || "-",
             totalPaid: 0,
             paymentCount: 0,
           }

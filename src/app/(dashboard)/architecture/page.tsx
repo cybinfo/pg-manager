@@ -35,6 +35,7 @@ export default function ArchitecturePage() {
   const [filter, setFilter] = useState<"all" | "available" | "occupied">("all")
 
   useEffect(() => {
+    // eslint-disable-next-line react-compiler/react-compiler
     fetchData()
   }, [])
 

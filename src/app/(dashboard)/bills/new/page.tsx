@@ -243,7 +243,7 @@ function NewBillContent() {
         if (!chargeType) return
 
         let amount = 0
-        let description = `${chargeType.name} - ${formData.for_month}`
+        const description = `${chargeType.name} - ${formData.for_month}`
 
         // Determine amount based on charge type
         if (chargeType.code === "rent" && tenant?.monthly_rent) {

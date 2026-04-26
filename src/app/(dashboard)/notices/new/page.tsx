@@ -136,6 +136,7 @@ function NewNoticeContent() {
   // Filter rooms when property changes
   useEffect(() => {
     if (formData.property_id) {
+      // eslint-disable-next-line react-compiler/react-compiler
       setFilteredRooms(rooms.filter((r) => r.property_id === formData.property_id))
     } else {
       setFilteredRooms([])

@@ -122,6 +122,7 @@ export default function InquiryDetailPage() {
   // Initialize edit data when inquiry loads
   useEffect(() => {
     if (inquiry) {
+      // eslint-disable-next-line react-compiler/react-compiler
       setEditData({
         status: inquiry.status,
         notes: inquiry.notes || "",

@@ -301,6 +301,7 @@ export function DataTable<T extends object>({
   // Initialize collapsed state when groupBy changes
   React.useEffect(() => {
     if (groupedData && defaultCollapsed) {
+      // eslint-disable-next-line react-compiler/react-compiler
       setCollapsedGroups(new Set(getAllGroupKeys(groupedData)))
     } else {
       setCollapsedGroups(new Set())

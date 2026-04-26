@@ -30,6 +30,7 @@ export function useCountUp(
     // Respect prefers-reduced-motion
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
     if (motionQuery.matches) {
+      // eslint-disable-next-line react-compiler/react-compiler
       setCount(end)
       prevEnd.current = end
       return

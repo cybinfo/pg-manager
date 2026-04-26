@@ -94,6 +94,7 @@ export function ApprovalReviewDialog({
     }
 
     if (approval.document_ids && approval.document_ids.length > 0) {
+      // eslint-disable-next-line react-compiler/react-compiler
       fetchAttachedDocuments(approval.document_ids)
     } else {
       setAttachedDocs([])
@@ -139,7 +140,7 @@ export function ApprovalReviewDialog({
       showError("Failed to approve request")
     } else {
       // Try to apply the change (updates tenants + user_profiles)
-      const { error: applyError } = await (supabase.rpc as Function)("apply_approval_change", {
+      const { error: applyError } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)("apply_approval_change", {
         p_approval_id: approval.id
       })
 

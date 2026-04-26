@@ -284,6 +284,7 @@ function NewMeterReadingContent() {
   useEffect(() => {
     if (selectedMeter?.current_assignment?.room_id) {
       const filtered = tenants.filter((t) => t.room_id === selectedMeter.current_assignment.room_id)
+      // eslint-disable-next-line react-compiler/react-compiler
       setRoomTenants(filtered)
     } else {
       setRoomTenants([])
@@ -330,6 +331,7 @@ function NewMeterReadingContent() {
     if (lastReading && formData.reading_value) {
       const currentValue = parseFloat(formData.reading_value as string)
       if (!isNaN(currentValue) && currentValue >= lastReading.reading_value) {
+        // eslint-disable-next-line react-compiler/react-compiler
         setCalculatedUnits(currentValue - lastReading.reading_value)
       } else {
         setCalculatedUnits(null)

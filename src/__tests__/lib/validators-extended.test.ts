@@ -77,7 +77,7 @@ describe("Extended Validators", () => {
     it("returns false for invalid UUIDs", () => {
       expect(isValidUUID("not-a-uuid")).toBe(false)
       expect(isValidUUID("")).toBe(false)
-      expect(isValidUUID(null as any)).toBe(false)
+      expect(isValidUUID(null as unknown as string)).toBe(false)
     })
   })
 

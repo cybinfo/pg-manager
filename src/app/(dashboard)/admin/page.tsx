@@ -71,6 +71,7 @@ export default function AdminExplorerPage() {
   const [loadingDetails, setLoadingDetails] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-compiler/react-compiler
     checkAdminAndFetchData()
   }, [user])
 
@@ -101,7 +102,7 @@ export default function AdminExplorerPage() {
     const supabase = createClient()
 
     // Fetch all workspaces using SECURITY DEFINER function (bypasses RLS)
-    const { data: workspacesData, error: wsError } = await (supabase.rpc as Function)("get_all_workspaces_admin")
+    const { data: workspacesData, error: wsError } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)("get_all_workspaces_admin")
 
     if (wsError) {
       console.error("Error fetching workspaces:", wsError)
@@ -141,7 +142,7 @@ export default function AdminExplorerPage() {
 
     try {
       // Fetch workspace details using admin function
-      const { data: details, error } = await (supabase.rpc as Function)("get_workspace_details_admin", { p_workspace_id: workspace.id })
+      const { data: details, error } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)("get_workspace_details_admin", { p_workspace_id: workspace.id })
 
       if (error) {
         console.error("Error fetching workspace details:", error)

@@ -218,7 +218,7 @@ export async function checkStaffPermission(
   }
 
   // Check staff permissions via RPC
-  const { data: permissions } = await (supabase.rpc as Function)("get_user_permissions", {
+  const { data: permissions } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)("get_user_permissions", {
     p_user_id: userId,
     p_workspace_id: workspaceId,
   })

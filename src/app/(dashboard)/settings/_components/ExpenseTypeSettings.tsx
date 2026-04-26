@@ -72,8 +72,8 @@ export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTy
       setNewExpenseType({ name: "", code: "" })
       setShowAddExpense(false)
       showSuccess("Expense category added")
-    } catch (error: any) {
-      showError(error.message || "Failed to add expense category")
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : "Failed to add expense category")
     } finally {
       setSaving(false)
     }

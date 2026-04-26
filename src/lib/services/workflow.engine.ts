@@ -20,6 +20,7 @@ import {
   CascadeEffect,
   NotificationPayload,
   AuditEvent,
+  EntityType,
   createServiceError,
   ERROR_CODES,
 } from "./types"
@@ -289,7 +290,7 @@ export async function executeWorkflow<TInput, TOutput>(
   // BL-004: Log audit event for failed optional steps (important for debugging)
   if (!options?.skip_audit && failedOptionalSteps.length > 0) {
     const failedStepsAudit = createAuditEvent(
-      "workflow" as any,
+      "workflow" as EntityType,
       context.workflow_id,
       "update",
       {
@@ -436,7 +437,7 @@ export async function wrapOperation<T>(
   // Log audit event
   if (!options.skipAudit) {
     const auditEvent = createAuditEvent(
-      options.entityType as any,
+      options.entityType as EntityType,
       options.entityId,
       options.action,
       {

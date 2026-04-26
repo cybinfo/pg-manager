@@ -212,6 +212,7 @@ export function EntitySelector<T extends { id: string }>({
   // --------------------------------------------------
   // Search function
   // --------------------------------------------------
+  // eslint-disable-next-line react-compiler/react-compiler
   const searchEntities = useCallback(async (query: string) => {
     if (minSearchLength > 0 && (!query || query.length < minSearchLength)) {
       setResults([])

@@ -15,6 +15,7 @@ export interface KeyboardShortcut {
 
 export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
   const shortcutsRef = useRef(shortcuts)
+  // eslint-disable-next-line react-compiler/react-compiler
   shortcutsRef.current = shortcuts
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {

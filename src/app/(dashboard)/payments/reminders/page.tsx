@@ -57,6 +57,7 @@ export default function PaymentRemindersPage() {
   const [sentReminders, setSentReminders] = useState<Set<string>>(new Set())
 
   useEffect(() => {
+    // eslint-disable-next-line react-compiler/react-compiler
     fetchTenantsWithDues()
   }, [])
 

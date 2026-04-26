@@ -20,6 +20,10 @@ import * as React from "react"
 import { Column, ColumnWidthKey } from "@/components/ui/data-table/types"
 import { formatCurrency, formatDate, formatTimeAgo } from "@/lib/format"
 import type { LucideIcon } from "lucide-react"
+import { Phone } from "lucide-react"
+import { TableBadge } from "@/components/ui/data-table/TableBadge"
+import { StatusDot } from "@/components/ui/data-table/StatusDot"
+import { Avatar } from "@/components/ui/avatar"
 
 // ============================================================================
 // Types
@@ -129,13 +133,9 @@ export function statusColumn(
       const info = getInfo(statusValue)
 
       if (style === "badge") {
-        // Dynamic import at module level is not possible for React components in render,
-        // so we use React.createElement with a lazy approach
-        const { TableBadge } = require("@/components/ui/data-table/TableBadge")
-        return React.createElement(TableBadge, { variant: info.status }, info.label)
+        return React.createElement(TableBadge, { variant: info.status, children: info.label })
       }
 
-      const { StatusDot } = require("@/components/ui/data-table/StatusDot")
       return React.createElement(StatusDot, { status: info.status, label: info.label })
     },
   }
@@ -304,31 +304,26 @@ export function badgeColumn(
     render: (row: AnyRecord) => {
       const value = row[field] as string
       if (!colorMap) {
-        const { TableBadge } = require("@/components/ui/data-table/TableBadge")
-        return React.createElement(TableBadge, { variant: defaultVariant }, value || "\u2014")
+        return React.createElement(TableBadge, { variant: defaultVariant, children: value || "\u2014" })
       }
 
       const config = colorMap[value]
 
       // If config is a string, it's a simple label (like PAYMENT_METHODS)
       if (typeof config === "string") {
-        const { TableBadge } = require("@/components/ui/data-table/TableBadge")
-        return React.createElement(TableBadge, { variant: defaultVariant }, config)
+        return React.createElement(TableBadge, { variant: defaultVariant, children: config })
       }
 
       // If config is an object with variant, use it
       if (config && typeof config === "object" && "variant" in config) {
-        const { TableBadge } = require("@/components/ui/data-table/TableBadge")
         return React.createElement(
           TableBadge,
-          { variant: (config.variant || defaultVariant) as BadgeVariant },
-          config.label
+          { variant: (config.variant || defaultVariant) as BadgeVariant, children: config.label }
         )
       }
 
       // Fallback
-      const { TableBadge } = require("@/components/ui/data-table/TableBadge")
-      return React.createElement(TableBadge, { variant: defaultVariant }, value || "\u2014")
+      return React.createElement(TableBadge, { variant: defaultVariant, children: value || "\u2014" })
     },
   }
 }
@@ -461,8 +456,6 @@ export function personNameWithAvatarColumn(
         }
       }
 
-      const { Avatar } = require("@/components/ui/avatar")
-
       return React.createElement("div", { className: "flex items-center gap-3" },
         React.createElement(Avatar, {
           name: displayName,
@@ -532,11 +525,9 @@ export function booleanColumn(
     ...rest,
     render: (row: AnyRecord) => {
       const value = Boolean(row[field])
-      const { TableBadge } = require("@/components/ui/data-table/TableBadge")
       return React.createElement(
         TableBadge,
-        { variant: value ? trueColor : falseColor },
-        value ? trueLabel : falseLabel
+        { variant: value ? trueColor : falseColor, children: value ? trueLabel : falseLabel }
       )
     },
   }
@@ -588,7 +579,6 @@ export function phoneColumn(
         return React.createElement("span", { className: "text-muted-foreground" }, "\u2014")
       }
       if (showIcon) {
-        const { Phone } = require("lucide-react")
         return React.createElement("div", { className: "flex items-center gap-1.5" },
           React.createElement(Phone, { className: "h-3.5 w-3.5 text-muted-foreground shrink-0" }),
           React.createElement("span", null, value)

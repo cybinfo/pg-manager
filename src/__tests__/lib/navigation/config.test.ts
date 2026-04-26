@@ -15,6 +15,7 @@ import {
   type NavItem,
 } from '@/lib/navigation/config'
 import type { FeatureFlagKey } from '@/lib/features'
+import type { LucideIcon } from 'lucide-react'
 
 describe('DASHBOARD_NAVIGATION', () => {
   it('is a non-empty array', () => {
@@ -155,11 +156,11 @@ describe('TENANT_NAVIGATION', () => {
 describe('filterNavigation', () => {
   // Create a minimal set of test nav items
   const testItems: NavItem[] = [
-    { name: 'Dashboard', href: '/dashboard', icon: {} as any, permission: null, feature: null },
-    { name: 'Tenants', href: '/tenants', icon: {} as any, permission: 'tenants.view', feature: null },
-    { name: 'Expenses', href: '/expenses', icon: {} as any, permission: 'expenses.view', feature: 'expenses' as FeatureFlagKey },
-    { name: 'Visitors', href: '/visitors', icon: {} as any, permission: 'visitors.view', feature: 'visitors' as FeatureFlagKey },
-    { name: 'Activity Log', href: '/activity', icon: {} as any, permission: null, feature: 'activityLog' as FeatureFlagKey },
+    { name: 'Dashboard', href: '/dashboard', icon: {} as LucideIcon, permission: null, feature: null },
+    { name: 'Tenants', href: '/tenants', icon: {} as LucideIcon, permission: 'tenants.view', feature: null },
+    { name: 'Expenses', href: '/expenses', icon: {} as LucideIcon, permission: 'expenses.view', feature: 'expenses' as FeatureFlagKey },
+    { name: 'Visitors', href: '/visitors', icon: {} as LucideIcon, permission: 'visitors.view', feature: 'visitors' as FeatureFlagKey },
+    { name: 'Activity Log', href: '/activity', icon: {} as LucideIcon, permission: null, feature: 'activityLog' as FeatureFlagKey },
   ]
 
   it('shows all items for platform admin with all features enabled', () => {
@@ -242,8 +243,8 @@ describe('filterNavigation', () => {
   it('returns empty array when all items are filtered out', () => {
     // Use items that all require either a feature or permission
     const restrictedItems: NavItem[] = [
-      { name: 'Tenants', href: '/tenants', icon: {} as any, permission: 'tenants.view', feature: null },
-      { name: 'Expenses', href: '/expenses', icon: {} as any, permission: 'expenses.view', feature: 'expenses' as FeatureFlagKey },
+      { name: 'Tenants', href: '/tenants', icon: {} as LucideIcon, permission: 'tenants.view', feature: null },
+      { name: 'Expenses', href: '/expenses', icon: {} as LucideIcon, permission: 'expenses.view', feature: 'expenses' as FeatureFlagKey },
     ]
 
     const result = filterNavigation(restrictedItems, {

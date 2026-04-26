@@ -393,6 +393,7 @@ function useDuplicateCount() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-compiler/react-compiler
     fetchDuplicateCount()
   }, [fetchDuplicateCount])
 

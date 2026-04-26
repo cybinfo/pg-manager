@@ -17,6 +17,7 @@ import {
   Shield,
   Zap,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PredictiveInsights as PredictiveInsightsType, RiskAlert, Recommendation } from "@/types/journey.types"
@@ -134,7 +135,7 @@ interface ScoreCardProps {
   level: string
   trend?: "improving" | "stable" | "declining"
   factors?: string[]
-  icon: any
+  icon: LucideIcon
   colorScheme: ColorScheme
   invertScore?: boolean
 }

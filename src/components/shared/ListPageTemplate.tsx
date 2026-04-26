@@ -627,6 +627,7 @@ export function ListPageTemplate({
   // Mark initial load as complete once data has loaded
   useEffect(() => {
     if (!loading && !initialLoadComplete) {
+      // eslint-disable-next-line react-compiler/react-compiler
       setInitialLoadComplete(true)
     }
   }, [loading, initialLoadComplete])

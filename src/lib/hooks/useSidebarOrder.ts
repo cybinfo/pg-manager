@@ -36,6 +36,7 @@ export function useSidebarOrder() {
     } catch (error) {
       console.error("Failed to load sidebar order:", error)
     }
+    // eslint-disable-next-line react-compiler/react-compiler
     setIsLoaded(true)
   }, [])
 

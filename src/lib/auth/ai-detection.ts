@@ -19,7 +19,7 @@ export async function detectIdentityConflicts(
 
   const supabase = createClient()
 
-  const { data, error } = await (supabase.rpc as Function)('detect_identity_conflicts', {
+  const { data, error } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)('detect_identity_conflicts', {
     p_email: email || null,
     p_phone: phone || null,
   })
@@ -40,16 +40,17 @@ export async function findExistingUser(email?: string, phone?: string) {
 
   const supabase = createClient()
 
-  const { data, error } = await (supabase.rpc as Function)('find_user_by_identity', {
+  const { data, error } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)('find_user_by_identity', {
     p_email: email || null,
     p_phone: phone || null,
   })
 
-  if (error || !data || data.length === 0) {
+  const rows = data as unknown[]
+  if (error || !rows || rows.length === 0) {
     return null
   }
 
-  return data[0] as {
+  return rows[0] as {
     user_id: string
     name: string
     email: string | null

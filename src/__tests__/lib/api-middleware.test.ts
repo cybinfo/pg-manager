@@ -11,25 +11,16 @@
  */
 
 // These are declared at module scope and initialized immediately so jest.mock factories
-// can close over them. Using let (not const) because test code calls .mockResolvedValue etc.
-let mockCronCheck: jest.Mock
-let mockApiCheck: jest.Mock
-let mockSensitiveCheck: jest.Mock
-let mockAdminCheck: jest.Mock
-let mockValidateCsrfToken: jest.Mock
-let mockSupabaseCreateClient: jest.Mock
-let mockGetUser: jest.Mock
-let mockFrom: jest.Mock
-
-// Initialize the mocks (runs before jest.mock factories due to hoisting behavior)
-mockCronCheck = jest.fn()
-mockApiCheck = jest.fn()
-mockSensitiveCheck = jest.fn()
-mockAdminCheck = jest.fn()
-mockValidateCsrfToken = jest.fn()
-mockSupabaseCreateClient = jest.fn()
-mockGetUser = jest.fn()
-mockFrom = jest.fn()
+// can close over them. Declared as const since the variable bindings are never reassigned
+// (calling .mockResolvedValue etc. mutates the mock object, not the binding).
+const mockCronCheck: jest.Mock = jest.fn()
+const mockApiCheck: jest.Mock = jest.fn()
+const mockSensitiveCheck: jest.Mock = jest.fn()
+const mockAdminCheck: jest.Mock = jest.fn()
+const mockValidateCsrfToken: jest.Mock = jest.fn()
+const mockSupabaseCreateClient: jest.Mock = jest.fn()
+const mockGetUser: jest.Mock = jest.fn()
+const mockFrom: jest.Mock = jest.fn()
 
 jest.mock("@/lib/rate-limit", () => ({
   getClientIdentifier: jest.fn(() => "test-client-id"),

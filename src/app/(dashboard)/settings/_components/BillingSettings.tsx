@@ -115,8 +115,8 @@ export function BillingSettings({
       setNewChargeType({ name: "", code: "" })
       setShowAddCharge(false)
       showSuccess("Charge type added")
-    } catch (error: any) {
-      showError(error.message || "Failed to add charge type")
+    } catch (error: unknown) {
+      showError(error instanceof Error ? error.message : "Failed to add charge type")
     } finally {
       setSavingCharge(false)
     }

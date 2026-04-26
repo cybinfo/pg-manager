@@ -106,12 +106,13 @@ function NewExpenseContent() {
         }
 
         // Fetch expense types - create defaults if none exist (owner-scoped)
-        let { data: typesData, error: typesError } = await supabase
+        const { error: typesError, data: initialTypesData } = await supabase
           .from("expense_types")
           .select("id, name, code")
           .eq("owner_id", authUser.id)
           .eq("is_enabled", true)
           .order("display_order")
+        let typesData = initialTypesData
 
         if (typesError) {
           console.error("Error fetching expense types:", typesError)
@@ -119,7 +120,7 @@ function NewExpenseContent() {
 
         // If no expense types exist, create defaults
         if (!typesData || typesData.length === 0) {
-          await (supabase.rpc as Function)("create_default_expense_types", { p_owner_id: authUser.id })
+          await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<unknown>)("create_default_expense_types", { p_owner_id: authUser.id })
 
           // Fetch again after creating defaults (owner-scoped)
           const { data: newTypesData } = await supabase

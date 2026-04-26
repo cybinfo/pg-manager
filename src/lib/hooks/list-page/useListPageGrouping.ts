@@ -133,6 +133,7 @@ export function useListPageGrouping<T extends object>(
   // Fetch group counts when grouping changes
   useEffect(() => {
     if (selectedGroups.length > 0) {
+      // eslint-disable-next-line react-compiler/react-compiler
       fetchGroupCounts(selectedGroups, filters, searchQuery)
     } else {
       setGroupCounts({})

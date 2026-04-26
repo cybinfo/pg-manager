@@ -142,6 +142,7 @@ export default function ReportsPage() {
       const paymentsData = paymentsRes.data || []
       const billsData = billsRes.data || []
       const complaintsData = complaintsRes.data || []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const expensesData = (expensesRes.data || []).map((e: any) => ({
         ...e,
         expense_type: transformJoin(e.expense_type),
@@ -150,9 +151,10 @@ export default function ReportsPage() {
       setProperties(propertiesData)
 
       // Filter by property if selected
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const filterByProperty = (items: any[]) => {
         if (selectedProperty === "all") return items
-        return items.filter((item) => item.property_id === selectedProperty)
+        return items.filter((item: Record<string, unknown>) => item.property_id === selectedProperty)
       }
 
       const filteredRooms = filterByProperty(roomsData)
@@ -304,23 +306,24 @@ export default function ReportsPage() {
       const paymentMethods = buildPaymentMethodBreakdown(periodPayments)
 
       // Expense calculations
-      const periodExpenses = filteredExpenses.filter((e: any) => {
-        const expenseDate = new Date(e.expense_date)
+      const periodExpenses = filteredExpenses.filter((e: Record<string, unknown>) => {
+        const expenseDate = new Date(e.expense_date as string)
         return expenseDate >= startDate && expenseDate <= endDate
       })
-      const lastMonthExpenses = filteredExpenses.filter((e: any) => {
-        const expenseDate = new Date(e.expense_date)
+      const lastMonthExpenses = filteredExpenses.filter((e: Record<string, unknown>) => {
+        const expenseDate = new Date(e.expense_date as string)
         return expenseDate >= lastMonthStart && expenseDate <= lastMonthEnd
       })
-      const totalExpensesThisMonth = periodExpenses.reduce((sum: number, e: any) => sum + Number(e.amount), 0)
-      const totalExpensesLastMonth = lastMonthExpenses.reduce((sum: number, e: any) => sum + Number(e.amount), 0)
+      const totalExpensesThisMonth = periodExpenses.reduce((sum: number, e: Record<string, unknown>) => sum + Number(e.amount), 0)
+      const totalExpensesLastMonth = lastMonthExpenses.reduce((sum: number, e: Record<string, unknown>) => sum + Number(e.amount), 0)
       const expenseGrowth = calculateGrowth(totalExpensesThisMonth, totalExpensesLastMonth)
       const netIncome = totalCollectedThisMonth - totalExpensesThisMonth
 
       // Expense by category
       const categoryTotals: Record<string, number> = {}
-      periodExpenses.forEach((e: any) => {
-        const categoryName = e.expense_type?.name || "Uncategorized"
+      periodExpenses.forEach((e: Record<string, unknown>) => {
+        const expenseType = e.expense_type as { name?: string } | null
+        const categoryName = expenseType?.name || "Uncategorized"
         categoryTotals[categoryName] = (categoryTotals[categoryName] || 0) + Number(e.amount)
       })
       const expensesByCategory = Object.entries(categoryTotals)

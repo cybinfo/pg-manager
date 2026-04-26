@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { TenantJourneyData } from "@/types/journey.types"
+import type { StatusBadgeProps } from "@/components/ui/status-badge"
 import { formatDate } from "@/lib/format"
 
 // ============================================
@@ -151,7 +152,7 @@ export function JourneyHeader({
             <h1 className="text-2xl font-bold text-foreground truncate">
               {journey.tenant_name}&apos;s Journey
             </h1>
-            <StatusBadge status={statusInfo.variant as any} label={statusInfo.label} />
+            <StatusBadge status={statusInfo.variant as StatusBadgeProps["status"]} label={statusInfo.label} />
           </div>
 
           <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground flex-wrap">

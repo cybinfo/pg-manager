@@ -10,6 +10,11 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>
 }
 
+// MSStream is an IE-specific property not in TypeScript's standard Window type
+interface WindowWithMSStream extends Window {
+  MSStream?: unknown
+}
+
 export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
@@ -22,7 +27,8 @@ export function PWAInstallPrompt() {
     }
 
     // Check if iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as WindowWithMSStream).MSStream
+    // eslint-disable-next-line react-compiler/react-compiler
     setIsIOS(isIOSDevice)
 
     // Check if user dismissed before

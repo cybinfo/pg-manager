@@ -105,6 +105,7 @@ function EditMeterReadingContent() {
     if (previousReading !== null && previousReading !== undefined && formData.reading_value) {
       const currentValue = parseFloat(formData.reading_value as string)
       if (!isNaN(currentValue) && currentValue >= previousReading) {
+        // eslint-disable-next-line react-compiler/react-compiler
         setCalculatedUnits(currentValue - previousReading)
       } else {
         setCalculatedUnits(null)
