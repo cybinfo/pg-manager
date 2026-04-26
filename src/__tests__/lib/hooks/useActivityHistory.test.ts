@@ -1,16 +1,179 @@
 /**
- * Tests for pure helper functions in src/lib/hooks/useActivityHistory.ts
- *
- * Covers: formatFieldName, formatValue, formatChanges
- * (useActivityHistory hook depends on Supabase — not tested here)
+ * Tests for src/lib/hooks/useActivityHistory.ts
+ * Covers: useActivityHistory hook + formatFieldName, formatValue, formatChanges
  */
 
+const mockFrom = jest.fn()
+
+jest.mock("@/lib/supabase/client", () => ({
+  createClient: jest.fn(() => ({ from: (...args: unknown[]) => mockFrom(...args) })),
+}))
+
+import { renderHook, act, waitFor } from "@testing-library/react"
 import {
+  useActivityHistory,
   formatFieldName,
   formatValue,
   formatChanges,
   type AuditEventRecord,
 } from "@/lib/hooks/useActivityHistory"
+
+// Build a minimal Supabase query chain mock that resolves at `.limit()` or `.in()`
+function makeChain(resolved: { data: unknown; error: unknown }) {
+  const q: Record<string, jest.Mock> = {}
+  q.select = jest.fn().mockReturnValue(q)
+  q.eq = jest.fn().mockReturnValue(q)
+  q.order = jest.fn().mockReturnValue(q)
+  q.limit = jest.fn().mockResolvedValue(resolved)
+  q.in = jest.fn().mockResolvedValue(resolved)
+  return q
+}
+
+const sampleAuditEvent: AuditEventRecord = {
+  id: "evt-1",
+  entity_type: "tenant",
+  entity_id: "ten-1",
+  action: "update",
+  actor_id: "usr-1",
+  actor_type: "user",
+  changes: { before: { name: "Old" }, after: { name: "New" } },
+  created_at: "2026-01-01T10:00:00Z",
+}
+
+// ============================================================================
+// useActivityHistory hook
+// ============================================================================
+
+describe("useActivityHistory", () => {
+  beforeEach(() => { mockFrom.mockReset() })
+
+  it("loads events and resolves loading to false", async () => {
+    const auditChain = makeChain({ data: [sampleAuditEvent], error: null })
+    const userChain = makeChain({ data: [{ id: "usr-1", name: "Rajat", email: "r@test.com" }], error: null })
+    mockFrom.mockImplementation((table: string) =>
+      table === "audit_events" ? auditChain : userChain
+    )
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.events).toHaveLength(1)
+    expect(result.current.error).toBeNull()
+  })
+
+  it("does not fetch when entityId is empty", async () => {
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "" })
+    )
+
+    // loading stays true since fetchHistory is never called
+    await new Promise((r) => setTimeout(r, 50))
+    expect(mockFrom).not.toHaveBeenCalled()
+  })
+
+  it("sets error state when supabase throws", async () => {
+    const chain = makeChain({ data: null, error: null })
+    chain.limit = jest.fn().mockRejectedValue(new Error("network error"))
+    mockFrom.mockReturnValue(chain)
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.error).toBe("Failed to load activity history")
+  })
+
+  it("skips user_profiles query when there are no actor_ids", async () => {
+    const eventWithoutActor = { ...sampleAuditEvent, actor_id: null }
+    const auditChain = makeChain({ data: [eventWithoutActor], error: null })
+    mockFrom.mockReturnValue(auditChain)
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    // user_profiles was NOT queried because no actor_ids
+    const calls = mockFrom.mock.calls.map((c) => c[0])
+    expect(calls).not.toContain("user_profiles")
+  })
+
+  it("toggleExpanded adds and removes event id from expanded set", async () => {
+    const auditChain = makeChain({ data: [], error: null })
+    mockFrom.mockReturnValue(auditChain)
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    act(() => { result.current.toggleExpanded("evt-1") })
+    expect(result.current.expanded.has("evt-1")).toBe(true)
+
+    act(() => { result.current.toggleExpanded("evt-1") })
+    expect(result.current.expanded.has("evt-1")).toBe(false)
+  })
+
+  it("getUserDisplayName returns 'System' for null actorId", async () => {
+    const auditChain = makeChain({ data: [], error: null })
+    mockFrom.mockReturnValue(auditChain)
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.getUserDisplayName(null)).toBe("System")
+  })
+
+  it("getUserDisplayName returns name when user has name", async () => {
+    const auditChain = makeChain({ data: [sampleAuditEvent], error: null })
+    const userChain = makeChain({ data: [{ id: "usr-1", name: "Rajat", email: "r@test.com" }], error: null })
+    mockFrom.mockImplementation((table: string) =>
+      table === "audit_events" ? auditChain : userChain
+    )
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.getUserDisplayName("usr-1")).toBe("Rajat")
+  })
+
+  it("getUserDisplayName returns email prefix when no name", async () => {
+    const auditChain = makeChain({ data: [sampleAuditEvent], error: null })
+    const userChain = makeChain({ data: [{ id: "usr-1", email: "rajat@test.com" }], error: null })
+    mockFrom.mockImplementation((table: string) =>
+      table === "audit_events" ? auditChain : userChain
+    )
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.getUserDisplayName("usr-1")).toBe("rajat")
+  })
+
+  it("getUserDisplayName returns truncated id for unknown user", async () => {
+    const auditChain = makeChain({ data: [], error: null })
+    mockFrom.mockReturnValue(auditChain)
+
+    const { result } = renderHook(() =>
+      useActivityHistory({ entityType: "tenant", entityId: "ten-1" })
+    )
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const name = result.current.getUserDisplayName("abcdefghijklmnop")
+    expect(name).toContain("User ")
+    expect(name).toContain("abcdefgh")
+  })
+})
 
 // ============================================================================
 // formatFieldName
