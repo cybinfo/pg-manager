@@ -125,8 +125,8 @@ export default function TenantComplaintsPage() {
       setFormData({ category: "other", title: "", description: "" })
       setShowForm(false)
       showSuccess("Complaint submitted successfully")
-    } catch (error: any) {
-      showError(error.message || "Failed to submit complaint")
+    } catch (error: unknown) {
+      showError((error as Error).message || "Failed to submit complaint")
     } finally {
       setSubmitting(false)
     }

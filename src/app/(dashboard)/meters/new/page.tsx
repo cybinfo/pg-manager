@@ -213,7 +213,7 @@ export default function NewMeterPage() {
   useEffect(() => {
     if (formData.property_id) {
       const filtered = rooms.filter((r) => r.property_id === formData.property_id)
-      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilteredRooms(filtered)
       // Clear room selection if it's not in the filtered list
       if (formData.room_id && !filtered.some((r) => r.id === formData.room_id)) {

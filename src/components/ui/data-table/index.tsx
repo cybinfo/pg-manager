@@ -269,6 +269,7 @@ export function DataTable<T extends object>({
             config: currentConfig,
             rows: groupRows,
             children: remainingConfigs.length > 0
+              // eslint-disable-next-line react-hooks/immutability
               ? buildNestedGroups(groupRows, remainingConfigs, depth + 1, fullKey, activeSortConfigs)
               : [],
           }
@@ -301,7 +302,6 @@ export function DataTable<T extends object>({
   // Initialize collapsed state when groupBy changes
   React.useEffect(() => {
     if (groupedData && defaultCollapsed) {
-      // eslint-disable-next-line react-compiler/react-compiler
       setCollapsedGroups(new Set(getAllGroupKeys(groupedData)))
     } else {
       setCollapsedGroups(new Set())

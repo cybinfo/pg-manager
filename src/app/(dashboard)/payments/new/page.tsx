@@ -162,7 +162,7 @@ function NewPaymentForm() {
   useEffect(() => {
     if (formData.tenant_id) {
       const tenant = tenants.find((t) => t.id === formData.tenant_id)
-      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTenant(tenant || null)
       if (tenant) {
         setFormData((prev) => ({
@@ -200,7 +200,7 @@ function NewPaymentForm() {
     if (formData.bill_id) {
       const bill = bills.find((b) => b.id === formData.bill_id)
       if (bill) {
-        // eslint-disable-next-line react-compiler/react-compiler
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData((prev) => ({
           ...prev,
           amount: bill.balance_due.toString(),
@@ -213,7 +213,7 @@ function NewPaymentForm() {
   // Generate current month period
   useEffect(() => {
     const currentPeriod = formatMonthYear(new Date())
-    // eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData((prev) => ({ ...prev, for_period: currentPeriod }))
   }, [])
 

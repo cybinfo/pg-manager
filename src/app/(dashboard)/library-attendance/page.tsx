@@ -183,7 +183,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
             const displayName = record.member?.person?.name || record.member?.name || "Unknown"
             const photoUrl = record.member?.person?.photo_url
             const checkInTime = new Date(record.check_in_time)
-            // eslint-disable-next-line react-compiler/react-compiler
+            // eslint-disable-next-line react-hooks/purity
             const hoursAgo = ((Date.now() - checkInTime.getTime()) / (1000 * 60 * 60)).toFixed(1)
 
             return (

@@ -24,6 +24,14 @@ import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 
+interface RecentPayment {
+  id: string
+  amount: number
+  payment_date: string
+  payment_method: string
+  for_period: string | null
+}
+
 interface TenantFeatures {
   view_bills: boolean
   view_payments: boolean
@@ -47,11 +55,12 @@ const defaultTenantFeatures: TenantFeatures = {
 export default function TenantHomePage() {
   const { tenant, loading: tenantLoading } = useTenantPortalData()
   const [loading, setLoading] = useState(true)
-  const [recentPayments, setRecentPayments] = useState<any[]>([])
+  const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([])
   const [openComplaints, setOpenComplaints] = useState(0)
   const [unreadNotices, setUnreadNotices] = useState(0)
   const [totalPaid, setTotalPaid] = useState(0)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (tenantLoading) return
     if (!tenant) {
@@ -107,6 +116,7 @@ export default function TenantHomePage() {
 
     fetchDashboardData()
   }, [tenant, tenantLoading])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
 
   const getDaysStayed = () => {

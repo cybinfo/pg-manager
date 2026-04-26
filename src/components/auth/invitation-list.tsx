@@ -41,9 +41,11 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
     setIsLoading(false)
   }
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchInvitations()
   }, [workspaceId])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const copyInviteLink = (token: string) => {
     const link = `${window.location.origin}/invite/${token}`

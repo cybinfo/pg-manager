@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   Users,
   ArrowRightLeft,
+  type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { JourneyAnalytics as JourneyAnalyticsType } from "@/types/journey.types"
@@ -85,7 +86,7 @@ interface AnalyticsCardProps {
   title: string
   value: string
   subtitle: string
-  icon: any
+  icon: LucideIcon
   color: string
 }
 

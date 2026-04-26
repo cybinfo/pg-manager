@@ -126,9 +126,11 @@ export default function VisitorDirectoryPage() {
     setLoading(false)
   }, [searchQuery, filterType, filterStatus])
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchContacts()
   }, [fetchContacts])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleToggleFrequent = async (contact: VisitorContact) => {
     setActionLoading(contact.id)

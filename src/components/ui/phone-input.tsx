@@ -45,7 +45,7 @@ export function PhoneInput({
   useEffect(() => {
     if (displayValue) {
       const result = validatePhone(displayValue)
-      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValidation({ isValid: result.isValid, error: result.error })
       // Pass normalized value to parent
       onChange(result.normalized || displayValue, result.isValid)

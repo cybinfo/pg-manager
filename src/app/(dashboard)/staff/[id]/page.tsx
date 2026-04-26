@@ -124,6 +124,7 @@ export default function StaffDetailPage() {
   }, [])
 
   // Sync form data when staff data loads
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (staff) {
       setFormData({
@@ -133,6 +134,7 @@ export default function StaffDetailPage() {
       })
     }
   }, [staff])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({

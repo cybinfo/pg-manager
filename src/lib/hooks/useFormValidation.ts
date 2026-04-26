@@ -66,7 +66,7 @@ export function useFormValidation<T extends Record<string, unknown>>(
 ): UseFormValidationReturn<T> {
   const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({})
   const schemaRef = useRef(schema)
-  // eslint-disable-next-line react-compiler/react-compiler
+  // eslint-disable-next-line react-hooks/refs
   schemaRef.current = schema
 
   const validateField = useCallback(

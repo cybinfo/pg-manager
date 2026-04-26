@@ -31,12 +31,12 @@ export function useSidebarOrder() {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed = JSON.parse(stored)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setOrder(parsed)
       }
     } catch (error) {
       console.error("Failed to load sidebar order:", error)
     }
-    // eslint-disable-next-line react-compiler/react-compiler
     setIsLoaded(true)
   }, [])
 

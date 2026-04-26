@@ -22,7 +22,7 @@ function VerifyEmailContent() {
 
   useEffect(() => {
     if (!token) {
-      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus("no-token")
       return
     }

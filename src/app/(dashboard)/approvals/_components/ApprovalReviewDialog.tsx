@@ -94,7 +94,7 @@ export function ApprovalReviewDialog({
     }
 
     if (approval.document_ids && approval.document_ids.length > 0) {
-      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/immutability
       fetchAttachedDocuments(approval.document_ids)
     } else {
       setAttachedDocs([])

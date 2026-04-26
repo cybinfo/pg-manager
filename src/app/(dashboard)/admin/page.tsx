@@ -71,7 +71,7 @@ export default function AdminExplorerPage() {
   const [loadingDetails, setLoadingDetails] = useState(false)
 
   useEffect(() => {
-    // eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/immutability
     checkAdminAndFetchData()
   }, [user])
 

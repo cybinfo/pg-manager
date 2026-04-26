@@ -133,7 +133,7 @@ export function statusColumn(
       const info = getInfo(statusValue)
 
       if (style === "badge") {
-        return React.createElement(TableBadge, { variant: info.status, children: info.label })
+        return React.createElement(TableBadge, { variant: info.status }, info.label)
       }
 
       return React.createElement(StatusDot, { status: info.status, label: info.label })
@@ -304,26 +304,27 @@ export function badgeColumn(
     render: (row: AnyRecord) => {
       const value = row[field] as string
       if (!colorMap) {
-        return React.createElement(TableBadge, { variant: defaultVariant, children: value || "\u2014" })
+        return React.createElement(TableBadge, { variant: defaultVariant }, value || "\u2014")
       }
 
       const config = colorMap[value]
 
       // If config is a string, it's a simple label (like PAYMENT_METHODS)
       if (typeof config === "string") {
-        return React.createElement(TableBadge, { variant: defaultVariant, children: config })
+        return React.createElement(TableBadge, { variant: defaultVariant }, config)
       }
 
       // If config is an object with variant, use it
       if (config && typeof config === "object" && "variant" in config) {
         return React.createElement(
           TableBadge,
-          { variant: (config.variant || defaultVariant) as BadgeVariant, children: config.label }
+          { variant: (config.variant || defaultVariant) as BadgeVariant },
+          config.label
         )
       }
 
       // Fallback
-      return React.createElement(TableBadge, { variant: defaultVariant, children: value || "\u2014" })
+      return React.createElement(TableBadge, { variant: defaultVariant }, value || "\u2014")
     },
   }
 }
@@ -527,7 +528,8 @@ export function booleanColumn(
       const value = Boolean(row[field])
       return React.createElement(
         TableBadge,
-        { variant: value ? trueColor : falseColor, children: value ? trueLabel : falseLabel }
+        { variant: value ? trueColor : falseColor },
+        value ? trueLabel : falseLabel
       )
     },
   }

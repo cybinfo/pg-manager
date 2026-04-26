@@ -122,7 +122,7 @@ export default function SetupPage() {
       }
 
       // Step 2: Create owner config with defaults
-      const { error: configError } = await (supabase.rpc as Function)("create_default_owner_config", {
+      const { error: configError } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>)("create_default_owner_config", {
         owner_uuid: user.id,
       })
 

@@ -231,7 +231,7 @@ function NewComplaintForm() {
   // Filter rooms when property changes
   useEffect(() => {
     if (formData.property_id) {
-      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilteredRooms(rooms.filter((r) => r.property_id === formData.property_id))
       setFilteredTenants(tenants.filter((t) => t.property_id === formData.property_id))
     } else {
@@ -243,7 +243,7 @@ function NewComplaintForm() {
   // Filter tenants when room changes
   useEffect(() => {
     if (formData.room_id) {
-      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilteredTenants(tenants.filter((t) => t.room_id === formData.room_id))
     } else if (formData.property_id) {
       setFilteredTenants(tenants.filter((t) => t.property_id === formData.property_id))

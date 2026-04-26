@@ -65,6 +65,7 @@ export function SessionTimeout({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const warningRef = useRef<NodeJS.Timeout | null>(null)
   const countdownRef = useRef<NodeJS.Timeout | null>(null)
+  // eslint-disable-next-line react-hooks/purity
   const lastActivityRef = useRef<number>(Date.now())
   const activityDebounceRef = useRef<NodeJS.Timeout | null>(null)
 

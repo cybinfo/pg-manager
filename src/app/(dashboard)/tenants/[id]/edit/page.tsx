@@ -150,6 +150,7 @@ function EditTenantContent() {
           room.property_id === formData.property_id &&
           (room.occupied_beds < room.total_beds || room.id === originalRoomId)
       )
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvailableRooms(filtered)
     }
   }, [formData.property_id, rooms, originalRoomId])

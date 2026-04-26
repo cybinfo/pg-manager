@@ -116,7 +116,7 @@ export function DateRangePicker({ value, onChange, className, presets }: DateRan
   // Sync custom inputs when value changes
   useEffect(() => {
     if (value) {
-      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCustomFrom(toInputValue(value.from))
       setCustomTo(toInputValue(value.to))
     }

@@ -50,10 +50,12 @@ export default function TenantProfilePage() {
     }
   }
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (tenantLoading || !tenant) return
     fetchRequests(tenant.id)
   }, [tenant, tenantLoading])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const openReportDialog = (label: string, value: string, type: ApprovalType) => {
     setSelectedField({ label, value, type })

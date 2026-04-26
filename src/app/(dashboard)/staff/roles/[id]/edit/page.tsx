@@ -84,12 +84,14 @@ function EditRoleContent({
   })
 
   // Initialize permissions and system role flag when record loads
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (record) {
       setSelectedPermissions((record.permissions as string[]) || [])
       setIsSystemRole(!!record.is_system_role)
     }
   }, [record])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const togglePermission = (permission: string) => {
     setSelectedPermissions((prev) =>

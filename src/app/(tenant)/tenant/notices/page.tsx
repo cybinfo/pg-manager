@@ -10,7 +10,8 @@ import {
   Wrench,
   CreditCard,
   Calendar,
-  Clock
+  Clock,
+  type LucideIcon,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getNowISO } from "@/lib/date-helpers"
@@ -43,7 +44,7 @@ interface RawNotice {
   }[] | null
 }
 
-const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: any }> = {
+const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: LucideIcon }> = {
   general: { label: "General", color: "text-info", bgColor: "bg-info/10", icon: Megaphone },
   maintenance: { label: "Maintenance", color: "text-warning", bgColor: "bg-warning/10", icon: Wrench },
   payment_reminder: { label: "Payment", color: "text-success", bgColor: "bg-success/10", icon: CreditCard },
@@ -55,6 +56,7 @@ export default function TenantNoticesPage() {
   const [loading, setLoading] = useState(true)
   const [notices, setNotices] = useState<Notice[]>([])
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (tenantLoading) return
     if (!tenant) {
@@ -111,6 +113,7 @@ export default function TenantNoticesPage() {
 
     fetchNotices()
   }, [tenant, tenantLoading])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
 
   const isNew = (dateString: string) => {

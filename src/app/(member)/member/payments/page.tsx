@@ -34,6 +34,7 @@ export default function MemberPaymentsPage() {
     paymentCount: 0,
   })
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (memberLoading) return
     if (!member) {
@@ -73,6 +74,7 @@ export default function MemberPaymentsPage() {
 
     fetchPayments()
   }, [member, memberLoading])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (memberLoading || loading) {
     return <PageSkeleton variant="list" />

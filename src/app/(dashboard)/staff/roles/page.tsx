@@ -79,9 +79,11 @@ export default function RolesPage() {
     )
   }
 
+  /* eslint-disable react-hooks/immutability */
   useEffect(() => {
     fetchRoles()
   }, [])
+  /* eslint-enable react-hooks/immutability */
 
   const fetchRoles = async () => {
     const supabase = createClient()

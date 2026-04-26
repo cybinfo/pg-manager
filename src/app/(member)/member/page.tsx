@@ -148,9 +148,11 @@ export default function MemberHomePage() {
     : 0
 
   // Calculate days until expiry
+  /* eslint-disable react-hooks/purity */
   const daysUntilExpiry = subscription?.end_date
     ? Math.ceil((new Date(subscription.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null
+  /* eslint-enable react-hooks/purity */
 
   return (
     <div className="space-y-6">

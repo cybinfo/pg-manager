@@ -78,6 +78,7 @@ export default function TenantPaymentsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (tenantLoading) return
     if (!tenant) {
@@ -133,6 +134,7 @@ export default function TenantPaymentsPage() {
 
     fetchPayments()
   }, [tenant, tenantLoading])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const openReportDialog = (payment: Payment) => {
     setSelectedPayment(payment)

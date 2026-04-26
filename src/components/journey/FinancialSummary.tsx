@@ -11,6 +11,7 @@ import {
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
+  type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -244,7 +245,7 @@ export function FinancialSummary({
 interface StatBoxProps {
   label: string
   value: string
-  icon: any
+  icon: LucideIcon
   color: string
   highlight?: boolean
 }

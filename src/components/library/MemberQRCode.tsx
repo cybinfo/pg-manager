@@ -33,12 +33,12 @@ export function MemberQRCode({
   const qrRef = useRef<HTMLDivElement>(null)
 
   // Create QR code payload
-  // eslint-disable-next-line react-compiler/react-compiler
   const qrPayload = JSON.stringify({
     type: "library_checkin",
     member_id: memberId,
     member_code: memberCode,
     library_id: libraryId,
+    // eslint-disable-next-line react-hooks/purity
     timestamp: Date.now(),
   })
 

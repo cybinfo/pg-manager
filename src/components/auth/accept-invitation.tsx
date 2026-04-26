@@ -70,7 +70,7 @@ export function AcceptInvitation({ token }: AcceptInvitationProps) {
       }
 
       // Accept the invitation
-      const { data: contextId, error } = await (supabase.rpc as Function)('accept_invitation', {
+      const { data: contextId, error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>)('accept_invitation', {
         p_token: token,
         p_user_id: user.id,
       })
@@ -85,9 +85,9 @@ export function AcceptInvitation({ token }: AcceptInvitationProps) {
       } else {
         router.push('/dashboard')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error accepting invitation:', error)
-      showError(error.message || 'Failed to accept invitation')
+      showError((error as Error).message || 'Failed to accept invitation')
     } finally {
       setIsAccepting(false)
     }

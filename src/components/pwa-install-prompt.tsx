@@ -28,7 +28,7 @@ export function PWAInstallPrompt() {
 
     // Check if iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as WindowWithMSStream).MSStream
-    // eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsIOS(isIOSDevice)
 
     // Check if user dismissed before

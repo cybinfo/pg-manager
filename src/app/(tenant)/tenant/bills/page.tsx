@@ -74,6 +74,7 @@ export default function TenantBillsPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (tenantLoading) return
     if (!tenant) {
@@ -124,6 +125,7 @@ export default function TenantBillsPage() {
 
     fetchBills()
   }, [tenant, tenantLoading])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const openReportDialog = (bill: Bill) => {
     setSelectedBill(bill)

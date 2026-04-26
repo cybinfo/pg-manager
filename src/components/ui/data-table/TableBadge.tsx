@@ -8,7 +8,7 @@ export function TableBadge({
   children,
 }: {
   variant?: "default" | "success" | "warning" | "error" | "muted"
-  children: React.ReactNode
+  children?: React.ReactNode
 }) {
   const variants = {
     default: "bg-muted text-foreground",

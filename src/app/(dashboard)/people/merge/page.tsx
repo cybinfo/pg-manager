@@ -65,7 +65,7 @@ export default function PersonMergePage() {
   useEffect(() => {
     const loadPreselected = async () => {
       if (preselectedId) {
-        // eslint-disable-next-line react-compiler/react-compiler
+        // eslint-disable-next-line react-hooks/immutability
         const person = await fetchPersonWithStats(preselectedId)
         if (person) {
           setPrimaryPerson(person)
