@@ -476,6 +476,63 @@ describe('sendNotification', () => {
       expect.objectContaining({ priority: 'normal' })
     )
   })
+
+  it('should use payment_reminder template subject and body', async () => {
+    const payload: NotificationPayload = {
+      type: 'payment_reminder',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['email'],
+      data: { amount: '₹5,000', bill_number: 'BILL-001', bill_id: 'bill-1', due_date: '2024-06-15' },
+      priority: 'normal',
+    }
+    await sendNotification(payload)
+    expect(mockQueueInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification_type: 'payment_reminder',
+        title: 'Payment Reminder',
+        body: expect.stringContaining('BILL-001'),
+      })
+    )
+  })
+
+  it('should use complaint_update template subject and body', async () => {
+    const payload: NotificationPayload = {
+      type: 'complaint_update',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['in_app'],
+      data: { complaint_title: 'Water leak', complaint_id: 'c-1', new_status: 'resolved' },
+      priority: 'normal',
+    }
+    await sendNotification(payload)
+    expect(mockQueueInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification_type: 'complaint_update',
+        title: 'Complaint Status Updated',
+        body: expect.stringContaining('Water leak'),
+      })
+    )
+  })
+
+  it('should use invitation template subject and body', async () => {
+    const payload: NotificationPayload = {
+      type: 'invitation',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['email'],
+      data: { workspace_name: 'Green PG', inviter_name: 'Suresh', role: 'tenant', token: 'abc123' },
+      priority: 'normal',
+    }
+    await sendNotification(payload)
+    expect(mockQueueInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification_type: 'invitation',
+        title: 'Invitation',
+        body: expect.stringContaining('Green PG'),
+      })
+    )
+  })
 })
 
 // ============================================
