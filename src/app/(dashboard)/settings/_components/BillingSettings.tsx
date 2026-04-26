@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Loader2, Save, Plus, Trash2, IndianRupee,
@@ -308,8 +308,7 @@ export function BillingSettings({
                 {/* Rate Input */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {utility.billing_type === 'per_unit' ? (
-                    <div className="space-y-2">
-                      <Label className="text-sm">Rate per {utility.unit_label}</Label>
+                    <FormField label={`Rate per ${utility.unit_label}`}>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                         <Input
@@ -321,10 +320,9 @@ export function BillingSettings({
                           className="pl-7"
                         />
                       </div>
-                    </div>
+                    </FormField>
                   ) : (
-                    <div className="space-y-2">
-                      <Label className="text-sm">Flat Amount per Month</Label>
+                    <FormField label="Flat Amount per Month">
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                         <Input
@@ -335,12 +333,11 @@ export function BillingSettings({
                           className="pl-7"
                         />
                       </div>
-                    </div>
+                    </FormField>
                   )}
 
                   {/* Split By Selection */}
-                  <div className="space-y-2">
-                    <Label className="text-sm">Split Charges</Label>
+                  <FormField label="Split Charges">
                     <Select
                       value={utility.split_by}
                       onChange={(e) => updateUtilityRate(utility.id, 'split_by', e.target.value)}
@@ -349,7 +346,7 @@ export function BillingSettings({
                         { value: "room", label: "Per Room" },
                       ]}
                     />
-                  </div>
+                  </FormField>
                 </div>
 
                 {/* Preview */}
@@ -398,24 +395,22 @@ export function BillingSettings({
             <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
               <h4 className="font-medium">Add Custom Charge Type</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="charge_name">Name</Label>
+                <FormField label="Name" htmlFor="charge_name">
                   <Input
                     id="charge_name"
                     placeholder="e.g., Laundry"
                     value={newChargeType.name}
                     onChange={(e) => setNewChargeType({ ...newChargeType, name: e.target.value })}
                   />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="charge_code">Code</Label>
+                </FormField>
+                <FormField label="Code" htmlFor="charge_code">
                   <Input
                     id="charge_code"
                     placeholder="e.g., laundry"
                     value={newChargeType.code}
                     onChange={(e) => setNewChargeType({ ...newChargeType, code: e.target.value })}
                   />
-                </div>
+                </FormField>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={addChargeType} disabled={savingCharge}>
@@ -569,8 +564,7 @@ export function BillingSettings({
                 <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Billing Schedule</h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="billing_day">Bill Generation Day</Label>
+                  <FormField label="Bill Generation Day" htmlFor="billing_day" hint="Day when bills are automatically generated">
                     <Select
                       id="billing_day"
                       value={autoBillingSettings.billing_day.toString()}
@@ -583,13 +577,9 @@ export function BillingSettings({
                         label: `${day}${day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month`,
                       }))}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Day when bills are automatically generated
-                    </p>
-                  </div>
+                  </FormField>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="due_day_offset">Due Date (Days After)</Label>
+                  <FormField label="Due Date (Days After)" htmlFor="due_day_offset" hint="Payment due date offset from bill date">
                     <Select
                       id="due_day_offset"
                       value={autoBillingSettings.due_day_offset.toString()}
@@ -602,10 +592,7 @@ export function BillingSettings({
                         label: `${days} days after bill date`,
                       }))}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Payment due date offset from bill date
-                    </p>
-                  </div>
+                  </FormField>
                 </div>
               </div>
 
@@ -757,23 +744,21 @@ export function BillingSettings({
                 </div>
 
                 {autoBillingSettings.auto_reminder_enabled && (
-                  <div className="ml-7 space-y-2">
-                    <Label htmlFor="reminder_days_before">Remind Before Due Date</Label>
-                    <Select
-                      id="reminder_days_before"
-                      value={(autoBillingSettings.reminder_days_before ?? 5).toString()}
-                      onChange={(e) => setAutoBillingSettings({
-                        ...autoBillingSettings,
-                        reminder_days_before: parseInt(e.target.value)
-                      })}
-                      options={[1, 2, 3, 5, 7, 10].map((days) => ({
-                        value: days.toString(),
-                        label: `${days} day${days > 1 ? "s" : ""} before due date`,
-                      }))}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Tenants will receive a payment reminder this many days before their bill is due
-                    </p>
+                  <div className="ml-7">
+                    <FormField label="Remind Before Due Date" htmlFor="reminder_days_before" hint="Tenants will receive a payment reminder this many days before their bill is due">
+                      <Select
+                        id="reminder_days_before"
+                        value={(autoBillingSettings.reminder_days_before ?? 5).toString()}
+                        onChange={(e) => setAutoBillingSettings({
+                          ...autoBillingSettings,
+                          reminder_days_before: parseInt(e.target.value)
+                        })}
+                        options={[1, 2, 3, 5, 7, 10].map((days) => ({
+                          value: days.toString(),
+                          label: `${days} day${days > 1 ? "s" : ""} before due date`,
+                        }))}
+                      />
+                    </FormField>
                   </div>
                 )}
               </div>
