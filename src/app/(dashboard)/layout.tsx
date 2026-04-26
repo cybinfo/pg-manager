@@ -51,6 +51,7 @@ import {
   Clock,
   Lock,
   ToggleLeft,
+  ShieldCheck,
 } from "lucide-react"
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
 import { showSuccess } from "@/lib/toast-helpers"
@@ -253,7 +254,17 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   // Add admin link for platform admins
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const baseNavigation: NavItem[] = isPlatformAdmin
-    ? [...filteredNavigation, { name: "Admin", href: "/admin", icon: Shield, permission: null, feature: null }]
+    ? [...filteredNavigation, {
+        name: "Admin",
+        href: "/admin",
+        icon: Shield,
+        permission: null,
+        feature: null,
+        children: [
+          { name: "Workspaces", href: "/admin", icon: Building2, permission: null, feature: null },
+          { name: "Platform Admins", href: "/admin/admins", icon: ShieldCheck, permission: null, feature: null },
+        ]
+      }]
     : filteredNavigation
 
   // Apply user's custom order to navigation
