@@ -1,13 +1,15 @@
 /**
  * Tests for pure utility functions in src/components/reports/report-utils.ts
  *
- * Covers: calculateGrowth, buildPaymentMethodBreakdown, buildMonthlyTrend
+ * Covers: calculateGrowth, buildPaymentMethodBreakdown, buildMonthlyTrend,
+ *         getDefaultDateRange
  */
 
 import {
   calculateGrowth,
   buildPaymentMethodBreakdown,
   buildMonthlyTrend,
+  getDefaultDateRange,
   MONTH_NAMES,
   PAYMENT_METHOD_LABELS,
 } from "@/components/reports/report-utils"
@@ -180,5 +182,36 @@ describe("buildMonthlyTrend", () => {
     // but the array should be of length 3 and each month should be from MONTH_NAMES
     expect(result).toHaveLength(3)
     expect(MONTH_NAMES).toContain(result[0].month)
+  })
+})
+
+// ============================================================================
+// getDefaultDateRange
+// ============================================================================
+
+describe("getDefaultDateRange", () => {
+  it("returns a date range with label 'Last 6 months'", () => {
+    expect(getDefaultDateRange().label).toBe("Last 6 months")
+  })
+
+  it("'to' is approximately now", () => {
+    const before = Date.now()
+    const { to } = getDefaultDateRange()
+    const after = Date.now()
+    expect(to.getTime()).toBeGreaterThanOrEqual(before)
+    expect(to.getTime()).toBeLessThanOrEqual(after)
+  })
+
+  it("'from' is approximately 6 months before now", () => {
+    const { from, to } = getDefaultDateRange()
+    const diffMs = to.getTime() - from.getTime()
+    const approxSixMonthsMs = 6 * 30 * 24 * 60 * 60 * 1000 // ~180 days
+    // Allow a generous range (±31 days) since months vary in length
+    expect(diffMs).toBeGreaterThan(approxSixMonthsMs - 31 * 24 * 60 * 60 * 1000)
+    expect(diffMs).toBeLessThan(approxSixMonthsMs + 31 * 24 * 60 * 60 * 1000)
+  })
+
+  it("'from' date is the 1st of its month", () => {
+    expect(getDefaultDateRange().from.getDate()).toBe(1)
   })
 })
