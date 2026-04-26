@@ -13,7 +13,6 @@ import { useFormPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
@@ -177,8 +176,7 @@ function NewLibraryLockerContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Library Selection */}
-            <div className="space-y-2">
-              <Label>Library *</Label>
+            <FormField label="Library" required>
               <Combobox
                 options={libraryOptions}
                 value={formData.library_id as string}
@@ -188,7 +186,7 @@ function NewLibraryLockerContent() {
                 emptyText="No libraries found"
                 disabled={saving || loadingLibraries || !!preselectedLibrary}
               />
-            </div>
+            </FormField>
 
             {/* Locker Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -203,8 +201,7 @@ function NewLibraryLockerContent() {
                   disabled={saving}
                 />
               </FormField>
-              <div className="space-y-2">
-                <Label htmlFor="size">Size</Label>
+              <FormField label="Size" htmlFor="size">
                 <Select
                   value={formData.size as string}
                   onChange={handleChange}
@@ -216,7 +213,7 @@ function NewLibraryLockerContent() {
                     { value: "large", label: "Large" },
                   ]}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

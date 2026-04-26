@@ -12,7 +12,6 @@ import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
@@ -145,8 +144,7 @@ function EditLibraryLockerContent({
                   disabled={saving}
                 />
               </FormField>
-              <div className="space-y-2">
-                <Label htmlFor="size">Size</Label>
+              <FormField label="Size" htmlFor="size">
                 <Select
                   value={formData.size as string}
                   onChange={handleChange}
@@ -158,7 +156,7 @@ function EditLibraryLockerContent({
                     { value: "large", label: "Large" },
                   ]}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -186,8 +184,7 @@ function EditLibraryLockerContent({
               </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+            <FormField label="Status" htmlFor="status">
               <Select
                 value={formData.status as string}
                 onChange={handleChange}
@@ -199,7 +196,7 @@ function EditLibraryLockerContent({
                   { value: "maintenance", label: "Maintenance" },
                 ]}
               />
-            </div>
+            </FormField>
 
             {/* Pricing */}
             <div className="border-t pt-4">

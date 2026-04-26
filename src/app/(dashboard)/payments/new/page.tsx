@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
@@ -356,8 +355,7 @@ function NewPaymentForm() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Tenant *</Label>
+            <FormField label="Tenant" required>
               <Combobox
                 options={tenants.map((t): ComboboxOption => ({
                   value: t.id,
@@ -370,7 +368,7 @@ function NewPaymentForm() {
                 searchPlaceholder="Type tenant name..."
                 disabled={loading}
               />
-            </div>
+            </FormField>
 
             {selectedTenant && (
               <div className="p-3 bg-muted rounded-lg text-sm">
@@ -404,8 +402,7 @@ function NewPaymentForm() {
             <CardContent className="space-y-4">
               {bills.length > 0 ? (
                 <>
-                  <div className="space-y-2">
-                    <Label>Pending Bill *</Label>
+                  <FormField label="Pending Bill" required>
                     <Combobox
                       options={bills.map((b): ComboboxOption => ({
                         value: b.id,
@@ -418,7 +415,7 @@ function NewPaymentForm() {
                       searchPlaceholder="Search bills..."
                       disabled={loading}
                     />
-                  </div>
+                  </FormField>
 
                   {formData.bill_id && (
                     <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm">

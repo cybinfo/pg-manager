@@ -163,8 +163,7 @@ function EditLibrarySeatContent({
               </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+            <FormField label="Status" htmlFor="status">
               <Select
                 value={formData.status as string}
                 onChange={handleChange}
@@ -177,7 +176,7 @@ function EditLibrarySeatContent({
                   { value: "maintenance", label: "Maintenance" },
                 ]}
               />
-            </div>
+            </FormField>
 
             {/* Features */}
             <div className="border-t pt-4">
