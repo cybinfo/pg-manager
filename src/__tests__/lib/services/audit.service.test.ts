@@ -547,6 +547,21 @@ describe('queryAuditEvents', () => {
     expect(spiedLimit).not.toHaveBeenCalled()
   })
 
+  it('should filter by action when provided', async () => {
+    await queryAuditEvents({ workspace_id: testWorkspaceId, action: 'create' })
+    expect(spiedEq).toHaveBeenCalledWith('action', 'create')
+  })
+
+  it('should filter by actor_id when provided', async () => {
+    await queryAuditEvents({ workspace_id: testWorkspaceId, actor_id: testActorId })
+    expect(spiedEq).toHaveBeenCalledWith('actor_id', testActorId)
+  })
+
+  it('should apply range when offset is provided', async () => {
+    await queryAuditEvents({ workspace_id: testWorkspaceId, limit: 25, offset: 50 })
+    expect(spiedRange).toHaveBeenCalledWith(50, 74)
+  })
+
   it('should return the data returned by Supabase', async () => {
     const mockEvents: AuditEvent[] = [
       { ...baseAuditEvent, entity_id: 'e-1' },
