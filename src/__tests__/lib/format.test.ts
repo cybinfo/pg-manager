@@ -10,6 +10,10 @@ import {
   formatNumber,
   formatPercent,
   formatDate,
+  formatDateTime,
+  formatTimeAgo,
+  formatMonthYear,
+  parsePositiveNumber,
   formatPhone,
   truncate,
   capitalize,
@@ -230,6 +234,11 @@ describe('Filename Sanitization (SEC-018)', () => {
       expect(sanitizeFilename('')).toBe('file')
     })
 
+    it('returns "file" when input sanitizes to empty string (line 304 || branch)', () => {
+      // "!!!" → after removing specials and dashes: "" → fallback "file"
+      expect(sanitizeFilename('!!!')).toBe('file')
+    })
+
     it('limits length', () => {
       const longName = 'a'.repeat(200)
       expect(sanitizeFilename(longName).length).toBeLessThanOrEqual(100)
@@ -247,6 +256,13 @@ describe('Filename Sanitization (SEC-018)', () => {
 
     it('sanitizes filename in header', () => {
       expect(createContentDisposition("John's Report.pdf")).toBe('attachment; filename="john-s-report.pdf"')
+    })
+
+    it('handles filename without extension (line 329 branch — no match)', () => {
+      // filename.match(/\.[^.]+$/) returns null → ext = ""
+      const result = createContentDisposition('report')
+      expect(result).toContain('attachment')
+      expect(result).toContain('report')
     })
   })
 })
@@ -293,12 +309,128 @@ describe('numberToWords', () => {
     expect(numberToWords(500000)).toBe('Five Lakh')
   })
 
+  it('converts lakh with remainder (line 281 branch)', () => {
+    // 150000 = One Lakh Fifty Thousand
+    expect(numberToWords(150000)).toBe('One Lakh Fifty Thousand')
+  })
+
   it('converts crores (Indian system)', () => {
     expect(numberToWords(10000000)).toBe('One Crore')
+  })
+
+  it('converts crore with remainder (line 284 branch)', () => {
+    // 15000000 = One Crore Fifty Lakh
+    expect(numberToWords(15000000)).toBe('One Crore Fifty Lakh')
   })
 
   it('converts a typical rent amount', () => {
     // 8500 = Eight Thousand Five Hundred
     expect(numberToWords(8500)).toBe('Eight Thousand Five Hundred')
+  })
+})
+
+describe('parsePositiveNumber', () => {
+  it('returns a positive number for valid numeric input', () => {
+    expect(parsePositiveNumber(42)).toBe(42)
+    expect(parsePositiveNumber('100')).toBe(100)
+    expect(parsePositiveNumber(0.5)).toBe(0.5)
+  })
+
+  it('returns null for zero (not positive)', () => {
+    expect(parsePositiveNumber(0)).toBeNull()
+  })
+
+  it('returns null for negative numbers', () => {
+    expect(parsePositiveNumber(-5)).toBeNull()
+  })
+
+  it('returns null for NaN-producing values', () => {
+    expect(parsePositiveNumber('abc')).toBeNull()
+    expect(parsePositiveNumber(null)).toBeNull()
+    expect(parsePositiveNumber(undefined)).toBeNull()
+  })
+})
+
+describe('formatMonthYear', () => {
+  it('returns "-" for null', () => {
+    expect(formatMonthYear(null)).toBe('-')
+  })
+
+  it('returns "-" for undefined', () => {
+    expect(formatMonthYear(undefined)).toBe('-')
+  })
+
+  it('formats a date string to Month Year', () => {
+    const result = formatMonthYear('2024-06-15')
+    expect(result).toContain('2024')
+    expect(result).toContain('June')
+  })
+
+  it('accepts a Date object', () => {
+    const result = formatMonthYear(new Date('2024-01-01'))
+    expect(result).toContain('2024')
+    expect(result).toContain('January')
+  })
+})
+
+describe('formatDateTime', () => {
+  it('returns "-" for null', () => {
+    expect(formatDateTime(null)).toBe('-')
+  })
+
+  it('returns "-" for undefined', () => {
+    expect(formatDateTime(undefined)).toBe('-')
+  })
+
+  it('formats a valid ISO string to a readable datetime', () => {
+    const result = formatDateTime('2024-06-15T10:30:00')
+    expect(result).toContain('2024')
+    expect(result).toContain('Jun')
+    expect(result).toContain('15')
+  })
+
+  it('accepts a Date object', () => {
+    const result = formatDateTime(new Date('2024-03-01T08:00:00'))
+    expect(result).toContain('2024')
+  })
+})
+
+describe('formatTimeAgo', () => {
+  it('returns "-" for null', () => {
+    expect(formatTimeAgo(null)).toBe('-')
+  })
+
+  it('returns "-" for undefined', () => {
+    expect(formatTimeAgo(undefined)).toBe('-')
+  })
+
+  it('returns formatted date for dates more than 30 days ago (line 178)', () => {
+    const longAgo = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000)
+    const result = formatTimeAgo(longAgo)
+    // formatDate is called — result matches date pattern
+    expect(result).toMatch(/\d{4}/)
+  })
+
+  it('returns Xd ago for 1-30 days ago (line 180)', () => {
+    const daysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+    const result = formatTimeAgo(daysAgo)
+    expect(result).toMatch(/^\d+d ago$/)
+  })
+
+  it('returns Xh ago for hours ago (line 182)', () => {
+    const hoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000)
+    const result = formatTimeAgo(hoursAgo)
+    expect(result).toMatch(/^\d+h ago$/)
+  })
+
+  it('returns Xm ago for minutes ago', () => {
+    const minutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+    const result = formatTimeAgo(minutesAgo)
+    expect(result).toMatch(/^\d+m ago$/)
+  })
+
+  it('returns "Just now" for very recent dates', () => {
+    const result = formatTimeAgo(new Date())
+    expect(result).toBe('Just now')
   })
 })
