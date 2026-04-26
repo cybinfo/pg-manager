@@ -103,6 +103,25 @@ describe("useFilterBuilder", () => {
       const newGroup: FilterGroup = onChange.mock.calls[0][0]
       expect(newGroup.filters[0].column).toBe("monthly_rent")
     })
+
+    it("attaches _options when column has filterOptions", () => {
+      const onChange = jest.fn()
+      const { result } = renderHook(() =>
+        useFilterBuilder({
+          columns: COLUMNS,
+          value: createEmptyFilterGroup(),
+          onChange,
+        })
+      )
+
+      act(() => {
+        result.current.addFilter(STATUS_COLUMN)
+      })
+
+      const newGroup: FilterGroup = onChange.mock.calls[0][0]
+      const added = newGroup.filters[0] as typeof newGroup.filters[0] & { _options?: unknown[] }
+      expect(added._options).toEqual(STATUS_COLUMN.filterOptions)
+    })
   })
 
   describe("updateFilter", () => {

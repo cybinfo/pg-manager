@@ -207,6 +207,52 @@ describe("resetOrder", () => {
 })
 
 // ============================================================================
+// localStorage error paths
+// ============================================================================
+
+describe("localStorage error handling", () => {
+  it("handles getItem throwing during load (line 38 catch block)", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {})
+    const getItemSpy = jest.spyOn(Storage.prototype, "getItem").mockImplementationOnce(() => {
+      throw new Error("storage unavailable")
+    })
+
+    const { result } = renderHook(() => useSidebarOrder())
+
+    expect(result.current.isLoaded).toBe(true)
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to load"),
+      expect.any(Error)
+    )
+
+    getItemSpy.mockRestore()
+    consoleError.mockRestore()
+  })
+
+  it("handles setItem throwing during save (line 49 catch block)", () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {})
+    const setItemSpy = jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("quota exceeded")
+    })
+
+    const { result } = renderHook(() => useSidebarOrder())
+
+    // reorderMain internally calls saveOrder which calls localStorage.setItem
+    act(() => {
+      result.current.reorderMain(0, 1, ["Dashboard", "Rooms"])
+    })
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to save"),
+      expect.any(Error)
+    )
+
+    setItemSpy.mockRestore()
+    consoleError.mockRestore()
+  })
+})
+
+// ============================================================================
 // isLoaded
 // ============================================================================
 

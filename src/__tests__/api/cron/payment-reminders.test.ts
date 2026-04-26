@@ -259,4 +259,14 @@ describe("shouldSendOverdueAlert", () => {
       expect(shouldSendOverdueAlert(-5, TUESDAY, noOverdueSettings)).toBe(false)
     })
   })
+
+  describe("unknown overdue_alert_frequency", () => {
+    it("returns false for unrecognized frequency value", () => {
+      const unknownSettings = {
+        ...BASE_SETTINGS,
+        overdue_alert_frequency: "monthly" as "daily",
+      }
+      expect(shouldSendOverdueAlert(-5, MONDAY, unknownSettings)).toBe(false)
+    })
+  })
 })

@@ -318,6 +318,36 @@ describe("applyBaseFiltersToQuery", () => {
     })
   })
 
+  describe("select filter — domain-specific column mappings", () => {
+    it("maps visitor_type filter directly to visitor_type column", () => {
+      const q = makeMockChain()
+      const visitorFc: FilterConfig = { id: "visitor_type", label: "Type", type: "select", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [visitorFc], { visitor_type: "family" }, "")
+      expect(q.eq).toHaveBeenCalledWith("visitor_type", "family")
+    })
+
+    it("maps settlement_status filter directly to settlement_status column", () => {
+      const q = makeMockChain()
+      const settleFc: FilterConfig = { id: "settlement_status", label: "Settlement", type: "select", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [settleFc], { settlement_status: "cleared" }, "")
+      expect(q.eq).toHaveBeenCalledWith("settlement_status", "cleared")
+    })
+
+    it("maps refund_type filter directly to refund_type column", () => {
+      const q = makeMockChain()
+      const refundFc: FilterConfig = { id: "refund_type", label: "Type", type: "select", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [refundFc], { refund_type: "security_deposit" }, "")
+      expect(q.eq).toHaveBeenCalledWith("refund_type", "security_deposit")
+    })
+
+    it("maps meter_type filter directly to meter_type column", () => {
+      const q = makeMockChain()
+      const meterFc: FilterConfig = { id: "meter_type", label: "Type", type: "select", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [meterFc], { meter_type: "electricity" }, "")
+      expect(q.eq).toHaveBeenCalledWith("meter_type", "electricity")
+    })
+  })
+
   // --------------------------------------------------------------------------
   // Date-type filter
   // --------------------------------------------------------------------------

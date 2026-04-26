@@ -20,6 +20,7 @@ import {
   emailStatsBox,
   emailList,
 } from "@/lib/email/components"
+import { getBadgeColors, emailColors } from "@/lib/email/theme"
 
 // ============================================================================
 // emailWrapper
@@ -335,5 +336,27 @@ describe("emailList", () => {
   it("wraps each item in li tags", () => {
     const html = emailList(["Only item"])
     expect(html).toContain("<li")
+  })
+})
+
+// ============================================================================
+// getBadgeColors
+// ============================================================================
+
+describe("getBadgeColors", () => {
+  it("returns emailColors.success for success variant", () => {
+    expect(getBadgeColors("success")).toBe(emailColors.success)
+  })
+
+  it("returns emailColors.warning for warning variant", () => {
+    expect(getBadgeColors("warning")).toBe(emailColors.warning)
+  })
+
+  it("returns emailColors.error for error variant", () => {
+    expect(getBadgeColors("error")).toBe(emailColors.error)
+  })
+
+  it("returns emailColors.info for info variant", () => {
+    expect(getBadgeColors("info")).toBe(emailColors.info)
   })
 })
