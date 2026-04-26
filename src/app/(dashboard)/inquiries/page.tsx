@@ -270,6 +270,8 @@ export default function InquiriesPage() {
       advancedFilterColumns={advancedFilterColumns}
       enableInlineEdit={true}
       detailHref={(inquiry) => `/inquiries/${inquiry.id}`}
+      createHref="/inquiries/new"
+      createLabel="Log Inquiry"
       emptyTitle="No inquiries yet"
       emptyDescription="Inquiries from your public PG websites will appear here"
     />
