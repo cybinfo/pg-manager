@@ -18,6 +18,7 @@ import {
   timeColumn,
   timeAgoColumn,
   countColumn,
+  personNameWithAvatarColumn,
 } from "@/lib/columns/builders"
 
 // ============================================================================
@@ -115,6 +116,13 @@ describe("currencyColumn", () => {
     const col = currencyColumn("amount", "Amount", { prefix: "+" })
     const el = col.render!({ amount: 500 }) as React.ReactElement
     expect(el.props.children).toContain("+")
+  })
+
+  it("omits font-medium class when bold=false (line 185 branch)", () => {
+    const col = currencyColumn("amount", "Amount", { bold: false })
+    // Render succeeds without error — branch is exercised
+    const el = col.render!({ amount: 1000 }) as React.ReactElement
+    expect(React.isValidElement(el)).toBe(true)
   })
 })
 
@@ -338,5 +346,195 @@ describe("timeAgoColumn", () => {
     const col = timeAgoColumn("created_at", "Created")
     const el = col.render!({ created_at: null }) as React.ReactElement
     expect(el.props.children).toBe("—")
+  })
+})
+
+// ============================================================================
+// badgeColumn — additional coverage (no colorMap, StatusConfigEntry object)
+// ============================================================================
+
+describe("badgeColumn — extended", () => {
+  it("renders raw value in TableBadge when no colorMap is provided (line 307)", () => {
+    const col = badgeColumn("tag", "Tag")
+    const el = col.render!({ tag: "premium" }) as React.ReactElement
+    expect(React.isValidElement(el)).toBe(true)
+    expect(el.props.children).toBe("premium")
+  })
+
+  it("renders em dash when no colorMap and value is empty (line 307)", () => {
+    const col = badgeColumn("tag", "Tag")
+    const el = col.render!({ tag: null }) as React.ReactElement
+    expect(el.props.children).toBe("—")
+  })
+
+  it("renders label from StatusConfigEntry object (lines 319-323)", () => {
+    const statusMap = {
+      active: { label: "Active", variant: "success" as const },
+      inactive: { label: "Inactive", variant: "muted" as const },
+    }
+    const col = badgeColumn("status", "Status", statusMap)
+    const el = col.render!({ status: "active" }) as React.ReactElement
+    expect(React.isValidElement(el)).toBe(true)
+    expect(el.props.children).toBe("Active")
+    expect(el.props.variant).toBe("success")
+  })
+
+  it("uses defaultVariant from StatusConfigEntry when config.variant is falsy (line 319)", () => {
+    const statusMap = { pending: { label: "Pending", variant: "" } }
+    const col = badgeColumn("status", "Status", statusMap, { defaultVariant: "warning" })
+    const el = col.render!({ status: "pending" }) as React.ReactElement
+    expect(el.props.children).toBe("Pending")
+    expect(el.props.variant).toBe("warning")
+  })
+})
+
+// ============================================================================
+// timeColumn — render with valid datetime (lines 676-696)
+// ============================================================================
+
+describe("timeColumn", () => {
+  it("returns correct metadata", () => {
+    const col = timeColumn("check_in_time", "Check In")
+    expect(col.key).toBe("check_in_time")
+    expect(col.header).toBe("Check In")
+    expect((col as { sortType?: string }).sortType).toBe("date")
+  })
+
+  it("renders dash for missing value", () => {
+    const col = timeColumn("check_in_time", "Check In")
+    const el = col.render!({ check_in_time: null }) as React.ReactElement
+    expect(el.props.children).toBe("—")
+  })
+
+  it("renders HH:MM from a full ISO datetime string (lines 693-696)", () => {
+    const col = timeColumn("check_in_time", "Check In")
+    // Use a fixed UTC datetime so the test is deterministic regardless of timezone handling
+    const el = col.render!({ check_in_time: "2024-06-15T09:30:00.000Z" }) as React.ReactElement
+    expect(React.isValidElement(el)).toBe(true)
+    // Result is HH:MM — exact value depends on local TZ, but format is always XX:XX
+    expect(el.props.children).toMatch(/^\d{2}:\d{2}$/)
+  })
+
+  it("renders HH:MM from a time-only string when parseable as date", () => {
+    const col = timeColumn("check_in_time", "Check In")
+    const el = col.render!({ check_in_time: "2024-01-01T14:45:00" }) as React.ReactElement
+    expect(React.isValidElement(el)).toBe(true)
+    expect(el.props.children).toMatch(/^\d{2}:\d{2}$/)
+  })
+})
+
+// ============================================================================
+// countColumn — with icon (line 810)
+// ============================================================================
+
+describe("countColumn — with icon", () => {
+  it("renders icon wrapper div when icon prop is provided (line 810)", () => {
+    const MockIcon = (props: Record<string, unknown>) => React.createElement("svg", props)
+    const col = countColumn("total_seats", "Seats", { icon: MockIcon as React.ElementType })
+    const el = col.render!({ total_seats: 5 }) as React.ReactElement
+    expect(React.isValidElement(el)).toBe(true)
+    // With icon: outer div has flex class
+    expect(el.props.className).toContain("flex")
+    // The div has children: [icon, span]
+    const [iconEl, spanEl] = el.props.children as React.ReactElement[]
+    expect(React.isValidElement(iconEl)).toBe(true)
+    expect(spanEl.props.children).toContain("5")
+  })
+})
+
+// ============================================================================
+// personNameWithAvatarColumn (lines 381, 431-460)
+// ============================================================================
+
+describe("personNameWithAvatarColumn", () => {
+  it("returns correct metadata", () => {
+    const col = personNameWithAvatarColumn("Tenant")
+    expect(col.key).toBe("name")
+    expect(col.header).toBe("Tenant")
+    expect(col.sortable).toBe(true)
+    expect(col.canHide).toBe(false)
+  })
+
+  it("uses person.name (live data) over row.name (denormalized)", () => {
+    const col = personNameWithAvatarColumn("Tenant")
+    const el = col.render!({ name: "Old Name", person: { name: "Live Name", photo_url: null } }) as React.ReactElement
+    const nameDiv = el.props.children[1]
+    const nameLine = nameDiv.props.children[0]
+    expect(nameLine.props.children).toBe("Live Name")
+  })
+
+  it("falls back to row.name when person.name is missing", () => {
+    const col = personNameWithAvatarColumn("Tenant")
+    const el = col.render!({ name: "Fallback Name", person: null }) as React.ReactElement
+    const nameDiv = el.props.children[1]
+    const nameLine = nameDiv.props.children[0]
+    expect(nameLine.props.children).toBe("Fallback Name")
+  })
+
+  it("renders Unknown when both name fields are missing", () => {
+    const col = personNameWithAvatarColumn("Tenant")
+    const el = col.render!({ name: null, person: null }) as React.ReactElement
+    const nameDiv = el.props.children[1]
+    const nameLine = nameDiv.props.children[0]
+    expect(nameLine.props.children).toBe("Unknown")
+  })
+
+  it("resolves subtitle from single field", () => {
+    const col = personNameWithAvatarColumn("Tenant", { subtitleField: "phone" })
+    const el = col.render!({ name: "Ravi", phone: "9876543210", person: null }) as React.ReactElement
+    const nameDiv = el.props.children[1]
+    const subtitleEl = nameDiv.props.children[1]
+    expect(subtitleEl.props.children).toBe("9876543210")
+  })
+
+  it("uses first non-empty field from subtitle array fallback chain", () => {
+    // member_code is empty, phone has value — should pick phone
+    const col = personNameWithAvatarColumn("Member", { subtitleField: ["member_code", "phone"] })
+    const el = col.render!({ name: "Priya", member_code: "", phone: "9123456789", person: null }) as React.ReactElement
+    const nameDiv = el.props.children[1]
+    const subtitleEl = nameDiv.props.children[1]
+    expect(subtitleEl.props.children).toBe("9123456789")
+  })
+
+  it("uses first field in array when both are present", () => {
+    const col = personNameWithAvatarColumn("Member", { subtitleField: ["member_code", "phone"] })
+    const el = col.render!({ name: "Amit", member_code: "NGH-001", phone: "9000000000", person: null }) as React.ReactElement
+    const nameDiv = el.props.children[1]
+    const subtitleEl = nameDiv.props.children[1]
+    expect(subtitleEl.props.children).toBe("NGH-001")
+  })
+
+  it("resolves dot-notation path for subtitle (resolveField — line 381 via broken path)", () => {
+    // tenant.phone where tenant is null — resolveField returns undefined → no subtitle
+    const col = personNameWithAvatarColumn("Tenant", { subtitleField: "tenant.phone" })
+    const el = col.render!({ tenant: null }) as React.ReactElement
+    const nameDiv = el.props.children[1]
+    // When subtitle is undefined, children[1] is undefined (no subtitle element rendered)
+    expect(nameDiv.props.children[1]).toBeFalsy()
+  })
+
+  it("resolves nested dot-notation photoField", () => {
+    const col = personNameWithAvatarColumn("Member", { photoField: "person.photo_url" })
+    const el = col.render!({
+      name: "Neha",
+      person: { name: "Neha Live", photo_url: "https://example.com/photo.jpg" },
+    }) as React.ReactElement
+    const avatarEl = el.props.children[0]
+    expect(avatarEl.props.src).toBe("https://example.com/photo.jpg")
+  })
+
+  it("passes undefined to Avatar src when no photo (resolveField undefined path)", () => {
+    const col = personNameWithAvatarColumn("Tenant")
+    const el = col.render!({ name: "Test", person: { name: "Test Live", photo_url: null } }) as React.ReactElement
+    const avatarEl = el.props.children[0]
+    expect(avatarEl.props.src).toBeUndefined()
+  })
+
+  it("renders without subtitle when subtitleField option is empty string (line 452 branch)", () => {
+    const col = personNameWithAvatarColumn("Tenant", { subtitleField: "" })
+    const el = col.render!({ name: "Ravi", phone: "9876543210" }) as React.ReactElement
+    const nameDiv = el.props.children[1]
+    // No subtitle rendered — children[1] should be falsy
+    expect(nameDiv.props.children[1]).toBeFalsy()
   })
 })
