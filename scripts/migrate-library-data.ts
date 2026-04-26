@@ -40,7 +40,7 @@ const CSV_DIR = "/tmp/library_migration"
 // CSV Parsing Helpers
 // ============================================
 
-function readCSVPositional(filename: string, columnNames: string[]): Record<string, string>[] {
+function _readCSVPositional(filename: string, columnNames: string[]): Record<string, string>[] {
   const raw = readFileSync(`${CSV_DIR}/${filename}`, "utf-8")
   const lines = raw.split("\n")
 
@@ -449,7 +449,7 @@ async function migrate() {
   }
 
   // Get timing description for a subscription (legacy format)
-  function getTimingDesc(paymentId: string): string | null {
+  function _getTimingDesc(paymentId: string): string | null {
     const timings = subTimings.get(paymentId)
     if (!timings || timings.length === 0) return null
     return timings.map((t) => `${t.fromTime.slice(0, 5)}-${t.toTime.slice(0, 5)}`).join(", ")
@@ -470,7 +470,7 @@ async function migrate() {
   }
 
   // Check which users are "left" (have a leftUsers record)
-  const leftUserIds = new Set(leftUsers.map((l) => l.user_id))
+  const _leftUserIds = new Set(leftUsers.map((l) => l.user_id))
 
   // Find each user's latest subscription end date
   const userLatestExpiry = new Map<string, string>()

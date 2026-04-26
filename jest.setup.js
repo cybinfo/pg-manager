@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom'
+require('@testing-library/jest-dom')
 
 // Mock global Request for rate-limit tests
 class MockHeaders {

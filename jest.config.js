@@ -1,22 +1,30 @@
-const nextJest = require('next/jest')
-
-const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files
-  dir: './',
-})
-
 /** @type {import('jest').Config} */
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    // Mock CSS, images, and other static assets (same as next/jest does)
+    '\\.(css|less|scss|sass)$': '<rootDir>/src/__tests__/setup/__mocks__/styleMock.js',
+    '\\.(gif|ttf|eot|svg|png|jpg|jpeg|webp)$': '<rootDir>/src/__tests__/setup/__mocks__/fileMock.js',
+    '^next/image$': '<rootDir>/src/__tests__/setup/__mocks__/nextImage.js',
+    '^next/router$': '<rootDir>/src/__tests__/setup/__mocks__/nextRouter.js',
+    '^next/headers$': '<rootDir>/src/__tests__/setup/__mocks__/nextHeaders.js',
+    '^next/font/(.*)$': '<rootDir>/src/__tests__/setup/__mocks__/nextFont.js',
   },
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/.next/',
     '<rootDir>/src/__tests__/setup/',
   ],
+  transform: {
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      tsconfig: {
+        jsx: 'react-jsx',
+        esModuleInterop: true,
+      },
+    }],
+  },
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
@@ -38,4 +46,4 @@ const customJestConfig = {
   },
 }
 
-module.exports = createJestConfig(customJestConfig)
+module.exports = customJestConfig

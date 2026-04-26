@@ -296,7 +296,7 @@ async function seedDemoOwner() {
     // 10. Create some demo bills
     console.log("Creating demo bills...")
     const currentMonth = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })
-    const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    const _lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", { month: "long", year: "numeric" })
 
     for (let i = 0; i < Math.min(5, tenantIds.length); i++) {
       const tenantId = tenantIds[i]

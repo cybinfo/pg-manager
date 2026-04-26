@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Non-app files that legitimately use CommonJS require():
+    "scripts/**",
+    "coverage/**",
+    "src/__tests__/setup/__mocks__/**",
+    "jest.setup.js",
+    "jest.config.js",
   ]),
   // Project-level rule overrides
   {
