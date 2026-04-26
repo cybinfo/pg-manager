@@ -2,6 +2,52 @@
  * Tests for application-wide constants
  */
 
+import { FAQ_CATEGORIES } from "@/lib/constants/faqs"
+import { PORTAL_STAT_COLORS } from "@/lib/constants/portal-colors"
+
+describe("FAQ_CATEGORIES", () => {
+  it("is a non-empty array", () => {
+    expect(Array.isArray(FAQ_CATEGORIES)).toBe(true)
+    expect(FAQ_CATEGORIES.length).toBeGreaterThan(0)
+  })
+
+  it("every category has a category name, icon, color, and items array", () => {
+    for (const cat of FAQ_CATEGORIES) {
+      expect(typeof cat.category).toBe("string")
+      expect(cat.icon).toBeTruthy()
+      expect(typeof cat.color).toBe("string")
+      expect(Array.isArray(cat.items)).toBe(true)
+    }
+  })
+
+  it("every FAQ item has a question and answer", () => {
+    for (const cat of FAQ_CATEGORIES) {
+      for (const item of cat.items) {
+        expect(typeof item.question).toBe("string")
+        expect(typeof item.answer).toBe("string")
+        expect(item.question.length).toBeGreaterThan(0)
+        expect(item.answer.length).toBeGreaterThan(0)
+      }
+    }
+  })
+})
+
+describe("PORTAL_STAT_COLORS", () => {
+  it("has all expected color keys", () => {
+    const keys = ["primary", "paid", "time", "financial", "library", "warning", "danger"]
+    for (const key of keys) {
+      expect(PORTAL_STAT_COLORS).toHaveProperty(key)
+    }
+  })
+
+  it("every color entry has bgColor and iconColor strings", () => {
+    for (const entry of Object.values(PORTAL_STAT_COLORS)) {
+      expect(typeof entry.bgColor).toBe("string")
+      expect(typeof entry.iconColor).toBe("string")
+    }
+  })
+})
+
 import {
   // Time Constants
   ONE_SECOND_MS,

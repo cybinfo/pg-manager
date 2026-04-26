@@ -536,3 +536,50 @@ describe("emailBodyTemplates.testEmail", () => {
     expect(html).toContain("ManageKar")
   })
 })
+
+// ============================================================================
+// email-templates.ts — backward-compat shim
+// ============================================================================
+
+describe("email-templates backward-compat shim", () => {
+  it("re-exports all template functions from the deprecated path", async () => {
+    const shim = await import("@/lib/email-templates")
+    expect(typeof shim.paymentReminderTemplate).toBe("function")
+    expect(typeof shim.overdueAlertTemplate).toBe("function")
+    expect(typeof shim.paymentReceiptTemplate).toBe("function")
+    expect(typeof shim.invitationEmailTemplate).toBe("function")
+    expect(typeof shim.emailVerificationTemplate).toBe("function")
+    expect(typeof shim.dailySummaryTemplate).toBe("function")
+    expect(typeof shim.libraryLowHoursTemplate).toBe("function")
+    expect(typeof shim.libraryExpiringMembershipTemplate).toBe("function")
+    expect(typeof shim.libraryExpiredMembershipTemplate).toBe("function")
+  })
+
+  it("paymentReminderTemplate delegates to emailBodyTemplates.paymentReminder", async () => {
+    const { paymentReminderTemplate } = await import("@/lib/email-templates")
+    const data = {
+      tenantName: "Alice",
+      propertyName: "Sunrise PG",
+      roomNumber: "101",
+      amount: 5000,
+      dueDate: "2026-05-01",
+      billMonth: "May 2026",
+    }
+    const html = paymentReminderTemplate(data)
+    expect(html).toContain("Alice")
+    expect(html).toContain("<!DOCTYPE html>")
+  })
+
+  it("libraryLowHoursTemplate delegates to emailBodyTemplates.libraryLowHours", async () => {
+    const { libraryLowHoursTemplate } = await import("@/lib/email-templates")
+    const data = {
+      memberName: "Bob",
+      libraryName: "Scholar Hub",
+      hoursRemaining: 1,
+      totalHours: 9,
+    }
+    const html = libraryLowHoursTemplate(data)
+    expect(html).toContain("Bob")
+    expect(html).toContain("<!DOCTYPE html>")
+  })
+})
