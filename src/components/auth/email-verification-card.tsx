@@ -127,7 +127,7 @@ export function EmailVerificationCard({
 
         {!emailVerified && (
           <p className="text-sm text-muted-foreground">
-            Click the button above to receive a verification email. Check your spam folder if you don't see it.
+            Click the button above to receive a verification email. Check your spam folder if you don&apos;t see it.
           </p>
         )}
       </CardContent>

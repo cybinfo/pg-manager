@@ -388,7 +388,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               <Shield className="h-12 w-12 text-destructive" />
             </div>
             <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-            <p className="text-muted-foreground mb-4">You don't have permission to access this page.</p>
+            <p className="text-muted-foreground mb-4">You don&apos;t have permission to access this page.</p>
             <Link href="/dashboard">
               <Button>Go to Dashboard</Button>
             </Link>

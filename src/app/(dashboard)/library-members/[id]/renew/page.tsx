@@ -28,7 +28,8 @@ import { PageLoading } from "@/components/ui/loading"
 import { withCreatedBy } from "@/lib/audit"
 import { Currency } from "@/components/ui/currency"
 import { formatDate, formatNumber} from "@/lib/format"
-import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { getTodayISO, getNowISO, computeEndDate, computeDefaultStartDate } from "@/lib/date-helpers"
+import { TimeSlot, formatTime12h, calcSlotHours, serializeTimeSlots, parseTimeSlots } from "@/lib/time-slots"
 
 interface MemberData {
   id: string
@@ -60,103 +61,6 @@ interface CurrentMembership {
   plan_name: string
   time_slot: string | null
   hours_included: number | null
-}
-
-/**
- * Compute the smart default start date for renewal.
- * - If member is expired or has no expiry date: use today
- * - If member is active (early renewal): use expiry_date + 1 day
- */
-function computeDefaultStartDate(expiryDate: string | null, status: string): string {
-  const today = getTodayISO()
-
-  if (!expiryDate || status === "expired" || status === "cancelled" || status === "suspended") {
-    return today
-  }
-
-  // For active members (early renewal), start the day after current expiry
-  const expiry = new Date(expiryDate)
-  const todayDate = new Date(today)
-
-  if (expiry < todayDate) {
-    // Expiry is in the past - use today
-    return today
-  }
-
-  // Expiry is in the future - start day after expiry
-  const nextDay = new Date(expiry)
-  nextDay.setDate(nextDay.getDate() + 1)
-  return nextDay.toISOString().split("T")[0]
-}
-
-/**
- * Compute end date from start date + duration in months (each month = 30 days).
- */
-function computeEndDate(startDate: string, durationMonths: number): string {
-  const start = new Date(startDate)
-  const end = new Date(start)
-  end.setDate(end.getDate() + Math.round(durationMonths * 30))
-  return end.toISOString().split("T")[0]
-}
-
-/**
- * Format time string "HH:MM" to 12-hour display format.
- */
-function formatTime12h(time: string): string {
-  const [h, m] = time.split(":").map(Number)
-  const ampm = h >= 12 ? "PM" : "AM"
-  const hour12 = h % 12 || 12
-  return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`
-}
-
-interface TimeSlot {
-  start: string
-  end: string
-}
-
-/**
- * Calculate hours for a single time slot.
- */
-function calcSlotHours(slot: TimeSlot): number {
-  if (!slot.start || !slot.end) return 0
-  const [sh, sm] = slot.start.split(":").map(Number)
-  const [eh, em] = slot.end.split(":").map(Number)
-  let hours = (eh * 60 + em - sh * 60 - sm) / 60
-  if (hours < 0) hours += 24
-  return hours
-}
-
-/**
- * Serialize time slots for database storage.
- */
-function serializeTimeSlots(slots: TimeSlot[]): string | null {
-  const valid = slots.filter((s) => s.start && s.end)
-  if (valid.length === 0) return null
-  return JSON.stringify(valid.map((s) => ({ start: s.start, end: s.end })))
-}
-
-/**
- * Parse time_slot from database into TimeSlot array.
- * Handles null, old "HH:MM-HH:MM" format, and JSON array format.
- */
-function parseTimeSlots(raw: string | null): TimeSlot[] {
-  if (!raw) return []
-  try {
-    const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed)) {
-      return parsed.map((s: { start: string; end: string }) => ({
-        start: s.start || "",
-        end: s.end || "",
-      }))
-    }
-  } catch {
-    // Not JSON — try old format
-  }
-  if (raw.includes("-")) {
-    const [st, et] = raw.split("-")
-    return [{ start: st.trim(), end: et.trim() }]
-  }
-  return []
 }
 
 export default function RenewLibraryMemberPage({

@@ -249,7 +249,7 @@ export default function WaitlistDetailPage({
                   <DialogHeader>
                     <DialogTitle>Mark as Contacted</DialogTitle>
                     <DialogDescription>
-                      Record that you've contacted {entry.name}.
+                      Record that you&apos;ve contacted {entry.name}.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">

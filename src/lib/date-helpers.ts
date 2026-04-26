@@ -43,6 +43,39 @@ export function getNowISO(): string {
 }
 
 // ============================================================================
+// MEMBERSHIP DATE HELPERS
+// ============================================================================
+
+/**
+ * Compute end date from start date + duration in months (each month = 30 days).
+ * Used for library membership creation and renewal.
+ */
+export function computeEndDate(startDate: string, durationMonths: number): string {
+  const start = new Date(startDate)
+  const end = new Date(start)
+  end.setDate(end.getDate() + Math.round(durationMonths * 30))
+  return end.toISOString().split("T")[0]
+}
+
+/**
+ * Compute smart default start date for membership renewal.
+ * - Active member (early renewal): start = expiry_date + 1 day
+ * - Expired/cancelled/suspended/no expiry: start = today
+ */
+export function computeDefaultStartDate(expiryDate: string | null, status: string): string {
+  const today = getTodayISO()
+  if (!expiryDate || status === "expired" || status === "cancelled" || status === "suspended") {
+    return today
+  }
+  const expiry = new Date(expiryDate)
+  const todayDate = new Date(today)
+  if (expiry < todayDate) return today
+  const nextDay = new Date(expiry)
+  nextDay.setDate(nextDay.getDate() + 1)
+  return nextDay.toISOString().split("T")[0]
+}
+
+// ============================================================================
 // MONTH RANGE HELPERS
 // ============================================================================
 

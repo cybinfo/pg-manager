@@ -10,16 +10,16 @@
  * - Combined validation helpers
  */
 
-// Use var (not const/let) so jest.mock factory can access them before initialization
-// jest.mock is hoisted, and only var declarations are also hoisted with undefined init.
-var mockCronCheck: jest.Mock
-var mockApiCheck: jest.Mock
-var mockSensitiveCheck: jest.Mock
-var mockAdminCheck: jest.Mock
-var mockValidateCsrfToken: jest.Mock
-var mockSupabaseCreateClient: jest.Mock
-var mockGetUser: jest.Mock
-var mockFrom: jest.Mock
+// These are declared at module scope and initialized immediately so jest.mock factories
+// can close over them. Using let (not const) because test code calls .mockResolvedValue etc.
+let mockCronCheck: jest.Mock
+let mockApiCheck: jest.Mock
+let mockSensitiveCheck: jest.Mock
+let mockAdminCheck: jest.Mock
+let mockValidateCsrfToken: jest.Mock
+let mockSupabaseCreateClient: jest.Mock
+let mockGetUser: jest.Mock
+let mockFrom: jest.Mock
 
 // Initialize the mocks (runs before jest.mock factories due to hoisting behavior)
 mockCronCheck = jest.fn()

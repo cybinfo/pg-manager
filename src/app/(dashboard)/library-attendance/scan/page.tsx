@@ -425,7 +425,7 @@ export default function QRScannerPage() {
         </CardHeader>
         <CardContent>
           <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-            <li>Click "Start Scanner" to activate the camera</li>
+            <li>Click &quot;Start Scanner&quot; to activate the camera</li>
             <li>Point the camera at a member&apos;s QR code</li>
             <li>The system will automatically detect and process the check-in</li>
             <li>A confirmation will appear showing the member&apos;s name and hours balance</li>

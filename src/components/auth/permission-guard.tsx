@@ -91,7 +91,7 @@ export function PermissionGuard({
         </div>
         <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
         <p className="text-muted-foreground mb-4 max-w-md">
-          You don't have permission to view this page. Please contact your administrator if you believe this is an error.
+          You don&apos;t have permission to view this page. Please contact your administrator if you believe this is an error.
         </p>
         <Link href="/dashboard">
           <Button>Go to Dashboard</Button>

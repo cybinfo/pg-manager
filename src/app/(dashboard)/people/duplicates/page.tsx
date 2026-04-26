@@ -44,7 +44,7 @@ interface DuplicateGroup {
   person_names: string[]
 }
 
-interface DuplicatePerson {
+type PersonBase = {
   id: string
   name: string
   phone: string | null
@@ -54,6 +54,9 @@ interface DuplicatePerson {
   is_verified: boolean
   is_blocked: boolean
   created_at: string
+}
+
+interface DuplicatePerson extends PersonBase {
   tenant_count: number
   staff_count: number
   visitor_count: number
@@ -136,9 +139,8 @@ export default function DuplicatesPage() {
     }
 
     // Fetch counts for each person
-    type PersonData = { id: string; name: string; phone: string | null; email: string | null; photo_url: string | null; tags: string[] | null; is_verified: boolean; is_blocked: boolean; created_at: string }
     const personsWithCounts = await Promise.all(
-      (data || []).map(async (person: PersonData) => {
+      (data || []).map(async (person: PersonBase) => {
         const [tenantRes, staffRes, visitorRes] = await Promise.all([
           supabase.from("tenants").select("id", { count: "exact", head: true }).eq("person_id", person.id),
           supabase.from("staff_members").select("id", { count: "exact", head: true }).eq("person_id", person.id),

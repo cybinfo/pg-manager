@@ -549,7 +549,7 @@ function NewStaffContent() {
               <div className="text-center py-6 text-muted-foreground">
                 <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p>No roles assigned</p>
-                <p className="text-sm">Click "Add Role" to assign permissions</p>
+                <p className="text-sm">Click &quot;Add Role&quot; to assign permissions</p>
               </div>
             ) : (
               <div className="space-y-3">

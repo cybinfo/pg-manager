@@ -327,6 +327,7 @@ describe('executeWorkflow', () => {
   })
 
   it('should skip audit when skip_audit option is true', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { logAuditEvents } = require('@/lib/services/audit.service')
 
     const workflow: WorkflowDefinition<TestInput, TestOutput> = {
@@ -361,6 +362,7 @@ describe('executeWorkflow', () => {
   })
 
   it('should skip notifications when skip_notifications option is true', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { sendNotifications } = require('@/lib/services/notification.service')
 
     const workflow: WorkflowDefinition<TestInput, TestOutput> = {
@@ -464,6 +466,7 @@ describe('wrapOperation', () => {
   })
 
   it('should execute operation and log audit', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { logAuditEvent } = require('@/lib/services/audit.service')
     const operation = jest.fn().mockResolvedValue(createSuccessResult({ id: '123' }))
 
@@ -482,6 +485,7 @@ describe('wrapOperation', () => {
   })
 
   it('should not log audit when operation fails', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { logAuditEvent } = require('@/lib/services/audit.service')
     const operation = jest.fn().mockResolvedValue(
       createErrorResult(createServiceError(ERROR_CODES.UNKNOWN_ERROR, 'Failed'))
@@ -501,6 +505,7 @@ describe('wrapOperation', () => {
   })
 
   it('should skip audit when skipAudit is true', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { logAuditEvent } = require('@/lib/services/audit.service')
     const operation = jest.fn().mockResolvedValue(createSuccessResult({}))
 
@@ -518,6 +523,7 @@ describe('wrapOperation', () => {
   })
 
   it('should send notifications when provided', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { sendNotifications } = require('@/lib/services/notification.service')
     const operation = jest.fn().mockResolvedValue(createSuccessResult({}))
 
@@ -541,6 +547,7 @@ describe('wrapOperation', () => {
   })
 
   it('should skip notifications when skipNotifications is true', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { sendNotifications } = require('@/lib/services/notification.service')
     const operation = jest.fn().mockResolvedValue(createSuccessResult({}))
 
@@ -565,6 +572,7 @@ describe('wrapOperation', () => {
   })
 
   it('should pass before/after data to audit event', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { createAuditEvent } = require('@/lib/services/audit.service')
     const operation = jest.fn().mockResolvedValue(createSuccessResult({}))
 
@@ -598,7 +606,7 @@ describe('wrapOperation', () => {
 
 describe('Edge Cases', () => {
   it('should handle empty workflow', async () => {
-    const workflow: WorkflowDefinition<{}, {}> = {
+    const workflow: WorkflowDefinition<Record<string, never>, Record<string, never>> = {
       name: 'empty_workflow',
       steps: [],
       buildOutput: () => ({}),
@@ -618,7 +626,7 @@ describe('Edge Cases', () => {
   })
 
   it('should handle workflow with only optional steps that all fail', async () => {
-    const workflow: WorkflowDefinition<{}, { done: boolean }> = {
+    const workflow: WorkflowDefinition<Record<string, never>, { done: boolean }> = {
       name: 'all_optional_fail',
       steps: [
         {
@@ -652,7 +660,7 @@ describe('Edge Cases', () => {
   })
 
   it('should handle null/undefined in step results', async () => {
-    const workflow: WorkflowDefinition<{}, { value: null }> = {
+    const workflow: WorkflowDefinition<Record<string, never>, { value: null }> = {
       name: 'null_result',
       steps: [
         {

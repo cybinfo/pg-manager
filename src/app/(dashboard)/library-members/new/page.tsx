@@ -22,7 +22,8 @@ import { Currency } from "@/components/ui/currency"
 import { ArrowLeft, Users, Loader2, CreditCard, UserCheck, Trash2, Plus, Camera } from "lucide-react"
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
-import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { getTodayISO, getNowISO, computeEndDate } from "@/lib/date-helpers"
+import { TimeSlot, formatTime12h, calcSlotHours, serializeTimeSlots, parseTimeSlots } from "@/lib/time-slots"
 import { formatDate, formatNumber} from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { showError } from "@/lib/toast-helpers"
@@ -41,78 +42,6 @@ interface Plan {
   hours_included: number | null
   validity_days: number
   base_price: number
-}
-
-/**
- * Compute end date from start date + duration in months (each month = 30 days).
- */
-function computeEndDate(startDate: string, durationMonths: number): string {
-  const start = new Date(startDate)
-  const end = new Date(start)
-  end.setDate(end.getDate() + Math.round(durationMonths * 30))
-  return end.toISOString().split("T")[0]
-}
-
-/**
- * Format time string "HH:MM" to 12-hour display format.
- */
-function formatTime12h(time: string): string {
-  const [h, m] = time.split(":").map(Number)
-  const ampm = h >= 12 ? "PM" : "AM"
-  const hour12 = h % 12 || 12
-  return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`
-}
-
-interface TimeSlot {
-  start: string
-  end: string
-}
-
-/**
- * Calculate hours for a single time slot.
- */
-function calcSlotHours(slot: TimeSlot): number {
-  if (!slot.start || !slot.end) return 0
-  const [sh, sm] = slot.start.split(":").map(Number)
-  const [eh, em] = slot.end.split(":").map(Number)
-  let hours = (eh * 60 + em - sh * 60 - sm) / 60
-  if (hours < 0) hours += 24
-  return hours
-}
-
-/**
- * Serialize time slots for database storage.
- * Empty array → null, any slots → JSON array string.
- */
-function serializeTimeSlots(slots: TimeSlot[]): string | null {
-  const valid = slots.filter((s) => s.start && s.end)
-  if (valid.length === 0) return null
-  return JSON.stringify(valid.map((s) => ({ start: s.start, end: s.end })))
-}
-
-/**
- * Parse time_slot from database into TimeSlot array.
- * Handles null, old "HH:MM-HH:MM" format, and JSON array format.
- */
-function parseTimeSlots(raw: string | null): TimeSlot[] {
-  if (!raw) return []
-  // Try JSON array first
-  try {
-    const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed)) {
-      return parsed.map((s: { start: string; end: string }) => ({
-        start: s.start || "",
-        end: s.end || "",
-      }))
-    }
-  } catch {
-    // Not JSON — try old format "HH:MM-HH:MM"
-  }
-  if (raw.includes("-")) {
-    const [st, et] = raw.split("-")
-    return [{ start: st.trim(), end: et.trim() }]
-  }
-  return []
 }
 
 export default function NewLibraryMemberPage() {

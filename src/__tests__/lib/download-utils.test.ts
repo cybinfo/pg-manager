@@ -18,12 +18,14 @@ import {
 
 // Polyfill TextEncoder for jsdom test environment
 if (typeof globalThis.TextEncoder === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { TextEncoder } = require('util')
   globalThis.TextEncoder = TextEncoder
 }
 
 // Polyfill ReadableStream for jsdom test environment
 if (typeof globalThis.ReadableStream === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { ReadableStream } = require('stream/web')
   globalThis.ReadableStream = ReadableStream
 }

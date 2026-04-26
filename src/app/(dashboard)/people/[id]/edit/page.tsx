@@ -662,7 +662,7 @@ export default function EditPersonPage() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">
-              No emergency contacts added. Click "Add Contact" to add one.
+              No emergency contacts added. Click &quot;Add Contact&quot; to add one.
             </p>
           )}
         </DetailSection>

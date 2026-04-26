@@ -3,7 +3,7 @@
 > **STEP 1 — MANDATORY**: Read [`KEY_PRINCIPLES.md`](./KEY_PRINCIPLES.md) before anything else. Every review, suggestion, improvement, or addition must be evaluated against the 35 Core Principles and answered against the 35-question Principle Test first.
 >
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-04-25
+> **Last Updated**: 2026-04-26
 
 ---
 
@@ -949,7 +949,15 @@ git add . && git commit -m "description" && git push && vercel --prod
 - Include `compute` function (required)
 - Use `serverFilter` for server-side counting
 
-### Recently Fixed Issues (2026-03-20)
+### Recently Fixed Issues (2026-04-26)
+- **V8 type deduplication**: SortConfig, MutationOptions, AuditEvent, ConfigurableRoomType, POLICE_VERIFICATION_STATUS_OPTIONS all centralized
+- **PWA (D7)**: `@ducanh2912/next-pwa` wired in next.config.ts; `turbopack: {}` required for Next.js 16 + next-pwa coexistence
+- **Cron failure alerts (G1)**: `sendCronFailureAlert()` in email.ts; wired non-blocking in `baseCronHandler` catch block
+- **Portal pages**: `/tenant/renewal` (lease renewal via approvals), `/member/locker` (locker view), `/member/attendance` CSV export
+- **Portal nav**: Confirmed single-source (config.ts only) — unlike dashboard which requires BOTH config.ts AND layout.tsx
+- **Tenant complaints portal**: Already has full submission capability (was already implemented)
+
+### Previously Fixed Issues (2026-03-20)
 - **Full list page unification**: ALL 27 pages now have advanced filters, inline edit, column builders, filter presets, CSV export
 - **PermissionGuard on ALL forms**: 52/52 form pages now have permission guards (was ~16)
 - **Full CRUD**: All data modules have Create + Read + Edit + Delete (12 new edit pages, 8 new delete buttons)
@@ -970,6 +978,14 @@ git add . && git commit -m "description" && git push && vercel --prod
 - **Bulk operations**: Payment recording, member import (CSV), member status updates
 - **Payment reconciliation**: 2-panel matching UI with auto-match algorithm
 - **6 notification emails**: Receipts, resolution, refund, waitlist, monthly summary
+
+### Portal Navigation Pattern (IMPORTANT)
+- **Tenant/member portals**: nav is **single-source** — only update `TENANT_NAVIGATION` / `LIBRARY_MEMBER_NAVIGATION` in `src/lib/navigation/config.ts`
+- **Dashboard**: nav requires updating **BOTH** `config.ts` AND `src/app/(dashboard)/layout.tsx`
+
+### Next.js 16 + next-pwa Coexistence
+- next-pwa injects webpack config; Next.js 16 Turbopack errors without explicit turbopack config
+- Fix: add `turbopack: {}` to `nextConfig` in `next.config.ts`
 
 ---
 
