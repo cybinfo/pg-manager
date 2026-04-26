@@ -6,7 +6,16 @@
  */
 
 import { z } from "zod"
-import { validateBody, validateQuery } from "@/lib/validation"
+import {
+  validateBody,
+  validateQuery,
+  requiredField,
+  requiredSelect,
+  requiredPhone,
+  requiredAmount,
+  requiredDate,
+  requiredPositiveInt,
+} from "@/lib/validation"
 
 // Helper to extract JSON body from a response
 async function getResponseBody(response: Response): Promise<Record<string, unknown>> {
@@ -355,5 +364,168 @@ describe("Validation Utilities", () => {
         expect(result.data.search).toBe("second")
       }
     })
+
+    it("includes formErrors when schema has root-level refine failure (line 155 true branch)", async () => {
+      // Root-level .refine() failures produce formErrors (not fieldErrors)
+      const RefinedSchema = z.object({ page: z.string().optional() }).refine(() => false, "Root level error")
+      const params = new URLSearchParams()
+      const result = validateQuery(RefinedSchema as z.ZodType<{ page?: string }>, params)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const responseBody = await getResponseBody(result.response)
+        const error = responseBody.error as Record<string, unknown>
+        const details = error.details as Record<string, unknown>
+        expect(details.formErrors).toBeDefined()
+      }
+    })
+  })
+})
+
+// ============================================================================
+// Field Validator Factories (lines 34-94)
+// ============================================================================
+
+describe("requiredField", () => {
+  const validate = requiredField("Name")
+
+  it("returns null for a valid non-empty string", () => {
+    expect(validate("Alice")).toBeNull()
+  })
+
+  it("returns error for empty string", () => {
+    expect(validate("")?.isValid).toBe(false)
+    expect(validate("")?.error).toContain("Name")
+  })
+
+  it("returns error for whitespace-only string", () => {
+    expect(validate("   ")?.isValid).toBe(false)
+  })
+
+  it("returns error for null", () => {
+    expect(validate(null)?.isValid).toBe(false)
+  })
+
+  it("returns error for undefined", () => {
+    expect(validate(undefined)?.isValid).toBe(false)
+  })
+})
+
+describe("requiredSelect", () => {
+  const validate = requiredSelect("Status")
+
+  it("returns null for a valid selection", () => {
+    expect(validate("active")).toBeNull()
+  })
+
+  it("returns error for empty string", () => {
+    expect(validate("")?.isValid).toBe(false)
+    expect(validate("")?.error).toContain("status")
+  })
+
+  it("returns error for null", () => {
+    expect(validate(null)?.isValid).toBe(false)
+  })
+})
+
+describe("requiredPhone", () => {
+  const validate = requiredPhone("Phone")
+
+  it("returns null for a valid 10-digit phone", () => {
+    expect(validate("9876543210")).toBeNull()
+  })
+
+  it("returns error for empty string", () => {
+    expect(validate("")?.isValid).toBe(false)
+    expect(validate("")?.error).toContain("required")
+  })
+
+  it("returns error for invalid phone format", () => {
+    expect(validate("12345")?.isValid).toBe(false)
+    expect(validate("12345")?.error).toContain("10-digit")
+  })
+
+  it("accepts phone with non-digit separators when result is 10 digits (strips them)", () => {
+    // "98765-43210" → after removing non-digits: "9876543210" (10 digits) → valid
+    expect(validate("98765-43210")).toBeNull()
+  })
+
+  it("returns error for null (covers ?? branch on line 55)", () => {
+    expect(validate(null)?.isValid).toBe(false)
+    expect(validate(null)?.error).toContain("required")
+  })
+
+  it("returns error for undefined", () => {
+    expect(validate(undefined)?.isValid).toBe(false)
+  })
+})
+
+describe("requiredAmount", () => {
+  const validate = requiredAmount("Amount")
+
+  it("returns null for a positive number", () => {
+    expect(validate(5000)).toBeNull()
+  })
+
+  it("returns null for a positive numeric string", () => {
+    expect(validate("1500")).toBeNull()
+  })
+
+  it("returns error for zero", () => {
+    expect(validate(0)?.isValid).toBe(false)
+  })
+
+  it("returns error for negative number", () => {
+    expect(validate(-100)?.isValid).toBe(false)
+  })
+
+  it("returns error for empty string", () => {
+    expect(validate("")?.isValid).toBe(false)
+  })
+
+  it("returns error for NaN-producing input", () => {
+    expect(validate("abc")?.isValid).toBe(false)
+  })
+})
+
+describe("requiredDate", () => {
+  const validate = requiredDate("Date")
+
+  it("returns null for a valid date string", () => {
+    expect(validate("2024-06-15")).toBeNull()
+  })
+
+  it("returns error for empty string", () => {
+    expect(validate("")?.isValid).toBe(false)
+    expect(validate("")?.error).toContain("Date")
+  })
+
+  it("returns error for null", () => {
+    expect(validate(null)?.isValid).toBe(false)
+  })
+})
+
+describe("requiredPositiveInt", () => {
+  const validate = requiredPositiveInt("Seats")
+
+  it("returns null for a positive integer", () => {
+    expect(validate(5)).toBeNull()
+    expect(validate(1)).toBeNull()
+  })
+
+  it("returns error for zero", () => {
+    expect(validate(0)?.isValid).toBe(false)
+  })
+
+  it("returns error for a float", () => {
+    expect(validate(2.5)?.isValid).toBe(false)
+  })
+
+  it("returns error for a negative integer", () => {
+    expect(validate(-3)?.isValid).toBe(false)
+  })
+
+  it("returns error for empty string", () => {
+    expect(validate("")?.isValid).toBe(false)
   })
 })
