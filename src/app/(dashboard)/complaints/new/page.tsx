@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle, Library } from "lucide-react"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
 import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -79,6 +80,7 @@ const priorities = [
 ]
 
 function NewComplaintForm() {
+  const { backHref } = useBackNavigation({ defaultHref: "/complaints" })
   const [loadingData, setLoadingData] = useState(true)
   const [properties, setProperties] = useState<Property[]>([])
   const [libraries, setLibraries] = useState<LibraryItem[]>([])
@@ -256,7 +258,7 @@ function NewComplaintForm() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/complaints">
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -359,7 +361,7 @@ function NewComplaintForm() {
             {/* Property Fields */}
             {formData.entity_type === "property" && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField label="Property" htmlFor="property_id" required error={errors.property_id}>
                     <Select
                       id="property_id"
@@ -461,7 +463,7 @@ function NewComplaintForm() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Category *</Label>
                 <Select

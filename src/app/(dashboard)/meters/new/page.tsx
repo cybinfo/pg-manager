@@ -37,6 +37,7 @@ import {
   METER_TYPE_CONFIG,
 } from "@/types/meters.types"
 import { getTodayISO } from "@/lib/date-helpers"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 // ============================================
 // Types
@@ -58,6 +59,7 @@ interface Room {
 // ============================================
 
 export default function NewMeterPage() {
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meters", defaultLabel: "All Meters" })
   const [properties, setProperties] = useState<Property[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
@@ -244,8 +246,8 @@ export default function NewMeterPage() {
         <DetailHero
           title="Add New Meter"
           subtitle="Register a new meter in the system"
-          backHref="/meters"
-          backLabel="All Meters"
+          backHref={backHref}
+          backLabel={backLabel}
           avatar={
             <div className={`p-3 rounded-lg ${typeConfig.bgColor}`}>
               <TypeIcon className={`h-8 w-8 ${typeConfig.color}`} />
@@ -273,7 +275,7 @@ export default function NewMeterPage() {
               {errors.property_id && <p className="text-sm text-destructive">{errors.property_id}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="meter_number">Meter Number *</Label>
                 <Input
@@ -319,7 +321,7 @@ export default function NewMeterPage() {
           icon={Building2}
         >
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="make">Make / Manufacturer</Label>
                 <Input

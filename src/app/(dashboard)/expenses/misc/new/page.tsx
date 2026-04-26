@@ -11,6 +11,7 @@ import { ArrowLeftRight, ArrowDownLeft, ArrowUpRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { requiredAmount, requiredDate } from "@/lib/validation"
 
 import {
   FormPageTemplate,
@@ -27,6 +28,7 @@ import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_MISC_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { MiscTransactionCategory, MiscPaymentMode } from "@/types/expense-enhanced.types"
 import { PermissionGuard } from "@/components/auth"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function NewMiscTransactionPage() {
   return (
@@ -41,11 +43,15 @@ function NewMiscTransactionContent() {
   const [categories, setCategories] = useState<MiscTransactionCategory[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/expenses", defaultLabel: "All Expenses" })
+
   const {
     formData,
     setFormData,
     handleSubmit,
     saving,
+    errors,
+    validateField,
     router,
   } = useFormPage({
     table: "misc_transactions",
@@ -65,12 +71,17 @@ function NewMiscTransactionContent() {
     selectAfterInsert: true,
     successMessage: "Transaction recorded",
     errorMessage: "Failed to create transaction",
-    validate: (data) => {
-      if (data.amount <= 0) return "Amount must be greater than 0"
-      if (!data.person_name?.trim() && !data.description?.trim()) {
-        return "Please enter person name or description"
-      }
-      return null
+    validationSchema: {
+      amount: requiredAmount("Amount"),
+      transaction_date: requiredDate("Date"),
+      person_name: (value: unknown, data: Record<string, unknown>) => {
+        const personName = String(value ?? "").trim()
+        const description = String(data?.description ?? "").trim()
+        if (!personName && !description) {
+          return { isValid: false, error: "Please enter person name or description" }
+        }
+        return null
+      },
     },
     transform: (data) => {
       const selectedCategory = categories.find((c: MiscTransactionCategory) => c.id === data.category_id)
@@ -134,8 +145,8 @@ function NewMiscTransactionContent() {
       description="Record money in or money out"
       icon={ArrowLeftRight}
       iconColor="blue"
-      backHref="/expenses/misc"
-      backLabel="Back to Transactions"
+      backHref={backHref}
+      backLabel={backLabel}
       onSubmit={handleSubmit}
       onCancel={() => router.push("/expenses/misc")}
       submitLabel={formData.transaction_type === "in" ? "Record Money In" : "Record Money Out"}
@@ -186,17 +197,18 @@ function NewMiscTransactionContent() {
       {/* Basic Details */}
       <FormSection title="Transaction Details">
         <FormGrid cols={2}>
-          <FormField label="Date" required>
+          <FormField label="Date" required error={errors.transaction_date}>
             <Input
               type="date"
               value={formData.transaction_date}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, transaction_date: e.target.value }))
               }
+              onBlur={() => validateField("transaction_date")}
             />
           </FormField>
 
-          <FormField label="Amount" required>
+          <FormField label="Amount" required error={errors.amount}>
             <Input
               type="number"
               min="0"
@@ -205,17 +217,19 @@ function NewMiscTransactionContent() {
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))
               }
+              onBlur={() => validateField("amount")}
               placeholder="0.00"
             />
           </FormField>
         </FormGrid>
 
-        <FormField label="Person Name" hint={formData.transaction_type === "in" ? "Who gave the money?" : "Who received the money?"}>
+        <FormField label="Person Name" hint={formData.transaction_type === "in" ? "Who gave the money?" : "Who received the money?"} error={errors.person_name}>
           <Input
             value={formData.person_name || ""}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, person_name: e.target.value }))
             }
+            onBlur={() => validateField("person_name")}
             placeholder="e.g., Tenant name, Owner, Vendor"
           />
         </FormField>

@@ -10,6 +10,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,6 +35,7 @@ export default function NewLibrarySeatPage() {
 }
 
 function NewLibrarySeatContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/library-seats" })
   const [sections, setSections] = useState<Section[]>([])
   const [loadingSections, setLoadingSections] = useState(true)
 
@@ -149,7 +151,7 @@ function NewLibrarySeatContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={preselectedSection ? `/library-sections/${preselectedSection}` : "/library-seats"}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -194,7 +196,7 @@ function NewLibrarySeatContent() {
             </div>
 
             {/* Seat Info */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="seat_number">Seat Number *</Label>
                 <Input
@@ -224,7 +226,7 @@ function NewLibrarySeatContent() {
             {/* Features */}
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Features</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_power_outlet"

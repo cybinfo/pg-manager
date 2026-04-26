@@ -37,6 +37,7 @@ import {
   METER_STATUSES,
   METER_TYPE_CONFIG,
 } from "@/types/meters.types"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 interface Property {
   id: string
@@ -46,6 +47,7 @@ interface Property {
 export default function EditMeterPage() {
   const params = useParams()
   const id = params.id as string
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meters", defaultLabel: "All Meters" })
   const [properties, setProperties] = useState<Property[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -164,8 +166,8 @@ export default function EditMeterPage() {
         <DetailHero
           title="Edit Meter"
           subtitle={record?.meter_number as string}
-          backHref={`/meters/${id}`}
-          backLabel="Back to Meter"
+          backHref={backHref}
+          backLabel={backLabel}
           avatar={
             <div className={`p-3 rounded-lg ${typeConfig.bgColor}`}>
               <TypeIcon className={`h-8 w-8 ${typeConfig.color}`} />
@@ -193,7 +195,7 @@ export default function EditMeterPage() {
               {errors.property_id && <p className="text-sm text-destructive">{errors.property_id}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="meter_number">Meter Number *</Label>
                 <Input
@@ -216,7 +218,7 @@ export default function EditMeterPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
@@ -247,7 +249,7 @@ export default function EditMeterPage() {
           icon={Building2}
         >
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="make">Make / Manufacturer</Label>
                 <Input

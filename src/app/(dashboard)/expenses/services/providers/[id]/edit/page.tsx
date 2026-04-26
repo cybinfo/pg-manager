@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Wrench, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -43,6 +44,7 @@ export default function EditServiceProviderPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/expenses/services/providers" })
   const router = useRouter()
   const { user: _user, workspaceId } = useAuthContext()
 
@@ -210,7 +212,7 @@ export default function EditServiceProviderPage({
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
-            href={`/expenses/services/providers/${id}`}
+            href={backHref}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -267,7 +269,7 @@ export default function EditServiceProviderPage({
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Phone">
                       <Input
                         value={formData.phone || ""}
@@ -316,7 +318,7 @@ export default function EditServiceProviderPage({
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Tax Information</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="PAN">
                       <Input
                         value={formData.pan || ""}
@@ -363,7 +365,7 @@ export default function EditServiceProviderPage({
                     </div>
 
                     {formData.tds_applicable && (
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField label="TDS Section">
                           <Select
                             value={formData.tds_section || ""}

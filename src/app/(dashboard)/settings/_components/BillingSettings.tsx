@@ -306,7 +306,7 @@ export function BillingSettings({
                 </div>
 
                 {/* Rate Input */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {utility.billing_type === 'per_unit' ? (
                     <div className="space-y-2">
                       <Label className="text-sm">Rate per {utility.unit_label}</Label>
@@ -397,7 +397,7 @@ export function BillingSettings({
           {showAddCharge && (
             <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
               <h4 className="font-medium">Add Custom Charge Type</h4>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="charge_name">Name</Label>
                   <Input
@@ -501,7 +501,7 @@ export function BillingSettings({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
@@ -568,7 +568,7 @@ export function BillingSettings({
               <div className="space-y-4">
                 <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Billing Schedule</h4>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="billing_day">Bill Generation Day</Label>
                     <Select

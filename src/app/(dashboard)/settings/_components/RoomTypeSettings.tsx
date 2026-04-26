@@ -108,7 +108,7 @@ export function RoomTypeSettings({
           {showAddRoomType && (
             <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
               <h4 className="font-medium">Add Custom Room Type</h4>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="roomtype_name">Name</Label>
                   <Input
@@ -128,7 +128,7 @@ export function RoomTypeSettings({
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="roomtype_rent">Default Rent</Label>
                   <div className="relative">
@@ -211,7 +211,7 @@ export function RoomTypeSettings({
                     </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label className="text-xs">Default Rent</Label>
                     <div className="relative">

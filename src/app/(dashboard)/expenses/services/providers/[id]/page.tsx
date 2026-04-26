@@ -192,7 +192,7 @@ export default function ServiceProviderDetailPage({
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="bg-card border rounded-lg p-4">
               <div className="text-sm text-muted-foreground">Total Paid</div>
               <div className="text-xl font-bold text-success">

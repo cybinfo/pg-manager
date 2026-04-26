@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Receipt, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -26,6 +27,7 @@ import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/stat
 import type { Vendor, BillCategory, BillPaymentFormData } from "@/types/expense-enhanced.types"
 
 export default function NewBillPaymentPage() {
+  const { backHref } = useBackNavigation({ defaultHref: "/expenses/bills" })
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
 
@@ -230,7 +232,7 @@ export default function NewBillPaymentPage() {
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
-            href="/expenses/bills"
+            href={backHref}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -303,7 +305,7 @@ export default function NewBillPaymentPage() {
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Bill Details</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Bill Number">
                       <Input
                         value={formData.bill_number || ""}
@@ -325,7 +327,7 @@ export default function NewBillPaymentPage() {
                     </FormField>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Bill Date">
                       <Input
                         type="date"
@@ -381,7 +383,7 @@ export default function NewBillPaymentPage() {
                     </FormField>
                   ) : (
                     <>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField label="Base Amount">
                           <Input
                             type="number"
@@ -409,7 +411,7 @@ export default function NewBillPaymentPage() {
                         </FormField>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <FormField label="CGST">
                           <Input
                             type="number"
@@ -484,7 +486,7 @@ export default function NewBillPaymentPage() {
                     Payment Details (Optional)
                   </h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Paid Amount">
                       <Input
                         type="number"
@@ -512,7 +514,7 @@ export default function NewBillPaymentPage() {
                     </FormField>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Payment Mode">
                       <Select
                         value={formData.payment_mode || ""}

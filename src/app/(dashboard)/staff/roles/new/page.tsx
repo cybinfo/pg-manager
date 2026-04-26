@@ -3,9 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { requiredField } from "@/lib/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
@@ -25,6 +28,7 @@ export default function NewRolePage() {
 }
 
 function NewRoleContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/staff" })
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
 
   const {
@@ -32,6 +36,8 @@ function NewRoleContent() {
     handleChange,
     handleSubmit,
     saving,
+    errors,
+    validateField,
   } = useFormPage({
     table: "roles",
     initialData: {
@@ -41,10 +47,10 @@ function NewRoleContent() {
     redirectTo: "/staff/roles",
     successMessage: "Role created successfully!",
     errorMessage: "Failed to create role",
+    validationSchema: {
+      name: requiredField("Role name"),
+    },
     validate: (data) => {
-      if (!data.name) {
-        return "Please enter a role name"
-      }
       if (selectedPermissions.length === 0) {
         return "Please select at least one permission"
       }
@@ -113,7 +119,7 @@ function NewRoleContent() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/staff/roles">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -140,18 +146,17 @@ function NewRoleContent() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Role Name *</Label>
+            <FormField label="Role Name" htmlFor="name" required error={errors.name}>
               <Input
                 id="name"
                 name="name"
                 placeholder="e.g., Receptionist, Accountant, Meter Reader"
                 value={formData.name as string}
                 onChange={handleChange}
-                required
+                onBlur={() => validateField("name")}
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>

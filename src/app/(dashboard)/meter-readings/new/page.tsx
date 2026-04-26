@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { withCreatedBy } from "@/lib/audit"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,6 +51,7 @@ interface Meter {
 }
 
 function NewMeterReadingContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/meter-readings" })
   const [loadingData, setLoadingData] = useState(true)
   const [loadingLastReading, setLoadingLastReading] = useState(false)
 
@@ -371,7 +373,7 @@ function NewMeterReadingContent() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/meter-readings">
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>

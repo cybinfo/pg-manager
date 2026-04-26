@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Megaphone, Loader2 } from "lucide-react"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { NOTICE_TYPE_LABELS, NOTICE_AUDIENCES } from "@/lib/status"
@@ -50,6 +51,7 @@ function EditNoticeContent({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/notices" })
 
   const {
     formData,
@@ -108,7 +110,7 @@ function EditNoticeContent({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/notices/${id}`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -162,7 +164,7 @@ function EditNoticeContent({
             </FormField>
 
             {/* Type & Audience */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="type">Notice Type</Label>
                 <Select
@@ -186,7 +188,7 @@ function EditNoticeContent({
             </div>
 
             {/* Priority & Active */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority</Label>
                 <Select

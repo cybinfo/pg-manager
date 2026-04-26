@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, DoorOpen, Loader2 } from "lucide-react"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredDate } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
@@ -44,6 +45,7 @@ function EditExitClearanceContent({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/exit-clearance" })
 
   const {
     formData,
@@ -94,7 +96,7 @@ function EditExitClearanceContent({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/exit-clearance/${id}`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -124,7 +126,7 @@ function EditExitClearanceContent({
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="settlement_status">Settlement Status</Label>
                 <Select

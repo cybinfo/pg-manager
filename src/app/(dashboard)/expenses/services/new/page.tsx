@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Hammer, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -34,6 +35,7 @@ const TDS_RATES: Record<string, number> = {
 }
 
 export default function NewServicePaymentPage() {
+  const { backHref } = useBackNavigation({ defaultHref: "/expenses/services" })
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
 
@@ -241,7 +243,7 @@ export default function NewServicePaymentPage() {
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
-            href="/expenses/services"
+            href={backHref}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -393,7 +395,7 @@ export default function NewServicePaymentPage() {
 
                     {formData.tds_applicable && (
                       <>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <FormField label="TDS Section">
                             <Select
                               value={formData.tds_section || ""}
@@ -423,7 +425,7 @@ export default function NewServicePaymentPage() {
                           </FormField>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
                           <div>
                             <div className="text-xs text-muted-foreground">TDS Deducted</div>
                             <div className="font-medium">
@@ -446,7 +448,7 @@ export default function NewServicePaymentPage() {
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Payment Details</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Payment Mode">
                       <Select
                         value={formData.payment_mode || ""}

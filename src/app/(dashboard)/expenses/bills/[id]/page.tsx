@@ -197,7 +197,7 @@ export default function BillPaymentDetailPage({
                   : "bg-gradient-to-r from-blue-500 to-blue-600"
             }`}
           >
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <div className="text-sm opacity-90">Bill Amount</div>
                 <div className="text-2xl font-bold">{formatCurrency(bill.bill_amount)}</div>

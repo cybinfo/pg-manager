@@ -10,6 +10,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -61,6 +62,7 @@ export default function NewLibraryAttendancePage() {
 }
 
 function NewLibraryAttendanceContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/library-attendance" })
   const [loadingData, setLoadingData] = useState(true)
   const [members, setMembers] = useState<MemberOption[]>([])
   const [_libraries, setLibraries] = useState<LibraryOption[]>([])
@@ -320,7 +322,7 @@ function NewLibraryAttendanceContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/library-attendance">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>

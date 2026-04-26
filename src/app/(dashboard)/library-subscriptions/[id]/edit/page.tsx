@@ -9,6 +9,7 @@
 import { use } from "react"
 import Link from "next/link"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { getNowISO } from "@/lib/date-helpers"
 import { formatCurrency } from "@/lib/format"
 import { Button } from "@/components/ui/button"
@@ -51,6 +52,7 @@ function EditSubscriptionContent({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/library-subscriptions" })
 
   const {
     formData,
@@ -117,7 +119,7 @@ function EditSubscriptionContent({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/library-subscriptions/${id}`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -147,7 +149,7 @@ function EditSubscriptionContent({
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Start Date" htmlFor="start_date" required error={errors.start_date}>
                 <Input
                   id="start_date"
@@ -172,7 +174,7 @@ function EditSubscriptionContent({
               </FormField>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Amount (Rs.)" htmlFor="amount" required error={errors.amount}>
                 <Input
                   id="amount"
@@ -214,7 +216,7 @@ function EditSubscriptionContent({
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="time_slot">Time Slot</Label>
                 <Select

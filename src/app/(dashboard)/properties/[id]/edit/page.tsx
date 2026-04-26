@@ -12,6 +12,7 @@ import {
   Globe,
   Users,
 } from "lucide-react"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PermissionGuard } from "@/components/auth"
@@ -69,6 +70,7 @@ export default function EditPropertyPage() {
 }
 
 function EditPropertyContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/properties" })
   const params = useParams()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -284,7 +286,7 @@ function EditPropertyContent() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/properties/${params.id}`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>

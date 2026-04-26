@@ -10,6 +10,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -42,6 +43,7 @@ export default function NewLibraryPaymentPage() {
 }
 
 function NewLibraryPaymentContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/library-payments" })
   const [members, setMembers] = useState<Member[]>([])
   const [loadingMembers, setLoadingMembers] = useState(true)
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
@@ -210,7 +212,7 @@ function NewLibraryPaymentContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={preselectedMember ? `/library-members/${preselectedMember}` : "/library-payments"}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -254,7 +256,7 @@ function NewLibraryPaymentContent() {
             </FormField>
 
             {/* Payment Info */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Payment Date" htmlFor="payment_date" required error={errors.payment_date}>
                 <Input
                   id="payment_date"
@@ -281,7 +283,7 @@ function NewLibraryPaymentContent() {
               </FormField>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="payment_type">Payment Type</Label>
                 <Select

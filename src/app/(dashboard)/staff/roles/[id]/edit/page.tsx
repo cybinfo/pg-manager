@@ -10,6 +10,7 @@
 import { use, useState, useEffect } from "react"
 import Link from "next/link"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,6 +41,7 @@ function EditRoleContent({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/staff" })
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([])
   const [isSystemRole, setIsSystemRole] = useState(false)
 
@@ -152,7 +154,7 @@ function EditRoleContent({
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href={`/staff/roles/${id}`}>
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>

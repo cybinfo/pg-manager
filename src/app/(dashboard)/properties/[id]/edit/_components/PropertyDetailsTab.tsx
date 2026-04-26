@@ -91,7 +91,7 @@ export function PropertyDetailsTab({ formData, onChange, setFormData, loading }:
 
         <div className="border-t pt-4 mt-4">
           <h3 className="font-medium mb-3">Property Manager (Optional)</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="manager_name">Manager Name</Label>
               <Input

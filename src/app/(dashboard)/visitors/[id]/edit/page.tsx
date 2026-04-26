@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Users, Loader2 } from "lucide-react"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PageLoading } from "@/components/ui/loading"
 import { VISITOR_TYPE_LABELS } from "@/types/visitors.types"
 import { PermissionGuard } from "@/components/auth"
@@ -44,6 +45,7 @@ function EditVisitorContent({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/visitors" })
 
   const {
     formData,
@@ -96,7 +98,7 @@ function EditVisitorContent({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/visitors/${id}`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -148,7 +150,7 @@ function EditVisitorContent({
             </div>
 
             {/* Check-in & Check-out */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="check_in_time">Check-in Time</Label>
                 <Input

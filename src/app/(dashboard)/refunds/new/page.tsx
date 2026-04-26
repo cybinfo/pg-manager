@@ -24,6 +24,7 @@ import { PermissionGuard } from "@/components/auth"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { brandGradient } from "@/lib/design-tokens"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { REFUND_TYPE_OPTIONS, REFUND_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 
 interface Tenant {
@@ -45,6 +46,7 @@ interface ExitClearance {
 }
 
 export default function NewRefundPage() {
+  const { backHref } = useBackNavigation({ defaultHref: "/refunds" })
   const router = useRouter()
   const searchParams = useSearchParams()
   const tenantId = searchParams.get("tenant")
@@ -247,7 +249,7 @@ export default function NewRefundPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Link href="/refunds">
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -313,7 +315,7 @@ export default function NewRefundPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="refund_type">Refund Type *</Label>
                     <Select
@@ -344,7 +346,7 @@ export default function NewRefundPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="payment_mode">Payment Mode *</Label>
                     <Select

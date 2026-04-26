@@ -156,7 +156,7 @@ export default function ServicePaymentDetailPage({
 
           {/* Amount Summary Card */}
           <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl p-6 mb-6">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <div className="text-sm opacity-90">Gross Amount</div>
                 <div className="text-2xl font-bold">{formatCurrency(payment.gross_amount)}</div>

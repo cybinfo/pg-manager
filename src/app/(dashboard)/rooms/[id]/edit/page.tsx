@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Home, Loader2 } from "lucide-react"
 import { Select } from "@/components/ui/form-components"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PhotoGallery } from "@/components/forms"
 import { PermissionGuard } from "@/components/auth"
 import { ConfigurableRoomType, defaultConfigurableRoomTypes } from "@/types/rooms.types"
@@ -42,6 +43,7 @@ export default function EditRoomPage() {
 }
 
 function EditRoomContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/rooms" })
   const params = useParams()
   const [properties, setProperties] = useState<Property[]>([])
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
@@ -168,7 +170,7 @@ function EditRoomContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/rooms/${params.id}`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -211,7 +213,7 @@ function EditRoomContent() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="room_number">Room Number *</Label>
                 <Input
@@ -246,7 +248,7 @@ function EditRoomContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="floor">Floor</Label>
                 <Input
@@ -277,7 +279,7 @@ function EditRoomContent() {
 
             <div className="border-t pt-4 mt-4">
               <h3 className="font-medium mb-3">Pricing</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="rent_amount">Monthly Rent (₹) *</Label>
                   <Input

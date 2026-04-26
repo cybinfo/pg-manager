@@ -552,7 +552,7 @@ function NewLibraryMemberContent() {
               </div>
 
               {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField label="Full Name" htmlFor="name" required error={errors.name}>
                   <Input
                     id="name"
@@ -591,7 +591,7 @@ function NewLibraryMemberContent() {
               </div>
 
               {/* Gender & Date of Birth */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="gender">Gender</Label>
                   <Select
@@ -634,7 +634,7 @@ function NewLibraryMemberContent() {
               </div>
 
               {/* ID Proof */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="id_proof_type">ID Proof Type</Label>
                   <Select
@@ -697,7 +697,7 @@ function NewLibraryMemberContent() {
               </div>
 
               {/* Start Date & Duration */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="start_date">Start Date *</Label>
                   <Input
@@ -808,7 +808,7 @@ function NewLibraryMemberContent() {
               </div>
 
               {/* Amount & Discount */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="amount">Amount</Label>
                   <Input

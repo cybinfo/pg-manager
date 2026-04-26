@@ -198,6 +198,8 @@ export function useFeatureManagement() {
     flags,
     loading,
     saving,
+    /** The owner_config row id — needed to pass as config.id to FeatureSettings */
+    configId,
     toggleFeature,
     setFeature,
     saveFeatures,

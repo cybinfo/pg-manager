@@ -256,7 +256,7 @@ export default function RoomDetailPage() {
           description="Update room availability"
           icon={Home}
         >
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <Button
               variant={room.status === "available" ? "default" : "outline"}
               className="justify-start"

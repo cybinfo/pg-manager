@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Building2, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -29,6 +30,7 @@ export default function EditVendorPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/expenses/vendors" })
   const router = useRouter()
   const { user: _user, workspaceId } = useAuthContext()
 
@@ -194,7 +196,7 @@ export default function EditVendorPage({
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
-            href={`/expenses/vendors/${id}`}
+            href={backHref}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -251,7 +253,7 @@ export default function EditVendorPage({
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Contact Person">
                       <Input
                         value={formData.contact_name || ""}
@@ -300,7 +302,7 @@ export default function EditVendorPage({
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Tax Information</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="GSTIN" hint="15-character GST number">
                       <Input
                         value={formData.gstin || ""}
@@ -341,7 +343,7 @@ export default function EditVendorPage({
                     />
                   </FormField>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <FormField label="Bank Name">
                       <Input
                         value={formData.bank_name || ""}

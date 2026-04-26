@@ -31,6 +31,7 @@ import {
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
 import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 interface Property {
   id: string
@@ -58,6 +59,7 @@ export default function EditTenantPage() {
 function EditTenantContent() {
   const params = useParams()
   const id = params.id as string
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/tenants", defaultLabel: "All Tenants" })
   const [properties, setProperties] = useState<Property[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [availableRooms, setAvailableRooms] = useState<Room[]>([])
@@ -168,8 +170,8 @@ function EditTenantContent() {
       <DetailHero
         title="Edit Tenancy"
         subtitle={`Update tenancy details for ${(person?.name as string) || "Tenant"}`}
-        backHref={`/tenants/${id}`}
-        backLabel="Back to Tenant"
+        backHref={backHref}
+        backLabel={backLabel}
         avatar={
           <Avatar
             name={(person?.name as string) || "T"}
@@ -234,7 +236,7 @@ function EditTenantContent() {
           icon={Home}
         >
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="property_id">Property *</Label>
                 <Select
@@ -279,7 +281,7 @@ function EditTenantContent() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="monthly_rent">Monthly Rent (Rs.) *</Label>
                 <Input
@@ -318,7 +320,7 @@ function EditTenantContent() {
           icon={Shield}
         >
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select

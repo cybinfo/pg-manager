@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Home, Loader2, Building2, Info } from "lucide-react"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField, requiredSelect, requiredAmount } from "@/lib/validation"
 import { formatCurrency } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -54,6 +55,7 @@ export default function NewRoomPage() {
 }
 
 function NewRoomContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/rooms" })
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProperties, setLoadingProperties] = useState(true)
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
@@ -202,7 +204,7 @@ function NewRoomContent() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/rooms">
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -274,7 +276,7 @@ function NewRoomContent() {
               />
             </FormField>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Room Number" htmlFor="room_number" required error={errors.room_number}>
                 <Input
                   id="room_number"
@@ -302,7 +304,7 @@ function NewRoomContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="floor">Floor</Label>
                 <Input
@@ -342,7 +344,7 @@ function NewRoomContent() {
                   <span>Auto-filled from Settings</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField label="Monthly Rent" htmlFor="rent_amount" required error={errors.rent_amount} hint={`Default: ${formatCurrency(currentRoomType?.default_rent || 0)}`}>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">Rs.</span>

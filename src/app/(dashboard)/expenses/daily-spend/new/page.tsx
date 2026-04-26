@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ShoppingBag, ArrowLeft, Plus, Trash2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -38,6 +39,7 @@ interface SpendLineItem {
 }
 
 export default function NewDailySpendPage() {
+  const { backHref } = useBackNavigation({ defaultHref: "/expenses/daily-spend" })
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
 
@@ -266,7 +268,7 @@ export default function NewDailySpendPage() {
         <div className="max-w-4xl mx-auto py-6">
           {/* Back Link */}
           <Link
-            href="/expenses/daily-spend"
+            href={backHref}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />

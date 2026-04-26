@@ -246,7 +246,7 @@ export default function PaymentReceiptPage() {
           </div>
 
           {/* Receipt Details */}
-          <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-sm">
             <div>
               <span className="text-muted-foreground">Receipt No:</span>
               <span className="ml-2 font-medium">
@@ -263,7 +263,7 @@ export default function PaymentReceiptPage() {
           {payment.tenant && (
             <div className="bg-muted/50 rounded-lg p-4 mb-6">
               <h4 className="font-semibold mb-2">Received From:</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span>{payment.tenant.name}</span>
@@ -328,7 +328,7 @@ export default function PaymentReceiptPage() {
           </div>
 
           {/* Payment Method */}
-          <div className="grid grid-cols-2 gap-4 text-sm mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
             <div>
               <span className="text-muted-foreground">Payment Method:</span>
               <span className="ml-2 font-medium">

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Hammer, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -40,6 +41,7 @@ export default function EditServicePaymentPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/expenses/services" })
   const router = useRouter()
   const { user: _user, workspaceId } = useAuthContext()
 
@@ -292,7 +294,7 @@ export default function EditServicePaymentPage({
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
-            href={`/expenses/services/${id}`}
+            href={backHref}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -442,7 +444,7 @@ export default function EditServicePaymentPage({
 
                     {formData.tds_applicable && (
                       <>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <FormField label="TDS Section">
                             <Select
                               value={formData.tds_section || ""}
@@ -472,7 +474,7 @@ export default function EditServicePaymentPage({
                           </FormField>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
                           <div>
                             <div className="text-xs text-muted-foreground">TDS Deducted</div>
                             <div className="font-medium">
@@ -495,7 +497,7 @@ export default function EditServicePaymentPage({
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Payment Details</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Payment Mode">
                       <Select
                         value={formData.payment_mode || ""}

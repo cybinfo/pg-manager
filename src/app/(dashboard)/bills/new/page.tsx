@@ -20,6 +20,7 @@ import {
   IndianRupee,
   Check
 } from "lucide-react"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency, formatMonthYear, formatDate} from "@/lib/format"
@@ -74,6 +75,7 @@ interface PendingCharge {
 }
 
 function NewBillContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/bills" })
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedTenant = searchParams.get("tenant_id") || searchParams.get("tenant")
@@ -453,7 +455,7 @@ function NewBillContent() {
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/bills">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -495,7 +497,7 @@ function NewBillContent() {
                 {(() => {
                   const tenant = tenants.find((t) => t.id === selectedTenant)
                   return tenant ? (
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-muted-foreground">Property:</span>
                         <span className="ml-2 font-medium">{tenant.property?.name}</span>
@@ -593,7 +595,7 @@ function NewBillContent() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>For Month</Label>
                 <Input
@@ -618,7 +620,7 @@ function NewBillContent() {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Due Date</Label>
                 <Input
@@ -673,7 +675,7 @@ function NewBillContent() {
               <div className="space-y-3">
                 {lineItems.map((item, _index) => (
                   <div key={item.id} className="flex items-center gap-3">
-                    <div className="flex-1 grid grid-cols-3 gap-3">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <Input
                         placeholder="Type (e.g., Rent)"
                         value={item.type}

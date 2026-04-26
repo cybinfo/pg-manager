@@ -354,7 +354,7 @@ export default function AssignLockerToMemberPage({
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Dates */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="start_date">Start Date *</Label>
                     <Input
@@ -387,7 +387,7 @@ export default function AssignLockerToMemberPage({
                 {/* Pricing */}
                 <div className="border-t pt-4">
                   <h3 className="font-medium mb-3">Pricing</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="rent_amount">Monthly Rent (₹)</Label>
                       <Input

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Wrench, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -36,6 +37,7 @@ const TDS_RATES: Record<string, number> = {
 }
 
 export default function NewServiceProviderPage() {
+  const { backHref } = useBackNavigation({ defaultHref: "/expenses/services/providers" })
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
 
@@ -161,7 +163,7 @@ export default function NewServiceProviderPage() {
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
-            href="/expenses/services/providers"
+            href={backHref}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -221,7 +223,7 @@ export default function NewServiceProviderPage() {
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Contact Information</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="Phone" hint="Primary contact">
                       <Input
                         value={formData.phone || ""}
@@ -270,7 +272,7 @@ export default function NewServiceProviderPage() {
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Tax Information</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField label="PAN" hint="Required for TDS">
                       <Input
                         value={formData.pan || ""}
@@ -319,7 +321,7 @@ export default function NewServiceProviderPage() {
                     </div>
 
                     {formData.tds_applicable && (
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField label="TDS Section">
                           <Select
                             value={formData.tds_section || ""}

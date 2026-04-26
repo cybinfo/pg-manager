@@ -21,6 +21,7 @@ import { showDetailedError, debugLog } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
 import { sendInvitationEmail, sendTenantWelcomeEmail } from "@/lib/email"
 import { withCreatedBy } from "@/lib/audit"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
@@ -44,6 +45,7 @@ interface Room {
 }
 
 export default function NewTenantPage() {
+  const { backHref } = useBackNavigation({ defaultHref: "/tenants" })
   const router = useRouter()
   const searchParams = useSearchParams()
   const personIdFromUrl = searchParams.get("person_id")
@@ -527,7 +529,7 @@ export default function NewTenantPage() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/tenants">
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -573,7 +575,7 @@ export default function NewTenantPage() {
 
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/tenants">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -647,7 +649,7 @@ export default function NewTenantPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Property *</Label>
                 <Combobox
@@ -713,7 +715,7 @@ export default function NewTenantPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="monthly_rent">Monthly Rent *</Label>
                 <div className="relative">

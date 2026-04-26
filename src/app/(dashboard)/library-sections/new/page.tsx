@@ -10,6 +10,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,6 +35,7 @@ export default function NewLibrarySectionPage() {
 }
 
 function NewLibrarySectionContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/library-sections" })
   const [libraries, setLibraries] = useState<Library[]>([])
   const [loadingLibraries, setLoadingLibraries] = useState(true)
 
@@ -153,7 +155,7 @@ function NewLibrarySectionContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={preselectedLibrary ? `/library/${preselectedLibrary}` : "/library-sections"}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -198,7 +200,7 @@ function NewLibrarySectionContent() {
             </div>
 
             {/* Basic Info */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Section Name *</Label>
                 <Input
@@ -242,7 +244,7 @@ function NewLibrarySectionContent() {
             {/* Features */}
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Features</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="is_ac"
@@ -271,7 +273,7 @@ function NewLibrarySectionContent() {
             {/* Pricing */}
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Pricing (Optional)</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="hourly_rate">Hourly Rate (₹)</Label>
                   <Input

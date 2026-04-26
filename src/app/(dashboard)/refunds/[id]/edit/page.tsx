@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Wallet, Loader2 } from "lucide-react"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredAmount } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import {
@@ -49,6 +50,7 @@ function EditRefundContent({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/refunds" })
 
   const {
     formData,
@@ -114,7 +116,7 @@ function EditRefundContent({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/refunds/${id}`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -141,7 +143,7 @@ function EditRefundContent({
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Amount & Type */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Amount (Rs.)" htmlFor="amount" required error={errors.amount}>
                 <Input
                   id="amount"
@@ -169,7 +171,7 @@ function EditRefundContent({
             </div>
 
             {/* Payment Mode & Status */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="payment_mode">Payment Mode</Label>
                 <Select
@@ -193,7 +195,7 @@ function EditRefundContent({
             </div>
 
             {/* Date & Reference */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="refund_date">Refund Date</Label>
                 <Input

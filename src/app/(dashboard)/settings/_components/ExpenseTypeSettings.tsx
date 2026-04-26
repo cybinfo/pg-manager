@@ -128,7 +128,7 @@ export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTy
           {showAddExpense && (
             <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
               <h4 className="font-medium">Add Expense Category</h4>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="expense_name">Name</Label>
                   <Input

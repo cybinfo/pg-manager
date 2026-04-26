@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ShoppingBag, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -45,6 +46,7 @@ export default function EditDailySpendPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/expenses/daily-spend" })
   const router = useRouter()
   const { user: _user, workspaceId } = useAuthContext()
 
@@ -274,7 +276,7 @@ export default function EditDailySpendPage({
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
-            href={`/expenses/daily-spend/${id}`}
+            href={backHref}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -323,7 +325,7 @@ export default function EditDailySpendPage({
                   />
                 </FormField>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* Quantity */}
                   <FormField label="Quantity" required>
                     <Input

@@ -743,7 +743,7 @@ function BulkImportContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Summary Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 bg-muted/50 rounded-lg text-center">
                 <div className="text-2xl font-bold">{importResult.total}</div>
                 <div className="text-sm text-muted-foreground">Total Rows</div>

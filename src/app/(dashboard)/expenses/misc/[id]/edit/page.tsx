@@ -28,6 +28,7 @@ import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { EXPENSE_MISC_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { MiscTransaction, MiscTransactionCategory, MiscTransactionFormData, MiscPaymentMode } from "@/types/expense-enhanced.types"
 import { PermissionGuard } from "@/components/auth"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function EditMiscTransactionPage({
   params,
@@ -49,6 +50,7 @@ function EditMiscTransactionContent({
   const { id } = use(params)
   const router = useRouter()
   const { workspaceId } = useAuthContext()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/expenses", defaultLabel: "All Expenses" })
 
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
@@ -206,8 +208,8 @@ function EditMiscTransactionContent({
       description="Update the transaction details"
       icon={ArrowLeftRight}
       iconColor="blue"
-      backHref={`/expenses/misc/${id}`}
-      backLabel="Back to Transaction"
+      backHref={backHref}
+      backLabel={backLabel}
       onSubmit={handleSubmit}
       onCancel={() => router.push(`/expenses/misc/${id}`)}
       submitLabel="Save Changes"

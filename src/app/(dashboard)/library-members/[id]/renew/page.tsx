@@ -450,7 +450,7 @@ export default function RenewLibraryMemberPage({
               </div>
 
               {/* Start Date & Duration */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="start_date">Start Date *</Label>
                   <Input
@@ -561,7 +561,7 @@ export default function RenewLibraryMemberPage({
               </div>
 
               {/* Amount & Discount */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="amount">Amount</Label>
                   <Input

@@ -8,6 +8,7 @@
 
 import Link from "next/link"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,6 +26,8 @@ export default function NewLibraryPage() {
 }
 
 function NewLibraryContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/library" })
+
   const {
     formData, setFormData,
     handleChange,
@@ -95,7 +98,7 @@ function NewLibraryContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/library">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -126,7 +129,7 @@ function NewLibraryContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Basic Info */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Library Name *</Label>
                 <Input
@@ -172,7 +175,7 @@ function NewLibraryContent() {
                     disabled={saving}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="city">City *</Label>
                     <Input
@@ -197,7 +200,7 @@ function NewLibraryContent() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="pincode">Pincode</Label>
                     <Input
@@ -232,7 +235,7 @@ function NewLibraryContent() {
                 <Clock className="h-4 w-4" />
                 Operating Hours
               </h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="opening_time">Opening Time</Label>
                   <Input
@@ -261,7 +264,7 @@ function NewLibraryContent() {
             {/* Features */}
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Amenities</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_ac"

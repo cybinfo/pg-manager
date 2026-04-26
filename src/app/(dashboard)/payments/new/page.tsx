@@ -18,6 +18,7 @@ import { formatCurrency, formatMonthYear } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import { getTodayISO } from "@/lib/date-helpers"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
 import { PAYMENT_METHOD_OPTIONS } from "@/lib/status"
 
@@ -69,6 +70,7 @@ interface Bill {
 }
 
 function NewPaymentForm() {
+  const { backHref } = useBackNavigation({ defaultHref: "/payments" })
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedTenantId = searchParams.get("tenant")
@@ -296,7 +298,7 @@ function NewPaymentForm() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/payments">
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -463,7 +465,7 @@ function NewPaymentForm() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount (₹) *</Label>
                 <Input
@@ -493,7 +495,7 @@ function NewPaymentForm() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="charge_type_id">Payment For</Label>
                 <Select
@@ -522,7 +524,7 @@ function NewPaymentForm() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="payment_method">Payment Method *</Label>
                 <Select

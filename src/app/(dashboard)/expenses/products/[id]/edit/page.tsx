@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Package, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -30,6 +31,7 @@ export default function EditProductPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/expenses/products" })
   const router = useRouter()
   const { user: _user, workspaceId } = useAuthContext()
 
@@ -171,7 +173,7 @@ export default function EditProductPage({
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
-            href={`/expenses/products/${id}`}
+            href={backHref}
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -234,7 +236,7 @@ export default function EditProductPage({
                   />
                 </FormField>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Default Unit */}
                   <FormField label="Default Unit">
                     <Select

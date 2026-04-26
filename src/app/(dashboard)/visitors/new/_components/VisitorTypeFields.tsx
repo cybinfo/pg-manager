@@ -142,7 +142,7 @@ export function VisitorTypeFields({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="service_type">
                 Service Type {!selectedPerson?.occupation && "*"}
@@ -205,7 +205,7 @@ export function VisitorTypeFields({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="enquiry_source">How did they find you?</Label>
               <Select
@@ -279,7 +279,7 @@ export function VisitorTypeFields({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="host_name">Meeting With (Host Name)</Label>
               <Input

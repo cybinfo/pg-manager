@@ -12,7 +12,9 @@ import { Package } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { requiredField } from "@/lib/validation"
 import { PermissionGuard } from "@/components/auth"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { UNIT_OPTIONS } from "@/lib/status"
 
 import {
@@ -38,6 +40,7 @@ export default function NewProductPage() {
 
 function NewProductContent() {
   const { workspaceId } = useAuthContext()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/expenses/products", defaultLabel: "Products" })
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [loadingCategories, setLoadingCategories] = useState(true)
 
@@ -46,6 +49,8 @@ function NewProductContent() {
     setFormData,
     handleSubmit,
     saving,
+    errors,
+    validateField,
     user,
     router,
   } = useFormPage({
@@ -63,9 +68,8 @@ function NewProductContent() {
     selectAfterInsert: true,
     successMessage: "Product created successfully",
     errorMessage: "Failed to create product",
-    validate: (data) => {
-      if (!data.name || !String(data.name).trim()) return "Product name is required"
-      return null
+    validationSchema: {
+      name: requiredField("Product name"),
     },
     transform: (data) => ({
       workspace_id: workspaceId,
@@ -143,8 +147,8 @@ function NewProductContent() {
       description="Add a new item to your product master"
       icon={Package}
       iconColor="blue"
-      backHref="/expenses/products"
-      backLabel="Back to Products"
+      backHref={backHref}
+      backLabel={backLabel}
       onSubmit={handleSubmit}
       onCancel={() => router.push("/expenses/products")}
       submitLabel="Create Product"
@@ -154,12 +158,13 @@ function NewProductContent() {
       feature="expenses"
     >
       {/* Product Name */}
-      <FormField label="Product Name" required>
+      <FormField label="Product Name" required error={errors.name}>
         <Input
           value={formData.name}
           onChange={(e) =>
             setFormData((prev) => ({ ...prev, name: e.target.value }))
           }
+          onBlur={() => validateField("name")}
           placeholder="e.g., Tomato, Rice, Milk"
           autoFocus
         />

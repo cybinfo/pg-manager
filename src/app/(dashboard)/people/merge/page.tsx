@@ -431,7 +431,7 @@ export default function PersonMergePage() {
             <CardContent>
               <div className="space-y-4">
                 {/* Records to be moved */}
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                   <div className="p-4 border rounded-lg">
                     <Home className="h-6 w-6 mx-auto text-info mb-2" />
                     <p className="text-2xl font-bold">{secondaryPerson.tenant_count || 0}</p>
@@ -577,7 +577,7 @@ function PersonCard({ person }: { person: PersonWithStats }) {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
         <div className="p-2 bg-info/10 rounded">
           <p className="font-semibold text-info">{person.tenant_count || 0}</p>
           <p className="text-info/80">Tenants</p>

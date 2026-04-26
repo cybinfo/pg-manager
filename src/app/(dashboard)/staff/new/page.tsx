@@ -26,6 +26,7 @@ import { EmailInput } from "@/components/ui/form-components"
 import { handleClientError } from "@/lib/error-handler"
 import { sendInvitationEmail } from "@/lib/email"
 import { withCreatedBy, withCreatedByBatch } from "@/lib/audit"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
@@ -59,6 +60,7 @@ export default function NewStaffPage() {
 }
 
 function NewStaffContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/staff" })
   const router = useRouter()
   const searchParams = useSearchParams()
   const { handleSuccess } = useFormSubmit({
@@ -405,7 +407,7 @@ function NewStaffContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/staff">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -557,7 +559,7 @@ function NewStaffContent() {
                     key={index}
                     className="flex items-center gap-3 p-3 border rounded-lg"
                   >
-                    <div className="flex-1 grid grid-cols-2 gap-3">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs text-muted-foreground">Role</Label>
                         <Select

@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, Receipt, Loader2 } from "lucide-react"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredAmount, requiredDate } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { PAYMENT_METHOD_OPTIONS, PAYMENT_STATUS_OPTIONS } from "@/lib/status"
@@ -40,6 +41,7 @@ function EditPaymentContent({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/payments" })
 
   const {
     formData,
@@ -97,7 +99,7 @@ function EditPaymentContent({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/payments/${id}`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -124,7 +126,7 @@ function EditPaymentContent({
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Amount & Date */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Amount (Rs.)" htmlFor="amount" required error={errors.amount}>
                 <Input
                   id="amount"
@@ -153,7 +155,7 @@ function EditPaymentContent({
             </div>
 
             {/* Method & Status */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="payment_method">Payment Method</Label>
                 <Select

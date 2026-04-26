@@ -29,6 +29,7 @@ import { formatCurrency, formatDate} from "@/lib/format"
 import { handleClientError } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { initiateExitClearance, ExitClearanceInput } from "@/lib/workflows/exit.workflow"
 import { getTodayISO } from "@/lib/date-helpers"
 
@@ -76,6 +77,7 @@ interface Deduction {
 }
 
 function InitiateCheckoutForm() {
+  const { backHref } = useBackNavigation({ defaultHref: "/exit-clearance" })
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedTenantId = searchParams.get("tenant")
@@ -361,7 +363,7 @@ function InitiateCheckoutForm() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/exit-clearance">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -424,7 +426,7 @@ function InitiateCheckoutForm() {
 
             {selectedTenant && (
               <div className="p-4 bg-muted rounded-lg space-y-2">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     <span>{selectedTenant.property?.name || "—"}</span>
@@ -467,7 +469,7 @@ function InitiateCheckoutForm() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="notice_given_date">Notice Given Date *</Label>
                 <Input

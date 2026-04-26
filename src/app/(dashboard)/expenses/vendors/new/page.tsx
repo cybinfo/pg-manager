@@ -12,6 +12,7 @@ import { Building2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { requiredField } from "@/lib/validation"
 
 import {
   FormPageTemplate,
@@ -26,6 +27,7 @@ import { PageLoading } from "@/components/ui/loading"
 
 import type { BillCategory } from "@/types/expense-enhanced.types"
 import { PermissionGuard } from "@/components/auth"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function NewVendorPage() {
   return (
@@ -37,6 +39,7 @@ export default function NewVendorPage() {
 
 function NewVendorContent() {
   const { workspaceId } = useAuthContext()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/expenses/vendors", defaultLabel: "Vendors" })
   const [categories, setCategories] = useState<BillCategory[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
@@ -45,6 +48,8 @@ function NewVendorContent() {
     setFormData,
     handleSubmit,
     saving,
+    errors,
+    validateField,
     user,
     router,
   } = useFormPage({
@@ -70,9 +75,8 @@ function NewVendorContent() {
     selectAfterInsert: true,
     successMessage: "Vendor created successfully",
     errorMessage: "Failed to create vendor",
-    validate: (data) => {
-      if (!data.name || !String(data.name).trim()) return "Vendor name is required"
-      return null
+    validationSchema: {
+      name: requiredField("Vendor name"),
     },
     transform: (data) => ({
       workspace_id: workspaceId,
@@ -158,8 +162,8 @@ function NewVendorContent() {
       description="Add a new vendor/supplier for bill payments"
       icon={Building2}
       iconColor="purple"
-      backHref="/expenses/vendors"
-      backLabel="Back to Vendors"
+      backHref={backHref}
+      backLabel={backLabel}
       onSubmit={handleSubmit}
       onCancel={() => router.push("/expenses/vendors")}
       submitLabel="Create Vendor"
@@ -170,12 +174,13 @@ function NewVendorContent() {
     >
       {/* Basic Info */}
       <FormSection title="Basic Information">
-        <FormField label="Vendor Name" required>
+        <FormField label="Vendor Name" required error={errors.name}>
           <Input
             value={formData.name}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, name: e.target.value }))
             }
+            onBlur={() => validateField("name")}
             placeholder="e.g., ABC Electricals"
             autoFocus
           />

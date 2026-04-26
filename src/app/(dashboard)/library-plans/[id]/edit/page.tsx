@@ -9,6 +9,7 @@
 import { use } from "react"
 import Link from "next/link"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,6 +40,7 @@ function EditLibraryPlanContent({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/library-plans" })
 
   const {
     formData, setFormData,
@@ -109,7 +111,7 @@ function EditLibraryPlanContent({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/library-plans">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -140,7 +142,7 @@ function EditLibraryPlanContent({
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Basic Info */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Plan Name *</Label>
                 <Input
@@ -183,7 +185,7 @@ function EditLibraryPlanContent({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="hours_included">Hours Included</Label>
                 <Input
@@ -222,7 +224,7 @@ function EditLibraryPlanContent({
               <p className="text-xs text-muted-foreground mb-3">
                 Leave all unchecked to allow all time slots
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {TIME_SLOTS.map((slot) => (
                   <div key={slot.value} className="flex items-center space-x-2">
                     <Checkbox
@@ -241,7 +243,7 @@ function EditLibraryPlanContent({
 
             {/* Status & Order */}
             <div className="border-t pt-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="sort_order">Sort Order</Label>
                   <Input

@@ -338,7 +338,7 @@ export default function NoticeDetailPage() {
         description="Select the type of notice"
         icon={Megaphone}
       >
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {noticeTypes.map((type) => {
             const Icon = type.icon
             const isSelected = formData.type === type.value
@@ -415,7 +415,7 @@ export default function NoticeDetailPage() {
                   {selectedRooms.length === filteredRooms.length ? "Deselect All" : "Select All"}
                 </Button>
               </div>
-              <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 border rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 border rounded-lg">
                 {filteredRooms.map((room) => (
                   <button
                     key={room.id}
@@ -471,7 +471,7 @@ export default function NoticeDetailPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="expires_at">Expires On</Label>
               <Input

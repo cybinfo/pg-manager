@@ -50,6 +50,7 @@ import {
   ListOrdered,
   Clock,
   Lock,
+  ToggleLeft,
 } from "lucide-react"
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
 import { showSuccess } from "@/lib/toast-helpers"
@@ -635,20 +636,34 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           <div className="border-t p-4 space-y-1 bg-muted/30">
             {/* Theme Toggle */}
             <ThemeToggleSidebar />
-            {/* Settings only for owners */}
+            {/* Settings & Feature Control — owners only */}
             {currentContext.isOwner && (
-              <Link
-                href="/settings"
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  pathname === "/settings"
-                    ? brandGradient.navActive
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <Settings className="h-5 w-5" />
-                Settings
-              </Link>
+              <>
+                <Link
+                  href="/settings"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    pathname === "/settings"
+                      ? brandGradient.navActive
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <Settings className="h-5 w-5" />
+                  Settings
+                </Link>
+                <Link
+                  href="/settings/features"
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    pathname === "/settings/features"
+                      ? brandGradient.navActive
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <ToggleLeft className="h-5 w-5" />
+                  Features
+                </Link>
+              </>
             )}
             <button
               onClick={handleLogout}

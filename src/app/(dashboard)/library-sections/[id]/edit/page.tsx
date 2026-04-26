@@ -9,6 +9,7 @@
 import { use } from "react"
 import Link from "next/link"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,6 +39,7 @@ function EditLibrarySectionContent({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { backHref } = useBackNavigation({ defaultHref: "/library-sections" })
 
   const {
     formData, setFormData,
@@ -107,7 +109,7 @@ function EditLibrarySectionContent({
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href={`/library-sections/${id}`}>
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -138,7 +140,7 @@ function EditLibrarySectionContent({
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Basic Info */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Section Name *</Label>
                 <Input
@@ -182,7 +184,7 @@ function EditLibrarySectionContent({
             {/* Features */}
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Features</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="is_ac"
@@ -211,7 +213,7 @@ function EditLibrarySectionContent({
             {/* Pricing */}
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Pricing (Optional)</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="hourly_rate">Hourly Rate (Rs.)</Label>
                   <Input

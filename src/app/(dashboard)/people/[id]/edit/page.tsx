@@ -51,10 +51,12 @@ import {
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { validateAadhaar, validatePAN } from "@/lib/validators"
 import { IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT } from "@/components/forms"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 export default function EditPersonPage() {
   const params = useParams()
   const router = useRouter()
+  const { backHref, backLabel } = useBackNavigation({ defaultHref: "/people", defaultLabel: "All People" })
   const [pageLoading, setPageLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<PersonFormData>({
@@ -331,8 +333,8 @@ export default function EditPersonPage() {
         <DetailHero
           title="Edit Person"
           subtitle={`Update details for ${formData.name}`}
-          backHref={`/people/${params.id}`}
-          backLabel="Back to Person"
+          backHref={backHref}
+          backLabel={backLabel}
           avatar={
             <Avatar
               name={formData.name || "P"}
@@ -405,7 +407,7 @@ export default function EditPersonPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="dob">Date of Birth</Label>
                 <Input
@@ -493,7 +495,7 @@ export default function EditPersonPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="company">Company / Institution</Label>
                 <Input
@@ -534,7 +536,7 @@ export default function EditPersonPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
                 <Input
@@ -617,7 +619,7 @@ export default function EditPersonPage() {
                 <div key={index} className="p-4 border rounded-lg bg-muted/30">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-4">
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label>Name</Label>
                           <Input

@@ -12,6 +12,7 @@ import {
   Building2,
   MessageSquare,
 } from "lucide-react"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PageSkeleton } from "@/components/ui/loading"
 
 import { PermissionGuard } from "@/components/auth"
@@ -33,6 +34,7 @@ export default function NewVisitorPage() {
 }
 
 function NewVisitorContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/visitors" })
   const {
     loading,
     loadingData,
@@ -60,7 +62,7 @@ function NewVisitorContent() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/visitors">
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>

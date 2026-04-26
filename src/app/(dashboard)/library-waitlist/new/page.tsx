@@ -10,6 +10,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -39,6 +40,7 @@ export default function AddToWaitlistPage() {
 }
 
 function AddToWaitlistContent() {
+  const { backHref } = useBackNavigation({ defaultHref: "/library-waitlist" })
   const [loadingData, setLoadingData] = useState(true)
   const [libraries, setLibraries] = useState<LibraryOption[]>([])
 
@@ -169,7 +171,7 @@ function AddToWaitlistContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/library-waitlist">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -213,7 +215,7 @@ function AddToWaitlistContent() {
             </div>
 
             {/* Contact Info */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name *</Label>
                 <Input
@@ -256,7 +258,7 @@ function AddToWaitlistContent() {
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">Preferences</span>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="preferred_slot">Preferred Time Slot</Label>
                   <Select

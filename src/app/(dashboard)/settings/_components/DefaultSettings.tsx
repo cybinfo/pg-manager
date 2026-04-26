@@ -48,7 +48,7 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
           <CardDescription>Default settings for new properties and tenants</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="default_rent_due_day">Rent Due Day</Label>
               <Select

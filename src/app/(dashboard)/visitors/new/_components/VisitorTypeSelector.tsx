@@ -49,7 +49,7 @@ export function VisitorTypeSelector({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {(Object.keys(VISITOR_TYPE_LABELS) as VisitorType[]).map((type) => (
             <button
               key={type}
