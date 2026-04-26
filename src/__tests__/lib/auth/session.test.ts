@@ -1,9 +1,20 @@
 /**
- * Tests for pure utility functions in src/lib/auth/session.ts
+ * Tests for src/lib/auth/session.ts
  *
- * Covers: createSessionError, isSessionExpired, getSessionExpiryTime, getTimeUntilExpiry
- * (getSession / refreshSession / requireSession depend on Supabase — not covered here)
+ * Covers: createSessionError, isSessionExpired, getSessionExpiryTime, getTimeUntilExpiry,
+ * getSession, getUser, refreshSession, signOut, isSessionValid, requireSession,
+ * getStoredContextId, setStoredContextId, clearStoredContextId.
  */
+
+const mockCreateClient = jest.fn()
+
+jest.mock("@/lib/supabase/client", () => ({
+  createClient: (...args: unknown[]) => mockCreateClient(...args),
+}))
+
+jest.mock("@/lib/date-helpers", () => ({
+  getNowISO: jest.fn(() => "2026-01-01T00:00:00.000Z"),
+}))
 
 import type { Session } from "@supabase/supabase-js"
 import {
@@ -11,6 +22,15 @@ import {
   isSessionExpired,
   getSessionExpiryTime,
   getTimeUntilExpiry,
+  getSession,
+  getUser,
+  refreshSession,
+  signOut,
+  isSessionValid,
+  requireSession,
+  getStoredContextId,
+  setStoredContextId,
+  clearStoredContextId,
 } from "@/lib/auth/session"
 
 // ============================================================================
@@ -144,5 +164,530 @@ describe("getTimeUntilExpiry", () => {
     const pastSeconds = Math.floor(Date.now() / 1000) - 100
     const result = getTimeUntilExpiry(makeSession(pastSeconds))
     expect(result).toBe(0)
+  })
+})
+
+// ============================================================================
+// Helpers for Supabase-dependent tests
+// ============================================================================
+
+function makeUser(id = "user-1") {
+  return {
+    id,
+    email: "test@example.com",
+    aud: "authenticated",
+    role: "authenticated",
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    app_metadata: {},
+    user_metadata: {},
+  }
+}
+
+function makeAuthSupabase(opts: {
+  getSession?: unknown
+  getUser?: unknown
+  refreshSession?: unknown
+  signOut?: unknown
+  userContextResult?: unknown
+  throwAuth?: string
+}) {
+  const authMethods = {
+    getSession:
+      opts.throwAuth === "getSession"
+        ? jest.fn().mockRejectedValue(new Error("getSession threw"))
+        : jest.fn().mockResolvedValue(opts.getSession ?? { data: { session: null }, error: null }),
+    getUser:
+      opts.throwAuth === "getUser"
+        ? jest.fn().mockRejectedValue(new Error("getUser threw"))
+        : jest.fn().mockResolvedValue(opts.getUser ?? { data: { user: null }, error: null }),
+    refreshSession:
+      opts.throwAuth === "refreshSession"
+        ? jest.fn().mockRejectedValue(new Error("refreshSession threw"))
+        : jest.fn().mockResolvedValue(
+            opts.refreshSession ?? { data: { session: null }, error: null }
+          ),
+    signOut:
+      opts.throwAuth === "signOut"
+        ? jest.fn().mockRejectedValue(new Error("signOut threw"))
+        : jest.fn().mockResolvedValue(opts.signOut ?? { error: null }),
+  }
+
+  const contextChain: Record<string, jest.Mock> = {}
+  contextChain.select = jest.fn().mockReturnValue(contextChain)
+  contextChain.eq = jest.fn().mockReturnValue(contextChain)
+  contextChain.limit = jest.fn().mockReturnValue(contextChain)
+  contextChain.single = jest
+    .fn()
+    .mockResolvedValue(opts.userContextResult ?? { data: null, error: null })
+
+  const auditInsertResult = {
+    then: jest
+      .fn()
+      .mockImplementation((cb: (v: { error: null }) => void) => {
+        cb({ error: null })
+        return Promise.resolve()
+      }),
+  }
+  const auditChain = { insert: jest.fn().mockReturnValue(auditInsertResult) }
+
+  const mockFrom = jest.fn().mockImplementation((table: string) => {
+    if (table === "audit_events") return auditChain
+    return contextChain
+  })
+
+  return { auth: authMethods, from: mockFrom }
+}
+
+// ============================================================================
+// getSession
+// ============================================================================
+
+describe("getSession", () => {
+  beforeEach(() => {
+    mockCreateClient.mockReset()
+  })
+
+  it("returns user and session when session is valid", async () => {
+    const session = makeSession(Math.floor(Date.now() / 1000) + 3600)
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ getSession: { data: { session }, error: null } })
+    )
+
+    const result = await getSession()
+    expect(result.session).toBe(session)
+    expect(result.user).toBe(session.user)
+    expect(result.error).toBeNull()
+  })
+
+  it("returns NO_SESSION error when supabase returns error", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({
+        getSession: { data: { session: null }, error: { message: "Auth error" } },
+      })
+    )
+
+    const result = await getSession()
+    expect(result.user).toBeNull()
+    expect(result.session).toBeNull()
+    expect(result.error?.code).toBe("NO_SESSION")
+    expect(result.error?.message).toBe("Auth error")
+  })
+
+  it("returns NO_SESSION error when data.session is null", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ getSession: { data: { session: null }, error: null } })
+    )
+
+    const result = await getSession()
+    expect(result.error?.code).toBe("NO_SESSION")
+    expect(result.error?.message).toBe("No active session")
+  })
+
+  it("calls refreshSession when session is expired", async () => {
+    const expiredSession = makeSession(Math.floor(Date.now() / 1000) - 100)
+    const freshSession = makeSession(Math.floor(Date.now() / 1000) + 3600)
+
+    // First createClient() call: returns expired session
+    mockCreateClient.mockReturnValueOnce(
+      makeAuthSupabase({ getSession: { data: { session: expiredSession }, error: null } })
+    )
+    // Second createClient() call (inside refreshSession): returns fresh session
+    mockCreateClient.mockReturnValueOnce(
+      makeAuthSupabase({
+        refreshSession: { data: { session: freshSession }, error: null },
+      })
+    )
+
+    const result = await getSession()
+    expect(result.session).toBe(freshSession)
+    expect(result.error).toBeNull()
+  })
+
+  it("returns NETWORK_ERROR when createClient throws", async () => {
+    mockCreateClient.mockImplementation(() => {
+      throw new Error("network failure")
+    })
+
+    const result = await getSession()
+    expect(result.error?.code).toBe("NETWORK_ERROR")
+    expect(result.user).toBeNull()
+    expect(result.session).toBeNull()
+  })
+})
+
+// ============================================================================
+// getUser
+// ============================================================================
+
+describe("getUser", () => {
+  beforeEach(() => {
+    mockCreateClient.mockReset()
+  })
+
+  it("returns user when authenticated", async () => {
+    const user = makeUser()
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ getUser: { data: { user }, error: null } })
+    )
+
+    const result = await getUser()
+    expect(result.user).toBe(user)
+    expect(result.error).toBeNull()
+  })
+
+  it("returns NO_SESSION error when user is null", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ getUser: { data: { user: null }, error: null } })
+    )
+
+    const result = await getUser()
+    expect(result.user).toBeNull()
+    expect(result.error?.code).toBe("NO_SESSION")
+  })
+
+  it("returns SESSION_EXPIRED when error message contains 'expired'", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({
+        getUser: { data: { user: null }, error: { message: "JWT expired" } },
+      })
+    )
+
+    const result = await getUser()
+    expect(result.error?.code).toBe("SESSION_EXPIRED")
+  })
+
+  it("returns UNKNOWN_ERROR for non-expiry auth errors", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({
+        getUser: { data: { user: null }, error: { message: "invalid token" } },
+      })
+    )
+
+    const result = await getUser()
+    expect(result.error?.code).toBe("UNKNOWN_ERROR")
+  })
+
+  it("returns NETWORK_ERROR when createClient throws", async () => {
+    mockCreateClient.mockImplementation(() => {
+      throw new Error("network failure")
+    })
+
+    const result = await getUser()
+    expect(result.error?.code).toBe("NETWORK_ERROR")
+    expect(result.user).toBeNull()
+  })
+})
+
+// ============================================================================
+// refreshSession
+// ============================================================================
+
+describe("refreshSession", () => {
+  beforeEach(() => {
+    mockCreateClient.mockReset()
+  })
+
+  it("returns refreshed session on success", async () => {
+    const session = makeSession(Math.floor(Date.now() / 1000) + 3600)
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ refreshSession: { data: { session }, error: null } })
+    )
+
+    const result = await refreshSession()
+    expect(result.session).toBe(session)
+    expect(result.user).toBe(session.user)
+    expect(result.error).toBeNull()
+  })
+
+  it("returns REFRESH_FAILED error on supabase error", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({
+        refreshSession: { data: { session: null }, error: { message: "Refresh failed" } },
+      })
+    )
+
+    const result = await refreshSession()
+    expect(result.error?.code).toBe("REFRESH_FAILED")
+    expect(result.session).toBeNull()
+  })
+
+  it("returns NO_SESSION when refresh returns null session", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ refreshSession: { data: { session: null }, error: null } })
+    )
+
+    const result = await refreshSession()
+    expect(result.error?.code).toBe("NO_SESSION")
+    expect(result.error?.message).toBe("Refresh returned no session")
+  })
+
+  it("returns NETWORK_ERROR when createClient throws", async () => {
+    mockCreateClient.mockImplementation(() => {
+      throw new Error("network failure")
+    })
+
+    const result = await refreshSession()
+    expect(result.error?.code).toBe("NETWORK_ERROR")
+    expect(result.session).toBeNull()
+  })
+})
+
+// ============================================================================
+// signOut
+// ============================================================================
+
+describe("signOut", () => {
+  beforeEach(() => {
+    mockCreateClient.mockReset()
+  })
+
+  it("signs out successfully when no user", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({
+        getUser: { data: { user: null }, error: null },
+        signOut: { error: null },
+      })
+    )
+
+    const result = await signOut()
+    expect(result.success).toBe(true)
+    expect(result.error).toBeNull()
+  })
+
+  it("signs out successfully with user but no active workspace", async () => {
+    const user = makeUser()
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({
+        getUser: { data: { user }, error: null },
+        userContextResult: { data: null, error: null },
+        signOut: { error: null },
+      })
+    )
+
+    const result = await signOut()
+    expect(result.success).toBe(true)
+    expect(result.error).toBeNull()
+  })
+
+  it("logs audit event and signs out when user has active workspace", async () => {
+    const user = makeUser()
+    const supabaseMock = makeAuthSupabase({
+      getUser: { data: { user }, error: null },
+      userContextResult: { data: { workspace_id: "ws-1" }, error: null },
+      signOut: { error: null },
+    })
+    mockCreateClient.mockReturnValue(supabaseMock)
+
+    const result = await signOut()
+    expect(result.success).toBe(true)
+    expect(supabaseMock.from).toHaveBeenCalledWith("audit_events")
+  })
+
+  it("returns error when supabase.auth.signOut fails", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({
+        getUser: { data: { user: null }, error: null },
+        signOut: { error: { message: "Sign out failed" } },
+      })
+    )
+
+    const result = await signOut()
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe("UNKNOWN_ERROR")
+  })
+
+  it("still succeeds when audit log insert fails", async () => {
+    const user = makeUser()
+    const contextChain: Record<string, jest.Mock> = {}
+    contextChain.select = jest.fn().mockReturnValue(contextChain)
+    contextChain.eq = jest.fn().mockReturnValue(contextChain)
+    contextChain.limit = jest.fn().mockReturnValue(contextChain)
+    contextChain.single = jest
+      .fn()
+      .mockResolvedValue({ data: { workspace_id: "ws-audit-fail" }, error: null })
+
+    const auditInsertResult = {
+      then: jest
+        .fn()
+        .mockImplementation((cb: (v: { error: { message: string } }) => void) => {
+          cb({ error: { message: "audit insert failed" } })
+          return Promise.resolve()
+        }),
+    }
+
+    mockCreateClient.mockReturnValue({
+      auth: {
+        getUser: jest.fn().mockResolvedValue({ data: { user }, error: null }),
+        signOut: jest.fn().mockResolvedValue({ error: null }),
+      },
+      from: jest.fn().mockImplementation((table: string) => {
+        if (table === "audit_events") return { insert: jest.fn().mockReturnValue(auditInsertResult) }
+        return contextChain
+      }),
+    })
+
+    const result = await signOut()
+    expect(result.success).toBe(true)
+  })
+
+  it("returns NETWORK_ERROR when createClient throws", async () => {
+    mockCreateClient.mockImplementation(() => {
+      throw new Error("network failure")
+    })
+
+    const result = await signOut()
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe("NETWORK_ERROR")
+  })
+})
+
+// ============================================================================
+// isSessionValid
+// ============================================================================
+
+describe("isSessionValid", () => {
+  beforeEach(() => {
+    mockCreateClient.mockReset()
+  })
+
+  it("returns true when session is valid", async () => {
+    const session = makeSession(Math.floor(Date.now() / 1000) + 3600)
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ getSession: { data: { session }, error: null } })
+    )
+
+    expect(await isSessionValid()).toBe(true)
+  })
+
+  it("returns false when there is no session", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ getSession: { data: { session: null }, error: null } })
+    )
+
+    expect(await isSessionValid()).toBe(false)
+  })
+
+  it("returns false when getSession returns an error", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({
+        getSession: { data: { session: null }, error: { message: "Auth error" } },
+      })
+    )
+
+    expect(await isSessionValid()).toBe(false)
+  })
+})
+
+// ============================================================================
+// requireSession
+// ============================================================================
+
+describe("requireSession", () => {
+  beforeEach(() => {
+    mockCreateClient.mockReset()
+  })
+
+  it("returns user and session when session is valid", async () => {
+    const session = makeSession(Math.floor(Date.now() / 1000) + 3600)
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ getSession: { data: { session }, error: null } })
+    )
+
+    const result = await requireSession()
+    expect(result.session).toBe(session)
+    expect(result.user).toBe(session.user)
+  })
+
+  it("throws when session is missing", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({ getSession: { data: { session: null }, error: null } })
+    )
+
+    await expect(requireSession()).rejects.toThrow("No active session")
+  })
+
+  it("throws with error message when getSession returns error", async () => {
+    mockCreateClient.mockReturnValue(
+      makeAuthSupabase({
+        getSession: { data: { session: null }, error: { message: "Token invalid" } },
+      })
+    )
+
+    await expect(requireSession()).rejects.toThrow("Token invalid")
+  })
+})
+
+// ============================================================================
+// getStoredContextId
+// ============================================================================
+
+describe("getStoredContextId", () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it("returns null when no value is stored", () => {
+    expect(getStoredContextId()).toBeNull()
+  })
+
+  it("returns stored context ID", () => {
+    localStorage.setItem("currentContextId", "ctx-123")
+    expect(getStoredContextId()).toBe("ctx-123")
+  })
+
+  it("returns null when localStorage.getItem throws", () => {
+    jest.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("storage error")
+    })
+    expect(getStoredContextId()).toBeNull()
+    jest.spyOn(Storage.prototype, "getItem").mockRestore()
+  })
+})
+
+// ============================================================================
+// setStoredContextId
+// ============================================================================
+
+describe("setStoredContextId", () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it("stores the context ID in localStorage", () => {
+    setStoredContextId("ctx-456")
+    expect(localStorage.getItem("currentContextId")).toBe("ctx-456")
+  })
+
+  it("does not throw when localStorage.setItem throws", () => {
+    jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage full")
+    })
+    expect(() => setStoredContextId("ctx-789")).not.toThrow()
+    jest.spyOn(Storage.prototype, "setItem").mockRestore()
+  })
+})
+
+// ============================================================================
+// clearStoredContextId
+// ============================================================================
+
+describe("clearStoredContextId", () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it("removes the stored context ID", () => {
+    localStorage.setItem("currentContextId", "ctx-to-clear")
+    clearStoredContextId()
+    expect(localStorage.getItem("currentContextId")).toBeNull()
+  })
+
+  it("does not throw when localStorage.removeItem throws", () => {
+    jest.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new Error("storage error")
+    })
+    expect(() => clearStoredContextId()).not.toThrow()
+    jest.spyOn(Storage.prototype, "removeItem").mockRestore()
   })
 })
