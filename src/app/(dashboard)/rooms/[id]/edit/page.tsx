@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField } from "@/components/ui/form-components"
+import { requiredSelect, requiredField, requiredAmount } from "@/lib/validation"
 import { ArrowLeft, Home, Loader2 } from "lucide-react"
 import { Select } from "@/components/ui/form-components"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -54,6 +55,7 @@ function EditRoomContent() {
     handleSubmit,
     loading,
     saving,
+    errors,
   } = useFormEditPage({
     table: "rooms",
     id: params.id as string,
@@ -99,11 +101,10 @@ function EditRoomContent() {
       has_refrigerator: (record.has_refrigerator as boolean) || false,
       photos: (record.photos as string[]) || [],
     }),
-    validate: (data) => {
-      if (!data.property_id || !data.room_number || !data.rent_amount) {
-        return "Please fill in all required fields"
-      }
-      return null
+    validationSchema: {
+      property_id: requiredSelect("Property"),
+      room_number: requiredField("Room Number"),
+      rent_amount: requiredAmount("Monthly Rent"),
     },
     transform: (data) => {
       // Build amenities array from checkboxes
@@ -197,7 +198,7 @@ function EditRoomContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Property Selection */}
-            <FormField label="Property" required>
+            <FormField label="Property" required error={errors.property_id}>
               <Select
                 id="property_id"
                 name="property_id"
@@ -213,7 +214,7 @@ function EditRoomContent() {
             </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Room Number" required>
+              <FormField label="Room Number" required error={errors.room_number}>
                 <Input
                   id="room_number"
                   name="room_number"
@@ -275,7 +276,7 @@ function EditRoomContent() {
             <div className="border-t pt-4 mt-4">
               <h3 className="font-medium mb-3">Pricing</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Monthly Rent (₹)" required>
+                <FormField label="Monthly Rent (₹)" required error={errors.rent_amount}>
                   <Input
                     id="rent_amount"
                     name="rent_amount"

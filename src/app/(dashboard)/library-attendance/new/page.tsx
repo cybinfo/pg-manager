@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/components/ui/form-components"
+import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
@@ -75,6 +76,7 @@ function NewLibraryAttendanceContent() {
     formData, setFormData,
     handleSubmit,
     saving,
+    errors,
     searchParams,
     workspaceId,
   } = useFormPage({
@@ -89,17 +91,13 @@ function NewLibraryAttendanceContent() {
     redirectTo: "/library-attendance",
     successMessage: "Checked in successfully!",
     errorMessage: "Failed to check in",
-    validate: (data) => {
-      if (!data.member_id) {
-        return "Please select a member"
-      }
-      if (!selectedMember) {
-        return "Member not found"
-      }
-      if (selectedMember.hours_balance <= 0) {
-        return "Member has no hours remaining. Please renew subscription first."
-      }
-      return null
+    validationSchema: {
+      member_id: (value: unknown): ValidatorResult => {
+        if (!value) return { isValid: false, error: "Please select a member" }
+        if (!selectedMember) return { isValid: false, error: "Member not found" }
+        if (selectedMember.hours_balance <= 0) return { isValid: false, error: "Member has no hours remaining. Please renew subscription first." }
+        return null
+      },
     },
     customSubmit: async (data, userId, supabase): Promise<string | void> => {
       if (!selectedMember) {
@@ -354,7 +352,7 @@ function NewLibraryAttendanceContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Member Selection */}
-            <FormField label="Select Member" htmlFor="member_id" required>
+            <FormField label="Select Member" htmlFor="member_id" required error={errors.member_id}>
               {members.length > 0 ? (
                 <Combobox
                   options={memberOptions}
