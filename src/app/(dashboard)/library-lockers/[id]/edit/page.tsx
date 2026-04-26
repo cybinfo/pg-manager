@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
+import { requiredField } from "@/lib/validation"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -47,6 +48,7 @@ function EditLibraryLockerContent({
     loading,
     saving,
     record,
+    errors,
   } = useFormEditPage({
     table: "library_lockers",
     id,
@@ -72,11 +74,8 @@ function EditLibraryLockerContent({
       deposit_amount: rec.deposit_amount?.toString() || "",
       status: (rec.status as string) || "available",
     }),
-    validate: (data) => {
-      if (!data.locker_number) {
-        return "Please enter locker number"
-      }
-      return null
+    validationSchema: {
+      locker_number: requiredField("Locker Number"),
     },
     transform: (data): Record<string, unknown> => ({
       locker_number: data.locker_number,
@@ -133,7 +132,7 @@ function EditLibraryLockerContent({
           <CardContent className="space-y-6">
             {/* Locker Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Locker Number" required>
+              <FormField label="Locker Number" required error={errors.locker_number}>
                 <Input
                   id="locker_number"
                   name="locker_number"

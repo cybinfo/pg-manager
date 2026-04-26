@@ -16,6 +16,7 @@ import {
 import { PageLoading } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
 import { Select, FormField } from "@/components/ui/form-components"
+import { requiredSelect, requiredAmount } from "@/lib/validation"
 import {
   Loader2,
   Home,
@@ -72,6 +73,7 @@ function EditTenantContent() {
     loading,
     saving,
     record,
+    errors,
     setLoading: _setLoading,
   } = useFormEditPage({
     table: "tenants",
@@ -111,11 +113,10 @@ function EditTenantContent() {
         notes: (rec.notes as string) || "",
       }
     },
-    validate: (data) => {
-      if (!data.property_id || !data.room_id || !data.monthly_rent) {
-        return "Please fill in all required fields"
-      }
-      return null
+    validationSchema: {
+      property_id: requiredSelect("Property"),
+      room_id: requiredSelect("Room"),
+      monthly_rent: requiredAmount("Monthly Rent"),
     },
     transform: (data): Record<string, unknown> => ({
       property_id: data.property_id,
@@ -237,7 +238,7 @@ function EditTenantContent() {
         >
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Property" required>
+              <FormField label="Property" required error={errors.property_id}>
                 <Select
                   id="property_id"
                   name="property_id"
@@ -247,7 +248,7 @@ function EditTenantContent() {
                   disabled={saving}
                 />
               </FormField>
-              <FormField label="Room" required>
+              <FormField label="Room" required error={errors.room_id}>
                 <Select
                   id="room_id"
                   name="room_id"
@@ -279,7 +280,7 @@ function EditTenantContent() {
             </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Monthly Rent (Rs.)" required>
+              <FormField label="Monthly Rent (Rs.)" required error={errors.monthly_rent}>
                 <Input
                   id="monthly_rent"
                   name="monthly_rent"

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/components/ui/form-components"
+import { requiredField, requiredAmount } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
@@ -50,6 +51,7 @@ function EditLibraryPlanContent({
     loading,
     saving,
     record,
+    errors,
   } = useFormEditPage({
     table: "library_plans",
     id,
@@ -76,11 +78,10 @@ function EditLibraryPlanContent({
       is_active: (rec.is_active as boolean) ?? true,
       sort_order: rec.sort_order?.toString() || "0",
     }),
-    validate: (data) => {
-      if (!data.name || !data.base_price || !data.validity_days) {
-        return "Please fill in required fields (Name, Price, Validity)"
-      }
-      return null
+    validationSchema: {
+      name: requiredField("Plan Name"),
+      base_price: requiredAmount("Price"),
+      validity_days: requiredField("Validity"),
     },
     transform: (data): Record<string, unknown> => ({
       name: data.name,
@@ -144,7 +145,7 @@ function EditLibraryPlanContent({
           <CardContent className="space-y-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Plan Name" required>
+              <FormField label="Plan Name" required error={errors.name}>
                 <Input
                   id="name"
                   name="name"
@@ -155,7 +156,7 @@ function EditLibraryPlanContent({
                   disabled={saving}
                 />
               </FormField>
-              <FormField label="Price (Rs.)" required>
+              <FormField label="Price (Rs.)" required error={errors.base_price}>
                 <Input
                   id="base_price"
                   name="base_price"
@@ -196,7 +197,7 @@ function EditLibraryPlanContent({
                   min={1}
                 />
               </FormField>
-              <FormField label="Validity (Days)" required>
+              <FormField label="Validity (Days)" required error={errors.validity_days}>
                 <Input
                   id="validity_days"
                   name="validity_days"

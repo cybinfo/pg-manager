@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
+import { requiredField } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { PageLoading } from "@/components/ui/loading"
@@ -80,11 +81,9 @@ function EditLibraryContent() {
       has_parking: (record.has_parking as boolean) || false,
       is_active: (record.is_active as boolean) !== false,
     }),
-    validate: (data) => {
-      if (!data.name || !data.city) {
-        return "Please fill in required fields (Name, City)"
-      }
-      return null
+    validationSchema: {
+      name: requiredField("Library Name"),
+      city: requiredField("City"),
     },
     transform: (data): Record<string, unknown> => ({
       name: data.name,

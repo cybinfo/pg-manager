@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
+import { requiredField, requiredSelect } from "@/lib/validation"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
 import { PermissionGuard } from "@/components/auth"
 
@@ -43,6 +44,7 @@ function NewLibraryLockerContent() {
     handleChange,
     handleSubmit,
     saving,
+    errors,
     searchParams,
     workspaceId,
   } = useFormPage({
@@ -59,11 +61,9 @@ function NewLibraryLockerContent() {
     redirectTo: "/library-lockers",
     successMessage: "Locker created successfully!",
     errorMessage: "Failed to create locker",
-    validate: (data) => {
-      if (!data.library_id || !data.locker_number) {
-        return "Please fill in required fields (Library, Locker Number)"
-      }
-      return null
+    validationSchema: {
+      library_id: requiredSelect("Library"),
+      locker_number: requiredField("Locker Number"),
     },
     customSubmit: async (data, userId, supabase): Promise<string | void> => {
       // Get library's owner_id
@@ -176,7 +176,7 @@ function NewLibraryLockerContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Library Selection */}
-            <FormField label="Library" required>
+            <FormField label="Library" required error={errors.library_id}>
               <Combobox
                 options={libraryOptions}
                 value={formData.library_id as string}
@@ -190,7 +190,7 @@ function NewLibraryLockerContent() {
 
             {/* Locker Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Locker Number" required>
+              <FormField label="Locker Number" required error={errors.locker_number}>
                 <Input
                   id="locker_number"
                   name="locker_number"

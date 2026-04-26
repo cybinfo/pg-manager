@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
+import { requiredField, requiredSelect } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
@@ -45,6 +46,7 @@ function NewLibrarySeatContent() {
     handleChange,
     handleSubmit,
     saving,
+    errors,
     searchParams,
   } = useFormPage({
     table: "library_seats",
@@ -60,11 +62,9 @@ function NewLibrarySeatContent() {
     redirectTo: "/library-seats",
     successMessage: "Seat created successfully!",
     errorMessage: "Failed to create seat",
-    validate: (data) => {
-      if (!data.section_id || !data.seat_number) {
-        return "Please fill in required fields (Section, Seat Number)"
-      }
-      return null
+    validationSchema: {
+      section_id: requiredSelect("Section"),
+      seat_number: requiredField("Seat Number"),
     },
     customSubmit: async (data, userId, supabase): Promise<string | void> => {
       // Get section's owner_id and workspace_id
@@ -183,7 +183,7 @@ function NewLibrarySeatContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Section Selection */}
-            <FormField label="Section" required>
+            <FormField label="Section" required error={errors.section_id}>
               <Combobox
                 options={sectionOptions}
                 value={formData.section_id as string}
@@ -197,7 +197,7 @@ function NewLibrarySeatContent() {
 
             {/* Seat Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Seat Number" required>
+              <FormField label="Seat Number" required error={errors.seat_number}>
                 <Input
                   id="seat_number"
                   name="seat_number"

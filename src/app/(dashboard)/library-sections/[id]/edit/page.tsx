@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
+import { requiredField } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
@@ -49,6 +50,7 @@ function EditLibrarySectionContent({
     loading,
     saving,
     record,
+    errors,
   } = useFormEditPage({
     table: "library_sections",
     id,
@@ -74,11 +76,8 @@ function EditLibrarySectionContent({
       hourly_rate: rec.hourly_rate?.toString() || "",
       monthly_rate: rec.monthly_rate?.toString() || "",
     }),
-    validate: (data) => {
-      if (!data.name) {
-        return "Please enter section name"
-      }
-      return null
+    validationSchema: {
+      name: requiredField("Section Name"),
     },
     transform: (data): Record<string, unknown> => ({
       name: data.name,
@@ -142,7 +141,7 @@ function EditLibrarySectionContent({
           <CardContent className="space-y-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Section Name" required>
+              <FormField label="Section Name" required error={errors.name}>
                 <Input
                   id="name"
                   name="name"

@@ -20,6 +20,7 @@ import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Users, Loader2, Clock } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
+import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { PermissionGuard } from "@/components/auth"
 import { TIME_SLOTS } from "@/types/library.types"
 
@@ -65,12 +66,10 @@ function AddToWaitlistContent() {
     redirectTo: "/library-waitlist",
     successMessage: "Added to waitlist successfully!",
     errorMessage: "Failed to add to waitlist",
-    validate: (data) => {
-      if (!data.library_id) return "Please select a library"
-      if (!(data.name as string).trim()) return "Please enter a name"
-      if (!(data.phone as string).trim()) return "Please enter a phone number"
-      if (!validateIndianMobile(data.phone as string)) return "Please enter a valid 10-digit mobile number"
-      return null
+    validationSchema: {
+      library_id: requiredSelect("Library"),
+      name: requiredField("Name"),
+      phone: requiredPhone("Phone"),
     },
     customSubmit: async (data, userId, supabase) => {
       // Get owner_id from workspace
@@ -202,7 +201,7 @@ function AddToWaitlistContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Library Selection */}
-            <FormField label="Library" htmlFor="library_id" required>
+            <FormField label="Library" htmlFor="library_id" required error={errors.library_id}>
               <Combobox
                 options={libraryOptions}
                 value={formData.library_id as string}

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
+import { requiredField, requiredPhone } from "@/lib/validation"
 import { ArrowLeft, Users, Loader2 } from "lucide-react"
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { PageLoading } from "@/components/ui/loading"
@@ -51,6 +52,7 @@ function EditLibraryMemberContent({
     loading,
     saving,
     record,
+    errors,
   } = useFormEditPage({
     table: "library_members",
     id,
@@ -84,11 +86,9 @@ function EditLibraryMemberContent({
       notes: (rec.notes as string) || "",
       status: (rec.status as string) || "active",
     }},
-    validate: (data) => {
-      if (!data.name || !data.phone) {
-        return "Please fill in required fields (Name, Phone)"
-      }
-      return null
+    validationSchema: {
+      name: requiredField("Full Name"),
+      phone: requiredPhone("Phone Number"),
     },
     customSubmit: async (data, userId, recordId, supabase) => {
       // Update library_members (denormalized copy)
@@ -194,7 +194,7 @@ function EditLibraryMemberContent({
 
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Full Name" required>
+              <FormField label="Full Name" required error={errors.name}>
                 <Input
                   id="name"
                   name="name"
@@ -205,7 +205,7 @@ function EditLibraryMemberContent({
                   disabled={saving}
                 />
               </FormField>
-              <FormField label="Phone Number" required>
+              <FormField label="Phone Number" required error={errors.phone}>
                 <Input
                   id="phone"
                   name="phone"

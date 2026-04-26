@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, FormField } from "@/components/ui/form-components"
+import { requiredField } from "@/lib/validation"
 import { ArrowLeft, Armchair, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -49,6 +50,7 @@ function EditLibrarySeatContent({
     loading,
     saving,
     record,
+    errors,
   } = useFormEditPage({
     table: "library_seats",
     id,
@@ -72,11 +74,8 @@ function EditLibrarySeatContent({
       is_window_seat: (rec.is_window_seat as boolean) ?? false,
       status: (rec.status as string) || "available",
     }),
-    validate: (data) => {
-      if (!data.seat_number) {
-        return "Please enter seat number"
-      }
-      return null
+    validationSchema: {
+      seat_number: requiredField("Seat Number"),
     },
     transform: (data): Record<string, unknown> => ({
       seat_number: data.seat_number,
@@ -139,7 +138,7 @@ function EditLibrarySeatContent({
           <CardContent className="space-y-6">
             {/* Seat Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Seat Number" required>
+              <FormField label="Seat Number" required error={errors.seat_number}>
                 <Input
                   id="seat_number"
                   name="seat_number"

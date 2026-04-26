@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
+import { requiredField } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
@@ -57,11 +58,9 @@ function NewLibraryContent() {
     redirectTo: "/library",
     successMessage: "Library created successfully!",
     errorMessage: "Failed to create library",
-    validate: (data) => {
-      if (!data.name || !data.city) {
-        return "Please fill in required fields (Name, City)"
-      }
-      return null
+    validationSchema: {
+      name: requiredField("Library Name"),
+      city: requiredField("City"),
     },
     transform: (data, userId): Record<string, unknown> => ({
       owner_id: userId,

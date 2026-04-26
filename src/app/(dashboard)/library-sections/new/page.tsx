@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
+import { requiredField, requiredSelect } from "@/lib/validation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
@@ -64,11 +65,9 @@ function NewLibrarySectionContent() {
     redirectTo: "/library-sections",
     successMessage: "Section created successfully!",
     errorMessage: "Failed to create section",
-    validate: (data) => {
-      if (!data.library_id || !data.name) {
-        return "Please select a library and enter section name"
-      }
-      return null
+    validationSchema: {
+      library_id: requiredSelect("Library"),
+      name: requiredField("Section Name"),
     },
     customSubmit: async (data, userId, supabase): Promise<string | void> => {
       // Get library's owner_id
@@ -188,7 +187,7 @@ function NewLibrarySectionContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Library Selection */}
-            <FormField label="Library" required>
+            <FormField label="Library" required error={errors.library_id}>
               <Combobox
                 options={libraryOptions}
                 value={formData.library_id as string}
