@@ -51,18 +51,26 @@ export function validateDateRange(
     }
   }
 
-  // Validate against min/max bounds
+  // Validate against min/max bounds — normalise to local midnight to avoid
+  // UTC-vs-local mismatch (ISO date strings are parsed as UTC midnight, but
+  // startDay/endDay are local midnight, which differ in UTC+5:30)
   if (minDate) {
-    const min = minDate instanceof Date ? minDate : new Date(minDate)
-    if (!isNaN(min.getTime()) && startDay < min) {
-      return { isValid: false, error: `${startLabel} cannot be before ${min.toLocaleDateString()}` }
+    const minRaw = minDate instanceof Date ? minDate : new Date(minDate)
+    if (!isNaN(minRaw.getTime())) {
+      const minDay = new Date(minRaw.getFullYear(), minRaw.getMonth(), minRaw.getDate())
+      if (startDay < minDay) {
+        return { isValid: false, error: `${startLabel} cannot be before ${minDay.toLocaleDateString()}` }
+      }
     }
   }
 
   if (maxDate) {
-    const max = maxDate instanceof Date ? maxDate : new Date(maxDate)
-    if (!isNaN(max.getTime()) && endDay > max) {
-      return { isValid: false, error: `${endLabel} cannot be after ${max.toLocaleDateString()}` }
+    const maxRaw = maxDate instanceof Date ? maxDate : new Date(maxDate)
+    if (!isNaN(maxRaw.getTime())) {
+      const maxDay = new Date(maxRaw.getFullYear(), maxRaw.getMonth(), maxRaw.getDate())
+      if (endDay > maxDay) {
+        return { isValid: false, error: `${endLabel} cannot be after ${maxDay.toLocaleDateString()}` }
+      }
     }
   }
 
@@ -102,16 +110,24 @@ export function validateDate(
   }
 
   if (minDate) {
-    const min = minDate instanceof Date ? minDate : new Date(minDate)
-    if (!isNaN(min.getTime()) && parsed < min) {
-      return { isValid: false, parsed: null, error: `${label} cannot be before ${min.toLocaleDateString()}` }
+    const minRaw = minDate instanceof Date ? minDate : new Date(minDate)
+    if (!isNaN(minRaw.getTime())) {
+      const minDay = new Date(minRaw.getFullYear(), minRaw.getMonth(), minRaw.getDate())
+      const parsedDay = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+      if (parsedDay < minDay) {
+        return { isValid: false, parsed: null, error: `${label} cannot be before ${minDay.toLocaleDateString()}` }
+      }
     }
   }
 
   if (maxDate) {
-    const max = maxDate instanceof Date ? maxDate : new Date(maxDate)
-    if (!isNaN(max.getTime()) && parsed > max) {
-      return { isValid: false, parsed: null, error: `${label} cannot be after ${max.toLocaleDateString()}` }
+    const maxRaw = maxDate instanceof Date ? maxDate : new Date(maxDate)
+    if (!isNaN(maxRaw.getTime())) {
+      const maxDay = new Date(maxRaw.getFullYear(), maxRaw.getMonth(), maxRaw.getDate())
+      const parsedDay = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+      if (parsedDay > maxDay) {
+        return { isValid: false, parsed: null, error: `${label} cannot be after ${maxDay.toLocaleDateString()}` }
+      }
     }
   }
 

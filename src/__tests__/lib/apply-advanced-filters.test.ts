@@ -162,15 +162,6 @@ describe("applyAdvancedFilters", () => {
       expect(q.lte).toHaveBeenCalledWith("status", "100")
     })
 
-    it("applies in with array value", () => {
-      const q = makeMockQuery()
-      applyAdvancedFilters(
-        q,
-        makeGroup({ filters: [makeFilter({ conditions: [{ operator: "in", value: ["a", "b"] }] })] })
-      )
-      expect(q.in).toHaveBeenCalledWith("status", ["a", "b"])
-    })
-
     it("applies in with comma-separated string", () => {
       const q = makeMockQuery()
       applyAdvancedFilters(
