@@ -477,6 +477,20 @@ describe('sendNotification', () => {
     )
   })
 
+  it('uses scheduled_at ISO string when scheduled_at is provided', async () => {
+    const scheduledAt = new Date('2026-06-01T09:00:00.000Z')
+    const payload: NotificationPayload = {
+      ...billPayload,
+      scheduled_at: scheduledAt,
+    }
+    await sendNotification(payload)
+    expect(mockQueueInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scheduled_at: scheduledAt.toISOString(),
+      })
+    )
+  })
+
   it('should use payment_reminder template subject and body', async () => {
     const payload: NotificationPayload = {
       type: 'payment_reminder',
@@ -532,6 +546,139 @@ describe('sendNotification', () => {
         body: expect.stringContaining('Green PG'),
       })
     )
+  })
+
+  it('should use approval_required template', async () => {
+    const payload: NotificationPayload = {
+      type: 'approval_required',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['email'],
+      data: { approval_id: 'appr-1', request_type: 'Leave Request', tenant_name: 'Alice' },
+      priority: 'normal',
+    }
+    await sendNotification(payload)
+    expect(mockQueueInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification_type: 'approval_required',
+        title: 'New Approval Request',
+        body: expect.stringContaining('Alice'),
+      })
+    )
+  })
+
+  it('should use approval_decision template', async () => {
+    const payload: NotificationPayload = {
+      type: 'approval_decision',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['email'],
+      data: { approval_id: 'appr-1', request_type: 'Leave Request', decision: 'approved', notes: '' },
+      priority: 'normal',
+    }
+    await sendNotification(payload)
+    expect(mockQueueInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification_type: 'approval_decision',
+        title: 'Request approved',
+      })
+    )
+  })
+
+  it('should use exit_clearance_initiated template', async () => {
+    const payload: NotificationPayload = {
+      type: 'exit_clearance_initiated',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['email'],
+      data: { clearance_id: 'ec-1', tenant_name: 'Alice', exit_date: '2026-06-01' },
+      priority: 'normal',
+    }
+    await sendNotification(payload)
+    expect(mockQueueInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification_type: 'exit_clearance_initiated',
+        title: 'Exit Clearance Started',
+      })
+    )
+  })
+
+  it('should use exit_clearance_completed template', async () => {
+    const payload: NotificationPayload = {
+      type: 'exit_clearance_completed',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['email'],
+      data: { clearance_id: 'ec-1', tenant_name: 'Alice', settlement_amount: '₹2,000' },
+      priority: 'normal',
+    }
+    await sendNotification(payload)
+    expect(mockQueueInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        notification_type: 'exit_clearance_completed',
+        title: 'Exit Clearance Complete',
+      })
+    )
+  })
+
+  it('should use welcome template', async () => {
+    const payload: NotificationPayload = {
+      type: 'welcome',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['in_app'],
+      data: { property_name: 'Green Heights' },
+      priority: 'normal',
+    }
+    await sendNotification(payload)
+    expect(mockNotifInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'welcome',
+        title: 'Welcome!',
+      })
+    )
+  })
+
+  it('returns error when template lookup throws (unknown type)', async () => {
+    // TypeScript bypass: use unknown type to trigger the catch block
+    const badPayload = {
+      type: 'nonexistent_type_xyz',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['email'],
+      data: {},
+      priority: 'normal',
+    } as unknown as NotificationPayload
+
+    const result = await sendNotification(badPayload)
+    expect(result.success).toBe(false)
+    expect(result.error?.message).toMatch(/Exception sending notification/)
+  })
+
+  it('createInAppNotification catch block fires when createClient throws on its call', async () => {
+    // sendNotification with ["email", "in_app"] channels makes 3 createClient() calls:
+    // #1 queueNotification(email), #2 queueNotification(in_app), #3 createInAppNotification
+    // We make #3 throw to cover lines 257-258
+    const { createClient } = jest.requireMock('@/lib/supabase/client')
+    ;(createClient as jest.Mock)
+      .mockReturnValueOnce({ from: mockFrom })  // #1: email queueNotification succeeds
+      .mockReturnValueOnce({ from: mockFrom })  // #2: in_app queueNotification succeeds
+      .mockImplementationOnce(() => { throw new Error('db unavailable') })  // #3: createInAppNotification throws
+
+    const payload: NotificationPayload = {
+      type: 'bill_generated',
+      recipient_id: tenantId,
+      recipient_type: 'tenant',
+      channels: ['email', 'in_app'],
+      data: { bill_id: 'b-1', bill_number: 'BILL-001', amount: '₹5,000', month: 'April' },
+      priority: 'normal',
+    }
+
+    const result = await sendNotification(payload)
+    // email channel succeeded → partial success (in_app_record failed)
+    expect(result.success).toBe(true)
+
+    resetMocks()
   })
 })
 

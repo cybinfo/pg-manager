@@ -583,6 +583,33 @@ describe('queryAuditEvents', () => {
     expect(result.success).toBe(false)
     expect(result.error?.message).toMatch(/query/)
   })
+
+  it('should return error when query chain throws an exception', async () => {
+    // Override the chain.then to reject (covers catch block lines 252-253)
+    const { createClient } = jest.requireMock('@/lib/supabase/client')
+    const throwingChain: Record<string, unknown> = {
+      eq: () => throwingChain,
+      gte: () => throwingChain,
+      lte: () => throwingChain,
+      limit: () => throwingChain,
+      range: () => throwingChain,
+      order: () => throwingChain,
+      then: (_resolve: unknown, reject: (e: Error) => void) => {
+        reject(new Error('network timeout'))
+      },
+    }
+    ;(createClient as jest.Mock).mockReturnValueOnce({
+      from: jest.fn(() => ({
+        insert: mockInsert,
+        select: jest.fn(() => throwingChain),
+      })),
+    })
+
+    const result = await queryAuditEvents({ workspace_id: testWorkspaceId })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.message).toMatch(/Exception querying/)
+  })
 })
 
 // ============================================
