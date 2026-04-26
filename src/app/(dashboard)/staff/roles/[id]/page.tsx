@@ -21,6 +21,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PERMISSION_GROUPS as permissionGroups } from "@/lib/auth/permission-groups"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 interface Role {
   id: string
@@ -34,6 +35,7 @@ interface Role {
 export default function EditRolePage() {
   const params = useParams()
   const router = useRouter()
+  const { backHref } = useBackNavigation({ defaultHref: "/staff/roles" })
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -253,7 +255,7 @@ export default function EditRolePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link href="/staff/roles">
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
