@@ -481,6 +481,45 @@ describe("Audit Utilities", () => {
       expect(result.errors).toHaveLength(0)
     })
 
+    it("records 0 count when data is null (line 230 data?.length || 0 branch)", async () => {
+      mockFrom.mockImplementation(() => ({
+        update: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            is: jest.fn().mockReturnValue({
+              select: jest.fn().mockResolvedValue({ data: null, error: null }),
+            }),
+          }),
+        }),
+      }))
+
+      const result = await cascadeSoftDelete("parent-1", "user-1", [
+        { table: "rooms", foreignKey: "property_id" },
+      ])
+
+      expect(result.results.rooms).toBe(0)
+      expect(result.errors).toHaveLength(0)
+    })
+
+    it("catches non-Error throws and uses 'Unknown error' (line 233 false branch)", async () => {
+      mockFrom.mockImplementation(() => ({
+        update: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            is: jest.fn().mockReturnValue({
+              // throw a plain string, not an Error
+              select: jest.fn().mockRejectedValue("connection reset"),
+            }),
+          }),
+        }),
+      }))
+
+      const result = await cascadeSoftDelete("parent-1", "user-1", [
+        { table: "rooms", foreignKey: "property_id" },
+      ])
+
+      expect(result.errors).toHaveLength(1)
+      expect(result.errors[0]).toContain("Unknown error")
+    })
+
     it("sets correct deleted_by for cascade", async () => {
       const mockUpdate = jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
