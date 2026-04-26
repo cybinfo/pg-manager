@@ -19,7 +19,6 @@ import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
 import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
-import { Currency } from "@/components/ui/currency"
 import { getTodayISO } from "@/lib/date-helpers"
 import { LIBRARY_PAYMENT_METHOD_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
@@ -53,7 +52,7 @@ function NewLibraryPaymentContent() {
     handleSubmit,
     saving,
     searchParams,
-    workspaceId,
+    workspaceId: _workspaceId,
     errors,
     validateField,
   } = useFormPage({

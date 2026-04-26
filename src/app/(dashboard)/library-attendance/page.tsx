@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Clock, Users, Armchair, LogIn, LogOut, RefreshCw, QrCode } from "lucide-react"
+import { Clock, Users, LogIn, LogOut, RefreshCw, QrCode } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"

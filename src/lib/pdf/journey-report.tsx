@@ -8,7 +8,6 @@ import {
 } from "@react-pdf/renderer"
 import {
   TenantJourneyData,
-  JourneyEvent,
   EventCategory,
 } from "@/types/journey.types"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"

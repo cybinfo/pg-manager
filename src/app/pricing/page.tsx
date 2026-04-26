@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PublicNav, PublicFooter } from "@/components/public"
 import {
-  Building2,
   CheckCircle,
   ArrowRight,
   Star,

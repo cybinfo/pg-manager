@@ -87,8 +87,6 @@ function NewComplaintForm() {
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [filteredTenants, setFilteredTenants] = useState<Tenant[]>([])
-  const [filteredMembers, setFilteredMembers] = useState<LibraryMember[]>([])
-
   const {
     formData, setFormData,
     handleSubmit,

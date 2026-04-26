@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react"
 import { formatCurrency, formatDate, formatTimeAgo } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { JourneyEvent, EVENT_CATEGORY_CONFIG } from "@/types/journey.types"
+import { JourneyEvent } from "@/types/journey.types"
 import { EventIcon, CategoryBadge, StatusDot } from "./EventIcon"
 
 // ============================================

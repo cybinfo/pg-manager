@@ -11,7 +11,6 @@ import { createClient } from "@/lib/supabase/client"
 import {
   WorkflowDefinition,
   executeWorkflow,
-  ServiceResult,
   createSuccessResult,
   createErrorResult,
   createServiceError,
@@ -552,7 +551,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const supabase = createClient()
         const tenant = previousResults.create_tenant as Record<string, unknown>
         const room = previousResults.validate_room as Record<string, unknown>
-        const property = room?.property as Record<string, unknown>
+        const _property = room?.property as Record<string, unknown>
 
         // Calculate first month charges
         const now = new Date()
@@ -641,7 +640,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
   // Audit events
   auditEvents: (context, input, results) => {
     const tenant = results.create_tenant as Record<string, unknown>
-    const room = results.validate_room as Record<string, unknown>
+    const _room = results.validate_room as Record<string, unknown>
 
     return [
       createAuditEvent(
@@ -784,7 +783,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
       name: "create_transfer_record",
       execute: async (context, input, previousResults) => {
         const supabase = createClient()
-        const { tenant, newRoom, oldRoom } = previousResults.validate as Record<string, unknown>
+        const { tenant, newRoom: _newRoom, oldRoom } = previousResults.validate as Record<string, unknown>
 
         const { data: transfer, error } = await supabase
           .from("room_transfers")
@@ -920,7 +919,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
       name: "update_tenant",
       execute: async (context, input, previousResults) => {
         const supabase = createClient()
-        const { tenant } = previousResults.validate as Record<string, unknown>
+        const { tenant: _tenant } = previousResults.validate as Record<string, unknown>
 
         const updateData: Record<string, unknown> = {
           room_id: input.new_room_id,
@@ -996,7 +995,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
 
   auditEvents: (context, input, results) => {
     const { tenant, oldRoom, newRoom } = results.validate as Record<string, unknown>
-    const t = tenant as Record<string, unknown>
+    const _t = tenant as Record<string, unknown>
     const old = oldRoom as Record<string, unknown>
     const newR = newRoom as Record<string, unknown>
 

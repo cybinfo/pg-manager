@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback, use } from "react"
 import { formatDate } from "@/lib/format"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth"
 import { PermissionGuard } from "@/components/auth"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -20,7 +18,7 @@ import {
 import { JourneyHeader } from "@/components/journey/JourneyHeader"
 import { JourneyAnalytics } from "@/components/journey/JourneyAnalytics"
 import { FinancialSummary } from "@/components/journey/FinancialSummary"
-import { PredictiveInsights, CompactInsights } from "@/components/journey/PredictiveInsights"
+import { PredictiveInsights } from "@/components/journey/PredictiveInsights"
 import { JourneyFilters } from "@/components/journey/JourneyFilters"
 import { Timeline } from "@/components/journey/Timeline"
 import { getTodayISO } from "@/lib/date-helpers"
@@ -53,7 +51,7 @@ interface JourneyPageContentProps {
 }
 
 function JourneyPageContent({ tenantId }: JourneyPageContentProps) {
-  const router = useRouter()
+  const _router = useRouter()
   const { user } = useAuth()
 
   // State

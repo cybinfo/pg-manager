@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { transformArrayJoins } from "@/lib/supabase/transforms"
-import { useAuthContext } from "@/lib/auth/useAuthContext"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PermissionGuard, PermissionGate } from "@/components/auth"
@@ -210,7 +210,6 @@ function autoMatch(
 
 function ReconciliationView() {
   const router = useRouter()
-  const { user } = useAuthContext()
 
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState(false)
@@ -311,15 +310,6 @@ function ReconciliationView() {
 
     return [...sameTenant, ...otherTenant]
   }, [availableBills, selectedPaymentId, payments])
-
-  // Proposals: filtered to only show unmatched proposals
-  const activeProposals = useMemo(
-    () =>
-      proposals.filter(
-        (p) => !matchedPaymentIds.has(p.paymentId) && !matchedBillIds.has(p.billId)
-      ),
-    [proposals, matchedPaymentIds, matchedBillIds]
-  )
 
   // Handlers
   const handleSelectPayment = useCallback(

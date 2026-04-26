@@ -22,7 +22,6 @@ import {
   Users,
   Phone,
   Building2,
-  Home,
   Clock,
   LogOut,
   Moon,
@@ -46,7 +45,7 @@ import {
   MessageCircle,
   Edit,
 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showSuccess } from "@/lib/toast-helpers"
 import { getNowISO } from "@/lib/date-helpers"
 import { formatDateTime, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
@@ -682,7 +681,7 @@ export default function VisitorDetailPage() {
             description={`Previous visits from this person (${visitHistory.length} total)`}
             icon={History}
             items={visitHistory}
-            keyExtractor={(visit, _idx) => visit.id}
+            keyExtractor={(visit, _) => visit.id}
             renderItem={(visit) => (
               <Link
                 href={`/visitors/${visit.id}`}

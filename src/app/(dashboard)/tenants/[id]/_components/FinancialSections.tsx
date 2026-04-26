@@ -56,7 +56,7 @@ export function FinancialSections({ tenantId, charges, payments, bills }: Financ
         description="Outstanding payments"
         icon={AlertCircle}
         items={charges}
-        keyExtractor={(charge, _idx) => charge.id}
+        keyExtractor={(charge, _) => charge.id}
         renderItem={(charge) => (
           <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
             <div>
@@ -98,7 +98,7 @@ export function FinancialSections({ tenantId, charges, payments, bills }: Financ
         description="Transaction history"
         icon={CreditCard}
         items={payments}
-        keyExtractor={(payment, _idx) => payment.id}
+        keyExtractor={(payment, _) => payment.id}
         renderItem={(payment) => (
           <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0">
             <div>
@@ -126,7 +126,7 @@ export function FinancialSections({ tenantId, charges, payments, bills }: Financ
         description="Latest billing activity"
         icon={FileText}
         items={bills}
-        keyExtractor={(bill, _idx) => bill.id}
+        keyExtractor={(bill, _) => bill.id}
         renderItem={(bill) => (
           <Link href={`/bills/${bill.id}`}>
             <div className="flex items-center justify-between py-2 border-b border-dashed last:border-0 hover:bg-muted/50 transition-colors rounded px-1 -mx-1">

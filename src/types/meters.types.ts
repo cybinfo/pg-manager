@@ -5,7 +5,7 @@
  * meter assignments, and related interfaces.
  */
 
-import { Zap, Droplets, Gauge, Flame, type LucideIcon } from "lucide-react"
+import { Zap, Droplets, Flame, type LucideIcon } from "lucide-react"
 
 // ============================================================================
 // ENUMS AND CONSTANTS

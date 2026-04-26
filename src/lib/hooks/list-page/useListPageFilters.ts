@@ -9,9 +9,8 @@
 
 import { useState, useCallback, useRef, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { SEARCH_DEBOUNCE_MS } from "@/lib/constants"
 import type { FilterGroup } from "@/types/table-features.types"
-import type { FilterConfig, ListPageConfig, SortConfig, TableViewConfig } from "./types"
+import type { FilterConfig, ListPageConfig, SortConfig } from "./types"
 
 // ============================================
 // Types

@@ -94,6 +94,7 @@ export function FileUpload({
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Normalize value to array for internal use
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const files = Array.isArray(value) ? value : value ? [value] : []
 
   const handleFileSelect = useCallback(

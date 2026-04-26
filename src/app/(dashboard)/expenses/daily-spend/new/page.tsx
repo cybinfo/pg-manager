@@ -45,7 +45,7 @@ export default function NewDailySpendPage() {
   const [loadingData, setLoadingData] = useState(true)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<ProductCategory[]>([])
-  const [vendors, setVendors] = useState<Vendor[]>([])
+  const [_vendors, setVendors] = useState<Vendor[]>([])
 
   // Form state
   const [spendDate, setSpendDate] = useState(getTodayISO())

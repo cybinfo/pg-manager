@@ -9,7 +9,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Users, Clock, AlertTriangle, CalendarClock, Upload, RefreshCw, Loader2, UserMinus } from "lucide-react"
+import { Users, Clock, CalendarClock, Upload, RefreshCw, Loader2, UserMinus } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
 import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate, BulkActionConfig } from "@/components/shared/ListPageTemplate"

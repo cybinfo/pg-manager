@@ -63,7 +63,7 @@ export default function NewLibraryAttendancePage() {
 function NewLibraryAttendanceContent() {
   const [loadingData, setLoadingData] = useState(true)
   const [members, setMembers] = useState<MemberOption[]>([])
-  const [libraries, setLibraries] = useState<LibraryOption[]>([])
+  const [_libraries, setLibraries] = useState<LibraryOption[]>([])
   const [seats, setSeats] = useState<SeatOption[]>([])
   const [loadingSeats, setLoadingSeats] = useState(false)
   const [selectedMember, setSelectedMember] = useState<MemberOption | null>(null)

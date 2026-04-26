@@ -27,7 +27,7 @@ export function PermissionGuard({
   redirectTo = "/dashboard",
 }: PermissionGuardProps) {
   const router = useRouter()
-  const { isLoading, hasPermission, hasAnyPermission, currentContext } = useAuth()
+  const { isLoading, hasPermission: _hasPermission, hasAnyPermission, currentContext } = useAuth()
   const { isOwner, isTenant, isStaff } = useCurrentContext()
 
   // Check if user has required permission(s)
@@ -36,7 +36,6 @@ export function PermissionGuard({
 
   // Debug logging only in development
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
     console.debug('[PermissionGuard] Checking access:', {
       permission,
       isOwner,
@@ -113,7 +112,7 @@ export function OwnerGuard({
   redirectTo = "/dashboard",
 }: Omit<PermissionGuardProps, 'permission'>) {
   const router = useRouter()
-  const { isLoading, currentContext } = useAuth()
+  const { isLoading, currentContext: _currentContext } = useAuth()
   const { isOwner, isTenant } = useCurrentContext()
 
   useEffect(() => {
@@ -180,7 +179,7 @@ export function PlatformAdminGuard({
   redirectTo = "/dashboard",
 }: Omit<PermissionGuardProps, 'permission'>) {
   const router = useRouter()
-  const { isLoading, isPlatformAdmin, currentContext } = useAuth()
+  const { isLoading, isPlatformAdmin, currentContext: _currentContext2 } = useAuth()
   const { isTenant } = useCurrentContext()
 
   useEffect(() => {

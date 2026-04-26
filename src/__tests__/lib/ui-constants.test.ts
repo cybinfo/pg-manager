@@ -69,7 +69,7 @@ describe('UI Constants', () => {
     })
 
     it('all values are non-empty strings', () => {
-      Object.entries(UI_STRINGS).forEach(([key, value]) => {
+      Object.entries(UI_STRINGS).forEach(([_key, value]) => {
         expect(typeof value).toBe('string')
         expect(value.length).toBeGreaterThan(0)
       })

@@ -61,6 +61,7 @@ function EditExpenseContent() {
 
   useEffect(() => {
     fetchData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
   const fetchData = async () => {

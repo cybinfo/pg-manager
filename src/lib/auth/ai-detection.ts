@@ -182,7 +182,7 @@ export interface LinkSuggestion {
 export async function getSuggestionsForIdentity(
   email?: string,
   phone?: string,
-  name?: string
+  _name?: string
 ): Promise<LinkSuggestion[]> {
   const suggestions: LinkSuggestion[] = []
 

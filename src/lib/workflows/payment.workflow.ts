@@ -14,7 +14,6 @@ import { createClient } from "@/lib/supabase/client"
 import {
   WorkflowDefinition,
   executeWorkflow,
-  ServiceResult,
   createSuccessResult,
   createErrorResult,
   createServiceError,
@@ -144,7 +143,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
     // Step 2: Generate receipt number
     {
       name: "generate_receipt_number",
-      execute: async (context, input) => {
+      execute: async (context, _input) => {
         const supabase = createClient()
 
         // Get count of existing receipts
@@ -210,7 +209,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
       name: "update_bill",
       execute: async (context, input, previousResults) => {
         const supabase = createClient()
-        const { bill, remaining_balance } = previousResults.validate as Record<string, unknown>
+        const { bill, remaining_balance: _remaining_balance } = previousResults.validate as Record<string, unknown>
         const billData = bill as Record<string, unknown>
 
         const newPaidAmount = (billData.paid_amount as number || 0) + input.amount
@@ -251,7 +250,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
     // Step 5: Update tenant advance balance (if advance payment)
     {
       name: "update_advance_balance",
-      execute: async (context, input, previousResults) => {
+      execute: async (context, input, _previousResults) => {
         if (!input.is_advance) {
           return createSuccessResult({ updated: false })
         }
@@ -289,7 +288,6 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
     {
       name: "clear_overdue",
       execute: async (context, input, previousResults) => {
-        const supabase = createClient()
         const { bill } = previousResults.validate as Record<string, unknown>
         const billData = bill as Record<string, unknown>
         const billStatus = previousResults.update_bill as Record<string, unknown>
@@ -317,7 +315,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
         const tenantData = tenant as Record<string, unknown>
         const billData = bill as Record<string, unknown>
         const receiptResult = previousResults.generate_receipt_number as Record<string, unknown>
-        const billStatus = previousResults.update_bill as Record<string, unknown>
+        const _billStatus = previousResults.update_bill as Record<string, unknown>
 
         const tenantEmail = tenantData?.email as string | undefined
         if (!tenantEmail) {
@@ -585,7 +583,7 @@ export const refundPaymentWorkflow: WorkflowDefinition<RefundPaymentInput, Refun
 
   auditEvents: (context, input, results) => {
     const refundResult = results.create_refund as Record<string, unknown>
-    const payment = results.validate_payment as Record<string, unknown>
+    const _payment = results.validate_payment as Record<string, unknown>
 
     return [
       createAuditEvent(

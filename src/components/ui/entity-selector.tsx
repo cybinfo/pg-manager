@@ -22,8 +22,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react"
-import { showSuccess, showError, showInfo } from "@/lib/toast-helpers"
-import { withCreatedBy } from "@/lib/audit"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
 
 // ============================================================================
@@ -212,7 +211,6 @@ export function EntitySelector<T extends { id: string }>({
   // --------------------------------------------------
   // Search function
   // --------------------------------------------------
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const searchEntities = useCallback(async (query: string) => {
     if (minSearchLength > 0 && (!query || query.length < minSearchLength)) {
       setResults([])
@@ -270,6 +268,7 @@ export function EntitySelector<T extends { id: string }>({
     }
 
     setLoading(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scopeId, config, extraFilterData])
 
   // --------------------------------------------------

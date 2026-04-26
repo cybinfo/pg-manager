@@ -126,7 +126,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // Get price range for structured data
   const prices = property.rooms.map(r => r.rent_amount).filter(p => p > 0)
   const minPrice = prices.length > 0 ? Math.min(...prices) : null
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : null
+  const _maxPrice = prices.length > 0 ? Math.max(...prices) : null
 
   return {
     title,
@@ -189,7 +189,7 @@ export default async function PGWebsitePage({ params }: PageProps) {
 
   // Add JSON-LD structured data for SEO
   const config = property.website_config
-  const propertyType = config.property_type === "hostel" ? "Hostel" : config.property_type === "coliving" ? "Co-Living" : "PG"
+  const _propertyType = config.property_type === "hostel" ? "Hostel" : config.property_type === "coliving" ? "Co-Living" : "PG"
   const prices = property.rooms.map(r => r.rent_amount).filter(p => p > 0)
   const minPrice = prices.length > 0 ? Math.min(...prices) : null
 

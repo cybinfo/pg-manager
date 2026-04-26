@@ -30,9 +30,8 @@ import {
   UserCircle,
   RefreshCw,
   CheckCircle2,
-  Users,
 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 
@@ -193,8 +192,6 @@ export default function DuplicatesPage() {
   if (loading) {
     return <PageSkeleton variant="list" />
   }
-
-  const totalDuplicates = duplicateGroups.reduce((sum, g) => sum + g.duplicate_count, 0)
 
   return (
     <PermissionGuard permission="tenants.view">

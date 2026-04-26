@@ -34,7 +34,6 @@ import {
   MeterType,
   METER_TYPES,
   ASSIGNMENT_REASONS,
-  AssignmentReason,
   METER_TYPE_CONFIG,
 } from "@/types/meters.types"
 import { getTodayISO } from "@/lib/date-helpers"

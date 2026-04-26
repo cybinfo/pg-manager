@@ -142,6 +142,7 @@ export default function NewTenantPage() {
     }
 
     loadPersonFromUrl()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personIdFromUrl])
 
   // Filter rooms when property changes

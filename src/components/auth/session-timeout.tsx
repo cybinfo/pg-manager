@@ -54,7 +54,7 @@ export function SessionTimeout({
   children,
 }: SessionTimeoutProps) {
   const router = useRouter()
-  const { user, logout, isAuthenticated, isLoading } = useAuth()
+  const { user: _user, logout, isAuthenticated, isLoading } = useAuth()
   const [showWarning, setShowWarning] = useState(false)
   const [remainingTime, setRemainingTime] = useState(0)
 

@@ -22,7 +22,7 @@ export function StayHistorySections({ stays, transfers }: StayHistorySectionsPro
           description="All tenures at your properties"
           icon={History}
           items={stays}
-          keyExtractor={(stay, _idx) => stay.id}
+          keyExtractor={(stay, _) => stay.id}
           renderItem={(stay) => (
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg mb-2 last:mb-0">
               <div>
@@ -58,7 +58,7 @@ export function StayHistorySections({ stays, transfers }: StayHistorySectionsPro
           description="History of room changes"
           icon={ArrowRightLeft}
           items={transfers}
-          keyExtractor={(transfer, _idx) => transfer.id}
+          keyExtractor={(transfer, _) => transfer.id}
           renderItem={(transfer) => (
             <div className="p-3 bg-muted rounded-lg mb-2 last:mb-0">
               <div className="flex items-center gap-2 text-sm">

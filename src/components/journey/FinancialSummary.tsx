@@ -8,7 +8,6 @@ import {
   Wallet,
   Receipt,
   AlertCircle,
-  TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
   type LucideIcon,

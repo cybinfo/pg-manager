@@ -94,7 +94,7 @@ export function BillBreakdown({
         description="Payments received for this bill"
         icon={CreditCard}
         items={payments}
-        keyExtractor={(payment, _idx) => payment.id}
+        keyExtractor={(payment, _) => payment.id}
         renderItem={(payment) => (
           <div className="flex justify-between items-center py-3 border-b last:border-0">
             <div>

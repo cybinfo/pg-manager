@@ -5,7 +5,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { StatusBadge, type StatusBadgeProps } from "@/components/ui/status-badge"
-import { ArrowLeft, LucideIcon, ChevronRight, MoreVertical, Edit, Trash2, Home } from "lucide-react"
+import { ArrowLeft, LucideIcon, ChevronRight, MoreVertical, Home } from "lucide-react"
 import type { BreadcrumbItem } from "@/components/ui/page-header"
 import { brandGradient } from "@/lib/design-tokens"
 

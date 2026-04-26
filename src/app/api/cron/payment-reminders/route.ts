@@ -1,7 +1,7 @@
 import { sendPaymentReminder, sendOverdueAlert } from "@/lib/email"
 import { baseCronHandler, logCronAudit } from "@/lib/cron-handler"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { cronLogger, extractErrorMeta } from "@/lib/logger"
+import { cronLogger } from "@/lib/logger"
 
 interface NotificationSettings {
   email_reminders_enabled: boolean

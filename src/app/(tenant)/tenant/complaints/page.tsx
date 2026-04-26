@@ -10,11 +10,8 @@ import {
   Loader2,
   MessageSquare,
   Plus,
-  AlertCircle,
   CheckCircle,
   Clock,
-  Wrench,
-  Eye,
   X,
   Send
 } from "lucide-react"

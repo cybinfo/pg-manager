@@ -43,7 +43,6 @@ function NewLibrarySeatContent() {
     handleSubmit,
     saving,
     searchParams,
-    workspaceId,
   } = useFormPage({
     table: "library_seats",
     initialData: {

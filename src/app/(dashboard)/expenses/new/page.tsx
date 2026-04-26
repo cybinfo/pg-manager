@@ -52,7 +52,7 @@ function NewExpenseContent() {
     handleChange,
     handleSubmit,
     saving,
-    user,
+    user: _user,
     router,
     errors,
     validateField,

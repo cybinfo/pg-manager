@@ -261,7 +261,7 @@ export function useMultiDelete<T = string>(
       onSuccess?.()
 
       return true
-    } catch (err) {
+    } catch (_err) {
       showError(errorMessage)
       return false
     } finally {

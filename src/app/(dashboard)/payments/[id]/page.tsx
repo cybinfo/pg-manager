@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -12,9 +12,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import {
   DetailHero,
   InfoCard,
-  DetailSection,
-  InfoRow,
-  DetailListSection,
   DetailPageTemplate,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
@@ -24,7 +21,6 @@ import {
   Building2,
   User,
   Phone,
-  Home,
   CheckCircle,
   Download,
   Trash2,
@@ -51,7 +47,6 @@ interface PaymentWithOwner extends Payment {
 
 export default function PaymentReceiptPage() {
   const params = useParams()
-  const router = useRouter()
   const receiptRef = useRef<HTMLDivElement>(null)
 
   // Use centralized hook for data fetching

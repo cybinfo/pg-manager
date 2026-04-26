@@ -117,7 +117,6 @@ function NewMiscTransactionContent() {
     }
 
     loadCategories()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId])
 
   // Filter categories based on transaction type

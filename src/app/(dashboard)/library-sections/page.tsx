@@ -6,7 +6,7 @@
 
 "use client"
 
-import { Grid3X3, Armchair, Library } from "lucide-react"
+import { Grid3X3, Armchair } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_SECTION_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"

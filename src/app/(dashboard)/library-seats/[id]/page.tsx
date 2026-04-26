@@ -34,7 +34,6 @@ import {
   Lightbulb,
   Square,
 } from "lucide-react"
-import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { LIBRARY_SEAT_STATUS_CONFIG } from "@/types/library.types"
 import type { LibrarySeat } from "@/types/library.types"

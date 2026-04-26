@@ -12,7 +12,6 @@ import {
   WorkflowDefinition,
 } from '@/lib/services/workflow.engine'
 import {
-  ServiceResult,
   WorkflowContext,
   createServiceError,
   createSuccessResult,

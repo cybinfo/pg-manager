@@ -6,9 +6,7 @@
 
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,7 +34,7 @@ function NewLibraryPlanContent() {
     handleChange,
     handleSubmit,
     saving,
-    user, workspaceId,
+    user: _user, workspaceId,
     errors,
     validateField,
   } = useFormPage({

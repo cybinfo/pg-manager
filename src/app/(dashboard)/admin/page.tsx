@@ -28,9 +28,8 @@ import {
   Receipt,
   CreditCard,
   Activity,
-  X
 } from "lucide-react"
-import { formatDistanceToNow, format } from "date-fns"
+import { formatDistanceToNow } from "date-fns"
 import { formatCurrency } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
 
@@ -71,8 +70,8 @@ export default function AdminExplorerPage() {
   const [loadingDetails, setLoadingDetails] = useState(false)
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability
     checkAdminAndFetchData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const checkAdminAndFetchData = async () => {

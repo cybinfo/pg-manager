@@ -10,7 +10,6 @@ import {
   EventCategoryType,
   EventCategory,
   EVENT_CATEGORY_CONFIG,
-  DEFAULT_JOURNEY_FILTERS,
 } from "@/types/journey.types"
 
 // ============================================

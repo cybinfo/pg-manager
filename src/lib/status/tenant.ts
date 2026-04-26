@@ -2,7 +2,7 @@
  * Tenant & Approval Status Configurations
  */
 
-import type { StatusConfig, StatusVariant } from "./shared"
+import type { StatusConfig } from "./shared"
 
 // ============================================================================
 // TENANT STATUS

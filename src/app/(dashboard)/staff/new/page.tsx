@@ -17,10 +17,8 @@ import {
   Phone,
   User,
   Shield,
-  Building2,
   Plus,
   X,
-  UserCheck,
 } from "lucide-react"
 import { showError } from "@/lib/toast-helpers"
 import { useFormSubmit } from "@/lib/hooks/useFormSubmit"
@@ -136,6 +134,7 @@ function NewStaffContent() {
     }
 
     loadPersonFromUrl()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personIdFromUrl])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -16,10 +16,8 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/form-components"
 import {
   DetailHero,
-  InfoCard,
   DetailSection,
   InfoRow,
-  DetailListSection,
   DetailPageTemplate,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"

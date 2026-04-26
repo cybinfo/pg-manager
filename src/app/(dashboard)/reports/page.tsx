@@ -110,6 +110,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     fetchReportData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProperty, dateRange])
 
   const fetchReportData = async () => {

@@ -12,9 +12,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts"
 import { PageSkeleton } from "@/components/ui/loading"
 import {
@@ -23,7 +20,6 @@ import {
   Clock,
   IndianRupee,
   TrendingUp,
-  TrendingDown,
   AlertCircle,
   CheckCircle,
   Armchair,
@@ -33,9 +29,7 @@ import {
   Timer,
   CreditCard,
   Receipt,
-  Download,
   ArrowUpDown,
-  Hash,
 } from "lucide-react"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { useDemoMode } from "@/lib/demo-mode"
@@ -53,16 +47,13 @@ import {
   CHART_COLORS,
   MONTH_NAMES,
   DAY_NAMES,
-  PAYMENT_METHOD_LABELS,
   exportCSV,
 } from "@/components/reports"
 import { StatCard } from "@/components/ui/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Select } from "@/components/ui/form-components"
 import { getTodayISO } from "@/lib/date-helpers"
 import { cn } from "@/lib/utils"
-import { LIBRARY_PAYMENT_TYPE_LABELS } from "@/lib/status"
+
 
 interface LibraryOption {
   id: string
@@ -208,6 +199,7 @@ export default function LibraryReportsPage() {
 
   useEffect(() => {
     fetchReportData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLibrary, dateRange])
 
   // Lazy load payment report data when tab activates
@@ -215,6 +207,7 @@ export default function LibraryReportsPage() {
     if (activeTab === "payments" && !paymentReportData && !paymentReportLoading) {
       fetchPaymentReportData()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
   // Refetch payment report when filters change (if tab is active)
@@ -225,6 +218,7 @@ export default function LibraryReportsPage() {
       // Invalidate so next tab switch refetches
       setPaymentReportData(null)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLibrary, dateRange, paymentGroupBy])
 
   // Paginated fetch to bypass Supabase max-rows-per-request limit (default 1000)
@@ -281,10 +275,6 @@ export default function LibraryReportsPage() {
         section: transformJoin(s.section),
       }))
       const membersData = membersRes.data || []
-      const membershipsData = (membershipsRes.data || []).map((m: Record<string, unknown>) => ({
-        ...m,
-        member: transformJoin(m.member),
-      }))
       const paymentsData = (paymentsRes.data || []).map((p: Record<string, unknown>) => ({
         ...p,
         member: transformJoin(p.member),

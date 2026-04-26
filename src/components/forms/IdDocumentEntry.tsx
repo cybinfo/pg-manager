@@ -1,11 +1,12 @@
 "use client"
 
+import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Select } from "@/components/ui/form-components"
-import { Trash2, FileText, ImageIcon } from "lucide-react"
+import { Trash2, FileText } from "lucide-react"
 
 export interface IdDocumentData {
   type: string
@@ -109,16 +110,17 @@ export function IdDocumentEntry({
             </Label>
             {value.front_url ? (
               <div className="relative group">
-                <div className="aspect-[3/2] rounded-lg border overflow-hidden bg-muted">
+                <div className="relative aspect-[3/2] rounded-lg border overflow-hidden bg-muted">
                   {value.front_url.toLowerCase().endsWith(".pdf") ? (
                     <div className="w-full h-full flex items-center justify-center">
                       <FileText className="h-8 w-8 text-muted-foreground" />
                     </div>
                   ) : (
-                    <img
+                    <Image
                       src={value.front_url}
                       alt={`${value.type} front`}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   )}
                 </div>
@@ -149,16 +151,17 @@ export function IdDocumentEntry({
               <Label className="text-xs text-muted-foreground">Back Side</Label>
               {value.back_url ? (
                 <div className="relative group">
-                  <div className="aspect-[3/2] rounded-lg border overflow-hidden bg-muted">
+                  <div className="relative aspect-[3/2] rounded-lg border overflow-hidden bg-muted">
                     {value.back_url.toLowerCase().endsWith(".pdf") ? (
                       <div className="w-full h-full flex items-center justify-center">
                         <FileText className="h-8 w-8 text-muted-foreground" />
                       </div>
                     ) : (
-                      <img
+                      <Image
                         src={value.back_url}
                         alt={`${value.type} back`}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     )}
                   </div>
@@ -209,9 +212,11 @@ export function IdDocumentEntry({
                     <FileText className="h-5 w-5 text-muted-foreground" />
                   </div>
                 ) : (
-                  <img
+                  <Image
                     src={url}
                     alt={`${value.type} page ${fileIdx + 1}`}
+                    width={56}
+                    height={56}
                     className="w-14 h-14 object-cover rounded-lg border"
                   />
                 )}

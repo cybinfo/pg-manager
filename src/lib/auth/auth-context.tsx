@@ -1,12 +1,11 @@
 "use client"
 
 import { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback, useMemo, useRef, ReactNode } from 'react'
-import { User, SupabaseClient, Session } from '@supabase/supabase-js'
+import { User, SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import {
   ContextWithDetails,
   UserProfile,
-  ContextType,
   Permission,
   TENANT_PERMISSIONS,
   isValidPermission,
@@ -18,7 +17,6 @@ import {
   clearStoredContextId,
   getStoredContextId,
   setStoredContextId,
-  SessionError,
 } from './session'
 import { AUTH_INIT_TIMEOUT_MS } from '@/lib/constants'
 
@@ -481,7 +479,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // Timeout wrapper to prevent hanging forever (cancellable)
-    const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+    const _withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
       let timeoutId: NodeJS.Timeout
       const timeoutPromise = new Promise<T>((resolve) => {
         timeoutId = setTimeout(() => resolve(fallback), ms)

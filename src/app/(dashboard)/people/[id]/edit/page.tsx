@@ -50,7 +50,7 @@ import {
 } from "@/types/people.types"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { validateAadhaar, validatePAN } from "@/lib/validators"
-import { IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT, ID_DOCUMENT_TYPES } from "@/components/forms"
+import { IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT } from "@/components/forms"
 
 export default function EditPersonPage() {
   const params = useParams()

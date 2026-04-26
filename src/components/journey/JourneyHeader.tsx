@@ -41,7 +41,7 @@ export function JourneyHeader({
 }: JourneyHeaderProps) {
   const router = useRouter()
 
-  const initials = journey.tenant_name
+  const _initials = journey.tenant_name
     .split(" ")
     .map(n => n[0])
     .join("")

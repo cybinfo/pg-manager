@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
+import Image from "next/image"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useDetailPage, METER_READING_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
@@ -405,7 +406,7 @@ export default function MeterReadingDetailPage() {
         {reading.image_url && (
           <DetailSection title="Meter Photo" description="Captured meter image" icon={ImageIcon}>
             <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-              <img src={reading.image_url} alt="Meter reading" className="object-cover w-full h-full" />
+              <Image src={reading.image_url} alt="Meter reading" fill className="object-cover" />
             </div>
           </DetailSection>
         )}

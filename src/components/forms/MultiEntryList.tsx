@@ -28,7 +28,7 @@ export function MultiEntryList<T>({
   onAdd,
   addLabel = "Add",
   renderEntry,
-  minEntries = 1,
+  minEntries: _minEntries = 1,
   maxEntries = 10,
   disabled = false,
 }: MultiEntryListProps<T>) {

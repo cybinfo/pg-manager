@@ -90,7 +90,7 @@ export {
 } from "./list-page/configs"
 
 // Import types for use in this file
-import type { UseListPageOptions, UseListPageReturn, SortConfig, MetricConfig } from "./list-page/types"
+import type { UseListPageOptions, UseListPageReturn, SortConfig } from "./list-page/types"
 
 // ============================================
 // Hook Implementation
@@ -297,6 +297,7 @@ export function useListPage<T extends object>(
     } finally {
       setLoading(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, enableServerPagination, paginationHook.page, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery, groupingHook.selectedGroups]) // Dependencies for pagination, filtering, and grouping
 
   // Keep fetch function refs updated (for use in applyViewConfig without dependency issues)
@@ -315,6 +316,7 @@ export function useListPage<T extends object>(
     filtersHook.fetchFilterOptions()
     metricsHook.fetchServerCounts()
     metricsHook.fetchServerSums()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchData, filtersHook.fetchFilterOptions, metricsHook.fetchServerCounts, metricsHook.fetchServerSums])
 
   // ============================================
@@ -330,6 +332,7 @@ export function useListPage<T extends object>(
     fetchData(1, paginationHook.pageSize, newFilters, filtersHook.searchQuery, undefined, filtersHook.advancedFiltersRef.current)
     metricsHook.fetchServerCounts(newFilters, filtersHook.searchQuery)
     metricsHook.fetchServerSums(newFilters, filtersHook.searchQuery)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersHook.filters, paginationHook.pageSize, filtersHook.searchQuery, fetchData, metricsHook.fetchServerCounts, metricsHook.fetchServerSums])
 
   const setFilters = useCallback((newFilters: Record<string, string>) => {
@@ -339,6 +342,7 @@ export function useListPage<T extends object>(
     fetchData(1, paginationHook.pageSize, newFilters, filtersHook.searchQuery, undefined, filtersHook.advancedFiltersRef.current)
     metricsHook.fetchServerCounts(newFilters, filtersHook.searchQuery)
     metricsHook.fetchServerSums(newFilters, filtersHook.searchQuery)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paginationHook.pageSize, filtersHook.searchQuery, fetchData, metricsHook.fetchServerCounts, metricsHook.fetchServerSums])
 
   const clearFilters = useCallback(() => {
@@ -349,6 +353,7 @@ export function useListPage<T extends object>(
     fetchData(1, paginationHook.pageSize, defaultFilters, filtersHook.searchQuery, undefined, filtersHook.advancedFiltersRef.current)
     metricsHook.fetchServerCounts(defaultFilters, filtersHook.searchQuery)
     metricsHook.fetchServerSums(defaultFilters, filtersHook.searchQuery)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paginationHook.pageSize, filtersHook.searchQuery, fetchData, metricsHook.fetchServerCounts, metricsHook.fetchServerSums])
 
   // Search setter with debounce for server-side search
@@ -367,6 +372,7 @@ export function useListPage<T extends object>(
       metricsHook.fetchServerCounts(filtersHook.filters, query)
       metricsHook.fetchServerSums(filtersHook.filters, query)
     }, SEARCH_DEBOUNCE_MS)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paginationHook.pageSize, filtersHook.filters, fetchData, metricsHook.fetchServerCounts, metricsHook.fetchServerSums])
 
   // Sort setters - triggers server-side refetch
@@ -376,10 +382,12 @@ export function useListPage<T extends object>(
     paginationHook.setPageState(1) // Reset to page 1 when sort changes
     // Refetch data with new sort
     fetchData(1, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery, configs, filtersHook.advancedFiltersRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchData, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery])
 
   const clearSort = useCallback(() => {
     filtersHook.setSortConfig([])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Group by setter - triggers refetch because grouping affects pagination
@@ -389,18 +397,21 @@ export function useListPage<T extends object>(
     paginationHook.setPageState(1)
     // Reset to page 1 when grouping changes
     fetchData(1, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery, undefined, filtersHook.advancedFiltersRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchData, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery])
 
   // Pagination setters - pass current filters and search
   const setPage = useCallback((newPage: number) => {
     paginationHook.setPageState(newPage)
     fetchData(newPage, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery, undefined, filtersHook.advancedFiltersRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchData, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery])
 
   const setPageSize = useCallback((newSize: number) => {
     paginationHook.setPageSizeState(newSize)
     paginationHook.setPageState(1) // Reset to page 1 when page size changes
     fetchData(1, newSize, filtersHook.filters, filtersHook.searchQuery, undefined, filtersHook.advancedFiltersRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchData, filtersHook.filters, filtersHook.searchQuery])
 
   const nextPage = useCallback(() => {
@@ -447,6 +458,7 @@ export function useListPage<T extends object>(
     }
 
     return result
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, filtersHook.searchQuery])
 
   // ============================================
@@ -455,6 +467,7 @@ export function useListPage<T extends object>(
 
   const metricsData = useMemo(() => {
     return metricsHook.computeMetrics(data, paginationHook.total, metrics)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, paginationHook.total, metrics, metricsHook.computeMetrics])
 
   // ============================================
@@ -584,6 +597,7 @@ export function useListPage<T extends object>(
     if (fetchServerSumsRef.current) {
       fetchServerSumsRef.current(newFilters, filtersHook.searchQuery)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config.defaultFilters, config.defaultPageSize, filtersHook.searchQuery])
 
   // Advanced filters methods
@@ -593,6 +607,7 @@ export function useListPage<T extends object>(
     paginationHook.setPageState(1)
     // Refetch with the new advanced filters
     fetchData(1, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery, undefined, group)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery, fetchData])
 
   const clearAdvancedFilters = useCallback(() => {
@@ -601,11 +616,13 @@ export function useListPage<T extends object>(
     filtersHook.advancedFiltersRef.current = emptyGroup // Update ref immediately
     paginationHook.setPageState(1)
     fetchData(1, paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery, undefined, emptyGroup)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paginationHook.pageSize, filtersHook.filters, filtersHook.searchQuery, fetchData])
 
   // Column visibility methods
   const setHiddenColumns = useCallback((columns: string[]) => {
     filtersHook.setHiddenColumnsState(columns)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const toggleColumn = useCallback((key: string) => {
@@ -614,10 +631,12 @@ export function useListPage<T extends object>(
         ? filtersHook.hiddenColumns.filter(k => k !== key)
         : [...filtersHook.hiddenColumns, key]
     )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersHook.hiddenColumns])
 
   const resetColumnVisibility = useCallback(() => {
     filtersHook.setHiddenColumnsState([])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ============================================

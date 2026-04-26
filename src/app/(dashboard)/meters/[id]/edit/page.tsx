@@ -33,7 +33,6 @@ import {
 import { PermissionGuard } from "@/components/auth"
 import {
   MeterType,
-  MeterStatus,
   METER_TYPES,
   METER_STATUSES,
   METER_TYPE_CONFIG,
@@ -57,7 +56,6 @@ export default function EditMeterPage() {
     saving,
     record,
     setFormData,
-    setLoading,
   } = useFormEditPage({
     table: "meters",
     id,

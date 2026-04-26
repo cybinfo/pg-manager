@@ -23,7 +23,7 @@ import {
   Trash2,
   Edit,
 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
@@ -55,7 +55,7 @@ const statusLabels: Record<string, string> = Object.fromEntries(
 )
 
 export default function BillDetailPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const params = useParams()
   const billId = params.id as string
 

@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, FileText, Loader2 } from "lucide-react"
 import { requiredDate } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
-import { BILL_STATUS, labelsToOptions } from "@/lib/status"
+import { BILL_STATUS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
 
 const BILL_STATUS_OPTIONS = Object.entries(BILL_STATUS).map(([value, config]) => ({

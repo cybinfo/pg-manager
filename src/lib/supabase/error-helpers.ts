@@ -14,7 +14,7 @@
  * if (!result.success) return result.response
  */
 
-import { PostgrestError, PostgrestSingleResponse } from "@supabase/supabase-js"
+import { PostgrestError } from "@supabase/supabase-js"
 import { notFound, internalError, badRequest } from "@/lib/api-response"
 import { logger } from "@/lib/logger"
 

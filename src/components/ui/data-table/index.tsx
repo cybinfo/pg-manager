@@ -81,6 +81,7 @@ export function DataTable<T extends object>({
     if (!defaultSort) return []
     if (Array.isArray(defaultSort)) return defaultSort
     return [defaultSort]
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const [sortConfigs, setSortConfigs] = React.useState<SortConfig[]>(initialSortConfigs)
 
@@ -269,7 +270,6 @@ export function DataTable<T extends object>({
             config: currentConfig,
             rows: groupRows,
             children: remainingConfigs.length > 0
-              // eslint-disable-next-line react-hooks/immutability
               ? buildNestedGroups(groupRows, remainingConfigs, depth + 1, fullKey, activeSortConfigs)
               : [],
           }
@@ -306,6 +306,7 @@ export function DataTable<T extends object>({
     } else {
       setCollapsedGroups(new Set())
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupConfigs.length, defaultCollapsed, getAllGroupKeys])
 
   // Toggle group collapse

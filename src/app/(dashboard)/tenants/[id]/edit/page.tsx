@@ -70,7 +70,7 @@ function EditTenantContent() {
     loading,
     saving,
     record,
-    setLoading,
+    setLoading: _setLoading,
   } = useFormEditPage({
     table: "tenants",
     id,

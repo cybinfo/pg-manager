@@ -168,7 +168,7 @@ function ScoreCard({
       : "text-muted-foreground"
 
   // For churn risk, lower is better
-  const displayScore = invertScore ? 100 - score : score
+  const _displayScore = invertScore ? 100 - score : score
 
   return (
     <div

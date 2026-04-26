@@ -107,7 +107,7 @@ export async function getTenantJourney(
 ): Promise<ServiceResult<TenantJourneyData>> {
   const {
     tenant_id,
-    workspace_id,
+    workspace_id: _workspace_id,
     events_limit = 50,
     events_offset = 0,
     event_categories,

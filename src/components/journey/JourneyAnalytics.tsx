@@ -6,9 +6,7 @@ import {
   TrendingUp,
   Star,
   FileText,
-  AlertTriangle,
   Users,
-  ArrowRightLeft,
   type LucideIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"

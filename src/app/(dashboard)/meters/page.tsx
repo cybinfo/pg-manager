@@ -11,11 +11,7 @@ import {
   Gauge,
   Zap,
   Droplets,
-  Building2,
   CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Archive,
 } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
 import { dateColumn, statusColumn } from "@/lib/column-builders"
@@ -59,13 +55,6 @@ const meterTypeIcons: Record<MeterType, typeof Zap> = {
   electricity: Zap,
   water: Droplets,
   gas: Gauge,
-}
-
-const statusIcons: Record<MeterStatus, typeof CheckCircle2> = {
-  active: CheckCircle2,
-  faulty: AlertTriangle,
-  replaced: XCircle,
-  retired: Archive,
 }
 
 // ============================================

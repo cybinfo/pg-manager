@@ -5,7 +5,7 @@ import { useKeyboardShortcuts, KeyboardShortcut } from "@/lib/hooks/useKeyboardS
 import { KeyboardShortcutsDialog } from "@/components/ui/keyboard-shortcuts-dialog"
 
 export function DashboardShortcuts() {
-  const router = useRouter()
+  const _router = useRouter()
 
   const shortcuts: KeyboardShortcut[] = [
     // Navigation shortcuts using "g" prefix (like GitHub)

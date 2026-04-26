@@ -18,7 +18,7 @@ import { sendWaitlistSeatAvailableEmail } from "@/lib/email"
 export const GET = (request: Request) =>
   baseCronHandler(request, {
     name: "expire-library-memberships",
-    execute: async (supabaseAdmin, _today) => {
+    execute: async (supabaseAdmin, _) => {
       const todayStr = getTodayISO()
 
       // 1. Find all active memberships that have expired

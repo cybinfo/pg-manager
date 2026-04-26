@@ -12,10 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/form-components"
 import {
   DetailHero,
-  InfoCard,
   DetailSection,
   InfoRow,
-  DetailListSection,
   DetailPageTemplate,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
@@ -40,7 +38,7 @@ import { getNowISO } from "@/lib/date-helpers"
 import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { Notice, NOTICE_TYPE_CONFIG, NoticeType } from "@/types/notices.types"
+import { Notice, NoticeType } from "@/types/notices.types"
 
 interface Property {
   id: string

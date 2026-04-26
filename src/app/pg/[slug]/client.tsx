@@ -334,6 +334,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
       }
       return acc
     }, {} as Record<string, { rooms: typeof property.rooms; minPrice: number; maxPrice: number; available: number }>)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property.rooms])
 
   const whatsappMessage = `Hi, I found your ${propertyType} "${property.name}" on ManageKar and I'm interested in knowing more about room availability and rent. Please share the details.`

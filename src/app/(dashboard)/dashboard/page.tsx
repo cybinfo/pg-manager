@@ -36,7 +36,6 @@ import {
   BarChart3,
   FileText,
   Wallet,
-  AlertCircle,
   Clock,
   Percent,
   MessageSquare,
@@ -102,7 +101,7 @@ function getGreeting(): { text: string; icon: typeof Sun } {
   return { text: "Good evening", icon: Moon }
 }
 
-const CHART_COLORS = ["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
+const _CHART_COLORS = ["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
 
 export default function DashboardPage() {
   const { hasPermission } = useAuth()
@@ -153,8 +152,8 @@ export default function DashboardPage() {
 
       // Calculate date ranges
       const now = new Date()
-      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+      const _thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const _nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
       const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
       const today = now.toISOString().split("T")[0]
@@ -364,7 +363,7 @@ export default function DashboardPage() {
   // Filter metrics based on user permissions
   const metricsItems: MetricItem[] = allMetricsItems
     .filter(item => !item.permission || canView(item.permission))
-    .map(({ permission, ...rest }) => rest)
+    .map(({ permission: _permission, ...rest }) => rest)
 
   // Filter quick actions based on permissions
   const quickActions = quickActionsConfig.filter(action => canView(action.permission))

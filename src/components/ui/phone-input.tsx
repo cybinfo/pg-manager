@@ -45,7 +45,6 @@ export function PhoneInput({
   useEffect(() => {
     if (displayValue) {
       const result = validatePhone(displayValue)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValidation({ isValid: result.isValid, error: result.error })
       // Pass normalized value to parent
       onChange(result.normalized || displayValue, result.isValid)
@@ -53,6 +52,7 @@ export function PhoneInput({
       setValidation({ isValid: false, error: required ? "Phone number is required" : null })
       onChange("", false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayValue, required])
 
   // Format on blur

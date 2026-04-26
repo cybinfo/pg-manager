@@ -6,7 +6,7 @@
 
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useMemo } from "react"
 import type { PaginationState } from "./types"
 
 // ============================================

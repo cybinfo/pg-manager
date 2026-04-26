@@ -22,7 +22,7 @@ import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
 import { getTodayISO } from "@/lib/date-helpers"
-import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, EXPENSE_BILL_STATUS_OPTIONS as STATUS_OPTIONS } from "@/lib/status"
+import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { Vendor, BillCategory, BillPaymentFormData } from "@/types/expense-enhanced.types"
 
 export default function NewBillPaymentPage() {
@@ -104,7 +104,7 @@ export default function NewBillPaymentPage() {
   }
 
   // Calculate GST breakdown
-  const calculateGst = (baseAmount: number, gstPercent: number, isIgst: boolean) => {
+  const _calculateGst = (baseAmount: number, gstPercent: number, isIgst: boolean) => {
     const gstAmount = (baseAmount * gstPercent) / 100
     if (isIgst) {
       setFormData((prev) => ({

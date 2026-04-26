@@ -7,7 +7,7 @@
 
 "use client"
 
-import { Wrench, Check, X, Phone, Star, FileText } from "lucide-react"
+import { Wrench, Check, X, Star, FileText } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { SERVICE_PROVIDER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"

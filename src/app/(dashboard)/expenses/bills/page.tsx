@@ -7,7 +7,7 @@
 
 "use client"
 
-import { Receipt, Calendar, AlertCircle, Check, Clock, IndianRupee } from "lucide-react"
+import { Receipt, AlertCircle, Clock, IndianRupee } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { BILL_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"

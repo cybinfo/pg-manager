@@ -3,7 +3,6 @@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Trash2, Loader2 } from "lucide-react"
-import { ReactNode } from "react"
 
 export interface PhoneData {
   number: string

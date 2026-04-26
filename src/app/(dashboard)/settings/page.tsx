@@ -132,7 +132,7 @@ function SettingsContent() {
   const [autoBillingSettings, setAutoBillingSettings] = useState<AutoBillingSettings>(DEFAULT_AUTO_BILLING_SETTINGS)
 
   // Room Type Pricing (legacy flat pricing)
-  const [roomTypePricing, setRoomTypePricing] = useState<RoomTypePricing>(DEFAULT_ROOM_TYPE_PRICING)
+  const [_roomTypePricing, setRoomTypePricing] = useState<RoomTypePricing>(DEFAULT_ROOM_TYPE_PRICING)
 
   // Property Type Pricing (new - pricing by property type)
   const [propertyTypePricing, setPropertyTypePricing] = useState<PropertyTypePricing>(DEFAULT_PROPERTY_TYPE_PRICING)

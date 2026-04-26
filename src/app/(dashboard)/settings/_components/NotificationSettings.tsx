@@ -48,7 +48,7 @@ export function NotificationSettings({
       } else {
         showError(result.error || "Failed to send test email")
       }
-    } catch (error) {
+    } catch (_error) {
       showError("Failed to send test email")
     } finally {
       setSendingTestEmail(false)

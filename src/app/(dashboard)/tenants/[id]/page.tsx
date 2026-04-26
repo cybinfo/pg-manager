@@ -87,7 +87,7 @@ interface Bill {
 export default function TenantDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { hasPermission } = useAuth()
+  const { hasPermission: _hasPermission } = useAuth()
 
   // Use centralized hook for data fetching
   const {
@@ -114,6 +114,7 @@ export default function TenantDetailPage() {
 
   // Get related data from hook
   const payments = (related.payments || []) as Payment[]
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const charges = (related.charges || []) as Charge[]
   const stays = (related.stays || []) as TenantStay[]
   const transfers = (related.transfers || []) as RoomTransfer[]

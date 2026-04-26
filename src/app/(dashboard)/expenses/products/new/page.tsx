@@ -131,7 +131,6 @@ function NewProductContent() {
     }
 
     loadCategories()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, user?.id])
 
   if (loadingCategories) {

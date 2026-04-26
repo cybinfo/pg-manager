@@ -13,7 +13,6 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-  DetailListSection,
   DetailPageTemplate,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"

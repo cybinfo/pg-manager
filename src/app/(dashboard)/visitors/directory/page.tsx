@@ -11,9 +11,8 @@ import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
   Users,
@@ -29,7 +28,6 @@ import {
   ArrowLeft,
   Calendar,
   History,
-  Filter,
   MoreVertical,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"

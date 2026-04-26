@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -25,7 +25,6 @@ import {
   UserCog,
   Receipt,
   TrendingDown,
-  MoreHorizontal,
   UserCircle2,
   Grid3X3,
   ClipboardCheck,
@@ -33,7 +32,6 @@ import {
   Activity,
   Wallet,
   Contact,
-  Inbox,
   Package,
   ShoppingCart,
   Store,
@@ -252,6 +250,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     .filter((item): item is NavItem => item !== null)
 
   // Add admin link for platform admins
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const baseNavigation: NavItem[] = isPlatformAdmin
     ? [...filteredNavigation, { name: "Admin", href: "/admin", icon: Shield, permission: null, feature: null }]
     : filteredNavigation

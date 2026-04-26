@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import {
   ArrowLeft,
@@ -16,9 +15,7 @@ import {
   Loader2,
   Plus,
   Trash2,
-  Calculator,
   User,
-  Building2,
   Calendar,
   IndianRupee,
   Check
@@ -674,7 +671,7 @@ function NewBillContent() {
               </div>
             ) : (
               <div className="space-y-3">
-                {lineItems.map((item, index) => (
+                {lineItems.map((item, _index) => (
                   <div key={item.id} className="flex items-center gap-3">
                     <div className="flex-1 grid grid-cols-3 gap-3">
                       <Input

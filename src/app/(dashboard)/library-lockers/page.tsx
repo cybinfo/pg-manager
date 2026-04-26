@@ -6,15 +6,14 @@
 
 "use client"
 
-import { Lock, Library, Users } from "lucide-react"
-import { Column, StatusDot } from "@/components/ui/data-table"
+import { Lock, Users } from "lucide-react"
+import { Column } from "@/components/ui/data-table"
 import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_LOCKER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_FILTER, createStatusFilter } from "@/lib/filter-presets"
-import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { LIBRARY_LOCKER_STATUS_CONFIG, LIBRARY_LOCKER_SIZE_CONFIG } from "@/types/library.types"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"

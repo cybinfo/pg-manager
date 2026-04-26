@@ -19,7 +19,6 @@ import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { Avatar } from "@/components/ui/avatar"
 
 interface QRPayload {
   type: string
@@ -38,7 +37,7 @@ interface CheckInResult {
 }
 
 export default function QRScannerPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const { user, workspaceId } = useAuthContext()
   const [scanning, setScanning] = useState(false)
   const [processing, setProcessing] = useState(false)

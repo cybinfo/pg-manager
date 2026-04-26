@@ -17,7 +17,7 @@ import {
   CreditCard,
   Smartphone,
 } from "lucide-react"
-import { Column, TableBadge } from "@/components/ui/data-table"
+import { Column } from "@/components/ui/data-table"
 import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { REFUND_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -26,7 +26,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, REFUND_STATUS_FILTER, REFUND_TYPE_FILTER, PAYMENT_METHOD_FILTER } from "@/lib/filter-presets"
 import { REFUND_STATUS_OPTIONS, REFUND_TYPE_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
+import { PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { REFUND_STATUS } from "@/lib/status-config"
 import { numberFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"

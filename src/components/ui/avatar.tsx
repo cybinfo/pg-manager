@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import NextImage from "next/image"
 import { cn } from "@/lib/utils"
 import { ImageLightbox } from "./image-lightbox"
 
@@ -78,9 +79,11 @@ export function Avatar({
   if (src) {
     return (
       <>
-        <img
+        <NextImage
           src={src}
           alt={name}
+          width={64}
+          height={64}
           onClick={handleClick}
           className={cn(
             "rounded-full object-cover",

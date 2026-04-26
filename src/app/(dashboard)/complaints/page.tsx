@@ -19,7 +19,7 @@ import { PROPERTY_FILTER, PRIORITY_FILTER, COMPLAINT_STATUS_FILTER, COMPLAINT_CA
 import { COMPLAINT_STATUS_OPTIONS, PRIORITY_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink, RoomLink } from "@/components/ui/entity-link"
-import { COMPLAINT_STATUS, COMPLAINT_PRIORITY, COMPLAINT_CATEGORIES, getStatusInfo as getComplaintStatusInfo } from "@/lib/status-config"
+import { COMPLAINT_PRIORITY, COMPLAINT_CATEGORIES, getStatusInfo as getComplaintStatusInfo } from "@/lib/status-config"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import { NullDisplay } from "@/components/ui/null-display"
 import type { CSVColumn } from "@/lib/download-utils"

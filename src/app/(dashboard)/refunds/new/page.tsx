@@ -7,14 +7,9 @@ import {
   Wallet,
   ArrowLeft,
   User,
-  Building2,
-  Banknote,
-  CreditCard,
-  Smartphone,
-  FileText,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/form-components"
@@ -77,6 +72,7 @@ export default function NewRefundPage() {
     if (exitClearanceId) {
       fetchExitClearance(exitClearanceId)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exitClearanceId])
 
   useEffect(() => {
@@ -175,7 +171,7 @@ export default function NewRefundPage() {
         processed_at: formData.refund_date ? getNowISO() : null,
       }, session.user.id)
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("refunds")
         .insert(refundData)
         .select()

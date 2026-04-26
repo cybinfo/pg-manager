@@ -305,7 +305,7 @@ export function simpleFiltersToGroup(
   columnTypes?: Record<string, "text" | "number" | "date" | "select">
 ): FilterGroup {
   const filters: AdvancedFilter[] = Object.entries(simpleFilters)
-    .filter(([_, value]) => value && value !== "all" && value !== "")
+    .filter(([_key, value]) => value && value !== "all" && value !== "")
     .map(([column, value]) => ({
       id: crypto.randomUUID(),
       column,

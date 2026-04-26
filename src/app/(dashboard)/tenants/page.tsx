@@ -14,7 +14,7 @@
 
 import { Users, UserCheck, UserMinus, Clock } from "lucide-react"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
-import { Column, StatusDot } from "@/components/ui/data-table"
+import { Column } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
 import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"

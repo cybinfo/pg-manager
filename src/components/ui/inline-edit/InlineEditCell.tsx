@@ -11,7 +11,6 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Loader2, Check, X, Pencil } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/form-components"
 import { Checkbox } from "@/components/ui/checkbox"
 import type {
   EditType,

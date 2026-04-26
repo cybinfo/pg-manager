@@ -46,7 +46,7 @@ export function EmailVerificationCard({
       } else {
         showError(data.error || "Failed to send verification email")
       }
-    } catch (error) {
+    } catch (_error) {
       showError("An error occurred while sending verification email")
     } finally {
       setSending(false)

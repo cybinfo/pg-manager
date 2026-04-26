@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/components/ui/form-components"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Loader2, AlertCircle, FileText, Paperclip } from "lucide-react"
+import { Loader2, AlertCircle, FileText } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 
@@ -87,7 +87,7 @@ export function ReportIssueDialog({
   const [reason, setReason] = useState("")
   const [documents, setDocuments] = useState<TenantDocument[]>([])
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
-  const [loadingDocs, setLoadingDocs] = useState(false)
+  const [_loadingDocs, setLoadingDocs] = useState(false)
 
   // Fetch approved documents when dialog opens
   useEffect(() => {

@@ -22,14 +22,14 @@
 
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback } from "react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-interface UseDialogStateOptions<T> {
+interface UseDialogStateOptions {
   /** Called when dialog opens */
   onOpen?: () => void
   /** Called when dialog closes */
@@ -85,7 +85,7 @@ interface UseDialogStateReturn<T> {
  */
 export function useDialogState<T extends Record<string, unknown>>(
   initialFormData: T,
-  options: UseDialogStateOptions<T> = {}
+  options: UseDialogStateOptions = {}
 ): UseDialogStateReturn<T> {
   const {
     onOpen,

@@ -41,11 +41,10 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
     setIsLoading(false)
   }
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchInvitations()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId])
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const copyInviteLink = (token: string) => {
     const link = `${window.location.origin}/invite/${token}`
@@ -68,7 +67,7 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
     }
   }
 
-  const resendInvitation = async (invitation: Invitation) => {
+  const resendInvitation = async (_invitation: Invitation) => {
     // In a real app, this would trigger an email/SMS
     showSuccess('Invitation reminder sent!')
   }

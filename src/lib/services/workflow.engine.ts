@@ -14,7 +14,6 @@ import {
   WorkflowContext,
   WorkflowStep,
   WorkflowResult,
-  WorkflowStatus,
   ServiceResult,
   ServiceError,
   CascadeEffect,
@@ -25,7 +24,7 @@ import {
   ERROR_CODES,
 } from "./types"
 import { logAuditEvent, logAuditEvents, createAuditEvent } from "./audit.service"
-import { sendNotification, sendNotifications } from "./notification.service"
+import { sendNotifications } from "./notification.service"
 import { workflowLogger, extractErrorMeta } from "@/lib/logger"
 import { softDelete, isSoftDeletableTable } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"

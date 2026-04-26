@@ -13,8 +13,6 @@ import {
   Edit,
   Trash2,
   Phone,
-  Mail,
-  MapPin,
   CreditCard,
   Receipt,
   History,

@@ -24,7 +24,6 @@ import {
   InfoRow,
   DetailPageTemplate,
 } from "@/components/ui"
-import { StatusBadge } from "@/components/ui/status-badge"
 import { PageLoading } from "@/components/ui/loading"
 import {
   AlertDialog,

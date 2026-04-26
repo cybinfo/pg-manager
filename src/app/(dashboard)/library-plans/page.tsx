@@ -8,7 +8,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { CreditCard, Clock, Calendar, CheckCircle, Users, TrendingUp } from "lucide-react"
+import { CreditCard, Clock, CheckCircle, Users, TrendingUp } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_PLAN_LIST_CONFIG } from "@/lib/hooks/useListPage"

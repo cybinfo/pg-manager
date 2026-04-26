@@ -102,9 +102,9 @@ export function createMockSupabaseClient(
 ): MockSupabaseClient {
   const {
     selectResult = { data: [], error: null },
-    insertResult = { data: null, error: null },
-    updateResult = { data: null, error: null },
-    deleteResult = { data: null, error: null },
+    insertResult: _insertResult = { data: null, error: null },
+    updateResult: _updateResult = { data: null, error: null },
+    deleteResult: _deleteResult = { data: null, error: null },
     singleResult = { data: null, error: null },
     rpcResult = { data: null, error: null },
     user = null,

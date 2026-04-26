@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import type {
-  FilterGroup,
   AdvancedFilter,
   FilterOperator,
   FilterType,

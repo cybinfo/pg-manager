@@ -10,7 +10,6 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-  DetailListSection,
   DetailPageTemplate,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
@@ -27,7 +26,7 @@ import {
   Hash,
   Clock,
 } from "lucide-react"
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
+import { formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { PAYMENT_METHODS } from "@/lib/status"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"

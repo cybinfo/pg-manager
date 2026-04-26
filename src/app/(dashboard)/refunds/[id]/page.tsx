@@ -14,7 +14,6 @@ import {
   InfoCard,
   DetailSection,
   InfoRow,
-  DetailListSection,
   DetailPageTemplate,
 } from "@/components/ui"
 import { Currency } from "@/components/ui/currency"
@@ -35,9 +34,7 @@ import {
   CreditCard,
   Smartphone,
   Calendar,
-  CheckCircle,
   Clock,
-  XCircle,
   Edit,
   Trash2,
   Save,

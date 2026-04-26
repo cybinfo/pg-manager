@@ -9,7 +9,7 @@
  * - Unified logging
  */
 
-import { createClient, hasStoredSession } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { User, Session, AuthError } from "@supabase/supabase-js"
 import { TOKEN_REFRESH_BUFFER_SECONDS } from "@/lib/constants"
 import { getNowISO } from "@/lib/date-helpers"
@@ -83,7 +83,7 @@ export function getTimeUntilExpiry(session: Session | null): number | null {
 // ============================================
 
 // Helper to wrap a promise with a timeout (cancellable)
-function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+function _withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
   let timeoutId: NodeJS.Timeout
   const timeoutPromise = new Promise<T>((resolve) => {
     timeoutId = setTimeout(() => resolve(fallback), ms)

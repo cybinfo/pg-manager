@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ContextWithDetails, CONTEXT_TYPE_CONFIG } from '@/lib/auth/types'
 import { Building2, Crown, Users, Home, Clock, ChevronRight, Loader2 } from 'lucide-react'

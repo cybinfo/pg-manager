@@ -41,7 +41,7 @@ export default function EditServicePaymentPage({
 }) {
   const { id } = use(params)
   const router = useRouter()
-  const { user, workspaceId } = useAuthContext()
+  const { user: _user, workspaceId } = useAuthContext()
 
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)

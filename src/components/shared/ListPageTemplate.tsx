@@ -75,8 +75,7 @@ import { useInlineEdit } from "@/lib/hooks/useInlineEdit"
 import { useRowSelection } from "@/lib/hooks/useRowSelection"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { SavedViewSelector } from "@/components/ui/saved-view-selector"
-import type { FilterGroup } from "@/types/table-features.types"
-import { createEmptyFilterGroup, hasActiveAdvancedFilters } from "@/types/table-features.types"
+
 
 // ============================================
 // Internal Types
@@ -444,7 +443,7 @@ export function ListPageTemplate({
     // Advanced filters
     advancedFilters,
     setAdvancedFilters,
-    clearAdvancedFilters,
+    clearAdvancedFilters: _clearAdvancedFilters,
     selectedGroups,
     setSelectedGroups,
     groupCounts,

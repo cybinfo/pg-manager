@@ -41,7 +41,6 @@ import {
   FileText,
   AlertTriangle,
   Clock,
-  Wrench,
   Star,
   Merge,
   ExternalLink,
@@ -120,8 +119,11 @@ export default function PersonDetailPage() {
   })
 
   // Cast related data
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const rawTenants = (related.tenants || []) as TenantData[]
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const staffHistory = (related.staffMembers || []) as PersonStaffHistory[]
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const visitorContacts = (related.visitorContacts || []) as VisitorContact[]
 
   // Transform tenant data

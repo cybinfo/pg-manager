@@ -44,7 +44,7 @@ function VerifyEmailContent() {
           setStatus("error")
           setErrorMessage(data.error || "Verification failed")
         }
-      } catch (error) {
+      } catch (_error) {
         setStatus("error")
         setErrorMessage("An unexpected error occurred")
       }

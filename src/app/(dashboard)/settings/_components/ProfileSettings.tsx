@@ -50,7 +50,7 @@ export function ProfileSettings({ owner, setOwner, userId, profile }: ProfileSet
 
       setOwner({ ...owner, ...profileForm })
       showSuccess("Profile updated successfully")
-    } catch (error) {
+    } catch (_error) {
       showError("Failed to update profile")
     } finally {
       setSaving(false)

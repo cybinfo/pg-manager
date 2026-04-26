@@ -1,5 +1,6 @@
 "use client"
 
+import NextImage from "next/image"
 import { Label } from "@/components/ui/label"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Image } from "lucide-react"
@@ -47,7 +48,8 @@ export function PhotoGallery({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Image className="h-4 w-4 text-muted-foreground" />
+        {/* eslint-disable-next-line jsx-a11y/alt-text */}
+        <Image className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
         <Label>{label}</Label>
       </div>
       {description && (
@@ -67,12 +69,12 @@ export function PhotoGallery({
       {photos.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
           {photos.map((photo, idx) => (
-            <div key={idx} className="relative group">
-              <img
+            <div key={idx} className="relative group" style={{ width: thumbnailSize, height: thumbnailSize }}>
+              <NextImage
                 src={photo}
                 alt={`Photo ${idx + 1}`}
+                fill
                 className="object-cover rounded-lg border"
-                style={{ width: thumbnailSize, height: thumbnailSize }}
               />
               {!disabled && (
                 <button
@@ -138,11 +140,12 @@ export function CoverImageUpload({
         accept="image/*"
       />
       {value && (
-        <div className="mt-2 relative inline-block">
-          <img
+        <div className="mt-2 relative inline-block w-32 h-24">
+          <NextImage
             src={value}
             alt="Cover preview"
-            className="w-32 h-24 object-cover rounded-lg border"
+            fill
+            className="object-cover rounded-lg border"
           />
           {!disabled && (
             <button

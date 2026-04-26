@@ -7,7 +7,7 @@
 
 "use client"
 
-import { useState, useCallback, useMemo, useRef, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { MetricConfig, FilterConfig, ListPageConfig } from "./types"
 import { applyServerFilter, applyBaseFiltersToQuery } from "./utils"

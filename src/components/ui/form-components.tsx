@@ -4,7 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, LucideIcon, IndianRupee, Mail, Calendar, Search } from "lucide-react"
+import { ChevronDown, LucideIcon, Mail, Calendar, Search } from "lucide-react"
 
 // ============================================
 // Form Field Wrapper
@@ -335,7 +335,7 @@ export function ToggleSwitch({
   const switchId = React.useId()
   const labelId = label ? `${switchId}-label` : undefined
   const descriptionId = description ? `${switchId}-desc` : undefined
-  const describedBy = [labelId, descriptionId].filter(Boolean).join(" ") || undefined
+  const _describedBy = [labelId, descriptionId].filter(Boolean).join(" ") || undefined
 
   return (
     <div className={cn("flex items-center justify-between", className)}>

@@ -37,7 +37,7 @@ export const GET = (request: Request) =>
   baseCronHandler(request, {
     name: "library-notifications",
     execute: async (supabaseAdmin, today) => {
-      const todayStr = today.toISOString().split("T")[0]
+      const _todayStr = today.toISOString().split("T")[0]
       const expiringDate = new Date(today)
       expiringDate.setDate(expiringDate.getDate() + EXPIRING_DAYS_BEFORE)
       const expiringDateStr = expiringDate.toISOString().split("T")[0]

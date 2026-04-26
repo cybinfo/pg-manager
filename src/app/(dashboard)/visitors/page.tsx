@@ -11,8 +11,8 @@
 "use client"
 
 import Link from "next/link"
-import { Users, UserCheck, Clock, CalendarDays, Search, Wrench, User, Star, Ban, BookUser } from "lucide-react"
-import { Column, StatusDot } from "@/components/ui/data-table"
+import { Users, UserCheck, CalendarDays, Search, Wrench, User, Star, Ban, BookUser } from "lucide-react"
+import { Column } from "@/components/ui/data-table"
 import { statusColumn, dateColumn } from "@/lib/column-builders"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
@@ -23,17 +23,14 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, VISITOR_TYPE_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
-import { formatDate } from "@/lib/format"
 import {
   VisitorType,
   VISITOR_TYPE_LABELS,
-  VISITOR_TYPE_COLORS,
   VISITOR_TYPE_BADGE_COLORS,
   ENQUIRY_STATUS_LABELS,
-  ENQUIRY_STATUS_COLORS,
   EnquiryStatus,
 } from "@/types/visitors.types"
-import { VISITOR_STATUS, getStatusInfo as getVisitorStatusInfo } from "@/lib/status-config"
+import { getStatusInfo as getVisitorStatusInfo } from "@/lib/status-config"
 import type { CSVColumn } from "@/lib/download-utils"
 import { nestedColumn, dateExportColumn, labelMapColumn } from "@/lib/export-columns"
 

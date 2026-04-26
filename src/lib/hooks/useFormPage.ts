@@ -233,7 +233,7 @@ export function useFormPage<T extends FormData>(
       }
     }
     return prefilled
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Intentionally empty - only compute once on mount
 
   const [formData, setFormData] = useState<T>(initialWithPreSelect)
@@ -369,10 +369,10 @@ export function useFormPage<T extends FormData>(
         }
 
         // Perform the insert
-        let query = supabase.from(table).insert(insertData)
+        let _query = supabase.from(table).insert(insertData)
 
         if (selectAfterInsert) {
-          query = query.select() as typeof query
+          _query = _query.select() as typeof _query
         }
 
         const { data: insertedData, error } = selectAfterInsert
@@ -406,6 +406,7 @@ export function useFormPage<T extends FormData>(
         setSaving(false)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       user,
       formData,
@@ -573,7 +574,6 @@ export function useFormEditPage<T extends FormData>(
   useUnsavedChanges(isDirty)
 
   // ---- Field-Level Validation ----
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const emptySchemaEdit = useMemo(() => ({} as ValidationSchema<T>), [])
   const {
     errors: fieldErrors,
@@ -614,7 +614,7 @@ export function useFormEditPage<T extends FormData>(
     }
 
     fetchRecord()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, table])
 
   // ---- Change Handlers ----
@@ -735,6 +735,7 @@ export function useFormEditPage<T extends FormData>(
         setSaving(false)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [user, formData, table, id, redirectTo, transform, successMessage, errorMessage, validate, validationSchema, validateAll, customSubmit, router]
   )
 

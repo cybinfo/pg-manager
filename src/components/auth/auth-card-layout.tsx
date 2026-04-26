@@ -1,5 +1,4 @@
-import Link from "next/link"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { BrandLogo } from "@/components/ui/brand-logo"
 import { brandGradient } from "@/lib/design-tokens"
 

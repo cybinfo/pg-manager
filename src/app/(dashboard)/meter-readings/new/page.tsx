@@ -72,7 +72,6 @@ function NewMeterReadingContent() {
     saving,
     ownerId,
     searchParams,
-    router,
   } = useFormPage({
     table: "meter_readings",
     initialData: {

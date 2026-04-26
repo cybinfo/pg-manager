@@ -101,7 +101,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
   // 1. Name Change
   // ============================================
   name_change: {
-    apply: async (approval, input) => {
+    apply: async (approval, _input) => {
       const supabase = createClient()
       const payload = approval.payload as Record<string, string>
       const newName = payload.new_name
@@ -275,7 +275,7 @@ const approvalHandlers: Record<ApprovalType, ApprovalHandler> = {
     },
     apply: async (approval, input, context) => {
       const payload = approval.payload as Record<string, string>
-      const tenant = approval.tenant as Record<string, unknown>
+      const _tenant = approval.tenant as Record<string, unknown>
 
       // Use the room transfer workflow
       const result = await transferRoom(

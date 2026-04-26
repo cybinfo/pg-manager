@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -280,11 +281,12 @@ export function WebsiteSettingsTab({
                   onChange={(e) => onWebsiteChange("cover_photo_url", e.target.value)}
                 />
                 {websiteData.website_config.cover_photo_url && (
-                  <div className="mt-3 rounded-lg overflow-hidden border">
-                    <img
+                  <div className="mt-3 rounded-lg overflow-hidden border relative h-48">
+                    <Image
                       src={websiteData.website_config.cover_photo_url}
                       alt="Cover preview"
-                      className="w-full h-48 object-cover"
+                      fill
+                      className="object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none"
                       }}

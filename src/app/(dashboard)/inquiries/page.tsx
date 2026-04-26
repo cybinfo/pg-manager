@@ -7,8 +7,8 @@
 
 "use client"
 
-import { Inbox, Clock, CheckCircle, UserCheck, Phone, XCircle } from "lucide-react"
-import { Column, StatusDot } from "@/components/ui/data-table"
+import { Inbox, Clock, UserCheck, Phone } from "lucide-react"
+import { Column } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { INQUIRY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"

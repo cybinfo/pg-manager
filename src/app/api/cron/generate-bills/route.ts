@@ -190,7 +190,7 @@ export const GET = (request: Request) =>
             // Calculate due date and grace period deadline
             const dueDate = new Date(today)
             dueDate.setDate(dueDate.getDate() + settings.due_day_offset)
-            const gracePeriodDays = settings.grace_period_days ?? 7
+            const _gracePeriodDays = settings.grace_period_days ?? 7
 
             // Calculate period
             const periodStart = new Date(today.getFullYear(), today.getMonth(), 1)

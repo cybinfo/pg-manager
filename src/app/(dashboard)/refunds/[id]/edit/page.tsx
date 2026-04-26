@@ -56,7 +56,6 @@ function EditRefundContent({
     handleSubmit,
     loading,
     saving,
-    record,
     errors,
     validateField,
   } = useFormEditPage({

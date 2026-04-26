@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { createPortal } from "react-dom"
+import NextImage from "next/image"
 import { X } from "lucide-react"
 
 interface ImageLightboxProps {
@@ -57,9 +58,11 @@ export function ImageLightbox({ src, alt, isOpen, onClose }: ImageLightboxProps)
         className="relative flex flex-col items-center justify-center p-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
+        <NextImage
           src={src}
           alt={alt}
+          width={1200}
+          height={900}
           className="max-w-[85vw] max-h-[80vh] object-contain rounded-lg shadow-2xl bg-white/5"
         />
         {/* Caption */}

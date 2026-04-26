@@ -18,7 +18,7 @@ import { Progress } from "@/components/ui/progress"
 import { Combobox } from "@/components/ui/combobox"
 import { FormField } from "@/components/ui/form-components"
 import {
-  ArrowLeft, Upload, FileText, CheckCircle, XCircle, AlertTriangle,
+  ArrowLeft, Upload, CheckCircle, XCircle, AlertTriangle,
   Loader2, Download, Users,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -108,7 +108,7 @@ function parseCSV(text: string): { headers: string[]; rows: string[][] } {
 // ============================================
 
 const VALID_SLOTS = ["Morning", "Evening", "Night", "24 Hours"]
-const VALID_GENDERS = ["male", "female", "other"]
+const _VALID_GENDERS = ["male", "female", "other"]
 
 function normalizeSlot(slot: string): string {
   if (!slot) return ""

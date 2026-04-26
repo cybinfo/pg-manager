@@ -23,7 +23,6 @@ import {
   AutoBillingSettings,
   BillingCycleMode,
   PropertyTypePricing,
-  DEFAULT_AUTO_BILLING_SETTINGS,
 } from "@/types/settings.types"
 
 interface BillingSettingsProps {
@@ -56,7 +55,6 @@ export function BillingSettings({
   configForm,
   config,
   setConfig,
-  propertyTypePricing,
 }: BillingSettingsProps) {
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const { saving, save: saveOwnerConfig } = useSettingsMutation({ configId: config?.id, setConfig })

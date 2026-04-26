@@ -19,7 +19,6 @@ import { PublicNav, PublicFooter } from "@/components/public"
 import {
   Building2,
   Users,
-  CreditCard,
   BarChart3,
   Shield,
   Smartphone,

@@ -18,14 +18,12 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import {
   WorkflowDefinition,
   executeWorkflow,
-  ServiceResult,
   createSuccessResult,
   createErrorResult,
   createServiceError,
   ERROR_CODES,
   CascadeEffect,
   NotificationPayload,
-  AuditEvent,
 } from "@/lib/services"
 import {
   buildExitClearanceNotification,
@@ -361,7 +359,7 @@ export const exitClearanceWorkflow: WorkflowDefinition<ExitClearanceInput, ExitC
   ],
 
   // Cascade effects
-  cascades: (context, input, results) => {
+  cascades: (_context, _input, _results) => {
     const cascades: CascadeEffect[] = []
 
     // Note: Room occupancy will be updated when tenant status changes to checked_out
@@ -564,7 +562,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
         const tenant = clearance.tenant as Record<string, unknown>
 
         // Find and update active tenant_stay
-        const { data: stay, error: findError } = await supabase
+        const { data: stay, error: _findError } = await supabase
           .from("tenant_stays")
           .select("id")
           .eq("tenant_id", tenant.id)
@@ -670,7 +668,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
       execute: async (context, input, previousResults) => {
         const supabase = createClient()
         const clearance = previousResults.validate_clearance as Record<string, unknown>
-        const tenant = clearance.tenant as Record<string, unknown>
+        const _tenant = clearance.tenant as Record<string, unknown>
 
         if (!clearance.bed_id) {
           return createSuccessResult({ bed_released: false })
@@ -771,7 +769,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
     // Step 7: Update exit_clearance to completed
     {
       name: "complete_clearance",
-      execute: async (context, input, previousResults) => {
+      execute: async (context, input, _previousResults) => {
         const supabase = createClient()
 
         const { error } = await supabase

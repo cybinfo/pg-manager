@@ -335,6 +335,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         setLoading(false)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [table, entityType, getActorInfo, globalSkipAudit, globalSkipNotifications, successMessages, errorMessages, onSuccess, onError]
   )
 

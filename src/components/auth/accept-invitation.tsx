@@ -70,7 +70,7 @@ export function AcceptInvitation({ token }: AcceptInvitationProps) {
       }
 
       // Accept the invitation
-      const { data: contextId, error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>)('accept_invitation', {
+      const { error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: Error | null }>)('accept_invitation', {
         p_token: token,
         p_user_id: user.id,
       })

@@ -19,7 +19,6 @@ import {
   DetailHero,
   DetailSection,
   InfoRow,
-  DetailListSection,
   DetailPageTemplate,
 } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
@@ -35,7 +34,6 @@ import {
   Edit2,
   Save,
   X,
-  CheckCircle,
   UserCheck,
   XCircle,
   Clock,
@@ -45,7 +43,7 @@ import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime, formatDate, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
 import { PermissionGate } from "@/components/auth"
-import { showSuccess, showError } from "@/lib/toast-helpers"
+import { showSuccess } from "@/lib/toast-helpers"
 import { INQUIRY_STATUS_LABELS, INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_LABELS } from "@/lib/status"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
