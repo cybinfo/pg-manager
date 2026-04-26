@@ -6,8 +6,8 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FormField } from "@/components/ui/form-components"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import {
   ArrowLeft,
@@ -596,49 +596,48 @@ function NewBillContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>For Month</Label>
+              <FormField label="For Month" required>
                 <Input
                   value={formData.for_month}
                   onChange={(e) => setFormData({ ...formData, for_month: e.target.value })}
                   placeholder="January 2024"
                   required
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>Bill Date</Label>
+              </FormField>
+              <FormField
+                label="Bill Date"
+                required
+                hint={
+                  billingCycleMode === 'checkin_anniversary'
+                    ? "Auto-set from tenant's check-in date"
+                    : "Using calendar month (1st of month)"
+                }
+              >
                 <Input
                   type="date"
                   value={formData.bill_date}
                   onChange={(e) => setFormData({ ...formData, bill_date: e.target.value })}
                   required
                 />
-                <p className="text-xs text-muted-foreground">
-                  {billingCycleMode === 'checkin_anniversary'
-                    ? "Auto-set from tenant's check-in date"
-                    : "Using calendar month (1st of month)"}
-                </p>
-              </div>
+              </FormField>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Due Date</Label>
+              <FormField label="Due Date" required>
                 <Input
                   type="date"
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                   required
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>Previous Balance (if any)</Label>
+              </FormField>
+              <FormField label="Previous Balance (if any)">
                 <Input
                   type="number"
                   value={formData.previous_balance}
                   onChange={(e) => setFormData({ ...formData, previous_balance: parseFloat(e.target.value) || 0 })}
                   min="0"
                 />
-              </div>
+              </FormField>
             </div>
           </CardContent>
         </Card>

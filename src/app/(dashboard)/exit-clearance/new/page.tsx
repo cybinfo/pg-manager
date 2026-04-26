@@ -7,8 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
@@ -389,8 +388,7 @@ function InitiateCheckoutForm() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="tenant_id">Tenant *</Label>
+            <FormField label="Tenant" required>
               {tenants.length === 0 ? (
                 <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg text-center">
                   <Bell className="h-8 w-8 text-warning mx-auto mb-2" />
@@ -422,7 +420,7 @@ function InitiateCheckoutForm() {
                   }))}
                 />
               )}
-            </div>
+            </FormField>
 
             {selectedTenant && (
               <div className="p-4 bg-muted rounded-lg space-y-2">
@@ -470,8 +468,7 @@ function InitiateCheckoutForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="notice_given_date">Notice Given Date *</Label>
+              <FormField label="Notice Given Date" required hint="When did the tenant give notice?">
                 <Input
                   id="notice_given_date"
                   name="notice_given_date"
@@ -481,12 +478,8 @@ function InitiateCheckoutForm() {
                   disabled={loading}
                   required
                 />
-                <p className="text-xs text-muted-foreground">
-                  When did the tenant give notice?
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expected_exit_date">Expected Exit Date *</Label>
+              </FormField>
+              <FormField label="Expected Exit Date" required hint="Last day of stay">
                 <Input
                   id="expected_exit_date"
                   name="expected_exit_date"
@@ -496,10 +489,7 @@ function InitiateCheckoutForm() {
                   required
                   disabled={loading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Last day of stay
-                </p>
-              </div>
+              </FormField>
             </div>
 
             {/* Notice Period Comparison */}
@@ -532,8 +522,7 @@ function InitiateCheckoutForm() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="room_condition_notes">Room Condition Notes</Label>
+            <FormField label="Room Condition Notes">
               <textarea
                 id="room_condition_notes"
                 name="room_condition_notes"
@@ -544,7 +533,7 @@ function InitiateCheckoutForm() {
                 rows={3}
                 className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

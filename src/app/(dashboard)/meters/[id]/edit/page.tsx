@@ -14,14 +14,13 @@ import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
   DetailHero,
   DetailSection,
 } from "@/components/ui/detail-components"
 import { PageLoading } from "@/components/ui/loading"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import {
   Gauge,
   Zap,
@@ -182,8 +181,7 @@ export default function EditMeterPage() {
           icon={Gauge}
         >
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="property_id">Property *</Label>
+            <FormField label="Property" required error={errors.property_id}>
               <Select
                 value={formData.property_id as string}
                 onChange={(e) => updateField("property_id", e.target.value)}
@@ -192,44 +190,37 @@ export default function EditMeterPage() {
                   ...properties.map((p) => ({ value: p.id, label: p.name })),
                 ]}
               />
-              {errors.property_id && <p className="text-sm text-destructive">{errors.property_id}</p>}
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="meter_number">Meter Number *</Label>
+              <FormField label="Meter Number" required error={errors.meter_number}>
                 <Input
                   id="meter_number"
                   value={formData.meter_number as string}
                   onChange={(e) => updateField("meter_number", e.target.value)}
                   placeholder="e.g., E-001, W-101"
-                  className={errors.meter_number ? "border-destructive" : ""}
                 />
-                {errors.meter_number && <p className="text-sm text-destructive">{errors.meter_number}</p>}
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="meter_type">Meter Type *</Label>
+              <FormField label="Meter Type" required>
                 <Select
                   value={formData.meter_type as string}
                   onChange={(e) => updateField("meter_type", e.target.value)}
                   options={METER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+              <FormField label="Status">
                 <Select
                   value={formData.status as string}
                   onChange={(e) => updateField("status", e.target.value)}
                   options={METER_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="initial_reading">Initial Reading</Label>
+              <FormField label="Initial Reading">
                 <Input
                   id="initial_reading"
                   type="number"
@@ -237,7 +228,7 @@ export default function EditMeterPage() {
                   onChange={(e) => updateField("initial_reading", e.target.value)}
                   placeholder="0"
                 />
-              </div>
+              </FormField>
             </div>
           </div>
         </DetailSection>
@@ -250,39 +241,35 @@ export default function EditMeterPage() {
         >
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="make">Make / Manufacturer</Label>
+              <FormField label="Make / Manufacturer">
                 <Input
                   id="make"
                   value={formData.make as string}
                   onChange={(e) => updateField("make", e.target.value)}
                   placeholder="e.g., Secure, HPL"
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
+              <FormField label="Model">
                 <Input
                   id="model"
                   value={formData.model as string}
                   onChange={(e) => updateField("model", e.target.value)}
                   placeholder="e.g., Sprint 350"
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="installation_date">Installation Date</Label>
+            <FormField label="Installation Date">
               <Input
                 id="installation_date"
                 type="date"
                 value={formData.installation_date as string}
                 onChange={(e) => updateField("installation_date", e.target.value)}
               />
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes">
               <Textarea
                 id="notes"
                 value={formData.notes as string}
@@ -290,7 +277,7 @@ export default function EditMeterPage() {
                 placeholder="Any additional notes about this meter..."
                 rows={3}
               />
-            </div>
+            </FormField>
           </div>
         </DetailSection>
 

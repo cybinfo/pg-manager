@@ -9,6 +9,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -48,6 +49,7 @@ interface PersonWithStats extends Person {
 export default function PersonMergePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { backHref } = useBackNavigation({ defaultHref: "/people" })
   const preselectedId = searchParams.get("id")
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
@@ -215,7 +217,7 @@ export default function PersonMergePage() {
         {ConfirmDialogElement}
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Link href="/people">
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>

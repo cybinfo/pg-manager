@@ -18,7 +18,7 @@ import {
   DetailHero,
   DetailSection,
 } from "@/components/ui/detail-components"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import {
   Gauge,
   Zap,
@@ -262,8 +262,7 @@ export default function NewMeterPage() {
           icon={Gauge}
         >
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="property_id">Property *</Label>
+            <FormField label="Property" required error={errors.property_id}>
               <Select
                 value={formData.property_id as string}
                 onChange={(e) => updateField("property_id", e.target.value)}
@@ -272,34 +271,31 @@ export default function NewMeterPage() {
                   ...properties.map((p) => ({ value: p.id, label: p.name })),
                 ]}
               />
-              {errors.property_id && <p className="text-sm text-destructive">{errors.property_id}</p>}
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="meter_number">Meter Number *</Label>
+              <FormField label="Meter Number" required error={errors.meter_number}>
                 <Input
                   id="meter_number"
                   value={formData.meter_number as string}
                   onChange={(e) => updateField("meter_number", e.target.value)}
                   placeholder="e.g., E-001, W-101"
-                  className={errors.meter_number ? "border-destructive" : ""}
                 />
-                {errors.meter_number && <p className="text-sm text-destructive">{errors.meter_number}</p>}
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="meter_type">Meter Type *</Label>
+              <FormField label="Meter Type" required>
                 <Select
                   value={formData.meter_type as string}
                   onChange={(e) => updateField("meter_type", e.target.value)}
                   options={METER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="initial_reading">Initial Reading</Label>
+            <FormField
+              label="Initial Reading"
+              hint="The reading when this meter was first registered or installed"
+            >
               <Input
                 id="initial_reading"
                 type="number"
@@ -307,10 +303,7 @@ export default function NewMeterPage() {
                 onChange={(e) => updateField("initial_reading", e.target.value)}
                 placeholder="0"
               />
-              <p className="text-xs text-muted-foreground">
-                The reading when this meter was first registered or installed
-              </p>
-            </div>
+            </FormField>
           </div>
         </DetailSection>
 
@@ -322,39 +315,35 @@ export default function NewMeterPage() {
         >
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="make">Make / Manufacturer</Label>
+              <FormField label="Make / Manufacturer">
                 <Input
                   id="make"
                   value={formData.make as string}
                   onChange={(e) => updateField("make", e.target.value)}
                   placeholder="e.g., Secure, HPL"
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
+              <FormField label="Model">
                 <Input
                   id="model"
                   value={formData.model as string}
                   onChange={(e) => updateField("model", e.target.value)}
                   placeholder="e.g., Sprint 350"
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="installation_date">Installation Date</Label>
+            <FormField label="Installation Date">
               <Input
                 id="installation_date"
                 type="date"
                 value={formData.installation_date as string}
                 onChange={(e) => updateField("installation_date", e.target.value)}
               />
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes">
               <Textarea
                 id="notes"
                 value={formData.notes as string}
@@ -362,7 +351,7 @@ export default function NewMeterPage() {
                 placeholder="Any additional notes about this meter..."
                 rows={3}
               />
-            </div>
+            </FormField>
           </div>
         </DetailSection>
 
@@ -388,8 +377,7 @@ export default function NewMeterPage() {
 
             {formData.assign_to_room && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="room_id">Room *</Label>
+                <FormField label="Room" required error={errors.room_id}>
                   <Select
                     value={formData.room_id as string}
                     onChange={(e) => updateField("room_id", e.target.value)}
@@ -399,17 +387,15 @@ export default function NewMeterPage() {
                     ]}
                     disabled={filteredRooms.length === 0}
                   />
-                  {errors.room_id && <p className="text-sm text-destructive">{errors.room_id}</p>}
-                </div>
+                </FormField>
 
-                <div className="space-y-2">
-                  <Label htmlFor="assignment_reason">Assignment Reason</Label>
+                <FormField label="Assignment Reason">
                   <Select
                     value={formData.assignment_reason as string}
                     onChange={(e) => updateField("assignment_reason", e.target.value)}
                     options={ASSIGNMENT_REASONS.map((r) => ({ value: r.value, label: r.label }))}
                   />
-                </div>
+                </FormField>
               </>
             )}
           </div>

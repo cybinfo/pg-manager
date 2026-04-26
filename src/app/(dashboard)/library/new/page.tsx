@@ -12,6 +12,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Library, Loader2, MapPin, Clock, Wifi, Car, Lock } from "lucide-react"
@@ -33,6 +34,7 @@ function NewLibraryContent() {
     handleChange,
     handleSubmit,
     saving,
+    errors,
     workspaceId,
   } = useFormPage({
     table: "libraries",
@@ -130,8 +132,7 @@ function NewLibraryContent() {
           <CardContent className="space-y-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Library Name *</Label>
+              <FormField label="Library Name" required error={errors.name}>
                 <Input
                   id="name"
                   name="name"
@@ -141,9 +142,8 @@ function NewLibraryContent() {
                   required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="code">Short Code</Label>
+              </FormField>
+              <FormField label="Short Code" hint="Used for member codes" error={errors.code}>
                 <Input
                   id="code"
                   name="code"
@@ -153,8 +153,7 @@ function NewLibraryContent() {
                   disabled={saving}
                   maxLength={10}
                 />
-                <p className="text-xs text-muted-foreground">Used for member codes</p>
-              </div>
+              </FormField>
             </div>
 
             {/* Location */}
@@ -164,8 +163,7 @@ function NewLibraryContent() {
                 Location
               </h3>
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
+                <FormField label="Address" error={errors.address}>
                   <Input
                     id="address"
                     name="address"
@@ -174,10 +172,9 @@ function NewLibraryContent() {
                     onChange={handleChange}
                     disabled={saving}
                   />
-                </div>
+                </FormField>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City *</Label>
+                  <FormField label="City" required error={errors.city}>
                     <Input
                       id="city"
                       name="city"
@@ -187,9 +184,8 @@ function NewLibraryContent() {
                       required
                       disabled={saving}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
+                  </FormField>
+                  <FormField label="State" error={errors.state}>
                     <Input
                       id="state"
                       name="state"
@@ -198,11 +194,10 @@ function NewLibraryContent() {
                       onChange={handleChange}
                       disabled={saving}
                     />
-                  </div>
+                  </FormField>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="pincode">Pincode</Label>
+                  <FormField label="Pincode" error={errors.pincode}>
                     <Input
                       id="pincode"
                       name="pincode"
@@ -212,9 +207,8 @@ function NewLibraryContent() {
                       disabled={saving}
                       maxLength={6}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
+                  </FormField>
+                  <FormField label="Phone" error={errors.phone}>
                     <Input
                       id="phone"
                       name="phone"
@@ -224,7 +218,7 @@ function NewLibraryContent() {
                       disabled={saving}
                       type="tel"
                     />
-                  </div>
+                  </FormField>
                 </div>
               </div>
             </div>
@@ -236,8 +230,7 @@ function NewLibraryContent() {
                 Operating Hours
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="opening_time">Opening Time</Label>
+                <FormField label="Opening Time" error={errors.opening_time}>
                   <Input
                     id="opening_time"
                     name="opening_time"
@@ -246,9 +239,8 @@ function NewLibraryContent() {
                     onChange={handleChange}
                     disabled={saving}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="closing_time">Closing Time</Label>
+                </FormField>
+                <FormField label="Closing Time" error={errors.closing_time}>
                   <Input
                     id="closing_time"
                     name="closing_time"
@@ -257,7 +249,7 @@ function NewLibraryContent() {
                     onChange={handleChange}
                     disabled={saving}
                   />
-                </div>
+                </FormField>
               </div>
             </div>
 

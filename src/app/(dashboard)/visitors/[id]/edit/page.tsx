@@ -14,8 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
+import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, Users, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PageLoading } from "@/components/ui/loading"
@@ -125,8 +124,7 @@ function EditVisitorContent({
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Visitor Type */}
-            <div className="space-y-2">
-              <Label htmlFor="visitor_type">Visitor Type</Label>
+            <FormField label="Visitor Type">
               <Select
                 value={formData.visitor_type as string}
                 onChange={handleChange}
@@ -134,11 +132,10 @@ function EditVisitorContent({
                 disabled={saving}
                 options={VISITOR_TYPE_OPTIONS}
               />
-            </div>
+            </FormField>
 
             {/* Purpose */}
-            <div className="space-y-2">
-              <Label htmlFor="purpose">Purpose</Label>
+            <FormField label="Purpose">
               <Input
                 id="purpose"
                 name="purpose"
@@ -147,12 +144,11 @@ function EditVisitorContent({
                 onChange={handleChange}
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             {/* Check-in & Check-out */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="check_in_time">Check-in Time</Label>
+              <FormField label="Check-in Time">
                 <Input
                   id="check_in_time"
                   name="check_in_time"
@@ -161,9 +157,8 @@ function EditVisitorContent({
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="check_out_time">Check-out Time</Label>
+              </FormField>
+              <FormField label="Check-out Time" hint="Leave empty if still checked in">
                 <Input
                   id="check_out_time"
                   name="check_out_time"
@@ -172,15 +167,11 @@ function EditVisitorContent({
                   onChange={handleChange}
                   disabled={saving}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty if still checked in
-                </p>
-              </div>
+              </FormField>
             </div>
 
             {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes">
               <Textarea
                 id="notes"
                 name="notes"
@@ -190,7 +181,7 @@ function EditVisitorContent({
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

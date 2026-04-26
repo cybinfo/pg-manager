@@ -14,7 +14,6 @@ import { createClient } from "@/lib/supabase/client"
 import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
   DetailHero,
@@ -38,7 +37,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
-import { Select, EmailInput } from "@/components/ui/form-components"
+import { FormField, Select, EmailInput } from "@/components/ui/form-components"
 import {
   PersonFormData,
   EmergencyContact,
@@ -370,20 +369,16 @@ export default function EditPersonPage() {
           icon={User}
         >
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
+            <FormField label="Full Name" required error={errors.name}>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => updateField("name", e.target.value)}
                 placeholder="Enter full name"
-                className={errors.name ? "border-destructive" : ""}
               />
-              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Mobile Number</Label>
+            <FormField label="Mobile Number" error={errors.phone}>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -391,34 +386,30 @@ export default function EditPersonPage() {
                   value={formData.phone}
                   onChange={(e) => updateField("phone", e.target.value)}
                   placeholder="10-digit mobile number"
-                  className={`pl-10 ${errors.phone ? "border-destructive" : ""}`}
+                  className="pl-10"
                 />
               </div>
-              {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <FormField label="Email">
               <EmailInput
                 id="email"
                 value={formData.email}
                 onChange={(e) => updateField("email", e.target.value)}
                 placeholder="email@example.com"
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dob">Date of Birth</Label>
+              <FormField label="Date of Birth">
                 <Input
                   id="dob"
                   type="date"
                   value={formData.date_of_birth}
                   onChange={(e) => updateField("date_of_birth", e.target.value)}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
+              </FormField>
+              <FormField label="Gender">
                 <Select
                   value={formData.gender || ""}
                   onChange={(e) => updateField("gender", e.target.value as Gender)}
@@ -430,11 +421,10 @@ export default function EditPersonPage() {
                     })),
                   ]}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="blood_group">Blood Group</Label>
+            <FormField label="Blood Group">
               <Select
                 value={formData.blood_group || ""}
                 onChange={(e) => updateField("blood_group", e.target.value)}
@@ -443,7 +433,7 @@ export default function EditPersonPage() {
                   ...BLOOD_GROUPS.map((bg) => ({ value: bg, label: bg })),
                 ]}
               />
-            </div>
+            </FormField>
           </div>
         </DetailSection>
 
@@ -485,35 +475,32 @@ export default function EditPersonPage() {
           icon={Building2}
         >
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="occupation">Occupation</Label>
+            <FormField label="Occupation">
               <Input
                 id="occupation"
                 value={formData.occupation}
                 onChange={(e) => updateField("occupation", e.target.value)}
                 placeholder="e.g., Software Engineer, Student"
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="company">Company / Institution</Label>
+              <FormField label="Company / Institution">
                 <Input
                   id="company"
                   value={formData.company_name}
                   onChange={(e) => updateField("company_name", e.target.value)}
                   placeholder="Company or institution"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="designation">Designation</Label>
+              </FormField>
+              <FormField label="Designation">
                 <Input
                   id="designation"
                   value={formData.designation}
                   onChange={(e) => updateField("designation", e.target.value)}
                   placeholder="Job title or role"
                 />
-              </div>
+              </FormField>
             </div>
           </div>
         </DetailSection>
@@ -525,8 +512,7 @@ export default function EditPersonPage() {
           icon={MapPin}
         >
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
+            <FormField label="Address">
               <Textarea
                 id="address"
                 value={formData.permanent_address}
@@ -534,31 +520,28 @@ export default function EditPersonPage() {
                 placeholder="Street address, landmark"
                 rows={2}
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
+              <FormField label="City">
                 <Input
                   id="city"
                   value={formData.permanent_city}
                   onChange={(e) => updateField("permanent_city", e.target.value)}
                   placeholder="City"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pincode">Pincode</Label>
+              </FormField>
+              <FormField label="Pincode">
                 <Input
                   id="pincode"
                   value={formData.permanent_pincode}
                   onChange={(e) => updateField("permanent_pincode", e.target.value)}
                   placeholder="6-digit pincode"
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
+            <FormField label="State">
               <Select
                 value={formData.permanent_state || ""}
                 onChange={(e) => updateField("permanent_state", e.target.value)}
@@ -567,7 +550,7 @@ export default function EditPersonPage() {
                   ...INDIAN_STATES.map((state) => ({ value: state, label: state })),
                 ]}
               />
-            </div>
+            </FormField>
           </div>
         </DetailSection>
 
@@ -578,8 +561,7 @@ export default function EditPersonPage() {
           icon={MapPin}
         >
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="current_address">Address</Label>
+            <FormField label="Address">
               <Textarea
                 id="current_address"
                 value={formData.current_address}
@@ -587,17 +569,16 @@ export default function EditPersonPage() {
                 placeholder="Street address, landmark"
                 rows={2}
               />
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label htmlFor="current_city">City</Label>
+            <FormField label="City">
               <Input
                 id="current_city"
                 value={formData.current_city}
                 onChange={(e) => updateField("current_city", e.target.value)}
                 placeholder="City"
               />
-            </div>
+            </FormField>
           </div>
         </DetailSection>
 
@@ -620,24 +601,21 @@ export default function EditPersonPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label>Name</Label>
+                        <FormField label="Name">
                           <Input
                             value={contact.name}
                             onChange={(e) => updateEmergencyContact(index, "name", e.target.value)}
                             placeholder="Contact name"
                           />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Phone</Label>
+                        </FormField>
+                        <FormField label="Phone">
                           <Input
                             value={contact.phone}
                             onChange={(e) => updateEmergencyContact(index, "phone", e.target.value)}
                             placeholder="Phone number"
                           />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Relation</Label>
+                        </FormField>
+                        <FormField label="Relation">
                           <Select
                             value={contact.relation}
                             onChange={(e) => updateEmergencyContact(index, "relation", e.target.value)}
@@ -646,7 +624,7 @@ export default function EditPersonPage() {
                               ...RELATIONS.map((rel) => ({ value: rel, label: rel })),
                             ]}
                           />
-                        </div>
+                        </FormField>
                       </div>
                     </div>
                     <Button
@@ -675,8 +653,7 @@ export default function EditPersonPage() {
           description="Any other important information"
           icon={User}
         >
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+          <FormField label="Notes">
             <Textarea
               id="notes"
               value={formData.notes}
@@ -684,7 +661,7 @@ export default function EditPersonPage() {
               placeholder="Any additional information about this person..."
               rows={3}
             />
-          </div>
+          </FormField>
         </DetailSection>
 
         {/* Submit Buttons */}

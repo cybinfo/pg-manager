@@ -7,8 +7,8 @@ import { createClient } from "@/lib/supabase/client"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FormField } from "@/components/ui/form-components"
 import { ArrowLeft, Home, Loader2 } from "lucide-react"
 import { Select } from "@/components/ui/form-components"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -197,8 +197,7 @@ function EditRoomContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Property Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="property_id">Property *</Label>
+            <FormField label="Property" required>
               <Select
                 id="property_id"
                 name="property_id"
@@ -211,11 +210,10 @@ function EditRoomContent() {
                   label: property.name,
                 }))}
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="room_number">Room Number *</Label>
+              <FormField label="Room Number" required>
                 <Input
                   id="room_number"
                   name="room_number"
@@ -225,9 +223,8 @@ function EditRoomContent() {
                   required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="room_type">Room Type</Label>
+              </FormField>
+              <FormField label="Room Type">
                 <Select
                   id="room_type"
                   name="room_type"
@@ -245,12 +242,11 @@ function EditRoomContent() {
                       : []),
                   ]}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="floor">Floor</Label>
+              <FormField label="Floor">
                 <Input
                   id="floor"
                   name="floor"
@@ -261,9 +257,8 @@ function EditRoomContent() {
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="total_beds">Total Beds</Label>
+              </FormField>
+              <FormField label="Total Beds">
                 <Input
                   id="total_beds"
                   name="total_beds"
@@ -274,14 +269,13 @@ function EditRoomContent() {
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="border-t pt-4 mt-4">
               <h3 className="font-medium mb-3">Pricing</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rent_amount">Monthly Rent (₹) *</Label>
+                <FormField label="Monthly Rent (₹)" required>
                   <Input
                     id="rent_amount"
                     name="rent_amount"
@@ -293,9 +287,8 @@ function EditRoomContent() {
                     required
                     disabled={saving}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="deposit_amount">Security Deposit (₹)</Label>
+                </FormField>
+                <FormField label="Security Deposit (₹)">
                   <Input
                     id="deposit_amount"
                     name="deposit_amount"
@@ -306,7 +299,7 @@ function EditRoomContent() {
                     onChange={handleChange}
                     disabled={saving}
                   />
-                </div>
+                </FormField>
               </div>
             </div>
 

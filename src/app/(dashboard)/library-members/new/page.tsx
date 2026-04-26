@@ -22,6 +22,7 @@ import { Currency } from "@/components/ui/currency"
 import { ArrowLeft, Users, Loader2, CreditCard, UserCheck, Trash2, Plus } from "lucide-react"
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { getTodayISO, getNowISO, computeEndDate } from "@/lib/date-helpers"
 import { TimeSlot, formatTime12h, calcSlotHours, serializeTimeSlots } from "@/lib/time-slots"
 import { formatDate, formatNumber} from "@/lib/format"
@@ -52,9 +53,17 @@ export default function NewLibraryMemberPage() {
   )
 }
 
+// Validation schema for required fields
+const validationSchema = {
+  library_id: requiredSelect("Library"),
+  name: requiredField("Full name"),
+  phone: requiredPhone("Phone number"),
+} as const
+
 function NewLibraryMemberContent() {
   const router = useRouter()
   const { user } = useAuthContext()
+  const { backHref } = useBackNavigation({ defaultHref: "/library-members" })
   const [libraries, setLibraries] = useState<Library[]>([])
   const [plans, setPlans] = useState<Plan[]>([])
   const [loadingData, setLoadingData] = useState(true)
@@ -182,22 +191,15 @@ function NewLibraryMemberContent() {
     }))
   }
 
-  const validateForm = (): boolean => {
+  const runValidation = (): boolean => {
     const newErrors: Record<string, string> = {}
 
-    const libraryResult = requiredSelect("Library")(formData.library_id)
-    if (libraryResult && !libraryResult.isValid && libraryResult.error) {
-      newErrors.library_id = libraryResult.error
-    }
-
-    const nameResult = requiredField("Full name")(formData.name)
-    if (nameResult && !nameResult.isValid && nameResult.error) {
-      newErrors.name = nameResult.error
-    }
-
-    const phoneResult = requiredPhone("Phone number")(formData.phone)
-    if (phoneResult && !phoneResult.isValid && phoneResult.error) {
-      newErrors.phone = phoneResult.error
+    for (const [field, validator] of Object.entries(validationSchema)) {
+      const value = formData[field as keyof typeof formData]
+      const result = (validator as (v: unknown) => { isValid: boolean; error?: string } | null)(value)
+      if (result && !result.isValid && result.error) {
+        newErrors[field] = result.error
+      }
     }
 
     setErrors(newErrors)
@@ -207,7 +209,7 @@ function NewLibraryMemberContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) return
+    if (!runValidation()) return
 
     if (!user) {
       showError("Session expired. Please login again.")
@@ -479,7 +481,7 @@ function NewLibraryMemberContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/library-members">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -577,8 +579,7 @@ function NewLibraryMemberContent() {
                 </FormField>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+              <FormField label="Email" htmlFor="email">
                 <Input
                   id="email"
                   name="email"
@@ -588,16 +589,16 @@ function NewLibraryMemberContent() {
                   disabled={saving}
                   type="email"
                 />
-              </div>
+              </FormField>
 
               {/* Gender & Date of Birth */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
+                <FormField label="Gender" htmlFor="gender">
                   <Select
                     value={formData.gender}
                     onChange={handleChange}
                     name="gender"
+                    id="gender"
                     disabled={saving}
                     options={[
                       { value: "", label: "Select Gender" },
@@ -606,9 +607,8 @@ function NewLibraryMemberContent() {
                       { value: "other", label: "Other" },
                     ]}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date_of_birth">Date of Birth</Label>
+                </FormField>
+                <FormField label="Date of Birth" htmlFor="date_of_birth">
                   <Input
                     id="date_of_birth"
                     name="date_of_birth"
@@ -617,12 +617,11 @@ function NewLibraryMemberContent() {
                     onChange={handleChange}
                     disabled={saving}
                   />
-                </div>
+                </FormField>
               </div>
 
               {/* Father/Guardian Name */}
-              <div className="space-y-2">
-                <Label htmlFor="father_name">Father/Guardian Name</Label>
+              <FormField label="Father/Guardian Name" htmlFor="father_name">
                 <Input
                   id="father_name"
                   name="father_name"
@@ -631,16 +630,16 @@ function NewLibraryMemberContent() {
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
+              </FormField>
 
               {/* ID Proof */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="id_proof_type">ID Proof Type</Label>
+                <FormField label="ID Proof Type" htmlFor="id_proof_type">
                   <Select
                     value={formData.id_proof_type}
                     onChange={handleChange}
                     name="id_proof_type"
+                    id="id_proof_type"
                     disabled={saving}
                     options={[
                       { value: "aadhar", label: "Aadhaar Card" },
@@ -650,9 +649,8 @@ function NewLibraryMemberContent() {
                       { value: "driving_license", label: "Driving License" },
                     ]}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="id_proof_number">ID Number</Label>
+                </FormField>
+                <FormField label="ID Number" htmlFor="id_proof_number">
                   <Input
                     id="id_proof_number"
                     name="id_proof_number"
@@ -661,7 +659,7 @@ function NewLibraryMemberContent() {
                     onChange={handleChange}
                     disabled={saving}
                   />
-                </div>
+                </FormField>
               </div>
             </CardContent>
           </Card>
@@ -683,8 +681,7 @@ function NewLibraryMemberContent() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Plan Selection */}
-              <div className="space-y-2">
-                <Label>Subscription Plan</Label>
+              <FormField label="Subscription Plan" error={errors.plan_id}>
                 <Combobox
                   options={planOptions}
                   value={formData.plan_id}
@@ -694,12 +691,11 @@ function NewLibraryMemberContent() {
                   emptyText="No plans found"
                   disabled={saving || loadingData}
                 />
-              </div>
+              </FormField>
 
               {/* Start Date & Duration */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start_date">Start Date *</Label>
+                <FormField label="Start Date" htmlFor="start_date" required>
                   <Input
                     id="start_date"
                     name="start_date"
@@ -709,9 +705,8 @@ function NewLibraryMemberContent() {
                     required
                     disabled={saving}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration_months">Duration (Months) *</Label>
+                </FormField>
+                <FormField label="Duration (Months)" htmlFor="duration_months" required hint={computedEndDate ? `Ends: ${formatDate(computedEndDate)}` : undefined}>
                   <Input
                     id="duration_months"
                     name="duration_months"
@@ -723,12 +718,7 @@ function NewLibraryMemberContent() {
                     required
                     disabled={saving}
                   />
-                  {computedEndDate && (
-                    <p className="text-xs text-muted-foreground">
-                      Ends: {formatDate(computedEndDate)}
-                    </p>
-                  )}
-                </div>
+                </FormField>
               </div>
 
               {/* Access Schedule (Multi-Slot Time Input) */}
@@ -809,8 +799,7 @@ function NewLibraryMemberContent() {
 
               {/* Amount & Discount */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount</Label>
+                <FormField label="Amount" htmlFor="amount" hint={priceCalcDisplay ?? undefined}>
                   <Input
                     id="amount"
                     name="amount"
@@ -821,12 +810,8 @@ function NewLibraryMemberContent() {
                     onChange={(e) => setFormData((prev) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
                     disabled={saving}
                   />
-                  {priceCalcDisplay && (
-                    <p className="text-xs text-muted-foreground">{priceCalcDisplay}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="discount">Discount</Label>
+                </FormField>
+                <FormField label="Discount" htmlFor="discount">
                   <Input
                     id="discount"
                     name="discount"
@@ -837,7 +822,7 @@ function NewLibraryMemberContent() {
                     onChange={(e) => setFormData((prev) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
                     disabled={saving}
                   />
-                </div>
+                </FormField>
               </div>
 
               {/* Summary */}
@@ -907,7 +892,7 @@ function NewLibraryMemberContent() {
         </div>
 
         <div className="flex justify-end gap-4 mt-6">
-          <Link href="/library-members">
+          <Link href={backHref}>
             <Button type="button" variant="outline" disabled={saving}>
               Cancel
             </Button>

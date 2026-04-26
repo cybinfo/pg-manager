@@ -10,6 +10,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -81,6 +82,7 @@ const MATCH_TYPE_COLORS: Record<string, string> = {
 
 export default function DuplicatesPage() {
   const router = useRouter()
+  const { backHref } = useBackNavigation({ defaultHref: "/people" })
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([])
@@ -199,7 +201,7 @@ export default function DuplicatesPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link href="/people">
+            <Link href={backHref}>
               <Button variant="ghost" size="icon">
                 <ArrowLeft className="h-5 w-5" />
               </Button>

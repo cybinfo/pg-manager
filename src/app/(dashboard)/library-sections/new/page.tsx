@@ -14,6 +14,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
@@ -44,6 +45,7 @@ function NewLibrarySectionContent() {
     handleChange,
     handleSubmit,
     saving,
+    errors,
     searchParams,
     workspaceId,
   } = useFormPage({
@@ -201,8 +203,7 @@ function NewLibrarySectionContent() {
 
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Section Name *</Label>
+              <FormField label="Section Name" required error={errors.name}>
                 <Input
                   id="name"
                   name="name"
@@ -212,9 +213,8 @@ function NewLibrarySectionContent() {
                   required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="section_number">Section Number</Label>
+              </FormField>
+              <FormField label="Section Number" error={errors.section_number}>
                 <Input
                   id="section_number"
                   name="section_number"
@@ -224,11 +224,10 @@ function NewLibrarySectionContent() {
                   disabled={saving}
                   maxLength={10}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="floor">Floor</Label>
+            <FormField label="Floor" error={errors.floor}>
               <Input
                 id="floor"
                 name="floor"
@@ -239,7 +238,7 @@ function NewLibrarySectionContent() {
                 disabled={saving}
                 min={0}
               />
-            </div>
+            </FormField>
 
             {/* Features */}
             <div className="border-t pt-4">
@@ -274,8 +273,7 @@ function NewLibrarySectionContent() {
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Pricing (Optional)</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="hourly_rate">Hourly Rate (₹)</Label>
+                <FormField label="Hourly Rate (₹)" error={errors.hourly_rate}>
                   <Input
                     id="hourly_rate"
                     name="hourly_rate"
@@ -287,9 +285,8 @@ function NewLibrarySectionContent() {
                     min={0}
                     step="0.01"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="monthly_rate">Monthly Rate (₹)</Label>
+                </FormField>
+                <FormField label="Monthly Rate (₹)" error={errors.monthly_rate}>
                   <Input
                     id="monthly_rate"
                     name="monthly_rate"
@@ -301,7 +298,7 @@ function NewLibrarySectionContent() {
                     min={0}
                     step="0.01"
                   />
-                </div>
+                </FormField>
               </div>
             </div>
           </CardContent>

@@ -8,8 +8,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import {
   Loader2,
   ArrowLeft,
@@ -223,8 +222,7 @@ function EditExpenseContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="expense_type_id">Category *</Label>
+              <FormField label="Category" required>
                 <Select
                   id="expense_type_id"
                   name="expense_type_id"
@@ -237,10 +235,9 @@ function EditExpenseContent() {
                     label: type.name,
                   }))}
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="property_id">Property</Label>
+              <FormField label="Property">
                 <Select
                   id="property_id"
                   name="property_id"
@@ -252,12 +249,11 @@ function EditExpenseContent() {
                     label: prop.name,
                   }))}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (₹) *</Label>
+              <FormField label="Amount (₹)" required>
                 <Input
                   id="amount"
                   name="amount"
@@ -269,10 +265,9 @@ function EditExpenseContent() {
                   onChange={handleChange}
                   required
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="expense_date">Date *</Label>
+              <FormField label="Date" required>
                 <Input
                   id="expense_date"
                   name="expense_date"
@@ -281,11 +276,10 @@ function EditExpenseContent() {
                   onChange={handleChange}
                   required
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <FormField label="Description">
               <Input
                 id="description"
                 name="description"
@@ -293,7 +287,7 @@ function EditExpenseContent() {
                 value={formData.description}
                 onChange={handleChange}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 
@@ -312,8 +306,7 @@ function EditExpenseContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="vendor_name">Vendor / Payee</Label>
+              <FormField label="Vendor / Payee">
                 <Input
                   id="vendor_name"
                   name="vendor_name"
@@ -321,10 +314,9 @@ function EditExpenseContent() {
                   value={formData.vendor_name}
                   onChange={handleChange}
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="reference_number">Reference / Invoice #</Label>
+              <FormField label="Reference / Invoice #">
                 <Input
                   id="reference_number"
                   name="reference_number"
@@ -332,11 +324,10 @@ function EditExpenseContent() {
                   value={formData.reference_number}
                   onChange={handleChange}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="payment_method">Payment Method</Label>
+            <FormField label="Payment Method">
               <Select
                 id="payment_method"
                 name="payment_method"
@@ -344,7 +335,7 @@ function EditExpenseContent() {
                 onChange={handleChange}
                 options={EXPENSE_PAYMENT_MODE_OPTIONS}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

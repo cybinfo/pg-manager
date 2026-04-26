@@ -11,8 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { PageSkeleton } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency } from "@/lib/format"
@@ -316,17 +315,15 @@ export default function NewRefundPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="refund_type">Refund Type *</Label>
+                  <FormField label="Refund Type" required>
                     <Select
                       value={formData.refund_type}
                       onChange={(e) => setFormData({ ...formData, refund_type: e.target.value })}
                       options={REFUND_TYPE_OPTIONS}
                     />
-                  </div>
+                  </FormField>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount *</Label>
+                  <FormField label="Amount" required>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                         ₹
@@ -343,55 +340,50 @@ export default function NewRefundPage() {
                         required
                       />
                     </div>
-                  </div>
+                  </FormField>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="payment_mode">Payment Mode *</Label>
+                  <FormField label="Payment Mode" required>
                     <Select
                       value={formData.payment_mode}
                       onChange={(e) => setFormData({ ...formData, payment_mode: e.target.value })}
                       options={REFUND_PAYMENT_MODE_OPTIONS}
                     />
-                  </div>
+                  </FormField>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="reference_number">Reference Number</Label>
+                  <FormField label="Reference Number">
                     <Input
                       id="reference_number"
                       value={formData.reference_number}
                       onChange={(e) => setFormData({ ...formData, reference_number: e.target.value })}
                       placeholder="Transaction ID / UPI Ref / Cheque No."
                     />
-                  </div>
+                  </FormField>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="refund_date">Refund Date</Label>
+                <FormField
+                  label="Refund Date"
+                  hint="Leave empty to mark as pending. Enter a date to mark as completed."
+                >
                   <Input
                     id="refund_date"
                     type="date"
                     value={formData.refund_date}
                     onChange={(e) => setFormData({ ...formData, refund_date: e.target.value })}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Leave empty to mark as pending. Enter a date to mark as completed.
-                  </p>
-                </div>
+                </FormField>
 
-                <div className="space-y-2">
-                  <Label htmlFor="reason">Reason</Label>
+                <FormField label="Reason">
                   <Input
                     id="reason"
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                     placeholder="e.g., Security deposit refund after checkout"
                   />
-                </div>
+                </FormField>
 
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
+                <FormField label="Notes">
                   <textarea
                     id="notes"
                     value={formData.notes}
@@ -399,7 +391,7 @@ export default function NewRefundPage() {
                     placeholder="Any additional notes..."
                     className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
-                </div>
+                </FormField>
               </CardContent>
             </Card>
           </div>

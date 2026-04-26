@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, Users, Loader2 } from "lucide-react"
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { PageLoading } from "@/components/ui/loading"
@@ -195,8 +195,7 @@ function EditLibraryMemberContent({
 
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
+              <FormField label="Full Name" required>
                 <Input
                   id="name"
                   name="name"
@@ -206,9 +205,8 @@ function EditLibraryMemberContent({
                   required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number *</Label>
+              </FormField>
+              <FormField label="Phone Number" required>
                 <Input
                   id="phone"
                   name="phone"
@@ -220,11 +218,10 @@ function EditLibraryMemberContent({
                   type="tel"
                   maxLength={10}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <FormField label="Email">
               <Input
                 id="email"
                 name="email"
@@ -234,7 +231,7 @@ function EditLibraryMemberContent({
                 disabled={saving}
                 type="email"
               />
-            </div>
+            </FormField>
 
             {/* ID Proof */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -254,8 +251,7 @@ function EditLibraryMemberContent({
                   ]}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="id_proof_number">ID Number</Label>
+              <FormField label="ID Number">
                 <Input
                   id="id_proof_number"
                   name="id_proof_number"
@@ -264,7 +260,7 @@ function EditLibraryMemberContent({
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Preferences */}
@@ -300,8 +296,7 @@ function EditLibraryMemberContent({
             </div>
 
             {/* Left Date */}
-            <div className="space-y-2">
-              <Label htmlFor="left_date">Left Date</Label>
+            <FormField label="Left Date" hint="Set when member explicitly leaves. Clear when they renew.">
               <Input
                 id="left_date"
                 name="left_date"
@@ -310,14 +305,10 @@ function EditLibraryMemberContent({
                 onChange={handleChange}
                 disabled={saving}
               />
-              <p className="text-xs text-muted-foreground">
-                Set when member explicitly leaves. Clear when they renew.
-              </p>
-            </div>
+            </FormField>
 
             {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes">
               <Textarea
                 id="notes"
                 name="notes"
@@ -327,7 +318,7 @@ function EditLibraryMemberContent({
                 disabled={saving}
                 rows={3}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

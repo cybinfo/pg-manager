@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Users, Loader2, Clock } from "lucide-react"
@@ -48,6 +48,7 @@ function AddToWaitlistContent() {
     formData, setFormData,
     handleSubmit,
     saving,
+    errors,
     searchParams,
     workspaceId,
   } = useFormPage({
@@ -216,8 +217,7 @@ function AddToWaitlistContent() {
 
             {/* Contact Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
+              <FormField label="Name" required error={errors.name}>
                 <Input
                   id="name"
                   value={formData.name as string}
@@ -226,9 +226,8 @@ function AddToWaitlistContent() {
                   disabled={saving}
                   required
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone *</Label>
+              </FormField>
+              <FormField label="Phone" required error={errors.phone}>
                 <Input
                   id="phone"
                   value={formData.phone as string}
@@ -237,11 +236,10 @@ function AddToWaitlistContent() {
                   disabled={saving}
                   required
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email (Optional)</Label>
+            <FormField label="Email" hint="Optional" error={errors.email}>
               <Input
                 id="email"
                 type="email"
@@ -250,7 +248,7 @@ function AddToWaitlistContent() {
                 placeholder="email@example.com"
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             {/* Preferences */}
             <div className="border-t pt-4">
@@ -259,17 +257,15 @@ function AddToWaitlistContent() {
                 <span className="font-medium">Preferences</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="preferred_slot">Preferred Time Slot</Label>
+                <FormField label="Preferred Time Slot" error={errors.preferred_slot}>
                   <Select
                     value={formData.preferred_slot as string}
                     onChange={(e) => setFormData((prev) => ({ ...prev, preferred_slot: e.target.value }))}
                     options={slotOptions}
                     disabled={saving}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="preferred_plan">Preferred Plan</Label>
+                </FormField>
+                <FormField label="Preferred Plan" error={errors.preferred_plan}>
                   <Input
                     id="preferred_plan"
                     value={formData.preferred_plan as string}
@@ -277,13 +273,12 @@ function AddToWaitlistContent() {
                     placeholder="e.g., 9 Hours"
                     disabled={saving}
                   />
-                </div>
+                </FormField>
               </div>
             </div>
 
             {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
+            <FormField label="Notes" hint="Optional" error={errors.notes}>
               <Textarea
                 id="notes"
                 value={formData.notes as string}
@@ -292,7 +287,7 @@ function AddToWaitlistContent() {
                 rows={3}
                 disabled={saving}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

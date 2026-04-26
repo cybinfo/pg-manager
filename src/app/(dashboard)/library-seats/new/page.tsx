@@ -14,6 +14,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
@@ -197,8 +198,7 @@ function NewLibrarySeatContent() {
 
             {/* Seat Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="seat_number">Seat Number *</Label>
+              <FormField label="Seat Number" required>
                 <Input
                   id="seat_number"
                   name="seat_number"
@@ -208,9 +208,8 @@ function NewLibrarySeatContent() {
                   required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="row_number">Row</Label>
+              </FormField>
+              <FormField label="Row">
                 <Input
                   id="row_number"
                   name="row_number"
@@ -220,7 +219,7 @@ function NewLibrarySeatContent() {
                   disabled={saving}
                   maxLength={10}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Features */}

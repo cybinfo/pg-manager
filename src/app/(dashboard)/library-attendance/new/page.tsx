@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
@@ -453,8 +454,7 @@ function NewLibraryAttendanceContent() {
             )}
 
             {/* Check-in Time */}
-            <div className="space-y-2">
-              <Label htmlFor="check_in_time">Check-In Time *</Label>
+            <FormField label="Check-In Time" required>
               <Input
                 id="check_in_time"
                 name="check_in_time"
@@ -464,11 +464,10 @@ function NewLibraryAttendanceContent() {
                 required
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
+            <FormField label="Notes (Optional)">
               <Textarea
                 id="notes"
                 name="notes"
@@ -478,7 +477,7 @@ function NewLibraryAttendanceContent() {
                 disabled={saving}
                 rows={2}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, Armchair, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -139,8 +139,7 @@ function EditLibrarySeatContent({
           <CardContent className="space-y-6">
             {/* Seat Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="seat_number">Seat Number *</Label>
+              <FormField label="Seat Number" required>
                 <Input
                   id="seat_number"
                   name="seat_number"
@@ -150,9 +149,8 @@ function EditLibrarySeatContent({
                   required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="row_number">Row</Label>
+              </FormField>
+              <FormField label="Row">
                 <Input
                   id="row_number"
                   name="row_number"
@@ -162,7 +160,7 @@ function EditLibrarySeatContent({
                   disabled={saving}
                   maxLength={10}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="space-y-2">

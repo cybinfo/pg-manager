@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Gauge, Loader2, Building2, Home, Calculator, IndianRupee, Users, Zap, Droplets, Plus } from "lucide-react"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { showWarning } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate, formatMonthYear, formatNumber} from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -407,7 +407,7 @@ function NewMeterReadingContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/meter-readings">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -434,8 +434,7 @@ function NewMeterReadingContent() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="meter_id">Meter *</Label>
+            <FormField label="Meter" required>
               <Select
                 id="meter_id"
                 value={formData.meter_id as string}
@@ -448,7 +447,7 @@ function NewMeterReadingContent() {
                   label: `${meter.meter_number} (${meter.meter_type}) - ${meter.property?.name} / Room ${meter.current_assignment.room_number}`,
                 }))}
               />
-            </div>
+            </FormField>
 
             {/* Show selected meter details */}
             {selectedMeter && (
@@ -490,8 +489,7 @@ function NewMeterReadingContent() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="reading_date">Reading Date *</Label>
+              <FormField label="Reading Date" required>
                 <Input
                   id="reading_date"
                   name="reading_date"
@@ -501,7 +499,7 @@ function NewMeterReadingContent() {
                   required
                   disabled={saving}
                 />
-              </div>
+              </FormField>
 
               {/* Previous Reading Info */}
               {loadingLastReading ? (
@@ -520,8 +518,7 @@ function NewMeterReadingContent() {
                 </div>
               ) : null}
 
-              <div className="space-y-2">
-                <Label htmlFor="reading_value">Current Reading *</Label>
+              <FormField label="Current Reading" required>
                 <div className="relative">
                   <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -538,7 +535,7 @@ function NewMeterReadingContent() {
                     className="pl-9"
                   />
                 </div>
-              </div>
+              </FormField>
 
               {/* Calculated Units */}
               {calculatedUnits !== null && (
@@ -629,8 +626,7 @@ function NewMeterReadingContent() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
+              <FormField label="Notes">
                 <textarea
                   id="notes"
                   name="notes"
@@ -640,7 +636,7 @@ function NewMeterReadingContent() {
                   disabled={saving}
                   className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
                 />
-              </div>
+              </FormField>
             </CardContent>
           </Card>
         )}

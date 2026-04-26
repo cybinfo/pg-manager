@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, CreditCard, Loader2, User, IndianRupee, FileText } from "lucide-react"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency, formatMonthYear } from "@/lib/format"
@@ -329,7 +329,7 @@ function NewPaymentForm() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/payments">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -466,8 +466,7 @@ function NewPaymentForm() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (₹) *</Label>
+              <FormField label="Amount (₹)" required>
                 <Input
                   id="amount"
                   name="amount"
@@ -480,9 +479,8 @@ function NewPaymentForm() {
                   required
                   disabled={loading}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="payment_date">Payment Date *</Label>
+              </FormField>
+              <FormField label="Payment Date" required>
                 <Input
                   id="payment_date"
                   name="payment_date"
@@ -492,12 +490,11 @@ function NewPaymentForm() {
                   required
                   disabled={loading}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="charge_type_id">Payment For</Label>
+              <FormField label="Payment For">
                 <Select
                   id="charge_type_id"
                   name="charge_type_id"
@@ -510,9 +507,8 @@ function NewPaymentForm() {
                     label: ct.name,
                   }))}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="for_period">For Period</Label>
+              </FormField>
+              <FormField label="For Period">
                 <Input
                   id="for_period"
                   name="for_period"
@@ -521,12 +517,11 @@ function NewPaymentForm() {
                   onChange={handleChange}
                   disabled={loading}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="payment_method">Payment Method *</Label>
+              <FormField label="Payment Method" required>
                 <Select
                   id="payment_method"
                   name="payment_method"
@@ -536,9 +531,8 @@ function NewPaymentForm() {
                   disabled={loading}
                   options={PAYMENT_METHOD_OPTIONS}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reference_number">Reference Number</Label>
+              </FormField>
+              <FormField label="Reference Number">
                 <Input
                   id="reference_number"
                   name="reference_number"
@@ -547,11 +541,10 @@ function NewPaymentForm() {
                   onChange={handleChange}
                   disabled={loading}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes">
               <textarea
                 id="notes"
                 name="notes"
@@ -561,7 +554,7 @@ function NewPaymentForm() {
                 disabled={loading}
                 className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

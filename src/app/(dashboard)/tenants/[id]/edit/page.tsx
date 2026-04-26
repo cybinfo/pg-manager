@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/detail-components"
 import { PageLoading } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import {
   Loader2,
   Home,
@@ -237,8 +237,7 @@ function EditTenantContent() {
         >
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="property_id">Property *</Label>
+              <FormField label="Property" required>
                 <Select
                   id="property_id"
                   name="property_id"
@@ -247,9 +246,8 @@ function EditTenantContent() {
                   options={properties.map((p) => ({ value: p.id, label: p.name }))}
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="room_id">Room *</Label>
+              </FormField>
+              <FormField label="Room" required>
                 <Select
                   id="room_id"
                   name="room_id"
@@ -265,11 +263,10 @@ function EditTenantContent() {
                   }
                   disabled={saving || availableRooms.length === 0}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="check_in_date">Check-in Date *</Label>
+            <FormField label="Check-in Date" required>
               <Input
                 id="check_in_date"
                 name="check_in_date"
@@ -279,11 +276,10 @@ function EditTenantContent() {
                 required
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="monthly_rent">Monthly Rent (Rs.) *</Label>
+              <FormField label="Monthly Rent (Rs.)" required>
                 <Input
                   id="monthly_rent"
                   name="monthly_rent"
@@ -295,9 +291,8 @@ function EditTenantContent() {
                   required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="security_deposit">Security Deposit (Rs.)</Label>
+              </FormField>
+              <FormField label="Security Deposit (Rs.)">
                 <Input
                   id="security_deposit"
                   name="security_deposit"
@@ -308,7 +303,7 @@ function EditTenantContent() {
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
+              </FormField>
             </div>
           </div>
         </DetailSection>
@@ -321,8 +316,7 @@ function EditTenantContent() {
         >
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+              <FormField label="Status">
                 <Select
                   id="status"
                   name="status"
@@ -335,9 +329,8 @@ function EditTenantContent() {
                   ]}
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="police_verification_status">Police Verification</Label>
+              </FormField>
+              <FormField label="Police Verification">
                 <Select
                   id="police_verification_status"
                   name="police_verification_status"
@@ -346,7 +339,7 @@ function EditTenantContent() {
                   options={POLICE_VERIFICATION_STATUS_OPTIONS}
                   disabled={saving}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="flex items-center gap-2">
@@ -372,8 +365,7 @@ function EditTenantContent() {
           description="Additional information about this tenancy"
           icon={FileText}
         >
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+          <FormField label="Notes">
             <textarea
               id="notes"
               name="notes"
@@ -383,7 +375,7 @@ function EditTenantContent() {
               disabled={saving}
               className="w-full min-h-[100px] px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
             />
-          </div>
+          </FormField>
         </DetailSection>
 
         {/* Actions */}

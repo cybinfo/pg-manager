@@ -2,8 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
@@ -93,7 +92,7 @@ function NewVisitorContent() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/visitors">
+        <Link href={backHref}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -137,8 +136,7 @@ function NewVisitorContent() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="property_id">Property *</Label>
+            <FormField label="Property" htmlFor="property_id" required>
               <Select
                 id="property_id"
                 name="property_id"
@@ -151,7 +149,7 @@ function NewVisitorContent() {
                   label: property.name,
                 }))}
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

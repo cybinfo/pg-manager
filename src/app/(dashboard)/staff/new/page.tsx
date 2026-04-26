@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
@@ -474,8 +474,11 @@ function NewStaffContent() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
+              <FormField
+                label="Email Address"
+                required
+                hint="An invitation email will be sent to this address"
+              >
                 <EmailInput
                   id="email"
                   name="email"
@@ -485,13 +488,9 @@ function NewStaffContent() {
                   required
                   disabled={loading}
                 />
-                <p className="text-xs text-muted-foreground">
-                  An invitation email will be sent to this address
-                </p>
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+              <FormField label="Phone Number">
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -505,7 +504,7 @@ function NewStaffContent() {
                     className="pl-9"
                   />
                 </div>
-              </div>
+              </FormField>
             </CardContent>
           </Card>
         )}

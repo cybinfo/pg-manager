@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
-import { Select } from "@/components/ui/form-components"
+import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft, Users, Loader2, Building2, Home, RefreshCw,
@@ -702,8 +702,7 @@ export default function NewTenantPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="check_in_date">Check-in Date *</Label>
+            <FormField label="Check-in Date" required>
               <Input
                 id="check_in_date"
                 name="check_in_date"
@@ -713,11 +712,10 @@ export default function NewTenantPage() {
                 required
                 disabled={loading}
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="monthly_rent">Monthly Rent *</Label>
+              <FormField label="Monthly Rent" required>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                   <Input
@@ -733,9 +731,8 @@ export default function NewTenantPage() {
                     disabled={loading}
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="security_deposit">Security Deposit</Label>
+              </FormField>
+              <FormField label="Security Deposit">
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
                   <Input
@@ -750,7 +747,7 @@ export default function NewTenantPage() {
                     disabled={loading}
                   />
                 </div>
-              </div>
+              </FormField>
             </div>
           </CardContent>
         </Card>
@@ -771,8 +768,7 @@ export default function NewTenantPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="police_verification_status">Police Verification</Label>
+            <FormField label="Police Verification">
               <Select
                 id="police_verification_status"
                 name="police_verification_status"
@@ -781,7 +777,7 @@ export default function NewTenantPage() {
                 disabled={loading}
                 options={POLICE_VERIFICATION_STATUS_OPTIONS}
               />
-            </div>
+            </FormField>
 
             <div className="flex items-center gap-2">
               <input
@@ -814,8 +810,7 @@ export default function NewTenantPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes">
               <textarea
                 id="notes"
                 name="notes"
@@ -825,7 +820,7 @@ export default function NewTenantPage() {
                 disabled={loading}
                 className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 

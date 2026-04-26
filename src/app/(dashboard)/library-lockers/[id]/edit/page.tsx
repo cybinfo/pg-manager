@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select } from "@/components/ui/form-components"
+import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -134,8 +134,7 @@ function EditLibraryLockerContent({
           <CardContent className="space-y-6">
             {/* Locker Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="locker_number">Locker Number *</Label>
+              <FormField label="Locker Number" required>
                 <Input
                   id="locker_number"
                   name="locker_number"
@@ -145,7 +144,7 @@ function EditLibraryLockerContent({
                   required
                   disabled={saving}
                 />
-              </div>
+              </FormField>
               <div className="space-y-2">
                 <Label htmlFor="size">Size</Label>
                 <Select
@@ -163,8 +162,7 @@ function EditLibraryLockerContent({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="floor">Floor</Label>
+              <FormField label="Floor">
                 <Input
                   id="floor"
                   name="floor"
@@ -175,9 +173,8 @@ function EditLibraryLockerContent({
                   disabled={saving}
                   min={0}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="section">Section</Label>
+              </FormField>
+              <FormField label="Section">
                 <Input
                   id="section"
                   name="section"
@@ -186,7 +183,7 @@ function EditLibraryLockerContent({
                   onChange={handleChange}
                   disabled={saving}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="space-y-2">
@@ -208,8 +205,7 @@ function EditLibraryLockerContent({
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Pricing</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="monthly_rent">Monthly Rent (Rs.)</Label>
+                <FormField label="Monthly Rent (Rs.)">
                   <Input
                     id="monthly_rent"
                     name="monthly_rent"
@@ -221,9 +217,8 @@ function EditLibraryLockerContent({
                     min={0}
                     step="0.01"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="deposit_amount">Deposit Amount (Rs.)</Label>
+                </FormField>
+                <FormField label="Deposit Amount (Rs.)">
                   <Input
                     id="deposit_amount"
                     name="deposit_amount"
@@ -235,7 +230,7 @@ function EditLibraryLockerContent({
                     min={0}
                     step="0.01"
                   />
-                </div>
+                </FormField>
               </div>
             </div>
           </CardContent>

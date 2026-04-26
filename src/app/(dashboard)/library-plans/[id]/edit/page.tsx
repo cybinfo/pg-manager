@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
@@ -143,8 +144,7 @@ function EditLibraryPlanContent({
           <CardContent className="space-y-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Plan Name *</Label>
+              <FormField label="Plan Name" required>
                 <Input
                   id="name"
                   name="name"
@@ -154,9 +154,8 @@ function EditLibraryPlanContent({
                   required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="base_price">Price (Rs.) *</Label>
+              </FormField>
+              <FormField label="Price (Rs.)" required>
                 <Input
                   id="base_price"
                   name="base_price"
@@ -169,11 +168,10 @@ function EditLibraryPlanContent({
                   min={0}
                   step="0.01"
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <FormField label="Description">
               <Textarea
                 id="description"
                 name="description"
@@ -183,11 +181,10 @@ function EditLibraryPlanContent({
                 disabled={saving}
                 rows={2}
               />
-            </div>
+            </FormField>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="hours_included">Hours Included</Label>
+              <FormField label="Hours Included" hint="Leave empty for unlimited hours">
                 <Input
                   id="hours_included"
                   name="hours_included"
@@ -198,12 +195,8 @@ function EditLibraryPlanContent({
                   disabled={saving}
                   min={1}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty for unlimited hours
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="validity_days">Validity (Days) *</Label>
+              </FormField>
+              <FormField label="Validity (Days)" required>
                 <Input
                   id="validity_days"
                   name="validity_days"
@@ -215,7 +208,7 @@ function EditLibraryPlanContent({
                   disabled={saving}
                   min={1}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Time Slot Restrictions */}
@@ -244,8 +237,7 @@ function EditLibraryPlanContent({
             {/* Status & Order */}
             <div className="border-t pt-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sort_order">Sort Order</Label>
+                <FormField label="Sort Order">
                   <Input
                     id="sort_order"
                     name="sort_order"
@@ -256,7 +248,7 @@ function EditLibraryPlanContent({
                     disabled={saving}
                     min={0}
                   />
-                </div>
+                </FormField>
                 <div className="flex items-center space-x-2 pt-8">
                   <Checkbox
                     id="is_active"

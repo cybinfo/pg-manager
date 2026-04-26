@@ -17,8 +17,8 @@ import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { PermissionGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FormField } from "@/components/ui/form-components"
 import { Combobox } from "@/components/ui/combobox"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { ArrowLeft, Loader2, Clock, RefreshCw, Calendar, AlertTriangle, Trash2, Plus } from "lucide-react"
@@ -30,6 +30,9 @@ import { Currency } from "@/components/ui/currency"
 import { formatDate, formatNumber} from "@/lib/format"
 import { getTodayISO, getNowISO, computeEndDate, computeDefaultStartDate } from "@/lib/date-helpers"
 import { TimeSlot, formatTime12h, calcSlotHours, serializeTimeSlots, parseTimeSlots } from "@/lib/time-slots"
+import { useFormValidation } from "@/lib/hooks/useFormValidation"
+import { requiredSelect, requiredDate } from "@/lib/validation"
+import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 interface MemberData {
   id: string
@@ -71,6 +74,7 @@ export default function RenewLibraryMemberPage({
   const { id } = use(params)
   const router = useRouter()
   const { user } = useAuthContext()
+  const { backHref } = useBackNavigation({ defaultHref: `/library-members/${id}` })
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [member, setMember] = useState<MemberData | null>(null)
@@ -85,6 +89,23 @@ export default function RenewLibraryMemberPage({
     discount: 0,
     time_slots: [] as TimeSlot[],
   })
+
+  const validationSchema = {
+    plan_id: requiredSelect("Plan"),
+    start_date: requiredDate("Start date"),
+    duration_months: (value: unknown) => {
+      const num = Number(value)
+      if (!value || isNaN(num) || num <= 0) {
+        return { isValid: false, error: "Duration must be greater than 0" }
+      }
+      return null
+    },
+  }
+
+  const { errors, validateField, validateAll } = useFormValidation(
+    validationSchema,
+    formData as unknown as Record<string, unknown>
+  )
 
   useEffect(() => {
     async function fetchData() {
@@ -192,8 +213,7 @@ export default function RenewLibraryMemberPage({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.plan_id) {
-      showError("Please select a plan")
+    if (!validateAll(formData as unknown as Record<string, unknown>)) {
       return
     }
 
@@ -343,7 +363,7 @@ export default function RenewLibraryMemberPage({
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Link href={`/library-members/${id}`}>
+          <Link href={backHref}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -436,35 +456,50 @@ export default function RenewLibraryMemberPage({
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Plan Selection */}
-              <div className="space-y-2">
-                <Label>Subscription Plan *</Label>
+              <FormField
+                label="Subscription Plan"
+                required
+                error={errors.plan_id as string | undefined}
+              >
                 <Combobox
                   options={planOptions}
                   value={formData.plan_id}
-                  onValueChange={handlePlanChange}
+                  onValueChange={(val) => {
+                    handlePlanChange(val)
+                    validateField("plan_id")
+                  }}
                   placeholder="Select a plan..."
                   searchPlaceholder="Search plans..."
                   emptyText="No plans found"
                   disabled={loading}
                 />
-              </div>
+              </FormField>
 
               {/* Start Date & Duration */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start_date">Start Date *</Label>
+                <FormField
+                  label="Start Date"
+                  htmlFor="start_date"
+                  required
+                  error={errors.start_date as string | undefined}
+                >
                   <Input
                     id="start_date"
                     name="start_date"
                     type="date"
                     value={formData.start_date}
                     onChange={handleStartDateChange}
-                    required
+                    onBlur={() => validateField("start_date")}
                     disabled={loading}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration_months">Duration (Months) *</Label>
+                </FormField>
+                <FormField
+                  label="Duration (Months)"
+                  htmlFor="duration_months"
+                  required
+                  error={errors.duration_months as string | undefined}
+                  hint={computedEndDate ? `Ends: ${formatDate(computedEndDate)}` : undefined}
+                >
                   <Input
                     id="duration_months"
                     name="duration_months"
@@ -473,20 +508,15 @@ export default function RenewLibraryMemberPage({
                     step="0.5"
                     value={formData.duration_months}
                     onChange={handleDurationChange}
-                    required
+                    onBlur={() => validateField("duration_months")}
                     disabled={loading}
                   />
-                  {computedEndDate && (
-                    <p className="text-xs text-muted-foreground">
-                      Ends: {formatDate(computedEndDate)}
-                    </p>
-                  )}
-                </div>
+                </FormField>
               </div>
 
               {/* Access Schedule (Multi-Slot Time Input) */}
               <div className="space-y-3">
-                <Label>Access Schedule (optional)</Label>
+                <p className="text-sm font-medium">Access Schedule <span className="text-muted-foreground font-normal">(optional)</span></p>
                 <div className="border rounded-lg p-3 space-y-3">
                   {formData.time_slots.map((slot: TimeSlot, idx: number) => {
                     const slotHours = calcSlotHours(slot)
@@ -562,8 +592,11 @@ export default function RenewLibraryMemberPage({
 
               {/* Amount & Discount */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount</Label>
+                <FormField
+                  label="Amount"
+                  htmlFor="amount"
+                  hint={priceCalcDisplay ?? undefined}
+                >
                   <Input
                     id="amount"
                     name="amount"
@@ -574,12 +607,11 @@ export default function RenewLibraryMemberPage({
                     onChange={(e) => setFormData((prev) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
                     disabled={loading}
                   />
-                  {priceCalcDisplay && (
-                    <p className="text-xs text-muted-foreground">{priceCalcDisplay}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="discount">Discount</Label>
+                </FormField>
+                <FormField
+                  label="Discount"
+                  htmlFor="discount"
+                >
                   <Input
                     id="discount"
                     name="discount"
@@ -590,7 +622,7 @@ export default function RenewLibraryMemberPage({
                     onChange={(e) => setFormData((prev) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
                     disabled={loading}
                   />
-                </div>
+                </FormField>
               </div>
 
               {/* Summary */}
@@ -656,7 +688,7 @@ export default function RenewLibraryMemberPage({
           </Card>
 
           <div className="flex justify-end gap-4 mt-6">
-            <Link href={`/library-members/${id}`}>
+            <Link href={backHref}>
               <Button type="button" variant="outline" disabled={loading}>
                 Cancel
               </Button>

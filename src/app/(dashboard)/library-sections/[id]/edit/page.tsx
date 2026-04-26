@@ -13,6 +13,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
@@ -141,8 +142,7 @@ function EditLibrarySectionContent({
           <CardContent className="space-y-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Section Name *</Label>
+              <FormField label="Section Name" required>
                 <Input
                   id="name"
                   name="name"
@@ -152,9 +152,8 @@ function EditLibrarySectionContent({
                   required
                   disabled={saving}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="section_number">Section Number</Label>
+              </FormField>
+              <FormField label="Section Number">
                 <Input
                   id="section_number"
                   name="section_number"
@@ -164,11 +163,10 @@ function EditLibrarySectionContent({
                   disabled={saving}
                   maxLength={10}
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="floor">Floor</Label>
+            <FormField label="Floor">
               <Input
                 id="floor"
                 name="floor"
@@ -179,7 +177,7 @@ function EditLibrarySectionContent({
                 disabled={saving}
                 min={0}
               />
-            </div>
+            </FormField>
 
             {/* Features */}
             <div className="border-t pt-4">
@@ -214,8 +212,7 @@ function EditLibrarySectionContent({
             <div className="border-t pt-4">
               <h3 className="font-medium mb-3">Pricing (Optional)</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="hourly_rate">Hourly Rate (Rs.)</Label>
+                <FormField label="Hourly Rate (Rs.)">
                   <Input
                     id="hourly_rate"
                     name="hourly_rate"
@@ -227,9 +224,8 @@ function EditLibrarySectionContent({
                     min={0}
                     step="0.01"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="monthly_rate">Monthly Rate (Rs.)</Label>
+                </FormField>
+                <FormField label="Monthly Rate (Rs.)">
                   <Input
                     id="monthly_rate"
                     name="monthly_rate"
@@ -241,7 +237,7 @@ function EditLibrarySectionContent({
                     min={0}
                     step="0.01"
                   />
-                </div>
+                </FormField>
               </div>
             </div>
           </CardContent>

@@ -8,8 +8,8 @@ import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { FormField } from "@/components/ui/form-components"
 import { ArrowLeft, Gauge, Loader2, Calculator, Zap, Droplets, Building2, Home } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -186,8 +186,7 @@ function EditMeterReadingContent() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="reading_date">Reading Date *</Label>
+            <FormField label="Reading Date" required>
               <Input
                 id="reading_date"
                 name="reading_date"
@@ -197,7 +196,7 @@ function EditMeterReadingContent() {
                 required
                 disabled={saving}
               />
-            </div>
+            </FormField>
 
             {/* Previous Reading (Read-only) */}
             {previousReading !== null && (
@@ -208,8 +207,7 @@ function EditMeterReadingContent() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="reading_value">Current Reading *</Label>
+            <FormField label="Current Reading" required>
               <div className="relative">
                 <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -226,7 +224,7 @@ function EditMeterReadingContent() {
                   className="pl-9"
                 />
               </div>
-            </div>
+            </FormField>
 
             {/* Calculated Units */}
             {calculatedUnits !== null && (
@@ -245,8 +243,7 @@ function EditMeterReadingContent() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+            <FormField label="Notes">
               <textarea
                 id="notes"
                 name="notes"
@@ -256,7 +253,7 @@ function EditMeterReadingContent() {
                 disabled={saving}
                 className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
               />
-            </div>
+            </FormField>
           </CardContent>
         </Card>
 
