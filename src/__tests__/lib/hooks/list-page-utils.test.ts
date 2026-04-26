@@ -1,11 +1,13 @@
 /**
- * Tests for getNestedValue and applyServerFilter from src/lib/hooks/list-page/utils.ts
+ * Tests for getNestedValue, applyServerFilter, and applyBaseFiltersToQuery
+ * from src/lib/hooks/list-page/utils.ts
  *
- * Covers dot-notation path resolution on nested objects and
- * server filter operator dispatch to the Supabase query chain.
+ * Covers dot-notation path resolution, server filter operator dispatch, and
+ * base query filter application (soft-delete, select filters, date ranges, search).
  */
 
-import { getNestedValue, applyServerFilter } from "@/lib/hooks/list-page/utils"
+import { getNestedValue, applyServerFilter, applyBaseFiltersToQuery } from "@/lib/hooks/list-page/utils"
+import type { ListPageConfig, FilterConfig } from "@/lib/hooks/list-page/types"
 
 describe("getNestedValue", () => {
   describe("flat paths", () => {
@@ -170,5 +172,226 @@ describe("applyServerFilter", () => {
     const result = applyServerFilter(q, { column: "x", operator: "unknown" as any, value: "y" })
     expect(result).toBe(q)
     expect(q.eq).not.toHaveBeenCalled()
+  })
+})
+
+// ============================================================================
+// applyBaseFiltersToQuery
+// ============================================================================
+
+describe("applyBaseFiltersToQuery", () => {
+  function makeMockChain() {
+    const chain = {
+      eq: jest.fn(),
+      neq: jest.fn(),
+      in: jest.fn(),
+      not: jest.fn(),
+      contains: jest.fn(),
+      gt: jest.fn(),
+      gte: jest.fn(),
+      lt: jest.fn(),
+      lte: jest.fn(),
+      is: jest.fn(),
+      or: jest.fn(),
+      order: jest.fn(),
+      limit: jest.fn(),
+      range: jest.fn(),
+      select: jest.fn(),
+    }
+    Object.keys(chain).forEach((k) => (chain as Record<string, jest.Mock>)[k].mockReturnValue(chain))
+    return chain
+  }
+
+  function makeConfig(overrides: Partial<ListPageConfig<Record<string, unknown>>> = {}): ListPageConfig<Record<string, unknown>> {
+    return {
+      table: "tenants",
+      select: "*",
+      defaultOrderBy: "created_at",
+      defaultOrderDirection: "desc",
+      searchFields: ["name"],
+      ...overrides,
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Soft-delete
+  // --------------------------------------------------------------------------
+
+  describe("soft-delete filter", () => {
+    it("applies is(deleted_at, null) by default", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig(), [], {}, "")
+      expect(q.is).toHaveBeenCalledWith("deleted_at", null)
+    })
+
+    it("skips soft-delete filter when includeSoftDeleted=true", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig({ includeSoftDeleted: true }), [], {}, "")
+      expect(q.is).not.toHaveBeenCalled()
+    })
+  })
+
+  // --------------------------------------------------------------------------
+  // Select filters — value skipping
+  // --------------------------------------------------------------------------
+
+  describe("select filter value skipping", () => {
+    const filterConfig: FilterConfig = { id: "status", label: "Status", type: "select", options: [] }
+
+    it("skips filter when value is empty string", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig(), [filterConfig], { status: "" }, "")
+      expect(q.eq).not.toHaveBeenCalledWith("status", expect.anything())
+    })
+
+    it("skips filter when value is 'all'", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig(), [filterConfig], { status: "all" }, "")
+      expect(q.eq).not.toHaveBeenCalledWith("status", expect.anything())
+    })
+
+    it("skips filter when no matching filterConfig is found", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig(), [], { status: "active" }, "")
+      expect(q.eq).not.toHaveBeenCalledWith("status", "active")
+    })
+  })
+
+  // --------------------------------------------------------------------------
+  // Select filters — FK mapping
+  // --------------------------------------------------------------------------
+
+  describe("select filter FK mapping", () => {
+    it("maps 'property' filter to property_id column", () => {
+      const q = makeMockChain()
+      const fc: FilterConfig = { id: "property", label: "Property", type: "select", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [fc], { property: "prop-1" }, "")
+      expect(q.eq).toHaveBeenCalledWith("property_id", "prop-1")
+    })
+
+    it("maps 'tenant' filter to tenant_id column", () => {
+      const q = makeMockChain()
+      const fc: FilterConfig = { id: "tenant", label: "Tenant", type: "select", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [fc], { tenant: "tenant-1" }, "")
+      expect(q.eq).toHaveBeenCalledWith("tenant_id", "tenant-1")
+    })
+
+    it("maps 'room' filter to room_id column", () => {
+      const q = makeMockChain()
+      const fc: FilterConfig = { id: "room", label: "Room", type: "select", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [fc], { room: "room-1" }, "")
+      expect(q.eq).toHaveBeenCalledWith("room_id", "room-1")
+    })
+
+    it("maps 'tags' filter to contains(tags, [value])", () => {
+      const q = makeMockChain()
+      const fc: FilterConfig = { id: "tags", label: "Tags", type: "select", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [fc], { tags: "member" }, "")
+      expect(q.contains).toHaveBeenCalledWith("tags", ["member"])
+    })
+
+    it("uses .eq(filterId, value) for a standard status filter", () => {
+      const q = makeMockChain()
+      const fc: FilterConfig = { id: "status", label: "Status", type: "select", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [fc], { status: "active" }, "")
+      expect(q.eq).toHaveBeenCalledWith("status", "active")
+    })
+  })
+
+  // --------------------------------------------------------------------------
+  // Select filters — people table status special case
+  // --------------------------------------------------------------------------
+
+  describe("select filter — people table virtual status", () => {
+    const fc: FilterConfig = { id: "status", label: "Status", type: "select", options: [] }
+
+    it("maps status=verified to is_verified=true on people table", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig({ table: "people" }), [fc], { status: "verified" }, "")
+      expect(q.eq).toHaveBeenCalledWith("is_verified", true)
+    })
+
+    it("maps status=blocked to is_blocked=true on people table", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig({ table: "people" }), [fc], { status: "blocked" }, "")
+      expect(q.eq).toHaveBeenCalledWith("is_blocked", true)
+    })
+  })
+
+  // --------------------------------------------------------------------------
+  // Date-type filter
+  // --------------------------------------------------------------------------
+
+  describe("date-type filter", () => {
+    it("calls .eq(filterId, value) for date-type filters", () => {
+      const q = makeMockChain()
+      const fc: FilterConfig = { id: "due_date", label: "Due Date", type: "date", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [fc], { due_date: "2026-01-15" }, "")
+      expect(q.eq).toHaveBeenCalledWith("due_date", "2026-01-15")
+    })
+  })
+
+  // --------------------------------------------------------------------------
+  // Date range filters
+  // --------------------------------------------------------------------------
+
+  describe("date range filters", () => {
+    it("applies gte(dateField, date_from) using date-range filterConfig id", () => {
+      const q = makeMockChain()
+      const fc: FilterConfig = { id: "payment_date", label: "Date", type: "date-range", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [fc], { date_from: "2026-01-01" }, "")
+      expect(q.gte).toHaveBeenCalledWith("payment_date", "2026-01-01")
+    })
+
+    it("applies lte(dateField, date_to) using date-range filterConfig id", () => {
+      const q = makeMockChain()
+      const fc: FilterConfig = { id: "payment_date", label: "Date", type: "date-range", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [fc], { date_to: "2026-01-31" }, "")
+      expect(q.lte).toHaveBeenCalledWith("payment_date", "2026-01-31")
+    })
+
+    it("falls back to created_at when no date-range filterConfig exists", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig(), [], { date_from: "2026-01-01" }, "")
+      expect(q.gte).toHaveBeenCalledWith("created_at", "2026-01-01")
+    })
+
+    it("applies both date_from and date_to when both are present", () => {
+      const q = makeMockChain()
+      const fc: FilterConfig = { id: "created_at", label: "Date", type: "date-range", options: [] }
+      applyBaseFiltersToQuery(q, makeConfig(), [fc], { date_from: "2026-01-01", date_to: "2026-01-31" }, "")
+      expect(q.gte).toHaveBeenCalledWith("created_at", "2026-01-01")
+      expect(q.lte).toHaveBeenCalledWith("created_at", "2026-01-31")
+    })
+  })
+
+  // --------------------------------------------------------------------------
+  // Search
+  // --------------------------------------------------------------------------
+
+  describe("search query", () => {
+    it("calls .or() with ilike conditions for non-nested search fields", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig({ searchFields: ["name", "phone"] }), [], {}, "rajat")
+      expect(q.or).toHaveBeenCalledWith("name.ilike.%rajat%,phone.ilike.%rajat%")
+    })
+
+    it("excludes nested (dot-notation) search fields from ilike query", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig({ searchFields: ["name", "person.email"] }), [], {}, "test")
+      expect(q.or).toHaveBeenCalledWith("name.ilike.%test%")
+    })
+
+    it("does not call .or() when search query is empty", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig(), [], {}, "")
+      expect(q.or).not.toHaveBeenCalled()
+    })
+
+    it("does not call .or() when all searchFields are nested", () => {
+      const q = makeMockChain()
+      applyBaseFiltersToQuery(q, makeConfig({ searchFields: ["person.name", "property.address"] }), [], {}, "hello")
+      expect(q.or).not.toHaveBeenCalled()
+    })
   })
 })

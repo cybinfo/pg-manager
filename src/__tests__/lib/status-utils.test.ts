@@ -1,10 +1,10 @@
 /**
- * Tests for getStatusConfig and getStatusInfo from src/lib/status/shared.ts
- *
- * These functions map entity type + status string to display config (label, variant).
+ * Tests for getStatusConfig, getStatusInfo from src/lib/status/shared.ts
+ * and labelsToOptions from src/lib/status/billing.ts.
  */
 
 import { getStatusConfig, getStatusInfo } from "@/lib/status/shared"
+import { labelsToOptions } from "@/lib/status/billing"
 
 // ============================================================================
 // getStatusConfig
@@ -116,5 +116,56 @@ describe("getStatusInfo", () => {
     const info = getStatusInfo("tenant", "active")
     // Should be one of the valid StatusDot variants
     expect(["success", "warning", "error", "info", "muted"]).toContain(info.status)
+  })
+})
+
+// ============================================================================
+// labelsToOptions
+// ============================================================================
+
+describe("labelsToOptions", () => {
+  const LABELS = { cash: "Cash", upi: "UPI", card: "Card", cheque: "Cheque" }
+
+  it("returns all entries when no keys are specified", () => {
+    const opts = labelsToOptions(LABELS)
+    expect(opts).toHaveLength(4)
+  })
+
+  it("returns objects with value and label fields", () => {
+    const opts = labelsToOptions(LABELS)
+    expect(opts[0]).toHaveProperty("value")
+    expect(opts[0]).toHaveProperty("label")
+  })
+
+  it("maps keys to value fields and label strings to label fields", () => {
+    const opts = labelsToOptions({ cash: "Cash" })
+    expect(opts[0]).toEqual({ value: "cash", label: "Cash" })
+  })
+
+  it("returns only the specified keys when keys are provided", () => {
+    const opts = labelsToOptions(LABELS, ["cash", "upi"])
+    expect(opts).toHaveLength(2)
+    expect(opts.map((o) => o.value)).toEqual(["cash", "upi"])
+  })
+
+  it("preserves the order of the provided keys array", () => {
+    const opts = labelsToOptions(LABELS, ["card", "cash", "upi"])
+    expect(opts.map((o) => o.value)).toEqual(["card", "cash", "upi"])
+  })
+
+  it("skips keys that are not present in the labels object", () => {
+    const opts = labelsToOptions(LABELS, ["cash", "nonexistent", "upi"])
+    expect(opts).toHaveLength(2)
+    expect(opts.map((o) => o.value)).toEqual(["cash", "upi"])
+  })
+
+  it("returns an empty array when given an empty labels object", () => {
+    const opts = labelsToOptions({})
+    expect(opts).toEqual([])
+  })
+
+  it("returns an empty array when keys array is empty", () => {
+    const opts = labelsToOptions(LABELS, [])
+    expect(opts).toEqual([])
   })
 })
