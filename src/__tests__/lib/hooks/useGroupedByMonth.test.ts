@@ -144,6 +144,41 @@ describe("useGroupedByMonthWithTotals", () => {
     expect(result.current.totalCount).toBe(4)
     expect(result.current.months).toHaveLength(3)
   })
+
+  it("getMonthLabel returns a readable string for a valid month key (lines 160-162)", () => {
+    const { result } = renderHook(() =>
+      useGroupedByMonthWithTotals(makePayments(), "payment_date", "amount")
+    )
+    const label = result.current.getMonthLabel("2026-01")
+    expect(typeof label).toBe("string")
+    expect(label.length).toBeGreaterThan(0)
+    expect(label).toContain("2026")
+  })
+
+  it("skips items with null date field without crashing (line 135)", () => {
+    type Row = { id: number; payment_date: string | null; amount: number }
+    const rows: Row[] = [
+      { id: 1, payment_date: "2026-01-10", amount: 1000 },
+      { id: 2, payment_date: null, amount: 500 },
+    ]
+    const { result } = renderHook(() =>
+      useGroupedByMonthWithTotals(rows as unknown as Payment[], "payment_date", "amount")
+    )
+    // null-date item is skipped for grouping — grandTotal only includes valid row
+    expect(result.current.grandTotal).toBe(1000)
+    // only 1 month group should exist (the null row was skipped)
+    expect(result.current.months).toHaveLength(1)
+  })
+
+  it("sorts months in ascending order when sortOrder=asc (line 155 true branch)", () => {
+    const { result } = renderHook(() =>
+      useGroupedByMonthWithTotals(makePayments(), "payment_date", "amount", "asc")
+    )
+    const months = result.current.months
+    // asc: earliest month first
+    expect(months[0]).toBe("2026-01")
+    expect(months[months.length - 1]).toBe("2026-03")
+  })
 })
 
 // ============================================================================
@@ -201,5 +236,19 @@ describe("useGroupedByYear", () => {
     )
     expect(result.current.years).toHaveLength(0)
     expect(result.current.totalCount).toBe(0)
+  })
+
+  it("skips items with null date field without crashing (line 200)", () => {
+    type Item = { id: number; date: string | null }
+    const items: Item[] = [
+      { id: 1, date: "2025-06-01" },
+      { id: 2, date: null },
+    ]
+    const { result } = renderHook(() =>
+      useGroupedByYear(items as unknown as typeof multiYearItems, "date")
+    )
+    // null-date item is skipped for grouping — only 1 year group exists
+    expect(result.current.years).toEqual(["2025"])
+    expect(result.current.groupedItems["2025"]).toHaveLength(1)
   })
 })
