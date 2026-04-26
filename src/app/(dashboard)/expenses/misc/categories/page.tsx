@@ -38,6 +38,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 
 import type { MiscTransactionCategory, MiscTransactionType } from "@/types/expense-enhanced.types"
@@ -342,8 +343,7 @@ export default function MiscCategoriesPage() {
               </DialogHeader>
 
               <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name (English) *</Label>
+                <FormField label="Name (English)" htmlFor="name" required>
                   <Input
                     id="name"
                     value={formData.name}
@@ -352,10 +352,9 @@ export default function MiscCategoriesPage() {
                     }
                     placeholder="e.g., PG Collection"
                   />
-                </div>
+                </FormField>
 
-                <div className="space-y-2">
-                  <Label htmlFor="name_hi">Name (Hindi)</Label>
+                <FormField label="Name (Hindi)" htmlFor="name_hi">
                   <Input
                     id="name_hi"
                     value={formData.name_hi}
@@ -364,7 +363,7 @@ export default function MiscCategoriesPage() {
                     }
                     placeholder="e.g., पीजी संग्रह"
                   />
-                </div>
+                </FormField>
 
                 <div className="space-y-2">
                   <Label>Transaction Type</Label>

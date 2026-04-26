@@ -13,7 +13,6 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
@@ -235,8 +234,7 @@ function EditLibraryMemberContent({
 
             {/* ID Proof */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="id_proof_type">ID Proof Type</Label>
+              <FormField label="ID Proof Type" htmlFor="id_proof_type">
                 <Select
                   value={formData.id_proof_type as string}
                   onChange={handleChange}
@@ -250,7 +248,7 @@ function EditLibraryMemberContent({
                     { value: "driving_license", label: "Driving License" },
                   ]}
                 />
-              </div>
+              </FormField>
               <FormField label="ID Number">
                 <Input
                   id="id_proof_number"
@@ -265,8 +263,7 @@ function EditLibraryMemberContent({
 
             {/* Preferences */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="preferred_slot">Preferred Time Slot</Label>
+              <FormField label="Preferred Time Slot" htmlFor="preferred_slot">
                 <Select
                   value={formData.preferred_slot as string}
                   onChange={handleChange}
@@ -277,9 +274,8 @@ function EditLibraryMemberContent({
                     label: slot.label,
                   }))}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+              </FormField>
+              <FormField label="Status" htmlFor="status">
                 <Select
                   value={formData.status as string}
                   onChange={handleChange}
@@ -292,7 +288,7 @@ function EditLibraryMemberContent({
                     { value: "cancelled", label: "Cancelled" },
                   ]}
                 />
-              </div>
+              </FormField>
             </div>
 
             {/* Left Date */}

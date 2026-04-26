@@ -354,8 +354,7 @@ function NewLibraryAttendanceContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Member Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="member_id">Select Member *</Label>
+            <FormField label="Select Member" htmlFor="member_id" required>
               {members.length > 0 ? (
                 <Combobox
                   options={memberOptions}
@@ -373,7 +372,7 @@ function NewLibraryAttendanceContent() {
                   </p>
                 </div>
               )}
-            </div>
+            </FormField>
 
             {/* Member Info */}
             {selectedMember && (
