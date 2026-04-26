@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Save, ChevronDown, ChevronRight, AlertTriangle, Info, Sparkles } from "lucide-react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import { FeatureFlagKey, FeatureFlags, FEATURE_FLAGS } from "@/lib/features"
+import { invalidateFeatureCache } from "@/lib/features/use-features"
 import {
   DOMAIN_MODULES,
   CoreModule,
@@ -84,10 +85,15 @@ export function FeatureSettings({ featureFlags, setFeatureFlags, config }: Featu
   }
 
   const saveFeatureFlags = async () => {
-    await save(
+    const ok = await save(
       { feature_flags: featureFlags },
       { successMessage: "Feature settings saved", errorMessage: "Failed to save feature settings" }
     )
+    // Invalidate cache so all mounted useFeatures() hooks re-fetch immediately —
+    // this makes navigation and FeatureGuard update without a page reload.
+    if (ok) {
+      invalidateFeatureCache()
+    }
   }
 
   const { enabled, total } = countEnabledFeatures(featureFlags)
