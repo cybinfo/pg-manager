@@ -2,19 +2,18 @@ import { sendPaymentReminder, sendOverdueAlert } from "@/lib/email"
 import { baseCronHandler, logCronAudit } from "@/lib/cron-handler"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { cronLogger } from "@/lib/logger"
-
-interface NotificationSettings {
-  email_reminders_enabled: boolean
-  reminder_days_before: number
-  send_on_due_date: boolean
-  send_overdue_alerts: boolean
-  overdue_alert_frequency: "daily" | "weekly"
-}
+import {
+  calculateDaysUntilDue,
+  calculatePendingDues,
+  shouldSendReminder,
+  shouldSendOverdueAlert,
+  type ReminderNotificationSettings,
+} from "@/lib/billing/payment-reminders.helpers"
 
 interface OwnerConfig {
   owner_id: string
   default_rent_due_day: number
-  notification_settings: NotificationSettings | null
+  notification_settings: ReminderNotificationSettings | null
   owner: {
     id: string
     name: string
@@ -36,17 +35,6 @@ interface Tenant {
   }
   room: {
     room_number: string
-  }
-}
-
-// Calculate days until due date
-function calculateDaysUntilDue(currentDay: number, dueDay: number): number {
-  if (currentDay <= dueDay) {
-    return dueDay - currentDay
-  } else {
-    // Due day is in next month
-    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()
-    return daysInMonth - currentDay + dueDay
   }
 }
 
@@ -93,8 +81,7 @@ export const GET = (request: Request) =>
 
         // Calculate if we should send reminders today
         const daysUntilDue = calculateDaysUntilDue(dayOfMonth, rentDueDay)
-        const shouldSendReminder = daysUntilDue === settings.reminder_days_before
-        const shouldSendDueDateReminder = settings.send_on_due_date && daysUntilDue === 0
+        const sendReminder = shouldSendReminder(daysUntilDue, settings)
 
         // Fetch active tenants for this owner
         const { data: tenants, error: tenantsError } = await supabase
@@ -135,11 +122,7 @@ export const GET = (request: Request) =>
           // Calculate pending dues
           const tenantPayments = payments?.filter((p: { tenant_id: string }) => p.tenant_id === tenant.id) || []
           const totalPaid = tenantPayments.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0)
-          const monthsActive = Math.max(1, Math.ceil(
-            (today.getTime() - new Date(tenant.check_in_date).getTime()) / (1000 * 60 * 60 * 24 * 30)
-          ))
-          const expectedRent = monthsActive * Number(tenant.monthly_rent)
-          const pendingDues = Math.max(0, expectedRent - totalPaid)
+          const pendingDues = calculatePendingDues(tenant.check_in_date, Number(tenant.monthly_rent), totalPaid, today)
 
           if (pendingDues <= 0) continue // No pending dues
 
@@ -150,7 +133,7 @@ export const GET = (request: Request) =>
           }
 
           // Send reminder if applicable
-          if (shouldSendReminder || shouldSendDueDateReminder) {
+          if (sendReminder) {
             try {
               const result = await sendPaymentReminder({
                 to: tenant.email,
@@ -174,15 +157,10 @@ export const GET = (request: Request) =>
           }
 
           // Send overdue alert if applicable
-          if (settings.send_overdue_alerts && daysUntilDue < 0) {
+          if (shouldSendOverdueAlert(daysUntilDue, today, settings)) {
             const daysOverdue = Math.abs(daysUntilDue)
 
-            // Check frequency - daily or weekly (on Mondays)
-            const shouldSendOverdue =
-              settings.overdue_alert_frequency === "daily" ||
-              (settings.overdue_alert_frequency === "weekly" && today.getDay() === 1)
-
-            if (shouldSendOverdue) {
+            {
               try {
                 const result = await sendOverdueAlert({
                   to: tenant.email,
