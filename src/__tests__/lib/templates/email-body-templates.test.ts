@@ -582,4 +582,60 @@ describe("email-templates backward-compat shim", () => {
     expect(html).toContain("Bob")
     expect(html).toContain("<!DOCTYPE html>")
   })
+
+  it("overdueAlertTemplate delegates to emailBodyTemplates.overdueAlert", async () => {
+    const { overdueAlertTemplate } = await import("@/lib/email-templates")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const html = overdueAlertTemplate({ tenantName: "Carol", amount: 3000, totalDue: 3000, propertyName: "Test PG", roomNumber: "102", dueDate: new Date("2026-04-01"), daysOverdue: 5, ownerName: "Owner" } as any)
+    expect(typeof html).toBe("string")
+    expect(html).toContain("<!DOCTYPE html>")
+  })
+
+  it("paymentReceiptTemplate delegates to emailBodyTemplates.paymentReceipt", async () => {
+    const { paymentReceiptTemplate } = await import("@/lib/email-templates")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const html = paymentReceiptTemplate({ tenantName: "Dave", amount: 5000, receiptNumber: "RCP-001", propertyName: "Test PG", roomNumber: "103", paymentDate: new Date(), paymentMethod: "UPI", ownerName: "Owner" } as any)
+    expect(typeof html).toBe("string")
+    expect(html).toContain("<!DOCTYPE html>")
+  })
+
+  it("invitationEmailTemplate delegates to emailBodyTemplates.invitation", async () => {
+    const { invitationEmailTemplate } = await import("@/lib/email-templates")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const html = invitationEmailTemplate({ inviteeName: "Eve", inviterName: "Admin", workspaceName: "Test PG", contextType: "staff", signupUrl: "https://example.com/signup" } as any)
+    expect(typeof html).toBe("string")
+    expect(html).toContain("<!DOCTYPE html>")
+  })
+
+  it("emailVerificationTemplate delegates to emailBodyTemplates.emailVerification", async () => {
+    const { emailVerificationTemplate } = await import("@/lib/email-templates")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const html = emailVerificationTemplate({ userName: "Frank", email: "frank@example.com", verificationUrl: "https://example.com/verify", expiresInMinutes: 30 } as any)
+    expect(typeof html).toBe("string")
+    expect(html).toContain("<!DOCTYPE html>")
+  })
+
+  it("dailySummaryTemplate delegates to emailBodyTemplates.dailySummary", async () => {
+    const { dailySummaryTemplate } = await import("@/lib/email-templates")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const html = dailySummaryTemplate({ ownerName: "Grace", date: new Date(), paymentsReceived: 10000, paymentsCount: 3, expensesTotal: 2000, expensesCount: 1, pendingDues: 5000, pendingCount: 2, occupancyRate: 85, newTenants: 1, exits: 0, openComplaints: 0, whatsappMessage: "Test" } as any)
+    expect(typeof html).toBe("string")
+    expect(html).toContain("<!DOCTYPE html>")
+  })
+
+  it("libraryExpiringMembershipTemplate delegates to emailBodyTemplates.libraryExpiringMembership", async () => {
+    const { libraryExpiringMembershipTemplate } = await import("@/lib/email-templates")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const html = libraryExpiringMembershipTemplate({ memberName: "Hank", libraryName: "Study Hub", expiryDate: new Date(), daysRemaining: 3, planName: "9 Hours Plan", hoursRemaining: 27 } as any)
+    expect(typeof html).toBe("string")
+    expect(html).toContain("<!DOCTYPE html>")
+  })
+
+  it("libraryExpiredMembershipTemplate delegates to emailBodyTemplates.libraryExpiredMembership", async () => {
+    const { libraryExpiredMembershipTemplate } = await import("@/lib/email-templates")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const html = libraryExpiredMembershipTemplate({ memberName: "Iris", libraryName: "Study Hub", expiryDate: new Date(), planName: "9 Hours Plan", hoursRemaining: 0 } as any)
+    expect(typeof html).toBe("string")
+    expect(html).toContain("<!DOCTYPE html>")
+  })
 })
