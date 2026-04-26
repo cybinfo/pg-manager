@@ -13,7 +13,7 @@ export function PublicFooter({ variant = "full" }: PublicFooterProps) {
     return (
       <footer className="py-8 px-4 border-t mt-12">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} ManageKar. Made with &#10084;&#65039; in India.</p>
+          <p suppressHydrationWarning>&copy; {new Date().getFullYear()} ManageKar. Made with &#10084;&#65039; in India.</p>
         </div>
       </footer>
     )
@@ -66,7 +66,7 @@ export function PublicFooter({ variant = "full" }: PublicFooterProps) {
         </div>
 
         <div className="border-t border-muted-foreground/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground" suppressHydrationWarning>
             &copy; {new Date().getFullYear()} ManageKar. Made with &#10084;&#65039; in India.
           </p>
           <p className="text-sm text-muted-foreground">
