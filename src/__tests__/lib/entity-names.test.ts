@@ -92,6 +92,14 @@ describe('getEntityTableName', () => {
     expect(getEntityTableName('Bogus Entity')).toBeUndefined()
   })
 
+  it('returns a key via second pass when no plural/underscore key matches', () => {
+    // "Person" has both "person" (no s, no _) and "people" (no s, no _) keys.
+    // Neither satisfies the first-pass condition, so the second pass runs.
+    const result = getEntityTableName('Person')
+    expect(result).toBeDefined()
+    expect(['person', 'people'].includes(result!)).toBe(true)
+  })
+
   it('returns table name for Library Member', () => {
     expect(getEntityTableName('Library Member')).toBe('library_members')
   })
