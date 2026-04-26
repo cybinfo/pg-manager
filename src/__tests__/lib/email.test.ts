@@ -417,3 +417,215 @@ describe("send functions — exception catch path", () => {
     expect(r.error).toContain("Network error")
   })
 })
+
+// ============================================================================
+// Resend error path — remaining functions not covered above
+// ============================================================================
+
+describe("send functions — Resend error path (remaining)", () => {
+  beforeAll(() => {
+    process.env = { ...ORIG_ENV, RESEND_API_KEY: "test-key" }
+  })
+
+  afterAll(() => {
+    process.env = ORIG_ENV
+  })
+
+  beforeEach(() => {
+    resetMocks()
+    mockSendResendError()
+  })
+
+  it("sendPaymentReceipt returns failure on Resend error", async () => {
+    const r = await sendPaymentReceipt(PAYMENT_RECEIPT_DATA)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendInvitationEmail returns failure on Resend error", async () => {
+    const r = await sendInvitationEmail(INVITATION_DATA)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendVerificationEmail returns failure on Resend error", async () => {
+    const r = await sendVerificationEmail(VERIFICATION_DATA)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendDailySummary returns failure on Resend error", async () => {
+    const r = await sendDailySummary(DAILY_SUMMARY_DATA)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendLibraryExpiredMembership returns failure on Resend error", async () => {
+    const r = await sendLibraryExpiredMembership(LIB_EXPIRED)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendLibraryMemberWelcomeEmail returns failure on Resend error", async () => {
+    const r = await sendLibraryMemberWelcomeEmail(LIB_MEMBER_WELCOME)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendLibraryRenewalReminder returns failure on Resend error", async () => {
+    const r = await sendLibraryRenewalReminder(LIB_RENEWAL_REMINDER)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendLibraryPaymentReceiptEmail returns failure on Resend error", async () => {
+    const r = await sendLibraryPaymentReceiptEmail(LIB_PAYMENT_RECEIPT)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendComplaintResolvedEmail returns failure on Resend error", async () => {
+    const r = await sendComplaintResolvedEmail(COMPLAINT_RESOLVED)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendRefundProcessedEmail returns failure on Resend error", async () => {
+    const r = await sendRefundProcessedEmail(REFUND_PROCESSED)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendWaitlistSeatAvailableEmail returns failure on Resend error", async () => {
+    const r = await sendWaitlistSeatAvailableEmail(WAITLIST_SEAT_AVAILABLE)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendMonthlyAttendanceSummary returns failure on Resend error", async () => {
+    const r = await sendMonthlyAttendanceSummary(MONTHLY_ATTENDANCE)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendLibraryExpiringMembership returns failure on Resend error", async () => {
+    const r = await sendLibraryExpiringMembership(LIB_EXPIRING)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+
+  it("sendTenantWelcomeEmail returns failure on Resend error", async () => {
+    const r = await sendTenantWelcomeEmail(TENANT_WELCOME)
+    expect(r.success).toBe(false)
+    expect(r.error).toBe("Invalid API key")
+  })
+})
+
+// ============================================================================
+// Exception catch path — remaining functions not covered above
+// ============================================================================
+
+describe("send functions — exception catch path (remaining)", () => {
+  beforeAll(() => {
+    process.env = { ...ORIG_ENV, RESEND_API_KEY: "test-key" }
+  })
+
+  afterAll(() => {
+    process.env = ORIG_ENV
+  })
+
+  beforeEach(() => {
+    resetMocks()
+    mockSendThrows()
+  })
+
+  it("sendOverdueAlert catches exception", async () => {
+    const r = await sendOverdueAlert(OVERDUE_ALERT_DATA)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendPaymentReceipt catches exception", async () => {
+    const r = await sendPaymentReceipt(PAYMENT_RECEIPT_DATA)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendInvitationEmail catches exception", async () => {
+    const r = await sendInvitationEmail(INVITATION_DATA)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendTestEmail catches exception", async () => {
+    const r = await sendTestEmail("t@t.com", "Bob")
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendVerificationEmail catches exception", async () => {
+    const r = await sendVerificationEmail(VERIFICATION_DATA)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendDailySummary catches exception", async () => {
+    const r = await sendDailySummary(DAILY_SUMMARY_DATA)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendLibraryLowHoursWarning catches exception", async () => {
+    const r = await sendLibraryLowHoursWarning(LIB_LOW_HOURS)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendLibraryExpiredMembership catches exception", async () => {
+    const r = await sendLibraryExpiredMembership(LIB_EXPIRED)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendLibraryMemberWelcomeEmail catches exception", async () => {
+    const r = await sendLibraryMemberWelcomeEmail(LIB_MEMBER_WELCOME)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendLibraryRenewalReminder catches exception", async () => {
+    const r = await sendLibraryRenewalReminder(LIB_RENEWAL_REMINDER)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendLibraryPaymentReceiptEmail catches exception", async () => {
+    const r = await sendLibraryPaymentReceiptEmail(LIB_PAYMENT_RECEIPT)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendComplaintResolvedEmail catches exception", async () => {
+    const r = await sendComplaintResolvedEmail(COMPLAINT_RESOLVED)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendRefundProcessedEmail catches exception", async () => {
+    const r = await sendRefundProcessedEmail(REFUND_PROCESSED)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendWaitlistSeatAvailableEmail catches exception", async () => {
+    const r = await sendWaitlistSeatAvailableEmail(WAITLIST_SEAT_AVAILABLE)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+
+  it("sendCronFailureAlert catches exception", async () => {
+    const r = await sendCronFailureAlert(CRON_FAILURE)
+    expect(r.success).toBe(false)
+    expect(r.error).toContain("Network error")
+  })
+})
