@@ -33,6 +33,7 @@ function LoginForm() {
   const [contexts, setContexts] = useState<ContextWithDetails[]>([])
   const [userName, setUserName] = useState<string>('')
   const [resendLoading, setResendLoading] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   const supabase = createClient()
   const mountedRef = useRef(true)
@@ -130,11 +131,18 @@ function LoginForm() {
       })
 
       if (otpError) {
-        showError("Failed to send verification email. Please try again.")
+        if (otpError.status === 429) {
+          showError("Too many attempts — please wait 60 seconds and try again.")
+          startResendCooldown()
+          setStep('email-sent')
+        } else {
+          showError("Failed to send verification email. Please try again.")
+        }
         return
       }
 
       showSuccess("Verification email sent")
+      startResendCooldown()
       setStep('email-sent')
     } catch {
       showError("An unexpected error occurred")
@@ -143,7 +151,18 @@ function LoginForm() {
     }
   }
 
+  const startResendCooldown = () => {
+    setResendCooldown(60)
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) { clearInterval(interval); return 0 }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
   const handleResendLink = async () => {
+    if (resendCooldown > 0) return
     setResendLoading(true)
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -153,8 +172,17 @@ function LoginForm() {
           emailRedirectTo: window.location.origin + '/api/auth/callback',
         },
       })
-      if (error) showError("Failed to resend. Please try again.")
-      else showSuccess("New link sent to your email")
+      if (error) {
+        if (error.status === 429) {
+          showError("Too many attempts — please wait 60 seconds before trying again.")
+          startResendCooldown()
+        } else {
+          showError("Failed to resend. Please try again.")
+        }
+      } else {
+        showSuccess("New link sent to your email")
+        startResendCooldown()
+      }
     } finally {
       setResendLoading(false)
     }
@@ -218,10 +246,10 @@ function LoginForm() {
             <button
               type="button"
               onClick={handleResendLink}
-              className="text-primary hover:underline"
-              disabled={resendLoading}
+              className="text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+              disabled={resendLoading || resendCooldown > 0}
             >
-              {resendLoading ? "Sending..." : "Resend link"}
+              {resendLoading ? "Sending..." : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend link"}
             </button>
           </p>
         </CardContent>
@@ -323,8 +351,8 @@ function LoginForm() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <SubmitButton loading={loading} className="w-full" loadingText="Signing in...">
-            Sign in
+          <SubmitButton loading={loading} disabled={loading || resendCooldown > 0} className="w-full" loadingText="Signing in...">
+            {resendCooldown > 0 ? `Please wait ${resendCooldown}s…` : "Sign in"}
           </SubmitButton>
           <p className="text-sm text-center text-muted-foreground">
             Don&apos;t have an account?{" "}
