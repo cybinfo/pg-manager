@@ -52,6 +52,7 @@ import {
   ListOrdered,
   QrCode,
   BookOpen,
+  RefreshCw,
   type LucideIcon,
 } from "lucide-react"
 import type { FeatureFlagKey } from "@/lib/features"
@@ -154,6 +155,7 @@ export const TENANT_NAVIGATION: SimpleNavItem[] = [
   { name: "My Bills", href: "/tenant/bills", icon: FileText },
   { name: "Payments", href: "/tenant/payments", icon: CreditCard },
   { name: "Documents", href: "/tenant/documents", icon: FolderOpen },
+  { name: "Renewal", href: "/tenant/renewal", icon: RefreshCw },
   { name: "Complaints", href: "/tenant/complaints", icon: MessageSquare },
   { name: "Notices", href: "/tenant/notices", icon: Bell },
 ]
@@ -166,6 +168,7 @@ export const LIBRARY_MEMBER_NAVIGATION: SimpleNavItem[] = [
   { name: "Home", href: "/member", icon: Home },
   { name: "My Profile", href: "/member/profile", icon: User },
   { name: "Attendance", href: "/member/attendance", icon: Clock },
+  { name: "My Locker", href: "/member/locker", icon: Lock },
   { name: "Payments", href: "/member/payments", icon: CreditCard },
   { name: "My QR Code", href: "/member/qr", icon: QrCode },
 ]

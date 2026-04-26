@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock, CheckCircle, Calendar, Timer, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
+import { ExportButton } from "@/components/ui/export-button"
 import { formatDate } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 
@@ -99,9 +100,22 @@ export default function MemberAttendancePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold">Attendance History</h1>
-        <p className="text-muted-foreground">Your check-in and check-out records</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">Attendance History</h1>
+          <p className="text-muted-foreground">Your check-in and check-out records</p>
+        </div>
+        <ExportButton
+          data={attendance as unknown as Record<string, unknown>[]}
+          filename="my-attendance"
+          columns={[
+            { key: "attendance_date", header: "Date", format: (v) => formatDate(v as string) },
+            { key: "check_in_time", header: "Check In", format: (v) => v ? new Date(v as string).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "" },
+            { key: "check_out_time", header: "Check Out", format: (v) => v ? new Date(v as string).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "" },
+            { key: "hours_spent", header: "Hours", format: (v) => v != null ? `${(v as number).toFixed(1)}h` : "" },
+            { key: "notes", header: "Notes", format: (v) => (v as string) || "" },
+          ]}
+        />
       </div>
 
       {/* Stats */}

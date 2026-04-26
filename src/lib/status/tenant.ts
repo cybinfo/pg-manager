@@ -38,6 +38,7 @@ export const APPROVAL_TYPE_LABELS: Record<string, string> = {
   payment_dispute: "Payment Dispute",
   tenancy_issue: "Tenancy Issue",
   room_issue: "Room Issue",
+  lease_renewal: "Lease Renewal",
 }
 
 export const APPROVAL_PRIORITY: Record<string, string> = {
