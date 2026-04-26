@@ -3,7 +3,19 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
 import { getNowISO } from "@/lib/date-helpers"
-import { parsePositiveNumber, formatMonthYear} from "@/lib/format"
+import { formatMonthYear } from "@/lib/format"
+import {
+  buildRentLineItem,
+  buildChargeLineItem,
+  shouldIncludeCharge,
+  sumLineItems,
+  calculatePreviousBalance,
+  calculateDueDate,
+  calculateBillingPeriod,
+  shouldSkipBillingDay,
+  alreadyGeneratedThisMonth,
+  type LineItem,
+} from "@/lib/billing/generate-bills.helpers"
 
 interface AutoBillingSettings {
   enabled: boolean
@@ -16,12 +28,6 @@ interface AutoBillingSettings {
   auto_reminder_enabled?: boolean
   reminder_days_before?: number
   last_generated_month: string | null
-}
-
-interface LineItem {
-  type: string
-  description: string
-  amount: number
 }
 
 export const GET = (request: Request) =>
@@ -47,14 +53,10 @@ export const GET = (request: Request) =>
       for (const config of configs || []) {
         const settings = config.auto_billing_settings as AutoBillingSettings
 
-        // Skip if not enabled
+        // Skip if not enabled, wrong day, or already generated this month
         if (!settings?.enabled) continue
-
-        // Check if today is the billing day
-        if (currentDay !== settings.billing_day) continue
-
-        // Check if already generated for this month
-        if (settings.last_generated_month === currentMonth) {
+        if (shouldSkipBillingDay(currentDay, settings.billing_day)) continue
+        if (alreadyGeneratedThisMonth(settings.last_generated_month, currentMonth)) {
           cronLogger.debug("Already generated this month", { ownerId: config.owner_id })
           continue
         }
@@ -98,33 +100,21 @@ export const GET = (request: Request) =>
 
         for (const tenant of tenants || []) {
           try {
-            // CQ-006: Validate tenant has monthly rent set
-            const monthlyRent = parsePositiveNumber(tenant.monthly_rent)
-            if (!monthlyRent) {
+            // Build line items — rent first, then pending charges
+            const rentItem = buildRentLineItem(tenant.monthly_rent, currentMonth)
+            if (!rentItem) {
               cronLogger.warn("Tenant missing valid monthly rent, skipping", {
                 tenantId: tenant.id,
                 tenantName: tenant.name,
                 monthlyRent: tenant.monthly_rent,
               })
-              errors.push({
-                tenant_id: tenant.id,
-                error: "Missing or invalid monthly rent",
-              })
+              errors.push({ tenant_id: tenant.id, error: "Missing or invalid monthly rent" })
               billsFailed++
               continue
             }
+            const lineItems: LineItem[] = [rentItem]
 
-            // Build line items
-            const lineItems: LineItem[] = []
-
-            // Add monthly rent
-            lineItems.push({
-              type: "Rent",
-              description: `Monthly Rent - ${currentMonth}`,
-              amount: monthlyRent,
-            })
-
-            // Get pending charges if enabled
+            // Append pending charges if enabled
             if (settings.include_pending_charges) {
               const { data: charges } = await supabaseAdmin
                 .from("charges")
@@ -134,39 +124,30 @@ export const GET = (request: Request) =>
                 .is("bill_id", null)
 
               for (const charge of charges || []) {
-                // CQ-006: Skip charges with invalid amounts
-                const chargeAmount = parsePositiveNumber(charge.amount)
-                if (!chargeAmount) {
+                const chargeType = transformJoin(charge.charge_type) as { name?: string; code?: string } | null
+
+                if (!shouldIncludeCharge(chargeType, settings.included_charge_types)) {
+                  cronLogger.debug("Skipping excluded charge type", {
+                    tenantId: tenant.id,
+                    chargeTypeCode: chargeType?.code,
+                  })
+                  continue
+                }
+
+                const chargeItem = buildChargeLineItem(charge.amount, chargeType, charge.for_period, currentMonth)
+                if (!chargeItem) {
                   cronLogger.debug("Skipping charge with invalid amount", {
                     tenantId: tenant.id,
                     chargeAmount: charge.amount,
                   })
                   continue
                 }
-                // Use transformJoin for consistent handling of Supabase joins
-                const chargeType = transformJoin(charge.charge_type) as { name?: string; code?: string } | null
-
-                // Skip charge types excluded by per-type settings
-                if (settings.included_charge_types && chargeType?.code) {
-                  if (settings.included_charge_types[chargeType.code] === false) {
-                    cronLogger.debug("Skipping excluded charge type", {
-                      tenantId: tenant.id,
-                      chargeTypeCode: chargeType.code,
-                    })
-                    continue
-                  }
-                }
-
-                lineItems.push({
-                  type: chargeType?.name || "Charge",
-                  description: charge.for_period || currentMonth,
-                  amount: chargeAmount,
-                })
+                lineItems.push(chargeItem)
               }
             }
 
             // Calculate totals
-            const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0)
+            const subtotal = sumLineItems(lineItems)
 
             // Get previous balance from unpaid bills
             const { data: unpaidBills } = await supabaseAdmin
@@ -176,25 +157,10 @@ export const GET = (request: Request) =>
               .gt("balance_due", 0)
               .neq("status", "paid")
 
-            // CQ-006: Safely calculate previous balance with null checks
-            const previousBalance = (unpaidBills || []).reduce(
-              (sum, bill) => {
-                const balanceDue = parsePositiveNumber(bill.balance_due)
-                return sum + (balanceDue ?? 0)
-              },
-              0
-            )
-
+            const previousBalance = calculatePreviousBalance(unpaidBills || [])
             const totalAmountDue = subtotal + previousBalance
-
-            // Calculate due date and grace period deadline
-            const dueDate = new Date(today)
-            dueDate.setDate(dueDate.getDate() + settings.due_day_offset)
-            const _gracePeriodDays = settings.grace_period_days ?? 7
-
-            // Calculate period
-            const periodStart = new Date(today.getFullYear(), today.getMonth(), 1)
-            const periodEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+            const dueDateStr = calculateDueDate(today, settings.due_day_offset)
+            const { periodStart, periodEnd } = calculateBillingPeriod(today)
 
             // Generate bill number
             const { data: billNumber } = await supabaseAdmin.rpc("get_next_bill_number", {
@@ -208,9 +174,9 @@ export const GET = (request: Request) =>
               property_id: tenant.property_id,
               bill_number: billNumber || `INV-${Date.now()}`,
               bill_date: today.toISOString().split("T")[0],
-              due_date: dueDate.toISOString().split("T")[0],
-              period_start: periodStart.toISOString().split("T")[0],
-              period_end: periodEnd.toISOString().split("T")[0],
+              due_date: dueDateStr,
+              period_start: periodStart,
+              period_end: periodEnd,
               for_month: currentMonth,
               subtotal: subtotal,
               previous_balance: previousBalance,
