@@ -177,4 +177,12 @@ describe("emailSubjects", () => {
       expect(subject).toContain("City Library")
     })
   })
+
+  describe("testEmail", () => {
+    it("returns a non-empty string with ManageKar app name", () => {
+      const subject = emailSubjects.testEmail()
+      expect(subject).toContain("ManageKar")
+      expect(subject.length).toBeGreaterThan(0)
+    })
+  })
 })

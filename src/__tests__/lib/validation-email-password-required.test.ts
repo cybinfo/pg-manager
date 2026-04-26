@@ -163,6 +163,16 @@ describe("validatePassword", () => {
     it("valid password always has non-null strength", () => {
       expect(validatePassword("abc123").strength).toBeTruthy()
     })
+
+    it("password with score 4 (length + upper + lower + digit) scores 'good' (line 106)", () => {
+      // "MyPass123": length>=8(+1), no 12+, upper(+1), lower(+1), digit(+1), no special → score=4
+      expect(validatePassword("MyPass123").strength).toBe("good")
+    })
+
+    it("password without lowercase scores correctly (line 101 false branch)", () => {
+      // "MYPASS123!": length>=8(+1), upper(+1), NO lower(+0), digit(+1), special(+1) → score=4 → 'good'
+      expect(validatePassword("MYPASS123!").strength).toBe("good")
+    })
   })
 })
 

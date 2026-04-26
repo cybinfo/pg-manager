@@ -145,4 +145,20 @@ describe("useConfirmDialog", () => {
     const el = result.current.ConfirmDialogElement as React.ReactElement
     expect(el.props.title).toBe("Second")
   })
+
+  it("onOpenChange(false) closes the dialog (line 51)", () => {
+    const { result } = renderHook(() => useConfirmDialog())
+    act(() => {
+      result.current.confirm({ title: "Delete", description: "Sure?", onConfirm: () => {} })
+    })
+    expect((result.current.ConfirmDialogElement as React.ReactElement).props.open).toBe(true)
+
+    // Invoke the onOpenChange callback directly (simulates dialog requesting to close)
+    act(() => {
+      const el = result.current.ConfirmDialogElement as React.ReactElement
+      el.props.onOpenChange(false)
+    })
+
+    expect((result.current.ConfirmDialogElement as React.ReactElement).props.open).toBe(false)
+  })
 })

@@ -523,3 +523,16 @@ describe("emailBodyTemplates.monthlyAttendanceSummary", () => {
     expect(html).toContain("#F0FDF4")
   })
 })
+
+describe("emailBodyTemplates.testEmail", () => {
+  it("contains owner name in greeting", () => {
+    const html = emailBodyTemplates.testEmail({ ownerName: "Rajat Seth" })
+    expect(html).toContain("Rajat Seth")
+    expect(html).toContain("<div")
+  })
+
+  it("contains ManageKar branding", () => {
+    const html = emailBodyTemplates.testEmail({ ownerName: "Owner" })
+    expect(html).toContain("ManageKar")
+  })
+})
