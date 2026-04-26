@@ -34,6 +34,7 @@ function LoginForm() {
   const [userName, setUserName] = useState<string>('')
   const [resendLoading, setResendLoading] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const supabase = createClient()
   const mountedRef = useRef(true)
@@ -94,6 +95,10 @@ function LoginForm() {
 
     return () => {
       mountedRef.current = false
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current)
+        cooldownIntervalRef.current = null
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -152,10 +157,15 @@ function LoginForm() {
   }
 
   const startResendCooldown = () => {
+    if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current)
     setResendCooldown(60)
-    const interval = setInterval(() => {
+    cooldownIntervalRef.current = setInterval(() => {
       setResendCooldown((prev) => {
-        if (prev <= 1) { clearInterval(interval); return 0 }
+        if (prev <= 1) {
+          if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current)
+          cooldownIntervalRef.current = null
+          return 0
+        }
         return prev - 1
       })
     }, 1000)
