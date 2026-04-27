@@ -211,22 +211,18 @@ describe("resetOrder", () => {
 // ============================================================================
 
 describe("localStorage error handling", () => {
-  it("handles getItem throwing during load (line 38 catch block)", () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {})
+  it("handles getItem throwing during load — falls back to default state silently", () => {
     const getItemSpy = jest.spyOn(Storage.prototype, "getItem").mockImplementationOnce(() => {
       throw new Error("storage unavailable")
     })
 
     const { result } = renderHook(() => useSidebarOrder())
 
+    // Falls back to default state — no console.error (errors are silently ignored)
     expect(result.current.isLoaded).toBe(true)
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to load"),
-      expect.any(Error)
-    )
+    expect(result.current.order).toEqual({ mainOrder: [], childOrder: {} })
 
     getItemSpy.mockRestore()
-    consoleError.mockRestore()
   })
 
   it("handles setItem throwing during save (line 49 catch block)", () => {

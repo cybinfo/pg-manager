@@ -21,24 +21,20 @@ const DEFAULT_STATE: SidebarOrderState = {
   childOrder: {},
 }
 
-export function useSidebarOrder() {
-  const [order, setOrder] = useState<SidebarOrderState>(DEFAULT_STATE)
-  const [isLoaded, setIsLoaded] = useState(false)
+function readStoredOrder(): SidebarOrderState {
+  if (typeof window === "undefined") return DEFAULT_STATE
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) return JSON.parse(stored) as SidebarOrderState
+  } catch {
+    // ignore
+  }
+  return DEFAULT_STATE
+}
 
-  // Load order from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setOrder(parsed)
-      }
-    } catch (error) {
-      console.error("Failed to load sidebar order:", error)
-    }
-    setIsLoaded(true)
-  }, [])
+export function useSidebarOrder() {
+  const [order, setOrder] = useState<SidebarOrderState>(readStoredOrder)
+  const isLoaded = true
 
   // Save order to localStorage
   const saveOrder = useCallback((newOrder: SidebarOrderState) => {

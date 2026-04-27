@@ -568,6 +568,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => {
       mountedRef.current = false
+      initializingRef.current = false
       clearTimeout(authTimeout)
       subscription.unsubscribe()
     }
