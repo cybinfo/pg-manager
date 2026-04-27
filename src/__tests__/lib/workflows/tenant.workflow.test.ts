@@ -82,7 +82,7 @@ function makeChain(result: { data: unknown; error: unknown; count?: number }) {
   const methods = [
     "select", "eq", "neq", "order", "limit", "single",
     "gte", "lte", "lt", "or", "in", "is",
-    "insert", "update", "delete", "upsert",
+    "insert", "update", "delete", "upsert", "catch",
   ]
   methods.forEach((m) => { chain[m] = jest.fn(() => chain) })
   chain.then = (onFulfilled: (v: unknown) => unknown) =>
@@ -487,6 +487,25 @@ describe("createTenant — optional steps", () => {
     )
     expect(result.success).toBe(true)
     expect(mockFrom).toHaveBeenCalledWith("tenant_documents")
+  })
+
+  it("warns but continues when tenant_documents insert fails (optional)", async () => {
+    const callCounts: Record<string, number> = {}
+    mockFrom.mockImplementation((table: string) => {
+      callCounts[table] = (callCounts[table] || 0) + 1
+      if (table === "rooms") return makeChain({ data: callCounts.rooms === 1 ? mockRoom : null, error: null })
+      if (table === "tenants") return makeChain({ data: mockTenant, error: null })
+      if (table === "tenant_stays") return makeChain({ data: mockStay, error: null })
+      if (table === "tenant_documents") return makeChain({ data: null, error: { message: "constraint violation" } })
+      return makeChain({ data: null, error: null })
+    })
+    setupCreateTenantRpcs()
+    const result = await createTenant(
+      { ...validCreateInput, id_documents: [{ id_type: "aadhaar", id_number: "1234" }] },
+      ACTOR_ID, "owner", WORKSPACE_ID
+    )
+    // save_documents is optional — workflow succeeds despite insert error
+    expect(result.success).toBe(true)
   })
 
   it("fires bill notification when bill generated and email provided", async () => {

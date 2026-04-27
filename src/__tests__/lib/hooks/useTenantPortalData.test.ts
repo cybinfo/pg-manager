@@ -37,7 +37,7 @@ jest.mock("@/lib/hooks/usePortalData", () => ({
 // ============================================================================
 
 import { renderHook, act } from "@testing-library/react"
-import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
+import { useTenantPortalData, TENANT_PORTAL_CONFIG } from "@/lib/hooks/useTenantPortalData"
 
 // ============================================================================
 // Helpers
@@ -221,5 +221,18 @@ describe("useTenantPortalData — combined loading", () => {
     await act(async () => {})
 
     expect(result.current.loading).toBe(false)
+  })
+})
+
+// ============================================================================
+// TENANT_PORTAL_CONFIG.postTransform (line 112)
+// ============================================================================
+
+describe("TENANT_PORTAL_CONFIG.postTransform", () => {
+  it("returns the data passed through as TenantPortalTenant", () => {
+    const raw = { id: "t1", name: "Alice" } as Record<string, unknown>
+    // postTransform is a pure identity/type cast
+    const result = TENANT_PORTAL_CONFIG.postTransform(raw)
+    expect(result).toBe(raw)
   })
 })

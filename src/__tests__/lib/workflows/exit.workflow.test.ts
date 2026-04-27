@@ -230,6 +230,20 @@ describe("initiateExitClearance — fetch failures", () => {
     expect(result.success).toBe(false)
   })
 
+  it("returns failure when create_clearance_record fetch throws non-AbortError (line 339)", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeFetchResponse([mockTenantData])) // validate_tenant OK
+      .mockResolvedValueOnce(makeFetchResponse([]))               // clearance check — none
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))    // create_clearance_record → non-AbortError
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "bills") return makeChain({ data: [], error: null })
+      if (table === "tenants") return makeChain({ data: null, error: null })
+      return makeChain({ data: null, error: null })
+    })
+    const result = await initiateExitClearance(validExitInput, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(false)
+  })
+
   it("returns failure when create clearance fetch returns non-ok status", async () => {
     mockFetch
       .mockResolvedValueOnce(makeFetchResponse([mockTenantData])) // validate tenant

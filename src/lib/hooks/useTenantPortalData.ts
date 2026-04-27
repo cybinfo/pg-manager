@@ -98,7 +98,7 @@ export interface UseTenantPortalDataReturn {
 // CONFIG
 // ============================================================================
 
-const TENANT_PORTAL_CONFIG = {
+export const TENANT_PORTAL_CONFIG = {
   table: "tenants" as const,
   select: `
     *,
