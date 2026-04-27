@@ -295,3 +295,39 @@ describe("updateSession — return value", () => {
     expect(response).toBe(fakeResponse)
   })
 })
+
+// ============================================================================
+// setAll cookie path (lines 16-26) — triggered when Supabase refreshes session
+// ============================================================================
+
+describe("updateSession — setAll cookie callback", () => {
+  it("executes setAll to propagate refreshed session cookies to request and response", async () => {
+    type CookieEntry = { name: string; value: string; options?: Record<string, unknown> }
+    let capturedSetAll: ((cookies: CookieEntry[]) => void) | null = null
+
+    mockCreateServerClient.mockImplementation((_url, _key, config: { cookies: { getAll: () => CookieEntry[]; setAll: (c: CookieEntry[]) => void } }) => {
+      capturedSetAll = config.cookies.setAll
+      // Call getAll to cover that branch (line 16)
+      config.cookies.getAll()
+      return {
+        auth: {
+          getUser: jest.fn().mockImplementation(async () => {
+            // Simulate Supabase refreshing the session and setting cookies
+            capturedSetAll?.([{ name: "sb-access-token", value: "tok-123", options: { path: "/" } }])
+            return { data: { user: null }, error: null }
+          }),
+        },
+      } as never
+    })
+
+    const req = makeRequest("/about")
+    // Add .set to the mock request cookies (needed by the setAll callback)
+    const mockCookieSet = jest.fn()
+    ;(req.cookies as Record<string, unknown>).set = mockCookieSet
+
+    await updateSession(req)
+
+    expect(capturedSetAll).not.toBeNull()
+    expect(mockCookieSet).toHaveBeenCalledWith("sb-access-token", "tok-123")
+  })
+})

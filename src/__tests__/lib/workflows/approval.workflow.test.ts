@@ -889,3 +889,265 @@ describe("bulkReject", () => {
     expect(result.failed).toBe(0)
   })
 })
+
+// ============================================================================
+// processApproval — bill_dispute: new_due_date, waive_late_fee, overdue clear
+// ============================================================================
+
+describe("processApproval — bill_dispute additional branches", () => {
+  beforeEach(() => { jest.clearAllMocks() })
+
+  const makeBillApproval = (payload: Record<string, unknown> = { bill_id: "b1" }) =>
+    makePendingApproval("bill_dispute", payload)
+
+  function setupBillMock(billData: Record<string, unknown>, updateError: { message: string } | null = null) {
+    const callCounts: Record<string, number> = {}
+    mockFrom.mockImplementation((table: string) => {
+      callCounts[table] = (callCounts[table] || 0) + 1
+      if (table === "approvals") return makeChain({ data: callCounts.approvals === 1 ? makeBillApproval() : null, error: null })
+      if (table === "bills") {
+        if (callCounts.bills === 1) return makeChain({ data: billData, error: null })
+        return makeChain({ data: null, error: updateError })
+      }
+      return makeChain({ data: null, error: null })
+    })
+  }
+
+  it("updates due_date when new_due_date is provided", async () => {
+    setupBillMock({ id: "b1", total_amount: 5000, balance_due: 5000, late_fee: 0, notes: null, status: "pending" })
+    const result = await processApproval(
+      { approval_id: "a1", decision: "approved", new_due_date: "2026-06-01" },
+      ACTOR_ID, "owner", WORKSPACE_ID
+    )
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("due_date_updated")
+  })
+
+  it("waives late fee when waive_late_fee is true and late_fee > 0", async () => {
+    setupBillMock({ id: "b1", total_amount: 5100, balance_due: 5100, late_fee: 100, notes: null, status: "pending" })
+    const result = await processApproval(
+      { approval_id: "a1", decision: "approved", waive_late_fee: true },
+      ACTOR_ID, "owner", WORKSPACE_ID
+    )
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("late_fee_waived")
+  })
+
+  it("clears overdue status when bill is overdue and new_due_date is in future", async () => {
+    setupBillMock({ id: "b1", total_amount: 5000, balance_due: 5000, late_fee: 0, notes: null, status: "overdue" })
+    const futureDue = new Date()
+    futureDue.setDate(futureDue.getDate() + 10)
+    const result = await processApproval(
+      { approval_id: "a1", decision: "approved", new_due_date: futureDue.toISOString().split("T")[0] },
+      ACTOR_ID, "owner", WORKSPACE_ID
+    )
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("overdue_status_cleared")
+  })
+
+  it("returns error when bill update fails", async () => {
+    setupBillMock({ id: "b1", total_amount: 5000, balance_due: 5000, late_fee: 0, notes: null, status: "pending" }, { message: "DB write error" })
+    const result = await processApproval(
+      { approval_id: "a1", decision: "approved", adjustment_amount: 100 },
+      ACTOR_ID, "owner", WORKSPACE_ID
+    )
+    expect(result.success).toBe(false)
+  })
+})
+
+// ============================================================================
+// processApproval — payment_dispute: no payment_id + dispute type branches
+// ============================================================================
+
+describe("processApproval — payment_dispute branches", () => {
+  beforeEach(() => { jest.clearAllMocks() })
+
+  it("returns acknowledged_manual_review when no payment_id in payload", async () => {
+    const approval = makePendingApproval("payment_dispute", {}) // no payment_id
+    const callCounts: Record<string, number> = {}
+    mockFrom.mockImplementation((table: string) => {
+      callCounts[table] = (callCounts[table] || 0) + 1
+      if (table === "approvals") return makeChain({ data: callCounts.approvals === 1 ? approval : null, error: null })
+      return makeChain({ data: null, error: null })
+    })
+    const result = await processApproval(
+      { approval_id: "a1", decision: "approved" },
+      ACTOR_ID, "owner", WORKSPACE_ID
+    )
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("payment_dispute_acknowledged_manual_review")
+  })
+
+  function setupPaymentMock(paymentData: Record<string, unknown> | null, disputeType: string) {
+    const approval = makePendingApproval("payment_dispute", { payment_id: "p1", dispute_type: disputeType, claimed_amount: "4000" })
+    const callCounts: Record<string, number> = {}
+    mockFrom.mockImplementation((table: string) => {
+      callCounts[table] = (callCounts[table] || 0) + 1
+      if (table === "approvals") return makeChain({ data: callCounts.approvals === 1 ? approval : null, error: null })
+      if (table === "payments") return makeChain({ data: paymentData, error: null })
+      return makeChain({ data: null, error: null })
+    })
+  }
+
+  it("marks payment disputed for payment_not_received type", async () => {
+    setupPaymentMock({ id: "p1", amount: 5000, notes: null }, "payment_not_received")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("payment_marked_disputed")
+  })
+
+  it("notes discrepancy for wrong_amount type", async () => {
+    setupPaymentMock({ id: "p1", amount: 5000, notes: null }, "wrong_amount")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("amount_discrepancy_noted")
+  })
+
+  it("flags duplicate payment for duplicate_payment type", async () => {
+    setupPaymentMock({ id: "p1", amount: 5000, notes: null }, "duplicate_payment")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("duplicate_payment_flagged")
+  })
+
+  it("acknowledges unknown dispute type with default action", async () => {
+    setupPaymentMock({ id: "p1", amount: 5000, notes: null }, "unknown_dispute_type")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("payment_dispute_acknowledged")
+  })
+
+  it("returns manual_review when payment not found", async () => {
+    setupPaymentMock(null, "payment_not_received")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("payment_not_found_manual_review")
+  })
+})
+
+// ============================================================================
+// processApproval — tenancy_issue handler
+// ============================================================================
+
+describe("processApproval — tenancy_issue handler", () => {
+  beforeEach(() => { jest.clearAllMocks() })
+
+  function setupTenancyMock(issueType: string, payload: Record<string, unknown> = {}) {
+    const approval = makePendingApproval("tenancy_issue", { issue_type: issueType, ...payload })
+    const callCounts: Record<string, number> = {}
+    mockFrom.mockImplementation((table: string) => {
+      callCounts[table] = (callCounts[table] || 0) + 1
+      if (table === "approvals") return makeChain({ data: callCounts.approvals === 1 ? approval : null, error: null })
+      return makeChain({ data: null, error: null })
+    })
+  }
+
+  it("logs and revises rent for rent_revision", async () => {
+    setupTenancyMock("rent_revision", { new_rent: "6000" })
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("rent_revised")
+  })
+
+  it("acknowledges deposit dispute", async () => {
+    setupTenancyMock("deposit_dispute")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("deposit_dispute_acknowledged")
+  })
+
+  it("updates agreement end date for agreement_modification", async () => {
+    setupTenancyMock("agreement_modification", { new_end_date: "2027-01-01" })
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("agreement_end_date_updated")
+  })
+
+  it("resolves generic issue type with default action", async () => {
+    setupTenancyMock("noise_complaint")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("issue_resolved")
+  })
+})
+
+// ============================================================================
+// processApproval — room_issue handler
+// ============================================================================
+
+describe("processApproval — room_issue handler", () => {
+  beforeEach(() => { jest.clearAllMocks() })
+
+  it("returns acknowledged_no_room when no room_id in payload", async () => {
+    const approval = makePendingApproval("room_issue", {}) // no room_id
+    const callCounts: Record<string, number> = {}
+    mockFrom.mockImplementation((table: string) => {
+      callCounts[table] = (callCounts[table] || 0) + 1
+      if (table === "approvals") return makeChain({ data: callCounts.approvals === 1 ? approval : null, error: null })
+      return makeChain({ data: null, error: null })
+    })
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("room_issue_acknowledged_no_room_specified")
+  })
+
+  function setupRoomIssueMock(issueType: string) {
+    const approval = makePendingApproval("room_issue", { room_id: "r1", issue_type: issueType })
+    const callCounts: Record<string, number> = {}
+    mockFrom.mockImplementation((table: string) => {
+      callCounts[table] = (callCounts[table] || 0) + 1
+      if (table === "approvals") return makeChain({ data: callCounts.approvals === 1 ? approval : null, error: null })
+      if (table === "rooms") return makeChain({ data: { id: "r1", notes: null }, error: null })
+      return makeChain({ data: null, error: null })
+    })
+  }
+
+  it("logs and acknowledges maintenance issue", async () => {
+    setupRoomIssueMock("maintenance")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("maintenance_acknowledged")
+  })
+
+  it("processes amenity_request", async () => {
+    setupRoomIssueMock("amenity_request")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("amenity_request_processed")
+  })
+
+  it("addresses cleanliness issue", async () => {
+    setupRoomIssueMock("cleanliness")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("cleanliness_issue_addressed")
+  })
+
+  it("resolves unknown room issue with default action", async () => {
+    setupRoomIssueMock("other_room_issue")
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("room_issue_resolved")
+  })
+})
+
+// ============================================================================
+// processApproval — unknown approval type (handler not found)
+// ============================================================================
+
+describe("processApproval — unknown approval type", () => {
+  beforeEach(() => { jest.clearAllMocks() })
+
+  it("returns manual_handling action for an unrecognised approval type", async () => {
+    const approval = makePendingApproval("completely_unknown_type" as never)
+    const callCounts: Record<string, number> = {}
+    mockFrom.mockImplementation((table: string) => {
+      callCounts[table] = (callCounts[table] || 0) + 1
+      if (table === "approvals") return makeChain({ data: callCounts.approvals === 1 ? approval : null, error: null })
+      return makeChain({ data: null, error: null })
+    })
+    const result = await processApproval({ approval_id: "a1", decision: "approved" }, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(true)
+    expect(result.data?.cascading_actions).toContain("unknown_type_manual_handling")
+  })
+})
