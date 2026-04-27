@@ -89,4 +89,17 @@ export default withPWA({
   aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
   disable: process.env.NODE_ENV === "development",
+  // Force new SW to take over immediately (clears stale caches on deploy)
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true,
+    // Never serve HTML pages from cache — always go to network
+    // This prevents the SW from returning homepage HTML for /login, /dashboard, etc.
+    runtimeCaching: [
+      {
+        urlPattern: ({ request }: { request: Request }) => request.mode === "navigate",
+        handler: "NetworkOnly" as const,
+      },
+    ],
+  },
 })(nextConfig);
