@@ -839,6 +839,7 @@ export const AUDIT_EVENT_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = 
   defaultOrderDirection: "desc",
   searchFields: ["action", "entity_type", "actor_email", "actor_name"],
   defaultPageSize: 50,
+  includeSoftDeleted: true,
   computedFields: (item: Record<string, unknown>) => {
     const date = item.occurred_at ? new Date(item.occurred_at as string) : new Date()
     return {

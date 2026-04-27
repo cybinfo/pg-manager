@@ -43,7 +43,7 @@ export function ChartContainer({
 
   return (
     <div className={className} style={{ height, minHeight }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         {children}
       </ResponsiveContainer>
     </div>

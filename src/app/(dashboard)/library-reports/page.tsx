@@ -933,7 +933,7 @@ export default function LibraryReportsPage() {
                   onExport={() => handleExportCSV("revenue")}
                 >
                   <div className="h-[250px] sm:h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <LineChart data={reportData.monthlyRevenue}>
                         <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                         <YAxis
@@ -984,7 +984,7 @@ export default function LibraryReportsPage() {
                   description="Check-ins over the last 7 days"
                 >
                   <div className="h-[220px] sm:h-[250px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <BarChart data={reportData.dailyAttendance}>
                         <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                         <YAxis tick={{ fontSize: 11 }} />
@@ -1071,7 +1071,7 @@ export default function LibraryReportsPage() {
                   exportLabel="Export"
                 >
                   <div className="h-[250px] sm:h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <BarChart data={reportData.libraryStats} margin={{ bottom: 30 }}>
                         <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" />
                         <YAxis tick={{ fontSize: 11 }} width={55} tickFormatter={formatTickValue} />
@@ -1260,7 +1260,7 @@ export default function LibraryReportsPage() {
                       emptyMessage="No payments in selected period"
                     >
                       <div className="h-[250px] sm:h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                           <BarChart data={paymentReportData.revenueByPeriod}>
                             <XAxis dataKey="period" tick={{ fontSize: 11 }} />
                             <YAxis tick={{ fontSize: 11 }} width={55} tickFormatter={formatTickValue} />

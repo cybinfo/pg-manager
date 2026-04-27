@@ -529,7 +529,7 @@ export default function ReportsPage() {
           description="Top expense categories for the period"
         >
           <div className="h-[250px] sm:h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={reportData.expensesByCategory} layout="vertical">
                 <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(value: number) => {
                   if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
@@ -564,7 +564,7 @@ export default function ReportsPage() {
           description="Bills by payment status"
         >
           <div className="h-[220px] sm:h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart
                 data={[
                   { name: "Paid", value: reportData.collectionEfficiency.onTime, fill: "#10B981" },
@@ -610,7 +610,7 @@ export default function ReportsPage() {
         height={128}
       >
         <div className="h-[250px] sm:h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart data={reportData.propertyStats} margin={{ bottom: 30 }}>
               <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" />
               <YAxis tick={{ fontSize: 11 }} width={55} tickFormatter={(value: number) => {

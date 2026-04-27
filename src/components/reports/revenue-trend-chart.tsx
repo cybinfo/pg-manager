@@ -53,7 +53,7 @@ export function RevenueTrendChart({
       </CardHeader>
       <CardContent className="p-3 sm:p-6">
         <div className="h-[250px] sm:h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <LineChart data={data}>
               <XAxis dataKey="month" tick={{ fontSize: 11 }} />
               <YAxis
