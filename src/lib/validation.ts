@@ -54,10 +54,14 @@ export function requiredPhone(label: string): (value: unknown) => ValidatorResul
   return (value: unknown) => {
     const str = String(value ?? "").trim()
     if (!str) {
-      return { isValid: false, error: `${label} is required` }
+      return { isValid: false, error: `${label} is required — enter a 10-digit mobile number` }
     }
-    if (!/^\d{10}$/.test(str.replace(/\D/g, ""))) {
-      return { isValid: false, error: `${label} must be a valid 10-digit number` }
+    const digits = str.replace(/\D/g, "")
+    if (digits.length !== 10) {
+      return { isValid: false, error: `Enter a valid 10-digit mobile number (you entered ${digits.length} digits)` }
+    }
+    if (!/^[6-9]/.test(digits)) {
+      return { isValid: false, error: `Indian mobile numbers must start with 6, 7, 8, or 9` }
     }
     return null
   }
@@ -67,8 +71,11 @@ export function requiredPhone(label: string): (value: unknown) => ValidatorResul
 export function requiredAmount(label: string): (value: unknown) => ValidatorResult {
   return (value: unknown) => {
     const num = Number(value)
-    if (!value || isNaN(num) || num <= 0) {
-      return { isValid: false, error: `${label} must be a positive amount` }
+    if (!value && value !== 0) {
+      return { isValid: false, error: `Enter an amount greater than 0` }
+    }
+    if (isNaN(num) || num <= 0) {
+      return { isValid: false, error: `${label} must be a number greater than 0` }
     }
     return null
   }
@@ -78,7 +85,7 @@ export function requiredAmount(label: string): (value: unknown) => ValidatorResu
 export function requiredDate(label: string): (value: unknown) => ValidatorResult {
   return (value: unknown) => {
     if (!String(value ?? "").trim()) {
-      return { isValid: false, error: `${label} is required` }
+      return { isValid: false, error: `${label} is required — select a date to continue` }
     }
     return null
   }
@@ -88,8 +95,14 @@ export function requiredDate(label: string): (value: unknown) => ValidatorResult
 export function requiredPositiveInt(label: string): (value: unknown) => ValidatorResult {
   return (value: unknown) => {
     const num = Number(value)
-    if (!value || isNaN(num) || num < 1 || !Number.isInteger(num)) {
-      return { isValid: false, error: `${label} must be a positive whole number` }
+    if (!value && value !== 0) {
+      return { isValid: false, error: `Enter a whole number (e.g., 1, 2, 3)` }
+    }
+    if (isNaN(num) || !Number.isInteger(num)) {
+      return { isValid: false, error: `${label} must be a whole number, not a decimal` }
+    }
+    if (num < 1) {
+      return { isValid: false, error: `${label} must be at least 1` }
     }
     return null
   }

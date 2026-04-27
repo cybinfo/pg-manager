@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
+import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Currency } from "@/components/ui/currency"
 import { ArrowLeft, Users, Loader2, CreditCard, UserCheck, Trash2, Plus } from "lucide-react"
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
@@ -681,7 +682,7 @@ function NewLibraryMemberContent() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Plan Selection */}
-              <FormField label="Subscription Plan" error={errors.plan_id}>
+              <FormField label="Subscription Plan" error={errors.plan_id} tooltip="The plan defines the daily hours allowance and base price. You can override the amount below."  >
                 <Combobox
                   options={planOptions}
                   value={formData.plan_id}
@@ -706,7 +707,7 @@ function NewLibraryMemberContent() {
                     disabled={saving}
                   />
                 </FormField>
-                <FormField label="Duration (Months)" htmlFor="duration_months" required hint={computedEndDate ? `Ends: ${formatDate(computedEndDate)}` : undefined}>
+                <FormField label="Duration (Months)" htmlFor="duration_months" required hint={computedEndDate ? `Ends: ${formatDate(computedEndDate)}` : undefined} tooltip="How many months this subscription is valid for. The end date is calculated automatically."  >
                   <Input
                     id="duration_months"
                     name="duration_months"
@@ -723,7 +724,10 @@ function NewLibraryMemberContent() {
 
               {/* Access Schedule (Multi-Slot Time Input) */}
               <div className="space-y-3">
-                <Label>Access Schedule (optional)</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label>Access Schedule (optional)</Label>
+                  <HelpTooltip content="Define when this member is allowed to study. Each time slot is a daily window (e.g., 9 AM–12 PM). Members can have multiple non-overlapping slots per day." />
+                </div>
                 <div className="border rounded-lg p-3 space-y-3">
                   {formData.time_slots.map((slot: TimeSlot, idx: number) => {
                     const slotHours = calcSlotHours(slot)

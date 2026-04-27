@@ -56,7 +56,7 @@ import {
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
 import { showSuccess } from "@/lib/toast-helpers"
 import { ThemeToggleSidebar } from "@/components/ui/theme-toggle"
-import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
+import { PWAInstallPrompt, PWAInstallButton } from "@/components/pwa-install-prompt"
 import { AuthProvider, useAuth, useCurrentContext } from "@/lib/auth"
 import { ContextSwitcher, SessionTimeout } from "@/components/auth"
 import { DemoModeProvider, DemoBanner, DemoWatermark } from "@/lib/demo-mode"
@@ -66,6 +66,7 @@ import { useFeatures } from "@/lib/features/use-features"
 import { FeatureFlagKey } from "@/lib/features"
 import { getPathPermissions, getPathFeatures, DASHBOARD_MOBILE_NAV, filterNavigation } from "@/lib/navigation/config"
 import { brandGradient } from "@/lib/design-tokens"
+import { NotificationBell } from "@/components/ui/notification-bell"
 
 // Navigation item type with optional children for sub-menus
 type NavItem = {
@@ -676,6 +677,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 </Link>
               </>
             )}
+            {/* PWA Install — only shows on Chrome/Android when app is installable */}
+            <PWAInstallButton />
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
@@ -704,7 +707,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           <div className="flex-1" />
 
           {/* Context switcher and user menu */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Notification bell */}
+            <NotificationBell />
             {/* Context Switcher - show if user has multiple contexts */}
             {contexts.length > 1 && (
               <ContextSwitcher />

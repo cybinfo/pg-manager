@@ -445,6 +445,11 @@ describe("requiredPhone", () => {
     expect(validate("12345")?.error).toContain("10-digit")
   })
 
+  it("returns error for phone starting with 5 (non-Indian)", () => {
+    expect(validate("5876543210")?.isValid).toBe(false)
+    expect(validate("5876543210")?.error).toContain("6, 7, 8, or 9")
+  })
+
   it("accepts phone with non-digit separators when result is 10 digits (strips them)", () => {
     // "98765-43210" → after removing non-digits: "9876543210" (10 digits) → valid
     expect(validate("98765-43210")).toBeNull()

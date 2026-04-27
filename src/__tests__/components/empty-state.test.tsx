@@ -82,7 +82,8 @@ describe('EmptyState', () => {
   describe('variants', () => {
     it('renders default variant', () => {
       const { container } = render(<EmptyState title="Empty" variant="default" />)
-      expect(container.querySelector('.bg-slate-100')).not.toBeNull()
+      // Default variant uses brand gradient (rounded-2xl icon container)
+      expect(container.querySelector('.rounded-2xl')).not.toBeNull()
     })
 
     it('renders search variant', () => {

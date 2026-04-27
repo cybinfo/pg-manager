@@ -2,7 +2,9 @@
 
 > **MANDATORY**: Every AI session, code review, feature addition, improvement, or architectural decision MUST begin by reading this document in full. No change should violate or compromise these principles. They apply to the **entire platform and every individual module** without exception.
 >
-> **Last Updated**: 2026-04-25
+> **For any UI change**: Also read [`BRANDING.md`](./BRANDING.md) — the complete design system and visual language reference. No UI change ships without following it.
+>
+> **Last Updated**: 2026-04-27
 
 ---
 
@@ -791,14 +793,17 @@ This applies universally — PG, Library, School, Hotel, and every future domain
 
 ## F. User Experience
 
+> **Brand & Design System**: Every UI decision follows [`BRANDING.md`](./BRANDING.md) — the single source of truth for visual language, component patterns, spacing, typography, animation, accessibility, and interaction design. **Read `BRANDING.md` before touching any UI component, page, or style.** The principles below define the *what*; `BRANDING.md` defines the *how*.
+
 ### F1. Next-Level UI — World-Class, Not Generic
 
-ManageKar looks and feels like a world-class product — not generic SaaS, not a dashboard template, not a "good enough for SMBs" interface.
+ManageKar looks and feels like a world-class product — not generic SaaS, not a dashboard template, not a "good enough for SMBs" interface. The benchmark is Apple, Linear, Notion, and Stripe — products where every pixel is intentional.
 
-- Brand design system: teal/amber gradient, centralized in `design-tokens.ts` — never deviated from
-- Every component, spacing, color, and transition is intentional and deliberate
+- **Brand design system**: teal/amber gradient, centralized in `design-tokens.ts` — never deviated from. Full system documented in `BRANDING.md`.
+- Every component, spacing, color, and transition is intentional and deliberate — following the 8px grid, semantic color tokens, and Inter typography scale
 - Empty states, loading states, and error states are fully designed — never bare spinners or raw text
 - The UI must signal to every business owner who opens it: "this was built for you, at the highest standard"
+- **Anti-patterns are explicitly banned** — full list in `BRANDING.md` Anti-Patterns section. No magic numbers, no hardcoded colors, no raw HTML selects, no unexplained z-index values.
 
 As new Domain Modules are added, they inherit the full design system automatically. There is no "new module aesthetic" — there is only the ManageKar aesthetic.
 

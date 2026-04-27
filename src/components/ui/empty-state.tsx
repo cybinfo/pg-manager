@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { brandGradient } from "@/lib/design-tokens"
 import {
   LucideIcon,
   Plus,
@@ -45,8 +46,9 @@ export function EmptyState({
   const variantConfig = {
     default: {
       icon: Inbox,
-      iconBg: "bg-slate-100",
-      iconColor: "text-slate-400",
+      // Brand gradient icon container — signals "add something" vs error
+      iconBg: null, // uses gradient
+      iconColor: "text-white",
     },
     search: {
       icon: Search,
@@ -61,13 +63,14 @@ export function EmptyState({
     minimal: {
       icon: FolderOpen,
       iconBg: "bg-muted",
-      iconColor: "text-slate-300",
+      iconColor: "text-muted-foreground",
     },
   }
 
   const config = variantConfig[variant]
   const Icon = CustomIcon || config.icon
   const ActionIcon = action?.icon || Plus
+  const isDefault = variant === "default"
 
   return (
     <div
@@ -78,10 +81,13 @@ export function EmptyState({
       role="status"
       aria-live="polite"
     >
-      <div className={cn(
-        "p-4 rounded-full mb-4",
-        config.iconBg
-      )} aria-hidden="true">
+      <div
+        className={cn(
+          "p-4 rounded-2xl mb-4 shadow-sm",
+          isDefault ? `${brandGradient.solid} ${brandGradient.shadow}` : config.iconBg
+        )}
+        aria-hidden="true"
+      >
         <Icon className={cn("h-10 w-10", config.iconColor)} />
       </div>
 

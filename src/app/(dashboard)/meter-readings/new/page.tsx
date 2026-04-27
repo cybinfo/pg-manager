@@ -524,7 +524,7 @@ function NewMeterReadingContent() {
                 </div>
               ) : null}
 
-              <FormField label="Current Reading" required error={errors.reading_value}>
+              <FormField label="Current Reading" required error={errors.reading_value} tooltip="Enter the number shown on the meter dial right now. Units consumed = current reading minus previous reading."  >
                 <div className="relative">
                   <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input

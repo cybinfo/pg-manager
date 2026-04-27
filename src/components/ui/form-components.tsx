@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { ChevronDown, LucideIcon, Mail, Calendar, Search } from "lucide-react"
+import { HelpTooltip } from "@/components/ui/help-tooltip"
 
 // ============================================
 // Form Field Wrapper
@@ -15,6 +16,7 @@ interface FormFieldProps {
   required?: boolean
   error?: string
   hint?: string
+  tooltip?: string
   action?: React.ReactNode
   children: React.ReactNode
   className?: string
@@ -26,6 +28,7 @@ export function FormField({
   required,
   error,
   hint,
+  tooltip,
   action,
   children,
   className
@@ -51,11 +54,14 @@ export function FormField({
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
-        <Label htmlFor={fieldId} className="text-sm font-medium">
-          {label}
-          {required && <span className="text-destructive ml-1" aria-hidden="true">*</span>}
-          {required && <span className="sr-only">(required)</span>}
-        </Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor={fieldId} className="text-sm font-medium">
+            {label}
+            {required && <span className="text-destructive ml-1" aria-hidden="true">*</span>}
+            {required && <span className="sr-only">(required)</span>}
+          </Label>
+          {tooltip && <HelpTooltip content={tooltip} />}
+        </div>
         {action}
       </div>
       {enhancedChildren}

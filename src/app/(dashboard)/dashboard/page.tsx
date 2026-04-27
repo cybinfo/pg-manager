@@ -412,7 +412,9 @@ export default function DashboardPage() {
               {greeting.text}{userName ? `, ${userName}` : ""}!
             </h1>
             <p className="text-muted-foreground">
-              Here&apos;s what&apos;s happening with your PG today.
+              {isOwner
+                ? "Here's your business overview for today."
+                : "Here's your operational summary for today."}
             </p>
           </div>
         </div>
