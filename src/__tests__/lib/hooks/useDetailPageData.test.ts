@@ -679,6 +679,101 @@ describe("useDetailPageData — related joinFields", () => {
   })
 })
 
+describe("useDetailPageData — related joinFields edge cases", () => {
+  it("handles null relatedData (covers relatedData || [] fallback)", async () => {
+    mockCreateClient.mockReturnValue(
+      buildClient(
+        { data: { id: "t1" }, error: null },
+        { payments: { data: null, error: null } }
+      )
+    )
+
+    const { result } = renderData({
+      config: {
+        relatedQueries: [{
+          key: "payments",
+          table: "payments",
+          select: "*",
+          foreignKey: "tenant_id",
+          joinFields: ["charge_type"],
+        }],
+      },
+    })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    // null relatedData → falls back to [] → no joinField transform runs
+    expect(result.current.related.payments).toEqual([])
+  })
+
+  it("skips joinField when field is absent from item (covers !== undefined false branch)", async () => {
+    const relData = [{ id: "pay1" }] // no charge_type field
+    mockCreateClient.mockReturnValue(
+      buildClient(
+        { data: { id: "t1" }, error: null },
+        { payments: { data: relData, error: null } }
+      )
+    )
+
+    const { result } = renderData({
+      config: {
+        relatedQueries: [{
+          key: "payments",
+          table: "payments",
+          select: "*",
+          foreignKey: "tenant_id",
+          joinFields: ["charge_type"],
+        }],
+      },
+    })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    // transformJoin should NOT be called since field is absent
+    expect(mockTransformJoin).not.toHaveBeenCalledWith(undefined)
+    const payments = result.current.related.payments as Array<Record<string, unknown>>
+    expect(payments[0]).not.toHaveProperty("charge_type")
+  })
+
+  it("handles non-Error object thrown in related query catch (covers JSON.stringify branch)", async () => {
+    const plainObj = { code: 500, detail: "DB error" }
+    mockCreateClient.mockImplementation(() => {
+      const normalClient = buildClient({ data: { id: "t1" }, error: null })
+      const origFrom = normalClient.from
+      return {
+        ...normalClient,
+        from: jest.fn().mockImplementation((table: string) => {
+          const chain = origFrom(table)
+          if (table === "payments") {
+            return {
+              ...chain,
+              then: (_onFulfilled: unknown, onRejected: ((r: unknown) => unknown) | undefined) =>
+                Promise.reject(plainObj).catch(onRejected),
+              catch: (onRejected: (r: unknown) => unknown) => Promise.reject(plainObj).catch(onRejected),
+              select: jest.fn().mockReturnThis(),
+              eq: jest.fn().mockReturnThis(),
+              order: jest.fn().mockReturnThis(),
+            }
+          }
+          return chain
+        }),
+      }
+    })
+
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {})
+    const { result } = renderData({
+      config: {
+        relatedQueries: [{
+          key: "payments",
+          table: "payments",
+          select: "*",
+          foreignKey: "tenant_id",
+        }],
+      },
+    })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    consoleSpy.mockRestore()
+    // Error was caught — related should be empty array
+    expect(result.current.related.payments).toEqual([])
+  })
+})
+
 describe("useDetailPageData — refetch", () => {
   it("exposes a refetch function", async () => {
     mockCreateClient.mockReturnValue(
