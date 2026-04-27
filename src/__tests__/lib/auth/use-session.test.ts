@@ -600,6 +600,30 @@ describe("useSession — auto-refresh timer", () => {
     expect(mockRefreshSession).toHaveBeenCalled()
     unmount()
   })
+
+  it("fires scheduled refresh timer after delay (covers setTimeout callback)", async () => {
+    sessionSuccess()
+    // 600s remaining, 300s buffer → refreshIn = 300000ms
+    mockGetTimeUntilExpiry.mockReturnValue(600000)
+    mockRefreshSession.mockResolvedValue({ session: mockSession, user: mockSession.user, error: null })
+    mockIsSessionExpired.mockReturnValue(false)
+
+    const { unmount } = renderHook(() => useSession({ autoRefresh: true }))
+    await act(async () => {})
+
+    // Timer is set but not yet fired
+    expect(mockRefreshSession).toHaveBeenCalledTimes(0)
+
+    // Advance past the scheduled refresh delay
+    await act(async () => {
+      jest.advanceTimersByTime(300001)
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(mockRefreshSession).toHaveBeenCalled()
+    unmount()
+  })
 })
 
 // ============================================================================

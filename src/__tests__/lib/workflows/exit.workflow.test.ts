@@ -206,6 +206,30 @@ describe("initiateExitClearance — fetch failures", () => {
     expect(result.success).toBe(false)
   })
 
+  it("returns failure when validate_tenant fetch times out (AbortError)", async () => {
+    const abortError = new Error("The operation was aborted")
+    abortError.name = "AbortError"
+    mockFetch.mockRejectedValueOnce(abortError)
+    const result = await initiateExitClearance(validExitInput, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(false)
+  })
+
+  it("returns failure when create_clearance_record fetch times out (AbortError)", async () => {
+    const abortError = new Error("The operation was aborted")
+    abortError.name = "AbortError"
+    mockFetch
+      .mockResolvedValueOnce(makeFetchResponse([mockTenantData])) // validate_tenant OK
+      .mockResolvedValueOnce(makeFetchResponse([]))               // clearance check — none
+      .mockRejectedValueOnce(abortError)                          // create_clearance_record → AbortError
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "bills") return makeChain({ data: [], error: null })
+      if (table === "tenants") return makeChain({ data: null, error: null })
+      return makeChain({ data: null, error: null })
+    })
+    const result = await initiateExitClearance(validExitInput, ACTOR_ID, "owner", WORKSPACE_ID)
+    expect(result.success).toBe(false)
+  })
+
   it("returns failure when create clearance fetch returns non-ok status", async () => {
     mockFetch
       .mockResolvedValueOnce(makeFetchResponse([mockTenantData])) // validate tenant
@@ -589,6 +613,34 @@ describe("completeExitClearance — success path", () => {
       ACTOR_ID, "owner", WORKSPACE_ID
     )
     expect(result.success).toBe(false)
+  })
+
+  it("warns but continues when tenant_stay update fails (optional step)", async () => {
+    let stayCallCount = 0
+    const callCounts: Record<string, number> = {}
+    mockFrom.mockImplementation((table: string) => {
+      callCounts[table] = (callCounts[table] || 0) + 1
+      if (table === "exit_clearance") {
+        if (callCounts.exit_clearance === 1) return makeChain({ data: mockClearance, error: null })
+        return makeChain({ data: null, error: null })
+      }
+      if (table === "tenants") return makeChain({ data: null, error: null })
+      if (table === "tenant_stays") {
+        stayCallCount++
+        if (stayCallCount === 1) return makeChain({ data: { id: "s1" }, error: null }) // SELECT → stay found
+        return makeChain({ data: null, error: { message: "locked" } }) // UPDATE → fails
+      }
+      if (table === "rooms") return makeChain({ data: [{ id: "r1", occupied_beds: 1 }], error: null })
+      if (table === "refunds") return makeChain({ data: { id: "ref1" }, error: null })
+      return makeChain({ data: null, error: null })
+    })
+    const result = await completeExitClearance(
+      { clearance_id: "c1", actual_exit_date: "2026-04-30" },
+      ACTOR_ID, "owner", WORKSPACE_ID
+    )
+    // optional step — warns but workflow still succeeds
+    expect(result.success).toBe(true)
+    expect(stayCallCount).toBe(2) // both SELECT and UPDATE were called
   })
 
   it("calculates refund with array deductions (positive net amount)", async () => {

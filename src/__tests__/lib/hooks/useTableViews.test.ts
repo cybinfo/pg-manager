@@ -233,6 +233,34 @@ describe("createView — success", () => {
   })
 })
 
+describe("createView — insert error", () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockRpc.mockResolvedValue({ data: null, error: null })
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+  })
+
+  it("returns null and shows error when insert throws", async () => {
+    const orderChain = makeOrderChain({ data: [], error: null })
+    const singleFn = jest.fn().mockResolvedValue({ data: null, error: { message: "insert failed" } })
+    const selectFn = jest.fn(() => ({ single: singleFn }))
+    const insertFn = jest.fn(() => ({ select: selectFn }))
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "table_views") return { ...orderChain, insert: insertFn }
+      return orderChain
+    })
+    const { result } = renderHook(() => useTableViews({ tableKey: "tenants" }))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    let res: unknown
+    await act(async () => {
+      res = await result.current.createView({ name: "Bad View", config: { columns: [], sort: null, filters: {} } })
+    })
+    expect(res).toBeNull()
+    expect(mockShowError).toHaveBeenCalledWith("Failed to save view")
+  })
+})
+
 describe("createView — no user", () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -494,6 +522,19 @@ describe("applyView", () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
     act(() => { result.current.applyView("nonexistent") })
     expect(mockShowError).toHaveBeenCalledWith("View not found")
+  })
+
+  it("silently ignores error in recordUsage (usage tracking not critical)", async () => {
+    // RPC throws — recordUsage catch block should swallow the error
+    mockRpc.mockRejectedValue(new Error("rpc error"))
+    const view = makeView({ id: "v1" })
+    mockFrom.mockReturnValue(makeOrderChain({ data: [view], error: null }))
+    const { result } = renderHook(() => useTableViews({ tableKey: "tenants" }))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    act(() => { result.current.applyView("v1") })
+    // Let recordUsage promise settle — error should be swallowed
+    await act(async () => { await Promise.resolve() })
+    expect(result.current.activeViewId).toBe("v1") // applyView still succeeded
   })
 })
 
