@@ -1,18 +1,12 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `pg-manager-static-${CACHE_VERSION}`;
-const DYNAMIC_CACHE = `pg-manager-dynamic-${CACHE_VERSION}`;
 const IMAGE_CACHE = `pg-manager-images-${CACHE_VERSION}`;
 
-// Maximum number of entries in dynamic and image caches
-const MAX_DYNAMIC_CACHE_ITEMS = 50;
+// Maximum number of entries in image cache
 const MAX_IMAGE_CACHE_ITEMS = 100;
 
-// Assets to cache on install
+// Assets to cache on install (only non-HTML static resources)
 const STATIC_ASSETS = [
-  '/',
-  '/dashboard',
-  '/login',
-  '/register',
   '/manifest.json',
   '/icons/icon.svg',
   '/icons/icon-192x192.png',
@@ -31,7 +25,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  const currentCaches = [STATIC_CACHE, DYNAMIC_CACHE, IMAGE_CACHE];
+  const currentCaches = [STATIC_CACHE, IMAGE_CACHE];
 
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -105,37 +99,11 @@ function cacheFirst(event, cacheName, maxItems) {
   );
 }
 
-// Strategy: Network-first (for HTML pages and dynamic content)
-function networkFirst(event) {
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const responseClone = response.clone();
-
-        if (response.status === 200) {
-          caches.open(DYNAMIC_CACHE).then((cache) => {
-            cache.put(event.request, responseClone);
-            trimCache(DYNAMIC_CACHE, MAX_DYNAMIC_CACHE_ITEMS);
-          });
-        }
-
-        return response;
-      })
-      .catch(() => {
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-
-          // Return cached root page for navigation requests (offline fallback)
-          if (event.request.mode === 'navigate') {
-            return caches.match('/');
-          }
-
-          return new Response('Offline', { status: 503 });
-        });
-      })
-  );
+// Strategy: Network-only (for HTML pages and Next.js RSC payloads)
+// Never cache HTML — stale HTML + new JS causes React reconciliation crashes (removeChild errors)
+// Static assets use content-hash filenames so cache-first is safe; HTML is not safe
+function networkOnly(event) {
+  event.respondWith(fetch(event.request));
 }
 
 // Fetch event - route requests to appropriate strategy
@@ -160,8 +128,8 @@ self.addEventListener('fetch', (event) => {
     return cacheFirst(event, IMAGE_CACHE, MAX_IMAGE_CACHE_ITEMS);
   }
 
-  // Everything else (HTML pages, navigation) - network-first
-  return networkFirst(event);
+  // HTML pages and Next.js RSC payloads - network-only, never cache
+  return networkOnly(event);
 });
 
 // Handle push notifications (for future use)
