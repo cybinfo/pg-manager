@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Bell, CheckCheck, Inbox } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useNotifications } from "@/lib/hooks/useNotifications"
+import { useAuth } from "@/lib/auth"
 import { formatTimeAgo } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -22,7 +23,26 @@ function notificationStyle(type: string) {
 }
 
 export function NotificationBell() {
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications()
+  const { profile } = useAuth()
+  const inAppEnabled = profile?.preferences?.notifications?.in_app ?? true
+  const typePrefs = profile?.preferences?.notifications
+
+  const { notifications: allNotifications, isLoading, markAsRead, markAllAsRead } = useNotifications()
+
+  // Filter by user's type preferences
+  const notifications = inAppEnabled
+    ? allNotifications.filter((n) => {
+        if (!typePrefs) return true
+        if (n.type === "payment" || n.type === "bill") return typePrefs.payment_reminders ?? true
+        if (n.type === "complaint") return typePrefs.complaint_updates ?? true
+        if (n.type === "approval") return typePrefs.approval_updates ?? true
+        if (n.type === "notice") return typePrefs.notice_updates ?? true
+        if (n.type === "system") return typePrefs.system_alerts ?? true
+        return true
+      })
+    : []
+
+  const unreadCount = notifications.filter((n) => !n.read).length
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 

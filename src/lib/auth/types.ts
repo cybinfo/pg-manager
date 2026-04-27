@@ -49,8 +49,13 @@ export interface UserPreferences {
     email: boolean
     sms: boolean
     push: boolean
+    in_app: boolean
+    whatsapp: boolean
     payment_reminders: boolean
     complaint_updates: boolean
+    approval_updates: boolean
+    notice_updates: boolean
+    system_alerts: boolean
   }
 }
 

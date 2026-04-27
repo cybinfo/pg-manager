@@ -67,6 +67,7 @@ import { FeatureFlagKey } from "@/lib/features"
 import { getPathPermissions, getPathFeatures, DASHBOARD_MOBILE_NAV, filterNavigation } from "@/lib/navigation/config"
 import { brandGradient } from "@/lib/design-tokens"
 import { NotificationBell } from "@/components/ui/notification-bell"
+import { UserMenu } from "@/components/ui/user-menu"
 
 // Navigation item type with optional children for sub-menus
 type NavItem = {
@@ -728,11 +729,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               <p className="text-sm font-medium">{displayName}</p>
               <p className="text-xs text-muted-foreground">{displayEmail}</p>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full" aria-label="User profile">
-              <div className={`h-9 w-9 rounded-full ${brandGradient.solid} flex items-center justify-center text-white text-sm font-medium shadow-md ${brandGradient.shadow}`}>
-                {displayName[0].toUpperCase()}
-              </div>
-            </Button>
+            <UserMenu
+              displayName={displayName}
+              displayEmail={displayEmail}
+              onLogout={logout}
+            />
           </div>
         </header>
 
