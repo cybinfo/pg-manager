@@ -34,6 +34,7 @@ function LoginForm() {
   const [userName, setUserName] = useState<string>('')
   const [resendLoading, setResendLoading] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [emailActuallySent, setEmailActuallySent] = useState(false)
   const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const supabase = createClient()
@@ -142,7 +143,8 @@ function LoginForm() {
 
       if (otpError) {
         if (otpError.status === 429) {
-          showError("Too many attempts — please wait 60 seconds and try again.")
+          showError("A sign-in link was recently sent — check your inbox (or spam).")
+          setEmailActuallySent(false)
           startResendCooldown()
           setStep('email-sent')
         } else {
@@ -152,6 +154,7 @@ function LoginForm() {
       }
 
       showSuccess("Verification email sent")
+      setEmailActuallySent(true)
       startResendCooldown()
       setStep('email-sent')
     } catch {
@@ -250,11 +253,17 @@ function LoginForm() {
     return (
       <AuthCardLayout
         title="Check your email"
-        description={`We sent a login link to ${email}`}
+        description={
+          emailActuallySent
+            ? `We sent a login link to ${email}`
+            : `A sign-in link was recently sent to ${email}`
+        }
       >
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground text-center">
-            Click the link in the email to complete sign in. Check your spam folder if you don&apos;t see it.
+            {emailActuallySent
+              ? "Click the link in the email to complete sign in. Check your spam folder if you don't see it."
+              : "Check your inbox (and spam folder) for a recent sign-in link. If you don't find one, wait a moment and resend."}
           </p>
           <p className="text-sm text-muted-foreground text-center">
             Didn&apos;t receive it?{" "}
