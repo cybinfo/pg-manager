@@ -554,6 +554,144 @@ describe("data fetcher error paths — each table returns error", () => {
 })
 
 // ============================================================================
+// Coverage gap fills — specific uncovered lines
+// ============================================================================
+
+describe("coverage gap fills", () => {
+  beforeEach(() => { jest.clearAllMocks() })
+
+  it("fetchMeterReadings success path — returns transformArrayJoins result (line 496)", async () => {
+    let tenantCallCount = 0
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "tenants") {
+        tenantCallCount++
+        if (tenantCallCount === 1) return makeChain({ data: makeTenant(), error: null })
+        return makeChain({ data: { room_id: "room-123" }, error: null })
+      }
+      if (table === "meter_readings") {
+        return makeChain({ data: [{ id: "mr1", reading: 100, reading_date: "2026-04-26", charge_type: null }], error: null })
+      }
+      return makeChain(EMPTY)
+    })
+    const result = await getTenantJourney({ tenant_id: "t1", workspace_id: "ws1" })
+    expect(result.success).toBe(true)
+    // transformArrayJoins was called — meter reading data is in events
+    const meterEvents = result.data!.events.filter(e => e.source_table === "meter_readings")
+    expect(meterEvents.length).toBeGreaterThan(0)
+  })
+
+  it("calculateFinancialSummary — refunds reducers with completed/pending/processing statuses (lines 1250-1254)", async () => {
+    setupInsightsScenario({
+      billsData: [],
+      paymentsData: [],
+      refundsData: [
+        { id: "r1", status: "completed", amount: 1000 },
+        { id: "r2", status: "pending", amount: 500 },
+        { id: "r3", status: "processing", amount: 300 },
+        { id: "r4", status: "failed", amount: 200 },
+      ],
+    })
+    const result = await getTenantJourney({
+      tenant_id: "t1", workspace_id: "ws1",
+      include_financial: true,
+    })
+    expect(result.success).toBe(true)
+    expect(result.data!.financial!.total_refunds_processed).toBe(1000)
+    expect(result.data!.financial!.pending_refunds).toBe(800) // 500 + 300
+  })
+
+  it("calculateFinancialSummary — pending bills sort comparator (line 1235)", async () => {
+    setupInsightsScenario({
+      billsData: [
+        { id: "b1", status: "pending", due_date: "2026-05-01", balance_due: 5000,
+          total_amount: 5000, paid_amount: 0 },
+        { id: "b2", status: "partial", due_date: "2026-04-15", balance_due: 2500,
+          total_amount: 5000, paid_amount: 2500 },
+      ],
+      paymentsData: [],
+    })
+    const result = await getTenantJourney({
+      tenant_id: "t1", workspace_id: "ws1",
+      include_financial: true,
+    })
+    expect(result.success).toBe(true)
+    // Earliest pending bill (Apr 15) should be next_due_date
+    expect(result.data!.financial!.next_due_date).toBe("2026-04-15")
+  })
+
+  it("churn recommendation fires when churnScore > 60 && status === active (line 1416)", async () => {
+    setupInsightsScenario({
+      // 3 complaints, 0 resolved → unresolvedRate = 1 → +15
+      complaintsData: [{ id: "c1", status: "open" }, { id: "c2", status: "open" }, { id: "c3", status: "in_progress" }],
+      // 2 transfers → +10
+      transfersData: [{ id: "tr1" }, { id: "tr2" }],
+      // 2 stays with duration < 90 days → total_stays = 2 > 1 → +15
+      staysData: [
+        { id: "s1", join_date: "2026-01-01", exit_date: "2026-01-15", status: "completed" },
+        { id: "s2", join_date: "2026-02-01", exit_date: "2026-02-14", status: "active" },
+      ],
+      // 1 overdue bill → total_overdue = 25000 → paymentScore = 50-20=30 < 40 → +10
+      billsData: [{ id: "b1", status: "overdue", balance_due: 25000, total_amount: 5000, paid_amount: 0 }],
+      paymentsData: [],
+    })
+    const result = await getTenantJourney({
+      tenant_id: "t1", workspace_id: "ws1",
+      include_analytics: true, include_financial: true, include_insights: true,
+    })
+    expect(result.success).toBe(true)
+    // churnScore = 20+15+10+15+10 = 70 > 60 && tenant.status === "active" → retention recommendation
+    const retentionRec = result.data!.insights!.recommendations.find(r => r.type === "retention")
+    expect(retentionRec).toBeDefined()
+  })
+
+  it("linked visitor early-return map executes when visitors exist and phone is empty (line 1503)", async () => {
+    const tenantNoPhone = { ...makeTenant(), phone: null, phone_numbers: [] }
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "tenants") return makeChain({ data: tenantNoPhone, error: null })
+      if (table === "visitors") return makeChain({
+        data: [{ id: "v1", visitor_name: "Bob", relation: "Friend",
+          check_in_date: "2025-12-01", check_in_time: null, visitor_phone: null }],
+        error: null,
+      })
+      return makeChain(EMPTY)
+    })
+    const result = await getTenantJourney({
+      tenant_id: "t1", workspace_id: "ws1",
+      include_visitors: true,
+    })
+    expect(result.success).toBe(true)
+    // Early return fires — linked array has 1 mapped visitor
+    expect(result.data!.linked_visitors).toHaveLength(1)
+    expect(result.data!.linked_visitors[0].visitor_name).toBe("Bob")
+  })
+
+  it("pre-tenant visit filter and map run when phone matches (lines 1533-1543 + 1553)", async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "tenants") return makeChain({ data: makeTenant(), error: null })
+      if (table === "visitors") return makeChain({
+        data: [{
+          id: "pv1", visitor_name: "Future Tenant",
+          visitor_phone: "9876543210", // matches makeTenant phone
+          check_in_date: "2024-12-01", check_in_time: "2024-12-01T10:00:00Z",
+          tenant: null, property: null,
+          relation: "Self",
+        }],
+        error: null,
+      })
+      return makeChain(EMPTY)
+    })
+    const result = await getTenantJourney({
+      tenant_id: "t1", workspace_id: "ws1",
+      include_visitors: true,
+    })
+    expect(result.success).toBe(true)
+    // Pre-tenant visit matched and mapped
+    expect(result.data!.pre_tenant_visits).toHaveLength(1)
+    expect(result.data!.pre_tenant_visits[0].visitor_id).toBe("pv1")
+  })
+})
+
+// ============================================================================
 // Priority 3 — Event normalization branches
 // ============================================================================
 
