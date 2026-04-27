@@ -102,13 +102,13 @@ describe('StatusBadge', () => {
     it('applies success variant classes', () => {
       render(<StatusBadge variant="success" label="Good" />)
       const badge = screen.getByText('Good').closest('span')!
-      expect(badge.className).toContain('text-emerald')
+      expect(badge.className).toContain('text-success')
     })
 
     it('applies error variant classes', () => {
       render(<StatusBadge variant="error" label="Bad" />)
       const badge = screen.getByText('Bad').closest('span')!
-      expect(badge.className).toContain('text-rose')
+      expect(badge.className).toContain('text-destructive')
     })
   })
 

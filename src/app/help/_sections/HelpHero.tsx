@@ -25,7 +25,7 @@ export function HelpHero({
       {/* Hero Section */}
       <section className="relative py-16 px-4 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950">
         <div className="container mx-auto text-center max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <HelpCircle className="h-4 w-4" />
             Help Center
           </div>
@@ -56,7 +56,7 @@ export function HelpHero({
               variant={selectedCategory === null ? "default" : "outline"}
               size="sm"
               onClick={() => onCategoryChange(null)}
-              className={selectedCategory === null ? "bg-teal-500 hover:bg-teal-600" : ""}
+              className={selectedCategory === null ? "bg-primary hover:bg-primary/90 text-primary-foreground" : ""}
             >
               All Topics
             </Button>
@@ -66,7 +66,7 @@ export function HelpHero({
                 variant={selectedCategory === cat.category ? "default" : "outline"}
                 size="sm"
                 onClick={() => onCategoryChange(cat.category)}
-                className={selectedCategory === cat.category ? "bg-teal-500 hover:bg-teal-600" : ""}
+                className={selectedCategory === cat.category ? "bg-primary hover:bg-primary/90 text-primary-foreground" : ""}
               >
                 <cat.icon className="h-4 w-4 mr-1" />
                 {cat.category}

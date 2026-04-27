@@ -16,6 +16,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -167,7 +168,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         onSuccess?.(result, "create")
         return createSuccessResult(result as T)
       } catch (err) {
-        console.error(`[useEntityMutation] Create ${entityType} failed:`, err)
+        logger.error(`[useEntityMutation] Create ${entityType} failed:`, { error: String(err) })
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
@@ -246,7 +247,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         onSuccess?.(result, "update")
         return createSuccessResult(result as T)
       } catch (err) {
-        console.error(`[useEntityMutation] Update ${entityType} failed:`, err)
+        logger.error(`[useEntityMutation] Update ${entityType} failed:`, { error: String(err) })
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
@@ -320,7 +321,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         onSuccess?.(undefined, "delete")
         return createSuccessResult(undefined)
       } catch (err) {
-        console.error(`[useEntityMutation] Delete ${entityType} failed:`, err)
+        logger.error(`[useEntityMutation] Delete ${entityType} failed:`, { error: String(err) })
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
@@ -386,7 +387,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         onSuccess?.(results, "create")
         return createSuccessResult(results as T[])
       } catch (err) {
-        console.error(`[useEntityMutation] Bulk create ${entityType} failed:`, err)
+        logger.error(`[useEntityMutation] Bulk create ${entityType} failed:`, { error: String(err) })
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
@@ -455,7 +456,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         onSuccess?.(results, "update")
         return createSuccessResult(results)
       } catch (err) {
-        console.error(`[useEntityMutation] Bulk update ${entityType} failed:`, err)
+        logger.error(`[useEntityMutation] Bulk update ${entityType} failed:`, { error: String(err) })
         setError(err as Error)
 
         if (!mutationOptions?.silent) {
@@ -525,7 +526,7 @@ export function useEntityMutation<T extends Record<string, unknown>>(
         onSuccess?.(undefined, "delete")
         return createSuccessResult(undefined)
       } catch (err) {
-        console.error(`[useEntityMutation] Bulk delete ${entityType} failed:`, err)
+        logger.error(`[useEntityMutation] Bulk delete ${entityType} failed:`, { error: String(err) })
         setError(err as Error)
 
         if (!mutationOptions?.silent) {

@@ -58,7 +58,7 @@ export default function ContactPage() {
       description: "Mon-Sat, 10am-6pm IST",
       value: CONTACT.PHONE,
       href: `tel:+${CONTACT.PHONE_RAW}`,
-      color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950",
+      color: "text-success bg-success/10",
     },
     {
       icon: MessageSquare,

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import Cropper from "react-easy-crop"
 import { X, ZoomIn, ZoomOut, RotateCw, Check } from "lucide-react"
 import { Button } from "./button"
+import { logger } from "@/lib/logger"
 
 interface Point {
   x: number
@@ -151,7 +152,7 @@ export function ImageCropper({
       onCropComplete(croppedImage)
       onClose()
     } catch (error) {
-      console.error("Error cropping image:", error)
+      logger.error("Error cropping image:", { detail: error })
     } finally {
       setLoading(false)
     }

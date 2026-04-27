@@ -48,6 +48,7 @@ import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { validateAadhaar, validatePAN } from "@/lib/validators"
 import { IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT } from "@/components/forms"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 export default function NewPersonPage() {
   const router = useRouter()
@@ -238,7 +239,7 @@ export default function NewPersonPage() {
       .single()
 
     if (error) {
-      console.error("Error creating person:", error)
+      logger.error("Error creating person:", { detail: error })
       showError("Failed to create person")
       setLoading(false)
       return

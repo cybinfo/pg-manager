@@ -7,6 +7,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { MetricConfig, FilterConfig, ListPageConfig } from "./types"
@@ -110,7 +111,7 @@ export function useListPageMetrics<T extends object>(
 
       setServerCounts(counts)
     } catch (err) {
-      console.error("[useListPage] Error fetching server counts:", err)
+      logger.error("[useListPage] Error fetching server counts:", { error: String(err) })
     } finally {
       setServerCountsLoading(false)
     }
@@ -171,7 +172,7 @@ export function useListPageMetrics<T extends object>(
 
       setServerSums(sums)
     } catch (err) {
-      console.error("[useListPage] Error fetching server sums:", err)
+      logger.error("[useListPage] Error fetching server sums:", { error: String(err) })
     }
   }, [filters, searchQuery, configRef, filterConfigsRef, metricsRef])
 

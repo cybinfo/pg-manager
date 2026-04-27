@@ -20,6 +20,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
 import { PAYMENT_METHODS } from "@/lib/status/billing"
 import { recordBulkPayments, BulkPaymentInput } from "@/lib/workflows/payment.workflow"
+import { logger } from "@/lib/logger"
 
 // ============================================
 // Types
@@ -85,7 +86,7 @@ function BulkPaymentForm() {
         .order("created_at", { ascending: false })
 
       if (error) {
-        console.error("Error fetching bills with dues:", error)
+        logger.error("Error fetching bills with dues:", { detail: error })
         showError("Failed to load outstanding dues")
         setLoading(false)
         return

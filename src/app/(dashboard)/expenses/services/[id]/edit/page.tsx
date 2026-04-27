@@ -16,6 +16,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
+import { Currency } from "@/components/ui/currency"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
@@ -24,6 +25,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { getNowISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { ServicePayment, ServiceProvider, ServiceCategory, ServicePaymentFormData, TdsSection, PaymentMode } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 const TDS_SECTION_OPTIONS = [
   { value: "194C", label: "194C - Contractor (1%)" },
@@ -262,7 +264,7 @@ export default function EditServicePaymentPage({
       showSuccess("Service payment updated")
       router.push(`/expenses/services/${id}`)
     } catch (error) {
-      console.error("Failed to update service payment:", error)
+      logger.error("Failed to update service payment:", { detail: error })
       showError("Failed to update")
     } finally {
       setLoading(false)
@@ -478,13 +480,13 @@ export default function EditServicePaymentPage({
                           <div>
                             <div className="text-xs text-muted-foreground">TDS Deducted</div>
                             <div className="font-medium">
-                              ₹{(formData.tds_amount || 0).toFixed(2)}
+                              <Currency amount={formData.tds_amount || 0} />
                             </div>
                           </div>
                           <div>
                             <div className="text-xs text-muted-foreground">Net Payable</div>
                             <div className="font-bold text-success">
-                              ₹{(formData.net_amount || formData.gross_amount).toFixed(2)}
+                              <Currency amount={formData.net_amount || formData.gross_amount} />
                             </div>
                           </div>
                         </div>

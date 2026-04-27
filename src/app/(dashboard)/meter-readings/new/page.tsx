@@ -20,6 +20,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
+import { logger } from "@/lib/logger"
 
 interface ChargeType {
   id: string
@@ -202,7 +203,7 @@ function NewMeterReadingContent() {
           const { error: chargeError } = await supabase.from("charges").insert(chargeInserts)
 
           if (chargeError) {
-            console.error("Error creating charges:", chargeError)
+            logger.error("Error creating charges:", { detail: chargeError })
             showWarning("Meter reading saved, but failed to generate charges")
           }
         }

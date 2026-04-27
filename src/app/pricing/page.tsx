@@ -24,7 +24,7 @@ const plans = [
     price: 0,
     period: "3 months",
     highlight: "Start Here",
-    highlightColor: "bg-amber-500",
+    highlightColor: "bg-warning",
     features: [
       { name: "Unlimited Properties", included: true },
       { name: "Unlimited Rooms", included: true },
@@ -73,7 +73,7 @@ const plans = [
     price: 499,
     period: "month",
     highlight: "Most Popular",
-    highlightColor: "bg-teal-500",
+    highlightColor: "bg-primary",
     features: [
       { name: "3 Properties", included: true },
       { name: "50 Rooms", included: true },
@@ -159,11 +159,11 @@ export default function PricingPage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 md:py-24">
         <div className="absolute inset-0 bg-gradient-to-br from-teal-50 via-background to-emerald-50 dark:from-teal-950 dark:via-background dark:to-emerald-950" />
-        <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200/30 dark:bg-teal-800/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-200/30 dark:bg-emerald-800/30 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
 
         <div className="relative container mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 text-amber-700 dark:text-amber-300 text-sm font-medium mb-6 animate-fade-in-down">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r bg-warning/10 text-warning text-sm font-medium mb-6 animate-fade-in-down">
             <Gift className="h-4 w-4" />
             3 Months Free - No Credit Card Required
           </div>
@@ -202,7 +202,7 @@ export default function PricingPage() {
               }`}
             >
               Yearly
-              <span className="ml-2 text-xs text-teal-600 font-semibold">Save 20%</span>
+              <span className="ml-2 text-xs text-primary font-semibold">Save 20%</span>
             </button>
           </div>
         </div>
@@ -216,7 +216,7 @@ export default function PricingPage() {
               <Card
                 key={i}
                 className={`relative overflow-hidden ${
-                  plan.popular ? "border-2 border-teal-500 shadow-xl shadow-teal-500/10" : ""
+                  plan.popular ? "border-2 border-primary shadow-xl shadow-primary/10" : ""
                 }`}
               >
                 {/* Highlight Badge */}
@@ -238,7 +238,7 @@ export default function PricingPage() {
                     </span>
                   </div>
                   {billingCycle === "yearly" && plan.price > 0 && (
-                    <p className="text-sm text-teal-600 mt-1">
+                    <p className="text-sm text-primary mt-1">
                       {formatCurrency(Math.round(getPrice(plan.price) / 12))}/month
                     </p>
                   )}
@@ -248,7 +248,7 @@ export default function PricingPage() {
                     {plan.features.map((feature, j) => (
                       <li key={j} className="flex items-center gap-2 text-sm">
                         {feature.included ? (
-                          <CheckCircle className="h-4 w-4 text-teal-500 shrink-0" />
+                          <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                         ) : (
                           <X className="h-4 w-4 text-muted-foreground/50 shrink-0" />
                         )}
@@ -304,7 +304,7 @@ export default function PricingPage() {
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-sky-100 to-blue-100 dark:from-sky-900 dark:to-blue-900 text-sky-700 dark:text-sky-300 text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r bg-info/10 text-info text-sm font-medium mb-4">
               <HelpCircle className="h-4 w-4" />
               FAQ
             </div>
@@ -330,7 +330,7 @@ export default function PricingPage() {
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
             Still Have Questions?
           </h2>
-          <p className="text-teal-100 mb-8 text-lg">
+          <p className="text-primary-foreground mb-8 text-lg">
             Our team is here to help. Reach out and we&apos;ll get back to you within 24 hours.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

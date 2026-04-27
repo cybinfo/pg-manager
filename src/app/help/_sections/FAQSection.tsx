@@ -67,7 +67,7 @@ export function FAQSection({
                               {faq.question}
                             </CardTitle>
                             {isExpanded ? (
-                              <ChevronUp className="h-5 w-5 text-teal-500 flex-shrink-0" />
+                              <ChevronUp className="h-5 w-5 text-primary flex-shrink-0" />
                             ) : (
                               <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                             )}

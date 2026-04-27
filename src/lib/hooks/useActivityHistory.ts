@@ -1,5 +1,6 @@
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 
@@ -172,7 +173,7 @@ export function useActivityHistory({
           }
         }
       } catch (err) {
-        console.error("Failed to fetch activity history:", err)
+        logger.error("Failed to fetch activity history:", { error: String(err) })
         setError("Failed to load activity history")
       } finally {
         setLoading(false)

@@ -12,7 +12,7 @@ export function CTASection() {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Ready to Simplify Your Business?
             </h2>
-            <p className="text-teal-100 mb-8 text-lg max-w-2xl mx-auto">
+            <p className="text-primary-foreground mb-8 text-lg max-w-2xl mx-auto">
               Join hundreds of business owners who have streamlined their operations with ManageKar.
               Start your free trial today.
             </p>

@@ -11,6 +11,7 @@ import Link from "next/link"
 import {
   BarChart,
   Bar,
+  CartesianGrid,
   PieChart,
   Pie,
   Cell,
@@ -596,16 +597,17 @@ export default function DashboardPage() {
             <CardContent>
               <ChartContainer height={192}>
                 <BarChart data={monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis
                     dataKey="month"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
                     tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
                   />
                   <Tooltip content={<CustomBarTooltip />} />

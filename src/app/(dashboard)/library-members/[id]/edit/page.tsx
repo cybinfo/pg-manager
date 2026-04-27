@@ -23,6 +23,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
+import { logger } from "@/lib/logger"
 
 export default function EditLibraryMemberPage({
   params,
@@ -132,7 +133,7 @@ function EditLibraryMemberContent({
 
         if (personError) {
           // Log but don't fail — the member record was already updated
-          console.error("Failed to update people record:", personError.message)
+          logger.error("Failed to update people record:", { detail: personError.message })
         }
       }
     },

@@ -18,6 +18,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useCallback, useRef } from "react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 
@@ -181,7 +182,7 @@ export function useLoadingOperation() {
       const result = await operation()
       return result
     } catch (err) {
-      console.error("Operation failed:", err)
+      logger.error("Operation failed:", { error: String(err) })
       return null
     } finally {
       setLoading(false)

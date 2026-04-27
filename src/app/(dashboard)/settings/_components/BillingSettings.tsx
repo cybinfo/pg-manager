@@ -15,7 +15,9 @@ import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { formatCurrency } from "@/lib/format"
+import { Currency } from "@/components/ui/currency"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
+import { logger } from "@/lib/logger"
 import {
   ChargeType,
   UtilityRate,
@@ -184,7 +186,7 @@ export function BillingSettings({
 
       showSuccess("Utility rates saved")
     } catch (error) {
-      console.error("Save error:", error)
+      logger.error("Save error:", { detail: error })
       showError("Failed to save utility rates")
     } finally {
       setSavingUtilityRates(false)
@@ -352,7 +354,7 @@ export function BillingSettings({
                 {/* Preview */}
                 <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
                   {utility.billing_type === 'per_unit' ? (
-                    <>Example: 100 {utility.unit_label} × ₹{utility.rate_per_unit} = {formatCurrency(100 * utility.rate_per_unit)}</>
+                    <>Example: 100 {utility.unit_label} × <Currency amount={utility.rate_per_unit} /> = {formatCurrency(100 * utility.rate_per_unit)}</>
                   ) : (
                     <>Monthly charge: {formatCurrency(utility.flat_amount)} {utility.split_by === 'occupants' ? '(split among room occupants)' : '(per room)'}</>
                   )}

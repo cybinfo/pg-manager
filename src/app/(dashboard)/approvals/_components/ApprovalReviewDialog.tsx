@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/components/ui/form-components"
+import { logger } from "@/lib/logger"
 
 // ============================================
 // Types
@@ -159,7 +160,7 @@ export function ApprovalReviewDialog({
 
           if (!response.ok) {
             const data = await response.json()
-            console.error("Failed to update auth email:", data.error)
+            logger.error("Failed to update auth email:", { detail: data.error })
             showWarning("Request approved but login email needs manual update in Supabase")
           } else {
             showSuccess("Request approved and email updated everywhere!")
@@ -170,7 +171,7 @@ export function ApprovalReviewDialog({
             return
           }
         } catch (err) {
-          console.error("Error calling email update API:", err)
+          logger.error("Error calling email update API:", { detail: err })
           showWarning("Request approved but login email needs manual update")
         }
       }

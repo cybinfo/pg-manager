@@ -17,6 +17,7 @@ import { getNowISO } from "@/lib/date-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
+import { Currency } from "@/components/ui/currency"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
@@ -25,6 +26,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 
 import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, UNIT_OPTIONS } from "@/lib/status"
 import type { Product, DailySpend, Vendor } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 interface FormData {
   spend_date: string
@@ -244,7 +246,7 @@ export default function EditDailySpendPage({
       showSuccess("Entry updated successfully")
       router.push(`/expenses/daily-spend/${id}`)
     } catch (error) {
-      console.error("Failed to update entry:", error)
+      logger.error("Failed to update entry:", { detail: error })
       showError("Failed to update entry")
     } finally {
       setLoading(false)
@@ -374,7 +376,7 @@ export default function EditDailySpendPage({
                 <div className="bg-muted/50 rounded-lg p-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Total</span>
-                    <span className="text-xl font-bold">₹{total.toFixed(2)}</span>
+                    <span className="text-xl font-bold"><Currency amount={total} /></span>
                   </div>
                 </div>
 

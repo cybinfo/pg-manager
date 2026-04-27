@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { LogOut, Loader2, Menu, X } from "lucide-react"
 import { showSuccess } from "@/lib/toast-helpers"
 import type { LucideIcon } from "lucide-react"
+import { logger } from "@/lib/logger"
 
 export interface PortalNavItem {
   name: string
@@ -64,7 +65,7 @@ export function PortalLayout({
       const sessionResult = await getSession()
 
       if (sessionResult.error || !sessionResult.user) {
-        console.warn(`[${tag}] No valid session:`, sessionResult.error?.message)
+        logger.warn("No valid session", { tag, message: sessionResult.error?.message })
         router.push("/login")
         return
       }
@@ -91,7 +92,7 @@ export function PortalLayout({
   const handleLogout = async () => {
     const result = await signOut()
     if (!result.success) {
-      console.error(`[${tag}] Logout error:`, result.error?.message)
+      logger.error(`[${tag}] Logout error:`, { detail: result.error?.message })
     }
     showSuccess("Logged out successfully")
     router.push("/login")

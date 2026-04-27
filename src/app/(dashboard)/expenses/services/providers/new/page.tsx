@@ -21,6 +21,7 @@ import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
 
 import type { ServiceCategory, ServiceProviderFormData, TdsSection } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 const TDS_SECTION_OPTIONS = [
   { value: "194C", label: "194C - Contractor (1%)" },
@@ -77,7 +78,7 @@ export default function NewServiceProviderPage() {
         .order("sort_order")
 
       if (error) {
-        console.error("Failed to load categories:", error)
+        logger.error("Failed to load categories:", { detail: error })
       } else {
         setCategories(data || [])
       }
@@ -146,7 +147,7 @@ export default function NewServiceProviderPage() {
       showSuccess("Provider created successfully")
       router.push(`/expenses/services/providers/${data.id}`)
     } catch (error) {
-      console.error("Failed to create provider:", error)
+      logger.error("Failed to create provider:", { detail: error })
       showError("Failed to create provider")
     } finally {
       setLoading(false)

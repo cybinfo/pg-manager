@@ -20,6 +20,7 @@ import { showInfo, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { cn } from "@/lib/utils"
 import type { Vendor } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 import {
   EntitySelector,
   type EntitySelectorConfig,
@@ -265,7 +266,7 @@ export function VendorSelector({
         .single()
 
       if (createError) {
-        console.error("Create error:", createError)
+        logger.error("Create error:", { detail: createError })
         showError("Failed to create vendor")
         return null
       }

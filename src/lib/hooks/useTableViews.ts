@@ -16,6 +16,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -139,7 +140,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
         recordUsage(defaultView.id)
       }
     } catch (err) {
-      console.error("[useTableViews] Error fetching views:", err)
+      logger.error("[useTableViews] Error fetching views:", { error: String(err) })
       setError(err as Error)
     } finally {
       setLoading(false)
@@ -158,7 +159,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
       await supabase.rpc("record_table_view_usage", { p_view_id: viewId })
     } catch (err) {
       // Silent fail - usage tracking is not critical
-      console.debug("[useTableViews] Usage recording failed:", err)
+      logger.debug("[useTableViews] Usage recording failed:", { error: String(err) })
     }
   }
 
@@ -211,7 +212,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
         showSuccess(`View "${input.name}" saved`)
         return newView
       } catch (err) {
-        console.error("[useTableViews] Error creating view:", err)
+        logger.error("[useTableViews] Error creating view:", { error: String(err) })
         showError("Failed to save view")
         return null
       }
@@ -252,7 +253,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
         showSuccess("View updated")
         return true
       } catch (err) {
-        console.error("[useTableViews] Error updating view:", err)
+        logger.error("[useTableViews] Error updating view:", { error: String(err) })
         showError("Failed to update view")
         return false
       }
@@ -287,7 +288,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
         showSuccess("View deleted")
         return true
       } catch (err) {
-        console.error("[useTableViews] Error deleting view:", err)
+        logger.error("[useTableViews] Error deleting view:", { error: String(err) })
         showError("Failed to delete view")
         return false
       }
@@ -325,7 +326,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
       showSuccess("Default view updated")
       return true
     } catch (err) {
-      console.error("[useTableViews] Error setting default:", err)
+      logger.error("[useTableViews] Error setting default:", { error: String(err) })
       showError("Failed to set default view")
       return false
     }
@@ -357,7 +358,7 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
       showSuccess("Default view cleared")
       return true
     } catch (err) {
-      console.error("[useTableViews] Error clearing default:", err)
+      logger.error("[useTableViews] Error clearing default:", { error: String(err) })
       showError("Failed to clear default view")
       return false
     }

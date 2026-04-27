@@ -13,6 +13,7 @@ import {
   EnquirySource,
 } from "@/types/visitors.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { logger } from "@/lib/logger"
 
 interface Property {
   id: string
@@ -322,7 +323,7 @@ export function useVisitorForm() {
           .single()
 
         if (contactError) {
-          console.error("Error creating visitor contact:", contactError)
+          logger.error("Error creating visitor contact:", { detail: contactError })
         } else {
           visitorContactId = contactData.id
         }
@@ -388,7 +389,7 @@ export function useVisitorForm() {
           .single()
 
         if (billError) {
-          console.error("Error creating bill:", billError)
+          logger.error("Error creating bill:", { detail: billError })
           showError("Failed to create bill, but visitor will be checked in")
         } else {
           billId = billData.id
@@ -437,7 +438,7 @@ export function useVisitorForm() {
       const { error } = await supabase.from("visitors").insert(visitorData)
 
       if (error) {
-        console.error("Error creating visitor:", error)
+        logger.error("Error creating visitor:", { detail: error })
         throw error
       }
 

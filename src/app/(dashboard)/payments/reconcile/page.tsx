@@ -39,6 +39,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { PageHeader } from "@/components/ui/page-header"
 import { TableBadge } from "@/components/ui/data-table"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 
 // ============================================
 // Types
@@ -251,12 +252,12 @@ function ReconciliationView() {
 
       if (paymentsResult.error) {
         showError("Failed to load unreconciled payments")
-        console.error(paymentsResult.error)
+        logger.error("Failed to load unreconciled payments", { error: String(paymentsResult.error) })
       }
 
       if (billsResult.error) {
         showError("Failed to load outstanding bills")
-        console.error(billsResult.error)
+        logger.error("Failed to load outstanding bills", { error: String(billsResult.error) })
       }
 
       const transformedPayments = transformArrayJoins(
@@ -377,7 +378,7 @@ function ReconciliationView() {
           .eq("id", match.paymentId)
 
         if (paymentError) {
-          console.error(`Failed to link payment ${match.paymentId}:`, paymentError)
+          logger.error(`Failed to link payment ${match.paymentId}:`, { detail: paymentError })
           errorCount++
           continue
         }
@@ -402,7 +403,7 @@ function ReconciliationView() {
           .eq("id", match.billId)
 
         if (billError) {
-          console.error(`Failed to update bill ${match.billId}:`, billError)
+          logger.error(`Failed to update bill ${match.billId}:`, { detail: billError })
           // Revert payment link
           await supabase
             .from("payments")
@@ -801,14 +802,14 @@ function ReconciliationView() {
                       if (isExactAmount) {
                         matchIndicator = "Exact amount match"
                         matchColor =
-                          "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
+                          "border-success bg-success/10"
                       } else if (fitsWithin) {
                         matchIndicator = "Amount fits within balance"
                         matchColor =
-                          "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                          "border-warning bg-warning/10"
                       } else {
                         matchIndicator = "Same tenant"
-                        matchColor = "border-sky-500 bg-sky-50 dark:bg-sky-950/30"
+                        matchColor = "border-info bg-info/10"
                       }
                     }
 

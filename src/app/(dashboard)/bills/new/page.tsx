@@ -30,6 +30,7 @@ import { PermissionGuard } from "@/components/auth"
 import { cn } from "@/lib/utils"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { logger } from "@/lib/logger"
 
 interface Tenant {
   id: string
@@ -155,7 +156,7 @@ function NewBillContent() {
       ])
 
       if (tenantsRes.error) {
-        console.error("Error fetching tenants:", tenantsRes.error)
+        logger.error("Error fetching tenants:", { detail: tenantsRes.error })
         showError("Failed to load tenants")
         return
       }
@@ -222,7 +223,7 @@ function NewBillContent() {
         .order("due_date")
 
       if (error) {
-        console.error("Error fetching charges:", error)
+        logger.error("Error fetching charges:", { detail: error })
       }
 
       const transformedCharges: PendingCharge[] = (charges || []).map((c: Record<string, unknown>) => ({
@@ -422,7 +423,7 @@ function NewBillContent() {
         .single()
 
       if (billError) {
-        console.error("Error creating bill:", billError)
+        logger.error("Error creating bill:", { detail: billError })
         throw billError
       }
 

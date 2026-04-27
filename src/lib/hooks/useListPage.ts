@@ -16,6 +16,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { transformArrayJoins } from "@/lib/supabase/transforms"
@@ -291,7 +292,7 @@ export function useListPage<T extends object>(
 
       setData(transformedData as unknown as T[])
     } catch (err) {
-      console.error(`[useListPage] Error fetching ${currentConfig.table}:`, err)
+      logger.error(`[useListPage] Error fetching ${currentConfig.table}:`, { error: String(err) })
       setError(err as Error)
       showError(`Failed to load data`)
     } finally {

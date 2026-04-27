@@ -6,6 +6,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { transformArrayJoins } from "@/lib/supabase/transforms"
@@ -95,7 +96,7 @@ export function useListPageGrouping<T extends object>(
       const { data: rawData, error } = await query
 
       if (error || !rawData) {
-        console.error("[useListPage] Error fetching group counts:", error)
+        logger.error("[useListPage] Error fetching group counts:", { error: String(error) })
         return
       }
 
@@ -126,7 +127,7 @@ export function useListPageGrouping<T extends object>(
 
       setGroupCounts(counts)
     } catch (err) {
-      console.error("[useListPage] Error fetching group counts:", err)
+      logger.error("[useListPage] Error fetching group counts:", { error: String(err) })
     }
   }, [filters, searchQuery, configRef, filterConfigsRef])
 

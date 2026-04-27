@@ -36,7 +36,7 @@ export function PublicSection({
               className={cn(
                 "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4",
                 badge.colorClass ||
-                  "bg-gradient-to-r from-teal-100 to-emerald-100 dark:from-teal-900 dark:to-emerald-900 text-teal-700 dark:text-teal-300"
+                  "bg-primary/10 text-primary"
               )}
             >
               <badge.icon className="h-4 w-4" />

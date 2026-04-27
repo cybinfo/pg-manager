@@ -32,6 +32,7 @@ import {
 import { formatDistanceToNow } from "date-fns"
 import { formatCurrency } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
+import { logger } from "@/lib/logger"
 
 interface Workspace {
   id: string
@@ -104,7 +105,7 @@ export default function AdminExplorerPage() {
     const { data: workspacesData, error: wsError } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)("get_all_workspaces_admin")
 
     if (wsError) {
-      console.error("Error fetching workspaces:", wsError)
+      logger.error("Error fetching workspaces:", { detail: wsError })
     }
 
     if (workspacesData) {
@@ -144,7 +145,7 @@ export default function AdminExplorerPage() {
       const { data: details, error } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)("get_workspace_details_admin", { p_workspace_id: workspace.id })
 
       if (error) {
-        console.error("Error fetching workspace details:", error)
+        logger.error("Error fetching workspace details:", { detail: error })
         // Set empty details on error
         setWorkspaceDetails({
           properties: [],
@@ -156,7 +157,7 @@ export default function AdminExplorerPage() {
         setWorkspaceDetails(details as WorkspaceDetails)
       }
     } catch (err) {
-      console.error("Error:", err)
+      logger.error("Error:", { detail: err })
       setWorkspaceDetails({
         properties: [],
         tenants: [],

@@ -10,6 +10,7 @@ import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, LayoutDashboard } from "lucide-react"
 import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 interface ErrorPageProps {
   error: Error & { digest?: string }
@@ -18,7 +19,7 @@ interface ErrorPageProps {
 
 export default function DashboardError({ error, reset }: ErrorPageProps) {
   useEffect(() => {
-    console.error("[DashboardError]", {
+    logger.error("[DashboardError]", {
       message: error.message,
       digest: error.digest,
       stack: error.stack,

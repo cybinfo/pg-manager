@@ -29,6 +29,7 @@ import { EXPENSE_MISC_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib
 import type { MiscTransaction, MiscTransactionCategory, MiscTransactionFormData, MiscPaymentMode } from "@/types/expense-enhanced.types"
 import { PermissionGuard } from "@/components/auth"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 export default function EditMiscTransactionPage({
   params,
@@ -176,7 +177,7 @@ function EditMiscTransactionContent({
       showSuccess("Transaction updated")
       router.push(`/expenses/misc/${id}`)
     } catch (error) {
-      console.error("Failed to update transaction:", error)
+      logger.error("Failed to update transaction:", { detail: error })
       showError("Failed to update transaction")
     } finally {
       setLoading(false)

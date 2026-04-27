@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getTodayISO } from "@/lib/date-helpers"
 import { labelsToOptions, PAYMENT_METHODS } from "@/lib/status"
+import { logger } from "@/lib/logger"
 
 const BILL_PAYMENT_METHOD_OPTIONS = labelsToOptions(PAYMENT_METHODS, [
   "cash", "upi", "bank_transfer", "cheque", "other",
@@ -76,7 +77,7 @@ export function BillPaymentForm({
         } as Record<string, unknown>)
 
       if (error) {
-        console.error("Error recording payment:", error)
+        logger.error("Error recording payment:", { detail: error })
         showError("Failed to record payment")
         setSubmitting(false)
         return

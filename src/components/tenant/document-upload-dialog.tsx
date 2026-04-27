@@ -18,6 +18,7 @@ import { FileUpload } from "@/components/ui/file-upload"
 import { Loader2, Upload } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
+import { logger } from "@/lib/logger"
 
 export type DocumentType = "id_proof" | "address_proof" | "income_proof" | "agreement" | "receipt" | "other"
 
@@ -101,7 +102,7 @@ export function DocumentUploadDialog({
     setLoading(false)
 
     if (error) {
-      console.error("Error uploading document:", error)
+      logger.error("Error uploading document:", { detail: error })
       showError("Failed to save document. Please try again.")
       return
     }

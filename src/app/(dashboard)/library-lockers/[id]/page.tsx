@@ -61,6 +61,7 @@ import {
 import type { LibraryLocker, LibraryLockerAssignment } from "@/types/library.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 export default function LibraryLockerDetailPage() {
   const params = useParams()
@@ -103,7 +104,7 @@ export default function LibraryLockerDetailPage() {
         .eq("status", "active")
 
       if (assignmentError) {
-        console.error("Error ending assignment:", assignmentError)
+        logger.error("Error ending assignment:", { detail: assignmentError })
         showError(`Failed to end assignment: ${assignmentError.message}`)
         return
       }
@@ -121,7 +122,7 @@ export default function LibraryLockerDetailPage() {
         .eq("id", locker.id)
 
       if (lockerError) {
-        console.error("Error updating locker:", lockerError)
+        logger.error("Error updating locker:", { detail: lockerError })
         showError(`Failed to update locker: ${lockerError.message}`)
         return
       }
@@ -136,7 +137,7 @@ export default function LibraryLockerDetailPage() {
         .eq("id", locker.current_member_id)
 
       if (memberError) {
-        console.error("Error updating member:", memberError)
+        logger.error("Error updating member:", { detail: memberError })
         // Don't fail the whole operation
       }
 

@@ -16,7 +16,7 @@ interface ChartContainerProps {
  */
 export function ChartContainer({
   children,
-  height = 192,
+  height,
   minHeight = 150,
   className = "",
 }: ChartContainerProps) {
@@ -34,7 +34,7 @@ export function ChartContainer({
     return (
       <div
         className={`flex items-center justify-center ${className}`}
-        style={{ height, minHeight }}
+        style={{ ...(height !== undefined ? { height } : {}), minHeight }}
       >
         <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
@@ -42,7 +42,7 @@ export function ChartContainer({
   }
 
   return (
-    <div className={className} style={{ height, minHeight }}>
+    <div className={className} style={{ ...(height !== undefined ? { height } : {}), minHeight }}>
       <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         {children}
       </ResponsiveContainer>

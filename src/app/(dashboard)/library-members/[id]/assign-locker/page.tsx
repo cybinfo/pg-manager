@@ -25,6 +25,7 @@ import { Currency } from "@/components/ui/currency"
 import { withCreatedBy } from "@/lib/audit"
 import { LIBRARY_LOCKER_SIZE_CONFIG } from "@/types/library.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { logger } from "@/lib/logger"
 
 interface MemberData {
   id: string
@@ -191,7 +192,7 @@ export default function AssignLockerToMemberPage({
         .insert(assignmentData)
 
       if (assignmentError) {
-        console.error("Error creating assignment:", assignmentError)
+        logger.error("Error creating assignment:", { detail: assignmentError })
         showError(`Failed to assign locker: ${assignmentError.message}`)
         return
       }
@@ -209,7 +210,7 @@ export default function AssignLockerToMemberPage({
         .eq("id", selectedLockerId)
 
       if (lockerError) {
-        console.error("Error updating locker:", lockerError)
+        logger.error("Error updating locker:", { detail: lockerError })
         showError(`Failed to update locker status: ${lockerError.message}`)
         return
       }
@@ -224,7 +225,7 @@ export default function AssignLockerToMemberPage({
         .eq("id", memberId)
 
       if (memberError) {
-        console.error("Error updating member:", memberError)
+        logger.error("Error updating member:", { detail: memberError })
         // Don't fail the whole operation for this
       }
 

@@ -7,6 +7,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -171,7 +172,7 @@ export function useDetailPageData<T extends object>(
             const { data: relatedData, error: relatedError } = await query
 
             if (relatedError) {
-              console.error(`[useDetailPage] Error fetching ${relatedConfig.key}:`, JSON.stringify(relatedError, null, 2))
+              logger.error(`[useDetailPage] Error fetching ${relatedConfig.key}:`, { error: String(relatedError) })
               relatedResults[relatedConfig.key] = []
               return
             }
@@ -197,7 +198,7 @@ export function useDetailPageData<T extends object>(
               : typeof err === "object" && err !== null
                 ? JSON.stringify(err, null, 2)
                 : String(err)
-            console.error(`[useDetailPage] Error fetching ${relatedConfig.key}:`, errorDetails)
+            logger.error(`[useDetailPage] Error fetching ${relatedConfig.key}:`, { detail: String(errorDetails) })
             relatedResults[relatedConfig.key] = []
           }
         })
@@ -213,7 +214,7 @@ export function useDetailPageData<T extends object>(
         : typeof err === "object" && err !== null
           ? JSON.stringify(err, null, 2)
           : String(err)
-      console.error(`[useDetailPage] Error fetching ${currentConfig.table}:`, errorDetails)
+      logger.error(`[useDetailPage] Error fetching ${currentConfig.table}:`, { detail: String(errorDetails) })
       setError(err as Error)
       showError(`Failed to load data`)
     } finally {

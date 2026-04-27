@@ -28,6 +28,7 @@ import { PageLoading } from "@/components/ui/loading"
 import type { BillCategory } from "@/types/expense-enhanced.types"
 import { PermissionGuard } from "@/components/auth"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 export default function NewVendorPage() {
   return (
@@ -115,7 +116,7 @@ function NewVendorContent() {
         .order("sort_order")
 
       if (error) {
-        console.error("Failed to load categories:", error)
+        logger.error("Failed to load categories:", { detail: error })
         await seedDefaultCategories()
       } else {
         setCategories(data || [])
@@ -136,7 +137,7 @@ function NewVendorContent() {
       })
 
       if (error) {
-        console.error("Failed to seed categories:", error)
+        logger.error("Failed to seed categories:", { detail: error })
       } else {
         const { data } = await supabase
           .from("bill_categories")

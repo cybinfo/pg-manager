@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client"
 import { User, Session, AuthError } from "@supabase/supabase-js"
 import { TOKEN_REFRESH_BUFFER_SECONDS } from "@/lib/constants"
 import { getNowISO } from "@/lib/date-helpers"
+import { authLogger } from "@/lib/logger"
 
 // ============================================
 // Types
@@ -106,7 +107,7 @@ export async function getSession(): Promise<SessionResult> {
     const { data, error } = await supabase.auth.getSession()
 
     if (error) {
-      console.error("[Session] getSession error:", error.message)
+      authLogger.error("getSession error", { message: error.message })
       return {
         user: null,
         session: null,
@@ -136,7 +137,7 @@ export async function getSession(): Promise<SessionResult> {
       error: null,
     }
   } catch (err) {
-    console.error("[Session] Exception in getSession:", err)
+    authLogger.error("Exception in getSession", { error: err instanceof Error ? err.message : String(err) })
     return {
       user: null,
       session: null,
@@ -159,7 +160,7 @@ export async function getUser(): Promise<{ user: User | null; error: SessionErro
     const { data, error } = await supabase.auth.getUser()
 
     if (error) {
-      console.error("[Session] getUser error:", error.message)
+      authLogger.error("getUser error", { message: error.message })
       return {
         user: null,
         error: createSessionError(
@@ -175,7 +176,7 @@ export async function getUser(): Promise<{ user: User | null; error: SessionErro
       error: data.user ? null : createSessionError("NO_SESSION", "No authenticated user"),
     }
   } catch (err) {
-    console.error("[Session] Exception in getUser:", err)
+    authLogger.error("Exception in getUser", { error: err instanceof Error ? err.message : String(err) })
     return {
       user: null,
       error: createSessionError(
@@ -218,7 +219,7 @@ export async function refreshSession(): Promise<SessionResult> {
       error: null,
     }
   } catch (err) {
-    console.error("[Session] Exception in refreshSession:", err)
+    authLogger.error("Exception in refreshSession", { error: err instanceof Error ? err.message : String(err) })
     return {
       user: null,
       session: null,
@@ -273,7 +274,7 @@ export async function signOut(): Promise<{ success: boolean; error: SessionError
           created_at: getNowISO(),
         }).then(({ error: auditError }: { error: { message: string } | null }) => {
           if (auditError) {
-            console.warn("[Session] Failed to log logout audit event:", auditError.message)
+            authLogger.warn("Failed to log logout audit event", { message: auditError.message })
           }
         })
       }
@@ -282,17 +283,17 @@ export async function signOut(): Promise<{ success: boolean; error: SessionError
     const { error } = await supabase.auth.signOut()
 
     if (error) {
-      console.error("[Session] signOut error:", error.message)
+      authLogger.error("signOut error", { message: error.message })
       return {
         success: false,
         error: createSessionError("UNKNOWN_ERROR", error.message, error),
       }
     }
 
-    console.log("[Session] Signed out successfully")
+    authLogger.info("Signed out successfully")
     return { success: true, error: null }
   } catch (err) {
-    console.error("[Session] Exception in signOut:", err)
+    authLogger.error("Exception in signOut", { error: err instanceof Error ? err.message : String(err) })
     return {
       success: false,
       error: createSessionError(
@@ -351,7 +352,7 @@ export function setStoredContextId(contextId: string): void {
   try {
     localStorage.setItem(CONTEXT_STORAGE_KEY, contextId)
   } catch (err) {
-    console.warn("[Session] Failed to store context ID:", err)
+    authLogger.warn("Failed to store context ID", { error: err instanceof Error ? err.message : String(err) })
   }
 }
 
@@ -360,7 +361,7 @@ export function clearStoredContextId(): void {
   try {
     localStorage.removeItem(CONTEXT_STORAGE_KEY)
   } catch (err) {
-    console.warn("[Session] Failed to clear context ID:", err)
+    authLogger.warn("Failed to clear context ID", { error: err instanceof Error ? err.message : String(err) })
   }
 }
 

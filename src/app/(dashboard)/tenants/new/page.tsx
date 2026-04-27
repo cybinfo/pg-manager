@@ -27,6 +27,7 @@ import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
+import { logger } from "@/lib/logger"
 
 
 interface Property {
@@ -79,7 +80,7 @@ export default function NewTenantPage() {
     const supabase = createClient()
     const { data, error } = await supabase.from("rooms").select("*").order("room_number")
     if (error) {
-      console.error("Error refreshing rooms:", error)
+      logger.error("Error refreshing rooms:", { detail: error })
       showError("Failed to refresh rooms")
     } else {
       setRooms(data || [])
@@ -103,7 +104,7 @@ export default function NewTenantPage() {
       ])
 
       if (propertiesRes.error) {
-        console.error("Error fetching properties:", propertiesRes.error)
+        logger.error("Error fetching properties:", { detail: propertiesRes.error })
         showError("Failed to load properties")
       } else {
         setProperties(propertiesRes.data || [])
@@ -113,7 +114,7 @@ export default function NewTenantPage() {
       }
 
       if (roomsRes.error) {
-        console.error("Error fetching rooms:", roomsRes.error)
+        logger.error("Error fetching rooms:", { detail: roomsRes.error })
       } else {
         setRooms(roomsRes.data || [])
       }
@@ -479,7 +480,7 @@ export default function NewTenantPage() {
             if (emailResult.success) {
               debugLog("Invitation email sent", { email: primaryEmail })
             } else {
-              console.warn("Failed to send invitation email:", emailResult.error)
+              logger.warn("Failed to send invitation email", { error: String(emailResult.error) })
             }
           }
         }
@@ -503,7 +504,7 @@ export default function NewTenantPage() {
           ownerName: inviterProfile?.name || "Property Owner",
           ownerPhone: inviterProfile?.phone || undefined,
         }).catch((err: unknown) => {
-          console.warn("[NewTenant] Failed to send welcome email:", err)
+          logger.warn("Failed to send welcome email", { error: err instanceof Error ? err.message : String(err) })
         })
       }
 

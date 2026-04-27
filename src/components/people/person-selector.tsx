@@ -41,6 +41,7 @@ import { showInfo } from "@/lib/toast-helpers"
 import { showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 import {
   EntitySelector,
   type EntitySelectorConfig,
@@ -361,7 +362,7 @@ export function PersonSelector({
         .single()
 
       if (createError) {
-        console.error("Create error:", createError)
+        logger.error("Create error:", { detail: createError })
         showError("Failed to create person")
         return null
       }

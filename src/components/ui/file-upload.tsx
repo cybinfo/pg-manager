@@ -6,6 +6,7 @@ import { Button } from "./button"
 import { Upload, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 
 /** Compress an image file using Canvas API. Non-image files pass through unchanged. */
 async function compressImage(file: File, maxKB: number, maxDimension: number): Promise<File> {
@@ -138,7 +139,7 @@ export function FileUpload({
             })
 
           if (error) {
-            console.error("Upload error:", error)
+            logger.error("Upload error:", { detail: error })
             showError(`Failed to upload ${file.name}`)
             continue
           }
@@ -166,7 +167,7 @@ export function FileUpload({
           )
         }
       } catch (error) {
-        console.error("Upload error:", error)
+        logger.error("Upload error:", { detail: error })
         showError("Failed to upload file(s)")
       } finally {
         setUploading(false)
@@ -221,7 +222,7 @@ export function FileUpload({
         onRemove?.(urlToRemove)
         showSuccess("File removed")
       } catch (error) {
-        console.error("Remove error:", error)
+        logger.error("Remove error:", { detail: error })
         showError("Failed to remove file")
       }
     },
@@ -450,7 +451,7 @@ export function ProfilePhotoUpload({
         showSuccess("Photo uploaded")
       }
     } catch (error) {
-      console.error("Upload error:", error)
+      logger.error("Upload error:", { detail: error })
       showError("Failed to upload photo")
     } finally {
       setUploading(false)

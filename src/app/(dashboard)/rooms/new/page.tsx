@@ -18,6 +18,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { PhotoGallery } from "@/components/forms"
 import { PermissionGuard } from "@/components/auth"
 import { ConfigurableRoomType, defaultConfigurableRoomTypes } from "@/types/rooms.types"
+import { logger } from "@/lib/logger"
 
 interface Property {
   id: string
@@ -135,7 +136,7 @@ function NewRoomContent() {
       ])
 
       if (propertiesRes.error) {
-        console.error("Error fetching properties:", propertiesRes.error)
+        logger.error("Error fetching properties:", { detail: propertiesRes.error })
       } else {
         setProperties(propertiesRes.data || [])
 

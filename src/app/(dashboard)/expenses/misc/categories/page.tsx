@@ -42,6 +42,7 @@ import { FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 
 import type { MiscTransactionCategory, MiscTransactionType } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 type CategoryFormData = {
   name: string
@@ -81,7 +82,7 @@ export default function MiscCategoriesPage() {
       .order("sort_order")
 
     if (error) {
-      console.error("Failed to load categories:", error)
+      logger.error("Failed to load categories:", { detail: error })
     } else {
       setCategories(data || [])
     }
@@ -159,7 +160,7 @@ export default function MiscCategoriesPage() {
       setDialogOpen(false)
       loadCategories()
     } catch (error) {
-      console.error("Failed to save category:", error)
+      logger.error("Failed to save category:", { detail: error })
       showError("Failed to save category")
     } finally {
       setSaving(false)
@@ -183,7 +184,7 @@ export default function MiscCategoriesPage() {
             showError(result.error.message || "Failed to delete")
           }
         } catch (error) {
-          console.error("Failed to delete:", error)
+          logger.error("Failed to delete:", { detail: error })
           showError("Failed to delete")
         }
       },
@@ -206,7 +207,7 @@ export default function MiscCategoriesPage() {
       showSuccess(category.is_active ? "Category deactivated" : "Category activated")
       loadCategories()
     } catch (error) {
-      console.error("Failed to toggle category:", error)
+      logger.error("Failed to toggle category:", { detail: error })
       showError("Failed to update category")
     }
   }

@@ -21,6 +21,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -132,7 +133,7 @@ export function usePortalData<T>(config: PortalDataConfig<T>): UsePortalDataRetu
         setData(transformed as T)
       }
     } catch (err) {
-      console.error(`Error fetching ${errorContext} data:`, err)
+      logger.error(`Error fetching ${errorContext} data:`, { error: String(err) })
       setError(err instanceof Error ? err.message : `Failed to load ${errorContext} data`)
     } finally {
       setLoading(false)

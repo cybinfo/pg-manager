@@ -74,19 +74,19 @@ const features = [
     icon: Receipt,
     title: "Smart Billing System",
     description: "Generate itemized bills with multiple charge types. Calendar month or check-in anniversary billing. Auto-generation on schedule.",
-    color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950"
+    color: "text-success bg-success/10"
   },
   {
     icon: Bell,
     title: "Automated Notifications",
     description: "Email & WhatsApp payment reminders, receipts, and daily summaries. Professional formatting with property details.",
-    color: "text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950"
+    color: "text-info bg-info/10"
   },
   {
     icon: MessageSquare,
     title: "Approvals & Complaints",
     description: "Tenant issue reporting with approval workflow. Document uploads, profile change requests, and complaint tracking.",
-    color: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950"
+    color: "text-destructive bg-destructive/10"
   },
   {
     icon: FileText,

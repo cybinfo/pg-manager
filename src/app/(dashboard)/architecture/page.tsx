@@ -13,6 +13,7 @@ import {
 import { PropertyGrid, RoomGrid, BedView } from "./_components"
 import type { ArchProperty } from "./_components"
 import type { ArchRoom } from "./_components"
+import { logger } from "@/lib/logger"
 
 interface Tenant {
   id: string
@@ -51,7 +52,7 @@ export default function ArchitecturePage() {
       .order("name")
 
     if (propertiesError) {
-      console.error("Error fetching properties:", propertiesError)
+      logger.error("Error fetching properties:", { detail: propertiesError })
     } else {
       const transformedProperties = (propertiesData || []).map((p: { id: string; name: string; address?: string | null; rooms: unknown }) => {
         const pRooms = Array.isArray(p.rooms) ? p.rooms : []

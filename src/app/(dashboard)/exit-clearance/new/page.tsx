@@ -31,6 +31,7 @@ import { PermissionGuard } from "@/components/auth"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { initiateExitClearance, ExitClearanceInput } from "@/lib/workflows/exit.workflow"
 import { getTodayISO } from "@/lib/date-helpers"
+import { logger } from "@/lib/logger"
 
 interface TenantRaw {
   id: string
@@ -132,7 +133,7 @@ function InitiateCheckoutForm() {
         .order("name")
 
       if (error) {
-        console.error("Error fetching tenants:", error)
+        logger.error("Error fetching tenants:", { detail: error })
         showError("Failed to load tenants")
         setLoadingData(false)
         return
@@ -334,7 +335,7 @@ function InitiateCheckoutForm() {
       )
 
       if (!result.success) {
-        console.error("Error initiating exit:", result.errors)
+        logger.error("Error initiating exit:", { detail: result.errors })
         const errorMsg = result.errors?.[0]?.message || "Unknown error"
         showError(`Failed to initiate checkout: ${errorMsg}`)
         setLoading(false)

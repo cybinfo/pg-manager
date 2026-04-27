@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
         <Card className="w-full max-w-md text-center shadow-lg">
           <CardHeader>
             <div className="flex justify-center mb-4">
-              <CheckCircle className="h-16 w-16 text-teal-500" />
+              <CheckCircle className="h-16 w-16 text-primary" />
             </div>
             <CardTitle>Check your email</CardTitle>
             <CardDescription className="space-y-2">

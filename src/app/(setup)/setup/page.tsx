@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getNowISO } from "@/lib/date-helpers"
+import { logger } from "@/lib/logger"
 
 const templates = [
   {
@@ -117,7 +118,7 @@ export default function SetupPage() {
         .eq("id", user.id)
 
       if (ownerError) {
-        console.error("Owner update error:", ownerError)
+        logger.error("Owner update error:", { detail: ownerError })
         throw ownerError
       }
 
@@ -127,7 +128,7 @@ export default function SetupPage() {
       })
 
       if (configError) {
-        console.error("Config creation error:", configError)
+        logger.error("Config creation error:", { detail: configError })
         // Non-fatal - continue anyway
       }
 
@@ -142,7 +143,7 @@ export default function SetupPage() {
       )
 
       if (propertyError) {
-        console.error("Property creation error:", propertyError)
+        logger.error("Property creation error:", { detail: propertyError })
         throw propertyError
       }
 
@@ -161,7 +162,7 @@ export default function SetupPage() {
         .single()
 
       if (workspaceError) {
-        console.error("Workspace creation error:", workspaceError)
+        logger.error("Workspace creation error:", { detail: workspaceError })
         // Non-fatal - might already exist
       }
 
@@ -181,7 +182,7 @@ export default function SetupPage() {
           )
 
         if (contextError) {
-          console.error("Context creation error:", contextError)
+          logger.error("Context creation error:", { detail: contextError })
           // Non-fatal
         }
       }
@@ -196,7 +197,7 @@ export default function SetupPage() {
         }, { onConflict: "user_id" })
 
       if (profileError) {
-        console.error("Profile update error:", profileError)
+        logger.error("Profile update error:", { detail: profileError })
         // Non-fatal
       }
 
@@ -204,7 +205,7 @@ export default function SetupPage() {
       router.push("/dashboard")
       router.refresh()
     } catch (error) {
-      console.error("Setup error:", error)
+      logger.error("Setup error:", { detail: error })
       showError("Something went wrong. Please try again.")
       setLoading(false)
     }

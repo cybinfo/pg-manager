@@ -35,7 +35,7 @@ export function WhySection() {
     <section className="py-20 px-4 bg-muted/30">
       <div className="container mx-auto">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 text-amber-700 dark:text-amber-300 text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r bg-warning/10 text-warning text-sm font-medium mb-4">
             <Star className="h-4 w-4" />
             Why Choose Us
           </div>

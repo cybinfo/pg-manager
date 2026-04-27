@@ -22,6 +22,7 @@ import { handleClientError } from "@/lib/error-handler"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PERMISSION_GROUPS as permissionGroups } from "@/lib/auth/permission-groups"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 interface Role {
   id: string
@@ -58,7 +59,7 @@ export default function EditRolePage() {
         .single()
 
       if (error || !data) {
-        console.error("Error fetching role:", error)
+        logger.error("Error fetching role:", { detail: error })
         showError("Role not found")
         router.push("/staff/roles")
         return
@@ -161,7 +162,7 @@ export default function EditRolePage() {
         .eq("id", role.id)
 
       if (error) {
-        console.error("Error updating role:", error)
+        logger.error("Error updating role:", { detail: error })
         throw error
       }
 

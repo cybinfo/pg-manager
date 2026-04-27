@@ -10,6 +10,7 @@ import { Clock, Check, X, Loader2 } from 'lucide-react'
 import { showSuccess, showError } from '@/lib/toast-helpers'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/format'
+import { logger } from "@/lib/logger"
 
 // ============================================
 // Accept Invitation Component
@@ -86,7 +87,7 @@ export function AcceptInvitation({ token }: AcceptInvitationProps) {
         router.push('/dashboard')
       }
     } catch (error: unknown) {
-      console.error('Error accepting invitation:', error)
+      logger.error('Error accepting invitation', { error: String(error) })
       showError((error as Error).message || 'Failed to accept invitation')
     } finally {
       setIsAccepting(false)

@@ -39,6 +39,7 @@ import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PermissionGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { Person } from "@/types/people.types"
+import { logger } from "@/lib/logger"
 
 interface PersonWithStats extends Person {
   tenant_count?: number
@@ -123,7 +124,7 @@ export default function PersonMergePage() {
       .limit(20)
 
     if (error) {
-      console.error("Search error:", error)
+      logger.error("Search error:", { detail: error })
       showError("Search failed")
     } else {
       // Exclude already selected persons
@@ -193,7 +194,7 @@ export default function PersonMergePage() {
         })
 
         if (error) {
-          console.error("Merge error:", error)
+          logger.error("Merge error:", { detail: error })
           showError(`Merge failed: ${error.message}`)
           setMerging(false)
           return

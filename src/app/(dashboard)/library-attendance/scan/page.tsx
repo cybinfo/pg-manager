@@ -19,6 +19,7 @@ import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { logger } from "@/lib/logger"
 
 interface QRPayload {
   type: string
@@ -200,7 +201,7 @@ export default function QRScannerPage() {
         // Ignore audio errors
       }
     } catch (err) {
-      console.error("Check-in error:", err)
+      logger.error("Check-in error:", { detail: err })
       const result: CheckInResult = {
         success: false,
         memberName: "Error",
@@ -247,7 +248,7 @@ export default function QRScannerPage() {
       setScanning(true)
       setError(null)
     } catch (err) {
-      console.error("Scanner error:", err)
+      logger.error("Scanner error:", { detail: err })
       setError("Could not access camera. Please grant camera permissions.")
       setScanning(false)
     }

@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 
 import type { Product, ProductFormData, ProductCategory } from "@/types/expense-enhanced.types"
 import { UNIT_OPTIONS } from "@/lib/status"
+import { logger } from "@/lib/logger"
 
 export default function EditProductPage({
   params,
@@ -141,7 +142,7 @@ export default function EditProductPage({
       showSuccess("Product updated successfully")
       router.push(`/expenses/products/${id}`)
     } catch (error) {
-      console.error("Failed to update product:", error)
+      logger.error("Failed to update product:", { detail: error })
       showError("Failed to update product")
     } finally {
       setLoading(false)

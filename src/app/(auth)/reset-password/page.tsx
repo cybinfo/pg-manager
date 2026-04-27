@@ -108,7 +108,7 @@ function ResetPasswordForm() {
         <Card className="w-full max-w-md text-center shadow-lg">
           <CardHeader>
             <div className="flex justify-center mb-4">
-              <Loader2 className="h-16 w-16 text-teal-500 animate-spin" />
+              <Loader2 className="h-16 w-16 text-primary animate-spin" />
             </div>
             <CardTitle>Verifying...</CardTitle>
             <CardDescription>
@@ -126,7 +126,7 @@ function ResetPasswordForm() {
         <Card className="w-full max-w-md text-center shadow-lg">
           <CardHeader>
             <div className="flex justify-center mb-4">
-              <XCircle className="h-16 w-16 text-rose-500" />
+              <XCircle className="h-16 w-16 text-destructive" />
             </div>
             <CardTitle>Link Invalid or Expired</CardTitle>
             <CardDescription>
@@ -152,7 +152,7 @@ function ResetPasswordForm() {
         <Card className="w-full max-w-md text-center shadow-lg">
           <CardHeader>
             <div className="flex justify-center mb-4">
-              <CheckCircle className="h-16 w-16 text-teal-500" />
+              <CheckCircle className="h-16 w-16 text-primary" />
             </div>
             <CardTitle>Password Updated!</CardTitle>
             <CardDescription>

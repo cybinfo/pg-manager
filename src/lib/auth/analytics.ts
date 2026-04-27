@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger"
 import { createClient } from '@/lib/supabase/client'
 import { getTodayISO } from '@/lib/date-helpers'
 import { transformJoin } from '@/lib/supabase/transforms'
@@ -32,7 +33,7 @@ export async function getContextMetrics(workspaceId: string): Promise<ContextMet
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error fetching context metrics:', error)
+    logger.error('Error fetching context metrics:', error)
     return []
   }
 
@@ -63,7 +64,7 @@ export async function getPermissionUsage(workspaceId: string): Promise<Permissio
     .eq('workspace_id', workspaceId)
 
   if (error) {
-    console.error('Error fetching permission usage:', error)
+    logger.error('Error fetching permission usage:', error)
     return []
   }
 

@@ -31,6 +31,7 @@ import { PermissionGuard } from "@/components/auth"
 import { showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { withCreatedBy } from "@/lib/audit"
+import { logger } from "@/lib/logger"
 
 interface Library {
   id: string
@@ -308,7 +309,7 @@ function NewLibraryMemberContent() {
         .single()
 
       if (personError) {
-        console.error("Error creating person:", personError)
+        logger.error("Error creating person:", { detail: personError })
         // Continue without person_id — non-blocking
       }
 
@@ -370,7 +371,7 @@ function NewLibraryMemberContent() {
         .single()
 
       if (membershipError) {
-        console.error("Error creating membership:", membershipError)
+        logger.error("Error creating membership:", { detail: membershipError })
       }
 
       // Update member with current subscription
@@ -411,10 +412,10 @@ function NewLibraryMemberContent() {
             planName: selectedPlan?.name,
             hoursIncluded: selectedPlan?.hours_included || undefined,
           }).catch((err: unknown) => {
-            console.warn("[NewLibraryMember] Failed to send welcome email:", err)
+            logger.warn("Failed to send welcome email", { error: err instanceof Error ? err.message : String(err) })
           })
         }).catch((err: unknown) => {
-          console.warn("[NewLibraryMember] Failed to load email module:", err)
+          logger.warn("Failed to load email module", { error: err instanceof Error ? err.message : String(err) })
         })
       }
 
@@ -431,7 +432,7 @@ function NewLibraryMemberContent() {
           .eq("id", waitlistId)
 
         if (waitlistError) {
-          console.error("Error updating waitlist entry:", waitlistError)
+          logger.error("Error updating waitlist entry:", { detail: waitlistError })
         }
       }
 

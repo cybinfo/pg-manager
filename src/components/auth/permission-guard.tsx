@@ -1,5 +1,6 @@
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth, useCurrentContext } from "@/lib/auth"
@@ -36,7 +37,7 @@ export function PermissionGuard({
 
   // Debug logging only in development
   if (process.env.NODE_ENV === 'development') {
-    console.debug('[PermissionGuard] Checking access:', {
+    logger.debug('[PermissionGuard] Checking access:', {
       permission,
       isOwner,
       isStaff,

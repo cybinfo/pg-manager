@@ -19,8 +19,8 @@ const products = [
     description: "Complete management for Paying Guest accommodations and hostels. Tenants, rooms, billing, staff roles with 50+ permissions & more.",
     icon: Building2,
     color: "from-teal-500 to-emerald-500",
-    bgColor: "bg-teal-50",
-    textColor: "text-teal-600 dark:text-teal-400",
+    bgColor: "bg-primary/10",
+    textColor: "text-primary",
     status: "live",
     href: "/products/pg-manager",
     features: ["Tenant Management", "Smart Billing", "Staff & Roles (RBAC)", "Your Own Website"]
@@ -43,8 +43,8 @@ const products = [
     description: "Manage rental properties, track rent payments, handle maintenance requests, and generate agreements.",
     icon: Home,
     color: "from-amber-500 to-orange-500",
-    bgColor: "bg-amber-50",
-    textColor: "text-amber-600 dark:text-amber-400",
+    bgColor: "bg-warning/10",
+    textColor: "text-warning",
     status: "coming",
     href: "#",
     features: ["Rent Collection", "Tenant Screening", "Maintenance Tracking", "Agreement Generator"]
@@ -55,8 +55,8 @@ const products = [
     description: "Complete solution for housing societies - maintenance billing, complaints, visitor management & accounting.",
     icon: Building,
     color: "from-sky-500 to-blue-500",
-    bgColor: "bg-sky-50",
-    textColor: "text-sky-600 dark:text-sky-400",
+    bgColor: "bg-info/10",
+    textColor: "text-info",
     status: "coming",
     href: "#",
     features: ["Maintenance Billing", "Complaint Portal", "Visitor Logs", "Society Accounting"]
@@ -90,8 +90,8 @@ export function ProductsSection() {
             >
               {product.status === "live" && (
                 <div className="absolute top-4 right-4">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-xs font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                     Live Now
                   </span>
                 </div>

@@ -28,6 +28,7 @@ import {
 import { PageLoading } from "@/components/ui/loading"
 
 import type { ProductCategory } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 
 export default function NewProductPage() {
@@ -99,7 +100,7 @@ function NewProductContent() {
         .order("sort_order")
 
       if (error) {
-        console.error("Failed to load categories:", error)
+        logger.error("Failed to load categories:", { detail: error })
       } else {
         setCategories(data || [])
 
@@ -121,7 +122,7 @@ function NewProductContent() {
       })
 
       if (error) {
-        console.error("Failed to seed categories:", error)
+        logger.error("Failed to seed categories:", { detail: error })
       } else {
         const { data } = await supabase
           .from("product_categories")

@@ -18,6 +18,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
+import { Currency } from "@/components/ui/currency"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
@@ -27,6 +28,7 @@ import { ProductSelector } from "@/components/expenses/product-selector"
 import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, UNIT_OPTIONS } from "@/lib/status"
 
 import type { Product, ProductCategory, Vendor } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 interface SpendLineItem {
   id: string
@@ -251,7 +253,7 @@ export default function NewDailySpendPage() {
       showSuccess(`${validItems.length} item(s) recorded successfully`)
       router.push("/expenses/daily-spend")
     } catch (error) {
-      console.error("Failed to save daily spend:", error)
+      logger.error("Failed to save daily spend:", { detail: error })
       showError("Failed to save expense")
     } finally {
       setLoading(false)
@@ -434,7 +436,7 @@ export default function NewDailySpendPage() {
                             Total
                           </label>
                           <div className="h-10 flex items-center font-medium">
-                            ₹{item.total.toFixed(2)}
+                            <Currency amount={item.total} />
                           </div>
                         </div>
 
@@ -462,7 +464,7 @@ export default function NewDailySpendPage() {
                         Grand Total:
                       </span>
                       <span className="ml-2 text-xl font-bold">
-                        ₹{grandTotal.toFixed(2)}
+                        <Currency amount={grandTotal} />
                       </span>
                     </div>
                   </div>

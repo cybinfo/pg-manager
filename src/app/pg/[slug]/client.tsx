@@ -54,6 +54,7 @@ import { formatCurrency, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import type { PropertyWebsite } from "./page"
+import { logger } from "@/lib/logger"
 
 // ============================================================================
 // CONSTANTS
@@ -435,7 +436,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
       setSubmitted(true)
       showSuccess("Inquiry submitted successfully!")
     } catch (error) {
-      console.error("Error submitting inquiry:", error)
+      logger.error("Error submitting inquiry:", { detail: error })
       showError("Failed to submit inquiry. Please try calling directly.")
     } finally {
       setSubmitting(false)
@@ -479,12 +480,8 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
       {/* Hero Section */}
       <section className="relative">
         <div
-          className="h-[50vh] md:h-[60vh] bg-cover bg-center relative"
-          style={{
-            backgroundImage: config.cover_photo_url
-              ? `url(${config.cover_photo_url})`
-              : "linear-gradient(135deg, #14B8A6 0%, #10B981 100%)"
-          }}
+          className={`h-[50vh] md:h-[60vh] bg-cover bg-center relative${!config.cover_photo_url ? " bg-gradient-to-br from-primary to-primary/70" : ""}`}
+          style={config.cover_photo_url ? { backgroundImage: `url(${config.cover_photo_url})` } : undefined}
           role="img"
           aria-label={`${property.name} cover image`}
         >

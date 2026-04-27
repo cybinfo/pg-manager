@@ -10,6 +10,7 @@ import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, Home } from "lucide-react"
 import Link from "next/link"
+import { logger } from "@/lib/logger"
 
 export interface PortalErrorProps {
   /** The error caught by the Next.js error boundary */
@@ -29,7 +30,7 @@ export function PortalError({
   homeHref,
 }: PortalErrorProps) {
   useEffect(() => {
-    console.error(`[${portalName}Error]`, {
+    logger.error(`[${portalName}Error]`, {
       message: error.message,
       digest: error.digest,
       stack: error.stack,

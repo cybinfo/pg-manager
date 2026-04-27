@@ -20,6 +20,7 @@ import { getTodayISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
 import { PAYMENT_METHOD_OPTIONS } from "@/lib/status"
+import { logger } from "@/lib/logger"
 
 interface Tenant {
   id: string
@@ -118,7 +119,7 @@ function NewPaymentForm() {
       ])
 
       if (tenantsRes.error) {
-        console.error("Error fetching tenants:", tenantsRes.error)
+        logger.error("Error fetching tenants:", { detail: tenantsRes.error })
         showError("Failed to load tenants")
       } else {
         // Transform the data from arrays to single objects
@@ -143,7 +144,7 @@ function NewPaymentForm() {
       }
 
       if (chargeTypesRes.error) {
-        console.error("Error fetching charge types:", chargeTypesRes.error)
+        logger.error("Error fetching charge types:", { detail: chargeTypesRes.error })
       } else {
         setChargeTypes(chargeTypesRes.data || [])
         // Default to "Rent" if available
@@ -273,7 +274,7 @@ function NewPaymentForm() {
       )
 
       if (!result.success) {
-        console.error("Error recording payment:", result.errors)
+        logger.error("Error recording payment:", { detail: result.errors })
         const errorMsg = result.errors?.[0]?.message || "Unknown error"
         showError(`Failed to record payment: ${errorMsg}`)
         setLoading(false)

@@ -21,6 +21,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -97,7 +98,7 @@ export function useInlineEdit({
           .eq("workspace_id", workspaceId)
 
         if (error) {
-          console.error(`[useInlineEdit] Update failed:`, error)
+          logger.error(`[useInlineEdit] Update failed:`, { error: String(error) })
           if (showErrorToast) {
             showError(error.message || "Failed to update")
           }
@@ -113,7 +114,7 @@ export function useInlineEdit({
 
         return true
       } catch (err) {
-        console.error(`[useInlineEdit] Unexpected error:`, err)
+        logger.error(`[useInlineEdit] Unexpected error:`, { error: String(err) })
         if (showErrorToast) {
           showError("An unexpected error occurred")
         }
@@ -223,7 +224,7 @@ export function useBatchInlineEdit({
           .eq("workspace_id", workspaceId)
 
         if (error) {
-          console.error(`[useBatchInlineEdit] Update failed:`, error)
+          logger.error(`[useBatchInlineEdit] Update failed:`, { error: String(error) })
           if (showErrorToast) {
             showError(error.message || "Failed to update")
           }
@@ -237,7 +238,7 @@ export function useBatchInlineEdit({
         onSuccess?.()
         return true
       } catch (err) {
-        console.error(`[useBatchInlineEdit] Unexpected error:`, err)
+        logger.error(`[useBatchInlineEdit] Unexpected error:`, { error: String(err) })
         if (showErrorToast) {
           showError("An unexpected error occurred")
         }

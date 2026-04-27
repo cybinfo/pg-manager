@@ -11,6 +11,7 @@
  */
 
 import { createClient } from "@/lib/supabase/client"
+import { workflowLogger } from "@/lib/logger"
 import {
   WorkflowDefinition,
   executeWorkflow,
@@ -276,7 +277,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
           .eq("id", input.tenant_id)
 
         if (error) {
-          console.warn("[PaymentRecord] Failed to update advance balance:", error)
+          workflowLogger.warn("Failed to update advance balance", { error: error instanceof Error ? error.message : String(error) })
         }
 
         return createSuccessResult({ updated: true, new_balance: newBalance })
@@ -295,7 +296,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
         // If bill was overdue and is now paid, check if we need to clear late fees
         if (billData.status === "overdue" && billStatus.new_status === "paid") {
           // Log that late payment was cleared
-          console.log(`[PaymentRecord] Late payment cleared for bill ${input.bill_id}`)
+          workflowLogger.debug("Late payment cleared", { billId: input.bill_id })
         }
 
         return createSuccessResult({ checked: true })
@@ -354,7 +355,7 @@ export const paymentRecordWorkflow: WorkflowDefinition<PaymentRecordInput, Payme
           return createSuccessResult({ sent: true })
         } catch (err) {
           // Non-blocking: log but don't fail the workflow
-          console.warn("[PaymentRecord] Failed to send receipt email:", err)
+          workflowLogger.warn("Failed to send receipt email", { error: err instanceof Error ? err.message : String(err) })
           return createSuccessResult({ sent: false, reason: "send_error" })
         }
       },
@@ -522,7 +523,7 @@ export const refundPaymentWorkflow: WorkflowDefinition<RefundPaymentInput, Refun
 
         if (error) {
           // Table might not exist, create inline refund note
-          console.warn("[RefundPayment] Refund table not found, updating payment notes")
+          workflowLogger.warn("Refund table not found, updating payment notes")
           await supabase
             .from("payments")
             .update({
@@ -572,7 +573,7 @@ export const refundPaymentWorkflow: WorkflowDefinition<RefundPaymentInput, Refun
           .eq("id", bill.id)
 
         if (error) {
-          console.warn("[RefundPayment] Failed to update bill:", error)
+          workflowLogger.warn("Failed to update bill", { error: error instanceof Error ? error.message : String(error) })
         }
 
         return createSuccessResult({ updated: true, new_status: newStatus })

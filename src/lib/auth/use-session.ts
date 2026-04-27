@@ -13,6 +13,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { User, Session, AuthChangeEvent } from "@supabase/supabase-js"
+import { authLogger } from "@/lib/logger"
 import {
   SessionState,
   SessionError,
@@ -183,7 +184,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
           if (result.error.code === "NETWORK_ERROR" && retryCountRef.current < AUTH_MAX_RETRY_ATTEMPTS) {
             const delay = getExponentialBackoffDelay(retryCountRef.current)
             retryCountRef.current++
-            console.log(`[useSession] Retry attempt ${retryCountRef.current}/${AUTH_MAX_RETRY_ATTEMPTS} in ${delay}ms`)
+            authLogger.debug(`Retry attempt ${retryCountRef.current}/${AUTH_MAX_RETRY_ATTEMPTS} in ${delay}ms`)
             // UTIL-001: Store timeout ref to prevent memory leak
             retryTimeoutRef.current = setTimeout(() => initializeSession(), delay)
             return
@@ -218,7 +219,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
           setWillExpireSoon(expiry !== null && expiry < SESSION_REFRESH_BUFFER_MS)
         }
       } catch (err) {
-        console.error("[useSession] Initialization error:", err)
+        authLogger.error("Initialization error", { error: err instanceof Error ? err.message : String(err) })
         safeSetState({
           isLoading: false,
           isAuthenticated: false,
@@ -239,7 +240,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
   const refresh = useCallback(async (): Promise<boolean> => {
     // If already refreshing, wait for the existing promise
     if (isRefreshingRef.current && refreshPromiseRef.current) {
-      console.log("[useSession] Refresh already in progress, waiting...")
+      authLogger.debug("Refresh already in progress, waiting")
       return refreshPromiseRef.current
     }
 
@@ -271,7 +272,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
 
         return true
       } catch (err) {
-        console.error("[useSession] Refresh error:", err)
+        authLogger.error("Refresh error", { error: err instanceof Error ? err.message : String(err) })
         return false
       } finally {
         isRefreshingRef.current = false
@@ -305,7 +306,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
 
       return result.success
     } catch (err) {
-      console.error("[useSession] Logout error:", err)
+      authLogger.error("Logout error", { error: err instanceof Error ? err.message : String(err) })
       return false
     }
   }, [safeSetState, onError])
@@ -323,7 +324,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
       async (event: AuthChangeEvent, session: Session | null) => {
         if (!mountedRef.current) return
 
-        console.log("[useSession] Auth state changed:", event)
+        authLogger.debug("Auth state changed", { event })
 
         switch (event) {
           case "SIGNED_IN":
@@ -392,9 +393,9 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
       const refreshIn = Math.max(0, expiry - SESSION_REFRESH_BUFFER_MS)
 
       if (refreshIn > 0) {
-        console.log(`[useSession] Scheduling refresh in ${Math.round(refreshIn / 1000)}s`)
+        authLogger.debug(`Scheduling refresh in ${Math.round(refreshIn / 1000)}s`)
         refreshTimerRef.current = setTimeout(() => {
-          console.log("[useSession] Auto-refreshing session")
+          authLogger.debug("Auto-refreshing session")
           refresh()
         }, refreshIn)
       } else {
@@ -420,7 +421,7 @@ export function useSession(options: UseSessionOptions = {}): UseSessionReturn {
       if (!state.session) return
 
       if (isSessionExpired(state.session)) {
-        console.warn("[useSession] Session expired during check")
+        authLogger.warn("Session expired during check")
         const refreshed = await refresh()
         if (!refreshed) {
           onSessionExpired?.()

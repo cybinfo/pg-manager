@@ -15,6 +15,7 @@
  * if (!result.user) return result.response
  */
 
+import { logger } from "@/lib/logger"
 import { createClient as createBrowserClient } from "@supabase/supabase-js"
 import { createClient } from "./client"
 import { unauthorized, internalError } from "@/lib/api-response"
@@ -29,7 +30,7 @@ function createAdminClient(): SupabaseClient | null {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !serviceRoleKey) {
-    console.error("Missing Supabase admin credentials")
+    logger.error("Missing Supabase admin credentials")
     return null
   }
 

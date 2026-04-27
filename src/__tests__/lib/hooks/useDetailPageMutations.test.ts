@@ -27,6 +27,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react"
 import { useDetailPageMutations } from "@/lib/hooks/detail-page/useDetailPageMutations"
 import type { DetailPageConfig } from "@/lib/hooks/detail-page/types"
+import { logger } from "@/lib/logger"
 
 // ============================================================================
 // Mocks
@@ -516,12 +517,12 @@ describe("useDetailPageMutations — deleteRecord", () => {
     expect(global.window.confirm).not.toHaveBeenCalled()
   })
 
-  it("logs console.error when cascadeSoftDelete returns errors (line 183)", async () => {
+  it("logs logger.error when cascadeSoftDelete returns errors (line 183)", async () => {
     global.window.confirm = jest.fn().mockReturnValue(true)
     const client = makeSupabaseClient({})
     mockCreateClient.mockReturnValue(client)
     mockIsSoftDeletableTable.mockImplementation((table: string) => table === "tenants" || table === "bills")
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {})
+    const loggerSpy = jest.spyOn(logger, "error").mockImplementation(() => {})
     // cascadeSoftDelete returns errors array (non-empty)
     mockCascadeSoftDelete.mockResolvedValue({ errors: [{ table: "bills", error: "FK violation" }] })
     mockSoftDelete.mockResolvedValue({ error: null })
@@ -533,11 +534,11 @@ describe("useDetailPageMutations — deleteRecord", () => {
         cascadeDeletes: [{ table: "bills", foreignKey: "tenant_id" }],
       })
     })
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(loggerSpy).toHaveBeenCalledWith(
       expect.stringContaining("Cascade soft delete errors"),
-      expect.any(Array)
+      expect.any(Object)
     )
-    consoleSpy.mockRestore()
+    loggerSpy.mockRestore()
   })
 
   it("throws and returns false when hard delete (non-soft-deletable main table) returns error (line 212)", async () => {

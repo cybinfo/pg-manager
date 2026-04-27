@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, AlertCircle, FileText } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
+import { logger } from "@/lib/logger"
 
 interface TenantDocument {
   id: string
@@ -174,7 +175,7 @@ export function ReportIssueDialog({
     setLoading(false)
 
     if (error) {
-      console.error("Error submitting request:", error)
+      logger.error("Error submitting request:", { detail: error })
       showError("Failed to submit request. Please try again.")
       return
     }

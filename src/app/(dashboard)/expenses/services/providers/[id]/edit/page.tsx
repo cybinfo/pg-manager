@@ -23,6 +23,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 
 import type { ServiceProvider, ServiceCategory, ServiceProviderFormData, TdsSection } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 const TDS_SECTION_OPTIONS = [
   { value: "194C", label: "194C - Contractor (1%)" },
@@ -180,7 +181,7 @@ export default function EditServiceProviderPage({
       showSuccess("Provider updated successfully")
       router.push(`/expenses/services/providers/${id}`)
     } catch (error) {
-      console.error("Failed to update provider:", error)
+      logger.error("Failed to update provider:", { detail: error })
       showError("Failed to update provider")
     } finally {
       setLoading(false)

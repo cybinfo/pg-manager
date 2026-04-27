@@ -5,6 +5,7 @@
  * Stores order in localStorage for persistence across sessions.
  */
 
+import { logger } from "@/lib/logger"
 import { useState, useEffect, useCallback } from "react"
 
 const STORAGE_KEY = "sidebar-order"
@@ -42,7 +43,7 @@ export function useSidebarOrder() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newOrder))
       setOrder(newOrder)
     } catch (error) {
-      console.error("Failed to save sidebar order:", error)
+      logger.error("Failed to save sidebar order:", { error: String(error) })
     }
   }, [])
 

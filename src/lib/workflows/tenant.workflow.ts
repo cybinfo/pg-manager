@@ -8,6 +8,7 @@
  */
 
 import { createClient } from "@/lib/supabase/client"
+import { workflowLogger } from "@/lib/logger"
 import {
   WorkflowDefinition,
   executeWorkflow,
@@ -271,7 +272,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
 
         if (insertError) {
           // If people table doesn't exist yet, continue without person
-          console.warn("[TenantCreate] Could not create person record:", insertError)
+          workflowLogger.warn("[TenantCreate] Could not create person record:", { detail: insertError })
           return createSuccessResult({
             person_id: null,
             name: input.name,
@@ -449,7 +450,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const supabase = createClient()
         await supabase.rpc('decrement_room_occupancy', {
           p_room_id: input.room_id,
-        }).catch((err: unknown) => console.warn("[TenantCreate] Rollback decrement failed:", err))
+        }).catch((err: unknown) => workflowLogger.warn("[TenantCreate] Rollback decrement failed:", { detail: err }))
       },
       optional: false, // CRITICAL: Room occupancy must be accurate
     },
@@ -475,7 +476,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           .eq("id", input.bed_id)
 
         if (error) {
-          console.warn("[TenantCreate] Failed to update bed:", error)
+          workflowLogger.warn("[TenantCreate] Failed to update bed:", { detail: error })
           return createSuccessResult({ bed_updated: false, bed_id: input.bed_id })
         }
 
@@ -493,7 +494,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
             updated_at: getNowISO(),
           })
           .eq("id", input.bed_id)
-          .catch((err: unknown) => console.warn("[TenantCreate] Rollback bed assignment failed:", err))
+          .catch((err: unknown) => workflowLogger.warn("[TenantCreate] Rollback bed assignment failed:", { detail: err }))
       },
       optional: true, // Bed assignment is optional (not all rooms have beds)
     },
@@ -521,7 +522,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           .select("id")
 
         if (error) {
-          console.warn("[TenantCreate] Failed to save documents:", error)
+          workflowLogger.warn("[TenantCreate] Failed to save documents:", { detail: error })
           return createSuccessResult({ documents_saved: 0, document_ids: [] })
         }
 
@@ -535,7 +536,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const result = stepResult as { document_ids?: string[] }
         if (!result?.document_ids || result.document_ids.length === 0) return
         await softDeleteBatch("tenant_documents", result.document_ids, context.actor_id)
-          .catch((err: unknown) => console.warn("[TenantCreate] Rollback documents failed:", err))
+          .catch((err: unknown) => workflowLogger.warn("[TenantCreate] Rollback documents failed:", { detail: err }))
       },
       optional: true, // Documents are optional
     },
@@ -615,7 +616,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           .single()
 
         if (error) {
-          console.warn("[TenantCreate] Failed to generate initial bill:", error)
+          workflowLogger.warn("[TenantCreate] Failed to generate initial bill:", { detail: error })
           return createSuccessResult({ bill_generated: false, bill_id: null })
         }
 
@@ -631,7 +632,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const result = stepResult as { bill_id?: string }
         if (!result?.bill_id) return
         await softDelete("bills", result.bill_id, context.actor_id || "system")
-          .catch((err: unknown) => console.warn("[TenantCreate] Rollback bill failed:", err))
+          .catch((err: unknown) => workflowLogger.warn("[TenantCreate] Rollback bill failed:", { detail: err }))
       },
       optional: true, // Initial bill generation is optional
     },
@@ -804,7 +805,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
           .single()
 
         if (error) {
-          console.warn("[RoomTransfer] Failed to create transfer record:", error)
+          workflowLogger.warn("[RoomTransfer] Failed to create transfer record:", { detail: error })
           return createSuccessResult({ transfer_id: null })
         }
 
@@ -964,7 +965,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
 
         if (findError || !currentStay) {
           // No active stay found - this is unusual but not fatal
-          console.warn("[RoomTransfer] No active tenant_stays record found for tenant:", input.tenant_id)
+          workflowLogger.warn("[RoomTransfer] No active tenant_stays record found for tenant:", { detail: input.tenant_id })
           return createSuccessResult({ stay_updated: false, reason: "no_active_stay" })
         }
 
@@ -978,7 +979,7 @@ export const roomTransferWorkflow: WorkflowDefinition<RoomTransferInput, RoomTra
           .eq("id", currentStay.id)
 
         if (updateError) {
-          console.warn("[RoomTransfer] Failed to update tenant_stays:", updateError)
+          workflowLogger.warn("[RoomTransfer] Failed to update tenant_stays:", { detail: updateError })
           return createSuccessResult({ stay_updated: false, reason: "update_failed" })
         }
 

@@ -51,6 +51,7 @@ import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { validateAadhaar, validatePAN } from "@/lib/validators"
 import { IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT } from "@/components/forms"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 export default function EditPersonPage() {
   const params = useParams()
@@ -83,7 +84,7 @@ export default function EditPersonPage() {
         .single()
 
       if (error || !data) {
-        console.error("Error fetching person:", error)
+        logger.error("Error fetching person:", { detail: error })
         showError("Person not found")
         router.push("/people")
         return
@@ -311,7 +312,7 @@ export default function EditPersonPage() {
       .eq("id", params.id)
 
     if (error) {
-      console.error("Error updating person:", error)
+      logger.error("Error updating person:", { detail: error })
       showError("Failed to update person")
       setLoading(false)
       return

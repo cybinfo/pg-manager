@@ -25,6 +25,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { messageTemplates, generateWhatsAppLink, formatCurrency } from "@/lib/notifications"
 import { formatDate } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { logger } from "@/lib/logger"
 
 interface TenantWithDues {
   id: string
@@ -93,7 +94,7 @@ export default function PaymentRemindersPage() {
       .order("name")
 
     if (tenantsError) {
-      console.error("Error fetching tenants:", tenantsError)
+      logger.error("Error fetching tenants:", { detail: tenantsError })
       showError("Failed to load tenants")
       setLoading(false)
       return

@@ -29,6 +29,7 @@ import { EXPENSE_MISC_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib
 import type { MiscTransactionCategory, MiscPaymentMode } from "@/types/expense-enhanced.types"
 import { PermissionGuard } from "@/components/auth"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 export default function NewMiscTransactionPage() {
   return (
@@ -120,7 +121,7 @@ function NewMiscTransactionContent() {
         .order("sort_order")
 
       if (error) {
-        console.error("Failed to load categories:", error)
+        logger.error("Failed to load categories:", { detail: error })
       } else {
         setCategories(data || [])
       }

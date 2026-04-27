@@ -59,8 +59,8 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
             className={cn(
               "flex-1 min-w-[140px] px-4 py-3 flex items-center gap-3 text-left",
               index !== items.length - 1 && "border-r border-dashed",
-              item.highlight && "bg-amber-50/50 dark:bg-amber-950/50",
-              isClickable && "hover-lift cursor-pointer hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-inset"
+              item.highlight && "bg-warning/5",
+              isClickable && "hover-lift cursor-pointer hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-inset"
             )}
             onClick={() => handleClick(item.href)}
             onKeyDown={(e) => handleKeyDown(e as React.KeyboardEvent, item.href)}
@@ -70,7 +70,7 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
               <div className={cn(
                 "p-2 rounded-lg",
                 item.highlight
-                  ? "bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400"
+                  ? "bg-warning/10 text-warning"
                   : "bg-muted text-foreground"
               )} aria-hidden="true">
                 <item.icon className="h-4 w-4" />
@@ -86,13 +86,13 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
                     value={item.value}
                     className={cn(
                       "text-lg font-bold tabular-nums",
-                      item.highlight && "text-amber-600"
+                      item.highlight && "text-warning"
                     )}
                   />
                 ) : (
                   <span className={cn(
                     "text-lg font-bold tabular-nums",
-                    item.highlight && "text-amber-600"
+                    item.highlight && "text-warning"
                   )}>
                     {item.value}
                   </span>
@@ -100,7 +100,7 @@ export function MetricsBar({ items, className }: MetricsBarProps) {
                 {item.trend && (
                   <span className={cn(
                     "text-xs font-medium",
-                    item.trend.isPositive ? "text-emerald-600" : "text-rose-600"
+                    item.trend.isPositive ? "text-success" : "text-destructive"
                   )} aria-hidden="true">
                     {item.trend.isPositive ? "↑" : "↓"} {Math.abs(item.trend.value)}%
                   </span>
@@ -137,7 +137,7 @@ export function MetricsBarCompact({ items, className }: MetricsBarProps) {
           <span className="text-xs text-muted-foreground">{item.label}:</span>
           <span className={cn(
             "text-sm font-semibold tabular-nums",
-            item.highlight && "text-amber-600"
+            item.highlight && "text-warning"
           )}>
             {item.value}
           </span>

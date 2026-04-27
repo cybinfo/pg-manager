@@ -13,6 +13,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useCallback, useRef, useEffect } from "react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 
@@ -80,7 +81,7 @@ export function useCopyToClipboard(
 
         return true
       } catch (err) {
-        console.error("Failed to copy:", err)
+        logger.error("Failed to copy:", { error: String(err) })
         showError("Failed to copy to clipboard")
         return false
       }

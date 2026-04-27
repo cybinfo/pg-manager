@@ -23,6 +23,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 
 import type { Vendor, BillCategory, VendorFormData } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 export default function EditVendorPage({
   params,
@@ -164,7 +165,7 @@ export default function EditVendorPage({
       showSuccess("Vendor updated successfully")
       router.push(`/expenses/vendors/${id}`)
     } catch (error) {
-      console.error("Failed to update vendor:", error)
+      logger.error("Failed to update vendor:", { detail: error })
       showError("Failed to update vendor")
     } finally {
       setLoading(false)

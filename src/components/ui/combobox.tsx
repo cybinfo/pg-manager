@@ -4,6 +4,7 @@ import * as React from "react"
 import { Check, ChevronsUpDown, Search, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { logger } from "@/lib/logger"
 import {
   Command,
   CommandEmpty,
@@ -373,7 +374,7 @@ export function AsyncCombobox<T>({
         const results = await fetchOptions(query)
         setOptions(results)
       } catch (error) {
-        console.error("Error fetching options:", error)
+        logger.error("Error fetching options:", { detail: error })
         setOptions([])
       } finally {
         setLoading(false)

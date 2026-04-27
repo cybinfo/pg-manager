@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 
 // ============================================================================
 // TYPES
@@ -256,7 +257,7 @@ export function EntitySelector<T extends { id: string }>({
     const { data, error: searchError } = await queryBuilder
 
     if (searchError) {
-      console.error("Search error:", searchError)
+      logger.error("Search error:", { detail: searchError })
       setResults([])
     } else {
       let items = (data || []) as T[]

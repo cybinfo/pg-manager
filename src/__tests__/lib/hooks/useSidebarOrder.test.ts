@@ -7,6 +7,7 @@
 
 import { renderHook, act } from "@testing-library/react"
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
+import { logger } from "@/lib/logger"
 
 const STORAGE_KEY = "sidebar-order"
 
@@ -226,7 +227,7 @@ describe("localStorage error handling", () => {
   })
 
   it("handles setItem throwing during save (line 49 catch block)", () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {})
+    const loggerErrorSpy = jest.spyOn(logger, "error").mockImplementation(() => {})
     const setItemSpy = jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new Error("quota exceeded")
     })
@@ -238,13 +239,13 @@ describe("localStorage error handling", () => {
       result.current.reorderMain(0, 1, ["Dashboard", "Rooms"])
     })
 
-    expect(consoleError).toHaveBeenCalledWith(
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
       expect.stringContaining("Failed to save"),
-      expect.any(Error)
+      expect.any(Object)
     )
 
     setItemSpy.mockRestore()
-    consoleError.mockRestore()
+    loggerErrorSpy.mockRestore()
   })
 })
 

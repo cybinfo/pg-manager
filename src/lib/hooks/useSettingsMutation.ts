@@ -13,6 +13,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { withCreatedBy } from "@/lib/audit"
@@ -69,7 +70,7 @@ export function useSettingsMutation({ configId, setConfig }: UseSettingsMutation
       showSuccess(messages?.successMessage || "Settings saved")
       return true
     } catch (error) {
-      console.error("Settings save error:", error)
+      logger.error("Settings save error:", { error: String(error) })
       showError(messages?.errorMessage || "Failed to save settings")
       return false
     } finally {

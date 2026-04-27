@@ -16,6 +16,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PermissionGuard } from "@/components/auth"
+import { logger } from "@/lib/logger"
 
 import {
   PropertyDetailsTab,
@@ -124,7 +125,7 @@ function EditPropertyContent() {
         .single()
 
       if (error || !data) {
-        console.error("Error fetching property:", error)
+        logger.error("Error fetching property:", { detail: error })
         showError("Property not found")
         router.push("/properties")
         return
@@ -261,7 +262,7 @@ function EditPropertyContent() {
         .eq("id", params.id)
 
       if (error) {
-        console.error("Error updating property:", error)
+        logger.error("Error updating property:", { detail: error })
         throw error
       }
 

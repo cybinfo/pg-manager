@@ -19,6 +19,7 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
+import { logger } from "@/lib/logger"
 
 interface ExpenseType {
   id: string
@@ -114,7 +115,7 @@ function EditExpenseContent() {
 
       setProperties(propertiesData || [])
     } catch (error) {
-      console.error("Error fetching data:", error)
+      logger.error("Error fetching data:", { detail: error })
       showError("Failed to load expense")
       router.push("/expenses")
     } finally {
@@ -168,7 +169,7 @@ function EditExpenseContent() {
         .eq("id", params.id)
 
       if (error) {
-        console.error("Error updating expense:", error)
+        logger.error("Error updating expense:", { detail: error })
         showError(`Failed to update expense: ${error.message}`)
         return
       }
@@ -176,7 +177,7 @@ function EditExpenseContent() {
       showSuccess("Expense updated successfully")
       router.push(`/expenses/${params.id}`)
     } catch (error) {
-      console.error("Error:", error)
+      logger.error("Error:", { detail: error })
       showError("Failed to update expense")
     } finally {
       setSubmitting(false)

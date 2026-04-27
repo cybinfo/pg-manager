@@ -8,6 +8,7 @@ import { Clock, Copy, Loader2, RefreshCw, Trash2 } from 'lucide-react'
 import { showSuccess, showError } from '@/lib/toast-helpers'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/format'
+import { logger } from "@/lib/logger"
 
 // ============================================
 // Invitation List Component
@@ -34,7 +35,7 @@ export function InvitationList({ workspaceId, onInvitationChange }: InvitationLi
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching invitations:', error)
+      logger.error('Error fetching invitations', { error: String(error) })
     } else {
       setInvitations(data || [])
     }

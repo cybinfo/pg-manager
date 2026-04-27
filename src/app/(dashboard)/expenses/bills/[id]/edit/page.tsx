@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 
 import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS, EXPENSE_BILL_STATUS_OPTIONS as STATUS_OPTIONS } from "@/lib/status"
 import type { BillPayment, Vendor, BillCategory, BillPaymentFormData } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 export default function EditBillPaymentPage({
   params,
@@ -235,7 +236,7 @@ export default function EditBillPaymentPage({
       showSuccess("Bill updated successfully")
       router.push(`/expenses/bills/${id}`)
     } catch (error) {
-      console.error("Failed to update bill:", error)
+      logger.error("Failed to update bill:", { detail: error })
       showError("Failed to update bill")
     } finally {
       setLoading(false)

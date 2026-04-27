@@ -24,6 +24,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useEffect, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { TenantWithContext } from "@/types/tenants.types"
@@ -162,7 +163,7 @@ export function useTenantPortalData(): UseTenantPortalDataReturn {
           })
         }
       } catch (err) {
-        console.error("Error resolving tenant context:", err)
+        logger.error("Error resolving tenant context:", { error: String(err) })
         if (!cancelled) {
           setTenantContext(null)
         }

@@ -23,6 +23,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { METER_TYPE_CONFIG, MeterType } from "@/types/meters.types"
 import { OwnerGuard } from "@/components/auth"
 import { useAuth } from "@/lib/auth"
+import { logger } from "@/lib/logger"
 import {
   Owner,
   ChargeType,
@@ -250,7 +251,7 @@ function SettingsContent() {
         }
       }
     } catch (error) {
-      console.error("Error fetching settings:", error)
+      logger.error("Error fetching settings:", { detail: error })
     } finally {
       setLoading(false)
     }

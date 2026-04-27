@@ -33,6 +33,7 @@ import { PermissionGuard } from "@/components/auth"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
+import { logger } from "@/lib/logger"
 
 interface Role {
   id: string
@@ -273,7 +274,7 @@ function NewStaffContent() {
         .single()
 
       if (staffError) {
-        console.error("Error creating staff member:", staffError)
+        logger.error("Error creating staff member:", { detail: staffError })
         throw staffError
       }
 
@@ -293,7 +294,7 @@ function NewStaffContent() {
           .insert(withCreatedByBatch(roleInserts, user.id))
 
         if (roleError) {
-          console.error("Error assigning roles:", roleError)
+          logger.error("Error assigning roles:", { detail: roleError })
           showError("Staff created but role assignment failed")
         }
       }
@@ -319,7 +320,7 @@ function NewStaffContent() {
           )
 
         if (contextError) {
-          console.error("Error creating context:", contextError)
+          logger.error("Error creating context:", { detail: contextError })
         } else {
           handleSuccess({ message: `Staff member added! ${existingProfile.name} can now login and switch to this staff account.` })
           return
@@ -347,7 +348,7 @@ function NewStaffContent() {
           .single()
 
         if (inviteError) {
-          console.error("Error creating invitation:", inviteError)
+          logger.error("Error creating invitation:", { detail: inviteError })
           handleSuccess({ message: "Staff member added! (Invitation could not be created)" })
           return
         } else if (invitation) {
@@ -380,7 +381,7 @@ function NewStaffContent() {
           if (emailResult.success) {
             handleSuccess({ message: "Staff member added! An invitation email has been sent." })
           } else {
-            console.warn("Failed to send invitation email:", emailResult.error)
+            logger.warn("Failed to send invitation email", { error: String(emailResult.error) })
             handleSuccess({ message: "Staff member added! Invitation created but email failed to send." })
           }
           return

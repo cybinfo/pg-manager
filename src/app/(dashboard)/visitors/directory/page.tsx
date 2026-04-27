@@ -37,6 +37,7 @@ import { PermissionGuard } from "@/components/auth"
 import { PageSkeleton } from "@/components/ui/loading"
 import { Select } from "@/components/ui/form-components"
 import { EmptyState } from "@/components/ui/empty-state"
+import { logger } from "@/lib/logger"
 import {
   VisitorType,
   VISITOR_TYPE_LABELS,
@@ -103,7 +104,7 @@ export default function VisitorDirectoryPage() {
     const { data, error } = await query
 
     if (error) {
-      console.error("Error fetching contacts:", error)
+      logger.error("Error fetching contacts:", { detail: error })
       showError("Failed to load visitor directory")
       return
     }

@@ -15,6 +15,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth"
@@ -164,7 +165,7 @@ export function useTenant(): UseTenantReturn {
         }
       }
     } catch (err) {
-      console.error("Error fetching tenant data:", err)
+      logger.error("Error fetching tenant data:", { error: String(err) })
       setError(err instanceof Error ? err.message : "Failed to load tenant data")
     } finally {
       setLoading(false)

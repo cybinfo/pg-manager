@@ -5,6 +5,7 @@ import { formatDate, formatDateTime } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 
 interface UserInfo {
   id: string
@@ -65,7 +66,7 @@ export function RecordMetadata({
           }
         }
       } catch (error) {
-        console.error("Failed to fetch user info:", error)
+        logger.error("Failed to fetch user info:", { detail: error })
       } finally {
         setLoading(false)
       }
@@ -245,7 +246,7 @@ export function RecordMetadataContent({
           }
         }
       } catch (error) {
-        console.error("Failed to fetch user info:", error)
+        logger.error("Failed to fetch user info:", { detail: error })
       } finally {
         setLoading(false)
       }

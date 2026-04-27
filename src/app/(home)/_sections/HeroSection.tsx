@@ -17,13 +17,13 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-100/40 via-transparent to-transparent dark:from-teal-900/40" />
 
       {/* Animated shapes */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-teal-200/30 dark:bg-teal-800/30 rounded-full blur-3xl animate-pulse-soft" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-200/30 dark:bg-emerald-800/30 rounded-full blur-3xl animate-pulse-soft animation-delay-500" />
+      <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-soft" />
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-soft animation-delay-500" />
 
       <div className="relative container mx-auto px-4 py-20 md:py-32">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-100 to-emerald-100 dark:from-teal-900 dark:to-emerald-900 text-teal-700 dark:text-teal-300 text-sm font-medium mb-8 animate-fade-in-down shadow-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r bg-primary/10 text-primary text-sm font-medium mb-8 animate-fade-in-down shadow-sm">
             <Sparkles className="h-4 w-4" />
             Simple Software for Indian Small Businesses
           </div>
@@ -41,8 +41,8 @@ export function HeroSection() {
             ManageKar helps Indian small businesses go from <strong className="text-foreground">chaos to clarity</strong> with simple, powerful software.
           </p>
           <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
-            Start with <span className="font-semibold text-teal-600">PG Manager</span> today —
-            <span className="text-amber-600 font-semibold"> 3 months completely free!</span>
+            Start with <span className="font-semibold text-primary">PG Manager</span> today —
+            <span className="text-warning font-semibold"> 3 months completely free!</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-in-up animation-delay-300">
@@ -69,7 +69,7 @@ export function HeroSection() {
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="h-7 w-7 rounded-full bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900 dark:to-emerald-900 flex items-center justify-center">
-                  <item.icon className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+                  <item.icon className="h-3.5 w-3.5 text-primary" />
                 </div>
                 {item.text}
               </div>

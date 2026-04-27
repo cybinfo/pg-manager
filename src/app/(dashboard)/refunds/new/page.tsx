@@ -25,6 +25,7 @@ import { withCreatedBy } from "@/lib/audit"
 import { brandGradient } from "@/lib/design-tokens"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { REFUND_TYPE_OPTIONS, REFUND_PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import { logger } from "@/lib/logger"
 
 interface Tenant {
   id: string
@@ -96,7 +97,7 @@ export default function NewRefundPage() {
       .order("name")
 
     if (error) {
-      console.error("Error fetching tenants:", error)
+      logger.error("Error fetching tenants:", { detail: error })
     } else {
       const transformed = (data || []).map((t: Record<string, unknown>) => ({
         ...t,
@@ -125,7 +126,7 @@ export default function NewRefundPage() {
       .single()
 
     if (error) {
-      console.error("Error fetching exit clearance:", error)
+      logger.error("Error fetching exit clearance:", { detail: error })
     } else if (data) {
       setExitClearance(data)
       setFormData((prev) => ({
@@ -179,7 +180,7 @@ export default function NewRefundPage() {
         .single()
 
       if (error) {
-        console.error("Error creating refund:", error)
+        logger.error("Error creating refund:", { detail: error })
         showError(`Failed to create refund: ${error.message}`)
       } else {
         showSuccess("Refund recorded successfully")

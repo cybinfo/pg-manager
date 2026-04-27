@@ -21,6 +21,7 @@ import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { downloadCSV } from "@/lib/download-utils"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn } from "@/lib/export-columns"
+import { logger } from "@/lib/logger"
 
 interface Role {
   id: string
@@ -95,7 +96,7 @@ export default function RolesPage() {
       .order("name")
 
     if (error) {
-      console.error("Error fetching roles:", error)
+      logger.error("Error fetching roles:", { detail: error })
       showError("Failed to load roles")
     } else {
       // Get user count for each role

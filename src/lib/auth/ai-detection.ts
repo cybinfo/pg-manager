@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger"
 import { createClient } from '@/lib/supabase/client'
 import { IdentityConflict } from './types'
 import { getNowISO } from '@/lib/date-helpers'
@@ -25,7 +26,7 @@ export async function detectIdentityConflicts(
   })
 
   if (error) {
-    console.error('Error detecting conflicts:', error)
+    logger.error('Error detecting conflicts:', { error: String(error) })
     return []
   }
 

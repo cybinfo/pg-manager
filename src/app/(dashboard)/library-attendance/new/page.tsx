@@ -24,6 +24,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
+import { logger } from "@/lib/logger"
 
 interface MemberOption {
   id: string
@@ -170,7 +171,7 @@ function NewLibraryAttendanceContent() {
           .eq("id", data.seat_id)
 
         if (seatError) {
-          console.error("Error updating seat status:", seatError)
+          logger.error("Error updating seat status:", { detail: seatError })
           // Don't fail the check-in, just log the error
         }
       }
@@ -283,7 +284,7 @@ function NewLibraryAttendanceContent() {
 
       setSeats(availableSeats)
     } catch (error) {
-      console.error("Error fetching seats:", error)
+      logger.error("Error fetching seats:", { detail: error })
       setSeats([])
     } finally {
       setLoadingSeats(false)

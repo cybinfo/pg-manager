@@ -7,6 +7,7 @@ import {
   Line,
   BarChart,
   Bar,
+  CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
@@ -53,6 +54,7 @@ import { StatCard } from "@/components/ui/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getTodayISO } from "@/lib/date-helpers"
 import { cn } from "@/lib/utils"
+import { logger } from "@/lib/logger"
 
 
 interface LibraryOption {
@@ -470,7 +472,7 @@ export default function LibraryReportsPage() {
         monthlyRevenue, paymentMethods, timeSlotDistribution, dailyAttendance, libraryStats,
       })
     } catch (error) {
-      console.error("Error fetching library report data:", error)
+      logger.error("Error fetching library report data:", { detail: error })
     } finally {
       setLoading(false)
     }
@@ -634,7 +636,7 @@ export default function LibraryReportsPage() {
         topMembers,
       })
     } catch (error) {
-      console.error("Error fetching payment report data:", error)
+      logger.error("Error fetching payment report data:", { detail: error })
     } finally {
       setPaymentReportLoading(false)
     }
@@ -930,14 +932,15 @@ export default function LibraryReportsPage() {
                   <div className="h-[250px] sm:h-[300px]">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <LineChart data={reportData.monthlyRevenue}>
-                        <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                         <YAxis
                           yAxisId="left"
-                          tick={{ fontSize: 11 }}
+                          tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                           width={55}
                           tickFormatter={formatTickValue}
                         />
-                        <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
+                        <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                         <Tooltip
                           formatter={(value, name) => [
                             name === "Revenue" ? formatCurrency(Number(value)) : value,
@@ -981,8 +984,9 @@ export default function LibraryReportsPage() {
                   <div className="h-[220px] sm:h-[250px]">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <BarChart data={reportData.dailyAttendance}>
-                        <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="date" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                         <Tooltip />
                         <Bar dataKey="checkIns" name="Check-ins" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -1068,14 +1072,15 @@ export default function LibraryReportsPage() {
                   <div className="h-[250px] sm:h-[300px]">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                       <BarChart data={reportData.libraryStats} margin={{ bottom: 30 }}>
-                        <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" />
-                        <YAxis tick={{ fontSize: 11 }} width={55} tickFormatter={formatTickValue} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} angle={-30} textAnchor="end" />
+                        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatTickValue} />
                         <Tooltip formatter={(value, name) => [
                           name === "revenue" ? formatCurrency(Number(value)) : value,
                           name === "revenue" ? "Revenue" : name === "activeMembers" ? "Active Members" : "Check-ins"
                         ]} />
                         <Legend />
-                        <Bar dataKey="revenue" name="Revenue" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--chart-6))" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1087,9 +1092,9 @@ export default function LibraryReportsPage() {
                 <StatusBreakdownCard
                   title="Member Status"
                   items={[
-                    { label: "Active", value: reportData.activeMembers, color: "#22c55e" },
-                    { label: "Expired", value: reportData.expiredMembers, color: "#eab308" },
-                    { label: "Total", value: reportData.totalMembers, color: "#3b82f6" },
+                    { label: "Active", value: reportData.activeMembers, color: "hsl(var(--success))" },
+                    { label: "Expired", value: reportData.expiredMembers, color: "hsl(var(--warning))" },
+                    { label: "Total", value: reportData.totalMembers, color: "hsl(var(--info))" },
                   ]}
                 />
 
@@ -1257,8 +1262,9 @@ export default function LibraryReportsPage() {
                       <div className="h-[250px] sm:h-[300px]">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                           <BarChart data={paymentReportData.revenueByPeriod}>
-                            <XAxis dataKey="period" tick={{ fontSize: 11 }} />
-                            <YAxis tick={{ fontSize: 11 }} width={55} tickFormatter={formatTickValue} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                            <XAxis dataKey="period" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                            <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatTickValue} />
                             <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                             <Legend />
                             <Bar dataKey="subscriptionAmount" name="Subscription" fill="hsl(var(--chart-3))" stackId="revenue" radius={[0, 0, 0, 0]} />

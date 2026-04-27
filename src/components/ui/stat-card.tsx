@@ -53,15 +53,15 @@ export type StatColorVariant =
  * - red -> rose (matches error)
  */
 const colorClasses: Record<StatColorVariant, { bg: string; text: string }> = {
-  blue: { bg: "bg-sky-100", text: "text-sky-600" },
-  green: { bg: "bg-emerald-100", text: "text-emerald-600" },
-  red: { bg: "bg-rose-100", text: "text-rose-600" },
-  amber: { bg: "bg-amber-100", text: "text-amber-600" },
-  purple: { bg: "bg-violet-100", text: "text-violet-600" },
-  teal: { bg: "bg-teal-100", text: "text-teal-600" },
-  orange: { bg: "bg-orange-100", text: "text-orange-600" },
-  rose: { bg: "bg-rose-100", text: "text-rose-600" },
-  slate: { bg: "bg-slate-100", text: "text-slate-600" },
+  blue: { bg: "bg-info/10", text: "text-info" },
+  green: { bg: "bg-success/10", text: "text-success" },
+  red: { bg: "bg-destructive/10", text: "text-destructive" },
+  amber: { bg: "bg-warning/10", text: "text-warning" },
+  purple: { bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-600 dark:text-violet-400" },
+  teal: { bg: "bg-primary/10", text: "text-primary" },
+  orange: { bg: "bg-warning/10", text: "text-warning" },
+  rose: { bg: "bg-destructive/10", text: "text-destructive" },
+  slate: { bg: "bg-muted", text: "text-muted-foreground" },
 }
 
 /** Resolve icon colors from either a named variant or custom bg/iconColor strings */

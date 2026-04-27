@@ -16,6 +16,7 @@ import { BrandLogo } from "@/components/ui/brand-logo"
 import { SubmitButton } from "@/components/ui/submit-button"
 import { ContextWithDetails } from "@/lib/auth/types"
 import { brandGradient } from "@/lib/design-tokens"
+import { logger } from "@/lib/logger"
 
 type LoginStep = 'credentials' | 'email-sent' | 'context-picker'
 
@@ -67,7 +68,7 @@ function LoginForm() {
       })
 
       if (contextError) {
-        console.error('[Login] Error fetching contexts:', contextError)
+        logger.error('[Login] Error fetching contexts', { error: String(contextError) })
         // Redirect to dashboard anyway - it will handle setup
         router.push('/dashboard')
         return
@@ -241,7 +242,7 @@ function LoginForm() {
       }
       // Don't use router.refresh() - it causes full page reload and remount issues
     } catch (error) {
-      console.error('Error selecting context:', error)
+      logger.error('Error selecting context', { error: String(error) })
       showError('Failed to select account')
     }
   }

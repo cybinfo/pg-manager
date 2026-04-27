@@ -93,7 +93,7 @@ function JourneyPageContent({ tenantId }: JourneyPageContentProps) {
       const counts = await getEventCategoryCounts(tenantId)
       setEventCounts(counts)
     } catch (err) {
-      console.error("[JourneyPage] Error fetching journey:", err)
+      logger.error("[JourneyPage] Error fetching journey:", { detail: err })
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)
@@ -133,7 +133,7 @@ function JourneyPageContent({ tenantId }: JourneyPageContentProps) {
         } : null)
       }
     } catch (err) {
-      console.error("[JourneyPage] Error loading more events:", err)
+      logger.error("[JourneyPage] Error loading more events:", { detail: err })
     } finally {
       setLoadingMore(false)
     }
@@ -165,10 +165,10 @@ function JourneyPageContent({ tenantId }: JourneyPageContentProps) {
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
       } else {
-        console.error("Failed to export PDF")
+        logger.error("Failed to export PDF")
       }
     } catch (err) {
-      console.error("[JourneyPage] Error exporting PDF:", err)
+      logger.error("[JourneyPage] Error exporting PDF:", { detail: err })
     } finally {
       setExporting(false)
     }
@@ -287,6 +287,7 @@ function JourneyPageContent({ tenantId }: JourneyPageContentProps) {
 // ============================================
 
 import { PreTenantVisit, LinkedVisitor } from "@/types/journey.types"
+import { logger } from "@/lib/logger"
 
 interface PreTenantVisitsCardProps {
   visits: PreTenantVisit[]

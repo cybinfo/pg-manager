@@ -101,9 +101,9 @@ export function FeatureSettings({ featureFlags, setFeatureFlags, config }: Featu
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Trial banner */}
-      <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-        <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
-        <p className="text-sm text-amber-800">
+      <div className="flex items-center gap-3 bg-warning/10 border border-warning/20 rounded-lg px-4 py-3">
+        <Sparkles className="h-4 w-4 text-warning shrink-0" />
+        <p className="text-sm text-warning">
           <strong>Trial Mode</strong> — All features are available free during the trial period.
           Enable or disable to customise your workspace.
         </p>
@@ -241,7 +241,7 @@ export function FeatureSettings({ featureFlags, setFeatureFlags, config }: Featu
                               </p>
                               <p className="text-xs text-muted-foreground">{feature.description}</p>
                               {feature.dependsOn && feature.dependsOn.length > 0 && (
-                                <p className="text-xs text-amber-600 mt-0.5 flex items-center gap-1">
+                                <p className="text-xs text-warning mt-0.5 flex items-center gap-1">
                                   <Info className="h-3 w-3 shrink-0" />
                                   Requires:{" "}
                                   {feature.dependsOn

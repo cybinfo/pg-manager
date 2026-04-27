@@ -19,6 +19,7 @@ import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { formatDate } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
+import { logger } from "@/lib/logger"
 import {
   Shield,
   AlertTriangle,
@@ -269,7 +270,7 @@ export default function PlatformAdminsPage() {
           }).then(({ error: auditError }: { error: { message: string } | null }) => {
             if (auditError) {
               // Audit failure is non-fatal — revoke already succeeded
-              console.warn("Failed to log platform_admin.revoked audit event", auditError)
+              logger.warn("Failed to log platform_admin.revoked audit event", { error: String(auditError) })
             }
           })
         }

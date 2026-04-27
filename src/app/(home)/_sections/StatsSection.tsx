@@ -14,7 +14,7 @@ export function StatsSection() {
           {stats.map((stat, i) => (
             <div key={i} className={`text-center text-white animate-fade-in-up ${["animation-delay-0", "animation-delay-100", "animation-delay-200", "animation-delay-300"][i] || ""}`}>
               <div className="text-3xl md:text-4xl font-bold mb-1 tabular-nums">{stat.value}</div>
-              <div className="text-teal-100 text-sm">{stat.label}</div>
+              <div className="text-primary-foreground text-sm">{stat.label}</div>
             </div>
           ))}
         </div>

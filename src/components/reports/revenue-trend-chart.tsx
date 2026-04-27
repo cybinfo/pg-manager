@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import {
   LineChart,
   Line,
+  CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
@@ -55,9 +56,10 @@ export function RevenueTrendChart({
         <div className="h-[250px] sm:h-[300px]">
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <LineChart data={data}>
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
               <YAxis
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                 width={55}
                 tickFormatter={(value: number) => formatCurrencyCompact(value)}
               />

@@ -35,6 +35,7 @@ import {
 import { showError } from "@/lib/toast-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
+import { logger } from "@/lib/logger"
 
 interface DuplicateGroup {
   match_type: string
@@ -100,7 +101,7 @@ export default function DuplicatesPage() {
       .order("duplicate_count", { ascending: false })
 
     if (error) {
-      console.error("Error fetching duplicates:", error)
+      logger.error("Error fetching duplicates:", { detail: error })
       showError("Failed to load duplicates")
     } else {
       setDuplicateGroups(data || [])
@@ -134,7 +135,7 @@ export default function DuplicatesPage() {
       .order("created_at")
 
     if (error) {
-      console.error("Error fetching group persons:", error)
+      logger.error("Error fetching group persons:", { detail: error })
       showError("Failed to load person details")
       setLoadingGroup(null)
       return

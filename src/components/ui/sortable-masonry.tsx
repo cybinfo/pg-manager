@@ -21,6 +21,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { cn } from "@/lib/utils"
 import { GripVertical, Lock, Unlock, RotateCcw } from "lucide-react"
 import { Button } from "./button"
+import { logger } from "@/lib/logger"
 
 interface SortableMasonryProps {
   children: React.ReactNode
@@ -50,7 +51,7 @@ function useLayoutStorage(key: string) {
     try {
       localStorage.setItem(storageKey, JSON.stringify(order))
     } catch (e) {
-      console.error("Failed to save layout:", e)
+      logger.error("Failed to save layout:", { detail: e })
     }
   }, [storageKey])
 

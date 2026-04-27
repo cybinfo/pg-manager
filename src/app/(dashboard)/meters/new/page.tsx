@@ -38,6 +38,7 @@ import {
 } from "@/types/meters.types"
 import { getTodayISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 // ============================================
 // Types
@@ -160,7 +161,7 @@ export default function NewMeterPage() {
           })
 
         if (assignError) {
-          console.error("Error assigning meter:", assignError)
+          logger.error("Error assigning meter:", { detail: assignError })
           showWarning("Meter created but failed to assign to room")
         }
       }

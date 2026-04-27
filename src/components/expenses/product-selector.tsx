@@ -20,7 +20,9 @@ import { showInfo, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { UNIT_OPTIONS } from "@/lib/status"
 import { cn } from "@/lib/utils"
+import { Currency } from "@/components/ui/currency"
 import type { Product, ProductCategory } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 import {
   EntitySelector,
   type EntitySelectorConfig,
@@ -74,7 +76,7 @@ function ProductDropdownItem({ product }: { product: Product }) {
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {product.category?.name && <span>{product.category.name}</span>}
-          {product.default_rate && <span>· ₹{product.default_rate}</span>}
+          {product.default_rate && <span>· <Currency amount={product.default_rate} /></span>}
         </div>
       </div>
     </>
@@ -120,7 +122,7 @@ function ProductSelectedCard({
                     <span>Unit: {product.default_unit}</span>
                   )}
                   {product.default_rate && (
-                    <span>₹{product.default_rate}</span>
+                    <span><Currency amount={product.default_rate} /></span>
                   )}
                 </div>
               </div>
@@ -357,7 +359,7 @@ export function ProductSelector({
         .single()
 
       if (createError) {
-        console.error("Create error:", createError)
+        logger.error("Create error:", { detail: createError })
         showError("Failed to create product")
         return null
       }

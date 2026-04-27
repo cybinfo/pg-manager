@@ -43,6 +43,7 @@ import { getNowISO } from "@/lib/date-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import type { LibraryAttendance } from "@/types/library.types"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 export default function LibraryAttendanceDetailPage() {
   const params = useParams()
@@ -83,7 +84,7 @@ export default function LibraryAttendanceDetailPage() {
         .eq("id", attendance.id)
 
       if (attendanceError) {
-        console.error("Error checking out:", attendanceError)
+        logger.error("Error checking out:", { detail: attendanceError })
         showError(`Failed to check out: ${attendanceError.message}`)
         return
       }

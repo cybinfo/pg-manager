@@ -12,6 +12,7 @@ import { Phone, Send, Loader2, UserPlus } from 'lucide-react'
 import { EmailInput, Select } from '@/components/ui/form-components'
 import { showSuccess, showError } from '@/lib/toast-helpers'
 import { getNowISO } from '@/lib/date-helpers'
+import { logger } from "@/lib/logger"
 
 // ============================================
 // Invitation Form Component
@@ -127,7 +128,7 @@ export function InvitationForm({
         onSuccess?.(invitation as Invitation)
       }
     } catch (error: unknown) {
-      console.error('Error creating invitation:', error)
+      logger.error('Error creating invitation', { error: String(error) })
       showError((error as { message?: string }).message || 'Failed to create invitation')
     } finally {
       setIsLoading(false)

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import {
   BarChart,
   Bar,
+  CartesianGrid,
   XAxis,
   YAxis,
   Tooltip,
@@ -46,6 +47,7 @@ import {
 } from "@/components/reports"
 import { StatCard } from "@/components/ui/stat-card"
 import { SummaryCard } from "@/components/ui/quick-stats-grid"
+import { logger } from "@/lib/logger"
 
 interface Property {
   id: string
@@ -344,7 +346,7 @@ export default function ReportsPage() {
         expenseGrowth, netIncome, expensesByCategory,
       })
     } catch (error) {
-      console.error("Error fetching report data:", error)
+      logger.error("Error fetching report data:", { detail: error })
     } finally {
       setLoading(false)
     }
@@ -531,13 +533,14 @@ export default function ReportsPage() {
           <div className="h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={reportData.expensesByCategory} layout="vertical">
-                <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(value: number) => {
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(value: number) => {
                   if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
                   if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
                   if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
                   return `\u20B9${value}`
                 }} />
-                <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                 <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                 <Bar dataKey="value" fill="hsl(var(--chart-5))" radius={[0, 4, 4, 0]}>
                   {reportData.expensesByCategory.map((_entry, index) => (
@@ -573,8 +576,9 @@ export default function ReportsPage() {
                 ]}
                 layout="vertical"
               >
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={60} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={60} />
                 <Tooltip />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                   {[
@@ -612,8 +616,9 @@ export default function ReportsPage() {
         <div className="h-[250px] sm:h-[300px]">
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart data={reportData.propertyStats} margin={{ bottom: 30 }}>
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11 }} width={55} tickFormatter={(value: number) => {
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} angle={-30} textAnchor="end" />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={(value: number) => {
                 if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
                 if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
                 if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
@@ -633,9 +638,9 @@ export default function ReportsPage() {
         <StatusBreakdownCard
           title="Room Status"
           items={[
-            { label: "Occupied", value: reportData.occupiedRooms, color: "#22c55e" },
-            { label: "Available", value: reportData.availableRooms, color: "#3b82f6" },
-            { label: "Maintenance", value: reportData.maintenanceRooms, color: "#eab308" },
+            { label: "Occupied", value: reportData.occupiedRooms, color: "hsl(var(--success))" },
+            { label: "Available", value: reportData.availableRooms, color: "hsl(var(--info))" },
+            { label: "Maintenance", value: reportData.maintenanceRooms, color: "hsl(var(--warning))" },
           ]}
         />
         <SummaryCard

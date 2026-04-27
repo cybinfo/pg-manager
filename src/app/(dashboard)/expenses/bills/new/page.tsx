@@ -25,6 +25,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { Vendor, BillCategory, BillPaymentFormData } from "@/types/expense-enhanced.types"
+import { logger } from "@/lib/logger"
 
 export default function NewBillPaymentPage() {
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/bills" })
@@ -215,7 +216,7 @@ export default function NewBillPaymentPage() {
       showSuccess("Bill recorded successfully")
       router.push(`/expenses/bills/${data.id}`)
     } catch (error) {
-      console.error("Failed to create bill:", error)
+      logger.error("Failed to create bill:", { detail: error })
       showError("Failed to create bill")
     } finally {
       setLoading(false)

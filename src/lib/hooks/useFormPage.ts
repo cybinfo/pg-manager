@@ -48,6 +48,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useCallback, useEffect, useRef, ChangeEvent, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -380,7 +381,7 @@ export function useFormPage<T extends FormData>(
           : await supabase.from(table).insert(insertData)
 
         if (error) {
-          console.error(`Error inserting into ${table}:`, error)
+          logger.error(`Error inserting into ${table}:`, { error: String(error) })
           showError(`${errorMessage}: ${error.message}`)
           return
         }
@@ -599,7 +600,7 @@ export function useFormEditPage<T extends FormData>(
         .single()
 
       if (error || !data) {
-        console.error(`Error fetching ${table} record:`, error)
+        logger.error(`Error fetching ${table} record:`, { error: String(error) })
         showError(`${table.replace(/_/g, " ")} not found`)
         router.push(notFoundRedirect || redirectTo)
         return
@@ -721,7 +722,7 @@ export function useFormEditPage<T extends FormData>(
           .eq("id", id)
 
         if (error) {
-          console.error(`Error updating ${table}:`, error)
+          logger.error(`Error updating ${table}:`, { error: String(error) })
           showError(`${errorMessage}: ${error.message}`)
           return
         }

@@ -35,6 +35,7 @@ import { formatCurrency, formatDate, formatDateTime, numberToWords } from "@/lib
 import { PermissionGate } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { PAYMENT_METHODS } from "@/lib/status"
+import { logger } from "@/lib/logger"
 
 // Extended Payment type with owner info
 interface PaymentWithOwner extends Payment {
@@ -111,7 +112,7 @@ export default function PaymentReceiptPage() {
       toast.dismiss()
       showSuccess("PDF downloaded successfully!")
     } catch (error) {
-      console.error("Error downloading PDF:", error)
+      logger.error("Error downloading PDF:", { detail: error })
       toast.dismiss()
       showError("Failed to download PDF")
     }

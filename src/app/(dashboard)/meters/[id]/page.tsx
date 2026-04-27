@@ -69,6 +69,7 @@ import {
 } from "@/types/meters.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 // ============================================
 // Icon mapping
@@ -170,7 +171,7 @@ export default function MeterDetailPage() {
 
     if (error) {
       showError("Failed to assign meter")
-      console.error(error)
+      logger.error("Failed to assign meter", { error: String(error) })
       setSaving(false)
       return
     }

@@ -23,6 +23,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { Currency } from "@/components/ui/currency"
 import { withCreatedBy } from "@/lib/audit"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { logger } from "@/lib/logger"
 
 interface LockerData {
   id: string
@@ -175,7 +176,7 @@ export default function AssignLockerPage({
         .insert(assignmentData)
 
       if (assignmentError) {
-        console.error("Error creating assignment:", assignmentError)
+        logger.error("Error creating assignment:", { detail: assignmentError })
         showError(`Failed to assign locker: ${assignmentError.message}`)
         return
       }
@@ -193,7 +194,7 @@ export default function AssignLockerPage({
         .eq("id", id)
 
       if (lockerError) {
-        console.error("Error updating locker:", lockerError)
+        logger.error("Error updating locker:", { detail: lockerError })
         showError(`Failed to update locker status: ${lockerError.message}`)
         return
       }
@@ -208,7 +209,7 @@ export default function AssignLockerPage({
         .eq("id", formData.member_id)
 
       if (memberError) {
-        console.error("Error updating member:", memberError)
+        logger.error("Error updating member:", { detail: memberError })
         // Don't fail the whole operation for this
       }
 

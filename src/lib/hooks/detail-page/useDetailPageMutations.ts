@@ -7,6 +7,7 @@
 
 "use client"
 
+import { logger } from "@/lib/logger"
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -79,7 +80,7 @@ export function useDetailPageMutations<T extends object>(
       } catch (err) {
         // Rollback to snapshot on failure
         setData(snapshot)
-        console.error(`[useDetailPage] Error updating ${field}:`, err)
+        logger.error(`[useDetailPage] Error updating ${field}:`, { error: String(err) })
         showError("Failed to update — changes reverted")
         return false
       } finally {
@@ -121,7 +122,7 @@ export function useDetailPageMutations<T extends object>(
       } catch (err) {
         // Rollback to snapshot on failure
         setData(snapshot)
-        console.error(`[useDetailPage] Error updating fields:`, err)
+        logger.error(`[useDetailPage] Error updating fields:`, { error: String(err) })
         showError("Failed to update — changes reverted")
         return false
       } finally {
@@ -180,7 +181,7 @@ export function useDetailPageMutations<T extends object>(
           }))
           const { errors } = await cascadeSoftDelete(entityId, user.id, cascadeConfigs)
           if (errors.length > 0) {
-            console.error("[useDetailPage] Cascade soft delete errors:", errors)
+            logger.error("[useDetailPage] Cascade soft delete errors:", { error: String(errors) })
           }
         }
 
@@ -222,7 +223,7 @@ export function useDetailPageMutations<T extends object>(
 
         return true
       } catch (err) {
-        console.error(`[useDetailPage] Error deleting:`, err)
+        logger.error(`[useDetailPage] Error deleting:`, { error: String(err) })
         showError("Failed to delete")
         return false
       } finally {

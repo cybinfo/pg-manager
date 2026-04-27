@@ -33,6 +33,7 @@ import { TimeSlot, formatTime12h, calcSlotHours, serializeTimeSlots, parseTimeSl
 import { useFormValidation } from "@/lib/hooks/useFormValidation"
 import { requiredSelect, requiredDate } from "@/lib/validation"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 interface MemberData {
   id: string
@@ -275,7 +276,7 @@ export default function RenewLibraryMemberPage({
         .single()
 
       if (membershipError) {
-        console.error("Error creating membership:", membershipError)
+        logger.error("Error creating membership:", { detail: membershipError })
         showError(`Failed to create subscription: ${membershipError.message}`)
         setLoading(false)
         return
@@ -295,7 +296,7 @@ export default function RenewLibraryMemberPage({
         .eq("id", member.id)
 
       if (memberUpdateError) {
-        console.error("Error updating member:", memberUpdateError)
+        logger.error("Error updating member:", { detail: memberUpdateError })
       }
 
       // Mark previous active memberships as upgraded

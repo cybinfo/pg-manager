@@ -22,6 +22,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
+import { logger } from "@/lib/logger"
 
 interface ExpenseType {
   id: string
@@ -116,7 +117,7 @@ function NewExpenseContent() {
         let typesData = initialTypesData
 
         if (typesError) {
-          console.error("Error fetching expense types:", typesError)
+          logger.error("Error fetching expense types:", { detail: typesError })
         }
 
         // If no expense types exist, create defaults
@@ -144,7 +145,7 @@ function NewExpenseContent() {
 
         setProperties(propertiesData || [])
       } catch (error) {
-        console.error("Error fetching data:", error)
+        logger.error("Error fetching data:", { detail: error })
         showError("Failed to load form data")
       } finally {
         setLoadingData(false)

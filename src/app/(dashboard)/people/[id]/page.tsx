@@ -61,6 +61,7 @@ import {
   GENDER_LABELS,
 } from "@/types/people.types"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 
 // Types for related data
 interface PersonStaffHistory {
@@ -366,7 +367,7 @@ export default function PersonDetailPage() {
           )
 
           if (cascadeErrors.length > 0) {
-            console.error("Cascade soft delete errors:", cascadeErrors)
+            logger.error("Cascade soft delete errors:", { detail: cascadeErrors })
           }
 
           // Hard delete person_roles (join table, not auditable per user request)
