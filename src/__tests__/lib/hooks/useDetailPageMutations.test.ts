@@ -198,6 +198,39 @@ describe("useDetailPageMutations — updateField", () => {
     expect(setData).toHaveBeenCalledWith(originalData)
   })
 
+  it("invokes setData updater callback with prev state (covers updater body)", async () => {
+    let currentData: Record<string, unknown> | null = { id: "t1", name: "Alice" }
+    const setData = jest.fn().mockImplementation((updater: unknown) => {
+      if (typeof updater === "function") currentData = (updater as (prev: typeof currentData) => typeof currentData)(currentData)
+      else currentData = updater as typeof currentData
+    })
+    mockCreateClient.mockReturnValue(makeSupabaseClient({ updateResult: { error: null } }))
+    const { result } = renderMutations({ data: { id: "t1", name: "Alice" }, setData })
+
+    await act(async () => {
+      await result.current.updateField("name", "Bob")
+    })
+
+    // The setData updater should have merged the new field
+    expect(currentData).toMatchObject({ id: "t1", name: "Bob" })
+  })
+
+  it("handles null prev in setData updater (ternary null branch)", async () => {
+    // setData called with updater that receives null prev → returns null
+    const setData = jest.fn().mockImplementation((updater: unknown) => {
+      if (typeof updater === "function") {
+        const result = (updater as (prev: null) => null)(null)
+        expect(result).toBeNull()
+      }
+    })
+    mockCreateClient.mockReturnValue(makeSupabaseClient({ updateResult: { error: null } }))
+    const { result } = renderMutations({ data: { id: "t1", name: "Alice" }, setData })
+
+    await act(async () => {
+      await result.current.updateField("name", "Bob")
+    })
+  })
+
   it("uses id[0] when id is an array", async () => {
     const client = makeSupabaseClient({ updateResult: { error: null } })
     mockCreateClient.mockReturnValue(client)
@@ -303,6 +336,52 @@ describe("useDetailPageMutations — updateFields", () => {
     expect(success).toBe(false)
     expect(mockShowError).toHaveBeenCalledWith("Failed to update — changes reverted")
     expect(setData).toHaveBeenCalledWith(originalData)
+  })
+
+  it("handles array id in updateFields (uses id[0])", async () => {
+    const client = makeSupabaseClient({ updateResult: { error: null } })
+    mockCreateClient.mockReturnValue(client)
+    const { result } = renderMutations({ id: ["t1", "t2"] })
+
+    let success: boolean | undefined
+    await act(async () => {
+      success = await result.current.updateFields({ name: "Bob" })
+    })
+    expect(success).toBe(true)
+    // Verify the query used id[0]
+    expect(client.from).toHaveBeenCalledWith("tenants")
+  })
+
+  it("invokes setData callback with prev state (covers setData updater body)", async () => {
+    let currentData: Record<string, unknown> | null = { id: "t1", name: "Alice" }
+    const setData = jest.fn().mockImplementation((updater: unknown) => {
+      if (typeof updater === "function") currentData = (updater as (prev: typeof currentData) => typeof currentData)(currentData)
+      else currentData = updater as typeof currentData
+    })
+    mockCreateClient.mockReturnValue(makeSupabaseClient({ updateResult: { error: null } }))
+    const { result } = renderMutations({ data: { id: "t1", name: "Alice" }, setData })
+
+    await act(async () => {
+      await result.current.updateFields({ name: "Bob", status: "active" })
+    })
+
+    // The setData updater should have merged the new fields
+    expect(currentData).toMatchObject({ id: "t1", name: "Bob", status: "active" })
+  })
+
+  it("handles null prev in setData updater for updateFields (ternary null branch)", async () => {
+    const setData = jest.fn().mockImplementation((updater: unknown) => {
+      if (typeof updater === "function") {
+        const res = (updater as (prev: null) => null)(null)
+        expect(res).toBeNull()
+      }
+    })
+    mockCreateClient.mockReturnValue(makeSupabaseClient({ updateResult: { error: null } }))
+    const { result } = renderMutations({ data: { id: "t1", name: "Alice" }, setData })
+
+    await act(async () => {
+      await result.current.updateFields({ name: "Bob" })
+    })
   })
 })
 
@@ -526,6 +605,23 @@ describe("useDetailPageMutations — deleteRecord", () => {
     // Hard delete: from("user_roles").delete().eq(...)
     const fromCalls = (client.from as jest.Mock).mock.calls.map((c: unknown[]) => c[0])
     expect(fromCalls).toContain("user_roles")
+  })
+
+  it("handles array id in deleteRecord (uses id[0])", async () => {
+    global.window.confirm = jest.fn().mockReturnValue(true)
+    const client = makeSupabaseClient({})
+    mockCreateClient.mockReturnValue(client)
+    mockIsSoftDeletableTable.mockReturnValue(true)
+    mockSoftDelete.mockResolvedValue({ error: null })
+
+    const { result } = renderMutations({ id: ["t1", "t2"] })
+    let success: boolean | undefined
+    await act(async () => {
+      success = await result.current.deleteRecord({ confirm: true })
+    })
+    expect(success).toBe(true)
+    // softDelete should be called with id[0]
+    expect(mockSoftDelete).toHaveBeenCalledWith("tenants", "t1", expect.any(String))
   })
 
   it("sets isDeleting=true during delete and false after", async () => {

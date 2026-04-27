@@ -173,6 +173,37 @@ describe("getStaffProductivity", () => {
     expect(result[0].role_name).toBe("Manager")
     expect(result[0].login_count).toBe(10)
   })
+
+  it("sorts permissions by usage count (covers sort comparator)", async () => {
+    const contexts = [
+      {
+        id: "ctx1",
+        entity_id: "s1",
+        access_count: 5,
+        last_accessed_at: "2026-04-25T10:00:00Z",
+        role: null,
+        staff: null,
+      },
+    ]
+    const permUsage = [
+      { permission: "tenants.view" },
+      { permission: "rooms.view" },
+      { permission: "tenants.view" },
+      { permission: "tenants.view" },
+      { permission: "bills.view" },
+    ]
+    let callCount = 0
+    mockFrom.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) return makeChain({ data: contexts, error: null }) // contexts query
+      return makeChain({ data: permUsage, error: null }) // permUsage query
+    })
+    const result = await getStaffProductivity("ws1")
+    expect(result).toHaveLength(1)
+    // tenants.view appears 3x → should be first
+    expect(result[0].most_used_permissions[0]).toBe("tenants.view")
+    expect(result[0].actions_performed).toBe(5)
+  })
 })
 
 // ============================================================================
