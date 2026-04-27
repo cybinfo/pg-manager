@@ -867,6 +867,40 @@ describe("useListPage — view config", () => {
     expect(viewConfig.pageSize).toBe(50)
   })
 
+  it("getViewConfig includes advancedFilters when filters are active", async () => {
+    const activeGroup = { filters: [{ field: "status", operator: "eq", value: "active" }], combineMode: "and" as const }
+    mockFiltersHookState.advancedFilters = activeGroup
+    mockFiltersHookState.advancedFiltersRef = { current: activeGroup }
+
+    const { result } = renderHook(() =>
+      useListPage({ config: { ...testConfig, defaultPageSize: 25 } })
+    )
+    await act(async () => { await Promise.resolve() })
+
+    const viewConfig = result.current.getViewConfig()
+    expect(viewConfig.advancedFilters).toEqual(activeGroup)
+
+    // Reset for other tests
+    mockFiltersHookState.advancedFilters = { filters: [], combineMode: "and" }
+    mockFiltersHookState.advancedFiltersRef = { current: { filters: [], combineMode: "and" } }
+  })
+
+  it("refetch() triggers a data fetch", async () => {
+    const { result } = renderHook(() =>
+      useListPage({ config: { ...testConfig, defaultPageSize: 25 } })
+    )
+    await act(async () => { await Promise.resolve() })
+
+    mockFrom.mockClear()
+
+    await act(async () => {
+      result.current.refetch()
+      await Promise.resolve()
+    })
+
+    expect(mockFrom).toHaveBeenCalled()
+  })
+
   it("getViewConfig omits empty/default values", async () => {
     const { result } = renderHook(() =>
       useListPage({ config: { ...testConfig, defaultPageSize: 25 } })

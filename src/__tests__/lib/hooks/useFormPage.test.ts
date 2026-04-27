@@ -842,6 +842,27 @@ describe("useFormEditPage — handleChange", () => {
     expect(result.current.formData.active).toBe(true)
   })
 
+  it("clears field error on handleChange when validationSchema is provided in edit form", async () => {
+    const schema = { name: () => null }
+    const { result } = renderHook(() =>
+      useFormEditPage({
+        table: "test_table",
+        id: "r1",
+        initialData: { name: "", amount: "" } as TestForm,
+        redirectTo: "/list",
+        mapToForm: (r) => ({ name: String(r.name), amount: String(r.amount) }),
+        validationSchema: schema,
+      })
+    )
+    await act(async () => {})
+    act(() => {
+      result.current.handleChange({
+        target: { name: "name", value: "Alice", type: "text" },
+      } as React.ChangeEvent<HTMLInputElement>)
+    })
+    expect(mockClearFieldError).toHaveBeenCalledWith("name")
+  })
+
   it("setField marks dirty in edit form", async () => {
     const { result } = renderHook(() =>
       useFormEditPage({

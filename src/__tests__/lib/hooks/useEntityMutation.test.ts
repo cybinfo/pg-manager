@@ -363,6 +363,16 @@ describe("update — success path", () => {
     await act(async () => { await result.current.update("t1", {}) })
     expect(mockShowSuccess).toHaveBeenCalledWith("Saved!")
   })
+
+  it("sends notifications when provided on update", async () => {
+    setupUpdate()
+    const notification = { type: "email" as const, recipient: "a@b.com", subject: "Updated", body: "Record was updated" }
+    const { result } = renderMutation()
+    await act(async () => {
+      await result.current.update("t1", { name: "New" }, { notifications: [notification] })
+    })
+    expect(mockSendNotification).toHaveBeenCalledWith(notification)
+  })
 })
 
 describe("update — error path", () => {
@@ -470,6 +480,22 @@ describe("remove — hard delete path", () => {
     expect((res as { success: boolean }).success).toBe(true)
     expect(mockDeleteFn).toHaveBeenCalled()
     expect(mockSoftDelete).not.toHaveBeenCalled()
+  })
+
+  it("returns failure when hard delete throws an error", async () => {
+    const mockDeleteEq = jest.fn().mockResolvedValue({ error: { message: "permission denied" } })
+    const mockDeleteFn = jest.fn(() => ({ eq: mockDeleteEq }))
+    const singleBefore = jest.fn().mockResolvedValue({ data: { id: "t1" }, error: null })
+    const eqBefore = jest.fn(() => ({ single: singleBefore }))
+    mockFrom.mockReturnValue({
+      select: jest.fn(() => ({ eq: eqBefore })),
+      delete: mockDeleteFn,
+    })
+    const { result } = renderMutation()
+    let res: unknown
+    await act(async () => { res = await result.current.remove("t1") })
+    expect((res as { success: boolean }).success).toBe(false)
+    expect(mockShowError).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -633,6 +659,17 @@ describe("bulkDelete — hard delete path", () => {
     expect((res as { success: boolean }).success).toBe(true)
     expect(inFn).toHaveBeenCalledWith("id", ["t1", "t2"])
     expect(mockSoftDeleteBatch).not.toHaveBeenCalled()
+  })
+
+  it("returns failure when hard bulk delete throws an error", async () => {
+    const inFn = jest.fn().mockResolvedValue({ error: { message: "bulk delete denied" } })
+    const deleteFn = jest.fn(() => ({ in: inFn }))
+    mockFrom.mockReturnValue({ delete: deleteFn })
+    const { result } = renderMutation()
+    let res: unknown
+    await act(async () => { res = await result.current.bulkDelete(["t1", "t2"]) })
+    expect((res as { success: boolean }).success).toBe(false)
+    expect(mockShowError).toHaveBeenCalledTimes(1)
   })
 })
 
