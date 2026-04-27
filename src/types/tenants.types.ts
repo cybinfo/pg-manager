@@ -55,6 +55,7 @@ export const POLICE_VERIFICATION_CONFIG = {
 export interface Tenant {
   id: string
   owner_id: string
+  user_id: string | null
   person_id: string | null
   property_id: string
   room_id: string | null

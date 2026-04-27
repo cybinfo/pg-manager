@@ -127,11 +127,16 @@ function LoginForm() {
       await supabase.auth.signOut()
 
       // Send magic link to the user's email, routing back through our callback
+      // If invite token present, pass next=/invite/TOKEN so post-auth auto-accepts
+      const callbackNext = inviteToken ? `/invite/${inviteToken}` : null
+      const callbackUrl = callbackNext
+        ? `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(callbackNext)}`
+        : `${window.location.origin}/api/auth/callback`
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: false,
-          emailRedirectTo: window.location.origin + '/api/auth/callback',
+          emailRedirectTo: callbackUrl,
         },
       })
 

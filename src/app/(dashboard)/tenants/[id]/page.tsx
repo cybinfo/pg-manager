@@ -42,9 +42,10 @@ import {
 import { PrintButton } from "@/components/ui/print-button"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
-import { useAuth } from "@/lib/auth"
+import { useAuth, useCurrentContext } from "@/lib/auth"
 import { PermissionGate } from "@/components/auth"
 import { Avatar } from "@/components/ui/avatar"
+import { InvitePortalButton } from "@/components/ui/invite-portal-button"
 
 import {
   RoomTransferModal,
@@ -88,6 +89,8 @@ export default function TenantDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { hasPermission: _hasPermission } = useAuth()
+  const { context: currentCtx } = useCurrentContext()
+  const workspaceId = currentCtx?.workspace_id || null
 
   // Use centralized hook for data fetching
   const {
@@ -282,6 +285,15 @@ export default function TenantDetailPage() {
                 </Button>
               </a>
             )}
+            <PermissionGate permission="tenants.edit" hide>
+              {!tenant.user_id && workspaceId && (
+                <InvitePortalButton
+                  tenantId={tenant.id}
+                  tenantName={tenant.person?.name || tenant.name}
+                  workspaceId={workspaceId}
+                />
+              )}
+            </PermissionGate>
             <PrintButton />
             {tenant.person_id && (
               <Link href={`/people/${tenant.person_id}`}>
