@@ -264,11 +264,6 @@ export default function LibraryReportsPage() {
         fetchAllRows(supabase.from("library_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:library_members!library_attendance_member_id_fkey(library_id)")),
       ])
 
-      // Log query results for debugging
-      console.log("[Reports] Payments:", paymentsRes.data?.length || 0, "error:", paymentsRes.error?.message || "none")
-      console.log("[Reports] Members:", membersRes.data?.length || 0, "error:", membersRes.error?.message || "none")
-      console.log("[Reports] Memberships:", membershipsRes.data?.length || 0, "error:", membershipsRes.error?.message || "none")
-
       const librariesData = librariesRes.data || []
       const seatsData = (seatsRes.data || []).map((s: Record<string, unknown>) => ({
         ...s,
@@ -955,15 +950,15 @@ export default function LibraryReportsPage() {
                           type="monotone"
                           dataKey="revenue"
                           name="Revenue"
-                          stroke="#6366F1"
+                          stroke="hsl(var(--chart-3))"
                           strokeWidth={2}
-                          dot={{ fill: "#6366F1", strokeWidth: 2 }}
+                          dot={{ fill: "hsl(var(--chart-3))", strokeWidth: 2 }}
                         />
                         <Bar
                           yAxisId="right"
                           dataKey="members"
                           name="New Members"
-                          fill="#10B981"
+                          fill="hsl(var(--chart-1))"
                           radius={[4, 4, 0, 0]}
                         />
                       </LineChart>
@@ -973,7 +968,7 @@ export default function LibraryReportsPage() {
 
                 <PaymentMethodsChart
                   data={reportData.paymentMethods}
-                  colors={["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]}
+                  colors={CHART_COLORS}
                 />
               </div>
 
@@ -989,7 +984,7 @@ export default function LibraryReportsPage() {
                         <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                         <YAxis tick={{ fontSize: 11 }} />
                         <Tooltip />
-                        <Bar dataKey="checkIns" name="Check-ins" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="checkIns" name="Check-ins" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1133,8 +1128,8 @@ export default function LibraryReportsPage() {
                 <StatusBreakdownCard
                   title="Seat Status"
                   items={[
-                    { label: "Occupied", value: reportData.occupiedSeats, color: "#ef4444" },
-                    { label: "Available", value: reportData.availableSeats, color: "#22c55e" },
+                    { label: "Occupied", value: reportData.occupiedSeats, color: "hsl(var(--chart-5))" },
+                    { label: "Available", value: reportData.availableSeats, color: "hsl(var(--chart-1))" },
                   ]}
                   summary={{ label: "Total Seats", value: reportData.totalSeats }}
                 />
@@ -1266,9 +1261,9 @@ export default function LibraryReportsPage() {
                             <YAxis tick={{ fontSize: 11 }} width={55} tickFormatter={formatTickValue} />
                             <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                             <Legend />
-                            <Bar dataKey="subscriptionAmount" name="Subscription" fill="#6366F1" stackId="revenue" radius={[0, 0, 0, 0]} />
-                            <Bar dataKey="lockerAmount" name="Locker" fill="#8B5CF6" stackId="revenue" radius={[0, 0, 0, 0]} />
-                            <Bar dataKey="otherAmount" name="Other" fill="#F59E0B" stackId="revenue" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="subscriptionAmount" name="Subscription" fill="hsl(var(--chart-3))" stackId="revenue" radius={[0, 0, 0, 0]} />
+                            <Bar dataKey="lockerAmount" name="Locker" fill="hsl(var(--chart-6))" stackId="revenue" radius={[0, 0, 0, 0]} />
+                            <Bar dataKey="otherAmount" name="Other" fill="hsl(var(--chart-2))" stackId="revenue" radius={[4, 4, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -1277,7 +1272,7 @@ export default function LibraryReportsPage() {
                     {/* Payment Method Donut */}
                     <PaymentMethodsChart
                       data={paymentReportData.paymentMethodBreakdown}
-                      colors={["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"]}
+                      colors={CHART_COLORS}
                     />
                   </div>
 

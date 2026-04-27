@@ -49,8 +49,6 @@ function LoginForm() {
       const sessionResult = await getSession()
 
       if (sessionResult.error) {
-        // Session check failed - this is expected for non-logged in users
-        console.log('[Login] No existing session:', sessionResult.error.message)
         return
       }
 

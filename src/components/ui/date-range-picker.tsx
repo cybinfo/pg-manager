@@ -203,7 +203,7 @@ export function DateRangePicker({ value, onChange, className, presets }: DateRan
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute top-full left-0 z-50 mt-1 bg-card border border-input rounded-lg shadow-lg min-w-[320px] sm:min-w-[480px]">
+        <div className="absolute top-full left-0 z-[var(--z-dropdown)] mt-1 bg-card border border-input rounded-lg shadow-lg min-w-[320px] sm:min-w-[480px]">
           <div className="flex flex-col sm:flex-row">
             {/* Presets Column */}
             <div className="border-b sm:border-b-0 sm:border-r border-input p-2 sm:w-[180px] shrink-0">

@@ -68,6 +68,7 @@ import { getPathPermissions, getPathFeatures, DASHBOARD_MOBILE_NAV, filterNaviga
 import { brandGradient } from "@/lib/design-tokens"
 import { NotificationBell } from "@/components/ui/notification-bell"
 import { UserMenu } from "@/components/ui/user-menu"
+import { OfflineBanner } from "@/components/ui/offline-banner"
 
 // Navigation item type with optional children for sub-menus
 type NavItem = {
@@ -428,14 +429,14 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       {/* Mobile sidebar backdrop with glass effect */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[var(--z-dropdown)] lg:hidden animate-fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-card/95 backdrop-blur-md border-r shadow-xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:shadow-none ${
+        className={`fixed top-0 left-0 z-[var(--z-modal)] h-full w-64 bg-card/95 backdrop-blur-md border-r shadow-xl transform transition-all duration-300 ease-out lg:translate-x-0 lg:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -694,7 +695,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div className="lg:pl-64 pb-20 lg:pb-0">
         {/* Top bar with glass effect */}
-        <header className="sticky top-0 z-30 h-16 glass-nav border-b flex items-center justify-between px-4">
+        <header className="sticky top-0 z-[30] h-16 glass-nav border-b flex items-center justify-between px-4">
           <Button
             variant="ghost"
             size="icon"
@@ -737,6 +738,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
+        <OfflineBanner />
         {/* Page content */}
         <main id="main-content" className="p-4 md:p-6 lg:p-8 animate-fade-in-up">
           {children}

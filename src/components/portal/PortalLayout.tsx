@@ -116,7 +116,7 @@ export function PortalLayout({
       </a>
 
       {/* Mobile Header */}
-      <header className={`sticky top-0 z-50 bg-gradient-to-r ${brandGradient} lg:hidden`}>
+      <header className={`sticky top-0 z-[var(--z-modal)] bg-gradient-to-r ${brandGradient} lg:hidden`}>
         <div className="flex items-center justify-between h-14 px-4">
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 bg-white rounded-lg flex items-center justify-center">

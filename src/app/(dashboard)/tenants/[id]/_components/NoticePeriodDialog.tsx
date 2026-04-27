@@ -32,7 +32,7 @@ export function NoticePeriodDialog({ tenantName, loading, onClose, onSubmit }: N
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-black/50 z-[var(--z-modal)] flex items-center justify-center p-4 animate-fade-in">
       <Card className="w-full max-w-md animate-scale-in">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

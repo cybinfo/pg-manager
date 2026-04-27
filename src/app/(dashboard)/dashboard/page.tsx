@@ -101,7 +101,7 @@ function getGreeting(): { text: string; icon: typeof Sun } {
   return { text: "Good evening", icon: Moon }
 }
 
-const _CHART_COLORS = ["#10b981", "#f59e0b", "#ef4444", "#6366f1"]
+const _CHART_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-5))", "hsl(var(--chart-3))"]
 
 export default function DashboardPage() {
   const { hasPermission } = useAuth()
@@ -270,9 +270,9 @@ export default function DashboardPage() {
 
       // Payment status for pie chart
       setPaymentStatus([
-        { name: "Paid", value: paidCount, color: "#10b981" },
-        { name: "Partial", value: partialCount, color: "#f59e0b" },
-        { name: "Overdue", value: overdueCount, color: "#ef4444" },
+        { name: "Paid", value: paidCount, color: "hsl(var(--chart-1))" },
+        { name: "Partial", value: partialCount, color: "hsl(var(--chart-2))" },
+        { name: "Overdue", value: overdueCount, color: "hsl(var(--chart-5))" },
       ].filter(s => s.value > 0))
 
       setStats({
@@ -616,8 +616,8 @@ export default function DashboardPage() {
                   />
                   <defs>
                     <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" />
-                      <stop offset="100%" stopColor="#14b8a6" />
+                      <stop offset="0%" stopColor="hsl(var(--chart-1))" />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" />
                     </linearGradient>
                   </defs>
                 </BarChart>

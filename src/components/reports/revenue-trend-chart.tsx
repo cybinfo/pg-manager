@@ -70,17 +70,17 @@ export function RevenueTrendChart({
                 type="monotone"
                 dataKey="collected"
                 name="Collected"
-                stroke="#10B981"
+                stroke="hsl(var(--chart-1))"
                 strokeWidth={2}
-                dot={{ fill: "#10B981", strokeWidth: 2 }}
+                dot={{ fill: "hsl(var(--chart-1))", strokeWidth: 2 }}
               />
               <Line
                 type="monotone"
                 dataKey="billed"
                 name="Billed"
-                stroke="#6366F1"
+                stroke="hsl(var(--chart-3))"
                 strokeWidth={2}
-                dot={{ fill: "#6366F1", strokeWidth: 2 }}
+                dot={{ fill: "hsl(var(--chart-3))", strokeWidth: 2 }}
                 strokeDasharray="5 5"
               />
             </LineChart>

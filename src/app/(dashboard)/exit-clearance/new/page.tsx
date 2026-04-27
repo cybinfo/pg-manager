@@ -303,10 +303,6 @@ function InitiateCheckoutForm() {
       // Get session with access token for RLS context
       const { data: { session } } = await supabase.auth.getSession()
 
-      console.log("[ExitClearance] Session user:", session?.user?.id)
-      console.log("[ExitClearance] Has access token:", !!session?.access_token)
-      console.log("[ExitClearance] Selected tenant ID:", selectedTenant?.id)
-
       if (!session?.user || !session?.access_token || !selectedTenant) {
         showError("Session expired. Please login again.")
         setLoading(false)

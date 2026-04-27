@@ -170,7 +170,7 @@ export function UserMenu({ displayName, displayEmail, onLogout }: {
 
       {open && (
         <div
-          className="absolute right-0 top-full mt-2 w-80 rounded-xl border bg-popover shadow-xl z-50 animate-in slide-in-from-top-2 duration-200"
+          className="absolute right-0 top-full mt-2 w-80 rounded-xl border bg-popover shadow-xl z-[var(--z-dropdown)] animate-in slide-in-from-top-2 duration-200"
           role="dialog"
           aria-label="User preferences"
         >

@@ -539,7 +539,7 @@ export default function ReportsPage() {
                 }} />
                 <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Bar dataKey="value" fill="#F43F5E" radius={[0, 4, 4, 0]}>
+                <Bar dataKey="value" fill="hsl(var(--chart-5))" radius={[0, 4, 4, 0]}>
                   {reportData.expensesByCategory.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={CHART_COLORS[(index + 3) % CHART_COLORS.length]} />
                   ))}
@@ -567,9 +567,9 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart
                 data={[
-                  { name: "Paid", value: reportData.collectionEfficiency.onTime, fill: "#10B981" },
-                  { name: "Late (1-30d)", value: reportData.collectionEfficiency.late, fill: "#F59E0B" },
-                  { name: "Overdue (30d+)", value: reportData.collectionEfficiency.overdue, fill: "#EF4444" },
+                  { name: "Paid", value: reportData.collectionEfficiency.onTime, fill: "hsl(var(--chart-1))" },
+                  { name: "Late (1-30d)", value: reportData.collectionEfficiency.late, fill: "hsl(var(--chart-2))" },
+                  { name: "Overdue (30d+)", value: reportData.collectionEfficiency.overdue, fill: "hsl(var(--chart-5))" },
                 ]}
                 layout="vertical"
               >
@@ -578,9 +578,9 @@ export default function ReportsPage() {
                 <Tooltip />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                   {[
-                    { name: "Paid", fill: "#10B981" },
-                    { name: "Late (1-30d)", fill: "#F59E0B" },
-                    { name: "Overdue (30d+)", fill: "#EF4444" },
+                    { name: "Paid", fill: "hsl(var(--chart-1))" },
+                    { name: "Late (1-30d)", fill: "hsl(var(--chart-2))" },
+                    { name: "Overdue (30d+)", fill: "hsl(var(--chart-5))" },
                   ].map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
@@ -621,8 +621,8 @@ export default function ReportsPage() {
               }} />
               <Tooltip formatter={(value) => formatCurrency(Number(value))} />
               <Legend />
-              <Bar dataKey="revenue" name="Revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="pendingDues" name="Pending Dues" fill="#EF4444" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="pendingDues" name="Pending Dues" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

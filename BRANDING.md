@@ -928,7 +928,8 @@ Before creating any new UI component, verify:
 | 8px spacing grid | Forces consistency; eliminates ad-hoc spacing that breaks alignment |
 | tabular-nums on all figures | Prevents column width shift as numbers update in real time |
 | Lucide icons only | Single visual language; consistent weight and style at all sizes |
-| `skipWaiting` in SW | New deployments take effect immediately — no stale UI after updates |
+| PWA disabled by default | Next-pwa NavigationRoute intercepts all navigation — custom SW required to re-enable safely |
+| Bottom nav implemented | `MobileNavBar` in `nav-item.tsx`, items defined in `DASHBOARD_MOBILE_NAV` in `navigation/config.ts` |
 
 ---
 

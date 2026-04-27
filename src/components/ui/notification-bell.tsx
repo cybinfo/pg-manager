@@ -89,7 +89,7 @@ export function NotificationBell() {
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 mt-2 w-80 sm:w-96 bg-card border rounded-xl shadow-xl z-50 animate-in slide-in-from-top-2 duration-200 overflow-hidden"
+          className="absolute right-0 mt-2 w-80 sm:w-96 bg-card border rounded-xl shadow-xl z-[var(--z-dropdown)] animate-in slide-in-from-top-2 duration-200 overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">

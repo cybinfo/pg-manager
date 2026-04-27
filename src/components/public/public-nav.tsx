@@ -18,7 +18,7 @@ export function PublicNav({ activePage, ctaLabel = "Get Started Free" }: PublicN
   ]
 
   return (
-    <nav className="sticky top-0 z-50 glass-nav border-b">
+    <nav className="sticky top-0 z-[var(--z-modal)] glass-nav border-b">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <BrandLogo size="sm" />
         <div className="hidden md:flex items-center gap-6">

@@ -35,7 +35,7 @@ export function HelpTooltip({ content, side = "top", className, iconClassName }:
         <div
           role="tooltip"
           className={cn(
-            "absolute z-50 px-3 py-2 text-xs bg-popover text-popover-foreground",
+            "absolute z-[var(--z-dropdown)] px-3 py-2 text-xs bg-popover text-popover-foreground",
             "border rounded-lg shadow-lg max-w-[250px] whitespace-normal",
             "animate-fade-in pointer-events-none",
             // Positioning

@@ -379,7 +379,7 @@ export function EntitySelector<T extends { id: string }>({
 
         {/* Dropdown Results */}
         {isOpen && (
-          <Card className="absolute z-50 w-full mt-1 shadow-lg max-h-64 overflow-hidden">
+          <Card className="absolute z-[var(--z-dropdown)] w-full mt-1 shadow-lg max-h-64 overflow-hidden">
             <CardContent className="p-0">
               {loading && minSearchLength === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
@@ -530,7 +530,7 @@ export function EntitySelector<T extends { id: string }>({
       {/* Click outside handler */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-[var(--z-dropdown)]"
           onClick={() => setIsOpen(false)}
         />
       )}

@@ -11,7 +11,7 @@ export function PWAInstallPrompt() {
   if (!canInstall) return null
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-card border rounded-lg shadow-lg p-4 z-50 animate-in slide-in-from-bottom-4">
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-card border rounded-lg shadow-lg p-4 z-[var(--z-modal)] animate-in slide-in-from-bottom-4">
       <button
         onClick={dismiss}
         className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
