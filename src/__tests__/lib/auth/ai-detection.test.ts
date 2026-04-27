@@ -263,6 +263,34 @@ describe("getSuggestionsForIdentity", () => {
     // Both inner calls return null/empty — suggests create_new
     expect(result[0].type).toBe("create_new")
   })
+
+  it("suggests link_tenant when conflict source_type is tenant", async () => {
+    const conflict = { source_id: "t1", source_type: "tenant", workspace_name: "PG House", has_user_id: false }
+    ;(mockSupabase.rpc as unknown as jest.Mock)
+      .mockResolvedValueOnce({ data: [], error: null })  // findExistingUser
+      .mockResolvedValue({ data: [conflict], error: null })  // detectIdentityConflicts
+    const result = await getSuggestionsForIdentity("a@b.com")
+    expect(result.some((s) => s.action.type === "link_tenant")).toBe(true)
+  })
+
+  it("suggests accept_invitation when conflict source_type is invitation", async () => {
+    const conflict = { source_id: "inv1", source_type: "invitation", workspace_name: "Library", has_user_id: false }
+    ;(mockSupabase.rpc as unknown as jest.Mock)
+      .mockResolvedValueOnce({ data: [], error: null })  // findExistingUser
+      .mockResolvedValue({ data: [conflict], error: null })  // detectIdentityConflicts
+    const result = await getSuggestionsForIdentity("a@b.com")
+    expect(result.some((s) => s.action.type === "accept_invitation")).toBe(true)
+  })
+
+  it("returns create_new when conflicts exist but none match known types", async () => {
+    const conflict = { source_id: "x1", source_type: "unknown_type", workspace_name: "WS", has_user_id: false }
+    ;(mockSupabase.rpc as unknown as jest.Mock)
+      .mockResolvedValueOnce({ data: [], error: null })  // findExistingUser
+      .mockResolvedValue({ data: [conflict], error: null })  // detectIdentityConflicts
+    const result = await getSuggestionsForIdentity("a@b.com")
+    // No matching handler — falls through to create_new
+    expect(result.some((s) => s.type === "create_new")).toBe(true)
+  })
 })
 
 // ============================================================================
@@ -296,5 +324,30 @@ describe("validateInvitation", () => {
     const result = await validateInvitation("ws1", "a@b.com", undefined, "staff")
     expect(result.isValid).toBe(false)
     expect(result.errors[0]).toContain("already has staff access")
+  })
+
+  it("adds warning when staff user also has tenant context", async () => {
+    const user = { user_id: "u1", name: "Alice", email: "a@b.com", phone: null, has_contexts: true }
+    ;(mockSupabase.rpc as unknown as jest.Mock).mockResolvedValue({ data: [user], error: null })
+    let callCount = 0
+    mockFrom.mockImplementation(() => {
+      callCount++
+      // First: user_contexts for staff (no existing staff context) → null
+      // Second: user_contexts for tenant → has tenant context
+      if (callCount === 1) return makeChain({ data: null, error: null }) // no existing staff context
+      if (callCount === 2) return makeChain({ data: { id: "ctx2" }, error: null }) // has tenant context
+      return makeChain({ data: null, error: null })
+    })
+    const result = await validateInvitation("ws1", "a@b.com", undefined, "staff")
+    expect(result.isValid).toBe(true)
+    expect(result.warnings.some((w) => w.includes("both staff and tenant access"))).toBe(true)
+  })
+
+  it("adds warning when pending invitation found for email/phone", async () => {
+    ;(mockSupabase.rpc as unknown as jest.Mock).mockResolvedValue({ data: [], error: null }) // no existing user
+    mockFrom.mockReturnValue(makeChain({ data: { id: "inv1", status: "pending" }, error: null }))
+    const result = await validateInvitation("ws1", "new@user.com", undefined, "tenant")
+    expect(result.isValid).toBe(true)
+    expect(result.warnings.some((w) => w.includes("pending invitation"))).toBe(true)
   })
 })
