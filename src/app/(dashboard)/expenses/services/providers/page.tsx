@@ -322,6 +322,7 @@ export default function ServiceProvidersPage() {
       icon={Wrench}
       permission="expenses.view"
       module="expenses"
+      feature="serviceTracking"
       config={SERVICE_PROVIDER_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

@@ -375,6 +375,7 @@ export default function ServicePaymentsPage() {
       icon={Hammer}
       permission="expenses.view"
       module="expenses"
+      feature="serviceTracking"
       config={SERVICE_PAYMENT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

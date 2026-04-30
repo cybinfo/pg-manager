@@ -33,7 +33,7 @@ import {
   CheckCircle2,
 } from "lucide-react"
 import { showError } from "@/lib/toast-helpers"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { logger } from "@/lib/logger"
 
@@ -197,6 +197,7 @@ export default function DuplicatesPage() {
   }
 
   return (
+    <FeatureGuard module="people" feature="mergeDetection">
     <PermissionGuard permission="tenants.view">
       <div className="space-y-6">
         {/* Header */}
@@ -432,5 +433,6 @@ export default function DuplicatesPage() {
         )}
       </div>
     </PermissionGuard>
+    </FeatureGuard>
   )
 }

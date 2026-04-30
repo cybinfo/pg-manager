@@ -42,7 +42,7 @@ import {
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime, formatDate, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGate } from "@/components/auth"
 import { showSuccess } from "@/lib/toast-helpers"
 import { INQUIRY_STATUS_LABELS, INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_LABELS } from "@/lib/status"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -249,6 +249,7 @@ export default function InquiryDetailPage() {
               )}
               {(inquiry.status === "new" || inquiry.status === "contacted") && (
                 <>
+                  <FeatureGate module="inquiries" feature="inquiryConversion">
                   <Button
                     variant="outline"
                     size="sm"
@@ -259,6 +260,7 @@ export default function InquiryDetailPage() {
                     <UserCheck className="mr-2 h-4 w-4" />
                     Convert to Tenant
                   </Button>
+                  </FeatureGate>
                   <Button
                     variant="outline"
                     size="sm"
@@ -421,6 +423,7 @@ export default function InquiryDetailPage() {
         </DetailSection>
 
         {/* Convert to Tenant Card */}
+        <FeatureGate module="inquiries" feature="inquiryConversion">
         {inquiry.status === "converted" && (
           <DetailSection title="Next Steps" icon={UserCheck}>
             <div className="space-y-3">
@@ -436,6 +439,7 @@ export default function InquiryDetailPage() {
             </div>
           </DetailSection>
         )}
+        </FeatureGate>
 
       </DetailPageTemplate>
     </div>

@@ -55,6 +55,12 @@ export interface FeatureDefinition {
   description: string
   /** Other feature keys in the same module that must be enabled */
   dependsOn?: string[]
+  /**
+   * true  = toggle is wired to actual gate code; toggling has real effect.
+   * false = feature toggle is defined but gate code not yet built (hidden from UI).
+   * Omitting is treated as false.
+   */
+  wired?: boolean
 }
 
 export interface ModuleDefinition {

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { ArrowLeft, CreditCard, Loader2, Users, IndianRupee, CheckCircle2 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -494,8 +494,10 @@ function BulkPaymentForm() {
 
 export default function BulkPaymentPage() {
   return (
-    <PermissionGuard permission="payments.create">
-      <BulkPaymentForm />
-    </PermissionGuard>
+    <FeatureGuard module="payments" feature="bulkPaymentRecording">
+      <PermissionGuard permission="payments.create">
+        <BulkPaymentForm />
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }

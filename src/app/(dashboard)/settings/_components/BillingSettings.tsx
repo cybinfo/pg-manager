@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { withCreatedBy } from "@/lib/audit"
+import { FeatureGate } from "@/components/auth"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { formatCurrency } from "@/lib/format"
@@ -520,6 +521,7 @@ export function BillingSettings({
       </Card>
 
       {/* Auto Billing Settings */}
+      <FeatureGate module="billing" feature="autoBilling">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -794,6 +796,7 @@ export function BillingSettings({
           </p>
         </CardContent>
       </Card>
+      </FeatureGate>
     </div>
   )
 }

@@ -72,6 +72,8 @@ export interface NavItem {
   permission: string | null
   /** Module key required to be enabled (null = always show) */
   module: ModuleKey | null
+  /** Feature key within the module that must be enabled (requires module to be set) */
+  feature?: string
   /** Badge count (optional) */
   badge?: number
   /** Whether this is a divider/separator before this item */
@@ -98,13 +100,13 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", module: "payments" },
   { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", module: "refunds" },
   { name: "Expenses", href: "/expenses", icon: TrendingDown, permission: "expenses.view", module: "expenses" },
-  { name: "Daily Spend", href: "/expenses/daily-spend", icon: ShoppingCart, permission: "expenses.view", module: "expenses" },
+  { name: "Daily Spend", href: "/expenses/daily-spend", icon: ShoppingCart, permission: "expenses.view", module: "expenses", feature: "dailySpend" },
   { name: "Products", href: "/expenses/products", icon: Package, permission: "expenses.view", module: "expenses" },
-  { name: "Vendors", href: "/expenses/vendors", icon: Store, permission: "expenses.view", module: "expenses" },
-  { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", module: "expenses" },
-  { name: "Service Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", module: "expenses" },
-  { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", module: "expenses" },
-  { name: "Meter Readings", href: "/meter-readings", icon: TrendingUp, permission: "meter_readings.view", module: "meters" },
+  { name: "Vendors", href: "/expenses/vendors", icon: Store, permission: "expenses.view", module: "expenses", feature: "vendorManagement" },
+  { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", module: "expenses", feature: "billPayments" },
+  { name: "Service Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", module: "expenses", feature: "serviceTracking" },
+  { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", module: "expenses", feature: "serviceTracking" },
+  { name: "Meter Readings", href: "/meter-readings", icon: TrendingUp, permission: "meter_readings.view", module: "meters", feature: "meterReadings" },
   { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", module: "meters" },
   { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", module: "exitClearance" },
   { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", module: "visitors" },
@@ -113,7 +115,7 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Notices", href: "/notices", icon: Bell, permission: "notices.view", module: "notices" },
   { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", module: "reports" },
   { name: "Activity Log", href: "/activity", icon: Activity, permission: null, module: "activityLog" },
-  { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", module: "properties" },
+  { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", module: "properties", feature: "architectureView" },
   { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", module: "approvals" },
   { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", module: "staff" },
   // Library Modules
@@ -180,22 +182,30 @@ interface FilterOptions {
   hasPermission: (permission: string) => boolean
   /** Function to check if a module is enabled */
   isModuleEnabled: (module: ModuleKey) => boolean
+  /** Function to check if a feature within a module is enabled */
+  isFeatureEnabled?: (module: ModuleKey, feature: string) => boolean
   /** Whether user is platform admin (bypasses permission checks) */
   isPlatformAdmin?: boolean
 }
 
 /**
- * Filter navigation items based on permissions and module flags.
+ * Filter navigation items based on permissions, module flags, and feature flags.
  */
 export function filterNavigation(
   items: NavItem[],
   options: FilterOptions
 ): NavItem[] {
-  const { hasPermission, isModuleEnabled, isPlatformAdmin = false } = options
+  const { hasPermission, isModuleEnabled, isFeatureEnabled, isPlatformAdmin = false } = options
 
   return items.filter((item) => {
     if (item.module !== null && !isModuleEnabled(item.module)) {
       return false
+    }
+
+    if (item.module !== null && item.feature && isFeatureEnabled) {
+      if (!isFeatureEnabled(item.module, item.feature)) {
+        return false
+      }
     }
 
     if (isPlatformAdmin) return true

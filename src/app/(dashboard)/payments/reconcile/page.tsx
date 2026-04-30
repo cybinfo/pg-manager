@@ -20,7 +20,7 @@ import { transformArrayJoins } from "@/lib/supabase/transforms"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PermissionGuard, PermissionGate } from "@/components/auth"
+import { PermissionGuard, PermissionGate, FeatureGuard } from "@/components/auth"
 import {
   Link2,
   Loader2,
@@ -876,8 +876,10 @@ function ReconciliationView() {
 
 export default function ReconcilePage() {
   return (
-    <PermissionGuard permission="payments.edit">
-      <ReconciliationView />
-    </PermissionGuard>
+    <FeatureGuard module="payments" feature="reconciliation">
+      <PermissionGuard permission="payments.edit">
+        <ReconciliationView />
+      </PermissionGuard>
+    </FeatureGuard>
   )
 }

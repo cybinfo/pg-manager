@@ -25,7 +25,8 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react"
-import { PermissionGuard, ModuleGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard, FeatureGate } from "@/components/auth"
+import { useFeatures } from "@/lib/features/use-features"
 import { InfoBanner } from "@/components/ui/info-banner"
 import { useDemoMode } from "@/lib/demo-mode"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -109,6 +110,7 @@ export default function ReportsPage() {
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const { dateRange, setDateRange, startDate, endDate, lastMonthStart, lastMonthEnd } = useReportDateRange()
   const { canPerformAction, getDemoMessage } = useDemoMode()
+  const { isFeatureEnabled } = useFeatures()
 
   useEffect(() => {
     fetchReportData()
@@ -354,6 +356,7 @@ export default function ReportsPage() {
 
   const handleExportCSV = (type: string) => {
     if (!reportData) return
+    if (!isFeatureEnabled("reports", "csvExport")) return
 
     const rows: (string | number)[][] = []
     let filename = ""
@@ -516,12 +519,16 @@ export default function ReportsPage() {
 
       {/* Charts Row */}
       <div className="grid md:grid-cols-2 gap-6">
-        <RevenueTrendChart
-          data={reportData.monthlyRevenue}
-          onExport={() => handleExportCSV("revenue")}
-          formatCurrency={formatCurrency}
-        />
-        <PaymentMethodsChart data={reportData.paymentMethods} />
+        <FeatureGate module="reports" feature="revenueReports">
+          <RevenueTrendChart
+            data={reportData.monthlyRevenue}
+            onExport={() => handleExportCSV("revenue")}
+            formatCurrency={formatCurrency}
+          />
+        </FeatureGate>
+        <FeatureGate module="reports" feature="paymentAnalytics">
+          <PaymentMethodsChart data={reportData.paymentMethods} />
+        </FeatureGate>
       </div>
 
       {/* Expense by Category */}

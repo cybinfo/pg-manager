@@ -21,6 +21,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
 import { PAYMENT_METHOD_OPTIONS } from "@/lib/status"
 import { logger } from "@/lib/logger"
+import { useFeatures } from "@/lib/features/use-features"
 
 interface Tenant {
   id: string
@@ -71,6 +72,7 @@ interface Bill {
 
 function NewPaymentForm() {
   const { backHref } = useBackNavigation({ defaultHref: "/payments" })
+  const { isFeatureEnabled } = useFeatures()
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedTenantId = searchParams.get("tenant")
@@ -262,7 +264,7 @@ function NewPaymentForm() {
         reference_number: formData.reference_number || undefined,
         notes: formData.notes || undefined,
         is_advance: false,
-        send_receipt: true,
+        send_receipt: isFeatureEnabled("payments", "paymentReceipts"),
       }
 
       // Execute the workflow

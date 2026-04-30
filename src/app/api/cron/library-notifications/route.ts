@@ -15,6 +15,8 @@ import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
 import { getNowISO } from "@/lib/date-helpers"
+import { isFeatureEnabled } from "@/lib/features/checks"
+import type { WorkspaceModuleConfig } from "@/lib/features"
 import {
   sendLibraryLowHoursWarning,
   sendLibraryRenewalReminder,
@@ -158,6 +160,24 @@ export const GET = (request: Request) =>
             if (!library) continue
             const renewalPerson = transformJoin(member.person)
             const renewalMemberName = (renewalPerson?.name as string) || member.name
+
+            // Check if renewalReminders feature is enabled for this workspace
+            if (library.id) {
+              const { data: libWs } = await supabaseAdmin
+                .from("libraries")
+                .select("workspace_id")
+                .eq("id", library.id)
+                .single()
+              if (libWs?.workspace_id) {
+                const { data: ws } = await supabaseAdmin
+                  .from("workspaces")
+                  .select("module_config")
+                  .eq("id", libWs.workspace_id)
+                  .single()
+                const wsConfig = ws?.module_config as WorkspaceModuleConfig | null
+                if (!isFeatureEnabled(wsConfig, "subscriptions", "renewalReminders")) continue
+              }
+            }
 
             const result = await sendLibraryRenewalReminder({
               to: member.email,

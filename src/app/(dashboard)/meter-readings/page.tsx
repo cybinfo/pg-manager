@@ -313,6 +313,7 @@ export default function MeterReadingsPage() {
       icon={Gauge}
       permission="meter_readings.view"
       module="meters"
+      feature="meterReadings"
       config={METER_READING_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

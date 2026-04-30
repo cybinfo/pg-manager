@@ -14,6 +14,8 @@ import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { sendWaitlistSeatAvailableEmail } from "@/lib/email"
+import { isFeatureEnabled } from "@/lib/features/checks"
+import type { WorkspaceModuleConfig } from "@/lib/features"
 
 export const GET = (request: Request) =>
   baseCronHandler(request, {
@@ -253,6 +255,23 @@ export const GET = (request: Request) =>
           }
 
           for (const libraryId of libraryIdsFromExpired) {
+            // Check if waitlistNotifications feature is enabled for this library's workspace
+            const { data: libraryRecord } = await supabaseAdmin
+              .from("libraries")
+              .select("workspace_id")
+              .eq("id", libraryId)
+              .single()
+
+            if (libraryRecord?.workspace_id) {
+              const { data: ws } = await supabaseAdmin
+                .from("workspaces")
+                .select("module_config")
+                .eq("id", libraryRecord.workspace_id)
+                .single()
+              const wsConfig = ws?.module_config as WorkspaceModuleConfig | null
+              if (!isFeatureEnabled(wsConfig, "waitlist", "waitlistNotifications")) continue
+            }
+
             // Fetch waitlisted people for this library who have email
             const { data: waitlistEntries } = await supabaseAdmin
               .from("library_waitlist")

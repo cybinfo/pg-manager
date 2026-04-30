@@ -311,6 +311,7 @@ export default function DailySpendPage() {
       icon={ShoppingBag}
       permission="expenses.view"
       module="expenses"
+      feature="dailySpend"
       config={DAILY_SPEND_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

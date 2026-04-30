@@ -78,6 +78,7 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>
   permission: string | null
   module: ModuleKey | null
+  feature?: string
   children?: NavItem[]
 }
 
@@ -100,7 +101,7 @@ const navigation: NavItem[] = [
       { name: "Payments",        href: "/payments",       icon: CreditCard,  permission: "payments.view",            module: "payments" },
       { name: "Refunds",         href: "/refunds",        icon: Wallet,      permission: "payments.view",            module: "refunds" },
       { name: "Exit Clearance",  href: "/exit-clearance", icon: UserMinus,   permission: "exit_clearance.initiate",  module: "exitClearance" },
-      { name: "Architecture",    href: "/architecture",   icon: Grid3X3,     permission: "properties.view",          module: "properties" },
+      { name: "Architecture",    href: "/architecture",   icon: Grid3X3,     permission: "properties.view",          module: "properties",  feature: "architectureView" },
     ]
   },
 
@@ -135,7 +136,7 @@ const navigation: NavItem[] = [
     module: "meters",
     children: [
       { name: "All Meters", href: "/meters",         icon: Gauge, permission: "meters.view",         module: "meters" },
-      { name: "Readings",   href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", module: "meters" },
+      { name: "Readings",   href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", module: "meters", feature: "meterReadings" },
     ]
   },
 
@@ -147,14 +148,14 @@ const navigation: NavItem[] = [
     permission: "expenses.view",
     module: "expenses",
     children: [
-      { name: "Overview",          href: "/expenses",                     icon: TrendingDown, permission: "expenses.view", module: "expenses" },
-      { name: "Daily Spend",       href: "/expenses/daily-spend",         icon: ShoppingCart, permission: "expenses.view", module: "expenses" },
-      { name: "Products",          href: "/expenses/products",            icon: Package,      permission: "expenses.view", module: "expenses" },
-      { name: "Vendors/Shops",     href: "/expenses/vendors",             icon: Store,        permission: "expenses.view", module: "expenses" },
-      { name: "Bill Payments",     href: "/expenses/bills",               icon: Receipt,      permission: "expenses.view", module: "expenses" },
-      { name: "Providers",         href: "/expenses/services/providers",  icon: Wrench,       permission: "expenses.view", module: "expenses" },
-      { name: "Services",          href: "/expenses/services",            icon: Hammer,       permission: "expenses.view", module: "expenses" },
-      { name: "Misc Transactions", href: "/expenses/misc",                icon: ArrowLeftRight, permission: "expenses.view", module: "expenses" },
+      { name: "Overview",          href: "/expenses",                     icon: TrendingDown,   permission: "expenses.view", module: "expenses" },
+      { name: "Daily Spend",       href: "/expenses/daily-spend",         icon: ShoppingCart,   permission: "expenses.view", module: "expenses", feature: "dailySpend" },
+      { name: "Products",          href: "/expenses/products",            icon: Package,        permission: "expenses.view", module: "expenses" },
+      { name: "Vendors/Shops",     href: "/expenses/vendors",             icon: Store,          permission: "expenses.view", module: "expenses", feature: "vendorManagement" },
+      { name: "Bill Payments",     href: "/expenses/bills",               icon: Receipt,        permission: "expenses.view", module: "expenses", feature: "billPayments" },
+      { name: "Providers",         href: "/expenses/services/providers",  icon: Wrench,         permission: "expenses.view", module: "expenses", feature: "serviceTracking" },
+      { name: "Services",          href: "/expenses/services",            icon: Hammer,         permission: "expenses.view", module: "expenses", feature: "serviceTracking" },
+      { name: "Misc Transactions", href: "/expenses/misc",                icon: ArrowLeftRight, permission: "expenses.view", module: "expenses", feature: "miscTransactions" },
     ]
   },
 
@@ -211,17 +212,23 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   // Use module flags — skip module filtering while loading to avoid nav items
   // disappearing on first render (would require two clicks to navigate)
-  const { isModuleEnabled, loading: modulesLoading } = useFeatures()
+  const { isModuleEnabled, isFeatureEnabled, loading: modulesLoading } = useFeatures()
 
   // NOTE: Setup redirect removed from dashboard layout.
   // The setup page (/setup) handles its own access check.
   // Redirecting from here caused false redirects for existing users
   // due to auth context race conditions (contexts load asynchronously).
 
-  // Filter navigation based on permissions AND module flags
+  // Filter navigation based on permissions, module flags, and feature flags
   const filterNavItem = (item: NavItem): NavItem | null => {
     if (!modulesLoading && item.module !== null && !isModuleEnabled(item.module)) {
       return null
+    }
+
+    if (!modulesLoading && item.module !== null && item.feature) {
+      if (!isFeatureEnabled(item.module, item.feature)) {
+        return null
+      }
     }
 
     // Check permissions
@@ -293,6 +300,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     const filtered = filterNavigation(filterable, {
       hasPermission: (perm: string) => currentContext.isOwner || hasPermission(perm),
       isModuleEnabled: (mod) => modulesLoading || isModuleEnabled(mod),
+      isFeatureEnabled: (mod, feat) => modulesLoading || isFeatureEnabled(mod, feat),
       isPlatformAdmin,
     })
     // Always append the "More" item if it exists

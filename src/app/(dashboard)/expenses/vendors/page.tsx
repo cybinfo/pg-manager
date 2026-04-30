@@ -294,6 +294,7 @@ export default function VendorsPage() {
       icon={Building2}
       permission="expenses.view"
       module="expenses"
+      feature="vendorManagement"
       config={VENDOR_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

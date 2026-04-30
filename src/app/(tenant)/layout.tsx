@@ -7,6 +7,8 @@ import { PortalLayout } from "@/components/portal"
 import { TENANT_NAVIGATION } from "@/lib/navigation/config"
 import { TenantPortalInfo, RawTenantPortalInfo } from "@/types/tenants.types"
 import { brandGradient } from "@/lib/design-tokens"
+import { isFeatureEnabled } from "@/lib/features/checks"
+import type { WorkspaceModuleConfig } from "@/lib/features"
 
 export default function TenantLayout({
   children,
@@ -24,6 +26,7 @@ export default function TenantLayout({
         id,
         name,
         phone,
+        owner_id,
         property:properties(name),
         room:rooms(room_number)
       `)
@@ -33,6 +36,22 @@ export default function TenantLayout({
 
     if (error || !tenantData) {
       return false
+    }
+
+    // Check if tenantPortal feature is enabled for this workspace
+    if (tenantData.owner_id) {
+      const { data: workspace } = await supabase
+        .from("workspaces")
+        .select("module_config")
+        .eq("owner_user_id", tenantData.owner_id)
+        .single()
+
+      if (workspace) {
+        const config = workspace.module_config as WorkspaceModuleConfig | null
+        if (!isFeatureEnabled(config, "tenants", "tenantPortal")) {
+          return false
+        }
+      }
     }
 
     const rawData = tenantData as RawTenantPortalInfo

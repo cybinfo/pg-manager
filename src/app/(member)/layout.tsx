@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client"
 import { PortalLayout } from "@/components/portal"
 import { LIBRARY_MEMBER_NAVIGATION } from "@/lib/navigation/config"
 import { brandGradient } from "@/lib/design-tokens"
+import { isFeatureEnabled } from "@/lib/features/checks"
+import type { WorkspaceModuleConfig } from "@/lib/features"
 
 interface MemberPortalInfo {
   id: string
@@ -37,7 +39,7 @@ export default function MemberLayout({
         phone,
         member_code,
         hours_balance,
-        library:libraries(name)
+        library:libraries(name, workspace_id)
       `)
       .eq("user_id", userId)
       .eq("status", "active")
@@ -50,6 +52,22 @@ export default function MemberLayout({
     const library = Array.isArray(memberData.library)
       ? memberData.library[0]
       : memberData.library
+
+    // Check if memberPortal feature is enabled for this workspace
+    if (library?.workspace_id) {
+      const { data: workspace } = await supabase
+        .from("workspaces")
+        .select("module_config")
+        .eq("id", library.workspace_id)
+        .single()
+
+      if (workspace) {
+        const config = workspace.module_config as WorkspaceModuleConfig | null
+        if (!isFeatureEnabled(config, "members", "memberPortal")) {
+          return false
+        }
+      }
+    }
 
     setMember({
       id: memberData.id,

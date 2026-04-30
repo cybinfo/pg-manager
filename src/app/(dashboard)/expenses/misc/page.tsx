@@ -357,6 +357,7 @@ export default function MiscTransactionsPage() {
       icon={ArrowLeftRight}
       permission="expenses.view"
       module="expenses"
+      feature="miscTransactions"
       config={MISC_TRANSACTION_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

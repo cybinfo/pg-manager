@@ -20,6 +20,7 @@ import { withCreatedBy } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { logger } from "@/lib/logger"
+import { FeatureGuard } from "@/components/auth"
 
 interface QRPayload {
   type: string
@@ -276,6 +277,7 @@ export default function QRScannerPage() {
   }, [])
 
   return (
+    <FeatureGuard module="attendance" feature="qrCheckin">
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -434,5 +436,6 @@ export default function QRScannerPage() {
         </CardContent>
       </Card>
     </div>
+    </FeatureGuard>
   )
 }

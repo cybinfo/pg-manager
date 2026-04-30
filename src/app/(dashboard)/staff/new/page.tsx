@@ -34,6 +34,7 @@ import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { logger } from "@/lib/logger"
+import { useFeatures } from "@/lib/features/use-features"
 
 interface Role {
   id: string
@@ -62,6 +63,7 @@ export default function NewStaffPage() {
 
 function NewStaffContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/staff" })
+  const { isFeatureEnabled } = useFeatures()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { handleSuccess } = useFormSubmit({
@@ -325,8 +327,8 @@ function NewStaffContent() {
           handleSuccess({ message: `Staff member added! ${existingProfile.name} can now login and switch to this staff account.` })
           return
         }
-      } else if (workspace) {
-        // User doesn't exist - create invitation
+      } else if (workspace && isFeatureEnabled("staff", "staffInvitations")) {
+        // User doesn't exist - create invitation (only if staffInvitations feature is enabled)
         // Person-centric: Use staffEmail (from selectedPerson or formData)
         const { data: invitation, error: inviteError } = await supabase
           .from("invitations")

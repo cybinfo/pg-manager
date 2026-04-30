@@ -51,7 +51,7 @@ import {
 } from "@/types/exit-clearance.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGate } from "@/components/auth"
 
 export default function ExitClearanceDetailPage() {
   const params = useParams()
@@ -413,6 +413,7 @@ export default function ExitClearanceDetailPage() {
         </DetailSection>
 
         {/* Checkout Checklist */}
+        <FeatureGate module="exitClearance" feature="clearanceWorkflow">
         <DetailSection
           title="Checkout Checklist"
           description="Complete all items before finalizing"
@@ -476,6 +477,7 @@ export default function ExitClearanceDetailPage() {
             </div>
           </div>
         </DetailSection>
+        </FeatureGate>
 
         {/* Deductions */}
         <DetailSection

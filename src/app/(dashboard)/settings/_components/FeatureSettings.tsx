@@ -254,10 +254,10 @@ function ModuleCardList({
               </div>
             </CardHeader>
 
-            {isExpanded && moduleDef.features.length > 0 && (
+            {isExpanded && moduleDef.features.filter(f => f.wired !== false).length > 0 && (
               <CardContent className="pt-0 space-y-2">
                 <div className="h-px bg-border mb-3" />
-                {moduleDef.features.map((featureDef) => {
+                {moduleDef.features.filter(f => f.wired !== false).map((featureDef) => {
                   const featureOn = moduleState?.features?.[featureDef.key] === true
 
                   return (

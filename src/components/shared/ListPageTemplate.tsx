@@ -50,7 +50,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, GroupConfig } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
-import { PermissionGuard, ModuleGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard, FeatureGuard } from "@/components/auth"
 import type { ModuleKey } from "@/lib/features"
 import { PageSkeleton } from "@/components/ui/loading"
 import { ErrorState } from "@/components/ui/empty-state"
@@ -209,6 +209,8 @@ export interface ListPageTemplateProps<T extends Record<string, unknown> = Recor
   permission?: string
   /** Module that must be enabled for this page */
   module?: ModuleKey
+  /** Feature within the module that must be enabled (requires module to be set) */
+  feature?: string
 
   // --- Permission props (grouped style, new API) ---
   permissions?: ListPagePermissions
@@ -323,6 +325,7 @@ export function ListPageTemplate({
   // Permission (flat - original)
   permission: flatPermission,
   module: flatModule,
+  feature,
 
   // Permission (grouped - new)
   permissions,
@@ -912,7 +915,19 @@ export function ListPageTemplate({
     </div>
   )
 
-  // Wrap with permission and module guards
+  // Wrap with permission, module, and feature guards
+  if (module && feature && permission) {
+    return (
+      <FeatureGuard module={module} feature={feature}>
+        <PermissionGuard permission={permission}>{content}</PermissionGuard>
+      </FeatureGuard>
+    )
+  }
+
+  if (module && feature) {
+    return <FeatureGuard module={module} feature={feature}>{content}</FeatureGuard>
+  }
+
   if (module && permission) {
     return (
       <ModuleGuard module={module}>

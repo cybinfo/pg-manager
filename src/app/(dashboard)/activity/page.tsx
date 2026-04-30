@@ -37,6 +37,7 @@ import { getEntityName } from "@/lib/entity-names"
 import { brandGradient } from "@/lib/design-tokens"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateTimeExportColumn } from "@/lib/export-columns"
+import { useFeatures } from "@/lib/features/use-features"
 
 // ============================================
 // Types
@@ -258,6 +259,7 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
 // ============================================
 
 export default function ActivityLogPage() {
+  const { isFeatureEnabled } = useFeatures()
   return (
     <ListPageTemplate
       tableKey="activity"
@@ -271,7 +273,7 @@ export default function ActivityLogPage() {
       groupByOptions={groupByOptions}
       metrics={metrics}
       searchPlaceholder="Search activity..."
-      exportColumns={exportColumns}
+      exportColumns={isFeatureEnabled("activityLog", "exportLog") ? exportColumns : undefined}
       exportFilename="activity-log"
       emptyTitle="No activity yet"
       emptyDescription="Activity will appear here as changes are made"

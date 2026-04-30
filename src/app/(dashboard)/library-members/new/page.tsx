@@ -31,6 +31,7 @@ import { PermissionGuard } from "@/components/auth"
 import { showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { withCreatedBy } from "@/lib/audit"
+import { useFeatures } from "@/lib/features/use-features"
 import { logger } from "@/lib/logger"
 
 interface Library {
@@ -66,6 +67,7 @@ function NewLibraryMemberContent() {
   const router = useRouter()
   const { user } = useAuthContext()
   const { backHref } = useBackNavigation({ defaultHref: "/library-members" })
+  const { isFeatureEnabled } = useFeatures()
   const [libraries, setLibraries] = useState<Library[]>([])
   const [plans, setPlans] = useState<Plan[]>([])
   const [loadingData, setLoadingData] = useState(true)
@@ -402,7 +404,7 @@ function NewLibraryMemberContent() {
       }
 
       // Send welcome email (non-blocking)
-      if (formData.email) {
+      if (formData.email && isFeatureEnabled("members", "welcomeEmail")) {
         import("@/lib/email").then(({ sendLibraryMemberWelcomeEmail }) => {
           sendLibraryMemberWelcomeEmail({
             to: formData.email,

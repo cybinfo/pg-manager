@@ -52,7 +52,7 @@ import { formatDate, formatCurrency } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete, cascadeSoftDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
-import { PermissionGuard, PermissionGate } from "@/components/auth"
+import { PermissionGuard, PermissionGate, FeatureGate } from "@/components/auth"
 import { TagBadge } from "@/components/people"
 import {
   Person,
@@ -587,6 +587,7 @@ export default function PersonDetailPage() {
           )}
 
           {/* Emergency Contacts */}
+          <FeatureGate module="people" feature="emergencyContacts">
           {person.emergency_contacts && person.emergency_contacts.length > 0 && (
             <DetailListSection
               title="Emergency Contacts"
@@ -610,6 +611,7 @@ export default function PersonDetailPage() {
               emptyText="No emergency contacts"
             />
           )}
+          </FeatureGate>
 
           {/* Tenant History */}
         {tenantHistory.length > 0 && (

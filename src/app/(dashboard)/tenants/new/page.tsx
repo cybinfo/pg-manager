@@ -22,6 +22,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { sendInvitationEmail, sendTenantWelcomeEmail } from "@/lib/email"
 import { withCreatedBy } from "@/lib/audit"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { useFeatures } from "@/lib/features/use-features"
 import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
@@ -47,6 +48,7 @@ interface Room {
 
 export default function NewTenantPage() {
   const { backHref } = useBackNavigation({ defaultHref: "/tenants" })
+  const { isFeatureEnabled } = useFeatures()
   const router = useRouter()
   const searchParams = useSearchParams()
   const personIdFromUrl = searchParams.get("person_id")
@@ -487,7 +489,7 @@ export default function NewTenantPage() {
       }
 
       // Send welcome email (non-blocking - don't fail creation if email fails)
-      if (selectedPerson.email) {
+      if (selectedPerson.email && isFeatureEnabled("tenants", "welcomeEmail")) {
         const { data: inviterProfile } = await supabase
           .from("user_profiles")
           .select("name, phone")

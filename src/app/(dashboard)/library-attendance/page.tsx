@@ -27,6 +27,7 @@ import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { withCreatedBy } from "@/lib/audit"
+import { useFeatures } from "@/lib/features/use-features"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
@@ -603,6 +604,7 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
 
 export default function LibraryAttendancePage() {
   const [refreshKey, setRefreshKey] = useState(0)
+  const { isFeatureEnabled } = useFeatures()
 
   const handleRefresh = () => setRefreshKey((k) => k + 1)
 
@@ -634,7 +636,7 @@ export default function LibraryAttendancePage() {
         enableAdvancedFilters={true}
         advancedFilterColumns={advancedFilterColumns}
         enableInlineEdit={true}
-        exportColumns={exportColumns}
+        exportColumns={isFeatureEnabled("attendance", "csvExport") ? exportColumns : undefined}
         exportFilename="library-attendance"
         detailHref={(att) => `/library-attendance/${att.id}`}
         emptyTitle="No attendance records"

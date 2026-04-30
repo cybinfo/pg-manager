@@ -340,6 +340,7 @@ export default function BillPaymentsPage() {
       icon={Receipt}
       permission="expenses.view"
       module="expenses"
+      feature="billPayments"
       config={BILL_PAYMENT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

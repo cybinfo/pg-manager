@@ -22,6 +22,7 @@ import { downloadCSV } from "@/lib/download-utils"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn } from "@/lib/export-columns"
 import { logger } from "@/lib/logger"
+import { FeatureGuard } from "@/components/auth"
 
 interface Role {
   id: string
@@ -174,6 +175,7 @@ export default function RolesPage() {
   const customRoles = roles.filter((r) => !r.is_system_role)
 
   return (
+    <FeatureGuard module="staff" feature="staffRoles">
     <div className="space-y-6">
       {ConfirmDialogElement}
       {/* Header */}
@@ -387,5 +389,6 @@ export default function RolesPage() {
         </CardContent>
       </Card>
     </div>
+    </FeatureGuard>
   )
 }

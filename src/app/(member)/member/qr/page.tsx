@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { QrCode, Info, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { MemberQRCode } from "@/components/library"
+import { isFeatureEnabled } from "@/lib/features/checks"
+import type { WorkspaceModuleConfig } from "@/lib/features"
 
 interface MemberData {
   id: string
@@ -14,6 +16,7 @@ interface MemberData {
   library_id: string
   library: {
     name: string
+    workspace_id: string
   } | null
   person: {
     name: string
@@ -23,6 +26,7 @@ interface MemberData {
 export default function MemberQRPage() {
   const [loading, setLoading] = useState(true)
   const [member, setMember] = useState<MemberData | null>(null)
+  const [featureAvailable, setFeatureAvailable] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,7 +42,7 @@ export default function MemberQRPage() {
           name,
           member_code,
           library_id,
-          library:libraries(name),
+          library:libraries(name, workspace_id),
           person:people(name)
         `)
         .eq("user_id", user.id)
@@ -52,6 +56,24 @@ export default function MemberQRPage() {
         const person = Array.isArray(memberData.person)
           ? memberData.person[0]
           : memberData.person
+
+        // Check if memberQrCode feature is enabled for this workspace
+        if (library?.workspace_id) {
+          const { data: workspace } = await supabase
+            .from("workspaces")
+            .select("module_config")
+            .eq("id", library.workspace_id)
+            .single()
+
+          if (workspace) {
+            const config = workspace.module_config as WorkspaceModuleConfig | null
+            if (!isFeatureEnabled(config, "members", "memberQrCode")) {
+              setFeatureAvailable(false)
+              setLoading(false)
+              return
+            }
+          }
+        }
 
         setMember({
           ...memberData,
@@ -67,6 +89,16 @@ export default function MemberQRPage() {
 
   if (loading) {
     return <PageSkeleton variant="detail" />
+  }
+
+  if (!featureAvailable) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <QrCode className="h-12 w-12 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">QR Code Not Available</h2>
+        <p className="text-muted-foreground">This feature has not been enabled by your library.</p>
+      </div>
+    )
   }
 
   if (!member) {

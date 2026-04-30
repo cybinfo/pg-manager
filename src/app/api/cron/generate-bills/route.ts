@@ -4,6 +4,8 @@ import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
 import { getNowISO } from "@/lib/date-helpers"
 import { formatMonthYear } from "@/lib/format"
+import { isFeatureEnabled } from "@/lib/features/checks"
+import type { WorkspaceModuleConfig } from "@/lib/features"
 import {
   buildRentLineItem,
   buildChargeLineItem,
@@ -37,7 +39,7 @@ export const GET = (request: Request) =>
       const currentDay = today.getDate()
       const currentMonth = formatMonthYear(today)
 
-      // Get all owners with auto-billing settings
+      // Get all owners with auto-billing settings and their workspace module config
       const { data: configs, error: configError } = await supabaseAdmin
         .from("owner_config")
         .select("owner_id, auto_billing_settings")
@@ -55,6 +57,16 @@ export const GET = (request: Request) =>
 
         // Skip if not enabled, wrong day, or already generated this month
         if (!settings?.enabled) continue
+
+        // Skip if workspace has billing.autoBilling feature disabled
+        const { data: ws } = await supabaseAdmin
+          .from("workspaces")
+          .select("module_config")
+          .eq("owner_user_id", config.owner_id)
+          .single()
+        const wsConfig = ws?.module_config as WorkspaceModuleConfig | null
+        if (!isFeatureEnabled(wsConfig, "billing", "autoBilling")) continue
+
         if (shouldSkipBillingDay(currentDay, settings.billing_day)) continue
         if (alreadyGeneratedThisMonth(settings.last_generated_month, currentMonth)) {
           cronLogger.debug("Already generated this month", { ownerId: config.owner_id })

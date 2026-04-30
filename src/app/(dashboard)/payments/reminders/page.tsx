@@ -26,6 +26,7 @@ import { messageTemplates, generateWhatsAppLink, formatCurrency } from "@/lib/no
 import { formatDate } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { logger } from "@/lib/logger"
+import { FeatureGuard } from "@/components/auth"
 
 interface TenantWithDues {
   id: string
@@ -199,6 +200,7 @@ export default function PaymentRemindersPage() {
   }
 
   return (
+    <FeatureGuard module="payments" feature="paymentReminders">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -426,5 +428,6 @@ export default function PaymentRemindersPage() {
         </CardContent>
       </Card>
     </div>
+    </FeatureGuard>
   )
 }
