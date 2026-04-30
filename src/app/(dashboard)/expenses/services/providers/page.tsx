@@ -111,7 +111,7 @@ const columns: Column<ServiceProviderListItem>[] = [
     sortable: true,
     sortType: "number",
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (provider) => (
       <span className="tabular-nums">{provider.total_jobs}</span>
     ),
@@ -122,7 +122,7 @@ const columns: Column<ServiceProviderListItem>[] = [
     width: "badge",
     hideOnMobile: true,
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (provider) =>
       provider.tds_applicable ? (
         <TableBadge variant="muted">

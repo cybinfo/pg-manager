@@ -109,6 +109,7 @@ export function useListPage<T extends object>(
     initialGroups = [],
     initialPageSize,
     initialViewConfig,
+    defaultHiddenColumns = [],
     enabled = true,
     tableKey,
   } = options
@@ -121,7 +122,7 @@ export function useListPage<T extends object>(
   const computedInitialFilters = initialViewConfig?.filters || initialFilters
   const computedInitialGroups = initialViewConfig?.groupBy || initialGroups
   const computedInitialSort = initialViewConfig?.sort || []
-  const computedInitialHiddenColumns = initialViewConfig?.hiddenColumns || []
+  const computedInitialHiddenColumns = initialViewConfig?.hiddenColumns || defaultHiddenColumns
   const computedInitialAdvancedFilters = initialViewConfig?.advancedFilters || { filters: [], combineMode: "and" as const }
 
   // ============================================
@@ -537,7 +538,7 @@ export function useListPage<T extends object>(
       newPageSize = config.defaultPageSize || 25
       paginationHook.setPageSizeState(newPageSize)
       paginationHook.setPageState(1)
-      filtersHook.setHiddenColumnsState([])
+      filtersHook.setHiddenColumnsState(defaultHiddenColumns)
     } else {
       // Apply view config
       if (viewConfig.sort && viewConfig.sort.length > 0) {
@@ -636,7 +637,7 @@ export function useListPage<T extends object>(
   }, [filtersHook.hiddenColumns])
 
   const resetColumnVisibility = useCallback(() => {
-    filtersHook.setHiddenColumnsState([])
+    filtersHook.setHiddenColumnsState(defaultHiddenColumns)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

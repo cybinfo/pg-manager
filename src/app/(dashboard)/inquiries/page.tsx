@@ -124,6 +124,8 @@ const columns: Column<Inquiry>[] = [
     header: "Source",
     width: "badge",
     sortable: true,
+    canHide: true,
+    defaultVisible: false,
     render: (inquiry) => <SourceBadge source={inquiry.source} label={inquiry.source_label} />,
   },
   {
@@ -132,6 +134,8 @@ const columns: Column<Inquiry>[] = [
     width: "date",
     sortable: true,
     sortType: "date",
+    canHide: true,
+    defaultVisible: false,
     render: (inquiry) => formatDate(inquiry.created_at),
   },
   {

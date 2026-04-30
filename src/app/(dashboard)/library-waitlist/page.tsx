@@ -123,7 +123,7 @@ const columns: Column<LibraryWaitlist>[] = [
     width: "secondary",
     sortable: true,
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (item) => item.library?.name || "—",
   },
   {
@@ -141,7 +141,7 @@ const columns: Column<LibraryWaitlist>[] = [
     ),
   },
   statusColumn(LIBRARY_WAITLIST_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
-  dateColumn("created_at", "Joined"),
+  dateColumn("created_at", "Joined", { defaultVisible: false }),
 ]
 
 export default function LibraryWaitlistPage() {

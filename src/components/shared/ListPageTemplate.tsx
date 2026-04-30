@@ -432,6 +432,13 @@ export function ListPageTemplate({
     onViewApplied: (config) => setViewConfig(config),
   })
 
+  // Derive defaultHiddenColumns from column definitions (columns with defaultVisible === false)
+  const defaultHiddenColumns = useMemo(
+    () => columns.filter((c) => c.defaultVisible === false).map((c) => c.key),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [] // computed once on mount; columns array is stable (defined outside component)
+  )
+
   // Use centralized hook
   const {
     data,
@@ -475,6 +482,7 @@ export function ListPageTemplate({
     groupByOptions,
     metrics,
     initialViewConfig: tableViews.activeView?.config,
+    defaultHiddenColumns,
     tableKey,
   })
 

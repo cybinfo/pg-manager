@@ -68,7 +68,7 @@ const columns: Column<PaymentItem>[] = [
     width: "secondary",
     sortable: true,
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (payment) => (
       <div>
         <div className="font-mono text-sm">{payment.receipt_number || "—"}</div>
@@ -98,7 +98,7 @@ const columns: Column<PaymentItem>[] = [
     width: "badge",
     sortable: true,
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (payment) => {
       const config = LIBRARY_PAYMENT_TYPE_CONFIG[payment.payment_type as keyof typeof LIBRARY_PAYMENT_TYPE_CONFIG]
       return (

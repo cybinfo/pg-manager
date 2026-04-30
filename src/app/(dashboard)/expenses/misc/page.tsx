@@ -117,7 +117,7 @@ const columns: Column<MiscTransactionItem>[] = [
     sortable: true,
     hideOnMobile: true,
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (item) => (
       <TableBadge variant="muted">
         {item.category?.name || item.category_name || "Uncategorized"}

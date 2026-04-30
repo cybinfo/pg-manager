@@ -141,7 +141,7 @@ const columns: Column<ServicePaymentListItem>[] = [
     width: "badge",
     hideOnMobile: true,
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (payment) =>
       payment.tds_applicable ? (
         <TableBadge variant="muted">

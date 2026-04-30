@@ -146,6 +146,7 @@ export interface UseListPageOptions<T> {
   initialGroups?: string[]
   initialPageSize?: number
   initialViewConfig?: TableViewConfig // Apply a saved view configuration
+  defaultHiddenColumns?: string[] // Columns hidden by default (derived from column.defaultVisible === false)
   enabled?: boolean
   tableKey?: string // Used for persisting column visibility to localStorage
 }

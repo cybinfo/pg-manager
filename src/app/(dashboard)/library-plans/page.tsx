@@ -196,7 +196,7 @@ export default function LibraryPlansPage() {
       sortable: true,
       sortType: "number",
       canHide: true,
-      defaultVisible: true,
+      defaultVisible: false,
       render: (plan) => `${plan.validity_days} days`,
     },
     {
@@ -239,7 +239,7 @@ export default function LibraryPlansPage() {
       width: "count",
       sortable: false,
       canHide: true,
-      defaultVisible: true,
+      defaultVisible: false,
       render: (plan) => {
         const stat = enrollmentStats.get(plan.id)
         const total = stat?.total || 0

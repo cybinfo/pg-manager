@@ -85,7 +85,7 @@ const columns: Column<SubscriptionItem>[] = [
     key: "time_slot",
     header: "Slot",
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (sub) => {
       const raw = sub.time_slot as string | null
       if (!raw) return <span className="text-muted-foreground">Full Day</span>
@@ -113,10 +113,10 @@ const columns: Column<SubscriptionItem>[] = [
       }
     },
   },
-  dateColumn("start_date", "Start Date"),
+  dateColumn("start_date", "Start Date", { defaultVisible: false }),
   dateColumn("end_date", "End Date"),
   currencyColumn("final_amount", "Amount", { color: "text-success", prefix: "" }),
-  countColumn("hours_included", "Hours", { suffix: "h", defaultVisible: true }),
+  countColumn("hours_included", "Hours", { suffix: "h", defaultVisible: false }),
   statusColumn(LIBRARY_MEMBERSHIP_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
   // Hidden by default
   currencyColumn("discount_amount", "Discount", { defaultVisible: false }),

@@ -110,7 +110,7 @@ const columns: Column<VendorListItem>[] = [
     width: "badge",
     hideOnMobile: true,
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (vendor) => (
       <div className="text-xs">
         {vendor.gstin ? (
@@ -129,7 +129,7 @@ const columns: Column<VendorListItem>[] = [
     width: "badge",
     hideOnMobile: true,
     canHide: true,
-    defaultVisible: true,
+    defaultVisible: false,
     render: (vendor) =>
       vendor.upi_id ? (
         <TableBadge variant="success">
