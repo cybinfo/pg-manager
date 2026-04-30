@@ -154,7 +154,7 @@ function NewMiscTransactionContent() {
       loading={saving}
       loadingLabel="Saving..."
       permission="expenses.create"
-      feature="expenses"
+      module="expenses"
     >
       {/* Transaction Type */}
       <div className="flex gap-4">

@@ -28,7 +28,7 @@ import { createClient } from "@/lib/supabase/client"
 import { showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
   DetailPageTemplate,
@@ -125,7 +125,7 @@ export default function BillPaymentDetailPage({
 
 
   return (
-    <FeatureGuard feature="expenses">
+    <ModuleGuard module="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="container py-6">
           {ConfirmDialogElement}
@@ -315,6 +315,6 @@ export default function BillPaymentDetailPage({
           </DetailPageTemplate>
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

@@ -32,7 +32,7 @@ import {
   Receipt,
   ArrowUpDown,
 } from "lucide-react"
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { useDemoMode } from "@/lib/demo-mode"
 import { transformJoin } from "@/lib/supabase/transforms"
 import {
@@ -810,7 +810,7 @@ export default function LibraryReportsPage() {
   }
 
   return (
-    <FeatureGuard feature="library">
+    <ModuleGuard module="reports">
       <PermissionGuard permission="library.view">
         <div className="space-y-6">
           <ReportPageHeader
@@ -1420,6 +1420,6 @@ export default function LibraryReportsPage() {
           )}
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

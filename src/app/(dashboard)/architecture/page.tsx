@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import {
   Building2, Home, Bed, Users, Loader2, ChevronRight,
   CheckCircle, XCircle, AlertCircle, ArrowLeft,
@@ -154,7 +154,7 @@ export default function ArchitecturePage() {
   }
 
   return (
-    <FeatureGuard feature="architectureView">
+    <ModuleGuard module="properties">
       <PermissionGuard permission="properties.view">
         <div className="space-y-6">
         {/* Header */}
@@ -263,6 +263,6 @@ export default function ArchitecturePage() {
         )}
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

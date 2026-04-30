@@ -24,7 +24,7 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PAYMENT_METHODS } from "@/lib/status"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { DetailSection, InfoRow, DetailPageAudit } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
@@ -84,7 +84,7 @@ export default function MiscTransactionDetailPage({
 
 
   return (
-    <FeatureGuard feature="expenses">
+    <ModuleGuard module="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="container py-6 max-w-4xl mx-auto">
           {ConfirmDialogElement}
@@ -214,6 +214,6 @@ export default function MiscTransactionDetailPage({
           </div>
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

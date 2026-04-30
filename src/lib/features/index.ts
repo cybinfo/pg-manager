@@ -1,9 +1,17 @@
 /**
- * Feature Flags System
+ * Features System
  *
- * Allows controlling feature availability at the workspace/owner level.
- * Features can be enabled/disabled without code deployment.
+ * New: Module & Feature two-level control per workspace.
+ * Legacy: FEATURE_FLAGS kept for backward-compat with existing tests.
  */
+
+// New module/feature system
+export type { BusinessType, ModuleKey, ModuleState, WorkspaceModuleConfig, ModuleDefinition, FeatureDefinition, ModuleCatalog } from './types'
+export { MODULES_CATALOG, MODULE_MAP, ALL_MODULE_KEYS } from './modules-catalog'
+export { isModuleEnabled, getDefaultModuleConfig, enableModule, disableModule, toggleFeature, migrateOldFlagsToModuleConfig, isOldFlatFormat, countEnabledModules, checkModuleEnabled, moduleDisabledError } from './checks'
+// New isFeatureEnabled (module, feature) is available directly from '@/lib/features/checks'
+export { BUSINESS_TYPES, BUSINESS_TYPE_MAP, BUSINESS_TYPE_OPTIONS, BUSINESS_TYPE_LABELS, getSuggestedModules } from './business-types'
+export type { BusinessTypeDefinition } from './business-types'
 
 import { SupabaseClient } from "@supabase/supabase-js"
 

@@ -310,7 +310,7 @@ export default function DailySpendPage() {
       description="Track kitchen and daily purchase expenses"
       icon={ShoppingBag}
       permission="expenses.view"
-      feature="expenses"
+      module="expenses"
       config={DAILY_SPEND_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

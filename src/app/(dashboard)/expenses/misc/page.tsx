@@ -356,7 +356,7 @@ export default function MiscTransactionsPage() {
       description="Track money in and out that doesn't fit regular categories"
       icon={ArrowLeftRight}
       permission="expenses.view"
-      feature="expenses"
+      module="expenses"
       config={MISC_TRANSACTION_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

@@ -171,7 +171,7 @@ function NewVendorContent() {
       loading={saving}
       loadingLabel="Creating..."
       permission="expenses.create"
-      feature="expenses"
+      module="expenses"
     >
       {/* Basic Info */}
       <FormSection title="Basic Information">

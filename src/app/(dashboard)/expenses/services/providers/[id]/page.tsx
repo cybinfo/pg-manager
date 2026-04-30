@@ -24,7 +24,7 @@ import { createClient } from "@/lib/supabase/client"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
   DetailPageTemplate,
@@ -123,7 +123,7 @@ export default function ServiceProviderDetailPage({
   }
 
   return (
-    <FeatureGuard feature="expenses">
+    <ModuleGuard module="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="container py-6">
           {ConfirmDialogElement}
@@ -340,6 +340,6 @@ export default function ServiceProviderDetailPage({
           </DetailPageTemplate>
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

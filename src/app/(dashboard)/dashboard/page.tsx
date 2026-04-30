@@ -44,7 +44,7 @@ import {
   Library,
   Armchair,
 } from "lucide-react"
-import { FeatureGuard } from "@/components/auth/feature-guard"
+import { ModuleGuard } from "@/components/auth/module-guard"
 import { InfoBanner } from "@/components/ui/info-banner"
 import { formatCurrency } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
@@ -526,7 +526,7 @@ export default function DashboardPage() {
 
       {/* Library Overview - only show if user has libraries */}
       {!loading && stats.libraries > 0 && (
-        <FeatureGuard feature="library">
+        <ModuleGuard module="members">
           <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 border-purple-100 dark:border-purple-800">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -583,7 +583,7 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-        </FeatureGuard>
+        </ModuleGuard>
       )}
 
       {/* Charts Section - only visible to those with reports.view permission */}

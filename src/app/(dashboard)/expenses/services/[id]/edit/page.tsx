@@ -14,7 +14,7 @@ import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Currency } from "@/components/ui/currency"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -291,7 +291,7 @@ export default function EditServicePaymentPage({
   }
 
   return (
-    <FeatureGuard feature="expenses">
+    <ModuleGuard module="expenses">
       <PermissionGuard permission="expenses.edit">
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
@@ -568,6 +568,6 @@ export default function EditServicePaymentPage({
           </form>
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

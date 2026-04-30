@@ -217,7 +217,7 @@ function EditMiscTransactionContent({
       loading={loading}
       loadingLabel="Saving..."
       permission="expenses.edit"
-      feature="expenses"
+      module="expenses"
     >
       {/* Transaction Type */}
       <div className="flex gap-4">

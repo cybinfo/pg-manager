@@ -156,7 +156,7 @@ function NewProductContent() {
       loading={saving}
       loadingLabel="Creating..."
       permission="expenses.create"
-      feature="expenses"
+      module="expenses"
     >
       {/* Product Name */}
       <FormField label="Product Name" required error={errors.name}>

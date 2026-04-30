@@ -369,7 +369,7 @@ export default function VisitorsPage() {
       description="Manage all visitor entries - tenants, enquiries, service providers"
       icon={Users}
       permission="visitors.view"
-      feature="visitors"
+      module="visitors"
       config={VISITOR_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

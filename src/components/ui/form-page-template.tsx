@@ -33,7 +33,7 @@
 import Link from "next/link"
 import { ArrowLeft, type LucideIcon } from "lucide-react"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -42,7 +42,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card"
-import type { FeatureFlagKey } from "@/lib/features"
+import type { ModuleKey } from "@/lib/features"
 
 // Icon background color variants
 const iconColorVariants = {
@@ -96,8 +96,8 @@ export interface FormPageTemplateProps {
 
   /** Permission required to view this form */
   permission?: string
-  /** Feature flag required */
-  feature?: FeatureFlagKey
+  /** Module required to be enabled */
+  module?: ModuleKey
 
   /** Form content */
   children: React.ReactNode
@@ -122,7 +122,7 @@ export function FormPageTemplate({
   disabled = false,
   maxWidth = "max-w-2xl",
   permission,
-  feature,
+  module,
   children,
   actions,
 }: FormPageTemplateProps) {
@@ -185,16 +185,16 @@ export function FormPageTemplate({
   )
 
   // Wrap with guards if needed
-  if (feature && permission) {
+  if (module && permission) {
     return (
-      <FeatureGuard feature={feature}>
+      <ModuleGuard module={module}>
         <PermissionGuard permission={permission}>{content}</PermissionGuard>
-      </FeatureGuard>
+      </ModuleGuard>
     )
   }
 
-  if (feature) {
-    return <FeatureGuard feature={feature}>{content}</FeatureGuard>
+  if (module) {
+    return <ModuleGuard module={module}>{content}</ModuleGuard>
   }
 
   if (permission) {

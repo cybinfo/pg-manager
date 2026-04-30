@@ -321,7 +321,7 @@ export default function ServiceProvidersPage() {
       description="Manage plumbers, electricians, carpenters, and other service providers"
       icon={Wrench}
       permission="expenses.view"
-      feature="expenses"
+      module="expenses"
       config={SERVICE_PROVIDER_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

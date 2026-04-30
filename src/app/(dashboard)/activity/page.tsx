@@ -264,7 +264,7 @@ export default function ActivityLogPage() {
       title="Activity Log"
       description="Track all changes and actions in your workspace"
       icon={Activity}
-      feature="activityLog"
+      module="activityLog"
       config={AUDIT_EVENT_LIST_CONFIG}
       columns={columns}
       filters={filters}

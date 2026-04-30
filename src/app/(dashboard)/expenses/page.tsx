@@ -216,7 +216,7 @@ export default function ExpensesPage() {
       description="Track and manage property expenses"
       icon={Receipt}
       permission="expenses.view"
-      feature="expenses"
+      module="expenses"
       config={EXPENSE_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

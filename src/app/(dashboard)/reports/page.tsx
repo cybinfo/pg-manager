@@ -25,7 +25,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react"
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { InfoBanner } from "@/components/ui/info-banner"
 import { useDemoMode } from "@/lib/demo-mode"
 import { transformJoin } from "@/lib/supabase/transforms"
@@ -429,7 +429,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <FeatureGuard feature="reports">
+    <ModuleGuard module="reports">
       <PermissionGuard permission="reports.view">
         <div className="space-y-6">
       <ReportPageHeader
@@ -729,6 +729,6 @@ export default function ReportsPage() {
       />
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

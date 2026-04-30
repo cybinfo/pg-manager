@@ -251,7 +251,7 @@ export default function LibrarySectionsPage() {
       description="Manage sections and seating areas"
       icon={Grid3X3}
       permission="library_sections.view"
-      feature="library"
+      module="sections"
       config={LIBRARY_SECTION_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

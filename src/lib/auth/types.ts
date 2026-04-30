@@ -10,8 +10,10 @@ export interface Workspace {
   slug: string | null
   logo_url: string | null
   type: 'pg_manager' | 'shop_manager' | 'rent_manager' | 'society_manager'
+  business_type: string
   owner_user_id: string
   settings: WorkspaceSettings
+  module_config: import('@/lib/features').WorkspaceModuleConfig
   is_active: boolean
   created_at: string
 }

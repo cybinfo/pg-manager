@@ -262,7 +262,7 @@ export default function LibraryPaymentsPage() {
       description="Track subscription and locker payments"
       icon={CreditCard}
       permission="library_payments.view"
-      feature="library"
+      module="payments"
       config={LIBRARY_PAYMENT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

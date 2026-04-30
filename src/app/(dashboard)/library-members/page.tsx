@@ -445,7 +445,7 @@ export default function LibraryMembersPage() {
       description="Manage member subscriptions and hours"
       icon={Users}
       permission="library_members.view"
-      feature="library"
+      module="members"
       config={LIBRARY_MEMBER_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

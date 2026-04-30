@@ -1,5 +1,5 @@
 /**
- * Tests for useFeatures and useFeatureManagement hooks from use-features.ts
+ * Tests for useFeatures and useFeatureManagement hooks (new module-based API)
  */
 
 const mockCreateClient = jest.fn()
@@ -19,54 +19,48 @@ jest.mock("@/lib/logger", () => ({
   extractErrorMeta: jest.fn((e: unknown) => ({ error: String(e) })),
 }))
 
+jest.mock("@/lib/auth", () => ({
+  useCurrentContext: jest.fn(),
+}))
+
 import { renderHook, waitFor, act } from "@testing-library/react"
-import {
-  useFeatures,
-  useFeatureManagement,
-  invalidateFeatureCache,
-} from "@/lib/features/use-features"
-import { getDefaultFeatureFlags } from "@/lib/features/index"
+import { useFeatures, useFeatureManagement, invalidateFeatureCache } from "@/lib/features/use-features"
+import { useCurrentContext } from "@/lib/auth"
+import type { WorkspaceModuleConfig } from "@/lib/features"
+
+const mockUseCurrentContext = useCurrentContext as jest.Mock
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
-function makeUser(id = "user-1") {
-  return { id }
-}
-
-function makeOwnerConfigChain(result: unknown) {
+function makeWorkspaceChain(result: unknown) {
   const chain: Record<string, jest.Mock> = {}
   chain.select = jest.fn().mockReturnValue(chain)
   chain.eq = jest.fn().mockReturnValue(chain)
+  chain.order = jest.fn().mockReturnValue(chain)
   chain.single = jest.fn().mockResolvedValue(result)
   return chain
 }
 
-function makeOwnerConfigUpdateChain(result: unknown) {
-  const eqMock = jest.fn().mockResolvedValue(result)
-  return { eq: eqMock }
-}
-
 function makeSupabase(opts: {
   user?: { id: string } | null
-  configResult?: unknown
+  workspaceResult?: unknown
+  workspacesListResult?: unknown
   updateResult?: unknown
-  throwGetUser?: boolean
 }) {
-  const configChain = makeOwnerConfigChain(opts.configResult ?? { data: null, error: null })
-  const updateChain = makeOwnerConfigUpdateChain(opts.updateResult ?? { error: null })
-
+  const singleChain = makeWorkspaceChain(opts.workspaceResult ?? { data: null, error: null })
+  const updateChain = {
+    eq: jest.fn().mockResolvedValue(opts.updateResult ?? { error: null }),
+  }
   const fromMock = jest.fn().mockReturnValue({
-    ...configChain,
+    ...singleChain,
     update: jest.fn().mockReturnValue(updateChain),
   })
 
   return {
     auth: {
-      getUser: opts.throwGetUser
-        ? jest.fn().mockRejectedValue(new Error("auth error"))
-        : jest.fn().mockResolvedValue({ data: { user: opts.user ?? null } }),
+      getUser: jest.fn().mockResolvedValue({ data: { user: opts.user ?? null } }),
     },
     from: fromMock,
   }
@@ -82,183 +76,104 @@ describe("useFeatures", () => {
     invalidateFeatureCache()
   })
 
-  it("returns default flags immediately with loading=false when no user", async () => {
-    mockCreateClient.mockReturnValue(makeSupabase({ user: null }))
-
-    const { result } = renderHook(() => useFeatures())
-
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    const defaults = getDefaultFeatureFlags()
-    expect(result.current.flags.approvals).toBe(defaults.approvals)
-    expect(result.current.isEnabled("approvals")).toBe(true)
-    expect(result.current.isEnabled("food")).toBe(false)
-  })
-
-  it("fetches and applies feature flags from DB when user exists", async () => {
-    const user = makeUser()
-    mockCreateClient.mockReturnValue(
-      makeSupabase({
-        user,
-        configResult: { data: { feature_flags: { food: true, approvals: false } }, error: null },
-      })
-    )
-
-    const { result } = renderHook(() => useFeatures())
-
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    expect(result.current.isEnabled("food")).toBe(true)
-    expect(result.current.isEnabled("approvals")).toBe(false)
-  })
-
-  it("uses default flags when DB returns null config data", async () => {
-    const user = makeUser()
-    mockCreateClient.mockReturnValue(
-      makeSupabase({ user, configResult: { data: null, error: null } })
-    )
-
-    const { result } = renderHook(() => useFeatures())
-
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    expect(result.current.isEnabled("approvals")).toBe(true)
-    expect(result.current.isEnabled("food")).toBe(false)
-  })
-
-  it("returns loading=false on error during fetch", async () => {
-    mockCreateClient.mockReturnValue(makeSupabase({ throwGetUser: true }))
-
-    const { result } = renderHook(() => useFeatures())
-
-    await waitFor(() => expect(result.current.loading).toBe(false))
-  })
-
-  it("isEnabled falls back to default for unknown flags", async () => {
+  it("returns loading=false with empty config when no workspace context", async () => {
+    mockUseCurrentContext.mockReturnValue({ context: null })
     mockCreateClient.mockReturnValue(makeSupabase({ user: null }))
 
     const { result } = renderHook(() => useFeatures())
     await waitFor(() => expect(result.current.loading).toBe(false))
-
-    expect(result.current.isEnabled("approvals")).toBe(true)
-    expect(result.current.isEnabled("food")).toBe(false)
+    expect(result.current.isModuleEnabled("expenses")).toBe(false)
   })
 
-  it("bypasses cache and re-fetches when a different user id is returned", async () => {
-    // First render: user-1 populates cache with food=false
-    mockCreateClient.mockReturnValueOnce(
-      makeSupabase({
-        user: makeUser("user-1"),
-        configResult: { data: { feature_flags: { food: false } }, error: null },
-      })
+  it("fetches and applies module_config from DB", async () => {
+    mockUseCurrentContext.mockReturnValue({ context: { workspace_id: "ws-1" } })
+    const config: WorkspaceModuleConfig = {
+      expenses: { enabled: true, features: {} },
+      billing: { enabled: false, features: {} },
+    }
+    mockCreateClient.mockReturnValue(
+      makeSupabase({ workspaceResult: { data: { module_config: config }, error: null } })
     )
 
-    const { result: result1 } = renderHook(() => useFeatures())
-    await waitFor(() => expect(result1.current.loading).toBe(false))
-    expect(result1.current.isEnabled("food")).toBe(false)
+    const { result } = renderHook(() => useFeatures())
+    await waitFor(() => expect(result.current.loading).toBe(false))
 
-    // Second render: getUser now returns user-2 — cache is for user-1, so it's a miss
-    // isCacheValid returns false via the `cachedUserId !== userId` branch
-    mockCreateClient.mockReturnValueOnce(
-      makeSupabase({
-        user: makeUser("user-2"),
-        configResult: { data: { feature_flags: { food: true } }, error: null },
-      })
+    expect(result.current.isModuleEnabled("expenses")).toBe(true)
+    expect(result.current.isModuleEnabled("billing")).toBe(false)
+  })
+
+  it("returns false for module not in config", async () => {
+    mockUseCurrentContext.mockReturnValue({ context: { workspace_id: "ws-1" } })
+    mockCreateClient.mockReturnValue(
+      makeSupabase({ workspaceResult: { data: { module_config: {} }, error: null } })
     )
 
-    const { result: result2 } = renderHook(() => useFeatures())
-    // Loading may already be false (populated from stale cache), so wait on the flag itself
-    await waitFor(() => expect(result2.current.isEnabled("food")).toBe(true))
+    const { result } = renderHook(() => useFeatures())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.isModuleEnabled("reports")).toBe(false)
+  })
+
+  it("returns loading=false on DB error", async () => {
+    mockUseCurrentContext.mockReturnValue({ context: { workspace_id: "ws-1" } })
+    mockCreateClient.mockReturnValue(
+      makeSupabase({ workspaceResult: { data: null, error: new Error("db error") } })
+    )
+
+    const { result } = renderHook(() => useFeatures())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+  })
+
+  it("isEnabled shim works (maps to isModuleEnabled)", async () => {
+    mockUseCurrentContext.mockReturnValue({ context: { workspace_id: "ws-2" } })
+    const config: WorkspaceModuleConfig = {
+      expenses: { enabled: true, features: {} },
+    }
+    mockCreateClient.mockReturnValue(
+      makeSupabase({ workspaceResult: { data: { module_config: config }, error: null } })
+    )
+
+    const { result } = renderHook(() => useFeatures())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.isEnabled("expenses")).toBe(true)
   })
 
   it("re-fetches after invalidateFeatureCache is called", async () => {
-    const user = makeUser()
-    // First fetch: food disabled
-    mockCreateClient.mockReturnValueOnce(
-      makeSupabase({
-        user,
-        configResult: { data: { feature_flags: { food: false } }, error: null },
-      })
-    )
-    // Second fetch after invalidation: food enabled
-    mockCreateClient.mockReturnValueOnce(
-      makeSupabase({
-        user,
-        configResult: { data: { feature_flags: { food: true } }, error: null },
-      })
+    mockUseCurrentContext.mockReturnValue({ context: { workspace_id: "ws-1" } })
+    const configV1: WorkspaceModuleConfig = { expenses: { enabled: false, features: {} } }
+    const configV2: WorkspaceModuleConfig = { expenses: { enabled: true, features: {} } }
+
+    mockCreateClient
+      .mockReturnValueOnce(
+        makeSupabase({ workspaceResult: { data: { module_config: configV1 }, error: null } })
+      )
+      .mockReturnValueOnce(
+        makeSupabase({ workspaceResult: { data: { module_config: configV2 }, error: null } })
+      )
+
+    const { result } = renderHook(() => useFeatures())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.isModuleEnabled("expenses")).toBe(false)
+
+    act(() => { invalidateFeatureCache() })
+    await waitFor(() => expect(result.current.isModuleEnabled("expenses")).toBe(true))
+  })
+
+  it("isFeatureEnabled requires both module enabled and feature flag", async () => {
+    mockUseCurrentContext.mockReturnValue({ context: { workspace_id: "ws-1" } })
+    const config: WorkspaceModuleConfig = {
+      billing: { enabled: true, features: { autoBilling: true } },
+      expenses: { enabled: false, features: { vendorManagement: true } },
+    }
+    mockCreateClient.mockReturnValue(
+      makeSupabase({ workspaceResult: { data: { module_config: config }, error: null } })
     )
 
     const { result } = renderHook(() => useFeatures())
     await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(result.current.isEnabled("food")).toBe(false)
 
-    act(() => {
-      invalidateFeatureCache()
-    })
-
-    await waitFor(() => expect(result.current.isEnabled("food")).toBe(true))
-  })
-
-  it("reuses in-flight fetchPromise when two instances mount simultaneously", async () => {
-    const user = makeUser()
-    let resolveConfig!: (v: unknown) => void
-    const delayedConfig = new Promise<unknown>((resolve) => {
-      resolveConfig = resolve
-    })
-
-    const configChain: Record<string, jest.Mock> = {}
-    configChain.select = jest.fn().mockReturnValue(configChain)
-    configChain.eq = jest.fn().mockReturnValue(configChain)
-    configChain.single = jest.fn().mockReturnValue(delayedConfig)
-
-    const supabaseMock = {
-      auth: { getUser: jest.fn().mockResolvedValue({ data: { user } }) },
-      from: jest.fn().mockReturnValue(configChain),
-    }
-    mockCreateClient.mockReturnValue(supabaseMock)
-
-    // Mount two instances — the first sets fetchPromise; the second reuses it
-    const { result: result1 } = renderHook(() => useFeatures())
-    const { result: result2 } = renderHook(() => useFeatures())
-
-    // Resolve the delayed DB query
-    act(() => {
-      resolveConfig({ data: { feature_flags: { food: true } }, error: null })
-    })
-
-    await waitFor(() => expect(result1.current.loading).toBe(false))
-    await waitFor(() => expect(result2.current.loading).toBe(false))
-
-    expect(result1.current.isEnabled("food")).toBe(true)
-    expect(result2.current.isEnabled("food")).toBe(true)
-
-    // DB query (.from) should only have been called once
-    expect((supabaseMock.from as jest.Mock).mock.calls.length).toBe(1)
-  })
-
-  it("uses cached flags on second render within TTL without querying DB again", async () => {
-    const user = makeUser()
-    const supabaseMock = makeSupabase({
-      user,
-      configResult: { data: { feature_flags: { food: true } }, error: null },
-    })
-    mockCreateClient.mockReturnValue(supabaseMock)
-
-    // First hook instance — populates cache
-    const { result: result1 } = renderHook(() => useFeatures())
-    await waitFor(() => expect(result1.current.loading).toBe(false))
-    expect(result1.current.isEnabled("food")).toBe(true)
-
-    // Record from() calls after first fetch
-    const fromCallsBefore = (supabaseMock.from as jest.Mock).mock.calls.length
-
-    // Second hook instance — should use cache without hitting DB again
-    const { result: result2 } = renderHook(() => useFeatures())
-    await waitFor(() => expect(result2.current.loading).toBe(false))
-    expect(result2.current.isEnabled("food")).toBe(true)
-
-    // from() should not have been called again (cache hit skips DB query)
-    expect((supabaseMock.from as jest.Mock).mock.calls.length).toBe(fromCallsBefore)
+    expect(result.current.isFeatureEnabled("billing", "autoBilling")).toBe(true)
+    expect(result.current.isFeatureEnabled("billing", "gstInvoicing")).toBe(false)
+    expect(result.current.isFeatureEnabled("expenses", "vendorManagement")).toBe(false) // module disabled
   })
 })
 
@@ -272,187 +187,47 @@ describe("useFeatureManagement", () => {
     invalidateFeatureCache()
   })
 
-  it("starts with loading=true then sets loading=false after fetch", async () => {
-    mockCreateClient.mockReturnValue(makeSupabase({ user: null }))
+  it("starts with loading=true then sets loading=false", async () => {
+    mockUseCurrentContext.mockReturnValue({ context: null })
+
+    const listChain: Record<string, jest.Mock> = {}
+    listChain.select = jest.fn().mockReturnValue(listChain)
+    listChain.eq = jest.fn().mockReturnValue(listChain)
+    listChain.order = jest.fn().mockResolvedValue({ data: [], error: null })
+
+    mockCreateClient.mockReturnValue({
+      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "u1" } } }) },
+      from: jest.fn().mockReturnValue(listChain),
+    })
 
     const { result } = renderHook(() => useFeatureManagement())
-
     expect(result.current.loading).toBe(true)
     await waitFor(() => expect(result.current.loading).toBe(false))
   })
 
-  it("loads feature flags and configId from DB", async () => {
-    const user = makeUser()
-    mockCreateClient.mockReturnValue(
-      makeSupabase({
-        user,
-        configResult: {
-          data: { id: "cfg-1", feature_flags: { food: true } },
-          error: null,
-        },
-      })
-    )
+  it("loads workspaces list", async () => {
+    mockUseCurrentContext.mockReturnValue({ context: { workspace_id: "ws-1" } })
 
-    const { result } = renderHook(() => useFeatureManagement())
-    await waitFor(() => expect(result.current.loading).toBe(false))
+    const workspaces = [
+      { id: "ws-1", name: "Green Hills PG", business_type: "pg", module_config: {} },
+      { id: "ws-2", name: "PowerFit Gym",   business_type: "gym", module_config: {} },
+    ]
 
-    expect(result.current.configId).toBe("cfg-1")
-    expect(result.current.flags.food).toBe(true)
-  })
+    const listChain: Record<string, jest.Mock> = {}
+    listChain.select = jest.fn().mockReturnValue(listChain)
+    listChain.eq = jest.fn().mockReturnValue(listChain)
+    listChain.order = jest.fn().mockResolvedValue({ data: workspaces, error: null })
 
-  it("sets configId but not flags when feature_flags is null", async () => {
-    const user = makeUser()
-    mockCreateClient.mockReturnValue(
-      makeSupabase({
-        user,
-        configResult: { data: { id: "cfg-2", feature_flags: null }, error: null },
-      })
-    )
-
-    const { result } = renderHook(() => useFeatureManagement())
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    expect(result.current.configId).toBe("cfg-2")
-    expect(result.current.flags.approvals).toBe(true) // default
-  })
-
-  it("handles no user gracefully", async () => {
-    mockCreateClient.mockReturnValue(makeSupabase({ user: null }))
-
-    const { result } = renderHook(() => useFeatureManagement())
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    expect(result.current.configId).toBeNull()
-  })
-
-  it("handles user with no owner_config row (data is null)", async () => {
-    const user = makeUser()
-    mockCreateClient.mockReturnValue(
-      makeSupabase({ user, configResult: { data: null, error: null } })
-    )
-
-    const { result } = renderHook(() => useFeatureManagement())
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    expect(result.current.configId).toBeNull()
-    expect(result.current.flags.approvals).toBe(true) // default
-  })
-
-  it("handles error during fetch gracefully", async () => {
-    mockCreateClient.mockReturnValue(makeSupabase({ throwGetUser: true }))
-
-    const { result } = renderHook(() => useFeatureManagement())
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    expect(result.current.configId).toBeNull()
-  })
-
-  it("toggleFeature flips a flag", async () => {
-    const user = makeUser()
-    mockCreateClient.mockReturnValue(
-      makeSupabase({
-        user,
-        configResult: { data: { id: "cfg-1", feature_flags: { food: false } }, error: null },
-      })
-    )
-
-    const { result } = renderHook(() => useFeatureManagement())
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    expect(result.current.flags.food).toBe(false)
-    act(() => result.current.toggleFeature("food"))
-    expect(result.current.flags.food).toBe(true)
-    act(() => result.current.toggleFeature("food"))
-    expect(result.current.flags.food).toBe(false)
-  })
-
-  it("setFeature sets an explicit value", async () => {
-    const user = makeUser()
-    mockCreateClient.mockReturnValue(
-      makeSupabase({
-        user,
-        configResult: { data: { id: "cfg-1", feature_flags: {} }, error: null },
-      })
-    )
-
-    const { result } = renderHook(() => useFeatureManagement())
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    act(() => result.current.setFeature("food", true))
-    expect(result.current.flags.food).toBe(true)
-
-    act(() => result.current.setFeature("food", false))
-    expect(result.current.flags.food).toBe(false)
-  })
-
-  it("saveFeatures returns false when configId is null", async () => {
-    mockCreateClient.mockReturnValue(makeSupabase({ user: null }))
-
-    const { result } = renderHook(() => useFeatureManagement())
-    await waitFor(() => expect(result.current.loading).toBe(false))
-
-    const saved = await result.current.saveFeatures()
-    expect(saved).toBe(false)
-  })
-
-  it("saveFeatures returns true and invalidates cache on success", async () => {
-    const user = makeUser()
-    mockCreateClient.mockReturnValue(
-      makeSupabase({
-        user,
-        configResult: { data: { id: "cfg-1", feature_flags: {} }, error: null },
-        updateResult: { error: null },
-      })
-    )
-
-    const { result } = renderHook(() => useFeatureManagement())
-    await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(result.current.configId).toBe("cfg-1")
-
-    // Provide fresh mock for the save call
-    mockCreateClient.mockReturnValue(
-      makeSupabase({
-        user,
-        configResult: { data: { id: "cfg-1", feature_flags: {} }, error: null },
-        updateResult: { error: null },
-      })
-    )
-
-    let saved: boolean | undefined
-    await act(async () => {
-      saved = await result.current.saveFeatures()
+    mockCreateClient.mockReturnValue({
+      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "u1" } } }) },
+      from: jest.fn().mockReturnValue(listChain),
     })
-    expect(saved).toBe(true)
-    expect(result.current.saving).toBe(false)
-  })
-
-  it("saveFeatures returns false on DB error", async () => {
-    const user = makeUser()
-    mockCreateClient.mockReturnValue(
-      makeSupabase({
-        user,
-        configResult: { data: { id: "cfg-1", feature_flags: {} }, error: null },
-        updateResult: { error: { message: "DB error" } },
-      })
-    )
 
     const { result } = renderHook(() => useFeatureManagement())
     await waitFor(() => expect(result.current.loading).toBe(false))
 
-    // Provide fresh mock for the save call
-    mockCreateClient.mockReturnValue(
-      makeSupabase({
-        user,
-        configResult: { data: { id: "cfg-1", feature_flags: {} }, error: null },
-        updateResult: { error: { message: "update failed" } },
-      })
-    )
-
-    let saved: boolean | undefined
-    await act(async () => {
-      saved = await result.current.saveFeatures()
-    })
-    expect(saved).toBe(false)
-    expect(result.current.saving).toBe(false)
+    expect(result.current.workspaces).toHaveLength(2)
+    expect(result.current.workspaces[0].name).toBe("Green Hills PG")
+    expect(result.current.selectedWorkspaceId).toBe("ws-1")
   })
 })

@@ -50,8 +50,8 @@ import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column, GroupConfig } from "@/components/ui/data-table"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
-import { FeatureFlagKey } from "@/lib/features"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
+import type { ModuleKey } from "@/lib/features"
 import { PageSkeleton } from "@/components/ui/loading"
 import { ErrorState } from "@/components/ui/empty-state"
 import { Pagination } from "@/components/ui/pagination"
@@ -127,8 +127,8 @@ export interface ListPagePermissions {
   edit?: string
   /** Permission required to delete items (e.g., "tenants.delete") */
   delete?: string
-  /** Feature flag that must be enabled for this page */
-  feature?: FeatureFlagKey
+  /** Module that must be enabled for this page */
+  module?: ModuleKey
 }
 
 /**
@@ -207,8 +207,8 @@ export interface ListPageTemplateProps<T extends Record<string, unknown> = Recor
   // --- Permission props (flat style, original API) ---
   /** @deprecated Use `permissions.view` instead. Still fully supported for backward compatibility. */
   permission?: string
-  /** @deprecated Use `permissions.feature` instead. Still fully supported for backward compatibility. */
-  feature?: FeatureFlagKey
+  /** Module that must be enabled for this page */
+  module?: ModuleKey
 
   // --- Permission props (grouped style, new API) ---
   permissions?: ListPagePermissions
@@ -322,7 +322,7 @@ export function ListPageTemplate({
 
   // Permission (flat - original)
   permission: flatPermission,
-  feature: flatFeature,
+  module: flatModule,
 
   // Permission (grouped - new)
   permissions,
@@ -393,7 +393,7 @@ export function ListPageTemplate({
   // Resolve flat + grouped props (flat props take precedence for backward compat)
   // ============================================
   const permission = flatPermission || permissions?.view || ""
-  const feature = flatFeature || permissions?.feature
+  const module = flatModule || permissions?.module
   const createHref = flatCreateHref ?? actions?.createHref
   const createLabel = flatCreateLabel ?? actions?.createLabel ?? "Add New"
   const createPermission = flatCreatePermission ?? permissions?.create
@@ -912,22 +912,17 @@ export function ListPageTemplate({
     </div>
   )
 
-  // Wrap with permission and feature guards
-  // Skip PermissionGuard when no permission is specified (e.g., Activity Log)
-  if (feature && permission) {
+  // Wrap with permission and module guards
+  if (module && permission) {
     return (
-      <FeatureGuard feature={feature}>
+      <ModuleGuard module={module}>
         <PermissionGuard permission={permission}>{content}</PermissionGuard>
-      </FeatureGuard>
+      </ModuleGuard>
     )
   }
 
-  if (feature) {
-    return (
-      <FeatureGuard feature={feature}>
-        {content}
-      </FeatureGuard>
-    )
+  if (module) {
+    return <ModuleGuard module={module}>{content}</ModuleGuard>
   }
 
   if (permission) {

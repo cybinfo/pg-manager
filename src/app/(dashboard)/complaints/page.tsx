@@ -241,7 +241,7 @@ export default function ComplaintsPage() {
       description="Manage tenant complaints and issues"
       icon={MessageSquare}
       permission="complaints.view"
-      feature="complaints"
+      module="complaints"
       config={COMPLAINT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

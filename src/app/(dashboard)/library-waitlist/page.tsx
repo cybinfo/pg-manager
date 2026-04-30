@@ -158,7 +158,7 @@ export default function LibraryWaitlistPage() {
       description="Manage prospective library members"
       icon={Users}
       permission="library_waitlist.view"
-      feature="library"
+      module="waitlist"
       searchPlaceholder="Search by name, phone, email..."
       enableColumnManager={true}
       enableAdvancedFilters={true}

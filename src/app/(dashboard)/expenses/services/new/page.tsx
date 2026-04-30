@@ -14,7 +14,7 @@ import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Currency } from "@/components/ui/currency"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -240,7 +240,7 @@ export default function NewServicePaymentPage() {
   }
 
   return (
-    <FeatureGuard feature="expenses">
+    <ModuleGuard module="expenses">
       <PermissionGuard permission="expenses.create">
         <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
@@ -519,6 +519,6 @@ export default function NewServicePaymentPage() {
           </form>
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

@@ -207,9 +207,10 @@ describe("getDefaultDateRange", () => {
     const { from, to } = getDefaultDateRange()
     const diffMs = to.getTime() - from.getTime()
     const approxSixMonthsMs = 6 * 30 * 24 * 60 * 60 * 1000 // ~180 days
-    // Allow a generous range (±31 days) since months vary in length
-    expect(diffMs).toBeGreaterThan(approxSixMonthsMs - 31 * 24 * 60 * 60 * 1000)
-    expect(diffMs).toBeLessThan(approxSixMonthsMs + 31 * 24 * 60 * 60 * 1000)
+    // Allow ±45 days: "from" is the 1st of the month 6 months ago, so late-month dates
+    // can push the diff up to ~211 days (e.g., Apr 30 → Oct 1 = 211 days)
+    expect(diffMs).toBeGreaterThan(approxSixMonthsMs - 45 * 24 * 60 * 60 * 1000)
+    expect(diffMs).toBeLessThan(approxSixMonthsMs + 45 * 24 * 60 * 60 * 1000)
   })
 
   it("'from' date is the 1st of its month", () => {

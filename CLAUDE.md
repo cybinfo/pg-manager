@@ -3,7 +3,7 @@
 > **STEP 1 — MANDATORY**: Read [`KEY_PRINCIPLES.md`](./KEY_PRINCIPLES.md) before anything else. Every review, suggestion, improvement, or addition must be evaluated against the 35 Core Principles and answered against the 35-question Principle Test first.
 >
 > **Essential Reference**: Read this before making any code changes.
-> **Last Updated**: 2026-04-26
+> **Last Updated**: 2026-04-27
 
 ---
 
@@ -23,6 +23,7 @@ These behaviours are non-negotiable for every Claude session on this codebase:
 10. **White-label safe** — never hard-code ManageKar branding in customer-facing UI. All branding goes through workspace config.
 11. **Update CLAUDE.md and memory** — when something architecturally significant is learned or decided, update the relevant memory files and CLAUDE.md immediately.
 12. **100% confidence before any change** — read every file to be changed in full before touching it. Grep results and pattern assumptions are research, not proof. If uncertain, investigate further. Never add, modify, or delete code on a guess.
+13. **Never use raw console.*** — all logging uses `import { logger } from "@/lib/logger"`. The only exception is `src/lib/error-handler.ts` which intentionally keeps raw console for its test contracts. Wrap `unknown` catch errors as `{ error: String(err) }` to satisfy `LogMeta`.
 
 ---
 

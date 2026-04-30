@@ -218,7 +218,7 @@ export default function LibrarySeatsPage() {
       description="Manage library seats and assignments"
       icon={Armchair}
       permission="library_seats.view"
-      feature="library"
+      module="seats"
       config={LIBRARY_SEAT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

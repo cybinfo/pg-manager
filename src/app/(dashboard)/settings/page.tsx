@@ -370,11 +370,7 @@ function SettingsContent() {
 
       {/* Features Tab */}
       {activeTab === "features" && (
-        <FeatureSettings
-          featureFlags={featureFlags}
-          setFeatureFlags={setFeatureFlags}
-          config={config}
-        />
+        <FeatureSettings />
       )}
 
       {/* Defaults Tab */}

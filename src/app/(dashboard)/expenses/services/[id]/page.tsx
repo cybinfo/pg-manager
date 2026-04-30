@@ -23,7 +23,7 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PAYMENT_METHODS } from "@/lib/status"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
   DetailPageTemplate,
@@ -91,7 +91,7 @@ export default function ServicePaymentDetailPage({
 
 
   return (
-    <FeatureGuard feature="expenses">
+    <ModuleGuard module="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="container py-6">
           {ConfirmDialogElement}
@@ -284,6 +284,6 @@ export default function ServicePaymentDetailPage({
           </DetailPageTemplate>
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

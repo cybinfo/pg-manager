@@ -339,7 +339,7 @@ export default function BillPaymentsPage() {
       description="Track recurring bills and vendor payments"
       icon={Receipt}
       permission="expenses.view"
-      feature="expenses"
+      module="expenses"
       config={BILL_PAYMENT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

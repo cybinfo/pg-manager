@@ -4,296 +4,296 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Save, ChevronDown, ChevronRight, AlertTriangle, Info, Sparkles } from "lucide-react"
-import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
-import { FeatureFlagKey, FeatureFlags, FEATURE_FLAGS } from "@/lib/features"
-import { invalidateFeatureCache } from "@/lib/features/use-features"
-import {
-  DOMAIN_MODULES,
-  CoreModule,
-  DomainModule,
-  getDependentFeatures,
-  countEnabledFeatures,
-} from "@/lib/features/feature-control-config"
-import { OwnerConfig } from "@/types/settings.types"
+import { Loader2, Save, ChevronDown, ChevronRight, Building2, Plus } from "lucide-react"
+import { useFeatureManagement } from "@/lib/features/use-features"
+import { MODULES_CATALOG } from "@/lib/features/modules-catalog"
+import { BUSINESS_TYPE_LABELS } from "@/lib/features/business-types"
+import { enableModule, disableModule, toggleFeature } from "@/lib/features/checks"
+import type { ModuleKey, WorkspaceModuleConfig } from "@/lib/features"
+import { showSuccess, showError } from "@/lib/toast-helpers"
+import type { BusinessType } from "@/lib/features"
 
-interface FeatureSettingsProps {
-  featureFlags: FeatureFlags
-  setFeatureFlags: (flags: FeatureFlags) => void
-  config: OwnerConfig | null
-}
+export function FeatureSettings() {
+  const {
+    workspaces,
+    selectedWorkspaceId,
+    setSelectedWorkspaceId,
+    selectedConfig,
+    configs,
+    setConfig,
+    saveConfig,
+    loading,
+    saving,
+  } = useFeatureManagement()
 
-interface DependencyWarning {
-  featureKey: FeatureFlagKey
-  featureName: string
-  dependentNames: string[]
-  dependentKeys: FeatureFlagKey[]
-}
-
-export function FeatureSettings({ featureFlags, setFeatureFlags, config }: FeatureSettingsProps) {
-  const { saving, save } = useSettingsMutation({ configId: config?.id })
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
-  const [warning, setWarning] = useState<DependencyWarning | null>(null)
 
-  const toggleModuleExpanded = (moduleId: string) => {
+  const toggleModuleExpanded = (moduleKey: string) => {
     setExpandedModules((prev) => {
       const next = new Set(prev)
-      if (next.has(moduleId)) next.delete(moduleId)
-      else next.add(moduleId)
+      if (next.has(moduleKey)) next.delete(moduleKey)
+      else next.add(moduleKey)
       return next
     })
   }
 
-  const isFeatureOn = (key: FeatureFlagKey) => featureFlags[key] !== false
-
-  const isModulePartiallyOn = (module: CoreModule) =>
-    module.features.some((f) => isFeatureOn(f.key))
-
-  const isModuleFullyOn = (module: CoreModule) =>
-    module.features.every((f) => isFeatureOn(f.key))
-
-  const setAllModuleFeatures = (module: CoreModule, enabled: boolean) => {
-    const updates = { ...featureFlags }
-    for (const f of module.features) updates[f.key] = enabled
-    setFeatureFlags(updates)
+  const handleModuleToggle = (moduleKey: ModuleKey, currentlyEnabled: boolean) => {
+    if (!selectedWorkspaceId) return
+    const current = configs.get(selectedWorkspaceId) ?? {}
+    const next = currentlyEnabled
+      ? disableModule(current, moduleKey)
+      : enableModule(current, moduleKey)
+    setConfig(selectedWorkspaceId, next)
   }
 
-  const handleFeatureToggle = (key: FeatureFlagKey, domain: DomainModule) => {
-    const currentlyOn = isFeatureOn(key)
-    if (currentlyOn) {
-      const dependents = getDependentFeatures(key, domain).filter((d) => isFeatureOn(d.key))
-      if (dependents.length > 0) {
-        setWarning({
-          featureKey: key,
-          featureName: FEATURE_FLAGS[key]?.name ?? key,
-          dependentNames: dependents.map((d) => d.name),
-          dependentKeys: dependents.map((d) => d.key),
-        })
-        return
-      }
-    }
-    setFeatureFlags({ ...featureFlags, [key]: !currentlyOn })
+  const handleFeatureToggle = (
+    moduleKey: ModuleKey,
+    featureKey: string,
+    currentlyEnabled: boolean
+  ) => {
+    if (!selectedWorkspaceId) return
+    const current = configs.get(selectedWorkspaceId) ?? {}
+    const next = toggleFeature(current, moduleKey, featureKey, !currentlyEnabled)
+    setConfig(selectedWorkspaceId, next)
   }
 
-  const confirmDisable = () => {
-    if (!warning) return
-    const updates = { ...featureFlags, [warning.featureKey]: false }
-    for (const k of warning.dependentKeys) updates[k] = false
-    setFeatureFlags(updates)
-    setWarning(null)
+  const handleSave = async () => {
+    if (!selectedWorkspaceId) return
+    const ok = await saveConfig(selectedWorkspaceId)
+    if (ok) showSuccess("Module settings saved")
+    else showError("Failed to save module settings")
   }
 
-  const saveFeatureFlags = async () => {
-    const ok = await save(
-      { feature_flags: featureFlags },
-      { successMessage: "Feature settings saved", errorMessage: "Failed to save feature settings" }
+  const enabledCount = Object.values(selectedConfig).filter((s) => s?.enabled).length
+  const totalCount = MODULES_CATALOG.length
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
     )
-    // Invalidate cache so all mounted useFeatures() hooks re-fetch immediately —
-    // this makes navigation and FeatureGuard update without a page reload.
-    if (ok) {
-      invalidateFeatureCache()
-    }
   }
-
-  const { enabled, total } = countEnabledFeatures(featureFlags)
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Trial banner */}
-      <div className="flex items-center gap-3 bg-warning/10 border border-warning/20 rounded-lg px-4 py-3">
-        <Sparkles className="h-4 w-4 text-warning shrink-0" />
-        <p className="text-sm text-warning">
-          <strong>Trial Mode</strong> — All features are available free during the trial period.
-          Enable or disable to customise your workspace.
-        </p>
-      </div>
-
-      {/* Summary bar */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">
-            {enabled} of {total} features enabled
-          </span>
-          <div className="h-2 w-32 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary rounded-full transition-all duration-300"
-              style={{ width: `${Math.round((enabled / total) * 100)}%` }}
-            />
-          </div>
+    <div className="flex gap-6 min-h-[600px]">
+      {/* Left pane — workspace (business) list */}
+      <div className="w-64 shrink-0 space-y-2">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-medium text-muted-foreground">Your Businesses</p>
+          <Button variant="ghost" size="icon" className="h-7 w-7" title="Add Business" onClick={() => {}}>
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-        <Button onClick={saveFeatureFlags} disabled={saving} size="sm">
-          {saving ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="mr-2 h-4 w-4" />
-          )}
-          Save Changes
-        </Button>
+
+        {workspaces.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-8">No businesses found.</p>
+        )}
+
+        {workspaces.map((ws) => {
+          const isSelected = ws.id === selectedWorkspaceId
+          const wsConfig = configs.get(ws.id) ?? {}
+          const wsEnabled = Object.values(wsConfig).filter((s) => s?.enabled).length
+
+          return (
+            <button
+              key={ws.id}
+              onClick={() => setSelectedWorkspaceId(ws.id)}
+              className={`w-full text-left px-3 py-2.5 rounded-lg border transition-colors ${
+                isSelected
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-background border-border hover:bg-muted/50"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Building2 className="h-4 w-4 shrink-0" />
+                <span className="text-sm font-medium truncate">{ws.name}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <Badge variant="outline" className="text-xs px-1.5 py-0">
+                  {BUSINESS_TYPE_LABELS[ws.business_type as BusinessType] ?? ws.business_type}
+                </Badge>
+                <span className="text-xs text-muted-foreground">{wsEnabled} on</span>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
-      {/* Dependency warning */}
-      {warning && (
-        <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-lg px-4 py-3">
-          <AlertTriangle className="h-4 w-4 text-orange-600 shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm text-orange-800">
-              <strong>{warning.featureName}</strong> is required by{" "}
-              <strong>{warning.dependentNames.join(", ")}</strong>. Disabling it will also
-              disable those features.
-            </p>
-            <div className="flex gap-3 mt-2">
-              <button onClick={confirmDisable} className="text-xs font-medium text-orange-700 underline">
-                Disable all
-              </button>
-              <button onClick={() => setWarning(null)} className="text-xs text-muted-foreground underline">
-                Cancel
-              </button>
+      {/* Right pane — module cards */}
+      <div className="flex-1 min-w-0">
+        {!selectedWorkspaceId ? (
+          <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
+            Select a business to configure its modules.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Summary bar */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground">
+                  {enabledCount} of {totalCount} modules enabled
+                </span>
+                <div className="h-2 w-32 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-300"
+                    style={{ width: `${Math.round((enabledCount / totalCount) * 100)}%` }}
+                  />
+                </div>
+              </div>
+              <Button onClick={handleSave} disabled={saving} size="sm">
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Changes
+              </Button>
+            </div>
+
+            {/* Module cards */}
+            <ModuleCardList
+              config={selectedConfig}
+              expandedModules={expandedModules}
+              onToggleExpanded={toggleModuleExpanded}
+              onModuleToggle={handleModuleToggle}
+              onFeatureToggle={handleFeatureToggle}
+            />
+
+            {/* Footer save */}
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-muted-foreground">
+                Disabling a module hides it from navigation. No data is deleted.
+              </p>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Module Settings
+              </Button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Domain Tabs */}
-      <Tabs defaultValue={DOMAIN_MODULES[0].id}>
-        <TabsList className="w-full justify-start">
-          {DOMAIN_MODULES.map((domain) => (
-            <TabsTrigger key={domain.id} value={domain.id}>
-              {domain.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {DOMAIN_MODULES.map((domain) => (
-          <TabsContent key={domain.id} value={domain.id} className="mt-4 space-y-4">
-            <p className="text-sm text-muted-foreground">{domain.description}</p>
-
-            {domain.modules.map((module) => {
-              const isExpanded = expandedModules.has(module.id)
-              const fullyOn = isModuleFullyOn(module)
-              const partiallyOn = isModulePartiallyOn(module)
-
-              return (
-                <Card key={module.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-base">{module.name}</CardTitle>
-                          {partiallyOn && !fullyOn && (
-                            <Badge variant="outline" className="text-xs shrink-0">
-                              Partial
-                            </Badge>
-                          )}
-                        </div>
-                        <CardDescription className="mt-1">{module.description}</CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {/* Module-level toggle */}
-                        <button
-                          onClick={() => setAllModuleFeatures(module, !fullyOn)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                            partiallyOn ? "bg-primary" : "bg-muted"
-                          }`}
-                          title={fullyOn ? "Disable all in module" : "Enable all in module"}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                              fullyOn ? "translate-x-6" : partiallyOn ? "translate-x-3" : "translate-x-1"
-                            }`}
-                          />
-                        </button>
-                        {/* Expand / collapse */}
-                        <button
-                          onClick={() => toggleModuleExpanded(module.id)}
-                          className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
-                          title={isExpanded ? "Collapse" : "Expand features"}
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  {isExpanded && (
-                    <CardContent className="pt-0 space-y-2">
-                      <div className="h-px bg-border mb-3" />
-                      {module.features.map((feature) => {
-                        const featureOn = isFeatureOn(feature.key)
-                        return (
-                          <div
-                            key={feature.key}
-                            className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
-                              featureOn ? "bg-background" : "bg-muted/30"
-                            }`}
-                          >
-                            <div className="flex-1 min-w-0 pr-4">
-                              <p
-                                className={`text-sm font-medium ${
-                                  !featureOn ? "text-muted-foreground" : ""
-                                }`}
-                              >
-                                {feature.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">{feature.description}</p>
-                              {feature.dependsOn && feature.dependsOn.length > 0 && (
-                                <p className="text-xs text-warning mt-0.5 flex items-center gap-1">
-                                  <Info className="h-3 w-3 shrink-0" />
-                                  Requires:{" "}
-                                  {feature.dependsOn
-                                    .map((k) => FEATURE_FLAGS[k]?.name ?? k)
-                                    .join(", ")}
-                                </p>
-                              )}
-                            </div>
-                            <button
-                              onClick={() => handleFeatureToggle(feature.key, domain)}
-                              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                                featureOn ? "bg-primary" : "bg-muted"
-                              }`}
-                            >
-                              <span
-                                className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                                  featureOn ? "translate-x-5" : "translate-x-1"
-                                }`}
-                              />
-                            </button>
-                          </div>
-                        )
-                      })}
-                      {module.disabledNote && (
-                        <p className="text-xs text-muted-foreground pt-1 flex items-start gap-1.5">
-                          <Info className="h-3 w-3 shrink-0 mt-0.5 text-blue-500" />
-                          {module.disabledNote}
-                        </p>
-                      )}
-                    </CardContent>
-                  )}
-                </Card>
-              )
-            })}
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      {/* Footer save */}
-      <div className="flex items-center justify-between pt-2">
-        <p className="text-xs text-muted-foreground">
-          Disabling a feature hides it from navigation. No data is deleted.
-        </p>
-        <Button onClick={saveFeatureFlags} disabled={saving}>
-          {saving ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="mr-2 h-4 w-4" />
-          )}
-          Save Feature Settings
-        </Button>
+        )}
       </div>
+    </div>
+  )
+}
+
+// ─── Module card list ────────────────────────────────────────────────────────
+
+interface ModuleCardListProps {
+  config: WorkspaceModuleConfig
+  expandedModules: Set<string>
+  onToggleExpanded: (key: string) => void
+  onModuleToggle: (key: ModuleKey, currentlyEnabled: boolean) => void
+  onFeatureToggle: (module: ModuleKey, feature: string, currentlyEnabled: boolean) => void
+}
+
+function ModuleCardList({
+  config,
+  expandedModules,
+  onToggleExpanded,
+  onModuleToggle,
+  onFeatureToggle,
+}: ModuleCardListProps) {
+  return (
+    <div className="space-y-3">
+      {MODULES_CATALOG.map((moduleDef) => {
+        const moduleState = config[moduleDef.key]
+        const isEnabled = moduleState?.enabled === true
+        const isExpanded = expandedModules.has(moduleDef.key)
+        const enabledFeatureCount = Object.values(moduleState?.features ?? {}).filter(Boolean).length
+
+        return (
+          <Card key={moduleDef.key} className={isEnabled ? "" : "opacity-70"}>
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-base">{moduleDef.name}</CardTitle>
+                    {isEnabled && enabledFeatureCount > 0 && (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {enabledFeatureCount} feature{enabledFeatureCount !== 1 ? "s" : ""} on
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription className="mt-1">{moduleDef.description}</CardDescription>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Module master toggle */}
+                  <button
+                    onClick={() => onModuleToggle(moduleDef.key, isEnabled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      isEnabled ? "bg-primary" : "bg-muted"
+                    }`}
+                    title={isEnabled ? "Disable module" : "Enable module"}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        isEnabled ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                  {/* Expand / collapse — only show if module has features */}
+                  {moduleDef.features.length > 0 && (
+                    <button
+                      onClick={() => onToggleExpanded(moduleDef.key)}
+                      className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                      title={isExpanded ? "Collapse" : "Expand features"}
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+
+            {isExpanded && moduleDef.features.length > 0 && (
+              <CardContent className="pt-0 space-y-2">
+                <div className="h-px bg-border mb-3" />
+                {moduleDef.features.map((featureDef) => {
+                  const featureOn = moduleState?.features?.[featureDef.key] === true
+
+                  return (
+                    <div
+                      key={featureDef.key}
+                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                        featureOn ? "bg-background" : "bg-muted/30"
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0 pr-4">
+                        <p className={`text-sm font-medium ${!featureOn ? "text-muted-foreground" : ""}`}>
+                          {featureDef.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{featureDef.description}</p>
+                      </div>
+                      <button
+                        onClick={() => onFeatureToggle(moduleDef.key, featureDef.key, featureOn)}
+                        disabled={!isEnabled}
+                        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 ${
+                          featureOn ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
+                            featureOn ? "translate-x-5" : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )
+                })}
+              </CardContent>
+            )}
+          </Card>
+        )
+      })}
     </div>
   )
 }

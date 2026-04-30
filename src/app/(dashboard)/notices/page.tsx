@@ -286,7 +286,7 @@ export default function NoticesPage() {
       description="Announcements and notifications for tenants"
       icon={Bell}
       permission="notices.view"
-      feature="notices"
+      module="notices"
       config={NOTICE_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

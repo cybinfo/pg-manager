@@ -9,12 +9,13 @@ import {
   ROUTE_CONFIGS,
   filterNavigation,
   getPathPermissions,
+  getPathModules,
   getPathFeatures,
   getRouteConfig,
   canAccessRoute,
   type NavItem,
 } from '@/lib/navigation/config'
-import type { FeatureFlagKey } from '@/lib/features'
+import type { ModuleKey } from '@/lib/features'
 import type { LucideIcon } from 'lucide-react'
 
 describe('DASHBOARD_NAVIGATION', () => {
@@ -31,18 +32,16 @@ describe('DASHBOARD_NAVIGATION', () => {
       expect(typeof item.href).toBe('string')
       expect(item.href.startsWith('/')).toBe(true)
       expect(item.icon).toBeDefined()
-      // permission can be string or null
       expect(item.permission === null || typeof item.permission === 'string').toBe(true)
-      // feature can be a feature flag key or null
-      expect(item.feature === null || typeof item.feature === 'string').toBe(true)
+      expect(item.module === null || typeof item.module === 'string').toBe(true)
     }
   })
 
-  it('contains the Dashboard item with no permission required', () => {
+  it('contains the Dashboard item with no permission or module required', () => {
     const dashboard = DASHBOARD_NAVIGATION.find((item) => item.href === '/dashboard')
     expect(dashboard).toBeDefined()
     expect(dashboard!.permission).toBeNull()
-    expect(dashboard!.feature).toBeNull()
+    expect(dashboard!.module).toBeNull()
   })
 
   it('contains core PG modules', () => {
@@ -79,15 +78,18 @@ describe('DASHBOARD_NAVIGATION', () => {
     }
   })
 
-  it('has all library items gated behind the "library" feature flag', () => {
-    const libraryItems = DASHBOARD_NAVIGATION.filter(
-      (item) => item.href.startsWith('/library')
-    )
+  it('has library items gated behind specific module keys', () => {
+    const libraryItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/library')
+    expect(libraryItem?.module).toBe('members')
 
-    expect(libraryItems.length).toBeGreaterThan(0)
-    for (const item of libraryItems) {
-      expect(item.feature).toBe('library')
-    }
+    const sectionsItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/library-sections')
+    expect(sectionsItem?.module).toBe('sections')
+
+    const seatsItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/library-seats')
+    expect(seatsItem?.module).toBe('seats')
+
+    const attendanceItem = DASHBOARD_NAVIGATION.find((i) => i.href === '/library-attendance')
+    expect(attendanceItem?.module).toBe('attendance')
   })
 
   it('has dividerBefore on the first library item', () => {
@@ -96,11 +98,11 @@ describe('DASHBOARD_NAVIGATION', () => {
     expect(libraryItem!.dividerBefore).toBe(true)
   })
 
-  it('contains feature-flagged items', () => {
-    const featureFlaggedItems = DASHBOARD_NAVIGATION.filter(
-      (item) => item.feature !== null
+  it('contains module-gated items', () => {
+    const modulGatedItems = DASHBOARD_NAVIGATION.filter(
+      (item) => item.module !== null
     )
-    expect(featureFlaggedItems.length).toBeGreaterThan(0)
+    expect(modulGatedItems.length).toBeGreaterThan(0)
   })
 
   it('has no duplicate hrefs', () => {
@@ -154,29 +156,28 @@ describe('TENANT_NAVIGATION', () => {
 })
 
 describe('filterNavigation', () => {
-  // Create a minimal set of test nav items
   const testItems: NavItem[] = [
-    { name: 'Dashboard', href: '/dashboard', icon: {} as LucideIcon, permission: null, feature: null },
-    { name: 'Tenants', href: '/tenants', icon: {} as LucideIcon, permission: 'tenants.view', feature: null },
-    { name: 'Expenses', href: '/expenses', icon: {} as LucideIcon, permission: 'expenses.view', feature: 'expenses' as FeatureFlagKey },
-    { name: 'Visitors', href: '/visitors', icon: {} as LucideIcon, permission: 'visitors.view', feature: 'visitors' as FeatureFlagKey },
-    { name: 'Activity Log', href: '/activity', icon: {} as LucideIcon, permission: null, feature: 'activityLog' as FeatureFlagKey },
+    { name: 'Dashboard', href: '/dashboard', icon: {} as LucideIcon, permission: null, module: null },
+    { name: 'Tenants', href: '/tenants', icon: {} as LucideIcon, permission: 'tenants.view', module: null },
+    { name: 'Expenses', href: '/expenses', icon: {} as LucideIcon, permission: 'expenses.view', module: 'expenses' as ModuleKey },
+    { name: 'Visitors', href: '/visitors', icon: {} as LucideIcon, permission: 'visitors.view', module: 'visitors' as ModuleKey },
+    { name: 'Activity Log', href: '/activity', icon: {} as LucideIcon, permission: null, module: 'activityLog' as ModuleKey },
   ]
 
-  it('shows all items for platform admin with all features enabled', () => {
+  it('shows all items for platform admin with all modules enabled', () => {
     const result = filterNavigation(testItems, {
       hasPermission: () => true,
-      isFeatureEnabled: () => true,
+      isModuleEnabled: () => true,
       isPlatformAdmin: true,
     })
 
     expect(result).toHaveLength(5)
   })
 
-  it('hides feature-disabled items even for platform admin', () => {
+  it('hides module-disabled items even for platform admin', () => {
     const result = filterNavigation(testItems, {
       hasPermission: () => true,
-      isFeatureEnabled: (feature) => feature !== 'expenses',
+      isModuleEnabled: (module) => module !== 'expenses',
       isPlatformAdmin: true,
     })
 
@@ -189,7 +190,7 @@ describe('filterNavigation', () => {
   it('shows items without permission for any user', () => {
     const result = filterNavigation(testItems, {
       hasPermission: () => false,
-      isFeatureEnabled: () => true,
+      isModuleEnabled: () => true,
       isPlatformAdmin: false,
     })
 
@@ -201,7 +202,7 @@ describe('filterNavigation', () => {
   it('hides items when user lacks permission', () => {
     const result = filterNavigation(testItems, {
       hasPermission: (perm) => perm === 'tenants.view',
-      isFeatureEnabled: () => true,
+      isModuleEnabled: () => true,
       isPlatformAdmin: false,
     })
 
@@ -213,10 +214,10 @@ describe('filterNavigation', () => {
     expect(hrefs).toContain('/activity') // no permission needed
   })
 
-  it('hides items when feature is disabled even if user has permission', () => {
+  it('hides items when module is disabled even if user has permission', () => {
     const result = filterNavigation(testItems, {
       hasPermission: () => true,
-      isFeatureEnabled: (feature) => feature !== 'visitors',
+      isModuleEnabled: (module) => module !== 'visitors',
       isPlatformAdmin: false,
     })
 
@@ -225,73 +226,67 @@ describe('filterNavigation', () => {
     expect(hrefs).toContain('/expenses')
   })
 
-  it('both feature and permission must pass for an item to show', () => {
+  it('both module and permission must pass for an item to show', () => {
     const result = filterNavigation(testItems, {
       hasPermission: (perm) => perm === 'expenses.view',
-      isFeatureEnabled: (feature) => feature === 'expenses',
+      isModuleEnabled: (module) => module === 'expenses',
       isPlatformAdmin: false,
     })
 
     const hrefs = result.map((item) => item.href)
-    expect(hrefs).toContain('/dashboard') // no perm, no feature
+    expect(hrefs).toContain('/dashboard') // no perm, no module
     expect(hrefs).not.toContain('/tenants') // has perm check, user lacks it
-    expect(hrefs).toContain('/expenses') // feature enabled + has permission
-    expect(hrefs).not.toContain('/visitors') // feature disabled
-    expect(hrefs).not.toContain('/activity') // feature disabled
+    expect(hrefs).toContain('/expenses') // module enabled + has permission
+    expect(hrefs).not.toContain('/visitors') // module disabled
+    expect(hrefs).not.toContain('/activity') // module disabled
   })
 
   it('returns empty array when all items are filtered out', () => {
-    // Use items that all require either a feature or permission
     const restrictedItems: NavItem[] = [
-      { name: 'Tenants', href: '/tenants', icon: {} as LucideIcon, permission: 'tenants.view', feature: null },
-      { name: 'Expenses', href: '/expenses', icon: {} as LucideIcon, permission: 'expenses.view', feature: 'expenses' as FeatureFlagKey },
+      { name: 'Tenants', href: '/tenants', icon: {} as LucideIcon, permission: 'tenants.view', module: null },
+      { name: 'Expenses', href: '/expenses', icon: {} as LucideIcon, permission: 'expenses.view', module: 'expenses' as ModuleKey },
     ]
 
     const result = filterNavigation(restrictedItems, {
       hasPermission: () => false,
-      isFeatureEnabled: () => false,
+      isModuleEnabled: () => false,
       isPlatformAdmin: false,
     })
 
     expect(result).toEqual([])
   })
 
-  it('platform admin bypasses permission check but not feature check', () => {
+  it('platform admin bypasses permission check but not module check', () => {
     const result = filterNavigation(testItems, {
-      hasPermission: () => false, // would normally deny all
-      isFeatureEnabled: () => true,
+      hasPermission: () => false,
+      isModuleEnabled: () => true,
       isPlatformAdmin: true,
     })
 
-    // Platform admin sees everything (features are all enabled)
     expect(result).toHaveLength(5)
   })
 
   it('works with the real DASHBOARD_NAVIGATION', () => {
     const result = filterNavigation(DASHBOARD_NAVIGATION, {
       hasPermission: () => true,
-      isFeatureEnabled: () => true,
+      isModuleEnabled: () => true,
       isPlatformAdmin: false,
     })
 
-    // All items should be visible when all permissions and features are available
     expect(result).toHaveLength(DASHBOARD_NAVIGATION.length)
   })
 
   it('filters real DASHBOARD_NAVIGATION correctly for limited staff', () => {
     const result = filterNavigation(DASHBOARD_NAVIGATION, {
       hasPermission: (perm) => ['tenants.view', 'payments.view'].includes(perm),
-      isFeatureEnabled: () => true,
+      isModuleEnabled: () => true,
       isPlatformAdmin: false,
     })
 
     const hrefs = result.map((item) => item.href)
-    // Should include items with matching permissions
     expect(hrefs).toContain('/tenants')
     expect(hrefs).toContain('/payments')
-    // Should include items with null permission
     expect(hrefs).toContain('/dashboard')
-    // Should not include items needing other permissions
     expect(hrefs).not.toContain('/rooms')
     expect(hrefs).not.toContain('/staff')
   })
@@ -310,7 +305,6 @@ describe('getPathPermissions', () => {
   it('excludes paths with null permission', () => {
     const result = getPathPermissions(DASHBOARD_NAVIGATION)
 
-    // Dashboard has null permission, should not be in the map
     expect(result['/dashboard']).toBeUndefined()
   })
 
@@ -327,11 +321,11 @@ describe('getPathPermissions', () => {
       {
         href: '/parent',
         permission: 'parent.view',
-        feature: null,
+        module: null as ModuleKey | null,
         children: [
-          { href: '/parent/child1', permission: 'child1.view', feature: null },
-          { href: '/parent/child2', permission: 'child2.view', feature: null },
-          { href: '/parent/child3', permission: null, feature: null },
+          { href: '/parent/child1', permission: 'child1.view', module: null as ModuleKey | null },
+          { href: '/parent/child2', permission: 'child2.view', module: null as ModuleKey | null },
+          { href: '/parent/child3', permission: null, module: null as ModuleKey | null },
         ],
       },
     ]
@@ -350,56 +344,63 @@ describe('getPathPermissions', () => {
   })
 })
 
-describe('getPathFeatures', () => {
-  it('returns a map of path to feature flag', () => {
-    const result = getPathFeatures(DASHBOARD_NAVIGATION)
+describe('getPathModules', () => {
+  it('returns a map of path to module key', () => {
+    const result = getPathModules(DASHBOARD_NAVIGATION)
 
     expect(typeof result).toBe('object')
     expect(result['/expenses']).toBe('expenses')
     expect(result['/visitors']).toBe('visitors')
-    expect(result['/meter-readings']).toBe('meterReadings')
+    expect(result['/meter-readings']).toBe('meters')
   })
 
-  it('excludes paths with null feature', () => {
-    const result = getPathFeatures(DASHBOARD_NAVIGATION)
+  it('excludes paths with null module', () => {
+    const result = getPathModules(DASHBOARD_NAVIGATION)
 
-    // Items without feature flags should not be in the map
     expect(result['/dashboard']).toBeUndefined()
-    expect(result['/properties']).toBeUndefined()
-    expect(result['/rooms']).toBeUndefined()
   })
 
-  it('includes library feature flags', () => {
-    const result = getPathFeatures(DASHBOARD_NAVIGATION)
+  it('includes library module keys', () => {
+    const result = getPathModules(DASHBOARD_NAVIGATION)
 
-    expect(result['/library']).toBe('library')
-    expect(result['/library-members']).toBe('library')
-    expect(result['/library-seats']).toBe('library')
+    expect(result['/library']).toBe('members')
+    expect(result['/library-members']).toBe('members')
+    expect(result['/library-seats']).toBe('seats')
+    expect(result['/library-sections']).toBe('sections')
+    expect(result['/library-attendance']).toBe('attendance')
   })
 
   it('works with nested children', () => {
     const nestedItems = [
       {
         href: '/parent',
-        permission: null,
-        feature: 'parentFeature' as FeatureFlagKey,
+        permission: null as string | null,
+        module: 'expenses' as ModuleKey,
         children: [
-          { href: '/parent/child1', permission: null, feature: 'childFeature' as FeatureFlagKey },
-          { href: '/parent/child2', permission: null, feature: null },
+          { href: '/parent/child1', permission: null as string | null, module: 'billing' as ModuleKey },
+          { href: '/parent/child2', permission: null as string | null, module: null as ModuleKey | null },
         ],
       },
     ]
 
-    const result = getPathFeatures(nestedItems)
+    const result = getPathModules(nestedItems)
 
-    expect(result['/parent']).toBe('parentFeature')
-    expect(result['/parent/child1']).toBe('childFeature')
+    expect(result['/parent']).toBe('expenses')
+    expect(result['/parent/child1']).toBe('billing')
     expect(result['/parent/child2']).toBeUndefined()
   })
 
   it('returns empty object for empty array', () => {
-    const result = getPathFeatures([])
+    const result = getPathModules([])
     expect(result).toEqual({})
+  })
+})
+
+describe('getPathFeatures (deprecated shim)', () => {
+  it('delegates to getPathModules', () => {
+    const fromModules = getPathModules(DASHBOARD_NAVIGATION)
+    const fromFeatures = getPathFeatures(DASHBOARD_NAVIGATION)
+    expect(fromFeatures).toEqual(fromModules)
   })
 })
 
@@ -415,17 +416,16 @@ describe('ROUTE_CONFIGS', () => {
       expect(config.title).toBeTruthy()
       expect(config.icon).toBeDefined()
       expect(config.permission === null || typeof config.permission === 'string').toBe(true)
-      expect(config.feature === null || typeof config.feature === 'string').toBe(true)
+      expect(config.module === null || typeof config.module === 'string').toBe(true)
     }
   })
 
   it('has consistent data with DASHBOARD_NAVIGATION for shared paths', () => {
-    // Check that route configs match navigation for overlapping entries
     for (const navItem of DASHBOARD_NAVIGATION) {
       const config = ROUTE_CONFIGS[navItem.href]
       if (config) {
         expect(config.permission).toBe(navItem.permission)
-        expect(config.feature).toBe(navItem.feature)
+        expect(config.module).toBe(navItem.module)
       }
     }
   })
@@ -450,18 +450,18 @@ describe('getRouteConfig', () => {
     expect(config).toBeUndefined()
   })
 
-  it('returns library config', () => {
+  it('returns library config with module key', () => {
     const config = getRouteConfig('/library')
     expect(config).toBeDefined()
     expect(config!.permission).toBe('library.view')
-    expect(config!.feature).toBe('library')
+    expect(config!.module).toBe('members')
   })
 })
 
 describe('canAccessRoute', () => {
   const allAccess = {
     hasPermission: () => true,
-    isFeatureEnabled: () => true as boolean,
+    isModuleEnabled: () => true as boolean,
     isPlatformAdmin: false,
   }
 
@@ -469,21 +469,21 @@ describe('canAccessRoute', () => {
     expect(
       canAccessRoute('/nonexistent', {
         hasPermission: () => false,
-        isFeatureEnabled: () => false,
+        isModuleEnabled: () => false,
         isPlatformAdmin: false,
       })
     ).toBe(true)
   })
 
-  it('returns true when user has permission and feature is enabled', () => {
+  it('returns true when user has permission and module is enabled', () => {
     expect(canAccessRoute('/tenants', allAccess)).toBe(true)
   })
 
-  it('returns false when feature is disabled', () => {
+  it('returns false when module is disabled', () => {
     expect(
       canAccessRoute('/expenses', {
         hasPermission: () => true,
-        isFeatureEnabled: () => false,
+        isModuleEnabled: () => false,
         isPlatformAdmin: false,
       })
     ).toBe(false)
@@ -493,7 +493,7 @@ describe('canAccessRoute', () => {
     expect(
       canAccessRoute('/tenants', {
         hasPermission: () => false,
-        isFeatureEnabled: () => true,
+        isModuleEnabled: () => true,
         isPlatformAdmin: false,
       })
     ).toBe(false)
@@ -503,17 +503,17 @@ describe('canAccessRoute', () => {
     expect(
       canAccessRoute('/tenants', {
         hasPermission: () => false,
-        isFeatureEnabled: () => true,
+        isModuleEnabled: () => true,
         isPlatformAdmin: true,
       })
     ).toBe(true)
   })
 
-  it('returns false for platform admin when feature is disabled', () => {
+  it('returns false for platform admin when module is disabled', () => {
     expect(
       canAccessRoute('/expenses', {
         hasPermission: () => true,
-        isFeatureEnabled: (f) => f !== 'expenses',
+        isModuleEnabled: (m) => m !== 'expenses',
         isPlatformAdmin: true,
       })
     ).toBe(false)
@@ -523,17 +523,17 @@ describe('canAccessRoute', () => {
     expect(
       canAccessRoute('/dashboard', {
         hasPermission: () => false,
-        isFeatureEnabled: () => true,
+        isModuleEnabled: () => true,
         isPlatformAdmin: false,
       })
     ).toBe(true)
   })
 
-  it('checks feature for activity log (null permission, has feature)', () => {
+  it('checks module for activity log (null permission, has module)', () => {
     expect(
       canAccessRoute('/activity', {
         hasPermission: () => false,
-        isFeatureEnabled: (f) => f === 'activityLog',
+        isModuleEnabled: (m) => m === 'activityLog',
         isPlatformAdmin: false,
       })
     ).toBe(true)
@@ -541,7 +541,7 @@ describe('canAccessRoute', () => {
     expect(
       canAccessRoute('/activity', {
         hasPermission: () => false,
-        isFeatureEnabled: () => false,
+        isModuleEnabled: () => false,
         isPlatformAdmin: false,
       })
     ).toBe(false)
@@ -551,7 +551,7 @@ describe('canAccessRoute', () => {
     expect(
       canAccessRoute('/tenants/some-id', {
         hasPermission: (p) => p === 'tenants.view',
-        isFeatureEnabled: () => true,
+        isModuleEnabled: () => true,
         isPlatformAdmin: false,
       })
     ).toBe(true)

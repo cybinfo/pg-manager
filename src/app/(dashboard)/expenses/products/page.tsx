@@ -267,7 +267,7 @@ export default function ProductsPage() {
       description="Manage kitchen and daily spend items"
       icon={Package}
       permission="expenses.view"
-      feature="expenses"
+      module="expenses"
       config={PRODUCT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

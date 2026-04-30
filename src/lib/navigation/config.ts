@@ -9,7 +9,7 @@
  *
  * const filteredNav = filterNavigation(DASHBOARD_NAVIGATION, {
  *   hasPermission,
- *   isFeatureEnabled,
+ *   isModuleEnabled,
  * })
  */
 
@@ -55,7 +55,7 @@ import {
   RefreshCw,
   type LucideIcon,
 } from "lucide-react"
-import type { FeatureFlagKey } from "@/lib/features"
+import type { ModuleKey } from "@/lib/features"
 
 // ============================================================================
 // TYPES
@@ -70,8 +70,8 @@ export interface NavItem {
   icon: LucideIcon
   /** Permission required (null = no permission needed) */
   permission: string | null
-  /** Feature flag key (null = always show) */
-  feature: FeatureFlagKey | null
+  /** Module key required to be enabled (null = always show) */
+  module: ModuleKey | null
   /** Badge count (optional) */
   badge?: number
   /** Whether this is a divider/separator before this item */
@@ -89,60 +89,56 @@ export interface SimpleNavItem {
 // ============================================================================
 
 export const DASHBOARD_NAVIGATION: NavItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
-  { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", feature: null },
-  { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", feature: null },
-  { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
-  { name: "People", href: "/people", icon: Contact, permission: "tenants.view", feature: null },
-  { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
-  { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
-  { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", feature: null },
-  { name: "Expenses", href: "/expenses", icon: TrendingDown, permission: "expenses.view", feature: "expenses" },
-  { name: "Daily Spend", href: "/expenses/daily-spend", icon: ShoppingCart, permission: "expenses.view", feature: "expenses" },
-  { name: "Products", href: "/expenses/products", icon: Package, permission: "expenses.view", feature: "expenses" },
-  { name: "Vendors", href: "/expenses/vendors", icon: Store, permission: "expenses.view", feature: "expenses" },
-  { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", feature: "expenses" },
-  { name: "Service Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", feature: "expenses" },
-  { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", feature: "expenses" },
-  { name: "Meter Readings", href: "/meter-readings", icon: TrendingUp, permission: "meter_readings.view", feature: "meterReadings" },
-  { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", feature: null },
-  { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
-  { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
-  { name: "Inquiries", href: "/inquiries", icon: Inbox, permission: "tenants.view", feature: null },
-  { name: "Complaints", href: "/complaints", icon: MessageSquare, permission: "complaints.view", feature: "complaints" },
-  { name: "Notices", href: "/notices", icon: Bell, permission: "notices.view", feature: "notices" },
-  { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", feature: "reports" },
-  { name: "Activity Log", href: "/activity", icon: Activity, permission: null, feature: "activityLog" },
-  { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
-  { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
-  { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", feature: null },
-  // Library Module (feature-flagged)
-  { name: "Library", href: "/library", icon: Library, permission: "library.view", feature: "library", dividerBefore: true },
-  { name: "Sections", href: "/library-sections", icon: Layers, permission: "library_sections.view", feature: "library" },
-  { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", feature: "library" },
-  { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
-  { name: "Waitlist", href: "/library-waitlist", icon: ListOrdered, permission: "library_waitlist.view", feature: "library" },
-  { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", feature: "library" },
-  { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", feature: "library" },
-  { name: "Subscriptions", href: "/library-subscriptions", icon: BookOpen, permission: "library_members.view", feature: "library" },
-  { name: "Library Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
-  { name: "Library Reports", href: "/library-reports", icon: BarChart3, permission: "library.view", feature: "library" },
-  { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", feature: "library" },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, module: null },
+  { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", module: "properties" },
+  { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", module: "rooms" },
+  { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", module: "tenants" },
+  { name: "People", href: "/people", icon: Contact, permission: "tenants.view", module: "people" },
+  { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", module: "billing" },
+  { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", module: "payments" },
+  { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", module: "refunds" },
+  { name: "Expenses", href: "/expenses", icon: TrendingDown, permission: "expenses.view", module: "expenses" },
+  { name: "Daily Spend", href: "/expenses/daily-spend", icon: ShoppingCart, permission: "expenses.view", module: "expenses" },
+  { name: "Products", href: "/expenses/products", icon: Package, permission: "expenses.view", module: "expenses" },
+  { name: "Vendors", href: "/expenses/vendors", icon: Store, permission: "expenses.view", module: "expenses" },
+  { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", module: "expenses" },
+  { name: "Service Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", module: "expenses" },
+  { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", module: "expenses" },
+  { name: "Meter Readings", href: "/meter-readings", icon: TrendingUp, permission: "meter_readings.view", module: "meters" },
+  { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", module: "meters" },
+  { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", module: "exitClearance" },
+  { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", module: "visitors" },
+  { name: "Inquiries", href: "/inquiries", icon: Inbox, permission: "tenants.view", module: "inquiries" },
+  { name: "Complaints", href: "/complaints", icon: MessageSquare, permission: "complaints.view", module: "complaints" },
+  { name: "Notices", href: "/notices", icon: Bell, permission: "notices.view", module: "notices" },
+  { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", module: "reports" },
+  { name: "Activity Log", href: "/activity", icon: Activity, permission: null, module: "activityLog" },
+  { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", module: "properties" },
+  { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", module: "approvals" },
+  { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", module: "staff" },
+  // Library Modules
+  { name: "Library", href: "/library", icon: Library, permission: "library.view", module: "members", dividerBefore: true },
+  { name: "Sections", href: "/library-sections", icon: Layers, permission: "library_sections.view", module: "sections" },
+  { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", module: "seats" },
+  { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", module: "members" },
+  { name: "Waitlist", href: "/library-waitlist", icon: ListOrdered, permission: "library_waitlist.view", module: "waitlist" },
+  { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", module: "attendance" },
+  { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", module: "lockers" },
+  { name: "Subscriptions", href: "/library-subscriptions", icon: BookOpen, permission: "library_members.view", module: "subscriptions" },
+  { name: "Library Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", module: "payments" },
+  { name: "Library Reports", href: "/library-reports", icon: BarChart3, permission: "library.view", module: "reports" },
+  { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", module: "plans" },
 ]
 
 /**
- * Mobile bottom nav items (most used + "More" to open sidebar)
- *
- * These use NavItem so they can be filtered by permission/feature flags
- * via filterNavigation(). The "More" item has null permission/feature
- * so it always passes through.
+ * Mobile bottom nav items (most used + "More" to open sidebar).
  */
 export const DASHBOARD_MOBILE_NAV: NavItem[] = [
-  { name: "Home", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
-  { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
-  { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
-  { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
-  { name: "More", href: "#more", icon: MoreHorizontal, permission: null, feature: null },
+  { name: "Home", href: "/dashboard", icon: LayoutDashboard, permission: null, module: null },
+  { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", module: "tenants" },
+  { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", module: "payments" },
+  { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", module: "billing" },
+  { name: "More", href: "#more", icon: MoreHorizontal, permission: null, module: null },
 ]
 
 // ============================================================================
@@ -182,64 +178,47 @@ export const LIBRARY_MEMBER_NAVIGATION: SimpleNavItem[] = [
 interface FilterOptions {
   /** Function to check if user has a permission */
   hasPermission: (permission: string) => boolean
-  /** Function to check if a feature is enabled */
-  isFeatureEnabled: (feature: FeatureFlagKey) => boolean
+  /** Function to check if a module is enabled */
+  isModuleEnabled: (module: ModuleKey) => boolean
   /** Whether user is platform admin (bypasses permission checks) */
   isPlatformAdmin?: boolean
 }
 
 /**
- * Filter navigation items based on permissions and feature flags
- *
- * @example
- * const filteredNav = filterNavigation(DASHBOARD_NAVIGATION, {
- *   hasPermission,
- *   isFeatureEnabled,
- *   isPlatformAdmin,
- * })
+ * Filter navigation items based on permissions and module flags.
  */
 export function filterNavigation(
   items: NavItem[],
   options: FilterOptions
 ): NavItem[] {
-  const { hasPermission, isFeatureEnabled, isPlatformAdmin = false } = options
+  const { hasPermission, isModuleEnabled, isPlatformAdmin = false } = options
 
   return items.filter((item) => {
-    // Check feature flag first - if feature is disabled, hide the item
-    if (item.feature !== null && !isFeatureEnabled(item.feature)) {
+    if (item.module !== null && !isModuleEnabled(item.module)) {
       return false
     }
 
-    // Platform admins see everything (that passes feature check)
-    if (isPlatformAdmin) {
-      return true
-    }
+    if (isPlatformAdmin) return true
 
-    // Always show items with no permission requirement
-    if (item.permission === null) {
-      return true
-    }
+    if (item.permission === null) return true
 
-    // Check permission
     return hasPermission(item.permission)
   })
 }
 
 // ============================================================================
-// PATH-TO-PERMISSION/FEATURE DERIVATION
+// PATH-TO-PERMISSION/MODULE DERIVATION
 // ============================================================================
 
 interface NavItemWithChildren {
   href: string
   permission: string | null
-  feature: FeatureFlagKey | null
+  module: ModuleKey | null
   children?: NavItemWithChildren[]
 }
 
 /**
  * Derive a path-to-permission map from a navigation array.
- * Works with both flat NavItem[] and nested items with children.
- * Items with null permission are excluded (no permission required).
  */
 export function getPathPermissions(items: NavItemWithChildren[]): Record<string, string> {
   const map: Record<string, string> = {}
@@ -259,20 +238,18 @@ export function getPathPermissions(items: NavItemWithChildren[]): Record<string,
 }
 
 /**
- * Derive a path-to-feature map from a navigation array.
- * Works with both flat NavItem[] and nested items with children.
- * Items with null feature are excluded (always enabled).
+ * Derive a path-to-module map from a navigation array.
  */
-export function getPathFeatures(items: NavItemWithChildren[]): Record<string, FeatureFlagKey> {
-  const map: Record<string, FeatureFlagKey> = {}
+export function getPathModules(items: NavItemWithChildren[]): Record<string, ModuleKey> {
+  const map: Record<string, ModuleKey> = {}
   for (const item of items) {
-    if (item.feature && item.href) {
-      map[item.href] = item.feature
+    if (item.module && item.href) {
+      map[item.href] = item.module
     }
     if (item.children) {
       for (const child of item.children) {
-        if (child.feature && child.href) {
-          map[child.href] = child.feature
+        if (child.module && child.href) {
+          map[child.href] = child.module
         }
       }
     }
@@ -280,102 +257,75 @@ export function getPathFeatures(items: NavItemWithChildren[]): Record<string, Fe
   return map
 }
 
+/** @deprecated use getPathModules instead */
+export function getPathFeatures(items: NavItemWithChildren[]): Record<string, ModuleKey> {
+  return getPathModules(items)
+}
+
 // ============================================================================
 // ROUTE METADATA
 // ============================================================================
 
-/**
- * Route configuration with all metadata in one place
- */
 export interface RouteConfig {
-  /** Route path */
   path: string
-  /** Permission required to access */
   permission: string | null
-  /** Feature flag that must be enabled */
-  feature: FeatureFlagKey | null
-  /** Page title */
+  module: ModuleKey | null
   title: string
-  /** Icon for navigation */
   icon: LucideIcon
 }
 
-/**
- * Complete route configuration map
- * Use this as single source of truth for route metadata
- */
 export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
-  "/dashboard": { path: "/dashboard", permission: null, feature: null, title: "Dashboard", icon: LayoutDashboard },
-  "/properties": { path: "/properties", permission: "properties.view", feature: null, title: "Properties", icon: Building2 },
-  "/rooms": { path: "/rooms", permission: "rooms.view", feature: null, title: "Rooms", icon: Home },
-  "/tenants": { path: "/tenants", permission: "tenants.view", feature: null, title: "Tenants", icon: Users },
-  "/people": { path: "/people", permission: "tenants.view", feature: null, title: "People", icon: Contact },
-  "/bills": { path: "/bills", permission: "bills.view", feature: null, title: "Bills", icon: Receipt },
-  "/payments": { path: "/payments", permission: "payments.view", feature: null, title: "Payments", icon: CreditCard },
-  "/refunds": { path: "/refunds", permission: "payments.view", feature: null, title: "Refunds", icon: Wallet },
-  "/expenses": { path: "/expenses", permission: "expenses.view", feature: "expenses", title: "Expenses", icon: TrendingDown },
-  "/meter-readings": { path: "/meter-readings", permission: "meter_readings.view", feature: "meterReadings", title: "Meter Readings", icon: TrendingUp },
-  "/meters": { path: "/meters", permission: "meters.view", feature: null, title: "Meters", icon: Gauge },
-  "/exit-clearance": { path: "/exit-clearance", permission: "exit_clearance.initiate", feature: "exitClearance", title: "Exit Clearance", icon: UserMinus },
-  "/visitors": { path: "/visitors", permission: "visitors.view", feature: "visitors", title: "Visitors", icon: UserPlus },
-  "/complaints": { path: "/complaints", permission: "complaints.view", feature: "complaints", title: "Complaints", icon: MessageSquare },
-  "/notices": { path: "/notices", permission: "notices.view", feature: "notices", title: "Notices", icon: Bell },
-  "/reports": { path: "/reports", permission: "reports.view", feature: "reports", title: "Reports", icon: FileText },
-  "/activity": { path: "/activity", permission: null, feature: "activityLog", title: "Activity Log", icon: Activity },
-  "/architecture": { path: "/architecture", permission: "properties.view", feature: "architectureView", title: "Architecture", icon: Grid3X3 },
-  "/approvals": { path: "/approvals", permission: "tenants.view", feature: "approvals", title: "Approvals", icon: ClipboardCheck },
-  "/staff": { path: "/staff", permission: "staff.view", feature: null, title: "Staff", icon: UserCog },
-  "/inquiries": { path: "/inquiries", permission: "tenants.view", feature: null, title: "Inquiries", icon: Inbox },
-  // Library Module
-  "/library": { path: "/library", permission: "library.view", feature: "library", title: "Library", icon: Library },
-  "/library-sections": { path: "/library-sections", permission: "library_sections.view", feature: "library", title: "Sections", icon: Layers },
-  "/library-members": { path: "/library-members", permission: "library_members.view", feature: "library", title: "Members", icon: Users },
-  "/library-waitlist": { path: "/library-waitlist", permission: "library_waitlist.view", feature: "library", title: "Waitlist", icon: ListOrdered },
-  "/library-attendance": { path: "/library-attendance", permission: "library_attendance.view", feature: "library", title: "Attendance", icon: Clock },
-  "/library-lockers": { path: "/library-lockers", permission: "library_lockers.view", feature: "library", title: "Lockers", icon: Lock },
-  "/library-subscriptions": { path: "/library-subscriptions", permission: "library_members.view", feature: "library", title: "Subscriptions", icon: BookOpen },
-  "/library-payments": { path: "/library-payments", permission: "library_payments.view", feature: "library", title: "Library Payments", icon: CreditCard },
-  "/library-reports": { path: "/library-reports", permission: "library.view", feature: "library", title: "Library Reports", icon: BarChart3 },
+  "/dashboard":   { path: "/dashboard",   permission: null,                      module: null,           title: "Dashboard",        icon: LayoutDashboard },
+  "/properties":  { path: "/properties",  permission: "properties.view",         module: "properties",   title: "Properties",       icon: Building2 },
+  "/rooms":       { path: "/rooms",       permission: "rooms.view",              module: "rooms",        title: "Rooms",            icon: Home },
+  "/tenants":     { path: "/tenants",     permission: "tenants.view",            module: "tenants",      title: "Tenants",          icon: Users },
+  "/people":      { path: "/people",      permission: "tenants.view",            module: "people",       title: "People",           icon: Contact },
+  "/bills":       { path: "/bills",       permission: "bills.view",              module: "billing",      title: "Bills",            icon: Receipt },
+  "/payments":    { path: "/payments",    permission: "payments.view",           module: "payments",     title: "Payments",         icon: CreditCard },
+  "/refunds":     { path: "/refunds",     permission: "payments.view",           module: "refunds",      title: "Refunds",          icon: Wallet },
+  "/expenses":    { path: "/expenses",    permission: "expenses.view",           module: "expenses",     title: "Expenses",         icon: TrendingDown },
+  "/meter-readings": { path: "/meter-readings", permission: "meter_readings.view", module: "meters",   title: "Meter Readings",   icon: TrendingUp },
+  "/meters":      { path: "/meters",      permission: "meters.view",             module: "meters",       title: "Meters",           icon: Gauge },
+  "/exit-clearance": { path: "/exit-clearance", permission: "exit_clearance.initiate", module: "exitClearance", title: "Exit Clearance", icon: UserMinus },
+  "/visitors":    { path: "/visitors",    permission: "visitors.view",           module: "visitors",     title: "Visitors",         icon: UserPlus },
+  "/complaints":  { path: "/complaints",  permission: "complaints.view",         module: "complaints",   title: "Complaints",       icon: MessageSquare },
+  "/notices":     { path: "/notices",     permission: "notices.view",            module: "notices",      title: "Notices",          icon: Bell },
+  "/reports":     { path: "/reports",     permission: "reports.view",            module: "reports",      title: "Reports",          icon: FileText },
+  "/activity":    { path: "/activity",    permission: null,                      module: "activityLog",  title: "Activity Log",     icon: Activity },
+  "/architecture":{ path: "/architecture",permission: "properties.view",         module: "properties",   title: "Architecture",     icon: Grid3X3 },
+  "/approvals":   { path: "/approvals",   permission: "tenants.view",            module: "approvals",    title: "Approvals",        icon: ClipboardCheck },
+  "/staff":       { path: "/staff",       permission: "staff.view",              module: "staff",        title: "Staff",            icon: UserCog },
+  "/inquiries":   { path: "/inquiries",   permission: "tenants.view",            module: "inquiries",    title: "Inquiries",        icon: Inbox },
+  "/library":     { path: "/library",     permission: "library.view",            module: "members",      title: "Library",          icon: Library },
+  "/library-sections": { path: "/library-sections", permission: "library_sections.view", module: "sections", title: "Sections", icon: Layers },
+  "/library-members":  { path: "/library-members",  permission: "library_members.view",  module: "members",  title: "Members",  icon: Users },
+  "/library-waitlist": { path: "/library-waitlist", permission: "library_waitlist.view", module: "waitlist", title: "Waitlist", icon: ListOrdered },
+  "/library-attendance": { path: "/library-attendance", permission: "library_attendance.view", module: "attendance", title: "Attendance", icon: Clock },
+  "/library-lockers":  { path: "/library-lockers",  permission: "library_lockers.view",  module: "lockers",  title: "Lockers",  icon: Lock },
+  "/library-subscriptions": { path: "/library-subscriptions", permission: "library_members.view", module: "subscriptions", title: "Subscriptions", icon: BookOpen },
+  "/library-payments": { path: "/library-payments", permission: "library_payments.view", module: "payments",  title: "Library Payments", icon: CreditCard },
+  "/library-reports":  { path: "/library-reports",  permission: "library.view",           module: "reports",   title: "Library Reports",  icon: BarChart3 },
+  "/library-plans":    { path: "/library-plans",    permission: "library.view",           module: "plans",     title: "Plans",            icon: Receipt },
 }
 
-/**
- * Get route config for a path
- */
 export function getRouteConfig(path: string): RouteConfig | undefined {
-  // Try exact match first
-  if (ROUTE_CONFIGS[path]) {
-    return ROUTE_CONFIGS[path]
-  }
-
-  // Try to find parent route (for detail pages like /tenants/123)
+  if (ROUTE_CONFIGS[path]) return ROUTE_CONFIGS[path]
   const basePath = "/" + path.split("/").filter(Boolean)[0]
   return ROUTE_CONFIGS[basePath]
 }
 
-/**
- * Check if user can access a route
- */
 export function canAccessRoute(
   path: string,
   options: FilterOptions
 ): boolean {
   const config = getRouteConfig(path)
-  if (!config) return true // Unknown routes are accessible
+  if (!config) return true
 
-  // Check feature first
-  if (config.feature && !options.isFeatureEnabled(config.feature)) {
-    return false
-  }
+  if (config.module && !options.isModuleEnabled(config.module)) return false
 
-  // Platform admins can access all
-  if (options.isPlatformAdmin) {
-    return true
-  }
+  if (options.isPlatformAdmin) return true
 
-  // No permission required
-  if (!config.permission) {
-    return true
-  }
+  if (!config.permission) return true
 
   return options.hasPermission(config.permission)
 }

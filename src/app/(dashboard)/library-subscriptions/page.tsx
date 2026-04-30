@@ -255,7 +255,7 @@ export default function LibrarySubscriptionsPage() {
       description="All library memberships and subscription periods"
       icon={Clock}
       permission="library_members.view"
-      feature="library"
+      module="subscriptions"
       config={LIBRARY_MEMBERSHIP_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

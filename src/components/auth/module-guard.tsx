@@ -10,39 +10,33 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ToggleLeft, ArrowLeft, Settings } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 
-interface FeatureGuardProps {
+interface ModuleGuardProps {
   module: ModuleKey
-  feature: string
   children: ReactNode
+  /** Override the displayed module name */
   title?: string
+  /** Override the displayed description */
   description?: string
 }
 
 /**
- * Page-level guard that blocks access when a specific feature within a module is disabled.
- * Both the module AND the feature must be enabled for children to render.
+ * Page-level guard that blocks access when a module is disabled.
+ * Shows a "module disabled" page with a link to the Feature Control Center.
  *
  * Usage:
- *   <FeatureGuard module="billing" feature="autoBilling">
- *     <AutoBillingSettings />
- *   </FeatureGuard>
+ *   <ModuleGuard module="expenses">
+ *     <ExpensesContent />
+ *   </ModuleGuard>
  */
-export function FeatureGuard({
-  module,
-  feature,
-  children,
-  title,
-  description,
-}: FeatureGuardProps) {
-  const { isFeatureEnabled, loading } = useFeatures()
+export function ModuleGuard({ module, children, title, description }: ModuleGuardProps) {
+  const { isModuleEnabled, loading } = useFeatures()
 
   if (loading) return <PageLoading />
 
-  if (!isFeatureEnabled(module, feature)) {
+  if (!isModuleEnabled(module)) {
     const def = MODULE_MAP.get(module)
-    const featureDef = def?.features.find((f) => f.key === feature)
-    const displayName = title ?? featureDef?.name ?? feature
-    const displayDesc = description ?? featureDef?.description ?? "This feature is currently disabled."
+    const moduleName = title ?? def?.name ?? module
+    const moduleDesc = description ?? def?.description ?? "This module is currently disabled."
 
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -53,12 +47,12 @@ export function FeatureGuard({
                 <ToggleLeft className="h-8 w-8 text-muted-foreground" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-xl font-semibold">Feature Disabled</h2>
-                <p className="text-lg font-medium text-primary">{displayName}</p>
-                <p className="text-sm text-muted-foreground">{displayDesc}</p>
+                <h2 className="text-xl font-semibold">Module Disabled</h2>
+                <p className="text-lg font-medium text-primary">{moduleName}</p>
+                <p className="text-sm text-muted-foreground">{moduleDesc}</p>
               </div>
               <p className="text-sm text-muted-foreground">
-                This feature has been disabled for your workspace. Enable it in the Feature Control Center.
+                This module has been disabled for your workspace. Enable it in the Feature Control Center.
               </p>
               <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
                 <Link href="/dashboard">

@@ -303,7 +303,7 @@ export default function ExitClearancePage() {
         description="Manage tenant checkouts and settlements"
         icon={LogOut}
         permission="exit_clearance.initiate"
-        feature="exitClearance"
+        module="exitClearance"
         config={EXIT_CLEARANCE_LIST_CONFIG}
         filters={filters}
         groupByOptions={groupByOptions}

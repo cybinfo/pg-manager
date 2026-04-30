@@ -293,7 +293,7 @@ export default function VendorsPage() {
       description="Manage vendors and suppliers for bill payments"
       icon={Building2}
       permission="expenses.view"
-      feature="expenses"
+      module="expenses"
       config={VENDOR_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

@@ -242,7 +242,7 @@ export default function ApprovalsPage() {
         description="Review and manage tenant requests"
         icon={ClipboardCheck}
         permission="tenants.view"
-        feature="approvals"
+        module="approvals"
         config={APPROVALS_LIST_CONFIG}
         columns={columns}
         filters={filters}

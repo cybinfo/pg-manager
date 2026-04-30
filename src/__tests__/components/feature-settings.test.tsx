@@ -1,203 +1,119 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { FeatureSettings } from '@/app/(dashboard)/settings/_components/FeatureSettings'
-import type { FeatureFlags } from '@/lib/features'
+import type { WorkspaceModuleConfig } from '@/lib/features'
 
-// Mock the settings mutation hook
-const mockSave = jest.fn()
-let mockSaving = false
-jest.mock('@/lib/hooks/useSettingsMutation', () => ({
-  useSettingsMutation: () => ({ saving: mockSaving, save: mockSave }),
-}))
+// Mock useFeatureManagement
+const mockSaveConfig = jest.fn()
+const mockSetConfig = jest.fn()
+const mockSetSelectedWorkspaceId = jest.fn()
 
-const allEnabled: FeatureFlags = {}
-
-const withSomeDisabled: FeatureFlags = {
-  food: false,
-  demoMode: false,
-  whatsappSummaries: false,
+const defaultConfig: WorkspaceModuleConfig = {
+  expenses: { enabled: true, features: {} },
+  billing: { enabled: false, features: {} },
 }
 
-function setup(flags: FeatureFlags = allEnabled) {
-  const setFeatureFlags = jest.fn()
-  render(
-    <FeatureSettings
-      featureFlags={flags}
-      setFeatureFlags={setFeatureFlags}
-      config={null}
-    />
-  )
-  return { setFeatureFlags }
+let mockManagement = {
+  workspaces: [
+    { id: 'ws-1', name: 'Green Hills PG', business_type: 'pg', module_config: defaultConfig },
+  ],
+  selectedWorkspaceId: 'ws-1' as string | null,
+  setSelectedWorkspaceId: mockSetSelectedWorkspaceId,
+  selectedConfig: defaultConfig,
+  configs: new Map([['ws-1', defaultConfig]]),
+  setConfig: mockSetConfig,
+  saveConfig: mockSaveConfig,
+  loading: false,
+  saving: false,
+}
+
+jest.mock('@/lib/features/use-features', () => ({
+  useFeatureManagement: () => mockManagement,
+}))
+
+jest.mock('@/lib/toast-helpers', () => ({
+  showSuccess: jest.fn(),
+  showError: jest.fn(),
+}))
+
+function setup() {
+  return render(<FeatureSettings />)
 }
 
 describe('FeatureSettings', () => {
   beforeEach(() => {
-    mockSave.mockClear()
-    mockSaving = false
+    mockSaveConfig.mockClear()
+    mockSetConfig.mockClear()
+    mockSetSelectedWorkspaceId.mockClear()
+    mockManagement = {
+      workspaces: [
+        { id: 'ws-1', name: 'Green Hills PG', business_type: 'pg', module_config: defaultConfig },
+        { id: 'ws-2', name: 'PowerFit Gym',   business_type: 'gym', module_config: {} },
+      ],
+      selectedWorkspaceId: 'ws-1',
+      setSelectedWorkspaceId: mockSetSelectedWorkspaceId,
+      selectedConfig: defaultConfig,
+      configs: new Map([['ws-1', defaultConfig], ['ws-2', {}]]),
+      setConfig: mockSetConfig,
+      saveConfig: mockSaveConfig,
+      loading: false,
+      saving: false,
+    }
   })
 
-  describe('Trial mode banner', () => {
-    it('shows the trial mode message', () => {
+  describe('Business list (left pane)', () => {
+    it('shows all workspaces in left pane', () => {
       setup()
-      expect(screen.getByText(/Trial Mode/)).toBeInTheDocument()
+      expect(screen.getByText('Green Hills PG')).toBeInTheDocument()
+      expect(screen.getByText('PowerFit Gym')).toBeInTheDocument()
+    })
+
+    it('calls setSelectedWorkspaceId when a workspace is clicked', () => {
+      setup()
+      fireEvent.click(screen.getByText('PowerFit Gym'))
+      expect(mockSetSelectedWorkspaceId).toHaveBeenCalledWith('ws-2')
     })
   })
 
-  describe('Feature count summary', () => {
-    it('shows "17 of 17 features enabled" when all flags are empty (defaults to on)', () => {
-      setup(allEnabled)
-      expect(screen.getByText(/17 of 17 features enabled/)).toBeInTheDocument()
-    })
-
-    it('reflects disabled features in the count', () => {
-      setup(withSomeDisabled)
-      expect(screen.getByText(/14 of 17 features enabled/)).toBeInTheDocument()
-    })
-  })
-
-  describe('Domain tabs', () => {
-    it('renders PG Manager tab', () => {
+  describe('Module count summary', () => {
+    it('shows module count', () => {
       setup()
-      expect(screen.getByRole('tab', { name: 'PG Manager' })).toBeInTheDocument()
-    })
-
-    it('renders Library Manager tab', () => {
-      setup()
-      expect(screen.getByRole('tab', { name: 'Library Manager' })).toBeInTheDocument()
-    })
-
-    it('renders Platform Tools tab', () => {
-      setup()
-      expect(screen.getByRole('tab', { name: 'Platform Tools' })).toBeInTheDocument()
-    })
-
-    it('PG Manager tab is selected by default', () => {
-      setup()
-      const pgTab = screen.getByRole('tab', { name: 'PG Manager' })
-      expect(pgTab).toHaveAttribute('data-state', 'active')
+      // defaultConfig has 1 enabled (expenses), total is MODULES_CATALOG.length (26)
+      expect(screen.getByText(/1 of 26 modules enabled/)).toBeInTheDocument()
     })
   })
 
   describe('Module cards', () => {
-    it('shows PG module names in the default tab', () => {
+    it('shows all 26 module cards', () => {
       setup()
-      expect(screen.getByText('Operations')).toBeInTheDocument()
-      expect(screen.getByText('Billing & Finance')).toBeInTheDocument()
-      expect(screen.getByText('Utilities')).toBeInTheDocument()
-      expect(screen.getByText('Communications')).toBeInTheDocument()
-      expect(screen.getByText('Marketing')).toBeInTheDocument()
-    })
-
-    it('does not show Library module on PG tab', () => {
-      setup()
-      // Library Management feature is in Library tab, not PG tab
-      expect(screen.queryByText('Library Module')).not.toBeInTheDocument()
-    })
-  })
-
-  describe('Expand/collapse feature list', () => {
-    it('feature items are hidden before expanding', () => {
-      setup()
-      // Food & Meals is in Operations module — not visible until expanded
-      expect(screen.queryByText('Food & Meals')).not.toBeInTheDocument()
-    })
-
-    it('expands module to show individual features when chevron is clicked', () => {
-      setup()
-      // Find the expand button for "Operations" card
-      const expandButtons = screen.getAllByTitle('Expand features')
-      fireEvent.click(expandButtons[0]) // first card = Operations
-      expect(screen.getByText('Food & Meals')).toBeInTheDocument()
-      expect(screen.getByText('Visitor Log')).toBeInTheDocument()
-    })
-
-    it('collapses expanded module when chevron is clicked again', () => {
-      setup()
-      const expandButtons = screen.getAllByTitle('Expand features')
-      fireEvent.click(expandButtons[0])
-      expect(screen.getByText('Food & Meals')).toBeInTheDocument()
-
-      const collapseButton = screen.getByTitle('Collapse')
-      fireEvent.click(collapseButton)
-      expect(screen.queryByText('Food & Meals')).not.toBeInTheDocument()
-    })
-  })
-
-  describe('Individual feature toggles', () => {
-    it('calls setFeatureFlags when a feature toggle is clicked', () => {
-      const { setFeatureFlags } = setup()
-      const expandButtons = screen.getAllByTitle('Expand features')
-      fireEvent.click(expandButtons[0]) // expand Operations
-
-      // Find the toggle button for Approvals Hub
-      const featureRow = screen.getByText('Approvals Hub').closest('div[class*="rounded-lg"]')!
-      const toggle = featureRow.querySelector('button')!
-      fireEvent.click(toggle)
-
-      expect(setFeatureFlags).toHaveBeenCalledWith(
-        expect.objectContaining({ approvals: false })
-      )
-    })
-
-    it('shows disabled styling on toggled-off features', () => {
-      setup({ ...allEnabled, food: false })
-      const expandButtons = screen.getAllByTitle('Expand features')
-      fireEvent.click(expandButtons[0]) // expand Operations
-
-      const foodLabel = screen.getByText('Food & Meals')
-      expect(foodLabel).toHaveClass('text-muted-foreground')
-    })
-  })
-
-  describe('Module-level toggle', () => {
-    it('sets all features in module to true when module toggle is clicked (all off → on)', () => {
-      const { setFeatureFlags } = setup({
-        approvals: false,
-        exitClearance: false,
-        architectureView: false,
-        food: false,
-        visitors: false,
-      })
-      // The Operations module toggle — each Card has a module-level toggle button
-      const moduleToggles = screen.getAllByTitle(/Disable all in module|Enable all in module/)
-      fireEvent.click(moduleToggles[0])
-
-      expect(setFeatureFlags).toHaveBeenCalledWith(
-        expect.objectContaining({
-          approvals: true,
-          exitClearance: true,
-          architectureView: true,
-          food: true,
-          visitors: true,
-        })
-      )
+      // Check a sample of module names
+      expect(screen.getByText('Expenses')).toBeInTheDocument()
+      expect(screen.getByText('Billing')).toBeInTheDocument()
+      expect(screen.getByText('Rooms')).toBeInTheDocument()
     })
   })
 
   describe('Save button', () => {
-    it('renders Save Changes button in summary bar', () => {
+    it('calls saveConfig when Save Changes is clicked', async () => {
+      mockSaveConfig.mockResolvedValue(true)
       setup()
-      const saveButtons = screen.getAllByRole('button', { name: /Save/i })
-      expect(saveButtons.length).toBeGreaterThan(0)
-    })
-
-    it('calls save with feature_flags when Save is clicked', async () => {
-      setup(withSomeDisabled)
-      const saveButtons = screen.getAllByRole('button', { name: /Save/i })
-      fireEvent.click(saveButtons[0])
-
-      expect(mockSave).toHaveBeenCalledWith(
-        { feature_flags: withSomeDisabled },
-        expect.objectContaining({ successMessage: 'Feature settings saved' })
-      )
+      fireEvent.click(screen.getAllByText('Save Changes')[0])
+      await waitFor(() => expect(mockSaveConfig).toHaveBeenCalledWith('ws-1'))
     })
   })
 
-  describe('Saving state', () => {
-    it('disables save buttons while saving', () => {
-      mockSaving = true
+  describe('Loading state', () => {
+    it('shows spinner when loading', () => {
+      mockManagement = { ...mockManagement, loading: true }
+      const { container } = setup()
+      expect(container.querySelector('.animate-spin')).toBeInTheDocument()
+    })
+  })
+
+  describe('No workspace selected', () => {
+    it('shows prompt when no workspace selected', () => {
+      mockManagement = { ...mockManagement, selectedWorkspaceId: null }
       setup()
-      const saveButtons = screen.getAllByRole('button', { name: /Save/i })
-      saveButtons.forEach((btn) => expect(btn).toBeDisabled())
+      expect(screen.getByText(/Select a business to configure/)).toBeInTheDocument()
     })
   })
 })

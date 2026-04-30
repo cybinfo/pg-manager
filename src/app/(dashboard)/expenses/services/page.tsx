@@ -374,7 +374,7 @@ export default function ServicePaymentsPage() {
       description="Track maintenance, repairs, and service expenses"
       icon={Hammer}
       permission="expenses.view"
-      feature="expenses"
+      module="expenses"
       config={SERVICE_PAYMENT_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

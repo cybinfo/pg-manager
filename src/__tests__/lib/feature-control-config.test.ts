@@ -1,307 +1,248 @@
-import {
-  DOMAIN_MODULES,
-  getModuleFeatureKeys,
-  isModuleFullyEnabled,
-  isModulePartiallyEnabled,
-  getDependentFeatures,
-  countEnabledFeatures,
-  type CoreModule,
-  type DomainModule,
-} from '@/lib/features/feature-control-config'
-import type { FeatureFlagKey } from '@/lib/features'
+/**
+ * Tests for the new modules catalog system (replaces feature-control-config)
+ */
+
+import { MODULES_CATALOG, MODULE_MAP, ALL_MODULE_KEYS } from '@/lib/features/modules-catalog'
+import { isModuleEnabled, isFeatureEnabled, enableModule, disableModule, toggleFeature, migrateOldFlagsToModuleConfig, isOldFlatFormat, countEnabledModules } from '@/lib/features/checks'
+import type { ModuleKey, WorkspaceModuleConfig } from '@/lib/features/types'
 
 // ============================================================
-// DOMAIN_MODULES structure
+// MODULES_CATALOG structure
 // ============================================================
 
-describe('DOMAIN_MODULES', () => {
-  it('exports exactly 3 domains', () => {
-    expect(DOMAIN_MODULES).toHaveLength(3)
-  })
-
-  it('domains have expected ids in order', () => {
-    const ids = DOMAIN_MODULES.map((d) => d.id)
-    expect(ids).toEqual(['pg', 'library', 'platform'])
-  })
-
-  it('every domain has required fields', () => {
-    for (const domain of DOMAIN_MODULES) {
-      expect(typeof domain.id).toBe('string')
-      expect(typeof domain.name).toBe('string')
-      expect(typeof domain.description).toBe('string')
-      expect(typeof domain.tagline).toBe('string')
-      expect(Array.isArray(domain.modules)).toBe(true)
-      expect(domain.modules.length).toBeGreaterThan(0)
-    }
+describe('MODULES_CATALOG', () => {
+  it('exports exactly 26 modules', () => {
+    expect(MODULES_CATALOG).toHaveLength(26)
   })
 
   it('every module has required fields', () => {
-    for (const domain of DOMAIN_MODULES) {
-      for (const mod of domain.modules) {
-        expect(typeof mod.id).toBe('string')
-        expect(typeof mod.name).toBe('string')
-        expect(typeof mod.description).toBe('string')
-        expect(Array.isArray(mod.features)).toBe(true)
-        expect(mod.features.length).toBeGreaterThan(0)
-      }
+    for (const mod of MODULES_CATALOG) {
+      expect(typeof mod.key).toBe('string')
+      expect(typeof mod.name).toBe('string')
+      expect(typeof mod.description).toBe('string')
+      expect(Array.isArray(mod.features)).toBe(true)
     }
   })
 
   it('every feature has key, name, and description', () => {
-    for (const domain of DOMAIN_MODULES) {
-      for (const mod of domain.modules) {
-        for (const feature of mod.features) {
-          expect(typeof feature.key).toBe('string')
-          expect(typeof feature.name).toBe('string')
-          expect(typeof feature.description).toBe('string')
-        }
+    for (const mod of MODULES_CATALOG) {
+      for (const feature of mod.features) {
+        expect(typeof feature.key).toBe('string')
+        expect(typeof feature.name).toBe('string')
+        expect(typeof feature.description).toBe('string')
       }
     }
   })
 
-  it('PG domain has 5 modules', () => {
-    const pg = DOMAIN_MODULES.find((d) => d.id === 'pg')!
-    expect(pg.modules).toHaveLength(5)
+  it('no duplicate module keys', () => {
+    const keys = MODULES_CATALOG.map((m) => m.key)
+    expect(new Set(keys).size).toBe(keys.length)
   })
 
-  it('Library domain has 1 module with the library flag', () => {
-    const lib = DOMAIN_MODULES.find((d) => d.id === 'library')!
-    expect(lib.modules).toHaveLength(1)
-    expect(lib.modules[0].features.some((f) => f.key === 'library')).toBe(true)
-  })
-
-  it('Platform domain has 2 modules', () => {
-    const platform = DOMAIN_MODULES.find((d) => d.id === 'platform')!
-    expect(platform.modules).toHaveLength(2)
-  })
-
-  it('total feature count across all domains is 17', () => {
-    let count = 0
-    for (const domain of DOMAIN_MODULES) {
-      for (const mod of domain.modules) {
-        count += mod.features.length
-      }
+  it('includes all 26 expected module keys', () => {
+    const expectedKeys: ModuleKey[] = [
+      'properties', 'rooms', 'tenants', 'members', 'people',
+      'billing', 'payments', 'refunds', 'subscriptions', 'plans',
+      'expenses', 'meters', 'attendance', 'seats', 'sections',
+      'lockers', 'waitlist', 'complaints', 'notices', 'visitors',
+      'staff', 'reports', 'approvals', 'exitClearance', 'activityLog', 'inquiries',
+    ]
+    for (const key of expectedKeys) {
+      expect(MODULES_CATALOG.some((m) => m.key === key)).toBe(true)
     }
-    expect(count).toBe(17)
   })
+})
 
-  it('no duplicate feature keys across all domains', () => {
-    const keys: string[] = []
-    for (const domain of DOMAIN_MODULES) {
-      for (const mod of domain.modules) {
-        for (const feature of mod.features) {
-          keys.push(feature.key)
-        }
-      }
+// ============================================================
+// MODULE_MAP
+// ============================================================
+
+describe('MODULE_MAP', () => {
+  it('has an entry for every module', () => {
+    for (const mod of MODULES_CATALOG) {
+      expect(MODULE_MAP.has(mod.key)).toBe(true)
     }
-    const unique = new Set(keys)
-    expect(unique.size).toBe(keys.length)
+  })
+
+  it('returns correct definition for a known key', () => {
+    const def = MODULE_MAP.get('expenses')
+    expect(def?.name).toBe('Expenses')
   })
 })
 
 // ============================================================
-// getModuleFeatureKeys
+// ALL_MODULE_KEYS
 // ============================================================
 
-describe('getModuleFeatureKeys', () => {
-  const mockModule: CoreModule = {
-    id: 'test',
-    name: 'Test',
-    description: 'Test module',
-    features: [
-      { key: 'approvals', name: 'Approvals', description: '' },
-      { key: 'food', name: 'Food', description: '' },
-    ],
-  }
-
-  it('returns all feature keys from a module', () => {
-    expect(getModuleFeatureKeys(mockModule)).toEqual(['approvals', 'food'])
-  })
-
-  it('returns empty array for module with no features', () => {
-    const empty: CoreModule = { ...mockModule, features: [] }
-    expect(getModuleFeatureKeys(empty)).toEqual([])
+describe('ALL_MODULE_KEYS', () => {
+  it('has same length as MODULES_CATALOG', () => {
+    expect(ALL_MODULE_KEYS).toHaveLength(MODULES_CATALOG.length)
   })
 })
 
 // ============================================================
-// isModuleFullyEnabled
+// isModuleEnabled
 // ============================================================
 
-describe('isModuleFullyEnabled', () => {
-  const billingMod: CoreModule = {
-    id: 'billing',
-    name: 'Billing',
-    description: '',
-    features: [
-      { key: 'autoBilling', name: 'Auto Billing', description: '' },
-      { key: 'expenses', name: 'Expenses', description: '' },
-    ],
-  }
-
-  it('returns true when all features are absent from flags (treated as enabled by default)', () => {
-    expect(isModuleFullyEnabled(billingMod, {})).toBe(true)
+describe('isModuleEnabled', () => {
+  it('returns false for empty config', () => {
+    expect(isModuleEnabled({}, 'expenses')).toBe(false)
   })
 
-  it('returns true when all features are explicitly true', () => {
-    expect(isModuleFullyEnabled(billingMod, { autoBilling: true, expenses: true })).toBe(true)
+  it('returns false for null config', () => {
+    expect(isModuleEnabled(null, 'expenses')).toBe(false)
   })
 
-  it('returns false when any feature is explicitly false', () => {
-    expect(isModuleFullyEnabled(billingMod, { autoBilling: false, expenses: true })).toBe(false)
+  it('returns true when module is enabled', () => {
+    const config: WorkspaceModuleConfig = { expenses: { enabled: true, features: {} } }
+    expect(isModuleEnabled(config, 'expenses')).toBe(true)
   })
 
-  it('returns false when all features are disabled', () => {
-    expect(isModuleFullyEnabled(billingMod, { autoBilling: false, expenses: false })).toBe(false)
+  it('returns false when module is explicitly disabled', () => {
+    const config: WorkspaceModuleConfig = { expenses: { enabled: false, features: {} } }
+    expect(isModuleEnabled(config, 'expenses')).toBe(false)
   })
 })
 
 // ============================================================
-// isModulePartiallyEnabled
+// isFeatureEnabled
 // ============================================================
 
-describe('isModulePartiallyEnabled', () => {
-  const opsMod: CoreModule = {
-    id: 'ops',
-    name: 'Operations',
-    description: '',
-    features: [
-      { key: 'approvals', name: 'Approvals', description: '' },
-      { key: 'food', name: 'Food', description: '' },
-    ],
-  }
-
-  it('returns true when all features are missing from flags (defaults to on)', () => {
-    expect(isModulePartiallyEnabled(opsMod, {})).toBe(true)
+describe('isFeatureEnabled', () => {
+  it('returns false when module is disabled', () => {
+    const config: WorkspaceModuleConfig = { billing: { enabled: false, features: { autoBilling: true } } }
+    expect(isFeatureEnabled(config, 'billing', 'autoBilling')).toBe(false)
   })
 
-  it('returns true when at least one feature is enabled', () => {
-    expect(isModulePartiallyEnabled(opsMod, { approvals: true, food: false })).toBe(true)
+  it('returns false when feature is not set', () => {
+    const config: WorkspaceModuleConfig = { billing: { enabled: true, features: {} } }
+    expect(isFeatureEnabled(config, 'billing', 'autoBilling')).toBe(false)
   })
 
-  it('returns false when all features are explicitly false', () => {
-    expect(isModulePartiallyEnabled(opsMod, { approvals: false, food: false })).toBe(false)
+  it('returns true when module is enabled and feature is true', () => {
+    const config: WorkspaceModuleConfig = { billing: { enabled: true, features: { autoBilling: true } } }
+    expect(isFeatureEnabled(config, 'billing', 'autoBilling')).toBe(true)
   })
 })
 
 // ============================================================
-// getDependentFeatures
+// enableModule / disableModule
 // ============================================================
 
-describe('getDependentFeatures', () => {
-  const domain: DomainModule = {
-    id: 'pg',
-    name: 'PG',
-    description: '',
-    tagline: '',
-    modules: [
-      {
-        id: 'mod1',
-        name: 'Mod 1',
-        description: '',
-        features: [
-          { key: 'autoBilling', name: 'Auto Billing', description: '' },
-          {
-            key: 'emailReminders',
-            name: 'Email Reminders',
-            description: '',
-            dependsOn: ['autoBilling'],
-          },
-          {
-            key: 'whatsappSummaries',
-            name: 'WhatsApp',
-            description: '',
-            dependsOn: ['autoBilling'],
-          },
-        ],
-      },
-      {
-        id: 'mod2',
-        name: 'Mod 2',
-        description: '',
-        features: [{ key: 'library', name: 'Library', description: '' }],
-      },
-    ],
-  }
-
-  it('returns features that depend on the given key', () => {
-    const dependents = getDependentFeatures('autoBilling', domain)
-    expect(dependents).toHaveLength(2)
-    expect(dependents.map((d) => d.key)).toContain('emailReminders')
-    expect(dependents.map((d) => d.key)).toContain('whatsappSummaries')
+describe('enableModule', () => {
+  it('adds module to config', () => {
+    const result = enableModule({}, 'expenses')
+    expect(result.expenses?.enabled).toBe(true)
   })
 
-  it('returns empty array when no features depend on the key', () => {
-    const dependents = getDependentFeatures('library', domain)
-    expect(dependents).toHaveLength(0)
+  it('preserves existing features when enabling', () => {
+    const config: WorkspaceModuleConfig = { expenses: { enabled: false, features: { vendorManagement: true } } }
+    const result = enableModule(config, 'expenses')
+    expect(result.expenses?.enabled).toBe(true)
+    expect(result.expenses?.features.vendorManagement).toBe(true)
+  })
+})
+
+describe('disableModule', () => {
+  it('sets enabled to false', () => {
+    const config: WorkspaceModuleConfig = { expenses: { enabled: true, features: {} } }
+    const result = disableModule(config, 'expenses')
+    expect(result.expenses?.enabled).toBe(false)
   })
 
-  it('searches across all modules in the domain', () => {
-    const crossDomain: DomainModule = {
-      ...domain,
-      modules: [
-        ...domain.modules,
-        {
-          id: 'mod3',
-          name: 'Mod 3',
-          description: '',
-          features: [
-            {
-              key: 'reports',
-              name: 'Reports',
-              description: '',
-              dependsOn: ['autoBilling'],
-            },
-          ],
-        },
-      ],
+  it('does nothing for module not in config', () => {
+    const result = disableModule({}, 'expenses')
+    expect(result.expenses).toBeUndefined()
+  })
+})
+
+// ============================================================
+// toggleFeature
+// ============================================================
+
+describe('toggleFeature', () => {
+  it('enables a feature', () => {
+    const config: WorkspaceModuleConfig = { billing: { enabled: true, features: {} } }
+    const result = toggleFeature(config, 'billing', 'autoBilling', true)
+    expect(result.billing?.features.autoBilling).toBe(true)
+  })
+
+  it('disables a feature', () => {
+    const config: WorkspaceModuleConfig = { billing: { enabled: true, features: { autoBilling: true } } }
+    const result = toggleFeature(config, 'billing', 'autoBilling', false)
+    expect(result.billing?.features.autoBilling).toBe(false)
+  })
+})
+
+// ============================================================
+// migrateOldFlagsToModuleConfig
+// ============================================================
+
+describe('migrateOldFlagsToModuleConfig', () => {
+  it('maps expenses flag', () => {
+    const result = migrateOldFlagsToModuleConfig({ expenses: true })
+    expect(result.expenses?.enabled).toBe(true)
+  })
+
+  it('enables all library modules when library flag is true', () => {
+    const result = migrateOldFlagsToModuleConfig({ library: true })
+    expect(result.members?.enabled).toBe(true)
+    expect(result.sections?.enabled).toBe(true)
+    expect(result.seats?.enabled).toBe(true)
+    expect(result.attendance?.enabled).toBe(true)
+    expect(result.lockers?.enabled).toBe(true)
+    expect(result.waitlist?.enabled).toBe(true)
+    expect(result.subscriptions?.enabled).toBe(true)
+    expect(result.plans?.enabled).toBe(true)
+  })
+
+  it('always enables core modules regardless of flags', () => {
+    const result = migrateOldFlagsToModuleConfig({})
+    expect(result.properties?.enabled).toBe(true)
+    expect(result.rooms?.enabled).toBe(true)
+    expect(result.tenants?.enabled).toBe(true)
+    expect(result.billing?.enabled).toBe(true)
+    expect(result.payments?.enabled).toBe(true)
+  })
+})
+
+// ============================================================
+// isOldFlatFormat
+// ============================================================
+
+describe('isOldFlatFormat', () => {
+  it('detects old flat format', () => {
+    expect(isOldFlatFormat({ expenses: true, library: false })).toBe(true)
+  })
+
+  it('returns false for new nested format', () => {
+    expect(isOldFlatFormat({ expenses: { enabled: true, features: {} } })).toBe(false)
+  })
+
+  it('returns false for empty object', () => {
+    expect(isOldFlatFormat({})).toBe(false)
+  })
+
+  it('returns false for null', () => {
+    expect(isOldFlatFormat(null)).toBe(false)
+  })
+})
+
+// ============================================================
+// countEnabledModules
+// ============================================================
+
+describe('countEnabledModules', () => {
+  it('returns 0 for empty config', () => {
+    expect(countEnabledModules({})).toBe(0)
+  })
+
+  it('counts correctly', () => {
+    const config: WorkspaceModuleConfig = {
+      expenses: { enabled: true, features: {} },
+      billing: { enabled: true, features: {} },
+      rooms: { enabled: false, features: {} },
     }
-    const dependents = getDependentFeatures('autoBilling', crossDomain)
-    expect(dependents).toHaveLength(3)
-  })
-
-  it('returns empty for a key with no dependsOn defined anywhere', () => {
-    expect(getDependentFeatures('demoMode' as FeatureFlagKey, domain)).toHaveLength(0)
-  })
-})
-
-// ============================================================
-// countEnabledFeatures
-// ============================================================
-
-describe('countEnabledFeatures', () => {
-  it('counts all as enabled when flags is empty (defaults to on)', () => {
-    const { enabled, total } = countEnabledFeatures({})
-    expect(total).toBe(17)
-    expect(enabled).toBe(17)
-  })
-
-  it('counts correctly when some features are disabled', () => {
-    const { enabled, total } = countEnabledFeatures({
-      approvals: false,
-      food: false,
-      library: false,
-    })
-    expect(total).toBe(17)
-    expect(enabled).toBe(14) // 17 - 3 disabled
-  })
-
-  it('counts zero enabled when all known flags are false', () => {
-    const allOff: Record<string, boolean> = {}
-    for (const domain of DOMAIN_MODULES) {
-      for (const mod of domain.modules) {
-        for (const feature of mod.features) {
-          allOff[feature.key] = false
-        }
-      }
-    }
-    const { enabled, total } = countEnabledFeatures(allOff)
-    expect(total).toBe(17)
-    expect(enabled).toBe(0)
-  })
-
-  it('ignores unknown keys in flags', () => {
-    const { total } = countEnabledFeatures({ unknownKey: true, anotherKey: false })
-    expect(total).toBe(17)
+    expect(countEnabledModules(config)).toBe(2)
   })
 })

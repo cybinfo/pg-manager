@@ -26,7 +26,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getNowISO } from "@/lib/date-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { PageHeader, TableBadge, EmptyState } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
@@ -239,7 +239,7 @@ export default function MiscCategoriesPage() {
   }
 
   return (
-    <FeatureGuard feature="expenses">
+    <ModuleGuard module="expenses">
       <PermissionGuard permission="expenses.view">
         <div className="space-y-6">
           {ConfirmDialogElement}
@@ -417,6 +417,6 @@ export default function MiscCategoriesPage() {
           </Dialog>
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }

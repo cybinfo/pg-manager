@@ -52,6 +52,7 @@ import {
   Lock,
   ToggleLeft,
   ShieldCheck,
+  Inbox,
 } from "lucide-react"
 import { useSidebarOrder } from "@/lib/hooks/useSidebarOrder"
 import { showSuccess } from "@/lib/toast-helpers"
@@ -63,8 +64,8 @@ import { DemoModeProvider, DemoBanner, DemoWatermark } from "@/lib/demo-mode"
 import { DashboardShortcuts } from "@/components/dashboard-shortcuts"
 import { CommandPalette } from "@/components/command-palette"
 import { useFeatures } from "@/lib/features/use-features"
-import { FeatureFlagKey } from "@/lib/features"
-import { getPathPermissions, getPathFeatures, DASHBOARD_MOBILE_NAV, filterNavigation } from "@/lib/navigation/config"
+import type { ModuleKey } from "@/lib/features"
+import { getPathPermissions, getPathModules, DASHBOARD_MOBILE_NAV, filterNavigation } from "@/lib/navigation/config"
 import { brandGradient } from "@/lib/design-tokens"
 import { NotificationBell } from "@/components/ui/notification-bell"
 import { UserMenu } from "@/components/ui/user-menu"
@@ -76,105 +77,100 @@ type NavItem = {
   href: string
   icon: React.ComponentType<{ className?: string }>
   permission: string | null
-  feature: FeatureFlagKey | null
+  module: ModuleKey | null
   children?: NavItem[]
 }
 
-// Navigation items with required permissions and feature flags
-// null permission means always visible, string means need that permission
-// feature: null means always visible, string means feature must be enabled
+// Navigation items — module: null means always visible, string means module must be enabled
 const navigation: NavItem[] = [
-  // Common - Always visible
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, feature: null },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, module: null },
 
-  // PG Management - Collapsible dropdown (core PG items only)
+  // PG Management
   {
     name: "PG Management",
     href: "/properties",
     icon: Building2,
     permission: "properties.view",
-    feature: null,
+    module: null,
     children: [
-      { name: "Properties", href: "/properties", icon: Building2, permission: "properties.view", feature: null },
-      { name: "Rooms", href: "/rooms", icon: Home, permission: "rooms.view", feature: null },
-      { name: "Tenants", href: "/tenants", icon: Users, permission: "tenants.view", feature: null },
-      { name: "Bills", href: "/bills", icon: Receipt, permission: "bills.view", feature: null },
-      { name: "Payments", href: "/payments", icon: CreditCard, permission: "payments.view", feature: null },
-      { name: "Refunds", href: "/refunds", icon: Wallet, permission: "payments.view", feature: null },
-      { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", feature: "exitClearance" },
-      { name: "Architecture", href: "/architecture", icon: Grid3X3, permission: "properties.view", feature: "architectureView" },
+      { name: "Properties",      href: "/properties",    icon: Building2,   permission: "properties.view",         module: "properties" },
+      { name: "Rooms",           href: "/rooms",          icon: Home,        permission: "rooms.view",               module: "rooms" },
+      { name: "Tenants",         href: "/tenants",        icon: Users,       permission: "tenants.view",             module: "tenants" },
+      { name: "Bills",           href: "/bills",          icon: Receipt,     permission: "bills.view",               module: "billing" },
+      { name: "Payments",        href: "/payments",       icon: CreditCard,  permission: "payments.view",            module: "payments" },
+      { name: "Refunds",         href: "/refunds",        icon: Wallet,      permission: "payments.view",            module: "refunds" },
+      { name: "Exit Clearance",  href: "/exit-clearance", icon: UserMinus,   permission: "exit_clearance.initiate",  module: "exitClearance" },
+      { name: "Architecture",    href: "/architecture",   icon: Grid3X3,     permission: "properties.view",          module: "properties" },
     ]
   },
 
-  // Library Management - Collapsible dropdown
+  // Library Management
   {
     name: "Library",
     href: "/library",
     icon: Library,
     permission: "library.view",
-    feature: "library",
+    module: "members",
     children: [
-      { name: "Libraries", href: "/library", icon: Library, permission: "library.view", feature: "library" },
-      { name: "Sections", href: "/library-sections", icon: Grid3X3, permission: "library_sections.view", feature: "library" },
-      { name: "Seats", href: "/library-seats", icon: Armchair, permission: "library_seats.view", feature: "library" },
-      { name: "Members", href: "/library-members", icon: Users, permission: "library_members.view", feature: "library" },
-      { name: "Waitlist", href: "/library-waitlist", icon: ListOrdered, permission: "library_waitlist.view", feature: "library" },
-      { name: "Attendance", href: "/library-attendance", icon: Clock, permission: "library_attendance.view", feature: "library" },
-      { name: "Lockers", href: "/library-lockers", icon: Lock, permission: "library_lockers.view", feature: "library" },
-      { name: "Subscriptions", href: "/library-subscriptions", icon: BookOpen, permission: "library_members.view", feature: "library" },
-      { name: "Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", feature: "library" },
-      { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", feature: "library" },
-      { name: "Reports", href: "/library-reports", icon: BarChart3, permission: "library.view", feature: "library" },
+      { name: "Libraries",     href: "/library",               icon: Library,     permission: "library.view",            module: "members" },
+      { name: "Sections",      href: "/library-sections",      icon: Grid3X3,     permission: "library_sections.view",   module: "sections" },
+      { name: "Seats",         href: "/library-seats",         icon: Armchair,    permission: "library_seats.view",      module: "seats" },
+      { name: "Members",       href: "/library-members",       icon: Users,       permission: "library_members.view",    module: "members" },
+      { name: "Waitlist",      href: "/library-waitlist",      icon: ListOrdered, permission: "library_waitlist.view",   module: "waitlist" },
+      { name: "Attendance",    href: "/library-attendance",    icon: Clock,       permission: "library_attendance.view", module: "attendance" },
+      { name: "Lockers",       href: "/library-lockers",       icon: Lock,        permission: "library_lockers.view",    module: "lockers" },
+      { name: "Subscriptions", href: "/library-subscriptions", icon: BookOpen,    permission: "library_members.view",    module: "subscriptions" },
+      { name: "Payments",      href: "/library-payments",      icon: CreditCard,  permission: "library_payments.view",   module: "payments" },
+      { name: "Plans",         href: "/library-plans",         icon: Receipt,     permission: "library.view",            module: "plans" },
+      { name: "Reports",       href: "/library-reports",       icon: BarChart3,   permission: "library.view",            module: "reports" },
     ]
   },
 
-  // Meters - Collapsible dropdown (separate module)
+  // Meters
   {
     name: "Meters",
     href: "/meters",
     icon: Gauge,
     permission: "meters.view",
-    feature: null,
+    module: "meters",
     children: [
-      { name: "All Meters", href: "/meters", icon: Gauge, permission: "meters.view", feature: null },
-      { name: "Readings", href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", feature: "meterReadings" },
+      { name: "All Meters", href: "/meters",         icon: Gauge, permission: "meters.view",         module: "meters" },
+      { name: "Readings",   href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", module: "meters" },
     ]
   },
 
-  // Expenses - Collapsible dropdown (shared)
+  // Expenses
   {
     name: "Expenses",
     href: "/expenses",
     icon: TrendingDown,
     permission: "expenses.view",
-    feature: "expenses",
+    module: "expenses",
     children: [
-      { name: "Overview", href: "/expenses", icon: TrendingDown, permission: "expenses.view", feature: "expenses" },
-      { name: "Daily Spend", href: "/expenses/daily-spend", icon: ShoppingCart, permission: "expenses.view", feature: "expenses" },
-      { name: "Products", href: "/expenses/products", icon: Package, permission: "expenses.view", feature: "expenses" },
-      { name: "Vendors/Shops", href: "/expenses/vendors", icon: Store, permission: "expenses.view", feature: "expenses" },
-      { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", feature: "expenses" },
-      { name: "Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", feature: "expenses" },
-      { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", feature: "expenses" },
-      { name: "Misc Transactions", href: "/expenses/misc", icon: ArrowLeftRight, permission: "expenses.view", feature: "expenses" },
+      { name: "Overview",          href: "/expenses",                     icon: TrendingDown, permission: "expenses.view", module: "expenses" },
+      { name: "Daily Spend",       href: "/expenses/daily-spend",         icon: ShoppingCart, permission: "expenses.view", module: "expenses" },
+      { name: "Products",          href: "/expenses/products",            icon: Package,      permission: "expenses.view", module: "expenses" },
+      { name: "Vendors/Shops",     href: "/expenses/vendors",             icon: Store,        permission: "expenses.view", module: "expenses" },
+      { name: "Bill Payments",     href: "/expenses/bills",               icon: Receipt,      permission: "expenses.view", module: "expenses" },
+      { name: "Providers",         href: "/expenses/services/providers",  icon: Wrench,       permission: "expenses.view", module: "expenses" },
+      { name: "Services",          href: "/expenses/services",            icon: Hammer,       permission: "expenses.view", module: "expenses" },
+      { name: "Misc Transactions", href: "/expenses/misc",                icon: ArrowLeftRight, permission: "expenses.view", module: "expenses" },
     ]
   },
 
-  // Separate modules (not inside dropdowns)
-  { name: "People", href: "/people", icon: Contact, permission: "tenants.view", feature: null },
-  { name: "Visitors", href: "/visitors", icon: UserPlus, permission: "visitors.view", feature: "visitors" },
-  { name: "Complaints", href: "/complaints", icon: MessageSquare, permission: "complaints.view", feature: "complaints" },
-  { name: "Notices", href: "/notices", icon: Bell, permission: "notices.view", feature: "notices" },
-  { name: "Approvals", href: "/approvals", icon: ClipboardCheck, permission: "tenants.view", feature: "approvals" },
-  { name: "Reports", href: "/reports", icon: FileText, permission: "reports.view", feature: "reports" },
-  { name: "Activity Log", href: "/activity", icon: Activity, permission: null, feature: "activityLog" },
-  { name: "Staff", href: "/staff", icon: UserCog, permission: "staff.view", feature: null },
+  { name: "People",       href: "/people",     icon: Contact,       permission: "tenants.view",     module: "people" },
+  { name: "Visitors",     href: "/visitors",   icon: UserPlus,      permission: "visitors.view",    module: "visitors" },
+  { name: "Complaints",   href: "/complaints", icon: MessageSquare, permission: "complaints.view",  module: "complaints" },
+  { name: "Notices",      href: "/notices",    icon: Bell,          permission: "notices.view",     module: "notices" },
+  { name: "Approvals",    href: "/approvals",  icon: ClipboardCheck,permission: "tenants.view",     module: "approvals" },
+  { name: "Reports",      href: "/reports",    icon: FileText,      permission: "reports.view",     module: "reports" },
+  { name: "Activity Log", href: "/activity",   icon: Activity,      permission: null,               module: "activityLog" },
+  { name: "Staff",        href: "/staff",      icon: UserCog,       permission: "staff.view",       module: "staff" },
+  { name: "Inquiries",    href: "/inquiries",  icon: Inbox,         permission: "tenants.view",     module: "inquiries" },
 ]
 
-// Derive path-to-permission and path-to-feature maps from the navigation array
-// This is the single source of truth - no need to maintain separate hardcoded maps
 const pathPermissions = getPathPermissions(navigation)
-const pathFeatures = getPathFeatures(navigation)
+const pathModules = getPathModules(navigation)
 
 // Mobile bottom nav items are now sourced from DASHBOARD_MOBILE_NAV
 // and filtered by permissions/features inside DashboardLayoutInner
@@ -213,18 +209,17 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, profile, contexts, isLoading, logout, hasPermission, isPlatformAdmin } = useAuth()
   const currentContext = useCurrentContext()
 
-  // Use feature flags
-  const { isEnabled: isFeatureEnabled } = useFeatures()
+  // Use module flags
+  const { isModuleEnabled } = useFeatures()
 
   // NOTE: Setup redirect removed from dashboard layout.
   // The setup page (/setup) handles its own access check.
   // Redirecting from here caused false redirects for existing users
   // due to auth context race conditions (contexts load asynchronously).
 
-  // Filter navigation based on permissions AND feature flags
+  // Filter navigation based on permissions AND module flags
   const filterNavItem = (item: NavItem): NavItem | null => {
-    // Check feature flag first - if feature is disabled, hide the item
-    if (item.feature !== null && !isFeatureEnabled(item.feature)) {
+    if (item.module !== null && !isModuleEnabled(item.module)) {
       return null
     }
 
@@ -262,10 +257,10 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         href: "/admin",
         icon: Shield,
         permission: null,
-        feature: null,
+        module: null,
         children: [
-          { name: "Workspaces", href: "/admin", icon: Building2, permission: null, feature: null },
-          { name: "Platform Admins", href: "/admin/admins", icon: ShieldCheck, permission: null, feature: null },
+          { name: "Workspaces",      href: "/admin",        icon: Building2,   permission: null, module: null },
+          { name: "Platform Admins", href: "/admin/admins", icon: ShieldCheck, permission: null, module: null },
         ]
       }]
     : filteredNavigation
@@ -296,12 +291,12 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     const filterable = DASHBOARD_MOBILE_NAV.filter(item => item.href !== "#more")
     const filtered = filterNavigation(filterable, {
       hasPermission: (perm: string) => currentContext.isOwner || hasPermission(perm),
-      isFeatureEnabled,
+      isModuleEnabled,
       isPlatformAdmin,
     })
     // Always append the "More" item if it exists
     return moreItem ? [...filtered, moreItem] : filtered
-  }, [currentContext.isOwner, hasPermission, isFeatureEnabled, isPlatformAdmin])
+  }, [currentContext.isOwner, hasPermission, isModuleEnabled, isPlatformAdmin])
 
   // Get names array for reordering
   const navNames = finalNavigation.map(item => item.name)
@@ -373,10 +368,10 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   if (matchingPath) {
     const requiredPermission = pathPermissions[matchingPath]
-    const requiredFeature = pathFeatures[matchingPath]
+    const requiredModule = pathModules[matchingPath]
 
-    // Check feature flag first
-    if (requiredFeature && !isFeatureEnabled(requiredFeature)) {
+    // Check module flag first
+    if (requiredModule && !isModuleEnabled(requiredModule)) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
           <div className="text-center p-8">

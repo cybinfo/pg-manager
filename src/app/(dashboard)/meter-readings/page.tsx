@@ -312,7 +312,7 @@ export default function MeterReadingsPage() {
       description="Track electricity, water, and gas consumption"
       icon={Gauge}
       permission="meter_readings.view"
-      feature="meterReadings"
+      module="meters"
       config={METER_READING_LIST_CONFIG}
       filters={filters}
       groupByOptions={groupByOptions}

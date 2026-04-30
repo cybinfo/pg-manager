@@ -34,8 +34,9 @@ export { SessionTimeout, useSessionTimeout } from './session-timeout'
 // Email Verification
 export { EmailVerificationCard } from './email-verification-card'
 
-// Feature Gates
-export { FeatureGate, useFeatureCheck } from './feature-gate'
+// Module & Feature Gates
+export { ModuleGate, FeatureGate, useModuleCheck, useFeatureCheck } from './feature-gate'
+export { ModuleGuard } from './module-guard'
 export { FeatureGuard } from './feature-guard'
 
 // Auth Card Layout (shared layout for auth pages)

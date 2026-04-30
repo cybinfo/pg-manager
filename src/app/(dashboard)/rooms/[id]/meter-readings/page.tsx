@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column } from "@/components/ui/data-table"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -168,7 +168,7 @@ export default function RoomMeterReadingsPage() {
   }
 
   return (
-    <FeatureGuard feature="meterReadings">
+    <ModuleGuard module="meters">
       <PermissionGuard permission="meter_readings.view">
         <div className="space-y-6">
           <PageHeader
@@ -218,6 +218,6 @@ export default function RoomMeterReadingsPage() {
           )}
         </div>
       </PermissionGuard>
-    </FeatureGuard>
+    </ModuleGuard>
   )
 }
