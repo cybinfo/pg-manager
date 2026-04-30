@@ -209,8 +209,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, profile, contexts, isLoading, logout, hasPermission, isPlatformAdmin } = useAuth()
   const currentContext = useCurrentContext()
 
-  // Use module flags
-  const { isModuleEnabled } = useFeatures()
+  // Use module flags — skip module filtering while loading to avoid nav items
+  // disappearing on first render (would require two clicks to navigate)
+  const { isModuleEnabled, loading: modulesLoading } = useFeatures()
 
   // NOTE: Setup redirect removed from dashboard layout.
   // The setup page (/setup) handles its own access check.
@@ -219,7 +220,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   // Filter navigation based on permissions AND module flags
   const filterNavItem = (item: NavItem): NavItem | null => {
-    if (item.module !== null && !isModuleEnabled(item.module)) {
+    if (!modulesLoading && item.module !== null && !isModuleEnabled(item.module)) {
       return null
     }
 
@@ -291,12 +292,12 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     const filterable = DASHBOARD_MOBILE_NAV.filter(item => item.href !== "#more")
     const filtered = filterNavigation(filterable, {
       hasPermission: (perm: string) => currentContext.isOwner || hasPermission(perm),
-      isModuleEnabled,
+      isModuleEnabled: (mod) => modulesLoading || isModuleEnabled(mod),
       isPlatformAdmin,
     })
     // Always append the "More" item if it exists
     return moreItem ? [...filtered, moreItem] : filtered
-  }, [currentContext.isOwner, hasPermission, isModuleEnabled, isPlatformAdmin])
+  }, [currentContext.isOwner, hasPermission, isModuleEnabled, isPlatformAdmin, modulesLoading])
 
   // Get names array for reordering
   const navNames = finalNavigation.map(item => item.name)
@@ -370,8 +371,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     const requiredPermission = pathPermissions[matchingPath]
     const requiredModule = pathModules[matchingPath]
 
-    // Check module flag first
-    if (requiredModule && !isModuleEnabled(requiredModule)) {
+    // Check module flag first (skip during loading to avoid false blocks)
+    if (!modulesLoading && requiredModule && !isModuleEnabled(requiredModule)) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-background">
           <div className="text-center p-8">
