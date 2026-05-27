@@ -25,17 +25,8 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { getNowISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { ServicePayment, ServiceProvider, ServiceCategory, ServicePaymentFormData, TdsSection, PaymentMode } from "@/types/expense-enhanced.types"
+import { TDS_SECTION_SERVICE_OPTIONS as TDS_SECTION_OPTIONS, TDS_RATES } from "@/lib/constants/form-options"
 import { logger } from "@/lib/logger"
-
-const TDS_SECTION_OPTIONS = [
-  { value: "194C", label: "194C - Contractor (1%)" },
-  { value: "194J", label: "194J - Professional (10%)" },
-]
-
-const TDS_RATES: Record<string, number> = {
-  "194C": 1.0,
-  "194J": 10.0,
-}
 
 export default function EditServicePaymentPage({
   params,

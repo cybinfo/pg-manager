@@ -23,21 +23,8 @@ import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 
 import type { ServiceProvider, ServiceCategory, ServiceProviderFormData, TdsSection } from "@/types/expense-enhanced.types"
+import { TDS_SECTION_OPTIONS, TDS_RATES } from "@/lib/constants/form-options"
 import { logger } from "@/lib/logger"
-
-const TDS_SECTION_OPTIONS = [
-  { value: "194C", label: "194C - Contractor (1%)" },
-  { value: "194J", label: "194J - Professional (10%)" },
-  { value: "194I", label: "194I - Rent (10%)" },
-  { value: "194H", label: "194H - Commission (5%)" },
-]
-
-const TDS_RATES: Record<string, number> = {
-  "194C": 1.0,
-  "194J": 10.0,
-  "194I": 10.0,
-  "194H": 5.0,
-}
 
 export default function EditServiceProviderPage({
   params,
