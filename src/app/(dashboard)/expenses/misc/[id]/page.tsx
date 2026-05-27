@@ -26,7 +26,7 @@ import { PAYMENT_METHODS } from "@/lib/status"
 
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
-import { DetailSection, InfoRow, DetailPageAudit } from "@/components/ui"
+import { DetailSection, InfoRow, DetailPageTemplate } from "@/components/ui"
 import { TableBadge } from "@/components/ui/data-table"
 import { PageLoading } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -159,7 +159,11 @@ export default function MiscTransactionDetailPage({
           </div>
 
           {/* Content */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <DetailPageTemplate
+            layoutKey="misc-expense-detail"
+            entityType="misc_transaction"
+            record={transaction}
+          >
             {/* Transaction Details */}
             <DetailSection title="Transaction Details" icon={ArrowLeftRight}>
               <InfoRow
@@ -203,15 +207,7 @@ export default function MiscTransactionDetailPage({
                 <InfoRow label="Legacy ID" value={transaction.legacy_id} />
               </DetailSection>
             )}
-          </div>
-
-          {/* Audit Info */}
-          <div className="mt-8">
-            <DetailPageAudit
-              record={transaction}
-              entityType="misc_transaction"
-            />
-          </div>
+          </DetailPageTemplate>
         </div>
       </PermissionGuard>
     </ModuleGuard>

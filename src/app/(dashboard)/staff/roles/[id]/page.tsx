@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft,
   Loader2,
@@ -23,6 +22,7 @@ import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PERMISSION_GROUPS as permissionGroups } from "@/lib/auth/permission-groups"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
+import { DetailSection, DetailPageTemplate, InfoBanner } from "@/components/ui"
 
 interface Role {
   id: string
@@ -241,11 +241,11 @@ export default function EditRolePage() {
 
   if (!role) {
     return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <h2 className="text-lg font-semibold">Not Found</h2>
-          <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
-        </div>
-      )
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+        <h2 className="text-lg font-semibold">Not Found</h2>
+        <p className="text-muted-foreground mt-1">The requested record could not be found.</p>
+      </div>
+    )
   }
 
   const isSystemRole = role.is_system_role
@@ -253,6 +253,7 @@ export default function EditRolePage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {ConfirmDialogElement}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -264,9 +265,9 @@ export default function EditRolePage() {
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${isSystemRole ? "bg-info/10" : "bg-purple-100"}`}>
               {isSystemRole ? (
-                <Lock className={`h-5 w-5 text-info`} />
+                <Lock className="h-5 w-5 text-info" />
               ) : (
-                <Shield className={`h-5 w-5 text-purple-600`} />
+                <Shield className="h-5 w-5 text-purple-600" />
               )}
             </div>
             <div>
@@ -299,78 +300,66 @@ export default function EditRolePage() {
       </div>
 
       {isSystemRole && (
-        <Card className="border-info/30 bg-info/10">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Lock className="h-5 w-5 text-info" />
-              <p className="text-sm text-info">
-                System roles cannot be modified. They are managed by the application.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <InfoBanner variant="info">
+          System roles cannot be modified. They are managed by the application.
+        </InfoBanner>
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Shield className="h-5 w-5 text-purple-600" />
+      <form onSubmit={handleSubmit}>
+        <DetailPageTemplate
+          layoutKey="staff-role-detail"
+          entityType="role"
+          record={role}
+          columns={1}
+          editable={false}
+        >
+          {/* Role Details */}
+          <DetailSection
+            title="Role Details"
+            description="Name and description for this role"
+            icon={Shield}
+          >
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Role Name *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="e.g., Receptionist, Accountant, Meter Reader"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  disabled={saving || isSystemRole}
+                />
               </div>
-              <div>
-                <CardTitle>Role Details</CardTitle>
-                <CardDescription>Name and description for this role</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Role Name *</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="e.g., Receptionist, Accountant, Meter Reader"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                disabled={saving || isSystemRole}
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <textarea
-                id="description"
-                name="description"
-                placeholder="Brief description of this role's responsibilities"
-                value={formData.description}
-                onChange={handleChange}
-                disabled={saving || isSystemRole}
-                className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Permissions */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-info/10 rounded-lg">
-                  <Check className="h-5 w-5 text-info" />
-                </div>
-                <div>
-                  <CardTitle>Permissions</CardTitle>
-                  <CardDescription>
-                    {isSystemRole ? "Permissions for this role" : `Select what this role can do (${selectedPermissions.length} selected)`}
-                  </CardDescription>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <textarea
+                  id="description"
+                  name="description"
+                  placeholder="Brief description of this role's responsibilities"
+                  value={formData.description}
+                  onChange={handleChange}
+                  disabled={saving || isSystemRole}
+                  className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+                />
               </div>
-              {!isSystemRole && (
+            </div>
+          </DetailSection>
+
+          {/* Permissions */}
+          <DetailSection
+            title="Permissions"
+            description={
+              isSystemRole
+                ? "Permissions for this role"
+                : `Select what this role can do (${selectedPermissions.length} selected)`
+            }
+            icon={Check}
+            actions={
+              !isSystemRole ? (
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -391,10 +380,9 @@ export default function EditRolePage() {
                     Select All
                   </Button>
                 </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
+              ) : undefined
+            }
+          >
             <div className="grid md:grid-cols-2 gap-4">
               {Object.entries(permissionGroups).map(([groupKey, group]) => (
                 <div key={groupKey} className="border rounded-lg p-4">
@@ -439,12 +427,12 @@ export default function EditRolePage() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </DetailSection>
+        </DetailPageTemplate>
 
-        {/* Actions */}
+        {/* Form Actions */}
         {!isSystemRole && (
-          <div className="flex justify-end gap-4">
+          <div className="flex justify-end gap-4 mt-6">
             <Link href="/staff/roles">
               <Button type="button" variant="outline" disabled={saving}>
                 Cancel
