@@ -47,6 +47,7 @@ import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { LIBRARY_SEAT_STATUS_CONFIG } from "@/types/library.types"
 import type { LibrarySeat } from "@/types/library.types"
+import { logger } from "@/lib/logger"
 
 interface Reservation {
   id: string
@@ -168,7 +169,8 @@ export default function LibrarySeatDetailPage() {
           } else {
             showError(result.error.message || "Failed to delete seat")
           }
-        } catch {
+        } catch (error) {
+          logger.error("Failed to load seat data", { error: String(error) })
           showError("Failed to delete seat")
         }
       },

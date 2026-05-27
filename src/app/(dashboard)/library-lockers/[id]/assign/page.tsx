@@ -24,6 +24,7 @@ import { Currency } from "@/components/ui/currency"
 import { withCreatedBy } from "@/lib/audit"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
+import { ModuleGuard, PermissionGuard } from "@/components/auth"
 
 interface LockerData {
   id: string
@@ -236,6 +237,8 @@ export default function AssignLockerPage({
   }))
 
   return (
+    <ModuleGuard module="lockers">
+      <PermissionGuard permission="library_lockers.edit">
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -385,5 +388,7 @@ export default function AssignLockerPage({
         </div>
       </form>
     </div>
+      </PermissionGuard>
+    </ModuleGuard>
   )
 }

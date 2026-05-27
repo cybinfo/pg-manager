@@ -271,7 +271,8 @@ export default function LibraryLockerDetailPage() {
                         } else {
                           showError(result.error.message || "Failed to delete locker")
                         }
-                      } catch {
+                      } catch (error) {
+                        logger.error("Failed to load locker data", { error: String(error) })
                         showError("Failed to delete locker")
                       }
                     },
