@@ -15,13 +15,14 @@ import { Select, FormField } from "@/components/ui/form-components"
 import { requiredSelect } from "@/lib/validation"
 import type { ValidatorResult } from "@/lib/validation"
 import { showWarning } from "@/lib/toast-helpers"
-import { formatCurrency, formatDate, formatMonthYear, formatNumber} from "@/lib/format"
+import { formatCurrency, formatDate, formatNumber} from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { getTodayISO, startOfMonth, endOfMonth } from "@/lib/date-helpers"
+import { getTodayISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
 import { useFeatures } from "@/lib/features/use-features"
+import { generateChargesOnCreate } from "@/lib/services/meter-charges"
 
 interface ChargeType {
   id: string
@@ -166,46 +167,24 @@ function NewMeterReadingContent() {
       // Generate charges if enabled and there are units consumed
       if (generateCharge && calculatedUnits && calculatedUnits > 0 && roomTenants.length > 0 && matchingChargeType) {
         const ratePerUnit = matchingChargeType.calculation_config?.rate_per_unit || 0
-        const splitByOccupants = matchingChargeType.calculation_config?.split_by === "occupants"
 
         if (ratePerUnit > 0) {
-          const totalAmount = calculatedUnits * ratePerUnit
-          const amountPerTenant = splitByOccupants ? totalAmount / roomTenants.length : totalAmount
+          const chargeResult = await generateChargesOnCreate(supabase, {
+            readingId: meterReadingData.id,
+            readingDate: data.reading_date as string,
+            unitsConsumed: calculatedUnits,
+            propertyId: selectedMeter.property_id,
+            chargeTypeId: matchingChargeType.id,
+            ratePerUnit,
+            splitByOccupants: matchingChargeType.calculation_config?.split_by === "occupants",
+            meterId: selectedMeter.id,
+            meterNumber: selectedMeter.meter_number,
+            tenants: roomTenants,
+            ownerId: userId,
+          })
 
-          const readingDate = new Date(data.reading_date as string)
-          const dueDate = endOfMonth(readingDate)
-          const forPeriod = formatMonthYear(readingDate)
-
-          const chargeInserts = roomTenants.map((tenant: Tenant) => ({
-            owner_id: userId,
-            tenant_id: tenant.id,
-            property_id: selectedMeter.property_id,
-            charge_type_id: matchingChargeType.id,
-            amount: splitByOccupants ? amountPerTenant : totalAmount,
-            due_date: dueDate.toISOString().split("T")[0],
-            for_period: forPeriod,
-            period_start: startOfMonth(readingDate).toISOString().split("T")[0],
-            period_end: dueDate.toISOString().split("T")[0],
-            calculation_details: {
-              meter_reading_id: meterReadingData.id,
-              meter_id: selectedMeter.id,
-              meter_number: selectedMeter.meter_number,
-              units: calculatedUnits,
-              rate: ratePerUnit,
-              total_amount: totalAmount,
-              occupants: roomTenants.length,
-              split_by: splitByOccupants ? "occupants" : "room",
-              per_person: splitByOccupants ? amountPerTenant : totalAmount,
-              method: "meter_reading",
-            },
-            status: "pending",
-            notes: `Auto-generated from meter ${selectedMeter.meter_number} reading on ${data.reading_date}`,
-          }))
-
-          const { error: chargeError } = await supabase.from("charges").insert(chargeInserts)
-
-          if (chargeError) {
-            logger.error("Error creating charges:", { detail: chargeError })
+          if (!chargeResult.success) {
+            logger.error("Error creating charges on new reading", { detail: chargeResult.error })
             showWarning("Meter reading saved, but failed to generate charges")
           }
         }

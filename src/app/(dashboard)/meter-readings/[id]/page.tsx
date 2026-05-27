@@ -39,13 +39,13 @@ import {
 } from "lucide-react"
 import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { formatCurrency, formatDate, formatDateTime, formatMonthYear, formatNumber} from "@/lib/format"
+import { formatCurrency, formatDate, formatDateTime, formatNumber} from "@/lib/format"
 import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { useAuth } from "@/lib/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { startOfMonth, endOfMonth } from "@/lib/date-helpers"
+import { generateMeterCharges } from "@/lib/services/meter-charges"
 
 
 interface MeterReading {
@@ -180,79 +180,26 @@ export default function MeterReadingDetailPage() {
   }
 
   const handleGenerateCharges = async () => {
-    if (!reading || !reading.units_consumed || reading.units_consumed <= 0) {
-      showError("Cannot generate charges: No units consumed")
-      return
-    }
-
-    const ratePerUnit = (reading.charge_type?.calculation_config as { rate_per_unit?: number; split_by?: string })?.rate_per_unit
-    if (!ratePerUnit || ratePerUnit <= 0) {
-      showError("Cannot generate charges: No rate configured for this meter type")
-      return
-    }
-
-    setGenerating(true)
-
     if (!user) {
       showError("Session expired. Please login again.")
       router.push("/login")
       return
     }
 
-    const supabase = createClient()
+    setGenerating(true)
 
     try {
-      const { data: tenants, error: tenantsError } = await supabase
-        .from("tenants")
-        .select("id, name")
-        .eq("room_id", reading.room?.id)
-        .eq("status", "active")
+      const supabase = createClient()
+      const result = await generateMeterCharges(supabase, reading!.id, user.id)
 
-      if (tenantsError) {
-        showError("Failed to fetch tenants")
+      if (!result.success) {
+        showError(result.error || "Failed to generate charges")
         return
       }
 
-      if (!tenants || tenants.length === 0) {
-        showError("No active tenants in this room")
-        return
-      }
-
-      const splitByOccupants = (reading.charge_type?.calculation_config as { split_by?: string })?.split_by === "occupants"
-      const totalAmount = reading.units_consumed * ratePerUnit
-      const amountPerTenant = splitByOccupants ? totalAmount / tenants.length : totalAmount
-
-      const readingDate = new Date(reading.reading_date)
-      const dueDate = endOfMonth(readingDate)
-      const forPeriod = formatMonthYear(readingDate)
-
-      const chargeInserts = tenants.map((tenant: { id: string; name: string }) => ({
-        owner_id: user.id,
-        tenant_id: tenant.id,
-        property_id: reading.property?.id,
-        charge_type_id: reading.charge_type?.id,
-        amount: splitByOccupants ? amountPerTenant : totalAmount,
-        due_date: dueDate.toISOString().split("T")[0],
-        for_period: forPeriod,
-        period_start: startOfMonth(readingDate).toISOString().split("T")[0],
-        period_end: dueDate.toISOString().split("T")[0],
-        calculation_details: {
-          meter_reading_id: reading.id,
-          units: reading.units_consumed,
-          rate: ratePerUnit,
-          total_amount: totalAmount,
-          occupants: tenants.length,
-          split_by: splitByOccupants ? "occupants" : "room",
-          per_person: splitByOccupants ? amountPerTenant : totalAmount,
-          method: "meter_reading",
-        },
-        status: "pending",
-        notes: `Generated from meter reading on ${reading.reading_date}`,
-      }))
-
-      const { data: newCharges, error: chargeError } = await supabase
+      // Refresh the charges list from the DB to reflect newly inserted rows
+      const { data: chargesData } = await supabase
         .from("charges")
-        .insert(chargeInserts)
         .select(`
           id,
           amount,
@@ -263,14 +210,11 @@ export default function MeterReadingDetailPage() {
           calculation_details,
           tenant:tenants(id, name)
         `)
+        .contains("calculation_details", { meter_reading_id: reading!.id })
+        .order("created_at", { ascending: false })
 
-      if (chargeError) {
-        showError("Failed to generate charges")
-        return
-      }
-
-      if (newCharges) {
-        const transformedCharges: Charge[] = newCharges.map((charge: {
+      if (chargesData) {
+        const transformedCharges: Charge[] = chargesData.map((charge: {
           id: string
           amount: number
           due_date: string
@@ -283,10 +227,10 @@ export default function MeterReadingDetailPage() {
           ...charge,
           tenant: transformJoin(charge.tenant),
         }))
-        setCharges((prev) => [...transformedCharges, ...prev])
+        setCharges(transformedCharges)
       }
 
-      showSuccess(`${tenants.length} charge${tenants.length > 1 ? "s" : ""} generated successfully!`)
+      showSuccess(`Generated charges for ${result.chargesCount} tenant(s)`)
     } catch {
       showError("Failed to generate charges")
     } finally {
