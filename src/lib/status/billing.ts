@@ -3,6 +3,7 @@
  * Refund, Exit Clearance, Payment Methods, etc.
  */
 
+import { Megaphone, AlertTriangle, Wrench, CreditCard, type LucideIcon } from "lucide-react"
 import type { StatusConfig } from "./shared"
 
 export const REFUND_STATUS: Record<string, StatusConfig> = {
@@ -140,6 +141,13 @@ export const NOTICE_TYPE_CONFIG: Record<string, { label: string; color: string; 
   maintenance: { label: "Maintenance", color: "text-warning", bgColor: "bg-warning/10", icon: "Wrench" },
   payment_reminder: { label: "Payment Reminder", color: "text-success", bgColor: "bg-success/10", icon: "CreditCard" },
   emergency: { label: "Emergency", color: "text-destructive", bgColor: "bg-destructive/10", icon: "AlertTriangle" },
+}
+
+export const NOTICE_TYPE_DISPLAY_CONFIG: Record<string, { label: string; color: string; bgColor: string; icon: LucideIcon }> = {
+  general: { label: "General", color: "text-info", bgColor: "bg-info/10", icon: Megaphone },
+  maintenance: { label: "Maintenance", color: "text-warning", bgColor: "bg-warning/10", icon: Wrench },
+  payment_reminder: { label: "Payment Reminder", color: "text-success", bgColor: "bg-success/10", icon: CreditCard },
+  emergency: { label: "Emergency", color: "text-destructive", bgColor: "bg-destructive/10", icon: AlertTriangle },
 }
 
 // ============================================================================

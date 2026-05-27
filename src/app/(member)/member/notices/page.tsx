@@ -5,19 +5,15 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Bell,
-  Megaphone,
-  AlertTriangle,
-  Wrench,
-  CreditCard,
   Calendar,
   Clock,
   AlertCircle,
-  type LucideIcon,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getNowISO } from "@/lib/date-helpers"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
+import { NOTICE_TYPE_DISPLAY_CONFIG } from "@/lib/status"
 
 interface Notice {
   id: string
@@ -26,13 +22,6 @@ interface Notice {
   type: string
   created_at: string
   expires_at: string | null
-}
-
-const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: LucideIcon }> = {
-  general: { label: "General", color: "text-info", bgColor: "bg-info/10", icon: Megaphone },
-  maintenance: { label: "Maintenance", color: "text-warning", bgColor: "bg-warning/10", icon: Wrench },
-  payment_reminder: { label: "Payment", color: "text-success", bgColor: "bg-success/10", icon: CreditCard },
-  emergency: { label: "Emergency", color: "text-destructive", bgColor: "bg-destructive/10", icon: AlertTriangle },
 }
 
 export default function MemberNoticesPage() {
@@ -109,7 +98,7 @@ export default function MemberNoticesPage() {
       ) : (
         <div className="space-y-4">
           {notices.map((notice) => {
-            const config = typeConfig[notice.type] || typeConfig.general
+            const config = NOTICE_TYPE_DISPLAY_CONFIG[notice.type] || NOTICE_TYPE_DISPLAY_CONFIG.general
             const Icon = config.icon
 
             return (

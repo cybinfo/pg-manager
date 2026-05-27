@@ -20,9 +20,6 @@ import { PageLoading } from "@/components/ui/loading"
 import {
   Megaphone,
   Loader2,
-  AlertTriangle,
-  Wrench,
-  CreditCard,
   Calendar,
   Eye,
   EyeOff,
@@ -39,7 +36,7 @@ import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Notice, NoticeType } from "@/types/notices.types"
-import { NOTICE_AUDIENCE_OPTIONS } from "@/lib/status"
+import { NOTICE_AUDIENCE_OPTIONS, NOTICE_TYPE_DISPLAY_CONFIG } from "@/lib/status"
 import type { PropertyOption } from "@/types/properties.types"
 
 interface Room {
@@ -47,13 +44,6 @@ interface Room {
   room_number: string
   property_id: string
 }
-
-const noticeTypes = [
-  { value: "general", label: "General", icon: Megaphone, color: "text-info", bgColor: "bg-info/10" },
-  { value: "maintenance", label: "Maintenance", icon: Wrench, color: "text-warning", bgColor: "bg-warning/10" },
-  { value: "payment_reminder", label: "Payment Reminder", icon: CreditCard, color: "text-success", bgColor: "bg-success/10" },
-  { value: "emergency", label: "Emergency", icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10" },
-]
 
 export default function NoticeDetailPage() {
   const params = useParams()
@@ -230,15 +220,15 @@ export default function NoticeDetailPage() {
       )
   }
 
-  const typeConfig = noticeTypes.find((t) => t.value === formData.type)
-  const TypeIcon = typeConfig?.icon || Megaphone
+  const typeConfig = NOTICE_TYPE_DISPLAY_CONFIG[formData.type] || NOTICE_TYPE_DISPLAY_CONFIG.general
+  const TypeIcon = typeConfig.icon
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Hero Header */}
       <DetailHero
         title="Edit Notice"
-        subtitle={typeConfig?.label || formData.type}
+        subtitle={typeConfig.label}
         backHref={backHref}
         backLabel={backLabel}
         breadcrumbs={[
@@ -246,8 +236,8 @@ export default function NoticeDetailPage() {
           { label: notice.title || "Edit Notice" },
         ]}
         avatar={
-          <div className={`p-3 rounded-lg ${typeConfig?.bgColor || "bg-info/10"}`}>
-            <TypeIcon className={`h-8 w-8 ${typeConfig?.color || "text-info"}`} />
+          <div className={`p-3 rounded-lg ${typeConfig.bgColor}`}>
+            <TypeIcon className={`h-8 w-8 ${typeConfig.color}`} />
           </div>
         }
         status={
@@ -336,14 +326,14 @@ export default function NoticeDetailPage() {
         icon={Megaphone}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {noticeTypes.map((type) => {
+          {Object.entries(NOTICE_TYPE_DISPLAY_CONFIG).map(([value, type]) => {
             const Icon = type.icon
-            const isSelected = formData.type === type.value
+            const isSelected = formData.type === value
             return (
               <button
-                key={type.value}
+                key={value}
                 type="button"
-                onClick={() => setFormData((prev) => ({ ...prev, type: type.value as NoticeType }))}
+                onClick={() => setFormData((prev) => ({ ...prev, type: value as NoticeType }))}
                 className={`p-3 rounded-lg border text-left transition-all ${
                   isSelected
                     ? "border-primary bg-primary/5 ring-1 ring-primary"
