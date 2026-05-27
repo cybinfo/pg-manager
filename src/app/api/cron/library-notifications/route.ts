@@ -30,6 +30,7 @@ import {
   RENEWAL_REMINDER_DAYS,
   EXPIRING_DAYS_BEFORE,
 } from "@/lib/constants/business-rules"
+import { MONTH_NAMES } from "@/lib/format"
 
 export const GET = (request: Request) =>
   baseCronHandler(request, {
@@ -335,9 +336,7 @@ export const GET = (request: Request) =>
       if (today.getDate() === 1) {
         const lastMonth = new Date(today)
         lastMonth.setMonth(lastMonth.getMonth() - 1)
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-          "July", "August", "September", "October", "November", "December"]
-        const summaryMonth = monthNames[lastMonth.getMonth()]
+        const summaryMonth = MONTH_NAMES[lastMonth.getMonth()]
         const summaryYear = lastMonth.getFullYear()
 
         // Calculate first and last day of previous month

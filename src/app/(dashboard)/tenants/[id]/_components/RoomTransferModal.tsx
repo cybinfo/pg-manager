@@ -13,9 +13,8 @@ import { showError, showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth"
-import { withCreatedBy } from "@/lib/audit"
+import { transferTenantRoom } from "@/lib/services/room-transfer"
 import type { Tenant, TenantStay } from "@/types/tenants.types"
-import { getTodayISO } from "@/lib/date-helpers"
 
 export interface TransferRoom {
   id: string
@@ -49,58 +48,27 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
       showError("Please select a room")
       return
     }
+    if (!user) return
 
     setActionLoading(true)
-    if (!user) return
-    const supabase = createClient()
 
     try {
       const selectedRoom = availableRooms.find((r) => r.id === transferData.to_room_id)
       if (!selectedRoom) return
 
+      const supabase = createClient()
       const newRent = parseFloat(transferData.new_rent) || selectedRoom.rent_amount
 
-      // Create transfer record
-      await supabase.from("room_transfers").insert(withCreatedBy({
-        owner_id: user.id,
-        tenant_id: tenant.id,
-        from_property_id: tenant.property?.id,
-        from_room_id: tenant.room?.id,
-        to_property_id: selectedRoom.property_id,
-        to_room_id: selectedRoom.id,
-        transfer_date: getTodayISO(),
+      await transferTenantRoom(supabase, {
+        tenant,
+        stays,
+        toRoomId: selectedRoom.id,
+        toPropertyId: selectedRoom.property_id,
+        oldRent: tenant.monthly_rent,
+        newRent,
         reason: transferData.reason || null,
         notes: transferData.notes || null,
-        old_rent: tenant.monthly_rent,
-        new_rent: newRent,
-      }, user.id))
-
-      // Update current stay
-      await supabase
-        .from("tenant_stays")
-        .update({ status: "transferred", exit_date: getTodayISO(), exit_reason: "transferred" })
-        .eq("tenant_id", tenant.id)
-        .eq("status", "active")
-
-      // Create new stay
-      const stayNumber = stays.length > 0 ? Math.max(...stays.map((s) => s.stay_number)) + 1 : 1
-      await supabase.from("tenant_stays").insert({
-        owner_id: user.id,
-        tenant_id: tenant.id,
-        property_id: selectedRoom.property_id,
-        room_id: selectedRoom.id,
-        join_date: getTodayISO(),
-        monthly_rent: newRent,
-        security_deposit: tenant.security_deposit,
-        status: "active",
-        stay_number: stayNumber,
-      })
-
-      // Update tenant record
-      await supabase
-        .from("tenants")
-        .update({ property_id: selectedRoom.property_id, room_id: selectedRoom.id, monthly_rent: newRent })
-        .eq("id", tenant.id)
+      }, user.id)
 
       showSuccess("Room transfer completed!")
       onClose()

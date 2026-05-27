@@ -18,7 +18,7 @@ import { FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
 import { requiredField, requiredAmount, requiredPositiveInt } from "@/lib/validation"
-import { TIME_SLOTS } from "@/types/library.types"
+import { TIME_SLOT_OPTIONS } from "@/types/library.types"
 import { PermissionGuard } from "@/components/auth"
 
 export default function NewLibraryPlanPage() {
@@ -217,7 +217,7 @@ function NewLibraryPlanContent() {
                 Leave all unchecked to allow all time slots
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {TIME_SLOTS.map((slot) => (
+                {TIME_SLOT_OPTIONS.map((slot) => (
                   <div key={slot.value} className="flex items-center space-x-2">
                     <Checkbox
                       id={`slot-${slot.value}`}

@@ -41,6 +41,9 @@ export {
   BOOLEAN_STRING_OPTIONS,
 } from "./billing"
 
+// Visitors
+export { VISITOR_TYPE_COLORS, VISITOR_TYPE_ICONS } from "./visitors"
+
 // Library
 export {
   LIBRARY_SEAT_STATUS_LABELS, LIBRARY_MEMBER_STATUS_LABELS,

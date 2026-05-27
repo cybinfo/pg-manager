@@ -22,7 +22,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { PermissionGuard } from "@/components/auth"
-import { TIME_SLOTS } from "@/types/library.types"
+import { TIME_SLOT_OPTIONS } from "@/types/library.types"
 
 interface LibraryOption {
   id: string
@@ -163,7 +163,7 @@ function AddToWaitlistContent() {
 
   const slotOptions = [
     { value: "", label: "No preference" },
-    ...TIME_SLOTS.map((slot) => ({ value: slot.value, label: slot.label })),
+    ...TIME_SLOT_OPTIONS,
   ]
 
   return (

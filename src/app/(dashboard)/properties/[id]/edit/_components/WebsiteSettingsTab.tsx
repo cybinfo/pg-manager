@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { showSuccess } from "@/lib/toast-helpers"
 import { brandGradient } from "@/lib/design-tokens"
-import { PROPERTY_TYPE_OPTIONS } from "@/lib/constants/form-options"
+import { PROPERTY_TYPE_OPTIONS, WEBSITE_AMENITIES } from "@/lib/constants/form-options"
 
 interface WebsiteConfig {
   tagline: string
@@ -45,11 +45,6 @@ interface WebsiteData {
   website_config: WebsiteConfig
 }
 
-const defaultAmenities = [
-  "WiFi", "Parking", "Food", "CCTV", "Power Backup",
-  "Water Supply", "Laundry", "Housekeeping", "Security",
-  "AC Rooms", "Gym", "TV Room", "Study Room", "Terrace Access"
-]
 
 interface WebsiteSettingsTabProps {
   websiteData: WebsiteData
@@ -298,7 +293,7 @@ export function WebsiteSettingsTab({
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {defaultAmenities.map((amenity) => (
+                {WEBSITE_AMENITIES.map((amenity) => (
                   <button
                     key={amenity}
                     type="button"

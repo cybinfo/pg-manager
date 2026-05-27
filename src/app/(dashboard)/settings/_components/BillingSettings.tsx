@@ -26,6 +26,7 @@ import {
   GRACE_PERIOD_OPTIONS,
   REMINDER_DAYS_BEFORE_DUE_OPTIONS,
 } from "@/lib/constants/form-options"
+import { saveUtilityRates } from "@/lib/services/billing-settings"
 import {
   ChargeType,
   UtilityRate,
@@ -176,28 +177,14 @@ export function BillingSettings({
     ))
   }
 
-  const saveUtilityRates = async () => {
+  const handleSaveUtilityRates = async () => {
     setSavingUtilityRates(true)
     try {
       if (!user) throw new Error("Not authenticated")
-      const supabase = createClient()
-
-      for (const utility of utilityRates) {
-        const calculation_config = utility.billing_type === 'per_unit'
-          ? { rate_per_unit: utility.rate_per_unit, split_by: utility.split_by }
-          : { default_amount: utility.flat_amount, split_by: utility.split_by }
-
-        const { error } = await supabase
-          .from("charge_types")
-          .update({ calculation_config })
-          .eq("id", utility.id)
-
-        if (error) throw error
-      }
-
+      await saveUtilityRates(createClient(), utilityRates)
       showSuccess("Utility rates saved")
     } catch (error) {
-      logger.error("Save error:", { detail: error })
+      logger.error("Save utility rates failed", { error: String(error) })
       showError("Failed to save utility rates")
     } finally {
       setSavingUtilityRates(false)
@@ -370,7 +357,7 @@ export function BillingSettings({
               </div>
             ))}
 
-            <Button onClick={saveUtilityRates} disabled={savingUtilityRates} size="sm">
+            <Button onClick={handleSaveUtilityRates} disabled={savingUtilityRates} size="sm">
               {savingUtilityRates ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (

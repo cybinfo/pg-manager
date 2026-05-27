@@ -5,14 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Search, Star, X, Loader2 } from "lucide-react"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
-import { VisitorContactSearchResult, VisitorType } from "@/types/visitors.types"
-
-const VISITOR_TYPE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-info/10 text-info border-info/20",
-  enquiry: "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700",
-  service_provider: "bg-warning/10 text-warning border-warning/20",
-  general: "bg-muted text-foreground border-border",
-}
+import { VisitorContactSearchResult } from "@/types/visitors.types"
+import { VISITOR_TYPE_COLORS } from "@/lib/status"
 
 interface PersonStepCardProps {
   ownerId: string

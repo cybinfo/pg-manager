@@ -56,6 +56,7 @@ import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import type { PropertyWebsite } from "./page"
 import { logger } from "@/lib/logger"
 import { RATE_LIMIT_WINDOW, MAX_SUBMISSIONS } from "@/lib/constants/business-rules"
+import { WEBSITE_AMENITIES } from "@/lib/constants/form-options"
 
 // ============================================================================
 // CONSTANTS
@@ -78,10 +79,6 @@ const amenityIcons: Record<string, React.ComponentType<{ className?: string }>> 
   "Furnished": BedDouble,
 }
 
-const defaultAmenities = [
-  "WiFi", "Parking", "Food", "CCTV", "Power Backup",
-  "Water Supply", "Laundry", "Housekeeping", "Security"
-]
 
 // ============================================================================
 // TYPES
@@ -310,7 +307,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
   const [phoneError, setPhoneError] = useState<string | null>(null)
 
   const config = property.website_config || {}
-  const amenities = config.amenities || defaultAmenities
+  const amenities = config.amenities || WEBSITE_AMENITIES
   const propertyType = getPropertyType(config.property_type)
   const roomTypes = getUniqueRoomTypes(property.rooms)
 

@@ -2,6 +2,7 @@ import { sendDailySummary } from "@/lib/email"
 import { baseCronHandler, logCronAudit } from "@/lib/cron-handler"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { cronLogger } from "@/lib/logger"
+import { calculateOccupancyRate } from "@/lib/format"
 import {
   generateWhatsAppSummary,
   type DailySummaryData,
@@ -142,7 +143,7 @@ export const GET = (request: Request) =>
 
           const totalBeds = (rooms || []).reduce((sum: number, r: { total_beds: number | null }) => sum + (r.total_beds || 1), 0)
           const occupiedBeds = (activeTenants || []).length
-          const occupancyRate = totalBeds > 0 ? (occupiedBeds / totalBeds) * 100 : 0
+          const occupancyRate = calculateOccupancyRate(occupiedBeds, totalBeds)
 
           // Fetch open complaints
           const { data: complaints } = await supabase
@@ -191,7 +192,7 @@ export const GET = (request: Request) =>
             expensesCount: summaryData.expensesRecorded.count,
             pendingDues: summaryData.pendingDues.total,
             pendingCount: summaryData.pendingDues.count,
-            occupancyRate: Math.round(occupancyRate),
+            occupancyRate,
             newTenants: summaryData.newTenants,
             exits: summaryData.exits,
             openComplaints: summaryData.openComplaints,

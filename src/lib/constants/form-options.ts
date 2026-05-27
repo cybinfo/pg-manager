@@ -250,6 +250,13 @@ export const AVAILABLE_AMENITIES = [
   { key: "has_refrigerator", label: "Refrigerator" },
 ]
 
+/** Amenity toggle chips for the public PG website builder */
+export const WEBSITE_AMENITIES = [
+  "WiFi", "Parking", "Food", "CCTV", "Power Backup",
+  "Water Supply", "Laundry", "Housekeeping", "Security",
+  "AC Rooms", "Gym", "TV Room", "Study Room", "Terrace Access",
+]
+
 // ============================================================================
 // LIBRARY — WAITLIST
 // ============================================================================
