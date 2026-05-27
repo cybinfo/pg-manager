@@ -15,7 +15,7 @@ import { createTotalMetric, createBooleanMetric, createCountMetric, createSumMet
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { formatDate } from "@/lib/format"
+import { dateColumn } from "@/lib/columns"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn } from "@/lib/export-columns"
 
@@ -192,16 +192,7 @@ const columns: Column<ServiceProviderListItem>[] = [
     defaultVisible: false,
     render: (provider) => provider.tds_section || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (provider) => formatDate(provider.created_at),
-  },
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================

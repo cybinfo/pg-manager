@@ -16,6 +16,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, createDateFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { dateColumn } from "@/lib/columns"
 import { EXPENSE_DAILY_SPEND_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import type { CSVColumn } from "@/lib/download-utils"
 import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
@@ -194,16 +195,7 @@ const columns: Column<DailySpendItem>[] = [
       <span className="text-sm text-muted-foreground line-clamp-2">{item.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Recorded On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (item) => formatDate(item.created_at),
-  },
+  dateColumn("created_at", "Recorded On", { defaultVisible: false }),
 ]
 
 // ============================================

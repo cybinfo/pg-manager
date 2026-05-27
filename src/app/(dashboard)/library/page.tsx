@@ -14,7 +14,7 @@ import { createTotalMetric, createBooleanMetric, createSumMetric, MetricConfig }
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { formatDate } from "@/lib/format"
+import { dateColumn } from "@/lib/columns"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn } from "@/lib/export-columns"
 
@@ -195,16 +195,7 @@ const columns: Column<LibraryItem>[] = [
       </div>
     ),
   },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (library) => formatDate(library.created_at),
-  },
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================

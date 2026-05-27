@@ -16,6 +16,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { dateColumn } from "@/lib/columns"
 import type { CSVColumn } from "@/lib/download-utils"
 import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
@@ -238,16 +239,7 @@ const columns: Column<ServicePaymentListItem>[] = [
       <span className="tabular-nums">{payment.warranty_months}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Recorded On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (payment) => formatDate(payment.created_at),
-  },
+  dateColumn("created_at", "Recorded On", { defaultVisible: false }),
 ]
 
 // ============================================

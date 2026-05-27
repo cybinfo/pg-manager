@@ -16,7 +16,8 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { UNIT_OPTIONS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatCurrency } from "@/lib/format"
+import { dateColumn } from "@/lib/columns"
 import type { CSVColumn } from "@/lib/download-utils"
 import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
@@ -155,16 +156,7 @@ const columns: Column<Product>[] = [
     editType: "text",
     render: (product) => product.name_hi || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (product) => formatDate(product.created_at),
-  },
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================

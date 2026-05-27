@@ -13,8 +13,8 @@ import { LIBRARY_SECTION_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListP
 import { createTotalMetric, createBooleanMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_FILTER, ACTIVE_STATUS_FILTER, LIBRARY_AC_TYPE_FILTER } from "@/lib/filter-presets"
-import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
+import { dateColumn } from "@/lib/columns"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, numberFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -159,16 +159,7 @@ const columns: Column<LibrarySectionItem>[] = [
     defaultVisible: false,
     render: (section) => section.has_power_outlets ? "Yes" : "No",
   },
-  {
-    key: "created_at",
-    header: "Added On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (section) => formatDate(section.created_at),
-  },
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
 ]
 
 // ============================================
