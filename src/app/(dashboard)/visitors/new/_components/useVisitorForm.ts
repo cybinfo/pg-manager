@@ -397,7 +397,7 @@ export function useVisitorForm() {
         }
       }
 
-      const visitorData: Record<string, unknown> = withCreatedBy({
+      const visitorData = withCreatedBy({
         owner_id: user.id,
         property_id: formData.property_id,
         visitor_contact_id: visitorContactId || null,
@@ -416,7 +416,7 @@ export function useVisitorForm() {
         notes: formData.notes || null,
         vehicle_number: formData.vehicle_number || null,
         person_id: selectedPerson.id,
-      }
+      }, user.id) as unknown as Record<string, unknown>
 
       if (formData.visitor_type === "tenant_visitor") {
         visitorData.tenant_id = formData.tenant_id
