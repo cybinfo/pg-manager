@@ -12,6 +12,7 @@ import { ROOM_TRANSFER_REASON_OPTIONS } from "@/lib/constants/form-options"
 import { showError, showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { withCreatedBy } from "@/lib/audit"
 import type { Tenant, TenantStay } from "@/types/tenants.types"
 import { getTodayISO } from "@/lib/date-helpers"
@@ -34,6 +35,7 @@ interface RoomTransferModalProps {
 
 export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: RoomTransferModalProps) {
   const router = useRouter()
+  const { user } = useAuth()
   const [actionLoading, setActionLoading] = useState(false)
   const [transferData, setTransferData] = useState({
     to_room_id: "",
@@ -49,9 +51,8 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
     }
 
     setActionLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+    const supabase = createClient()
 
     try {
       const selectedRoom = availableRooms.find((r) => r.id === transferData.to_room_id)

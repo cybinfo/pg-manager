@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,6 +43,7 @@ export default function EditExpensePage() {
 
 function EditExpenseContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/expenses" })
+  const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
   const [loading, setLoading] = useState(true)
@@ -68,14 +70,12 @@ function EditExpenseContent() {
 
   const fetchData = async () => {
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
       if (!user) {
         router.push("/login")
         return
       }
 
+      const supabase = createClient()
       // Fetch expense
       const { data: expense, error: expenseError } = await supabase
         .from("expenses")

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { useFormEditPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +46,7 @@ export default function EditRoomPage() {
 
 function EditRoomContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/rooms" })
+  const { user } = useAuth()
   const params = useParams()
   const [properties, setProperties] = useState<Property[]>([])
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
@@ -139,7 +141,6 @@ function EditRoomContent() {
   useEffect(() => {
     const fetchReferenceData = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
 
       const [propertiesRes, configRes] = await Promise.all([
         supabase.from("properties").select("id, name").order("name"),
@@ -157,7 +158,7 @@ function EditRoomContent() {
     }
 
     fetchReferenceData()
-  }, [])
+  }, [user])
 
   if (loading) {
     return (

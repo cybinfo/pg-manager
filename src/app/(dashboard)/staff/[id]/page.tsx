@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { useDetailPage, STAFF_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { StaffMember, UserRole, Role } from "@/types/staff.types"
 import { Button } from "@/components/ui/button"
@@ -52,6 +53,7 @@ interface Property {
 export default function StaffDetailPage() {
   const params = useParams()
   const _router = useRouter()
+  const { user } = useAuth()
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/staff", defaultLabel: "All Staff" })
 
   // Use the centralized hook for main data fetching
@@ -236,14 +238,14 @@ export default function StaffDetailPage() {
     if (!staff || !newRoleAssignment.role_id) return
 
     setRoleLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       showError("Session expired")
       setRoleLoading(false)
       return
     }
+
+    const supabase = createClient()
 
     const propertyId = newRoleAssignment.property_id === "" ? null : newRoleAssignment.property_id
 

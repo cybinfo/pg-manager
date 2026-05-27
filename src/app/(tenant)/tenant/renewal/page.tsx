@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { getCurrentUser } from "@/lib/supabase/auth-helpers"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -58,8 +59,8 @@ function TenantRenewalContent() {
     }
 
     setSubmitting(true)
+    const user = await getCurrentUser()
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     const { error } = await supabase.from("approvals").insert(
       withCreatedBy({

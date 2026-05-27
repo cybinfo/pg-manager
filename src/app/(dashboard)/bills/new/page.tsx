@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -80,6 +81,7 @@ interface PendingCharge {
 
 function NewBillContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/bills" })
+  const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedTenant = searchParams.get("tenant_id") || searchParams.get("tenant")
@@ -128,14 +130,12 @@ function NewBillContent() {
   // Fetch tenants and charge types
   useEffect(() => {
     const fetchData = async () => {
-      const supabase = createClient()
-
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push("/login")
         return
       }
 
+      const supabase = createClient()
       // Fetch tenants, charge types, and owner config in parallel
       const [tenantsRes, chargeTypesRes, configRes] = await Promise.all([
         supabase
@@ -205,7 +205,7 @@ function NewBillContent() {
     }
 
     fetchData()
-  }, [router, preselectedTenant])
+  }, [router, preselectedTenant, user])
 
   // Build line items when tenant or selected charge types change
   useEffect(() => {
@@ -393,15 +393,13 @@ function NewBillContent() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
       if (!user) {
         showError("Session expired")
         router.push("/login")
         return
       }
 
+      const supabase = createClient()
       const tenant = tenants.find((t) => t.id === selectedTenant)
       const { subtotal, total, proRataAmount } = calculateTotals()
 

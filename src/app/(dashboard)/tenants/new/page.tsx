@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { PermissionGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,6 +51,7 @@ interface Room {
 export default function NewTenantPage() {
   const { backHref } = useBackNavigation({ defaultHref: "/tenants" })
   const { isFeatureEnabled } = useFeatures()
+  const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const personIdFromUrl = searchParams.get("person_id")
@@ -93,13 +95,12 @@ export default function NewTenantPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const supabase = createClient()
-
-      // Get current user ID for PersonSelector
-      const { data: { user } } = await supabase.auth.getUser()
+      // Set owner ID for PersonSelector
       if (user) {
         setOwnerId(user.id)
       }
+
+      const supabase = createClient()
 
       const [propertiesRes, roomsRes] = await Promise.all([
         supabase.from("properties").select("id, name").order("name"),
@@ -126,7 +127,7 @@ export default function NewTenantPage() {
     }
 
     fetchData()
-  }, [])
+  }, [user])
 
   // Load person from URL query param
   useEffect(() => {
@@ -246,23 +247,13 @@ export default function NewTenantPage() {
     debugLog("Starting tenant creation", { name: selectedPerson.name, phone: selectedPerson.phone })
 
     try {
-      const supabase = createClient()
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-      if (authError) {
-        showDetailedError(authError, {
-          operation: "checking authentication",
-          table: "auth.users"
-        })
-        return
-      }
-
       if (!user) {
         showError("Authentication Error", "No user session found. Please login again.")
         router.push("/login")
         return
       }
 
+      const supabase = createClient()
       debugLog("User authenticated", { userId: user.id, email: user.email })
 
       // First, verify the property and room exist and belong to this owner

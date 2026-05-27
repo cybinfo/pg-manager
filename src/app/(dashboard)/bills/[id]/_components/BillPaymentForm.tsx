@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/form-components"
 import { DetailSection } from "@/components/ui"
 import { CreditCard, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getTodayISO } from "@/lib/date-helpers"
@@ -35,6 +36,7 @@ export function BillPaymentForm({
   onClose,
   onPaymentRecorded,
 }: BillPaymentFormProps) {
+  const { user } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [paymentData, setPaymentData] = useState({
     amount: "",
@@ -49,12 +51,12 @@ export function BillPaymentForm({
     setSubmitting(true)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         showError("Session expired")
         return
       }
+
+      const supabase = createClient()
 
       const amount = parseFloat(paymentData.amount)
       if (isNaN(amount) || amount <= 0) {

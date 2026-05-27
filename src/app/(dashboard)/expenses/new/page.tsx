@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
@@ -45,6 +46,7 @@ export default function NewExpensePage() {
 
 function NewExpenseContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/expenses" })
+  const { user: authUser } = useAuth()
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingData, setLoadingData] = useState(true)
@@ -54,7 +56,6 @@ function NewExpenseContent() {
     handleChange,
     handleSubmit,
     saving,
-    user: _user,
     router,
     errors,
     validateField,
@@ -99,14 +100,12 @@ function NewExpenseContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const supabase = createClient()
-        const { data: { user: authUser } } = await supabase.auth.getUser()
-
         if (!authUser) {
           router.push("/login")
           return
         }
 
+        const supabase = createClient()
         // Fetch expense types - create defaults if none exist (owner-scoped)
         const { error: typesError, data: initialTypesData } = await supabase
           .from("expense_types")
@@ -153,7 +152,7 @@ function NewExpenseContent() {
     }
 
     fetchData()
-  }, [router])
+  }, [router, authUser])
 
   if (loadingData) {
     return <PageSkeleton variant="form" />

@@ -105,7 +105,7 @@ function getGreeting(): { text: string; icon: typeof Sun } {
 const _CHART_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-5))", "hsl(var(--chart-3))"]
 
 export default function DashboardPage() {
-  const { hasPermission } = useAuth()
+  const { hasPermission, user } = useAuth()
   const { isOwner } = useCurrentContext()
   const [userName, setUserName] = useState("")
   const [loading, setLoading] = useState(true)
@@ -141,9 +141,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
       if (!user) return
 
       // Set user name
@@ -151,6 +148,7 @@ export default function DashboardPage() {
         setUserName(user.user_metadata.full_name.split(" ")[0])
       }
 
+      const supabase = createClient()
       // Calculate date ranges
       const now = new Date()
       const _thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -307,7 +305,7 @@ export default function DashboardPage() {
     }
 
     fetchDashboardData()
-  }, [])
+  }, [user])
 
   const occupancyRate = calculateOccupancyRate(stats.occupiedBeds, stats.totalBeds)
 

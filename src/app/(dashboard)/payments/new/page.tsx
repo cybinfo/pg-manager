@@ -245,15 +245,13 @@ function NewPaymentForm() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
       if (!user) {
         showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
 
+      const supabase = createClient()
       // Build workflow input
       const workflowInput: PaymentRecordInput = {
         tenant_id: formData.tenant_id,

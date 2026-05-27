@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -64,6 +65,7 @@ export default function NewStaffPage() {
 function NewStaffContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/staff" })
   const { isFeatureEnabled } = useFeatures()
+  const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const { handleSuccess } = useFormSubmit({
@@ -88,14 +90,12 @@ function NewStaffContent() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const supabase = createClient()
-
-      // Get current user ID for PersonSelector
-      const { data: { user } } = await supabase.auth.getUser()
+      // Set owner ID for PersonSelector
       if (user) {
         setOwnerId(user.id)
       }
 
+      const supabase = createClient()
       const [rolesRes, propertiesRes] = await Promise.all([
         supabase
           .from("roles")
@@ -117,7 +117,7 @@ function NewStaffContent() {
     }
 
     fetchData()
-  }, [])
+  }, [user])
 
   // Load person from URL query param
   useEffect(() => {
@@ -210,15 +210,13 @@ function NewStaffContent() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
       if (!user) {
         showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
 
+      const supabase = createClient()
       // Step 1: Check if email already exists as a user
       const { data: existingProfile } = await supabase
         .from("user_profiles")

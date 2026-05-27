@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -102,6 +103,7 @@ const INITIAL_FORM_DATA: VisitorFormData = {
 export function useVisitorForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useAuth()
   const personIdFromUrl = searchParams.get("person_id")
 
   const [loading, setLoading] = useState(false)
@@ -129,13 +131,11 @@ export function useVisitorForm() {
   // Load initial data
   useEffect(() => {
     const fetchData = async () => {
-      const supabase = createClient()
-
-      const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setOwnerId(user.id)
       }
 
+      const supabase = createClient()
       const [propertiesRes, tenantsRes, roomsRes] = await Promise.all([
         supabase.from("properties").select("id, name").order("name"),
         supabase
@@ -169,7 +169,7 @@ export function useVisitorForm() {
     }
 
     fetchData()
-  }, [])
+  }, [user])
 
   // Load person from URL query param
   useEffect(() => {
@@ -294,15 +294,13 @@ export function useVisitorForm() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
       if (!user) {
         showError("Session expired. Please login again.")
         router.push("/login")
         return
       }
 
+      const supabase = createClient()
       let visitorContactId = formData.visitor_contact_id
 
       if (!visitorContactId) {

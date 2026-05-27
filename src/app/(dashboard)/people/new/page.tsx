@@ -11,6 +11,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -55,6 +56,7 @@ import { logger } from "@/lib/logger"
 
 export default function NewPersonPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/people", defaultLabel: "All People" })
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<PersonFormData>({
@@ -168,15 +170,14 @@ export default function NewPersonPage() {
     }
 
     setLoading(true)
-    const supabase = createClient()
 
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       showError("You must be logged in to add a person")
       setLoading(false)
       return
     }
+
+    const supabase = createClient()
 
     // Check for duplicate phone
     if (formData.phone) {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,6 +57,7 @@ export default function NewRoomPage() {
 
 function NewRoomContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/rooms" })
+  const { user } = useAuth()
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProperties, setLoadingProperties] = useState(true)
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
@@ -127,7 +129,6 @@ function NewRoomContent() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
 
       // Fetch properties and owner config (for room_types) in parallel
       const [propertiesRes, configRes] = await Promise.all([
@@ -167,7 +168,7 @@ function NewRoomContent() {
     }
 
     fetchData()
-  }, [setFormData])
+  }, [setFormData, user])
 
   // Handle property selection change
   const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

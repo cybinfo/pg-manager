@@ -30,6 +30,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { FormField } from "@/components/ui/form-components"
 import { logger } from "@/lib/logger"
+import { useAuth } from "@/lib/auth"
 
 // ============================================
 // Types
@@ -81,6 +82,7 @@ export function ApprovalReviewDialog({
   onOpenChange,
   onActionComplete,
 }: ApprovalReviewDialogProps) {
+  const { user } = useAuth()
   const [attachedDocs, setAttachedDocs] = useState<AttachedDocument[]>([])
   const [loadingDocs, setLoadingDocs] = useState(false)
   const [processing, setProcessing] = useState(false)
@@ -125,7 +127,6 @@ export function ApprovalReviewDialog({
     setProcessing(true)
 
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     const { error } = await (supabase
       .from("approvals") as ReturnType<typeof supabase.from>)
@@ -200,7 +201,6 @@ export function ApprovalReviewDialog({
     setProcessing(true)
 
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     const { error } = await (supabase
       .from("approvals") as ReturnType<typeof supabase.from>)

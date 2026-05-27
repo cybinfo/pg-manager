@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
+import { useAuth } from "@/lib/auth"
 import { ExpenseType } from "@/types/settings.types"
 
 interface ExpenseTypeSettingsProps {
@@ -18,6 +19,7 @@ interface ExpenseTypeSettingsProps {
 }
 
 export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTypeSettingsProps) {
+  const { user } = useAuth()
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const [saving, setSaving] = useState(false)
   const [newExpenseType, setNewExpenseType] = useState({ name: "", code: "" })
@@ -50,7 +52,6 @@ export function ExpenseTypeSettings({ expenseTypes, setExpenseTypes }: ExpenseTy
     setSaving(true)
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
 
       const { data, error } = await supabase
         .from("expense_types")
