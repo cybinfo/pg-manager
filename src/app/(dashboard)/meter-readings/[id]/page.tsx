@@ -45,7 +45,7 @@ import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { startOfMonth, endOfMonth } from "@/lib/date-helpers"
-import { getCurrentUser } from "@/lib/supabase/auth-helpers"
+
 
 interface MeterReading {
   id: string
@@ -193,7 +193,7 @@ export default function MeterReadingDetailPage() {
     const supabase = createClient()
 
     try {
-      const user = await getCurrentUser()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         showError("Session expired. Please login again.")
         router.push("/login")
