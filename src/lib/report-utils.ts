@@ -2,12 +2,43 @@
  * Report Utility Functions
  *
  * Pure helpers for the Payment Report and Library Reports pages:
- * period key generation, period label formatting, and ISO week numbering.
+ * period key generation, period label formatting, ISO week numbering,
+ * and paginated Supabase row fetching.
  */
 
 import { MONTH_NAMES } from "@/components/reports"
 
 export type GroupByPeriod = "day" | "week" | "month" | "year"
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type QueryWithRange = { range: (from: number, to: number) => any }
+
+/**
+ * Paginate through a Supabase query to bypass the default 1000-row response limit.
+ * Pass a fully-configured query (without `.range()`) and the function will fetch
+ * all pages and return the concatenated result.
+ */
+export async function fetchAllRows(
+  query: QueryWithRange,
+  pageSize = 1000
+): Promise<{ data: Record<string, unknown>[]; error: Error | null }> {
+  const allData: Record<string, unknown>[] = []
+  let from = 0
+  let hasMore = true
+  let lastError: Error | null = null
+  while (hasMore) {
+    const { data, error } = (await query.range(from, from + pageSize - 1)) as {
+      data: Record<string, unknown>[] | null
+      error: Error | null
+    }
+    if (error) { lastError = error; break }
+    if (!data || data.length === 0) { hasMore = false; break }
+    allData.push(...data)
+    if (data.length < pageSize) { hasMore = false; break }
+    from += pageSize
+  }
+  return { data: allData, error: lastError }
+}
 
 /**
  * Return the ISO week number (1–53) for a given date.

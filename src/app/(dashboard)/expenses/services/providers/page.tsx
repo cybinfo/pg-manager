@@ -15,7 +15,7 @@ import { createTotalMetric, createBooleanMetric, createCountMetric, createSumMet
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { dateColumn } from "@/lib/columns"
+import { dateColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn } from "@/lib/export-columns"
 
@@ -156,24 +156,8 @@ const columns: Column<ServiceProviderListItem>[] = [
       ),
   },
   // Hidden by default columns
-  {
-    key: "phone",
-    header: "Phone",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    editable: true,
-    editType: "text",
-    render: (provider) => provider.phone || <span className="text-muted-foreground">—</span>,
-  },
-  {
-    key: "email",
-    header: "Email",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (provider) => provider.email || <span className="text-muted-foreground">—</span>,
-  },
+  phoneColumn("phone", "Phone", { defaultVisible: false, editable: true, editType: "text" }),
+  emailColumn("email", "Email", { defaultVisible: false }),
   {
     key: "pan",
     header: "PAN",

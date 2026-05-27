@@ -46,8 +46,9 @@ import {
 } from "lucide-react"
 import { ModuleGuard } from "@/components/auth/module-guard"
 import { InfoBanner } from "@/components/ui/info-banner"
-import { formatCurrency, calculateOccupancyRate } from "@/lib/format"
+import { formatCurrency, formatCurrencyTick, calculateOccupancyRate, getGreeting } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
+import { MONTH_NAMES } from "@/components/reports"
 
 interface DashboardStats {
   properties: number
@@ -95,14 +96,12 @@ const quickActionsConfig = [
   { name: "Add Expense", href: "/expenses/new", icon: Wallet, permission: "expenses.create" },
 ]
 
-function getGreeting(): { text: string; icon: typeof Sun } {
+function getGreetingIcon(): typeof Sun {
   const hour = new Date().getHours()
-  if (hour < 12) return { text: "Good morning", icon: Sunrise }
-  if (hour < 17) return { text: "Good afternoon", icon: Sun }
-  return { text: "Good evening", icon: Moon }
+  if (hour < 12) return Sunrise
+  if (hour < 17) return Sun
+  return Moon
 }
-
-const _CHART_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-5))", "hsl(var(--chart-3))"]
 
 export default function DashboardPage() {
   const { hasPermission, user } = useAuth()
@@ -136,8 +135,8 @@ export default function DashboardPage() {
     { task: "Configure charge types", href: "/settings", done: false },
   ])
 
-  const greeting = getGreeting()
-  const GreetingIcon = greeting.icon
+  const greetingText = getGreeting()
+  const GreetingIcon = getGreetingIcon()
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -240,20 +239,19 @@ export default function DashboardPage() {
       }
 
       // Process monthly revenue for chart
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
       const revenueByMonth: Record<string, number> = {}
 
       // Initialize last 6 months
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-        const key = `${monthNames[d.getMonth()]}`
+        const key = `${MONTH_NAMES[d.getMonth()]}`
         revenueByMonth[key] = 0
       }
 
       if (monthlyPaymentsRes.data) {
         monthlyPaymentsRes.data.forEach((payment: { payment_date: string; amount: number }) => {
           const d = new Date(payment.payment_date)
-          const key = monthNames[d.getMonth()]
+          const key = MONTH_NAMES[d.getMonth()]
           if (revenueByMonth[key] !== undefined) {
             revenueByMonth[key] += Number(payment.amount)
           }
@@ -408,7 +406,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">
-              {greeting.text}{userName ? `, ${userName}` : ""}!
+              {greetingText}{userName ? `, ${userName}` : ""}!
             </h1>
             <p className="text-muted-foreground">
               {isOwner
@@ -606,7 +604,7 @@ export default function DashboardPage() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                    tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
+                    tickFormatter={formatCurrencyTick}
                   />
                   <Tooltip content={<CustomBarTooltip />} />
                   <Bar

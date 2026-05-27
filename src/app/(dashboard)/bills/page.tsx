@@ -10,7 +10,7 @@
 import { FileText, CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, currencyColumn, dateColumn } from "@/lib/columns"
+import { statusColumn, currencyColumn, dateColumn, phoneColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { BILL_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createSumMetric, MetricConfig } from "@/lib/metric-factories"
@@ -120,14 +120,7 @@ const columns: Column<Bill>[] = [
   currencyColumn("paid_amount", "Paid Amount", { defaultVisible: false, color: "text-success", bold: false }),
   currencyColumn("balance_due", "Balance Due", { defaultVisible: false, color: "text-destructive", bold: false }),
   dateColumn("bill_date", "Bill Date", { defaultVisible: false }),
-  {
-    key: "tenant_phone",
-    header: "Tenant Phone",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (bill) => bill.tenant?.phone || <span className="text-muted-foreground">—</span>,
-  },
+  phoneColumn("tenant.phone", "Tenant Phone", { defaultVisible: false }),
   {
     key: "notes",
     header: "Notes",

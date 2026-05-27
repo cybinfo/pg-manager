@@ -6,7 +6,7 @@
 
 "use client"
 
-import { Library, Users, Armchair, MapPin, Phone, Clock } from "lucide-react"
+import { Library, Users, Armchair, MapPin, Clock } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -14,7 +14,7 @@ import { createTotalMetric, createBooleanMetric, createSumMetric, MetricConfig }
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { dateColumn } from "@/lib/columns"
+import { dateColumn, phoneColumn } from "@/lib/columns"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn } from "@/lib/export-columns"
 
@@ -146,19 +146,7 @@ const columns: Column<LibraryItem>[] = [
     defaultVisible: false,
     render: (library) => library.address || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "phone",
-    header: "Phone",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (library) => library.phone ? (
-      <div className="flex items-center gap-1">
-        <Phone className="h-3 w-3 text-muted-foreground" />
-        {library.phone}
-      </div>
-    ) : <span className="text-muted-foreground">—</span>,
-  },
+  phoneColumn("phone", "Phone", { defaultVisible: false }),
   {
     key: "opening_time",
     header: "Hours",

@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Column, TableBadge } from "@/components/ui/data-table"
-import { dateColumn, personNameWithAvatarColumn, booleanColumn, phoneColumn } from "@/lib/columns"
+import { dateColumn, personNameWithAvatarColumn, booleanColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { STAFF_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createBooleanMetric, createNullCheckMetric, MetricConfig } from "@/lib/metric-factories"
@@ -107,15 +107,7 @@ const columns: Column<StaffMember>[] = [
     editField: "is_active",
   }),
   // Hidden by default columns
-  {
-    key: "email",
-    header: "Email",
-    width: "secondary",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (staff) => staff.email,
-  },
+  emailColumn("email", "Email", { defaultVisible: false }),
   booleanColumn("user_id", "Has Login", {
     defaultVisible: false,
   }),

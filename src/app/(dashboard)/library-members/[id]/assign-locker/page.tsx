@@ -26,6 +26,7 @@ import { withCreatedBy } from "@/lib/audit"
 import { LIBRARY_LOCKER_SIZE_CONFIG } from "@/types/library.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
+import { ModuleGuard, PermissionGuard } from "@/components/auth"
 
 interface MemberData {
   id: string
@@ -246,6 +247,8 @@ export default function AssignLockerToMemberPage({
   }
 
   return (
+    <ModuleGuard module="lockers">
+      <PermissionGuard permission="library_members.edit">
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -437,5 +440,7 @@ export default function AssignLockerToMemberPage({
         </form>
       )}
     </div>
+      </PermissionGuard>
+    </ModuleGuard>
   )
 }

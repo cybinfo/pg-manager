@@ -15,7 +15,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { TENANT_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
+import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
 import { textFilterColumn, statusFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
 import { brandGradient } from "@/lib/design-tokens"
@@ -66,15 +66,7 @@ const columns: Column<Tenant>[] = [
   personNameWithAvatarColumn("Tenant", {
     avatarClassName: `${brandGradient.solid} text-white shrink-0`,
   }),
-  {
-    key: "phone",
-    header: "Phone",
-    width: "secondary",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (tenant) => tenant.phone,
-  },
+  phoneColumn("phone", "Phone"),
   currencyColumn("monthly_rent", "Rent", {
     editable: true,
     editType: "number",
@@ -86,15 +78,7 @@ const columns: Column<Tenant>[] = [
     editType: "select",
     editOptions: TENANT_STATUS_OPTIONS,
   }),
-  {
-    key: "email",
-    header: "Email",
-    width: "secondary",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (tenant) => tenant.email || <span className="text-muted-foreground">—</span>,
-  },
+  emailColumn("email", "Email", { defaultVisible: false }),
   currencyColumn("security_deposit", "Security Deposit", {
     defaultVisible: false,
     bold: false,

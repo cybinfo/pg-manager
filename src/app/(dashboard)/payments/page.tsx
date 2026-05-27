@@ -10,7 +10,7 @@
 import { CreditCard, IndianRupee, Receipt, Wallet, Banknote, Bell, Users, Link2 } from "lucide-react"
 import Link from "next/link"
 import { Column, TableBadge } from "@/components/ui/data-table"
-import { currencyColumn, dateColumn, badgeColumn } from "@/lib/columns"
+import { currencyColumn, dateColumn, badgeColumn, phoneColumn } from "@/lib/columns"
 import { Button } from "@/components/ui/button"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -160,14 +160,7 @@ const columns: Column<Payment>[] = [
     defaultVisible: false,
     render: (payment) => payment.charge_type?.name || <NullDisplay />,
   },
-  {
-    key: "tenant_phone",
-    header: "Phone",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (payment) => payment.tenant.phone,
-  },
+  phoneColumn("tenant.phone", "Phone", { defaultVisible: false }),
   {
     key: "notes",
     header: "Notes",

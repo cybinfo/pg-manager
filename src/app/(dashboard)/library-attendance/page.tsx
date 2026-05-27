@@ -9,14 +9,14 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Clock, Users, LogIn, LogOut, RefreshCw, QrCode, AlertTriangle } from "lucide-react"
+import { Clock, Users, LogIn, LogOut, RefreshCw, QrCode, AlertTriangle, Calendar } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { ModuleGuard } from "@/components/auth"
 import { useAuth } from "@/lib/auth"
 import { LIBRARY_ATTENDANCE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createCountMetric, createTodayCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createDateFilter } from "@/lib/filter-presets"
 import { formatDate, formatTime } from "@/lib/format"
@@ -565,16 +565,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
   createCountMetric("checked_in", "Currently In", Users,
     (item) => !item.check_out_time
   ),
-  {
-    // Custom: dynamic date comparison with "today"
-    id: "today",
-    label: "Today",
-    icon: Calendar,
-    compute: (items) => {
-      const today = getTodayISO()
-      return items.filter((a) => a.attendance_date === today).length
-    },
-  },
+  createTodayCountMetric("attendance_date", "Today", Calendar),
   {
     // Custom: sum with dynamic date filter
     id: "hours_today",
@@ -589,8 +580,6 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     },
   },
 ]
-
-import { Calendar } from "lucide-react"
 
 // ============================================
 // Advanced Filter Columns

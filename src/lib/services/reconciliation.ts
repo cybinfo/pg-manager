@@ -1,16 +1,16 @@
 /**
  * Payment-Bill Reconciliation Logic
  *
- * Pure auto-match algorithm: given a list of unreconciled payments and bills
- * with outstanding balances, returns the best set of non-overlapping proposals.
+ * Auto-match algorithm + DB write helpers for the reconciliation page.
  *
- * Three passes:
+ * Auto-match three passes:
  *  1. Exact amount + same tenant  → confidence: "exact"
  *  2. Same tenant, amount ≤ balance, closest date → confidence: "partial"
  *  3. Same tenant, only one candidate bill  → confidence: "tenant_only"
  */
 
 import { formatCurrency } from "@/lib/format"
+import { logger } from "@/lib/logger"
 
 export interface UnreconciledPayment {
   id: string
@@ -134,4 +134,118 @@ export function autoMatch(
   }
 
   return proposals
+}
+
+// ============================================
+// Confidence display helpers
+// ============================================
+
+export function getConfidenceColor(
+  confidence: MatchProposal["confidence"]
+): "success" | "warning" | "default" {
+  switch (confidence) {
+    case "exact":
+      return "success"
+    case "partial":
+      return "warning"
+    case "tenant_only":
+      return "default"
+  }
+}
+
+export function getConfidenceLabel(confidence: MatchProposal["confidence"]): string {
+  switch (confidence) {
+    case "exact":
+      return "Exact Match"
+    case "partial":
+      return "Partial Match"
+    case "tenant_only":
+      return "Tenant Match"
+  }
+}
+
+// ============================================
+// DB write: apply confirmed matches
+// ============================================
+
+interface PendingMatch {
+  paymentId: string
+  billId: string
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseClient = any
+
+/**
+ * Persist a set of confirmed payment→bill matches to the database.
+ * For each match:
+ *  1. Links the payment to the bill (payments.bill_id = billId)
+ *  2. Updates the bill's paid_amount, balance_due, and status
+ *  3. If the bill update fails, reverts the payment link
+ *
+ * Returns totals so the caller can show feedback without re-querying.
+ */
+export async function applyReconciliationMatches(
+  matches: PendingMatch[],
+  payments: UnreconciledPayment[],
+  bills: OutstandingBill[],
+  supabase: SupabaseClient
+): Promise<{ successCount: number; errorCount: number; totalAmount: number }> {
+  let successCount = 0
+  let errorCount = 0
+
+  for (const match of matches) {
+    const payment = payments.find((p) => p.id === match.paymentId)
+    const bill = bills.find((b) => b.id === match.billId)
+
+    if (!payment || !bill) {
+      errorCount++
+      continue
+    }
+
+    const { error: paymentError } = await supabase
+      .from("payments")
+      .update({ bill_id: match.billId })
+      .eq("id", match.paymentId)
+
+    if (paymentError) {
+      logger.error(`Failed to link payment ${match.paymentId}`, { detail: String(paymentError) })
+      errorCount++
+      continue
+    }
+
+    const newPaidAmount = Number(bill.paid_amount) + Number(payment.amount)
+    const newBalanceDue = Math.max(0, Number(bill.total_amount) - newPaidAmount)
+    const newStatus =
+      newBalanceDue <= 0
+        ? "paid"
+        : newPaidAmount > 0
+          ? "partial"
+          : bill.status
+
+    const { error: billError } = await supabase
+      .from("bills")
+      .update({ paid_amount: newPaidAmount, balance_due: newBalanceDue, status: newStatus })
+      .eq("id", match.billId)
+
+    if (billError) {
+      logger.error(`Failed to update bill ${match.billId}`, { detail: String(billError) })
+      // Revert payment link
+      await supabase
+        .from("payments")
+        .update({ bill_id: null })
+        .eq("id", match.paymentId)
+      errorCount++
+      continue
+    }
+
+    successCount++
+  }
+
+  const totalAmount = matches.reduce((sum: number, match) => {
+    const payment = payments.find((p) => p.id === match.paymentId)
+    return sum + (payment?.amount || 0)
+  }, 0)
+
+  return { successCount, errorCount, totalAmount }
 }

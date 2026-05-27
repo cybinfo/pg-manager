@@ -52,7 +52,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { logger } from "@/lib/logger"
 import { formatCurrencyTick } from "@/lib/format"
-import { type GroupByPeriod } from "@/lib/report-utils"
+import { type GroupByPeriod, fetchAllRows } from "@/lib/report-utils"
 import {
   computeLibraryOverviewReport,
   computePaymentReport,
@@ -113,27 +113,6 @@ export default function LibraryReportsPage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLibrary, dateRange, paymentGroupBy])
-
-  // Paginated fetch to bypass Supabase max-rows-per-request limit (default 1000)
-  const fetchAllRows = async (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    query: ReturnType<ReturnType<typeof createClient>["from"]> & { range: (...args: unknown[]) => any },
-    pageSize = 1000
-  ): Promise<{ data: Record<string, unknown>[]; error: Error | null }> => {
-    const allData: Record<string, unknown>[] = []
-    let from = 0
-    let hasMore = true
-    let lastError: Error | null = null
-    while (hasMore) {
-      const { data, error } = await query.range(from, from + pageSize - 1) as { data: Record<string, unknown>[] | null; error: Error | null }
-      if (error) { lastError = error; break }
-      if (!data || data.length === 0) { hasMore = false; break }
-      allData.push(...data)
-      if (data.length < pageSize) { hasMore = false; break }
-      from += pageSize
-    }
-    return { data: allData, error: lastError }
-  }
 
   const fetchReportData = async () => {
     setLoading(true)

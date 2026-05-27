@@ -11,7 +11,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Users, Clock, CalendarClock, Upload, RefreshCw, Loader2, UserMinus } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
+import { statusColumn, dateColumn, personNameWithAvatarColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import { ListPageTemplate, BulkActionConfig } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_MEMBER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
@@ -120,22 +120,8 @@ const columns: Column<LibraryMemberItem>[] = [
   },
   statusColumn(LIBRARY_MEMBER_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
   // Hidden by default
-  {
-    key: "phone",
-    header: "Phone",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (member) => member.phone || "\u2014",
-  },
-  {
-    key: "email",
-    header: "Email",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (member) => member.email || "\u2014",
-  },
+  phoneColumn("phone", "Phone", { defaultVisible: false }),
+  emailColumn("email", "Email", { defaultVisible: false }),
   {
     key: "assigned_seat",
     header: "Seat",

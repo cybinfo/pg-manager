@@ -15,19 +15,16 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { TENANT_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
+import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
 import { textFilterColumn, statusFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
 import { brandGradient } from "@/lib/design-tokens"
 import type { CSVColumn } from "@/lib/download-utils"
 import { nestedColumn, dateExportColumn, currencyExportColumn } from "@/lib/export-columns"
 import { logger } from "@/lib/logger"
+import type { PropertyOption } from "@/types/properties.types"
 
-interface Property {
-  id: string
-  name: string
-  address: string
-}
+type Property = PropertyOption & { address: string }
 
 // ============================================
 // Types
@@ -86,24 +83,8 @@ const columns: Column<Tenant>[] = [
     editType: "select",
     editOptions: TENANT_STATUS_OPTIONS,
   }),
-  {
-    key: "phone",
-    header: "Phone",
-    width: "secondary",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (tenant) => tenant.phone,
-  },
-  {
-    key: "email",
-    header: "Email",
-    width: "secondary",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (tenant) => tenant.email || <span className="text-muted-foreground">—</span>,
-  },
+  phoneColumn("phone", "Phone", { defaultVisible: false }),
+  emailColumn("email", "Email", { defaultVisible: false }),
   currencyColumn("security_deposit", "Security Deposit", {
     defaultVisible: false,
     bold: false,

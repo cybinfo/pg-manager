@@ -15,7 +15,7 @@ import { createTotalMetric, createBooleanMetric, createCountMetric, MetricConfig
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { dateColumn } from "@/lib/columns"
+import { dateColumn, emailColumn } from "@/lib/columns"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn } from "@/lib/export-columns"
 
@@ -171,14 +171,7 @@ const columns: Column<VendorListItem>[] = [
     defaultVisible: false,
     render: (vendor) => vendor.contact_name || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "email",
-    header: "Email",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (vendor) => vendor.email || <span className="text-muted-foreground">—</span>,
-  },
+  emailColumn("email", "Email", { defaultVisible: false }),
   {
     key: "pan",
     header: "PAN",

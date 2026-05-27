@@ -35,7 +35,12 @@ import {
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { autoMatch } from "@/lib/services/reconciliation"
+import {
+  autoMatch,
+  applyReconciliationMatches,
+  getConfidenceColor,
+  getConfidenceLabel,
+} from "@/lib/services/reconciliation"
 import type { UnreconciledPayment, OutstandingBill, MatchProposal } from "@/lib/services/reconciliation"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PageHeader } from "@/components/ui/page-header"
@@ -50,32 +55,6 @@ import { logger } from "@/lib/logger"
 interface AppliedMatch {
   paymentId: string
   billId: string
-}
-
-// ============================================
-// Confidence helpers
-// ============================================
-
-function getConfidenceColor(confidence: MatchProposal["confidence"]): "success" | "warning" | "default" {
-  switch (confidence) {
-    case "exact":
-      return "success"
-    case "partial":
-      return "warning"
-    case "tenant_only":
-      return "default"
-  }
-}
-
-function getConfidenceLabel(confidence: MatchProposal["confidence"]): string {
-  switch (confidence) {
-    case "exact":
-      return "Exact Match"
-    case "partial":
-      return "Partial Match"
-    case "tenant_only":
-      return "Tenant Match"
-  }
 }
 
 // ============================================
@@ -232,68 +211,14 @@ function ReconciliationView() {
 
     try {
       const supabase = createClient()
-      let successCount = 0
-      let errorCount = 0
-
-      for (const match of matches) {
-        const payment = payments.find((p) => p.id === match.paymentId)
-        const bill = bills.find((b) => b.id === match.billId)
-
-        if (!payment || !bill) {
-          errorCount++
-          continue
-        }
-
-        // Update payment with bill_id
-        const { error: paymentError } = await supabase
-          .from("payments")
-          .update({ bill_id: match.billId })
-          .eq("id", match.paymentId)
-
-        if (paymentError) {
-          logger.error(`Failed to link payment ${match.paymentId}:`, { detail: paymentError })
-          errorCount++
-          continue
-        }
-
-        // Update bill: increase paid_amount, decrease balance_due, update status
-        const newPaidAmount = Number(bill.paid_amount) + Number(payment.amount)
-        const newBalanceDue = Math.max(0, Number(bill.total_amount) - newPaidAmount)
-        const newStatus =
-          newBalanceDue <= 0
-            ? "paid"
-            : newPaidAmount > 0
-              ? "partial"
-              : bill.status
-
-        const { error: billError } = await supabase
-          .from("bills")
-          .update({
-            paid_amount: newPaidAmount,
-            balance_due: newBalanceDue,
-            status: newStatus,
-          })
-          .eq("id", match.billId)
-
-        if (billError) {
-          logger.error(`Failed to update bill ${match.billId}:`, { detail: billError })
-          // Revert payment link
-          await supabase
-            .from("payments")
-            .update({ bill_id: null })
-            .eq("id", match.paymentId)
-          errorCount++
-          continue
-        }
-
-        successCount++
-      }
+      const { successCount, errorCount, totalAmount } = await applyReconciliationMatches(
+        matches,
+        payments,
+        bills,
+        supabase
+      )
 
       if (successCount > 0) {
-        const totalAmount = matches.reduce((sum: number, match) => {
-          const payment = payments.find((p) => p.id === match.paymentId)
-          return sum + (payment?.amount || 0)
-        }, 0)
         showSuccess(
           `${successCount} payment${successCount > 1 ? "s" : ""} reconciled (${formatCurrency(totalAmount)})`
         )

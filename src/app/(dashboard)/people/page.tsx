@@ -10,7 +10,6 @@
 import Link from "next/link"
 import {
   Users,
-  Phone,
   Mail,
   Building2,
   BadgeCheck,
@@ -25,7 +24,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
-import { dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
+import { dateColumn, personNameWithAvatarColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PEOPLE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createCountMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
@@ -159,32 +158,8 @@ const columns: Column<Person>[] = [
     ),
   },
   // Hidden by default columns
-  {
-    key: "phone",
-    header: "Phone",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    editable: true,
-    editType: "text",
-    render: (person) => person.phone ? (
-      <div className="flex items-center gap-1 text-sm">
-        <Phone className="h-3 w-3 text-muted-foreground" />
-        {person.phone}
-      </div>
-    ) : <span className="text-muted-foreground">—</span>,
-  },
-  {
-    key: "email_only",
-    header: "Email",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    editable: true,
-    editType: "text",
-    editField: "email",
-    render: (person) => person.email || <span className="text-muted-foreground">—</span>,
-  },
+  phoneColumn("phone", "Phone", { defaultVisible: false, editable: true, editType: "text" }),
+  emailColumn("email", "Email", { key: "email_only", defaultVisible: false, editable: true, editType: "text", editField: "email" }),
   {
     key: "company_name",
     header: "Company",

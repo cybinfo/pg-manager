@@ -317,6 +317,21 @@ export const numberToWords = (num: number): string => {
 }
 
 // ============================================
+// GREETING
+// ============================================
+
+/**
+ * Returns a time-appropriate greeting string based on the current hour.
+ * @example getGreeting() => "Good morning" | "Good afternoon" | "Good evening"
+ */
+export function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 17) return "Good afternoon"
+  return "Good evening"
+}
+
+// ============================================
 // FILENAME FORMATTING (SEC-018)
 // ============================================
 
@@ -365,3 +380,4 @@ export const createContentDisposition = (filename: string, inline = false): stri
   // Use simple ASCII filename for Content-Disposition
   return `${disposition}; filename="${safeFilename}"`
 }
+

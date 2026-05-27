@@ -16,7 +16,7 @@ import { Users, UserCheck, UserMinus, Clock } from "lucide-react"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
-import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
+import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
@@ -115,24 +115,8 @@ const columns: ExtendedColumn<Tenant>[] = [
     groupLabel: "Status",
   } as ExtendedColumn<Tenant>,
   // Additional columns - hidden by default, user can toggle them on
-  {
-    key: "email",
-    header: "Email",
-    width: "secondary",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (tenant) => tenant.email || <span className="text-muted-foreground">—</span>,
-  },
-  {
-    key: "phone",
-    header: "Phone",
-    width: "secondary",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (tenant) => tenant.phone,
-  },
+  emailColumn("email", "Email", { defaultVisible: false }),
+  phoneColumn("phone", "Phone", { defaultVisible: false }),
   currencyColumn("security_deposit", "Security Deposit", {
     defaultVisible: false,
     bold: false,

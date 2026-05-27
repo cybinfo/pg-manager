@@ -9,10 +9,10 @@
 
 import { Building2, Home, Users, MapPin } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { dateColumn, booleanColumn } from "@/lib/columns"
+import { dateColumn, booleanColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PROPERTY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createBooleanMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -153,22 +153,8 @@ const columns: Column<Property>[] = [
     defaultVisible: false,
     render: (property) => property.total_floors || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "phone",
-    header: "Phone",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (property) => property.phone || <span className="text-muted-foreground">—</span>,
-  },
-  {
-    key: "email",
-    header: "Email",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (property) => property.email || <span className="text-muted-foreground">—</span>,
-  },
+  phoneColumn("phone", "Phone", { defaultVisible: false }),
+  emailColumn("email", "Email", { defaultVisible: false }),
   {
     key: "manager_name",
     header: "Manager",
@@ -258,20 +244,8 @@ const advancedFilterColumns: FilterableColumn[] = [
 const metrics: MetricConfig<Record<string, unknown>>[] = [
   createTotalMetric({ label: "Properties", icon: Building2 }),
   createBooleanMetric("is_active", true, "Active", Building2, { id: "active" }),
-  {
-    id: "total_rooms",
-    label: "Total Rooms",
-    icon: Home,
-    compute: (items) => items.reduce((acc, item) => acc + (Number(item.room_count) || 0), 0),
-    format: "number",
-  },
-  {
-    id: "total_tenants",
-    label: "Total Tenants",
-    icon: Users,
-    compute: (items) => items.reduce((acc, item) => acc + (Number(item.tenant_count) || 0), 0),
-    format: "number",
-  },
+  createSumMetric("room_count", "total_rooms", "Total Rooms", Home, { format: "number" }),
+  createSumMetric("tenant_count", "total_tenants", "Total Tenants", Users, { format: "number" }),
 ]
 
 // ============================================

@@ -77,8 +77,8 @@ function parseTimeSlots(raw: string | null): TimeSlotEntry[] {
         end: s.end || "",
       }))
     }
-  } catch {
-    // Not JSON — try old format
+  } catch (error) {
+    logger.error("Failed to parse subscription data", { error: String(error) })
   }
   if (raw.includes("-")) {
     const [st, et] = raw.split("-")
@@ -117,6 +117,7 @@ function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
 }
 import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 import { LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryMembership, LibraryPayment } from "@/types/library.types"
 import { LIBRARY_PAYMENT_METHOD_OPTIONS, LIBRARY_PAYMENT_METHOD_LABELS } from "@/lib/status"

@@ -14,7 +14,7 @@ import Link from "next/link"
 import { Users, UserCheck, CalendarDays, Search, Wrench, User, Star, Ban, BookUser } from "lucide-react"
 import { FeatureGuard } from "@/components/auth"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, dateColumn } from "@/lib/columns"
+import { statusColumn, dateColumn, phoneColumn } from "@/lib/columns"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
@@ -26,7 +26,6 @@ import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import {
   VisitorType,
-  VISITOR_TYPE_LABELS,
   VISITOR_TYPE_BADGE_COLORS,
   ENQUIRY_STATUS_LABELS,
   EnquiryStatus,
@@ -34,6 +33,7 @@ import {
 import { getStatusInfo as getVisitorStatusInfo } from "@/lib/status-config"
 import type { CSVColumn } from "@/lib/download-utils"
 import { nestedColumn, dateExportColumn, labelMapColumn } from "@/lib/export-columns"
+import { VisitorTypeBadge } from "@/components/visitors/VisitorTypeBadge"
 
 // ============================================
 // Types
@@ -73,7 +73,7 @@ interface Visitor {
 // Status helper uses centralized VISITOR_STATUS from status-config
 
 // ============================================
-// Visitor Type Badge
+// Visitor Type Icons (for avatar fallback)
 // ============================================
 
 const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
@@ -82,13 +82,6 @@ const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
   service_provider: <Wrench className="h-3 w-3" />,
   general: <User className="h-3 w-3" />,
 }
-
-const VisitorTypeBadge = ({ type }: { type: VisitorType }) => (
-  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${VISITOR_TYPE_BADGE_COLORS[type]}`}>
-    {VISITOR_TYPE_ICONS[type]}
-    {VISITOR_TYPE_LABELS[type]}
-  </span>
-)
 
 const EnquiryStatusBadge = ({ status }: { status: EnquiryStatus }) => {
   const colorMap: Record<EnquiryStatus, string> = {
@@ -212,14 +205,7 @@ const columns: Column<Visitor>[] = [
       </span>
     ),
   },
-  {
-    key: "visitor_phone",
-    header: "Phone",
-    width: "secondary",
-    canHide: true,
-    defaultVisible: false,
-    render: (visitor) => visitor.visitor_phone || <span className="text-muted-foreground">—</span>,
-  },
+  phoneColumn("visitor_phone", "Phone", { defaultVisible: false }),
   {
     key: "company_name",
     header: "Company",
