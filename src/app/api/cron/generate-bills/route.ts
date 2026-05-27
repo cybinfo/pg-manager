@@ -112,6 +112,26 @@ export const GET = (request: Request) =>
 
         for (const tenant of tenants || []) {
           try {
+            // Guard: if a crash happened mid-owner on a previous run, last_generated_month
+            // was never written, so the next run retries the whole owner. Without this
+            // check, already-billed tenants would receive a duplicate bill.
+            const { data: existingBill } = await supabaseAdmin
+              .from("bills")
+              .select("id")
+              .eq("tenant_id", tenant.id)
+              .eq("for_month", currentMonth)
+              .eq("is_auto_generated", true)
+              .maybeSingle()
+
+            if (existingBill) {
+              cronLogger.debug("Bill already exists for tenant this month, skipping", {
+                tenantId: tenant.id,
+                forMonth: currentMonth,
+              })
+              billsGenerated++ // count it so last_generated_month still advances
+              continue
+            }
+
             // Build line items — rent first, then pending charges
             const rentItem = buildRentLineItem(tenant.monthly_rent, currentMonth)
             if (!rentItem) {
