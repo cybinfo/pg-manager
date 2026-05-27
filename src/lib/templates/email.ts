@@ -141,6 +141,9 @@ export const emailSubjects = {
 
   consumptionAlert: (data: { roomNumber: string; alertType: string }): string =>
     `${data.alertType === 'high' ? 'High' : 'Low'} Consumption Alert - Room ${data.roomNumber}`,
+
+  cronFailureAlert: (data: { cronName: string }): string =>
+    `[ManageKar] Cron job failed: ${data.cronName}`,
 }
 
 // ============================================================================
@@ -1508,6 +1511,20 @@ export const emailBodyTemplates = {
     </div>
   `
 
+    return emailWrapper(content)
+  },
+
+  cronFailureAlert: (data: { cronName: string; error: string; timestamp: string }): string => {
+    const content = `
+    <h2 style="color: #DC2626; font-size: 20px; margin: 0 0 16px 0;">Cron Job Failure Alert</h2>
+    <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+      <p style="margin: 0 0 8px 0;"><strong>Job:</strong> ${data.cronName}</p>
+      <p style="margin: 0 0 8px 0;"><strong>Time:</strong> ${data.timestamp}</p>
+      <p style="margin: 0;"><strong>Error:</strong></p>
+      <code style="display: block; background: #F3F4F6; padding: 8px 12px; border-radius: 4px; margin-top: 8px; font-size: 13px; word-break: break-all;">${data.error}</code>
+    </div>
+    <p style="color: #6B7280; font-size: 13px; margin: 0;">This is an automated alert from ManageKar.</p>
+    `
     return emailWrapper(content)
   },
 }

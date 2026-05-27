@@ -322,13 +322,7 @@ export default function RefundDetailPage() {
                     <Select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      options={[
-                        { value: "pending", label: "Pending" },
-                        { value: "processing", label: "Processing" },
-                        { value: "completed", label: "Completed" },
-                        { value: "failed", label: "Failed" },
-                        { value: "cancelled", label: "Cancelled" },
-                      ]}
+                      options={Object.entries(REFUND_STATUS).map(([value, { label }]) => ({ value, label }))}
                     />
                   </div>
                   <div className="space-y-2">
