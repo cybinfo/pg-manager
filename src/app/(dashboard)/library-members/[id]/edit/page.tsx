@@ -25,6 +25,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
 import { ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
+import { LIBRARY_MEMBER_STATUS_OPTIONS } from "@/lib/status"
 
 export default function EditLibraryMemberPage({
   params,
@@ -277,12 +278,7 @@ function EditLibraryMemberContent({
                   onChange={handleChange}
                   name="status"
                   disabled={saving}
-                  options={[
-                    { value: "active", label: "Active" },
-                    { value: "expired", label: "Expired" },
-                    { value: "suspended", label: "Suspended" },
-                    { value: "cancelled", label: "Cancelled" },
-                  ]}
+                  options={LIBRARY_MEMBER_STATUS_OPTIONS}
                 />
               </FormField>
             </div>

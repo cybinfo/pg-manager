@@ -88,3 +88,44 @@ export interface PaymentListItem extends Payment {
   payment_month?: string
   payment_year?: string
 }
+
+// ============================================================================
+// DUES TYPES
+// ============================================================================
+
+/** Tenant with computed overdue dues — used on the payment reminders page */
+export interface TenantWithRentDues {
+  id: string
+  name: string
+  phone: string
+  email: string | null
+  monthly_rent: number
+  check_in_date: string
+  property: {
+    id: string
+    name: string
+  }
+  room: {
+    id: string
+    room_number: string
+  }
+  totalPaid: number
+  expectedRent: number
+  pendingDues: number
+  monthsActive: number
+  lastPaymentDate: string | null
+}
+
+/** Tenant/bill row with outstanding balance — used on the bulk payment page */
+export interface TenantWithBillDues {
+  tenant_id: string
+  tenant_name: string
+  phone: string
+  property_id: string
+  property_name: string
+  room_number: string
+  bill_id: string
+  bill_number: string
+  for_month: string
+  balance_due: number
+}

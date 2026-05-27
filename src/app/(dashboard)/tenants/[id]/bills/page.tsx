@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -180,6 +180,16 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Config Factory
+// ============================================
+
+// Static parts of BILL_LIST_CONFIG are inherited; only fixedFilters varies per tenantId
+const buildBillConfig = (tenantId: string) => ({
+  ...BILL_LIST_CONFIG,
+  fixedFilters: [{ column: "tenant_id", operator: "eq" as const, value: tenantId }],
+})
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -222,10 +232,7 @@ export default function TenantBillsPage() {
     fetchTenant()
   }, [tenantId])
 
-  const config = useMemo(() => ({
-    ...BILL_LIST_CONFIG,
-    fixedFilters: [{ column: "tenant_id", operator: "eq" as const, value: tenantId }],
-  }), [tenantId])
+  const config = buildBillConfig(tenantId)
 
   if (notFound) {
     return (

@@ -61,3 +61,17 @@ export function transformArrayJoins<T extends Record<string, unknown>>(
 ): T[] {
   return data.map(item => transformJoins(item, fields))
 }
+
+/**
+ * Transform staff roles from Supabase JOIN format.
+ * Each role entry may have a nested `role` and `property` join that need normalisation.
+ */
+export function transformStaffRoles(
+  roles: { id: string; role: unknown; property: unknown }[]
+): { id: string; role: Record<string, unknown> | null; property: Record<string, unknown> | null }[] {
+  return (roles || []).map((r) => ({
+    ...r,
+    role: transformJoin(r.role as Record<string, unknown>[] | Record<string, unknown> | null),
+    property: transformJoin(r.property as Record<string, unknown>[] | Record<string, unknown> | null),
+  }))
+}

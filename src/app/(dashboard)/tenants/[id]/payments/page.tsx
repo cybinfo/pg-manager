@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -195,6 +195,16 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Config Factory
+// ============================================
+
+// Static parts of PAYMENT_LIST_CONFIG are inherited; only fixedFilters varies per tenantId
+const buildPaymentConfig = (tenantId: string) => ({
+  ...PAYMENT_LIST_CONFIG,
+  fixedFilters: [{ column: "tenant_id", operator: "eq" as const, value: tenantId }],
+})
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -237,10 +247,7 @@ export default function TenantPaymentsPage() {
     fetchTenant()
   }, [tenantId])
 
-  const config = useMemo(() => ({
-    ...PAYMENT_LIST_CONFIG,
-    fixedFilters: [{ column: "tenant_id", operator: "eq" as const, value: tenantId }],
-  }), [tenantId])
+  const config = buildPaymentConfig(tenantId)
 
   if (notFound) {
     return (

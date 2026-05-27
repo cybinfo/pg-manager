@@ -108,6 +108,9 @@ export const LIBRARY_PAYMENT_METHOD_LABELS: Record<string, string> = toLabels(LI
 
 import { labelsToOptions } from "./billing"
 
+/** Library member status options for forms */
+export const LIBRARY_MEMBER_STATUS_OPTIONS = labelsToOptions(LIBRARY_MEMBER_STATUS_LABELS)
+
 /** Library payment method options for forms (4 common modes) */
 export const LIBRARY_PAYMENT_METHOD_OPTIONS = labelsToOptions(LIBRARY_PAYMENT_METHOD_LABELS)
 

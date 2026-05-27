@@ -24,7 +24,7 @@ import { createTotalMetric, createBooleanMetric, createNullCheckMetric, MetricCo
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { transformJoin } from "@/lib/supabase/transforms"
+import { transformStaffRoles } from "@/lib/supabase/transforms"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn } from "@/lib/export-columns"
 
@@ -55,22 +55,6 @@ interface StaffMember {
 }
 
 // ============================================
-// Helper Functions
-// ============================================
-
-/**
- * Transform staff roles from Supabase JOIN format
- * Handles both array (from JOIN) and object formats
- */
-const transformStaffRoles = (staff: StaffMember) => {
-  return (staff.roles || []).map((r) => ({
-    ...r,
-    role: transformJoin(r.role),
-    property: transformJoin(r.property),
-  }))
-}
-
-// ============================================
 // Column Definitions
 // ============================================
 
@@ -92,14 +76,14 @@ const columns: Column<StaffMember>[] = [
     canHide: true,
     defaultVisible: true,
     render: (staff) => {
-      const roles = transformStaffRoles(staff)
+      const roles = transformStaffRoles(staff.roles)
 
       return (
         <div className="flex flex-wrap gap-1">
           {roles.length > 0 ? (
             roles.slice(0, 2).map((userRole) => (
               <TableBadge key={userRole.id} variant="default">
-                {userRole.role?.name}
+                {userRole.role?.name as string}
               </TableBadge>
             ))
           ) : (

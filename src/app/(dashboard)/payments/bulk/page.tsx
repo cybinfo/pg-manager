@@ -21,23 +21,11 @@ import { getTodayISO } from "@/lib/date-helpers"
 import { PAYMENT_METHODS } from "@/lib/status/billing"
 import { recordBulkPayments, BulkPaymentInput } from "@/lib/workflows/payment.workflow"
 import { logger } from "@/lib/logger"
+import { type TenantWithBillDues } from "@/types/payments.types"
 
 // ============================================
 // Types
 // ============================================
-
-interface TenantWithDues {
-  tenant_id: string
-  tenant_name: string
-  phone: string
-  property_id: string
-  property_name: string
-  room_number: string
-  bill_id: string
-  bill_number: string
-  for_month: string
-  balance_due: number
-}
 
 interface RowState {
   selected: boolean
@@ -55,7 +43,7 @@ function BulkPaymentForm() {
 
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [tenantDues, setTenantDues] = useState<TenantWithDues[]>([])
+  const [tenantDues, setTenantDues] = useState<TenantWithBillDues[]>([])
   const [rowStates, setRowStates] = useState<Record<string, RowState>>({})
   const [paymentDate, setPaymentDate] = useState(getTodayISO())
   const [globalMethod, setGlobalMethod] = useState("cash")
@@ -92,7 +80,7 @@ function BulkPaymentForm() {
         return
       }
 
-      const dues: TenantWithDues[] = (bills || [])
+      const dues: TenantWithBillDues[] = (bills || [])
         .map((bill: Record<string, unknown>) => {
           const tenant = transformJoin(bill.tenant as Record<string, unknown>[] | Record<string, unknown> | null)
           if (!tenant) return null
@@ -113,7 +101,7 @@ function BulkPaymentForm() {
             balance_due: bill.balance_due as number,
           }
         })
-        .filter((d: TenantWithDues | null): d is TenantWithDues => d !== null)
+        .filter((d: TenantWithBillDues | null): d is TenantWithBillDues => d !== null)
 
       setTenantDues(dues)
 

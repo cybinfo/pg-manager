@@ -27,34 +27,12 @@ import { messageTemplates, generateWhatsAppLink, formatCurrency } from "@/lib/no
 import { formatDate } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { logger } from "@/lib/logger"
-import { FeatureGuard } from "@/components/auth"
-
-interface TenantWithDues {
-  id: string
-  name: string
-  phone: string
-  email: string | null
-  monthly_rent: number
-  check_in_date: string
-  property: {
-    id: string
-    name: string
-  }
-  room: {
-    id: string
-    room_number: string
-  }
-  // Calculated fields
-  totalPaid: number
-  expectedRent: number
-  pendingDues: number
-  monthsActive: number
-  lastPaymentDate: string | null
-}
+import { FeatureGuard, PermissionGuard } from "@/components/auth"
+import { type TenantWithRentDues } from "@/types/payments.types"
 
 export default function PaymentRemindersPage() {
   const { user } = useAuth()
-  const [tenants, setTenants] = useState<TenantWithDues[]>([])
+  const [tenants, setTenants] = useState<TenantWithRentDues[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [ownerName, setOwnerName] = useState("")
@@ -118,14 +96,14 @@ export default function PaymentRemindersPage() {
       email: string | null
       monthly_rent: number
       check_in_date: string
-      property: TenantWithDues["property"] | TenantWithDues["property"][]
-      room: TenantWithDues["room"] | TenantWithDues["room"][]
+      property: TenantWithRentDues["property"] | TenantWithRentDues["property"][]
+      room: TenantWithRentDues["room"] | TenantWithRentDues["room"][]
     }
     const now = new Date()
-    const tenantsWithDues: TenantWithDues[] = ((tenantsData || []) as RawTenant[]).map((tenant) => {
+    const tenantsWithDues: TenantWithRentDues[] = ((tenantsData || []) as RawTenant[]).map((tenant) => {
       // Transform arrays to single objects (Supabase join pattern)
-      const property = transformJoin(tenant.property) as TenantWithDues["property"]
-      const room = transformJoin(tenant.room) as TenantWithDues["room"]
+      const property = transformJoin(tenant.property) as TenantWithRentDues["property"]
+      const room = transformJoin(tenant.room) as TenantWithRentDues["room"]
 
       // Calculate months active
       const checkIn = new Date(tenant.check_in_date)
@@ -203,6 +181,7 @@ export default function PaymentRemindersPage() {
 
   return (
     <FeatureGuard module="payments" feature="paymentReminders">
+      <PermissionGuard permission="payments.view">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -430,6 +409,7 @@ export default function PaymentRemindersPage() {
         </CardContent>
       </Card>
     </div>
+      </PermissionGuard>
     </FeatureGuard>
   )
 }
