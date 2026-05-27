@@ -37,7 +37,7 @@ import {
   Trash2,
   Edit,
 } from "lucide-react"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatTime } from "@/lib/format"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getNowISO } from "@/lib/date-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -170,18 +170,8 @@ export default function LibraryAttendanceDetailPage() {
   const isActive = !attendance.check_out_time
 
   // Format times
-  const checkInTime = new Date(attendance.check_in_time).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  })
-  const checkOutTime = attendance.check_out_time
-    ? new Date(attendance.check_out_time).toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : null
+  const checkInTime = formatTime(attendance.check_in_time)
+  const checkOutTime = attendance.check_out_time ? formatTime(attendance.check_out_time) : null
 
   return (
     <div className="space-y-6">

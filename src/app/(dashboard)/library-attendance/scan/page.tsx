@@ -18,6 +18,7 @@ import { ArrowLeft, Camera, CheckCircle, XCircle, Loader2, Users, Clock, AlertCi
 import { showSuccess, showError, showWarning } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { getNowISO } from "@/lib/date-helpers"
+import { formatTime } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { logger } from "@/lib/logger"
 import { FeatureGuard } from "@/components/auth"
@@ -429,10 +430,7 @@ export default function QRScannerPage() {
                       </p>
                     </div>
                     <div className="text-right text-xs text-muted-foreground">
-                      {checkIn.timestamp.toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatTime(checkIn.timestamp)}
                     </div>
                   </div>
                 ))}

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Clock, CheckCircle, Calendar, Timer, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { ExportButton } from "@/components/ui/export-button"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatTime } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 
 interface AttendanceRecord {
@@ -112,8 +112,8 @@ export default function MemberAttendancePage() {
           filename="my-attendance"
           columns={[
             { key: "attendance_date", header: "Date", format: (v) => formatDate(v as string) },
-            { key: "check_in_time", header: "Check In", format: (v) => v ? new Date(v as string).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "" },
-            { key: "check_out_time", header: "Check Out", format: (v) => v ? new Date(v as string).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "" },
+            { key: "check_in_time", header: "Check In", format: (v) => v ? formatTime(v as string) : "" },
+            { key: "check_out_time", header: "Check Out", format: (v) => v ? formatTime(v as string) : "" },
             { key: "hours_spent", header: "Hours", format: (v) => v != null ? `${(v as number).toFixed(1)}h` : "" },
             { key: "notes", header: "Notes", format: (v) => (v as string) || "" },
           ]}
@@ -221,17 +221,11 @@ export default function MemberAttendancePage() {
                     <div>
                       <p className="font-medium">{formatDate(record.attendance_date)}</p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(record.check_in_time).toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatTime(record.check_in_time)}
                         {record.check_out_time && (
                           <>
                             {" - "}
-                            {new Date(record.check_out_time).toLocaleTimeString("en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {formatTime(record.check_out_time)}
                           </>
                         )}
                       </p>

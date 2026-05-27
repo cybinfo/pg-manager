@@ -26,6 +26,7 @@ import { PropertyLink } from "@/components/ui/entity-link"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
 import type { CSVColumn } from "@/lib/download-utils"
 import { nestedColumn, dateExportColumn, labelMapColumn } from "@/lib/export-columns"
+import { formatNumber } from "@/lib/format"
 
 // ============================================
 // Types
@@ -129,7 +130,7 @@ const columns: Column<Meter>[] = [
     canHide: true,
     defaultVisible: true,
     render: (meter) => (
-      <span className="font-mono text-sm">{meter.initial_reading.toLocaleString()}</span>
+      <span className="font-mono text-sm">{formatNumber(meter.initial_reading)}</span>
     ),
   },
   statusColumn(METER_STATUS_CONFIG, {

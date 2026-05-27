@@ -63,7 +63,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MemberHoursCard, MemberQRCode } from "@/components/library"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatTime } from "@/lib/format"
 import { softDelete } from "@/lib/audit"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -704,9 +704,9 @@ export default function LibraryMemberDetailPage() {
               <div className="min-w-0">
                 <p className="font-medium text-sm">{formatDate(att.attendance_date)}</p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(att.check_in_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                  {formatTime(att.check_in_time)}
                   {att.check_out_time && (
-                    <> - {new Date(att.check_out_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</>
+                    <> - {formatTime(att.check_out_time)}</>
                   )}
                 </p>
               </div>

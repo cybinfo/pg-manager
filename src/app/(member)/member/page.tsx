@@ -21,7 +21,7 @@ import {
 import { PageSkeleton } from "@/components/ui/loading"
 import { QuickActionLink } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
-import { formatDate, formatCurrency } from "@/lib/format"
+import { formatDate, formatCurrency, formatTime } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 import { FeatureGuard } from "@/components/auth"
@@ -349,17 +349,11 @@ export default function MemberHomePage() {
                     <div>
                       <p className="font-medium">{formatDate(att.attendance_date)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(att.check_in_time).toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatTime(att.check_in_time)}
                         {att.check_out_time && (
                           <>
                             {" - "}
-                            {new Date(att.check_out_time).toLocaleTimeString("en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {formatTime(att.check_out_time)}
                           </>
                         )}
                       </p>

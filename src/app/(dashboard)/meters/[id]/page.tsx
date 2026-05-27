@@ -11,6 +11,7 @@ import { useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { useDetailPage, METER_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,7 +54,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatNumber } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import {
   MeterType,
@@ -88,6 +89,7 @@ const meterTypeIcons: Record<MeterType, typeof Zap> = {
 
 export default function MeterDetailPage() {
   const params = useParams()
+  const { user } = useAuth()
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meters", defaultLabel: "All Meters" })
 
   // Dialogs
@@ -158,7 +160,6 @@ export default function MeterDetailPage() {
     setSaving(true)
 
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     const { error } = await supabase.from("meter_assignments").insert({
       owner_id: user?.id,
@@ -305,7 +306,7 @@ export default function MeterDetailPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <InfoCard
           label="Initial Reading"
-          value={meter.initial_reading.toLocaleString()}
+          value={formatNumber(meter.initial_reading)}
           icon={Gauge}
         />
         <InfoCard
@@ -400,7 +401,7 @@ export default function MeterDetailPage() {
               />
               <InfoRow
                 label="Start Reading"
-                value={currentAssignment.start_reading.toLocaleString()}
+                value={formatNumber(currentAssignment.start_reading)}
                 icon={Gauge}
               />
               {currentAssignment.reason && (
@@ -449,12 +450,12 @@ export default function MeterDetailPage() {
                 <div className="text-right">
                   <div className="text-sm">
                     <span className="text-muted-foreground">Start:</span>{" "}
-                    <span className="font-mono">{assignment.start_reading.toLocaleString()}</span>
+                    <span className="font-mono">{formatNumber(assignment.start_reading)}</span>
                   </div>
                   {assignment.end_reading != null && (
                     <div className="text-sm">
                       <span className="text-muted-foreground">End:</span>{" "}
-                      <span className="font-mono">{assignment.end_reading.toLocaleString()}</span>
+                      <span className="font-mono">{formatNumber(assignment.end_reading)}</span>
                     </div>
                   )}
                 </div>
@@ -487,10 +488,10 @@ export default function MeterDetailPage() {
                   <span>{formatDate(reading.reading_date)}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="font-mono">{reading.reading_value.toLocaleString()}</span>
+                  <span className="font-mono">{formatNumber(reading.reading_value)}</span>
                   {reading.units_consumed !== null && (
                     <span className="text-sm text-muted-foreground">
-                      (+{reading.units_consumed.toLocaleString()} {typeConfig.unit})
+                      (+{formatNumber(reading.units_consumed)} {typeConfig.unit})
                     </span>
                   )}
                 </div>

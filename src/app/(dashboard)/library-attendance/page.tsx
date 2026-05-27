@@ -14,11 +14,12 @@ import { Column, StatusDot } from "@/components/ui/data-table"
 import { personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { ModuleGuard } from "@/components/auth"
+import { useAuth } from "@/lib/auth"
 import { LIBRARY_ATTENDANCE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createDateFilter } from "@/lib/filter-presets"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatTime } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -200,7 +201,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{displayName}</p>
                   <p className="text-xs text-muted-foreground">
-                    {checkInTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                    {formatTime(checkInTime)}
                     {" • "}
                     <span className={parseFloat(hoursAgo) > (record.member?.hours_balance || 999) ? "text-destructive font-medium" : "text-success"}>
                       {hoursAgo}h{record.member?.hours_balance ? ` / ${record.member.hours_balance.toFixed(0)}h today` : ""}
@@ -231,6 +232,7 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
 function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
   const [memberCode, setMemberCode] = useState("")
   const [loading, setLoading] = useState(false)
+  const { user } = useAuth()
 
   const handleCheckIn = async () => {
     if (!memberCode.trim()) {
@@ -298,8 +300,6 @@ function QuickCheckIn({ onCheckIn }: { onCheckIn: () => void }) {
       }
 
       // Create attendance record
-      const { data: { user } } = await supabase.auth.getUser()
-
       const attendanceData = withCreatedBy(
         {
           owner_id: fullMember.owner_id,
@@ -395,7 +395,7 @@ const columns: Column<AttendanceItem>[] = [
     render: (att) => (
       <div>
         <div className="font-medium flex items-center gap-1.5">
-          {new Date(att.check_in_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+          {formatTime(att.check_in_time)}
           {att.is_late && (
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium bg-warning/10 text-warning rounded border border-warning/20" title={att.scheduled_slot ? `Scheduled: ${att.scheduled_slot}` : "Outside assigned slot"}>
               <AlertTriangle className="h-2.5 w-2.5" />
@@ -419,7 +419,7 @@ const columns: Column<AttendanceItem>[] = [
     defaultVisible: true,
     render: (att) => att.check_out_time ? (
       <div className="font-medium">
-        {new Date(att.check_out_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+        {formatTime(att.check_out_time)}
       </div>
     ) : (
       <StatusDot status="success" label="Active" />

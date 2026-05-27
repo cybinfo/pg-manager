@@ -211,6 +211,15 @@ export const formatTimeAgo = (date: string | Date | null | undefined): string =>
 }
 
 /**
+ * Format time in 12-hour format (HH:MM AM/PM)
+ * @example formatTime("2024-01-15T10:30:00") => "10:30 AM"
+ */
+export function formatTime(date: string | Date | null | undefined): string {
+  if (!date) return "—"
+  return new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+}
+
+/**
  * Format month year (for billing periods)
  * @example formatMonthYear("2024-01-15") => "January 2024"
  */

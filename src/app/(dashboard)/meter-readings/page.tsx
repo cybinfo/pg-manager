@@ -274,10 +274,10 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
         const ct = r.charge_type as { name?: string } | null
         return ct?.name?.toLowerCase() === "electricity"
       })
-      return electricityReadings
+      const total = electricityReadings
         .filter((r) => r.units_consumed)
         .reduce((sum: number, r) => sum + (Number(r.units_consumed) || 0), 0)
-        .toLocaleString()
+      return formatNumber(total)
     },
     highlight: () => true,
   },

@@ -40,7 +40,7 @@ import {
   Wrench,
 } from "lucide-react"
 import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatCurrency, formatDate, formatNumber } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG } from "@/types/meters.types"
 import { ROOM_STATUS } from "@/lib/status"
@@ -568,7 +568,7 @@ export default function RoomDetailPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold tabular-nums">{reading.reading_value.toLocaleString()}</p>
+                    <p className="font-semibold tabular-nums">{formatNumber(reading.reading_value)}</p>
                     {reading.units_consumed !== null && (
                       <p className="text-xs text-warning">+{reading.units_consumed} units</p>
                     )}
