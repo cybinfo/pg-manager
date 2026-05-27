@@ -47,6 +47,7 @@ import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { useFeatures } from "@/lib/features/use-features"
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { COMPLAINT_STATUS, COMPLAINT_CATEGORIES } from "@/lib/status"
+import { COMPLAINT_PRIORITY_OPTIONS } from "@/lib/constants/form-options"
 
 const statusLabels: Record<string, string> = Object.fromEntries(
   Object.entries(COMPLAINT_STATUS).map(([k, v]) => [k, v.label])
@@ -394,12 +395,7 @@ export default function ComplaintDetailPage() {
                 <Select
                   value={editData.priority}
                   onChange={(e) => setEditData((prev) => ({ ...prev, priority: e.target.value }))}
-                  options={[
-                    { value: "low", label: "Low" },
-                    { value: "medium", label: "Medium" },
-                    { value: "high", label: "High" },
-                    { value: "urgent", label: "Urgent" },
-                  ]}
+                  options={COMPLAINT_PRIORITY_OPTIONS}
                 />
               ) : (
                 <div className="pt-1">

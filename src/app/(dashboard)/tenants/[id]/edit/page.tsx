@@ -32,6 +32,7 @@ import {
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
 import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
+import { TENANT_STATUS_OPTIONS } from "@/lib/constants/form-options"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 
 interface Property {
@@ -323,11 +324,7 @@ function EditTenantContent() {
                   name="status"
                   value={formData.status as string}
                   onChange={handleChange}
-                  options={[
-                    { value: "active", label: "Active" },
-                    { value: "notice_period", label: "Notice Period" },
-                    { value: "checked_out", label: "Checked Out" },
-                  ]}
+                  options={TENANT_STATUS_OPTIONS}
                   disabled={saving}
                 />
               </FormField>

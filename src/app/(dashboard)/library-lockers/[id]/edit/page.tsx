@@ -20,6 +20,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
+import { LOCKER_SIZE_OPTIONS, LOCKER_STATUS_OPTIONS } from "@/lib/constants/form-options"
 
 export default function EditLibraryLockerPage({
   params,
@@ -149,11 +150,7 @@ function EditLibraryLockerContent({
                   onChange={handleChange}
                   name="size"
                   disabled={saving}
-                  options={[
-                    { value: "small", label: "Small" },
-                    { value: "medium", label: "Medium" },
-                    { value: "large", label: "Large" },
-                  ]}
+                  options={LOCKER_SIZE_OPTIONS}
                 />
               </FormField>
             </div>
@@ -189,11 +186,7 @@ function EditLibraryLockerContent({
                 onChange={handleChange}
                 name="status"
                 disabled={saving}
-                options={[
-                  { value: "available", label: "Available" },
-                  { value: "occupied", label: "Occupied" },
-                  { value: "maintenance", label: "Maintenance" },
-                ]}
+                options={LOCKER_STATUS_OPTIONS}
               />
             </FormField>
 

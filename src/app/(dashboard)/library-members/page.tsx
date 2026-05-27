@@ -25,6 +25,7 @@ import { dateExportColumn, formatDecimalForExport } from "@/lib/export-columns"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/form-components"
 import { PermissionGate } from "@/components/auth"
+import { LIBRARY_MEMBER_STATUS_UPDATE_OPTIONS } from "@/lib/constants/form-options"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import {
@@ -368,12 +369,7 @@ function BulkStatusActions({
           value={targetStatus}
           onChange={(e) => setTargetStatus(e.target.value)}
           disabled={updating}
-          options={[
-            { value: "", label: "Update Status..." },
-            { value: "active", label: "Active" },
-            { value: "suspended", label: "Suspended" },
-            { value: "cancelled", label: "Cancelled" },
-          ]}
+          options={LIBRARY_MEMBER_STATUS_UPDATE_OPTIONS}
         />
         <Button
           size="sm"

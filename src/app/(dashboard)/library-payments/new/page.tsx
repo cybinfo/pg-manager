@@ -20,7 +20,7 @@ import { Select, FormField } from "@/components/ui/form-components"
 import { ArrowLeft, CreditCard, Loader2 } from "lucide-react"
 import { requiredSelect, requiredAmount, requiredDate } from "@/lib/validation"
 import { getTodayISO } from "@/lib/date-helpers"
-import { LIBRARY_PAYMENT_METHOD_OPTIONS } from "@/lib/status"
+import { LIBRARY_PAYMENT_METHOD_OPTIONS, LIBRARY_PAYMENT_TYPE_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
 
 interface Member {
@@ -289,13 +289,7 @@ function NewLibraryPaymentContent() {
                   onChange={handleChange}
                   name="payment_type"
                   disabled={saving}
-                  options={[
-                    { value: "subscription", label: "Subscription" },
-                    { value: "locker_rent", label: "Locker Rent" },
-                    { value: "locker_deposit", label: "Locker Deposit" },
-                    { value: "fine", label: "Fine" },
-                    { value: "other", label: "Other" },
-                  ]}
+                  options={LIBRARY_PAYMENT_TYPE_OPTIONS}
                 />
               </FormField>
               <FormField label="Payment Method" htmlFor="payment_method">

@@ -22,6 +22,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
+import { SEAT_STATUS_OPTIONS } from "@/lib/constants/form-options"
 
 export default function EditLibrarySeatPage({
   params,
@@ -168,12 +169,7 @@ function EditLibrarySeatContent({
                 onChange={handleChange}
                 name="status"
                 disabled={saving}
-                options={[
-                  { value: "available", label: "Available" },
-                  { value: "occupied", label: "Occupied" },
-                  { value: "reserved", label: "Reserved" },
-                  { value: "maintenance", label: "Maintenance" },
-                ]}
+                options={SEAT_STATUS_OPTIONS}
               />
             </FormField>
 

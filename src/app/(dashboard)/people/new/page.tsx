@@ -40,11 +40,13 @@ import {
   PersonFormData,
   EmergencyContact,
   Gender,
-  GENDER_LABELS,
-  BLOOD_GROUPS,
-  INDIAN_STATES,
-  RELATIONS,
 } from "@/types/people.types"
+import {
+  GENDER_OPTIONS,
+  BLOOD_GROUP_OPTIONS,
+  INDIAN_STATE_OPTIONS,
+  RELATION_OPTIONS,
+} from "@/lib/constants/form-options"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { validateAadhaar, validatePAN } from "@/lib/validators"
 import { IdDocumentEntry, IdDocumentData, DEFAULT_ID_DOCUMENT } from "@/components/forms"
@@ -333,13 +335,7 @@ export default function NewPersonPage() {
                 <Select
                   value={formData.gender || ""}
                   onChange={(e) => updateField("gender", e.target.value as Gender)}
-                  options={[
-                    { value: "", label: "Select gender" },
-                    ...Object.entries(GENDER_LABELS).map(([value, label]) => ({
-                      value,
-                      label,
-                    })),
-                  ]}
+                  options={GENDER_OPTIONS}
                 />
               </FormField>
             </div>
@@ -348,10 +344,7 @@ export default function NewPersonPage() {
               <Select
                 value={formData.blood_group || ""}
                 onChange={(e) => updateField("blood_group", e.target.value)}
-                options={[
-                  { value: "", label: "Select blood group" },
-                  ...BLOOD_GROUPS.map((bg) => ({ value: bg, label: bg })),
-                ]}
+                options={BLOOD_GROUP_OPTIONS}
               />
             </FormField>
           </div>
@@ -465,10 +458,7 @@ export default function NewPersonPage() {
               <Select
                 value={formData.permanent_state || ""}
                 onChange={(e) => updateField("permanent_state", e.target.value)}
-                options={[
-                  { value: "", label: "Select state" },
-                  ...INDIAN_STATES.map((state) => ({ value: state, label: state })),
-                ]}
+                options={INDIAN_STATE_OPTIONS}
               />
             </FormField>
           </div>
@@ -539,10 +529,7 @@ export default function NewPersonPage() {
                           <Select
                             value={contact.relation}
                             onChange={(e) => updateEmergencyContact(index, "relation", e.target.value)}
-                            options={[
-                              { value: "", label: "Select relation" },
-                              ...RELATIONS.map((rel) => ({ value: rel, label: rel })),
-                            ]}
+                            options={RELATION_OPTIONS}
                           />
                         </FormField>
                       </div>

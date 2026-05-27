@@ -19,6 +19,7 @@ import { Select, FormField } from "@/components/ui/form-components"
 import { requiredField, requiredSelect } from "@/lib/validation"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
 import { PermissionGuard } from "@/components/auth"
+import { LOCKER_SIZE_OPTIONS } from "@/lib/constants/form-options"
 
 interface Library {
   id: string
@@ -207,11 +208,7 @@ function NewLibraryLockerContent() {
                   onChange={handleChange}
                   name="size"
                   disabled={saving}
-                  options={[
-                    { value: "small", label: "Small" },
-                    { value: "medium", label: "Medium" },
-                    { value: "large", label: "Large" },
-                  ]}
+                  options={LOCKER_SIZE_OPTIONS}
                 />
               </FormField>
             </div>
