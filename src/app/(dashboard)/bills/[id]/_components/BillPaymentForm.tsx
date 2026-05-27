@@ -75,7 +75,7 @@ export function BillPaymentForm({
           payment_method: paymentData.payment_method,
           reference_number: paymentData.reference_number || null,
           notes: paymentData.notes || null,
-        }, user.id) as Record<string, unknown>)
+        }, user.id))
 
       if (error) {
         logger.error("Error recording payment:", { detail: error })
