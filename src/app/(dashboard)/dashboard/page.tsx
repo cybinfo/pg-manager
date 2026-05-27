@@ -48,7 +48,7 @@ import { ModuleGuard } from "@/components/auth/module-guard"
 import { InfoBanner } from "@/components/ui/info-banner"
 import { formatCurrency, formatCurrencyTick, calculateOccupancyRate, getGreeting } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
-import { MONTH_NAMES } from "@/components/reports"
+import { computeDashboardStats } from "@/lib/reports/dashboard"
 
 interface DashboardStats {
   properties: number
@@ -201,102 +201,33 @@ export default function DashboardPage() {
           .is("deleted_at", null),
       ])
 
-      // Calculate room stats
-      let totalBeds = 0
-      let occupiedBeds = 0
-      if (roomsRes.data) {
-        roomsRes.data.forEach((room: { total_beds?: number; occupied_beds?: number }) => {
-          totalBeds += room.total_beds || 0
-          occupiedBeds += room.occupied_beds || 0
-        })
-      }
+      const computed = computeDashboardStats({
+        rooms: roomsRes.data || [],
+        charges: chargesRes.data || [],
+        payments: paymentsRes.data || [],
+        allPayments: monthlyPaymentsRes.data || [],
+        expenses: expensesRes.data || [],
+        propertiesCount: propertiesRes.count || 0,
+        tenantsCount: tenantsRes.count || 0,
+        complaintsCount: complaintsRes.count || 0,
+        expiringLeasesCount: expiringLeasesRes.count || 0,
+        librariesCount: librariesRes.count || 0,
+        libraryMembersCount: libraryMembersRes.count || 0,
+        libraryActiveMembersCount: libraryActiveMembersRes.count || 0,
+        libraryCheckedInCount: libraryCheckedInRes.count || 0,
+        chargeTypesCount: chargeTypesRes.count || 0,
+        roomsCount: roomsRes.data?.length || 0,
+      }, now)
 
-      // Calculate pending dues and overdue count
-      let pendingDues = 0
-      let overdueCount = 0
-      let paidCount = 0
-      let partialCount = 0
-      if (chargesRes.data) {
-        chargesRes.data.forEach((charge: { amount: number; paid_amount?: number; status: string }) => {
-          const due = Number(charge.amount) - Number(charge.paid_amount || 0)
-          pendingDues += due
-          if (charge.status === "overdue") overdueCount++
-          else if (charge.status === "partial") partialCount++
-          else paidCount++
-        })
-      }
+      setStats(computed.stats)
+      setMonthlyRevenue(computed.monthlyRevenue)
+      setPaymentStatus(computed.paymentStatus)
 
-      // Calculate total revenue
-      let totalRevenue = 0
-      if (paymentsRes.data) {
-        totalRevenue = paymentsRes.data.reduce((sum: number, payment: { amount: number }) => sum + Number(payment.amount), 0)
-      }
-
-      // Calculate total expenses
-      let totalExpenses = 0
-      if (expensesRes.data) {
-        totalExpenses = expensesRes.data.reduce((sum: number, expense: { amount: number }) => sum + Number(expense.amount), 0)
-      }
-
-      // Process monthly revenue for chart
-      const revenueByMonth: Record<string, number> = {}
-
-      // Initialize last 6 months
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-        const key = `${MONTH_NAMES[d.getMonth()]}`
-        revenueByMonth[key] = 0
-      }
-
-      if (monthlyPaymentsRes.data) {
-        monthlyPaymentsRes.data.forEach((payment: { payment_date: string; amount: number }) => {
-          const d = new Date(payment.payment_date)
-          const key = MONTH_NAMES[d.getMonth()]
-          if (revenueByMonth[key] !== undefined) {
-            revenueByMonth[key] += Number(payment.amount)
-          }
-        })
-      }
-
-      const revenueData = Object.entries(revenueByMonth).map(([month, amount]) => ({
-        month,
-        amount,
-      }))
-
-      setMonthlyRevenue(revenueData)
-
-      // Payment status for pie chart
-      setPaymentStatus([
-        { name: "Paid", value: paidCount, color: "hsl(var(--chart-1))" },
-        { name: "Partial", value: partialCount, color: "hsl(var(--chart-2))" },
-        { name: "Overdue", value: overdueCount, color: "hsl(var(--chart-5))" },
-      ].filter(s => s.value > 0))
-
-      setStats({
-        properties: propertiesRes.count || 0,
-        rooms: roomsRes.data?.length || 0,
-        totalBeds,
-        occupiedBeds,
-        tenants: tenantsRes.count || 0,
-        pendingDues,
-        totalRevenue,
-        totalExpenses,
-        overdueCount,
-        openComplaints: complaintsRes.count || 0,
-        expiringLeases: expiringLeasesRes.count || 0,
-        // Library stats
-        libraries: librariesRes.count || 0,
-        libraryMembers: libraryMembersRes.count || 0,
-        libraryActiveMembers: libraryActiveMembersRes.count || 0,
-        libraryCheckedIn: libraryCheckedInRes.count || 0,
-      })
-
-      // Update getting started checklist
       setGettingStarted([
-        { task: "Add your first property", href: "/properties/new", done: (propertiesRes.count || 0) > 0 },
-        { task: "Create rooms in your property", href: "/rooms/new", done: (roomsRes.data?.length || 0) > 0 },
-        { task: "Add your first tenant", href: "/tenants/new", done: (tenantsRes.count || 0) > 0 },
-        { task: "Configure charge types", href: "/settings", done: (chargeTypesRes.count || 0) > 0 },
+        { task: "Add your first property", href: "/properties/new", done: computed.gettingStartedDone.property },
+        { task: "Create rooms in your property", href: "/rooms/new", done: computed.gettingStartedDone.room },
+        { task: "Add your first tenant", href: "/tenants/new", done: computed.gettingStartedDone.tenant },
+        { task: "Configure charge types", href: "/settings", done: computed.gettingStartedDone.chargeType },
       ])
 
       setLoading(false)

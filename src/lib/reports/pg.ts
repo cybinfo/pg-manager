@@ -1,4 +1,5 @@
-import { calculateGrowth, buildPaymentMethodBreakdown, MONTH_NAMES } from "@/components/reports"
+import { calculateGrowth, buildPaymentMethodBreakdown } from "@/components/reports"
+import { MONTH_NAMES } from "@/lib/format"
 
 // ============================================================================
 // Input types — raw Supabase rows (expenses already have transformJoin applied)

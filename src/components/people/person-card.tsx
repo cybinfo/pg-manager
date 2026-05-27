@@ -24,6 +24,7 @@ import {
   Star,
   ExternalLink,
   MoreVertical,
+  type LucideIcon,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -34,41 +35,37 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { PersonSearchResult } from "@/types/people.types"
 import { cn } from "@/lib/utils"
+import { PERSON_TAG_COLORS, PERSON_TAG_ICONS } from "@/lib/status"
 
-// Tag styling
-const TAG_COLORS: Record<string, string> = {
-  tenant: "bg-info/10 text-info",
-  staff: "bg-success/10 text-success",
-  visitor: "bg-primary/10 text-primary",
-  service_provider: "bg-warning/10 text-warning",
-  frequent: "bg-warning/10 text-warning",
-  vip: "bg-warning/10 text-warning",
+// Resolve icon name strings from PERSON_TAG_ICONS to Lucide components for rendering.
+// PERSON_TAG_COLORS / PERSON_TAG_ICONS are the canonical source of tag→style mapping.
+const TAG_ICON_COMPONENTS: Record<string, LucideIcon> = {
+  Home, Briefcase, UserCircle, Wrench, Star,
+}
+
+// Additional colors for tags not covered by PERSON_TAG_COLORS (local display only)
+const TAG_COLOR_EXTRAS: Record<string, string> = {
   blocked: "bg-destructive/10 text-destructive",
   verified: "bg-success/10 text-success",
 }
 
-const TAG_ICONS: Record<string, React.ReactNode> = {
-  tenant: <Home className="h-3 w-3" />,
-  staff: <Briefcase className="h-3 w-3" />,
-  visitor: <UserCircle className="h-3 w-3" />,
-  service_provider: <Wrench className="h-3 w-3" />,
-  frequent: <Star className="h-3 w-3" />,
-  vip: <Star className="h-3 w-3" />,
-  blocked: <Ban className="h-3 w-3" />,
-  verified: <BadgeCheck className="h-3 w-3" />,
-}
+const TAG_COLOR_MAP: Record<string, string> = { ...PERSON_TAG_COLORS, ...TAG_COLOR_EXTRAS }
 
-export const TagBadge = ({ tag }: { tag: string }) => (
-  <span
-    className={cn(
-      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-      TAG_COLORS[tag] || "bg-slate-100 text-slate-700"
-    )}
-  >
-    {TAG_ICONS[tag]}
-    {tag.replace("_", " ")}
-  </span>
-)
+export const TagBadge = ({ tag }: { tag: string }) => {
+  const iconName = PERSON_TAG_ICONS[tag]
+  const IconComponent = iconName ? TAG_ICON_COMPONENTS[iconName] : undefined
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+        TAG_COLOR_MAP[tag] || "bg-slate-100 text-slate-700"
+      )}
+    >
+      {IconComponent && <IconComponent className="h-3 w-3" />}
+      {tag.replace("_", " ")}
+    </span>
+  )
+}
 
 interface PersonCardProps {
   person: PersonSearchResult & {

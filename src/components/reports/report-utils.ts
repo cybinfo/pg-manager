@@ -6,9 +6,11 @@
 import { DateRange } from "@/components/ui/date-range-picker"
 import { showError } from "@/lib/toast-helpers"
 import { DemoAction } from "@/lib/demo-mode"
-import { formatCurrencyCompact } from "@/lib/format"
+import { formatCurrencyCompact, MONTH_NAMES } from "@/lib/format"
+import { PAYMENT_METHODS } from "@/lib/status"
 
-export const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+// Re-export so existing component consumers keep working without import changes
+export { MONTH_NAMES }
 
 export const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
@@ -21,16 +23,8 @@ export const CHART_COLORS = [
   "hsl(var(--chart-4))",
 ]
 
-/** Payment method display labels */
-export const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  cash: "Cash",
-  upi: "UPI",
-  bank_transfer: "Bank Transfer",
-  cheque: "Cheque",
-  card: "Card",
-  paytm: "Paytm",
-  other: "Other",
-}
+// Derived from PAYMENT_METHODS (single source of truth in @/lib/status)
+export const PAYMENT_METHOD_LABELS: Record<string, string> = PAYMENT_METHODS
 
 export { formatCurrencyCompact as formatCurrency }
 

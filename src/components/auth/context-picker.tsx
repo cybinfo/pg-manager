@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ContextWithDetails, CONTEXT_TYPE_CONFIG } from '@/lib/auth/types'
 import { Building2, Crown, Users, Home, Clock, ChevronRight, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { formatDate } from '@/lib/format'
+import { formatDate, formatTimeAgo } from '@/lib/format'
 
 interface ContextPickerProps {
   contexts: ContextWithDetails[]
@@ -33,22 +33,6 @@ export function ContextPicker({ contexts, onSelect, userName }: ContextPickerPro
       case 'tenant': return <Home className="h-5 w-5" />
       default: return <Building2 className="h-5 w-5" />
     }
-  }
-
-  const formatLastAccessed = (date: string | null) => {
-    if (!date) return 'Never accessed'
-    const d = new Date(date)
-    const now = new Date()
-    const diffMs = now.getTime() - d.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
-    return formatDate(d)
   }
 
   return (
@@ -112,7 +96,7 @@ export function ContextPicker({ contexts, onSelect, userName }: ContextPickerPro
 
                   <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span>{formatLastAccessed(ctx.last_accessed_at)}</span>
+                    <span>{ctx.last_accessed_at ? formatTimeAgo(ctx.last_accessed_at) : 'Never accessed'}</span>
                   </div>
                 </div>
 

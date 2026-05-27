@@ -317,6 +317,12 @@ export const numberToWords = (num: number): string => {
 }
 
 // ============================================
+// DATE CONSTANTS
+// ============================================
+
+export const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+// ============================================
 // GREETING
 // ============================================
 

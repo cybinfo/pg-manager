@@ -1,4 +1,5 @@
-import { calculateGrowth, buildPaymentMethodBreakdown, MONTH_NAMES, DAY_NAMES } from "@/components/reports"
+import { calculateGrowth, buildPaymentMethodBreakdown, DAY_NAMES } from "@/components/reports"
+import { MONTH_NAMES } from "@/lib/format"
 import { getTodayISO } from "@/lib/date-helpers"
 import { getPeriodKey, formatPeriodLabel, type GroupByPeriod } from "@/lib/report-utils"
 
