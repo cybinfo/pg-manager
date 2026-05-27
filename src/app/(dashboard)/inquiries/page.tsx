@@ -19,6 +19,7 @@ import { INQUIRY_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDate, formatPhone } from "@/lib/format"
+import { dateColumn } from "@/lib/columns"
 import { INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_COLORS } from "@/lib/status-config"
 import type { CSVColumn } from "@/lib/download-utils"
 import { nestedColumn, dateExportColumn } from "@/lib/export-columns"
@@ -129,16 +130,7 @@ const columns: Column<Inquiry>[] = [
     defaultVisible: false,
     render: (inquiry) => <SourceBadge source={inquiry.source} label={inquiry.source_label} />,
   },
-  {
-    key: "created_at",
-    header: "Received",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (inquiry) => formatDate(inquiry.created_at),
-  },
+  dateColumn("created_at", "Received", { sortType: "date", defaultVisible: false }),
   {
     key: "status",
     header: "Status",

@@ -24,8 +24,9 @@ import { createTotalMetric, createSumMetric, MetricConfig } from "@/lib/metric-f
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, createDateFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatCurrency } from "@/lib/format"
 import { PAYMENT_METHODS, EXPENSE_MISC_PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import { dateColumn, badgeColumn } from "@/lib/columns"
 import { Button } from "@/components/ui/button"
 import type { CSVColumn } from "@/lib/download-utils"
 import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
@@ -63,14 +64,7 @@ interface MiscTransactionItem {
 // ============================================
 
 const columns: Column<MiscTransactionItem>[] = [
-  {
-    key: "transaction_date",
-    header: "Date",
-    width: "date",
-    sortable: true,
-    canHide: false,
-    render: (item) => formatDate(item.transaction_date),
-  },
+  dateColumn("transaction_date", "Date", { canHide: false }),
   {
     key: "transaction_type",
     header: "Type",
@@ -142,18 +136,7 @@ const columns: Column<MiscTransactionItem>[] = [
       </span>
     ),
   },
-  {
-    key: "payment_mode",
-    header: "Mode",
-    width: "badge",
-    sortable: true,
-    hideOnMobile: true,
-    canHide: true,
-    defaultVisible: true,
-    render: (item) => (
-      <TableBadge variant="muted">{PAYMENT_METHODS[item.payment_mode] || item.payment_mode}</TableBadge>
-    ),
-  },
+  badgeColumn("payment_mode", "Mode", PAYMENT_METHODS, { hideOnMobile: true }),
   // Hidden by default columns
   {
     key: "description",
@@ -201,16 +184,7 @@ const columns: Column<MiscTransactionItem>[] = [
       <span className="text-sm text-muted-foreground line-clamp-2">{item.notes}</span>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Recorded On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (item) => formatDate(item.created_at),
-  },
+  dateColumn("created_at", "Recorded On", { sortType: "date", defaultVisible: false }),
 ]
 
 // ============================================

@@ -15,8 +15,9 @@ import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } 
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { EXPENSE_CATEGORY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatDate, formatCurrency } from "@/lib/format"
 import { BILL_STATUS, EXPENSE_BILL_STATUS_OPTIONS } from "@/lib/status"
+import { currencyColumn, dateColumn, statusColumn } from "@/lib/columns"
 import type { CSVColumn } from "@/lib/download-utils"
 import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 
@@ -84,21 +85,7 @@ const columns: Column<BillPaymentListItem>[] = [
       <span>{bill.category?.name || bill.category_name || "Uncategorized"}</span>
     ),
   },
-  {
-    key: "bill_amount",
-    header: "Amount",
-    width: "amount",
-    sortable: true,
-    sortType: "number",
-    canHide: true,
-    defaultVisible: true,
-    editable: true,
-    editType: "number",
-    editValidation: { min: 0 },
-    render: (bill) => (
-      <span className="font-medium tabular-nums">{formatCurrency(bill.bill_amount)}</span>
-    ),
-  },
+  currencyColumn("bill_amount", "Amount", { editable: true, editType: "number", editValidation: { min: 0 } }),
   {
     key: "due_date",
     header: "Due Date",
@@ -145,22 +132,7 @@ const columns: Column<BillPaymentListItem>[] = [
         <span className="text-muted-foreground">—</span>
       ),
   },
-  {
-    key: "status",
-    header: "Status",
-    width: "status",
-    sortable: true,
-    canHide: true,
-    defaultVisible: true,
-    editable: true,
-    editType: "select",
-    editOptions: EXPENSE_BILL_STATUS_OPTIONS,
-    render: (bill) => {
-      const config = BILL_STATUS[bill.status] || { variant: "muted", label: bill.status }
-
-      return <TableBadge variant={config.variant}>{config.label}</TableBadge>
-    },
-  },
+  statusColumn(BILL_STATUS, { style: "badge", editable: true, editType: "select", editOptions: EXPENSE_BILL_STATUS_OPTIONS }),
   // Hidden by default columns
   {
     key: "bill_number",
@@ -178,16 +150,7 @@ const columns: Column<BillPaymentListItem>[] = [
     defaultVisible: false,
     render: (bill) => bill.bill_period || <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "bill_date",
-    header: "Bill Date",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (bill) => bill.bill_date ? formatDate(bill.bill_date) : <span className="text-muted-foreground">—</span>,
-  },
+  dateColumn("bill_date", "Bill Date", { sortType: "date", defaultVisible: false }),
   {
     key: "paid_amount",
     header: "Paid Amount",
@@ -213,16 +176,7 @@ const columns: Column<BillPaymentListItem>[] = [
       <TableBadge variant="muted">{bill.payment_mode.replace(/_/g, " ")}</TableBadge>
     ) : <span className="text-muted-foreground">—</span>,
   },
-  {
-    key: "created_at",
-    header: "Recorded On",
-    width: "date",
-    sortable: true,
-    sortType: "date",
-    canHide: true,
-    defaultVisible: false,
-    render: (bill) => formatDate(bill.created_at),
-  },
+  dateColumn("created_at", "Recorded On", { sortType: "date", defaultVisible: false }),
 ]
 
 // ============================================

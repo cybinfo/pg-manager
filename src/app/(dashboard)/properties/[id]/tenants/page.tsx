@@ -13,7 +13,8 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Users, Plus, ArrowLeft, Building2 } from "lucide-react"
-import { formatDate, formatCurrency} from "@/lib/format"
+import { formatCurrency } from "@/lib/format"
+import { dateColumn } from "@/lib/columns"
 import { transformJoin } from "@/lib/supabase/transforms"
 
 interface Tenant {
@@ -109,11 +110,7 @@ export default function PropertyTenantsPage() {
       header: "Phone",
       render: (tenant) => tenant.phone
     },
-    {
-      key: "check_in_date",
-      header: "Check-in",
-      render: (tenant) => formatDate(tenant.check_in_date)
-    },
+    dateColumn("check_in_date", "Check-in"),
     {
       key: "monthly_rent",
       header: "Rent",

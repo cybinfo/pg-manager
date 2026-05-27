@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Receipt, Plus, ArrowLeft, User } from "lucide-react"
 import { formatDate } from "@/lib/format"
+import { dateColumn } from "@/lib/columns"
 import { transformJoin } from "@/lib/supabase/transforms"
 
 interface Bill {
@@ -99,11 +100,7 @@ export default function TenantBillsPage() {
         </Link>
       )
     },
-    {
-      key: "bill_date",
-      header: "Bill Date",
-      render: (bill) => formatDate(bill.bill_date)
-    },
+    dateColumn("bill_date", "Bill Date"),
     {
       key: "billing_period",
       header: "Period",
