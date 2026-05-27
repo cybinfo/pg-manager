@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { showSuccess } from "@/lib/toast-helpers"
 import { brandGradient } from "@/lib/design-tokens"
+import { PROPERTY_TYPE_OPTIONS } from "@/lib/constants/form-options"
 
 interface WebsiteConfig {
   tagline: string
@@ -218,11 +219,7 @@ export function WebsiteSettingsTab({
                   <Select
                     value={websiteData.website_config.property_type}
                     onChange={(e) => onWebsiteChange("property_type", e.target.value)}
-                    options={[
-                      { value: "pg", label: "PG (Paying Guest)" },
-                      { value: "hostel", label: "Hostel" },
-                      { value: "coliving", label: "Co-Living Space" },
-                    ]}
+                    options={PROPERTY_TYPE_OPTIONS}
                   />
                 </FormField>
                 <FormField label="Established Year">

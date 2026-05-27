@@ -64,6 +64,7 @@ import {
   MeterDetailRoom,
   METER_TYPE_CONFIG,
   METER_STATUS_CONFIG,
+  METER_STATUSES,
   ASSIGNMENT_REASONS,
   AssignmentReason,
 } from "@/types/meters.types"
@@ -537,12 +538,7 @@ export default function MeterDetailPage() {
               <Select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value as MeterStatus)}
-                options={[
-                  { value: "active", label: "Active" },
-                  { value: "faulty", label: "Faulty" },
-                  { value: "replaced", label: "Replaced" },
-                  { value: "retired", label: "Retired" },
-                ]}
+                options={METER_STATUSES}
               />
             </div>
           </div>
@@ -667,9 +663,10 @@ export default function MeterDetailPage() {
                 onChange={(e) => setEndForm({ ...endForm, new_status: e.target.value as MeterStatus | "" })}
                 options={[
                   { value: "", label: "Keep current status" },
-                  { value: "faulty", label: "Mark as Faulty" },
-                  { value: "replaced", label: "Mark as Replaced" },
-                  { value: "retired", label: "Mark as Retired" },
+                  ...METER_STATUSES.filter((s) => s.value !== "active").map((s) => ({
+                    value: s.value,
+                    label: `Mark as ${s.label}`,
+                  })),
                 ]}
               />
             </div>

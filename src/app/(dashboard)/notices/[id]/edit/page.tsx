@@ -19,18 +19,9 @@ import { ArrowLeft, Megaphone, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
-import { NOTICE_TYPE_LABELS, NOTICE_AUDIENCES } from "@/lib/status"
-import { labelsToOptions } from "@/lib/status"
+import { NOTICE_TYPE_OPTIONS, NOTICE_AUDIENCE_OPTIONS } from "@/lib/status"
+import { NOTICE_PRIORITY_OPTIONS } from "@/lib/constants/form-options"
 import { PermissionGuard } from "@/components/auth"
-
-const NOTICE_TYPE_OPTIONS = labelsToOptions(NOTICE_TYPE_LABELS)
-const NOTICE_AUDIENCE_OPTIONS = labelsToOptions(NOTICE_AUDIENCES)
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low" },
-  { value: "normal", label: "Normal" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
-]
 
 export default function EditNoticePage({
   params,
@@ -192,7 +183,7 @@ function EditNoticeContent({
                   onChange={handleChange}
                   name="priority"
                   disabled={saving}
-                  options={PRIORITY_OPTIONS}
+                  options={NOTICE_PRIORITY_OPTIONS}
                 />
               </FormField>
               <FormField label="Status" htmlFor="is_active">

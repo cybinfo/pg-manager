@@ -20,6 +20,12 @@ import { Currency } from "@/components/ui/currency"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import { logger } from "@/lib/logger"
 import {
+  UTILITY_SPLIT_OPTIONS,
+  DUE_DAY_OFFSET_OPTIONS,
+  GRACE_PERIOD_OPTIONS,
+  REMINDER_DAYS_BEFORE_DUE_OPTIONS,
+} from "@/lib/constants/form-options"
+import {
   ChargeType,
   UtilityRate,
   OwnerConfig,
@@ -344,10 +350,7 @@ export function BillingSettings({
                     <Select
                       value={utility.split_by}
                       onChange={(e) => updateUtilityRate(utility.id, 'split_by', e.target.value)}
-                      options={[
-                        { value: "occupants", label: "Per Occupant" },
-                        { value: "room", label: "Per Room" },
-                      ]}
+                      options={UTILITY_SPLIT_OPTIONS}
                     />
                   </FormField>
                 </div>
@@ -591,10 +594,7 @@ export function BillingSettings({
                         ...autoBillingSettings,
                         due_day_offset: parseInt(e.target.value)
                       })}
-                      options={[5, 7, 10, 15, 20, 30].map((days) => ({
-                        value: days.toString(),
-                        label: `${days} days after bill date`,
-                      }))}
+                      options={DUE_DAY_OFFSET_OPTIONS}
                     />
                   </FormField>
                 </div>
@@ -685,10 +685,7 @@ export function BillingSettings({
                       ...autoBillingSettings,
                       grace_period_days: parseInt(e.target.value)
                     })}
-                    options={[0, 3, 5, 7, 10, 15, 30].map((days) => ({
-                      value: days.toString(),
-                      label: days === 0 ? "No grace period" : `${days} days after due date`,
-                    }))}
+                    options={GRACE_PERIOD_OPTIONS}
                   />
                   <p className="text-xs text-muted-foreground">
                     Number of days after the due date before a bill is marked as overdue
@@ -757,10 +754,7 @@ export function BillingSettings({
                           ...autoBillingSettings,
                           reminder_days_before: parseInt(e.target.value)
                         })}
-                        options={[1, 2, 3, 5, 7, 10].map((days) => ({
-                          value: days.toString(),
-                          label: `${days} day${days > 1 ? "s" : ""} before due date`,
-                        }))}
+                        options={REMINDER_DAYS_BEFORE_DUE_OPTIONS}
                       />
                     </FormField>
                   </div>

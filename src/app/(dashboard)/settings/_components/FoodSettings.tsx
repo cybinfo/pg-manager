@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Check, UtensilsCrossed } from "lucide-react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import { FoodSettings as FoodSettingsType } from "@/types/settings.types"
+import { BILLING_FREQUENCY_OPTIONS } from "@/lib/constants/form-options"
 
 interface FoodSettingsProps {
   foodSettings: FoodSettingsType
@@ -128,11 +129,7 @@ export function FoodSettings({ foodSettings, setFoodSettings, configId }: FoodSe
                     ...foodSettings,
                     billing_frequency: e.target.value as "daily" | "weekly" | "monthly"
                   })}
-                  options={[
-                    { value: "daily", label: "Daily" },
-                    { value: "weekly", label: "Weekly" },
-                    { value: "monthly", label: "Monthly" },
-                  ]}
+                  options={BILLING_FREQUENCY_OPTIONS}
                 />
               </FormField>
             </>

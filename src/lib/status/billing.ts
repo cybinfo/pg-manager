@@ -269,6 +269,18 @@ export const EXPENSE_BILL_STATUS_OPTIONS = [
   { value: "overdue", label: "Overdue" },
 ]
 
+/** Notice type options for form selects */
+export const NOTICE_TYPE_OPTIONS = labelsToOptions(NOTICE_TYPE_LABELS)
+
+/** Notice audience options for form selects */
+export const NOTICE_AUDIENCE_OPTIONS = labelsToOptions(NOTICE_AUDIENCES)
+
+/** Meter status options for form selects */
+export const METER_STATUS_OPTIONS = labelsToOptions(METER_STATUS_LABELS)
+
+/** Meter type options for form selects */
+export const METER_TYPE_OPTIONS = labelsToOptions(METER_TYPE_LABELS)
+
 /** Unit options for products and daily-spend expense entries */
 export const UNIT_OPTIONS = [
   { value: "Kg", label: "Kilogram (Kg)" },

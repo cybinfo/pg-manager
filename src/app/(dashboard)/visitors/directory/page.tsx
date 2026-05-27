@@ -44,6 +44,10 @@ import {
   VisitorContact,
 } from "@/types/visitors.types"
 import {
+  VISITOR_TYPE_FILTER_OPTIONS,
+  VISITOR_CONTACT_STATUS_OPTIONS,
+} from "@/lib/constants/form-options"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -280,22 +284,12 @@ export default function VisitorDirectoryPage() {
               <Select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                options={[
-                  { value: "", label: "All Types" },
-                  { value: "tenant_visitor", label: "Tenant Visitors" },
-                  { value: "enquiry", label: "Enquiries" },
-                  { value: "service_provider", label: "Service Providers" },
-                  { value: "general", label: "General" },
-                ]}
+                options={VISITOR_TYPE_FILTER_OPTIONS}
               />
               <Select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                options={[
-                  { value: "", label: "All Status" },
-                  { value: "frequent", label: "Frequent Visitors" },
-                  { value: "blocked", label: "Blocked" },
-                ]}
+                options={VISITOR_CONTACT_STATUS_OPTIONS}
               />
             </div>
           </CardContent>

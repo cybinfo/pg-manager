@@ -39,6 +39,7 @@ import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Notice, NoticeType } from "@/types/notices.types"
+import { NOTICE_AUDIENCE_OPTIONS } from "@/lib/status"
 
 interface Property {
   id: string
@@ -391,11 +392,7 @@ export default function NoticeDetailPage() {
               value={formData.target_audience}
               onChange={handleChange}
               disabled={saving}
-              options={[
-                { value: "all", label: "All Residents" },
-                { value: "tenants_only", label: "Tenants Only" },
-                { value: "specific_rooms", label: "Specific Rooms" },
-              ]}
+              options={NOTICE_AUDIENCE_OPTIONS}
             />
           </FormField>
 

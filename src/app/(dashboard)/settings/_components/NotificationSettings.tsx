@@ -9,6 +9,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { sendTestEmail } from "@/lib/email"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import { NotificationSettings as NotificationSettingsType, OwnerConfig, Owner } from "@/types/settings.types"
+import { REMINDER_DAYS_OPTIONS, ALERT_FREQUENCY_OPTIONS } from "@/lib/constants/form-options"
 
 interface NotificationSettingsProps {
   notificationSettings: NotificationSettingsType
@@ -109,10 +110,7 @@ export function NotificationSettings({
                       ...notificationSettings,
                       reminder_days_before: parseInt(e.target.value)
                     })}
-                    options={[1, 2, 3, 5, 7, 10].map((days) => ({
-                      value: days.toString(),
-                      label: `${days} day${days > 1 ? "s" : ""} before`,
-                    }))}
+                    options={REMINDER_DAYS_OPTIONS}
                   />
                 </FormField>
 
@@ -174,10 +172,7 @@ export function NotificationSettings({
                         ...notificationSettings,
                         overdue_alert_frequency: e.target.value as "daily" | "weekly"
                       })}
-                      options={[
-                        { value: "daily", label: "Daily" },
-                        { value: "weekly", label: "Weekly" },
-                      ]}
+                      options={ALERT_FREQUENCY_OPTIONS}
                     />
                   </FormField>
                 )}

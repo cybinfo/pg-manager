@@ -143,6 +143,18 @@ export const TDS_RATES: Record<string, number> = {
 }
 
 // ============================================================================
+// NOTICES
+// ============================================================================
+
+/** Priority options for notices (low / normal / high / urgent) */
+export const NOTICE_PRIORITY_OPTIONS = [
+  { value: "low", label: "Low" },
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "High" },
+  { value: "urgent", label: "Urgent" },
+]
+
+// ============================================================================
 // NOTICE / TENANT DEFAULTS
 // ============================================================================
 

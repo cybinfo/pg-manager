@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Check } from "lucide-react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import { OwnerConfig } from "@/types/settings.types"
+import { NOTICE_PERIOD_OPTIONS } from "@/lib/constants/form-options"
 
 interface DefaultSettingsProps {
   configForm: {
@@ -77,12 +78,7 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
               id="default_notice_period"
               value={configForm.default_notice_period.toString()}
               onChange={(e) => setConfigForm({ ...configForm, default_notice_period: parseInt(e.target.value) })}
-              options={[
-                { value: "7", label: "7 days" },
-                { value: "15", label: "15 days" },
-                { value: "30", label: "30 days (1 month)" },
-                { value: "60", label: "60 days (2 months)" },
-              ]}
+              options={NOTICE_PERIOD_OPTIONS}
             />
           </FormField>
 
