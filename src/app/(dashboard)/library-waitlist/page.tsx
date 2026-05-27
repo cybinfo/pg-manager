@@ -18,6 +18,7 @@ import { Users, Clock, Check, Phone } from "lucide-react"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist } from "@/types/library.types"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { useFeatures } from "@/lib/features/use-features"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn, labelMapColumn } from "@/lib/export-columns"
@@ -90,62 +91,66 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   dateExportColumn("created_at", "Joined On"),
 ]
 
-// Column definitions
-const columns: Column<LibraryWaitlist>[] = [
-  {
-    key: "position",
-    header: "#",
-    width: "count",
-    sortable: true,
-    canHide: false,
-    render: (item) => (
-      <span className="font-mono text-muted-foreground">
-        {item.status === "waiting" && item.position ? `#${item.position}` : "—"}
-      </span>
-    ),
-  },
-  {
-    key: "name",
-    header: "Name",
-    width: "primary",
-    sortable: true,
-    canHide: false,
-    render: (item) => (
-      <div>
-        <p className="font-medium">{item.name}</p>
-        <p className="text-sm text-muted-foreground">{item.phone}</p>
-      </div>
-    ),
-  },
-  {
-    key: "library.name",
-    header: "Library",
-    width: "secondary",
-    sortable: true,
-    canHide: true,
-    defaultVisible: false,
-    render: (item) => item.library?.name || "—",
-  },
-  {
-    key: "preferred_slot",
-    header: "Slot",
-    width: "badge",
-    canHide: true,
-    defaultVisible: true,
-    render: (item) => (
-      item.preferred_slot ? (
-        <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
-          {item.preferred_slot}
-        </span>
-      ) : "—"
-    ),
-  },
-  statusColumn(LIBRARY_WAITLIST_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
-  dateColumn("created_at", "Joined", { defaultVisible: false }),
-]
-
 export default function LibraryWaitlistPage() {
   const router = useRouter()
+  const { isFeatureEnabled } = useFeatures()
+  const autoQueueingEnabled = isFeatureEnabled("waitlist", "autoQueueing")
+
+  const columns: Column<LibraryWaitlist>[] = [
+    {
+      key: autoQueueingEnabled ? "queue_position" : "position",
+      header: "#",
+      width: "count",
+      sortable: true,
+      canHide: false,
+      render: (item) => {
+        const pos = autoQueueingEnabled ? item.queue_position : item.position
+        return (
+          <span className="font-mono text-muted-foreground">
+            {item.status === "waiting" && pos ? `#${pos}` : "—"}
+          </span>
+        )
+      },
+    },
+    {
+      key: "name",
+      header: "Name",
+      width: "primary",
+      sortable: true,
+      canHide: false,
+      render: (item) => (
+        <div>
+          <p className="font-medium">{item.name}</p>
+          <p className="text-sm text-muted-foreground">{item.phone}</p>
+        </div>
+      ),
+    },
+    {
+      key: "library.name",
+      header: "Library",
+      width: "secondary",
+      sortable: true,
+      canHide: true,
+      defaultVisible: false,
+      render: (item) => item.library?.name || "—",
+    },
+    {
+      key: "preferred_slot",
+      header: "Slot",
+      width: "badge",
+      canHide: true,
+      defaultVisible: true,
+      render: (item) => (
+        item.preferred_slot ? (
+          <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+            {item.preferred_slot}
+          </span>
+        ) : "—"
+      ),
+    },
+    statusColumn(LIBRARY_WAITLIST_STATUS_CONFIG as Record<string, { label: string; variant: string }>),
+    dateColumn("created_at", "Joined", { defaultVisible: false }),
+  ]
 
   return (
     <ListPageTemplate

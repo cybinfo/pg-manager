@@ -132,6 +132,15 @@ export const emailSubjects = {
 
   monthlyAttendanceSummary: (data: { month: string; year: number; libraryName: string }): string =>
     `${data.month} ${data.year} Attendance Summary - ${data.libraryName}`,
+
+  lockerRenewal: (data: { libraryName: string; lockerNumber: string }): string =>
+    `Locker Renewal Reminder - ${data.libraryName} (Locker ${data.lockerNumber})`,
+
+  complaintEscalation: (data: { complaintTitle: string }): string =>
+    `Complaint Escalation Alert - ${data.complaintTitle}`,
+
+  consumptionAlert: (data: { roomNumber: string; alertType: string }): string =>
+    `${data.alertType === 'high' ? 'High' : 'Low'} Consumption Alert - Room ${data.roomNumber}`,
 }
 
 // ============================================================================
@@ -157,6 +166,9 @@ import type {
   RefundProcessedBody,
   WaitlistSeatAvailableBody,
   MonthlyAttendanceSummaryBody,
+  LockerRenewalBody,
+  ComplaintEscalationBody,
+  ConsumptionAlertBody,
 } from "./email.types"
 
 export const emailBodyTemplates = {
@@ -1278,6 +1290,164 @@ export const emailBodyTemplates = {
   },
 
   // ---- Monthly Attendance Summary ----
+
+  lockerRenewal: (data: LockerRenewalBody): string => {
+    const urgencyColor = data.daysUntilExpiry <= 2 ? "#DC2626" : data.daysUntilExpiry <= 5 ? "#D97706" : "#2563EB"
+    const urgencyBg = data.daysUntilExpiry <= 2 ? "#FEE2E2" : data.daysUntilExpiry <= 5 ? "#FEF3C7" : "#DBEAFE"
+    const urgencyBorder = data.daysUntilExpiry <= 2 ? "#FECACA" : data.daysUntilExpiry <= 5 ? "#FCD34D" : "#93C5FD"
+
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: ${urgencyBg}; color: ${urgencyColor}; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Locker Renewal Reminder
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.memberName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Your locker rental at <strong style="color: #10B981;">${data.libraryName}</strong> is expiring soon.
+    </p>
+
+    <div style="background: ${urgencyBg}; border: 1px solid ${urgencyBorder}; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
+      <p style="color: ${urgencyColor}; font-size: 14px; margin: 0 0 8px 0;">Locker ${data.lockerNumber} expires on</p>
+      <p style="color: ${urgencyColor}; font-size: 28px; font-weight: bold; margin: 0;">${data.expiryDate}</p>
+      <p style="color: ${urgencyColor}; font-size: 16px; font-weight: 600; margin: 8px 0 0 0;">${data.daysUntilExpiry} day${data.daysUntilExpiry !== 1 ? 's' : ''} remaining</p>
+    </div>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Please visit the library to renew your locker rental and avoid losing access to your stored items.
+    </p>
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Thank you,<br>
+        <strong style="color: #111827;">${data.libraryName}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
+  complaintEscalation: (data: ComplaintEscalationBody): string => {
+    const priorityColor = data.priority === "urgent" ? "#DC2626" : data.priority === "high" ? "#D97706" : "#6B7280"
+
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: #FEE2E2; color: #DC2626; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        Escalation Alert
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.ownerName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      A complaint has been open for <strong style="color: #DC2626;">${data.daysOpen} days</strong> without resolution and requires your attention.
+    </p>
+
+    <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Complaint</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.complaintTitle}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Reported By</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.tenantName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Priority</td>
+          <td style="padding: 8px 0; color: ${priorityColor}; font-weight: 600; text-align: right; text-transform: capitalize;">${data.priority}</td>
+        </tr>
+        <tr style="border-top: 1px solid #FECACA;">
+          <td style="padding: 16px 0 8px 0; color: #6B7280; font-size: 14px;">Days Open</td>
+          <td style="padding: 16px 0 8px 0; color: #DC2626; font-weight: bold; font-size: 24px; text-align: right;">${data.daysOpen}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="text-align: center; margin: 32px 0;">
+      <a href="${data.complaintUrl}" style="display: inline-block; background: linear-gradient(135deg, #14B8A6, #10B981); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        View Complaint
+      </a>
+    </div>
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        Please take action at your earliest convenience.<br>
+        <strong style="color: #111827;">${CONTACT.APP_NAME}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
+
+  consumptionAlert: (data: ConsumptionAlertBody): string => {
+    const isHigh = data.alertType === 'high'
+    const alertColor = isHigh ? "#DC2626" : "#2563EB"
+    const alertBg = isHigh ? "#FEF2F2" : "#EFF6FF"
+    const alertBorder = isHigh ? "#FECACA" : "#BFDBFE"
+    const alertLabel = isHigh ? "Unusually High Consumption" : "Unusually Low Consumption"
+    const alertDesc = isHigh
+      ? `Consumption is more than 2x the recent average.`
+      : `Consumption is less than half the recent average.`
+
+    const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="display: inline-block; background: ${alertBg}; color: ${alertColor}; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;">
+        ${alertLabel}
+      </div>
+    </div>
+
+    <h2 style="color: #111827; margin: 0 0 16px 0; font-size: 22px;">
+      Hi ${data.ownerName},
+    </h2>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      A meter reading for <strong>Room ${data.roomNumber}</strong> shows ${alertDesc}
+    </p>
+
+    <div style="background: ${alertBg}; border: 1px solid ${alertBorder}; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Room</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.roomNumber}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Charge Type</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.chargeType}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6B7280; font-size: 14px;">Recent Average</td>
+          <td style="padding: 8px 0; color: #111827; font-weight: 500; text-align: right;">${data.averageUnits.toFixed(1)} units</td>
+        </tr>
+        <tr style="border-top: 1px solid ${alertBorder};">
+          <td style="padding: 16px 0 8px 0; color: #6B7280; font-size: 14px;">Current Reading</td>
+          <td style="padding: 16px 0 8px 0; color: ${alertColor}; font-weight: bold; font-size: 24px; text-align: right;">${data.currentUnits.toFixed(1)} units</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="color: #4B5563; line-height: 1.6; margin: 0 0 24px 0;">
+      Please verify this reading and check for any issues with the meter or usage in this room.
+    </p>
+
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+      <p style="color: #6B7280; margin: 0; font-size: 14px;">
+        This is an automated alert.<br>
+        <strong style="color: #111827;">${CONTACT.APP_NAME}</strong>
+      </p>
+    </div>
+  `
+
+    return emailWrapper(content)
+  },
 
   monthlyAttendanceSummary: (data: MonthlyAttendanceSummaryBody): string => {
     const content = `

@@ -45,14 +45,17 @@ import {
   Merge,
   ExternalLink,
   Trash2,
+  Tag,
+  X,
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { softDelete, cascadeSoftDelete } from "@/lib/audit"
 import { useAuth } from "@/lib/auth"
-import { PermissionGuard, PermissionGate, FeatureGate } from "@/components/auth"
+import { PermissionGuard, PermissionGate, FeatureGate, FeatureGuard } from "@/components/auth"
 import { TagBadge } from "@/components/people"
 import {
   Person,
@@ -106,6 +109,8 @@ export default function PersonDetailPage() {
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/people", defaultLabel: "People" })
   const { user } = useAuth()
   const [visitHistory, setVisitHistory] = useState<PersonVisitHistory[]>([])
+  const [newTag, setNewTag] = useState("")
+  const [tagSaving, setTagSaving] = useState(false)
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
@@ -314,6 +319,44 @@ export default function PersonDetailPage() {
 
     showSuccess("Person unblocked successfully")
     refetch()
+  }
+
+  const handleAddTag = async () => {
+    if (!person || !newTag.trim()) return
+    const trimmed = newTag.trim().toLowerCase()
+    const existing = person.tags || []
+    if (existing.includes(trimmed)) {
+      setNewTag("")
+      return
+    }
+    setTagSaving(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from("people")
+      .update({ tags: [...existing, trimmed] })
+      .eq("id", person.id)
+    if (error) {
+      showError("Failed to add tag")
+    } else {
+      setNewTag("")
+      refetch()
+    }
+    setTagSaving(false)
+  }
+
+  const handleRemoveTag = async (tag: string) => {
+    if (!person) return
+    const updated = (person.tags || []).filter((t) => t !== tag)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from("people")
+      .update({ tags: updated })
+      .eq("id", person.id)
+    if (error) {
+      showError("Failed to remove tag")
+    } else {
+      refetch()
+    }
   }
 
   // Handle delete person
@@ -743,6 +786,53 @@ export default function PersonDetailPage() {
             emptyText="No visit history"
           />
         )}
+
+        {/* Tags */}
+        <FeatureGuard module="people" feature="tagging">
+          <DetailSection title="Tags" description="Labels and categories for this person" icon={Tag}>
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {(person.tags || []).length === 0 && (
+                  <p className="text-sm text-muted-foreground">No tags added</p>
+                )}
+                {(person.tags || []).map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="ml-0.5 hover:text-destructive transition-colors"
+                      aria-label={`Remove tag ${tag}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Add a tag..."
+                  className="h-8 text-sm max-w-[200px]"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAddTag() } }}
+                  disabled={tagSaving}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void handleAddTag()}
+                  disabled={tagSaving || !newTag.trim()}
+                >
+                  Add
+                </Button>
+              </div>
+            </div>
+          </DetailSection>
+        </FeatureGuard>
 
         {/* Notes */}
         {person.notes && (

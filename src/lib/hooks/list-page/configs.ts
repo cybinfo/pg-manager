@@ -797,7 +797,7 @@ export const LIBRARY_WAITLIST_LIST_CONFIG: ListPageConfig<Record<string, unknown
   `,
   joinFields: ["library"],
   searchFields: ["name", "phone", "email"],
-  defaultOrderBy: "position",
+  defaultOrderBy: "queue_position",
   defaultOrderDirection: "asc",
   defaultPageSize: 25,
 }

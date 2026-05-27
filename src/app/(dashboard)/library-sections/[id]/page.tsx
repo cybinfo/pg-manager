@@ -214,6 +214,42 @@ export default function LibrarySectionDetailPage() {
           )}
         </DetailSection>
 
+        {/* Capacity Tracking */}
+        <FeatureGuard module="sections" feature="sectionCapacity">
+          <DetailSection
+            title="Capacity"
+            description="Seat availability and occupancy"
+            icon={Armchair}
+          >
+            <InfoRow label="Total Seats" value={section.total_seats} icon={Armchair} />
+            <InfoRow label="Occupied Seats" value={section.occupied_seats} icon={Armchair} />
+            <InfoRow label="Available Seats" value={availableSeats} icon={Armchair} />
+            <InfoRow
+              label="Occupancy"
+              value={
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{occupancyRate}%</span>
+                  <div className="w-24 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        occupancyRate >= 90 ? "bg-destructive" :
+                        occupancyRate >= 70 ? "bg-warning" : "bg-success"
+                      }`}
+                      style={{ width: `${occupancyRate}%` }}
+                    />
+                  </div>
+                </div>
+              }
+              icon={Grid3X3}
+            />
+            <InfoRow
+              label="Confirmed Occupied"
+              value={seats.filter(s => s.status === "occupied").length}
+              icon={Armchair}
+            />
+          </DetailSection>
+        </FeatureGuard>
+
         {/* AC / Non-AC Classification */}
         <FeatureGuard module="sections" feature="acNonAcTracking">
           <DetailSection

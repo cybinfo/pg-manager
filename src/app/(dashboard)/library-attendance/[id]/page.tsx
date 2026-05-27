@@ -13,7 +13,7 @@ import { useDetailPage, LIBRARY_ATTENDANCE_DETAIL_CONFIG } from "@/lib/hooks/use
 import { useAuth } from "@/lib/auth"
 import { softDelete } from "@/lib/audit"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
@@ -372,6 +372,37 @@ export default function LibraryAttendanceDetailPage() {
             }
           />
         </DetailSection>
+
+        {/* Hours Deduction */}
+        <FeatureGuard module="attendance" feature="autoHoursDeduction">
+          {attendance.check_out_time && (() => {
+            const deducted = attendance.hours_spent !== null
+              ? attendance.hours_spent
+              : (new Date(attendance.check_out_time).getTime() - new Date(attendance.check_in_time).getTime()) / (1000 * 60 * 60)
+
+            return (
+              <DetailSection
+                title="Hours Deduction"
+                description="Hours automatically deducted from daily balance"
+                icon={Clock}
+              >
+                <InfoRow
+                  label="Hours Deducted"
+                  value={
+                    <span className="font-semibold text-primary">
+                      {deducted.toFixed(2)} hrs
+                    </span>
+                  }
+                  icon={Clock}
+                />
+                <InfoRow
+                  label="Deduction Source"
+                  value="Auto-deducted on check-out"
+                />
+              </DetailSection>
+            )
+          })()}
+        </FeatureGuard>
 
         {/* Seat Info */}
         {attendance.seat && (

@@ -8,7 +8,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { CreditCard, Clock, CheckCircle, Users, TrendingUp } from "lucide-react"
+import { CreditCard, Clock, CheckCircle, Users, TrendingUp, AlertTriangle } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_PLAN_LIST_CONFIG } from "@/lib/hooks/useListPage"
@@ -56,20 +56,23 @@ interface EnrollmentStats {
 
 function useEnrollmentStats() {
   const [stats, setStats] = useState<Map<string, EnrollmentStats>>(new Map())
+  const [expiringThisMonth, setExpiringThisMonth] = useState(0)
 
   const fetchStats = useCallback(async () => {
     const supabase = createClient()
 
-    // Fetch all memberships with plan_id and member status
     const { data: memberships } = await supabase
       .from("library_memberships")
-      .select("plan_id, status, member:library_members!library_memberships_member_id_fkey(status)")
+      .select("plan_id, status, end_date, member:library_members!library_memberships_member_id_fkey(status)")
       .not("plan_id", "is", null)
       .is("deleted_at", null)
 
     if (!memberships) return
 
     const statsMap = new Map<string, EnrollmentStats>()
+    const now = new Date()
+    const in30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+    let expiring = 0
 
     for (const ms of memberships) {
       const planId = ms.plan_id as string
@@ -82,14 +85,18 @@ function useEnrollmentStats() {
       const entry = statsMap.get(planId)!
       entry.total++
 
-      // Active = membership is active AND member is active
       const memberData = ms.member as { status?: string } | null
       if (ms.status === "active" && memberData?.status === "active") {
         entry.active++
+        if (ms.end_date) {
+          const end = new Date(ms.end_date as string)
+          if (end >= now && end <= in30) expiring++
+        }
       }
     }
 
     setStats(statsMap)
+    setExpiringThisMonth(expiring)
   }, [])
 
   useEffect(() => {
@@ -97,7 +104,7 @@ function useEnrollmentStats() {
     void fetchStats()
   }, [fetchStats])
 
-  return stats
+  return { stats, expiringThisMonth }
 }
 
 // ============================================
@@ -143,9 +150,10 @@ const groupByOptions: GroupByOption[] = [
 // ============================================
 
 export default function LibraryPlansPage() {
-  const enrollmentStats = useEnrollmentStats()
+  const { stats: enrollmentStats, expiringThisMonth } = useEnrollmentStats()
   const { isFeatureEnabled } = useFeatures()
   const planUsageEnabled = isFeatureEnabled("plans", "planUsageTracking")
+  const planExpiryEnabled = isFeatureEnabled("plans", "planExpiry")
 
   // ============================================
   // Column Definitions (uses enrollment stats)
@@ -216,6 +224,24 @@ export default function LibraryPlansPage() {
         </span>
       ),
     },
+    ...(planExpiryEnabled ? [
+      {
+        key: "validity_days_expiry",
+        header: "Validity",
+        width: "badge" as const,
+        sortable: false,
+        canHide: true,
+        defaultVisible: true,
+        render: (plan: PlanItem) => {
+          const months = Math.round(plan.validity_days / 30)
+          return (
+            <span className="text-sm font-medium">
+              {months > 0 ? `${months}mo` : `${plan.validity_days}d`}
+            </span>
+          )
+        },
+      },
+    ] : []),
     ...(planUsageEnabled ? [
       {
         key: "active_enrollments",
@@ -338,6 +364,14 @@ export default function LibraryPlansPage() {
           for (const stat of enrollmentStats.values()) active += stat.active
           return active
         },
+      },
+    ] : []),
+    ...(planExpiryEnabled ? [
+      {
+        id: "expiring_this_month",
+        label: "Expiring (30d)",
+        icon: AlertTriangle,
+        compute: () => expiringThisMonth,
       },
     ] : []),
   ]

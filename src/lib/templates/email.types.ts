@@ -187,3 +187,29 @@ export interface MonthlyAttendanceSummaryBody {
   hoursRemaining: number
   ownerPhone?: string
 }
+
+export interface LockerRenewalBody {
+  memberName: string
+  libraryName: string
+  lockerNumber: string
+  expiryDate: string
+  daysUntilExpiry: number
+}
+
+export interface ComplaintEscalationBody {
+  ownerName: string
+  complaintTitle: string
+  tenantName: string
+  daysOpen: number
+  priority: string
+  complaintUrl: string
+}
+
+export interface ConsumptionAlertBody {
+  ownerName: string
+  roomNumber: string
+  chargeType: string
+  currentUnits: number
+  averageUnits: number
+  alertType: 'high' | 'low'
+}

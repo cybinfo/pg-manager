@@ -38,6 +38,7 @@ import {
   FileText,
   ClipboardList,
   Wrench,
+  Clock,
 } from "lucide-react"
 import { RoomLink, TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime } from "@/lib/format"
@@ -182,6 +183,10 @@ export default function ComplaintDetailPage() {
 
   const currentStatusIndex = statusFlow.indexOf(complaint.status)
 
+  const isUnresolved = !["resolved", "closed"].includes(complaint.status)
+  const daysOpen = Math.floor((Date.now() - new Date(complaint.created_at).getTime()) / (1000 * 60 * 60 * 24))
+  const isEscalated = isUnresolved && daysOpen >= 3
+
   return (
     <div className="space-y-6">
       {/* Hero Header */}
@@ -200,9 +205,17 @@ export default function ComplaintDetailPage() {
           </div>
         }
         status={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <PriorityBadge priority={complaint.priority as "low" | "medium" | "high" | "urgent"} />
             <StatusBadge status={complaint.status as "open" | "acknowledged" | "in_progress" | "resolved" | "closed"} />
+            <FeatureGuard module="complaints" feature="complaintEscalation">
+              {isEscalated && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                  <Clock className="h-3 w-3" />
+                  {daysOpen}d open
+                </span>
+              )}
+            </FeatureGuard>
           </div>
         }
         actions={
@@ -267,6 +280,20 @@ export default function ComplaintDetailPage() {
       />
 
       <DetailPageTemplate layoutKey="complaint-detail" entityType="complaint" record={complaint}>
+        <FeatureGuard module="complaints" feature="complaintEscalation">
+          {isEscalated && (
+            <div className="flex items-start gap-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-destructive">Escalation Required</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  This complaint has been open for <strong>{daysOpen} days</strong> without resolution.
+                </p>
+              </div>
+            </div>
+          )}
+        </FeatureGuard>
+
         {/* Main Content - Status Section */}
           {/* Status Actions */}
           <DetailSection

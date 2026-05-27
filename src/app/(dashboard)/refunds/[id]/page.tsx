@@ -23,6 +23,7 @@ import { TableBadge } from "@/components/ui/data-table"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { PermissionGuard, PermissionGate } from "@/components/auth"
+import { useFeatures } from "@/lib/features/use-features"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { PAYMENT_METHODS, REFUND_STATUS, REFUND_TYPE_LABELS } from "@/lib/status"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
@@ -42,6 +43,8 @@ import {
   Loader2,
   Hash,
   FileText,
+  CheckCircle,
+  XCircle,
 } from "lucide-react"
 import { brandGradient } from "@/lib/design-tokens"
 
@@ -76,7 +79,9 @@ const refundTypeLabels = REFUND_TYPE_LABELS
 export default function RefundDetailPage() {
   const params = useParams()
   const [editing, setEditing] = useState(false)
+  const [approvingRefund, setApprovingRefund] = useState(false)
 
+  const { isFeatureEnabled } = useFeatures()
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/refunds", defaultLabel: "All Refunds" })
@@ -132,6 +137,15 @@ export default function RefundDetailPage() {
       setEditing(false)
       refetch()
     }
+  }
+
+  const handleApproveRefund = async (approve: boolean) => {
+    if (!refund) return
+    setApprovingRefund(true)
+    const newStatus = approve ? "processing" : "cancelled"
+    const success = await updateFields({ status: newStatus })
+    if (success) refetch()
+    setApprovingRefund(false)
   }
 
   const handleDelete = () => {
@@ -198,7 +212,33 @@ export default function RefundDetailPage() {
           }
           actions={
             !editing ? (
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
+                {isFeatureEnabled("refunds", "refundApproval") && refund?.status === "pending" && (
+                  <PermissionGate permission="refunds.edit" hide>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleApproveRefund(true)}
+                        disabled={approvingRefund}
+                        className="text-success border-success/30 hover:bg-success/10"
+                      >
+                        {approvingRefund ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleApproveRefund(false)}
+                        disabled={approvingRefund}
+                        className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                      >
+                        {approvingRefund ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <XCircle className="mr-2 h-4 w-4" />}
+                        Reject
+                      </Button>
+                    </>
+                  </PermissionGate>
+                )}
                 <PermissionGate permission="refunds.edit" hide>
                   <Link href={`/refunds/${params.id}/edit`}>
                     <Button variant="outline" size="sm">

@@ -256,53 +256,53 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
 ]
 
 // ============================================
-// Advanced Filter Columns
-// ============================================
-
-const advancedFilterColumns: FilterableColumn[] = [
-  {
-    key: "occurred_at",
-    header: "Date",
-    filterType: "date",
-    filterOperators: ["eq", "gt", "lt", "gte", "lte", "between"],
-  },
-  {
-    key: "actor_name",
-    header: "User",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "neq", "starts"],
-  },
-  {
-    key: "actor_email",
-    header: "Email",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "starts"],
-  },
-  {
-    key: "action",
-    header: "Action",
-    filterType: "select",
-    filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "create", label: "Created" },
-      { value: "update", label: "Updated" },
-      { value: "delete", label: "Deleted" },
-    ],
-  },
-  {
-    key: "entity_type",
-    header: "Entity Type",
-    filterType: "text",
-    filterOperators: ["contains", "eq", "neq"],
-  },
-]
-
-// ============================================
 // Page Component
 // ============================================
 
 export default function ActivityLogPage() {
   const { isFeatureEnabled } = useFeatures()
+  const filterByUserEnabled = isFeatureEnabled("activityLog", "filterByUser")
+
+  const advancedFilterColumns: FilterableColumn[] = [
+    {
+      key: "occurred_at",
+      header: "Date",
+      filterType: "date",
+      filterOperators: ["eq", "gt", "lt", "gte", "lte", "between"],
+    },
+    ...(filterByUserEnabled ? [
+      {
+        key: "actor_name",
+        header: "Filter by User",
+        filterType: "text" as const,
+        filterOperators: ["contains", "eq", "neq", "starts"] as ("contains" | "eq" | "neq" | "starts")[],
+      },
+      {
+        key: "actor_email",
+        header: "Email",
+        filterType: "text" as const,
+        filterOperators: ["contains", "eq", "starts"] as ("contains" | "eq" | "starts")[],
+      },
+    ] : []),
+    {
+      key: "action",
+      header: "Action",
+      filterType: "select",
+      filterOperators: ["eq", "neq", "in", "not_in"],
+      filterOptions: [
+        { value: "create", label: "Created" },
+        { value: "update", label: "Updated" },
+        { value: "delete", label: "Deleted" },
+      ],
+    },
+    {
+      key: "entity_type",
+      header: "Entity Type",
+      filterType: "text",
+      filterOperators: ["contains", "eq", "neq"],
+    },
+  ]
+
   return (
     <ListPageTemplate
       tableKey="activity"

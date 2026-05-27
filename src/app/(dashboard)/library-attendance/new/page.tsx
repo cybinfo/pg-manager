@@ -25,6 +25,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
+import { parseTimeSlots } from "@/lib/time-slots"
 
 interface MemberOption {
   id: string
@@ -34,6 +35,7 @@ interface MemberOption {
   hours_balance: number
   library_id: string
   current_subscription_id: string | null
+  time_slot?: string | null
   person?: { name: string } | null
 }
 
@@ -135,6 +137,26 @@ function NewLibraryAttendanceContent() {
       const checkInTime = new Date(data.check_in_time as string).toISOString()
       const attendanceDate = (data.check_in_time as string).split("T")[0]
 
+      // Late-entry detection — check if check-in time falls outside any assigned slot
+      let isLate = false
+      let scheduledSlot: string | null = null
+      if (selectedMember.time_slot) {
+        const slots = parseTimeSlots(selectedMember.time_slot)
+        if (slots.length > 0) {
+          const checkInDate = new Date(checkInTime)
+          const checkInMinutes = checkInDate.getHours() * 60 + checkInDate.getMinutes()
+          const inAnySlot = slots.some((s) => {
+            const [sh, sm] = s.start.split(":").map(Number)
+            const [eh, em] = s.end.split(":").map(Number)
+            const slotStart = sh * 60 + sm
+            const slotEnd = eh * 60 + em
+            return checkInMinutes >= slotStart && checkInMinutes <= slotEnd
+          })
+          isLate = !inAnySlot
+          scheduledSlot = slots.map((s) => `${s.start}-${s.end}`).join(", ")
+        }
+      }
+
       const attendanceData = withCreatedBy(
         {
           owner_id: workspace.owner_user_id,
@@ -145,6 +167,8 @@ function NewLibraryAttendanceContent() {
           check_in_time: checkInTime,
           seat_id: data.seat_id || null,
           notes: data.notes || null,
+          is_late: isLate,
+          scheduled_slot: scheduledSlot,
         },
         userId
       )
@@ -207,7 +231,7 @@ function NewLibraryAttendanceContent() {
       // Fetch active members with person data for live name
       const { data: membersData } = await supabase
         .from("library_members")
-        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id, person:people(name)")
+        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id, time_slot, person:people(name)")
         .eq("workspace_id", workspaceId)
         .eq("status", "active")
         .is("deleted_at", null)

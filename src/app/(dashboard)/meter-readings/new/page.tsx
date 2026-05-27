@@ -21,6 +21,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
+import { useFeatures } from "@/lib/features/use-features"
 
 interface ChargeType {
   id: string
@@ -55,6 +56,7 @@ interface Meter {
 
 function NewMeterReadingContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/meter-readings" })
+  const { isFeatureEnabled } = useFeatures()
   const [loadingData, setLoadingData] = useState(true)
   const [loadingLastReading, setLoadingLastReading] = useState(false)
 
@@ -206,6 +208,55 @@ function NewMeterReadingContent() {
             logger.error("Error creating charges:", { detail: chargeError })
             showWarning("Meter reading saved, but failed to generate charges")
           }
+        }
+      }
+
+      // Consumption anomaly check — runs after the reading is saved
+      if (isFeatureEnabled("meters", "consumptionAlerts") && calculatedUnits !== null && calculatedUnits > 0) {
+        try {
+          const { data: recentReadings } = await supabase
+            .from("meter_readings")
+            .select("units_consumed")
+            .eq("meter_id", selectedMeter.id)
+            .not("id", "eq", meterReadingData.id)
+            .not("units_consumed", "is", null)
+            .order("reading_date", { ascending: false })
+            .limit(3)
+
+          if (recentReadings && recentReadings.length >= 2) {
+            const validUnits = recentReadings
+              .map((r: { units_consumed: number | null }) => r.units_consumed)
+              .filter((u: number | null): u is number => u !== null && u > 0)
+
+            if (validUnits.length >= 2) {
+              const avg = validUnits.reduce((sum: number, u: number) => sum + u, 0) / validUnits.length
+              const isHigh = calculatedUnits > avg * 2
+              const isLow = calculatedUnits < avg * 0.5
+
+              if ((isHigh || isLow) && matchingChargeType) {
+                const { data: ownerProfile } = await supabase
+                  .from("user_profiles")
+                  .select("email, full_name")
+                  .eq("id", userId)
+                  .single()
+
+                if (ownerProfile?.email) {
+                  const { sendConsumptionAlert } = await import("@/lib/email")
+                  sendConsumptionAlert({
+                    to: ownerProfile.email,
+                    ownerName: ownerProfile.full_name || "Owner",
+                    roomNumber: selectedMeter.current_assignment.room_number || selectedMeter.current_assignment.room_id,
+                    chargeType: matchingChargeType.name,
+                    currentUnits: calculatedUnits,
+                    averageUnits: avg,
+                    alertType: isHigh ? "high" : "low",
+                  }).catch(() => {})
+                }
+              }
+            }
+          }
+        } catch (err) {
+          logger.error("Consumption alert check failed", { error: String(err) })
         }
       }
 

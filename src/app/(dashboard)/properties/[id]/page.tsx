@@ -47,23 +47,51 @@ import {
   UserCheck,
   Clock,
   AlertCircle,
+  Wrench,
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PG_ROOM_STATUS_COLORS } from "@/lib/status"
 import { Avatar } from "@/components/ui/avatar"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
+import { createClient } from "@/lib/supabase/client"
+import { useState } from "react"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 
 export default function PropertyDetailPage() {
   const params = useParams()
+  const [togglingMaintenance, setTogglingMaintenance] = useState(false)
 
   const {
     data: property,
     related,
     loading,
+    refetch,
   } = useDetailPage<Property>({
     config: PROPERTY_DETAIL_CONFIG,
     id: params.id as string,
   })
+
+  const handleMaintenanceToggle = async () => {
+    if (!property) return
+    setTogglingMaintenance(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from("properties")
+        .update({ is_under_maintenance: !property.is_under_maintenance })
+        .eq("id", property.id)
+      if (error) {
+        showError(error.message || "Failed to update maintenance status")
+      } else {
+        showSuccess(property.is_under_maintenance ? "Maintenance mode disabled" : "Maintenance mode enabled")
+        refetch()
+      }
+    } catch {
+      showError("Failed to update maintenance status")
+    } finally {
+      setTogglingMaintenance(false)
+    }
+  }
 
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/properties", defaultLabel: "All Properties" })
 
@@ -110,6 +138,12 @@ export default function PropertyDetailPage() {
             {property.address && (
               <span className="flex items-center gap-1">
                 {property.address}
+              </span>
+            )}
+            {property.is_under_maintenance && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning border border-warning/30">
+                <Wrench className="h-3 w-3" />
+                Under Maintenance
               </span>
             )}
           </div>
@@ -215,6 +249,45 @@ export default function PropertyDetailPage() {
             />
           )}
         </DetailSection>
+
+        {/* Maintenance Mode */}
+        <FeatureGuard module="properties" feature="maintenanceMode">
+          <DetailSection
+            title="Maintenance Mode"
+            description="Block new tenant assignments while under maintenance"
+            icon={Wrench}
+            className={property.is_under_maintenance ? "border-warning/30 bg-warning/5" : undefined}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">
+                  {property.is_under_maintenance ? "Under Maintenance" : "Available for Booking"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {property.is_under_maintenance
+                    ? "New tenants cannot be added until maintenance is resolved"
+                    : "Property is accepting new tenant assignments"}
+                </p>
+              </div>
+              <PermissionGate permission="properties.edit" hide>
+                <Button
+                  variant={property.is_under_maintenance ? "outline" : "outline"}
+                  size="sm"
+                  onClick={handleMaintenanceToggle}
+                  disabled={togglingMaintenance}
+                  className={property.is_under_maintenance ? "border-warning text-warning hover:bg-warning/10" : ""}
+                >
+                  <Wrench className="mr-2 h-4 w-4" />
+                  {togglingMaintenance
+                    ? "Updating..."
+                    : property.is_under_maintenance
+                    ? "Disable Maintenance"
+                    : "Enable Maintenance"}
+                </Button>
+              </PermissionGate>
+            </div>
+          </DetailSection>
+        </FeatureGuard>
 
         {/* Tenants on Notice */}
         {noticeTenants > 0 && (

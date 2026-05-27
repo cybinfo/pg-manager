@@ -31,6 +31,9 @@ import { cn } from "@/lib/utils"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
+import { calculateProRataAmount, getProRataBreakdown } from "@/lib/billing/pro-rata"
+import { useFeatures } from "@/lib/features/use-features"
+import { FeatureGuard } from "@/components/auth"
 
 interface Tenant {
   id: string
@@ -81,6 +84,9 @@ function NewBillContent() {
   const searchParams = useSearchParams()
   const preselectedTenant = searchParams.get("tenant_id") || searchParams.get("tenant")
 
+  const { isFeatureEnabled } = useFeatures()
+  const proRataEnabled = isFeatureEnabled("billing", "proRataBilling")
+
   const [loading, setLoading] = useState(false)
   const [loadingTenants, setLoadingTenants] = useState(true)
   const [loadingCharges, setLoadingCharges] = useState(false)
@@ -91,6 +97,11 @@ function NewBillContent() {
   const [selectedTenant, setSelectedTenant] = useState<string>("")
   const [pendingCharges, setPendingCharges] = useState<PendingCharge[]>([])
   const [billingCycleMode, setBillingCycleMode] = useState<'calendar_month' | 'checkin_anniversary'>('calendar_month')
+
+  const [proRata, setProRata] = useState({
+    enabled: false,
+    joinDate: "",
+  })
 
   const [formData, setFormData] = useState({
     for_month: formatMonthYear(new Date()),
@@ -341,10 +352,29 @@ function NewBillContent() {
     setLineItems(lineItems.filter((item) => item.id !== id))
   }
 
+  const getProRataRentAmount = (): number | null => {
+    if (!proRata.enabled || !proRata.joinDate || !formData.for_month) return null
+    const tenant = tenants.find((t) => t.id === selectedTenant)
+    if (!tenant?.monthly_rent) return null
+    // Convert "Month YYYY" to "YYYY-MM"
+    const [monthName, yearStr] = formData.for_month.split(" ")
+    const monthIndex = new Date(`${monthName} 1, ${yearStr}`).getMonth() + 1
+    const billingMonth = `${yearStr}-${String(monthIndex).padStart(2, "0")}`
+    const joinDate = new Date(proRata.joinDate)
+    return calculateProRataAmount(tenant.monthly_rent, joinDate, billingMonth)
+  }
+
   const calculateTotals = () => {
-    const subtotal = lineItems.reduce((sum, item) => sum + Number(item.amount), 0)
+    const proRataAmount = getProRataRentAmount()
+    const effectiveLineItems = lineItems.map((item) => {
+      if (proRata.enabled && proRataAmount !== null && item.type.toLowerCase().includes("rent")) {
+        return { ...item, amount: proRataAmount }
+      }
+      return item
+    })
+    const subtotal = effectiveLineItems.reduce((sum, item) => sum + Number(item.amount), 0)
     const total = subtotal + Number(formData.previous_balance) - Number(formData.discount_amount)
-    return { subtotal, total }
+    return { subtotal, total, proRataAmount }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -373,7 +403,15 @@ function NewBillContent() {
       }
 
       const tenant = tenants.find((t) => t.id === selectedTenant)
-      const { subtotal, total } = calculateTotals()
+      const { subtotal, total, proRataAmount } = calculateTotals()
+
+      // Apply pro-rata amounts to line items before saving
+      const effectiveLineItems = lineItems.map((item) => {
+        if (proRata.enabled && proRataAmount !== null && item.type.toLowerCase().includes("rent")) {
+          return { ...item, amount: proRataAmount }
+        }
+        return item
+      })
 
       // Generate bill number
       const year = new Date(formData.bill_date).getFullYear()
@@ -410,7 +448,7 @@ function NewBillContent() {
             total_amount: total,
             balance_due: total,
             status: "pending",
-            line_items: lineItems.map((item) => ({
+            line_items: effectiveLineItems.map((item) => ({
               type: item.type,
               description: item.description,
               amount: item.amount,
@@ -446,7 +484,7 @@ function NewBillContent() {
     }
   }
 
-  const { subtotal, total } = calculateTotals()
+  const { subtotal, total, proRataAmount } = calculateTotals()
 
   if (loadingTenants) {
     return <PageSkeleton variant="form" />
@@ -643,6 +681,64 @@ function NewBillContent() {
           </CardContent>
         </Card>
 
+        {/* Pro-Rata Billing */}
+        {proRataEnabled && selectedTenant && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Pro-Rata Billing</CardTitle>
+                  <CardDescription>Calculate partial-month rent for mid-cycle join</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <input
+                  id="prorata-toggle"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-input"
+                  checked={proRata.enabled}
+                  onChange={(e) => setProRata((p) => ({ ...p, enabled: e.target.checked }))}
+                />
+                <label htmlFor="prorata-toggle" className="text-sm font-medium cursor-pointer">
+                  Apply pro-rata calculation for this bill
+                </label>
+              </div>
+              {proRata.enabled && (
+                <div className="space-y-3">
+                  <FormField label="Tenant Join Date" required>
+                    <Input
+                      type="date"
+                      value={proRata.joinDate}
+                      onChange={(e) => setProRata((p) => ({ ...p, joinDate: e.target.value }))}
+                    />
+                  </FormField>
+                  {proRataAmount !== null && (
+                    <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 text-sm">
+                      {(() => {
+                        const [monthName, yearStr] = formData.for_month.split(" ")
+                        const monthIndex = new Date(`${monthName} 1, ${yearStr}`).getMonth() + 1
+                        const billingMonth = `${yearStr}-${String(monthIndex).padStart(2, "0")}`
+                        const { remainingDays, daysInMonth } = getProRataBreakdown(new Date(proRata.joinDate), billingMonth)
+                        const tenant = tenants.find((t) => t.id === selectedTenant)
+                        return (
+                          <span className="text-muted-foreground">
+                            {remainingDays} days / {daysInMonth} days × {formatCurrency(tenant?.monthly_rent || 0)} = <strong className="text-primary">{formatCurrency(proRataAmount)}</strong>
+                          </span>
+                        )
+                      })()}
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Line Items */}
         <Card>
           <CardHeader>
@@ -713,6 +809,12 @@ function NewBillContent() {
 
             {/* Totals */}
             <div className="mt-6 pt-4 border-t space-y-2">
+              {proRata.enabled && proRataAmount !== null && (
+                <div className="flex justify-between text-sm text-primary">
+                  <span>Pro-Rata Rent Applied</span>
+                  <span>{formatCurrency(proRataAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatCurrency(subtotal)}</span>

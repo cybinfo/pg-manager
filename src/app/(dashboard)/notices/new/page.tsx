@@ -20,7 +20,8 @@ import {
   Wrench,
   CreditCard,
   Users,
-  Library
+  Library,
+  Clock,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
@@ -62,6 +63,7 @@ function NewNoticeContent() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [selectedRooms, setSelectedRooms] = useState<string[]>([])
+  const [scheduleForLater, setScheduleForLater] = useState(false)
 
   const {
     formData, setFormData,
@@ -81,7 +83,9 @@ function NewNoticeContent() {
       title: "",
       content: "",
       expires_at: "",
+      scheduled_at: "",
       is_active: true,
+      is_published: true,
     },
     redirectTo: "/notices",
     successMessage: "Notice created successfully",
@@ -98,19 +102,24 @@ function NewNoticeContent() {
       }
       return null
     },
-    transform: (data, userId) => ({
-      owner_id: userId,
-      created_by: userId,
-      property_id: data.entity_type === "property" ? data.property_id : null,
-      library_id: data.entity_type === "library" ? data.library_id : null,
-      type: data.type,
-      target_audience: data.target_audience,
-      target_rooms: data.target_audience === "specific_rooms" ? selectedRooms : null,
-      title: data.title,
-      content: data.content,
-      expires_at: data.expires_at || null,
-      is_active: data.is_active,
-    }),
+    transform: (data, userId) => {
+      const isScheduled = scheduleForLater && !!data.scheduled_at
+      return {
+        owner_id: userId,
+        created_by: userId,
+        property_id: data.entity_type === "property" ? data.property_id : null,
+        library_id: data.entity_type === "library" ? data.library_id : null,
+        type: data.type,
+        target_audience: data.target_audience,
+        target_rooms: data.target_audience === "specific_rooms" ? selectedRooms : null,
+        title: data.title,
+        content: data.content,
+        expires_at: data.expires_at || null,
+        scheduled_at: isScheduled ? new Date(data.scheduled_at as string).toISOString() : null,
+        is_active: data.is_active,
+        is_published: !isScheduled,
+      }
+    },
   })
 
   useEffect(() => {
@@ -515,6 +524,48 @@ function NewNoticeContent() {
                 </div>
               </div>
             </div>
+
+            <FeatureGuard module="notices" feature="noticeScheduling">
+              <div className="pt-4 border-t space-y-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="schedule_for_later"
+                    checked={scheduleForLater}
+                    onChange={(e) => {
+                      setScheduleForLater(e.target.checked)
+                      if (!e.target.checked) {
+                        setFormData((prev) => ({ ...prev, scheduled_at: "" }))
+                      }
+                    }}
+                    disabled={saving}
+                    className="h-4 w-4 rounded border-input"
+                  />
+                  <label htmlFor="schedule_for_later" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    Schedule for later
+                  </label>
+                </div>
+                {scheduleForLater && (
+                  <FormField label="Publish At" htmlFor="scheduled_at" hint="Notice will be published at this date and time">
+                    <Input
+                      id="scheduled_at"
+                      name="scheduled_at"
+                      type="datetime-local"
+                      value={formData.scheduled_at as string}
+                      onChange={handleChange}
+                      disabled={saving}
+                      min={new Date().toISOString().slice(0, 16)}
+                    />
+                  </FormField>
+                )}
+                {scheduleForLater && (
+                  <p className="text-xs text-muted-foreground p-2 bg-info/10 rounded-lg">
+                    Notice will not be visible until the scheduled time. The cron job checks every 15 minutes.
+                  </p>
+                )}
+              </div>
+            </FeatureGuard>
           </CardContent>
         </Card>
 

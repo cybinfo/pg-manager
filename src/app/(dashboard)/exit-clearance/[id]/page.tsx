@@ -51,7 +51,8 @@ import {
 } from "@/types/exit-clearance.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { PermissionGate, FeatureGate } from "@/components/auth"
+import { PermissionGate, FeatureGate, FeatureGuard } from "@/components/auth"
+import { FileWarning, Calculator } from "lucide-react"
 
 export default function ExitClearanceDetailPage() {
   const params = useParams()
@@ -69,6 +70,20 @@ export default function ExitClearanceDetailPage() {
 
   const [deductions, setDeductions] = useState<Deduction[]>([])
   const [newDeduction, setNewDeduction] = useState({ reason: "", amount: "" })
+
+  interface OutstandingBill {
+    id: string
+    bill_number: string | null
+    for_month: string | null
+    total_amount: number
+    balance_due: number
+    due_date: string | null
+    status: string
+  }
+
+  const [outstandingBills, setOutstandingBills] = useState<OutstandingBill[]>([])
+  const [billsLoading, setBillsLoading] = useState(false)
+  const [calculatedRefund, setCalculatedRefund] = useState<number | null>(null)
 
   const {
     data: clearance,
@@ -92,6 +107,24 @@ export default function ExitClearanceDetailPage() {
       setFormInitialized(true)
     }
   }, [clearance, formInitialized])
+
+  useEffect(() => {
+    const fetchOutstandingBills = async () => {
+      if (!clearance?.tenant_id) return
+      setBillsLoading(true)
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("bills")
+        .select("id, bill_number, for_month, total_amount, balance_due, due_date, status")
+        .eq("tenant_id", clearance.tenant_id)
+        .neq("status", "paid")
+        .is("deleted_at", null)
+        .order("due_date", { ascending: true })
+      if (data) setOutstandingBills(data)
+      setBillsLoading(false)
+    }
+    fetchOutstandingBills()
+  }, [clearance?.tenant_id])
 
   const addDeduction = () => {
     if (!newDeduction.reason || !newDeduction.amount) {
@@ -599,6 +632,94 @@ export default function ExitClearanceDetailPage() {
             </Button>
           </Link>
         )}
+
+        {/* Outstanding Bills */}
+        <FeatureGuard module="exitClearance" feature="dueBillSettlement">
+          <DetailSection
+            title="Outstanding Bills"
+            description="Unpaid bills for this tenant"
+            icon={FileWarning}
+          >
+            {billsLoading ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">Loading bills...</p>
+            ) : outstandingBills.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">No outstanding bills</p>
+            ) : (
+              <div className="space-y-2">
+                {outstandingBills.map((bill) => (
+                  <div key={bill.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium text-sm">{bill.bill_number || "—"}</p>
+                      <p className="text-xs text-muted-foreground">{bill.for_month || "—"}{bill.due_date ? ` · Due ${formatDate(bill.due_date)}` : ""}</p>
+                    </div>
+                    <div className="text-right flex items-center gap-3">
+                      <StatusBadge
+                        status={bill.status === "overdue" ? "error" : bill.status === "partial" ? "warning" : "info"}
+                        label={bill.status}
+                        size="sm"
+                      />
+                      <div>
+                        <p className="text-xs text-muted-foreground">{formatCurrency(bill.total_amount)}</p>
+                        <p className="font-semibold text-sm text-destructive">{formatCurrency(bill.balance_due)} due</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex justify-between pt-3 border-t font-semibold">
+                  <span>Total Outstanding</span>
+                  <span className="text-destructive">
+                    {formatCurrency(outstandingBills.reduce((sum, b) => sum + b.balance_due, 0))}
+                  </span>
+                </div>
+              </div>
+            )}
+          </DetailSection>
+        </FeatureGuard>
+
+        {/* Auto-Calculate Refund */}
+        <FeatureGuard module="refunds" feature="autoRefundCalculation">
+          <DetailSection
+            title="Auto-Calculate Refund"
+            description="Calculate deposit refund based on security deposit and outstanding dues"
+            icon={Calculator}
+          >
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="p-3 bg-card border rounded-lg">
+                  <p className="text-muted-foreground">Security Deposit</p>
+                  <p className="font-semibold text-success mt-1">
+                    {formatCurrency((clearance.tenant as (typeof clearance.tenant & { security_deposit?: number }) | null)?.security_deposit ?? clearance.total_refundable)}
+                  </p>
+                </div>
+                <div className="p-3 bg-card border rounded-lg">
+                  <p className="text-muted-foreground">Total Dues</p>
+                  <p className="font-semibold text-destructive mt-1">{formatCurrency(clearance.total_dues)}</p>
+                </div>
+              </div>
+              {calculatedRefund !== null && (
+                <div className={`p-4 rounded-lg border-2 text-center ${calculatedRefund >= 0 ? "border-success/30 bg-success/10" : "border-destructive/30 bg-destructive/10"}`}>
+                  <p className="text-sm text-muted-foreground mb-1">{calculatedRefund >= 0 ? "Refundable Amount" : "Amount Owed by Tenant"}</p>
+                  <p className={`text-2xl font-bold ${calculatedRefund >= 0 ? "text-success" : "text-destructive"}`}>
+                    {formatCurrency(Math.abs(calculatedRefund))}
+                  </p>
+                </div>
+              )}
+              {!isCleared && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const deposit = (clearance.tenant as (typeof clearance.tenant & { security_deposit?: number }) | null)?.security_deposit ?? clearance.total_refundable
+                    setCalculatedRefund(deposit - clearance.total_dues)
+                  }}
+                >
+                  <Calculator className="mr-2 h-4 w-4" />
+                  Calculate Refund
+                </Button>
+              )}
+            </div>
+          </DetailSection>
+        </FeatureGuard>
 
       </DetailPageTemplate>
     </div>

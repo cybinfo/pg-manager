@@ -35,11 +35,12 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
+  AlertTriangle,
 } from "lucide-react"
 import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate, formatDateTime, formatMonthYear, formatNumber} from "@/lib/format"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -54,6 +55,7 @@ interface MeterReading {
   notes: string | null
   created_at: string
   created_by: string | null
+  meter_id: string | null
   property: { id: string; name: string; address: string } | null
   room: { id: string; room_number: string } | null
   charge_type: { id: string; name: string; calculation_config: Record<string, unknown> | null } | null
@@ -79,6 +81,7 @@ export default function MeterReadingDetailPage() {
   const [generating, setGenerating] = useState(false)
   const [charges, setCharges] = useState<Charge[]>([])
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [consumptionAnomaly, setConsumptionAnomaly] = useState<{ alertType: 'high' | 'low'; averageUnits: number } | null>(null)
 
   const {
     data: reading,
@@ -130,6 +133,42 @@ export default function MeterReadingDetailPage() {
     }
 
     fetchCharges()
+  }, [reading])
+
+  // Compute consumption anomaly against last 3 readings for the same meter
+  useEffect(() => {
+    const checkAnomaly = async () => {
+      if (!reading?.meter_id || reading.units_consumed === null || reading.units_consumed <= 0) return
+
+      const supabase = createClient()
+      const { data: recentReadings } = await supabase
+        .from("meter_readings")
+        .select("units_consumed")
+        .eq("meter_id", reading.meter_id)
+        .not("id", "eq", reading.id)
+        .not("units_consumed", "is", null)
+        .order("reading_date", { ascending: false })
+        .limit(3)
+
+      if (!recentReadings || recentReadings.length < 2) return
+
+      const validUnits = recentReadings
+        .map((r: { units_consumed: number | null }) => r.units_consumed)
+        .filter((u: number | null): u is number => u !== null && u > 0)
+
+      if (validUnits.length < 2) return
+
+      const avg = validUnits.reduce((s: number, u: number) => s + u, 0) / validUnits.length
+      const current = reading.units_consumed
+
+      if (current > avg * 2) {
+        setConsumptionAnomaly({ alertType: "high", averageUnits: avg })
+      } else if (current < avg * 0.5) {
+        setConsumptionAnomaly({ alertType: "low", averageUnits: avg })
+      }
+    }
+
+    checkAnomaly()
   }, [reading])
 
   const handleDelete = async () => {
@@ -350,6 +389,22 @@ export default function MeterReadingDetailPage() {
           icon={Calendar}
         />
       </div>
+
+      <FeatureGuard module="meters" feature="consumptionAlerts">
+        {consumptionAnomaly && (
+          <div className={`flex items-start gap-3 p-4 rounded-lg border ${consumptionAnomaly.alertType === "high" ? "border-destructive/30 bg-destructive/5" : "border-blue-300/50 bg-blue-50/50 dark:bg-blue-950/20"}`}>
+            <AlertTriangle className={`h-5 w-5 mt-0.5 shrink-0 ${consumptionAnomaly.alertType === "high" ? "text-destructive" : "text-blue-600"}`} />
+            <div>
+              <p className={`text-sm font-semibold ${consumptionAnomaly.alertType === "high" ? "text-destructive" : "text-blue-700 dark:text-blue-400"}`}>
+                {consumptionAnomaly.alertType === "high" ? "Unusually High Consumption" : "Unusually Low Consumption"}
+              </p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {formatNumber(reading.units_consumed!)} {config.unit} recorded vs. average of {formatNumber(Math.round(consumptionAnomaly.averageUnits * 10) / 10)} {config.unit}
+              </p>
+            </div>
+          </div>
+        )}
+      </FeatureGuard>
 
       <DetailPageTemplate layoutKey="meter-reading-detail" entityType="meter_reading" record={reading}>
         {/* Location Details */}

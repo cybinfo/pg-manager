@@ -36,11 +36,13 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { Combobox, ComboboxOption } from "@/components/ui/combobox"
+import { PERMISSIONS } from "@/lib/auth/types"
 
 interface Property {
   id: string
@@ -86,6 +88,10 @@ export default function StaffDetailPage() {
     property_id: "",
   })
 
+  const [deniedPermissions, setDeniedPermissions] = useState<string[]>([])
+  const [newDenyPermission, setNewDenyPermission] = useState("")
+  const [denyLoading, setDenyLoading] = useState(false)
+
   // Get user roles from related data
   const userRoles = (related.userRoles || []) as UserRole[]
 
@@ -120,6 +126,67 @@ export default function StaffDetailPage() {
 
     fetchRolesAndProperties()
   }, [])
+
+  // Fetch denied permissions for this staff member's user_context
+  useEffect(() => {
+    if (!staff?.user_id) return
+    const fetchDeniedPermissions = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("user_contexts")
+        .select("denied_permissions")
+        .eq("user_id", staff.user_id)
+        .eq("context_type", "staff")
+        .maybeSingle()
+      if (data?.denied_permissions) {
+        setDeniedPermissions(data.denied_permissions as string[])
+      }
+    }
+    fetchDeniedPermissions()
+  }, [staff?.user_id])
+
+  const handleAddDeny = async () => {
+    if (!staff?.user_id || !newDenyPermission) return
+    setDenyLoading(true)
+    const supabase = createClient()
+
+    const updated = [...new Set([...deniedPermissions, newDenyPermission])]
+    const { error } = await supabase
+      .from("user_contexts")
+      .update({ denied_permissions: updated })
+      .eq("user_id", staff.user_id)
+      .eq("context_type", "staff")
+
+    if (error) {
+      showError("Failed to add denial")
+    } else {
+      setDeniedPermissions(updated)
+      setNewDenyPermission("")
+      showSuccess("Permission denied")
+    }
+    setDenyLoading(false)
+  }
+
+  const handleRemoveDeny = async (permission: string) => {
+    if (!staff?.user_id) return
+    setDenyLoading(true)
+    const supabase = createClient()
+
+    const updated = deniedPermissions.filter((p) => p !== permission)
+    const { error } = await supabase
+      .from("user_contexts")
+      .update({ denied_permissions: updated })
+      .eq("user_id", staff.user_id)
+      .eq("context_type", "staff")
+
+    if (error) {
+      showError("Failed to remove denial")
+    } else {
+      setDeniedPermissions(updated)
+      showSuccess("Denial removed")
+    }
+    setDenyLoading(false)
+  }
 
   // Sync form data when staff data loads
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -522,6 +589,70 @@ export default function StaffDetailPage() {
             </div>
           )}
         </DetailSection>
+
+        {/* Permission Deny Overrides */}
+        <FeatureGuard module="staff" feature="permissionDeny">
+          <DetailSection
+            title="Permission Overrides"
+            description="Explicitly denied permissions for this staff member (deny-wins)"
+            icon={Shield}
+          >
+            {deniedPermissions.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No permission denials active</p>
+              </div>
+            ) : (
+              <div className="space-y-2 mb-4">
+                {deniedPermissions.map((perm) => (
+                  <div key={perm} className="flex items-center justify-between p-3 border rounded-lg bg-destructive/5 border-destructive/20">
+                    <span className="text-sm font-mono text-destructive">{perm}</span>
+                    <PermissionGate permission="staff.edit" hide>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveDeny(perm)}
+                        disabled={denyLoading}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </PermissionGate>
+                  </div>
+                ))}
+              </div>
+            )}
+            <PermissionGate permission="staff.edit" hide>
+              <div className="pt-4 border-t mt-2">
+                <Label className="text-sm font-medium">Add Permission Denial</Label>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex-1">
+                    <Combobox
+                      options={Object.values(PERMISSIONS)
+                        .filter((p) => !deniedPermissions.includes(p))
+                        .map((p): ComboboxOption => ({ value: p, label: p }))}
+                      value={newDenyPermission}
+                      onValueChange={setNewDenyPermission}
+                      placeholder="Search permission..."
+                      emptyText="No permissions found"
+                      disabled={denyLoading}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleAddDeny}
+                    disabled={denyLoading || !newDenyPermission}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Deny
+                  </Button>
+                </div>
+              </div>
+            </PermissionGate>
+          </DetailSection>
+        </FeatureGuard>
 
       </DetailPageTemplate>
     </div>

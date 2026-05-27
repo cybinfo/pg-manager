@@ -23,6 +23,7 @@ import {
   sendLibraryExpiringMembership,
   sendLibraryExpiredMembership,
   sendMonthlyAttendanceSummary,
+  sendLockerRenewalReminder,
 } from "@/lib/email"
 
 // Configuration
@@ -59,6 +60,7 @@ export const GET = (request: Request) =>
         expiringNotifications: 0,
         monthlySummaries: 0,
         expiredNotifications: 0,
+        lockerRenewalReminders: 0,
         errors: [] as string[],
       }
 
@@ -434,8 +436,89 @@ export const GET = (request: Request) =>
         }
       }
 
+      // 6. Locker Renewal Reminders (expiring within 7 days)
+      const lockerRenewalDate = new Date(today)
+      lockerRenewalDate.setDate(lockerRenewalDate.getDate() + 7)
+      const lockerRenewalDateStr = lockerRenewalDate.toISOString().split("T")[0]
+      const todayStr = today.toISOString().split("T")[0]
+
+      const { data: expiringLockers, error: lockersError } = await supabaseAdmin
+        .from("library_locker_assignments")
+        .select(`
+          id,
+          end_date,
+          locker:library_lockers(id, locker_number, library_id),
+          member:library_members!library_locker_assignments_member_id_fkey(
+            id,
+            name,
+            email,
+            person:people(name),
+            library:libraries(id, name, workspace_id)
+          )
+        `)
+        .eq("status", "active")
+        .gte("end_date", todayStr)
+        .lte("end_date", lockerRenewalDateStr)
+
+      if (lockersError) {
+        cronLogger.error("Error fetching expiring lockers", extractErrorMeta(lockersError))
+        results.errors.push(`Locker renewal query failed: ${lockersError.message}`)
+      } else if (expiringLockers && expiringLockers.length > 0) {
+        cronLogger.info("Found expiring locker assignments", { count: expiringLockers.length })
+
+        for (const assignment of expiringLockers) {
+          try {
+            const locker = transformJoin(assignment.locker)
+            const member = transformJoin(assignment.member)
+            if (!locker || !member || !member.email) continue
+
+            const library = transformJoin(member.library)
+            if (!library) continue
+
+            const wsConfig = await (async () => {
+              const { data: ws } = await supabaseAdmin
+                .from("workspaces")
+                .select("module_config")
+                .eq("id", library.workspace_id)
+                .single()
+              return ws?.module_config as WorkspaceModuleConfig | null
+            })()
+
+            if (!isFeatureEnabled(wsConfig, "lockers", "lockerRenewal")) continue
+
+            const memberPerson = transformJoin(member.person)
+            const memberName = (memberPerson?.name as string) || member.name
+
+            const expiryDate = new Date(assignment.end_date)
+            const daysUntil = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+            const result = await sendLockerRenewalReminder({
+              to: member.email,
+              memberName,
+              libraryName: library.name,
+              lockerNumber: String(locker.locker_number),
+              expiryDate: expiryDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
+              daysUntilExpiry: daysUntil,
+            })
+
+            if (result.success) {
+              results.lockerRenewalReminders++
+              cronLogger.debug("Sent locker renewal reminder", {
+                assignmentId: assignment.id,
+                memberName,
+                daysUntil,
+              })
+            } else {
+              results.errors.push(`Locker renewal email failed for ${member.email}: ${result.error}`)
+            }
+          } catch (err) {
+            results.errors.push(`Error processing locker renewal for ${assignment.id}: ${String(err)}`)
+          }
+        }
+      }
+
       // Log audit event for notification batch
-      const totalSent = results.lowHoursWarnings + results.renewalReminders + results.expiringNotifications + results.expiredNotifications + results.monthlySummaries
+      const totalSent = results.lowHoursWarnings + results.renewalReminders + results.expiringNotifications + results.expiredNotifications + results.monthlySummaries + results.lockerRenewalReminders
       if (totalSent > 0) {
         await supabaseAdmin
           .from("audit_events")
@@ -451,6 +534,7 @@ export const GET = (request: Request) =>
               expiring_notifications: results.expiringNotifications,
               expired_notifications: results.expiredNotifications,
               monthly_summaries: results.monthlySummaries,
+              locker_renewal_reminders: results.lockerRenewalReminders,
               total_sent: totalSent,
               errors_count: results.errors.length,
               triggered_by: "cron",
@@ -466,10 +550,11 @@ export const GET = (request: Request) =>
           expiringNotifications: results.expiringNotifications,
           expiredNotifications: results.expiredNotifications,
           monthlySummaries: results.monthlySummaries,
+          lockerRenewalReminders: results.lockerRenewalReminders,
           totalSent,
           errors: results.errors.length > 0 ? results.errors : undefined,
         },
-        message: `Sent ${results.lowHoursWarnings} low hours, ${results.renewalReminders} renewal reminders, ${results.expiringNotifications} expiring, ${results.expiredNotifications} expired, ${results.monthlySummaries} monthly summary notifications`,
+        message: `Sent ${results.lowHoursWarnings} low hours, ${results.renewalReminders} renewal reminders, ${results.expiringNotifications} expiring, ${results.expiredNotifications} expired, ${results.monthlySummaries} monthly summaries, ${results.lockerRenewalReminders} locker renewal notifications`,
       }
     },
   })

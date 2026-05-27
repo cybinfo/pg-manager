@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Clock, Users, LogIn, LogOut, RefreshCw, QrCode } from "lucide-react"
+import { Clock, Users, LogIn, LogOut, RefreshCw, QrCode, AlertTriangle } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
 import { personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
@@ -45,6 +45,8 @@ interface AttendanceItem {
   check_out_time: string | null
   hours_spent: number | null
   notes: string | null
+  is_late?: boolean
+  scheduled_slot?: string | null
   member?: {
     id: string
     name: string
@@ -392,8 +394,14 @@ const columns: Column<AttendanceItem>[] = [
     defaultVisible: true,
     render: (att) => (
       <div>
-        <div className="font-medium">
+        <div className="font-medium flex items-center gap-1.5">
           {new Date(att.check_in_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+          {att.is_late && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium bg-warning/10 text-warning rounded border border-warning/20" title={att.scheduled_slot ? `Scheduled: ${att.scheduled_slot}` : "Outside assigned slot"}>
+              <AlertTriangle className="h-2.5 w-2.5" />
+              Late
+            </span>
+          )}
         </div>
         <div className="text-xs text-muted-foreground">
           {formatDate(att.attendance_date)}
@@ -528,6 +536,15 @@ function CheckOutButton({ attendanceId, memberName }: { attendanceId: string; me
 
 const filters: FilterConfig[] = [
   createDateFilter("attendance_date", "Date"),
+  {
+    id: "is_late",
+    label: "Late Entry",
+    type: "select",
+    options: [
+      { value: "true", label: "Late only" },
+      { value: "false", label: "On time only" },
+    ],
+  },
 ]
 
 // ============================================

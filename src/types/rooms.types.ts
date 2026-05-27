@@ -63,6 +63,10 @@ export interface Room {
   created_at: string
   updated_at: string
 
+  // Maintenance mode (migration 078)
+  is_under_maintenance?: boolean
+  maintenance_notes?: string | null
+
   // Audit fields
   created_by?: string | null
   deleted_at?: string | null

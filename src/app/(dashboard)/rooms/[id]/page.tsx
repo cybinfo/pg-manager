@@ -37,13 +37,19 @@ import {
   Gauge,
   Calendar,
   MessageSquare,
+  Wrench,
 } from "lucide-react"
 import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG } from "@/types/meters.types"
 import { ROOM_STATUS } from "@/lib/status"
+import { Progress } from "@/components/ui/progress"
 import { PermissionGate, FeatureGuard } from "@/components/auth"
+import { createClient } from "@/lib/supabase/client"
+import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface MeterReading {
   id: string
@@ -64,6 +70,8 @@ export default function RoomDetailPage() {
   const router = useRouter()
   const { user } = useAuth()
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
+  const [togglingMaintenance, setTogglingMaintenance] = useState(false)
+  const [maintenanceNotes, setMaintenanceNotes] = useState("")
 
   const handleDelete = () => {
     if (!user?.id) return
@@ -93,6 +101,7 @@ export default function RoomDetailPage() {
     loading,
     updateField,
     isSaving,
+    refetch,
   } = useDetailPage<Room>({
     config: ROOM_DETAIL_CONFIG,
     id: params.id as string,
@@ -100,6 +109,33 @@ export default function RoomDetailPage() {
 
   const handleStatusChange = async (newStatus: string) => {
     await updateField("status", newStatus)
+  }
+
+  const handleMaintenanceToggle = async () => {
+    if (!room) return
+    setTogglingMaintenance(true)
+    try {
+      const supabase = createClient()
+      const enabling = !room.is_under_maintenance
+      const { error } = await supabase
+        .from("rooms")
+        .update({
+          is_under_maintenance: enabling,
+          maintenance_notes: enabling ? (maintenanceNotes || null) : null,
+        })
+        .eq("id", room.id)
+      if (error) {
+        showError(error.message || "Failed to update maintenance status")
+      } else {
+        showSuccess(enabling ? "Maintenance mode enabled" : "Maintenance mode disabled")
+        setMaintenanceNotes("")
+        refetch()
+      }
+    } catch {
+      showError("Failed to update maintenance status")
+    } finally {
+      setTogglingMaintenance(false)
+    }
   }
 
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/rooms", defaultLabel: "All Rooms" })
@@ -131,12 +167,20 @@ export default function RoomDetailPage() {
       <DetailHero
         title={`Room ${room.room_number}`}
         subtitle={
-          room.property && (
-            <Link href={`/properties/${room.property.id}`} className="flex items-center gap-1 text-muted-foreground hover:text-primary">
-              <Building2 className="h-4 w-4" />
-              {room.property.name}
-            </Link>
-          )
+          <div className="flex items-center gap-3 flex-wrap">
+            {room.property && (
+              <Link href={`/properties/${room.property.id}`} className="flex items-center gap-1 text-muted-foreground hover:text-primary">
+                <Building2 className="h-4 w-4" />
+                {room.property.name}
+              </Link>
+            )}
+            {room.is_under_maintenance && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning border border-warning/30">
+                <Wrench className="h-3 w-3" />
+                Under Maintenance
+              </span>
+            )}
+          </div>
         }
         backHref={backHref}
         backLabel={backLabel}
@@ -254,6 +298,43 @@ export default function RoomDetailPage() {
           </FeatureGuard>
         </DetailSection>
 
+        {/* Bed Capacity */}
+        <FeatureGuard module="rooms" feature="bedCapacityTracking">
+          <DetailSection
+            title="Bed Capacity"
+            description="Occupancy breakdown for this room"
+            icon={Bed}
+          >
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="p-3 bg-card rounded-lg border">
+                  <p className="text-2xl font-bold">{room.total_beds}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total</p>
+                </div>
+                <div className="p-3 bg-card rounded-lg border">
+                  <p className="text-2xl font-bold text-destructive">{room.occupied_beds}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Occupied</p>
+                </div>
+                <div className="p-3 bg-card rounded-lg border">
+                  <p className={`text-2xl font-bold ${availableBeds > 0 ? "text-success" : "text-muted-foreground"}`}>{availableBeds}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Available</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Occupancy</span>
+                  <span className="font-medium">{room.total_beds > 0 ? Math.round((room.occupied_beds / room.total_beds) * 100) : 0}%</span>
+                </div>
+                <Progress
+                  value={room.occupied_beds}
+                  max={room.total_beds}
+                  className={`h-3 ${room.occupied_beds === room.total_beds ? "[&>div]:bg-destructive" : availableBeds <= 1 ? "[&>div]:bg-warning" : "[&>div]:bg-success"}`}
+                />
+              </div>
+            </div>
+          </DetailSection>
+        </FeatureGuard>
+
         {/* Room Status */}
         <DetailSection
           title="Room Status"
@@ -302,6 +383,67 @@ export default function RoomDetailPage() {
             Note: Status is automatically updated when tenants are added or removed.
           </p>
         </DetailSection>
+
+        {/* Maintenance Mode */}
+        <FeatureGuard module="properties" feature="maintenanceMode">
+          <DetailSection
+            title="Maintenance Mode"
+            description="Mark room as under maintenance to block new tenant assignments"
+            icon={Wrench}
+            className={room.is_under_maintenance ? "border-warning/30 bg-warning/5" : undefined}
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm">
+                    {room.is_under_maintenance ? "Under Maintenance" : "Available for Booking"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {room.is_under_maintenance
+                      ? "New tenants cannot be assigned until maintenance is resolved"
+                      : "Room is accepting new tenant assignments"}
+                  </p>
+                </div>
+                <PermissionGate permission="rooms.edit" hide>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleMaintenanceToggle}
+                    disabled={togglingMaintenance}
+                    className={room.is_under_maintenance ? "border-warning text-warning hover:bg-warning/10" : ""}
+                  >
+                    <Wrench className="mr-2 h-4 w-4" />
+                    {togglingMaintenance
+                      ? "Updating..."
+                      : room.is_under_maintenance
+                      ? "Disable Maintenance"
+                      : "Enable Maintenance"}
+                  </Button>
+                </PermissionGate>
+              </div>
+              {room.is_under_maintenance && room.maintenance_notes && (
+                <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                  <p className="text-sm text-warning font-medium mb-1">Maintenance Notes</p>
+                  <p className="text-sm text-muted-foreground">{room.maintenance_notes}</p>
+                </div>
+              )}
+              {!room.is_under_maintenance && (
+                <div className="space-y-2">
+                  <Label htmlFor="maintenance_notes" className="text-sm">
+                    Maintenance Notes (optional)
+                  </Label>
+                  <Input
+                    id="maintenance_notes"
+                    placeholder="Describe the maintenance work..."
+                    value={maintenanceNotes}
+                    onChange={(e) => setMaintenanceNotes(e.target.value)}
+                    disabled={togglingMaintenance}
+                  />
+                </div>
+              )}
+            </div>
+          </DetailSection>
+        </FeatureGuard>
 
         {/* Current Tenants */}
         <DetailListSection
@@ -352,52 +494,52 @@ export default function RoomDetailPage() {
         />
 
         {/* Assigned Meters */}
-        <DetailListSection
-          title="Assigned Meters"
-          description={`${meterAssignments.length} meter(s) assigned`}
-          icon={Gauge}
-          items={meterAssignments.filter(a => a.meter)}
-          keyExtractor={(assignment, _idx) => assignment.id}
-          renderItem={(assignment) => {
-            if (!assignment.meter) return null
-            const typeConfig = METER_TYPE_CONFIG[assignment.meter.meter_type as keyof typeof METER_TYPE_CONFIG] || METER_TYPE_CONFIG.electricity
-            const meterStatusConfig = METER_STATUS_CONFIG[assignment.meter.status as keyof typeof METER_STATUS_CONFIG] || METER_STATUS_CONFIG.active
-            const TypeIcon = meterTypeConfig[assignment.meter.meter_type]?.icon || Gauge
-            return (
-              <Link href={`/meters/${assignment.meter.id}`}>
-                <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${typeConfig.bgColor}`}>
-                      <TypeIcon className={`h-4 w-4 ${typeConfig.color}`} />
+        <FeatureGuard module="meters" feature="perRoomMetering">
+          <DetailListSection
+            title="Meter Assignment"
+            description={`${meterAssignments.length} meter(s) assigned to this room`}
+            icon={Gauge}
+            items={meterAssignments.filter(a => a.meter)}
+            keyExtractor={(assignment, _idx) => assignment.id}
+            renderItem={(assignment) => {
+              if (!assignment.meter) return null
+              const typeConfig = METER_TYPE_CONFIG[assignment.meter.meter_type as keyof typeof METER_TYPE_CONFIG] || METER_TYPE_CONFIG.electricity
+              const meterStatusConfig = METER_STATUS_CONFIG[assignment.meter.status as keyof typeof METER_STATUS_CONFIG] || METER_STATUS_CONFIG.active
+              const TypeIcon = meterTypeConfig[assignment.meter.meter_type]?.icon || Gauge
+              return (
+                <Link href={`/meters/${assignment.meter.id}`}>
+                  <div className="flex items-center justify-between p-3 border rounded-lg hover:shadow-md transition-shadow mb-2 last:mb-0">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${typeConfig.bgColor}`}>
+                        <TypeIcon className={`h-4 w-4 ${typeConfig.color}`} />
+                      </div>
+                      <div>
+                        <p className="font-medium">{assignment.meter.meter_number}</p>
+                        <p className="text-sm text-muted-foreground capitalize">{typeConfig.label}</p>
+                        <p className="text-xs text-muted-foreground">Since {formatDate(assignment.start_date)}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{assignment.meter.meter_number}</p>
-                      <p className="text-sm text-muted-foreground">{typeConfig.label}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
                     <StatusBadge variant={meterStatusConfig.variant} label={meterStatusConfig.label} />
-                    <p className="text-xs text-muted-foreground mt-1">Since {formatDate(assignment.start_date)}</p>
                   </div>
-                </div>
+                </Link>
+              )
+            }}
+            initialLimit={4}
+            viewAllHref="/meters"
+            viewAllMode="auto"
+            emptyIcon={Gauge}
+            emptyText="No meters assigned to this room"
+            emptyAction={{ label: "Add First Meter", href: `/meters/new?property_id=${room.property?.id}&room_id=${room.id}` }}
+            actions={
+              <Link href={`/meters/new?property_id=${room.property?.id}&room_id=${room.id}`}>
+                <Button size="sm">
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add Meter
+                </Button>
               </Link>
-            )
-          }}
-          initialLimit={4}
-          viewAllHref="/meters"
-          viewAllMode="auto"
-          emptyIcon={Gauge}
-          emptyText="No meters assigned to this room"
-          emptyAction={{ label: "Add First Meter", href: `/meters/new?property_id=${room.property?.id}&room_id=${room.id}` }}
-          actions={
-            <Link href={`/meters/new?property_id=${room.property?.id}&room_id=${room.id}`}>
-              <Button size="sm">
-                <Plus className="mr-1 h-3 w-3" />
-                Add Meter
-              </Button>
-            </Link>
-          }
-        />
+            }
+          />
+        </FeatureGuard>
 
         {/* Meter Readings */}
         <DetailListSection

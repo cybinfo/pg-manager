@@ -481,6 +481,7 @@ export interface LibraryWaitlist extends AuditableEntity {
   notes: string | null
   status: LibraryWaitlistStatus
   position: number | null
+  queue_position: number | null
   last_contacted_at: string | null
   contact_notes: string | null
   converted_member_id: string | null

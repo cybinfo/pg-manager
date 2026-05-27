@@ -17,6 +17,7 @@ import {
   CreditCard,
   Building2,
   Users,
+  CalendarClock,
 } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
 import { timeAgoColumn } from "@/lib/columns"
@@ -46,6 +47,8 @@ interface Notice {
   target_audience: string
   target_rooms: string[] | null
   is_active: boolean
+  is_published?: boolean
+  scheduled_at?: string | null
   expires_at: string | null
   created_at: string
   property: { id: string; name: string } | null
@@ -191,6 +194,24 @@ const columns: Column<Notice>[] = [
     defaultVisible: false,
     render: (notice) => notice.expires_at ? formatTimeAgo(notice.expires_at) : <span className="text-muted-foreground">Never</span>,
   },
+  {
+    key: "scheduled_at",
+    header: "Scheduled",
+    width: "date",
+    sortable: true,
+    sortType: "date",
+    canHide: true,
+    defaultVisible: false,
+    render: (notice) => {
+      if (notice.is_published !== false) return <span className="text-muted-foreground">—</span>
+      return notice.scheduled_at ? (
+        <div className="flex items-center gap-1 text-warning text-sm">
+          <CalendarClock className="h-3 w-3" />
+          {formatTimeAgo(notice.scheduled_at)}
+        </div>
+      ) : <span className="text-muted-foreground">—</span>
+    },
+  },
 ]
 
 // ============================================
@@ -201,6 +222,16 @@ const filters: FilterConfig[] = [
   PROPERTY_FILTER,
   NOTICE_TYPE_FILTER,
   ACTIVE_STATUS_FILTER,
+  {
+    id: "is_published",
+    label: "Publication",
+    type: "select" as const,
+    options: [
+      { value: "all", label: "All Notices" },
+      { value: "true", label: "Published" },
+      { value: "false", label: "Scheduled (Pending)" },
+    ],
+  },
 ]
 
 // ============================================
@@ -224,12 +255,14 @@ const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("title", "Title"),
   selectFilterColumn("type", "Type", NOTICE_TYPE_OPTIONS),
   booleanFilterColumn("is_active", "Status", { trueLabel: "Active", falseLabel: "Inactive" }),
+  booleanFilterColumn("is_published", "Published", { trueLabel: "Published", falseLabel: "Scheduled (Pending)" }),
   selectFilterColumn("target_audience", "Audience", [
     { value: "all", label: "All Residents" },
     { value: "tenants_only", label: "Tenants Only" },
     { value: "specific_rooms", label: "Specific Rooms" },
   ], ["eq", "neq"]),
   dateFilterColumn("created_at", "Created Date"),
+  dateFilterColumn("scheduled_at", "Scheduled At"),
 ]
 
 // ============================================
@@ -270,6 +303,8 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   labelMapColumn("type", "Type", NOTICE_TYPE_LABELS),
   labelMapColumn("target_audience", "Audience", AUDIENCE_LABELS),
   { key: "is_active", header: "Active", format: (v) => (v ? "Yes" : "No") },
+  { key: "is_published", header: "Published", format: (v) => (v === false ? "No (Scheduled)" : "Yes") },
+  dateExportColumn("scheduled_at", "Scheduled At"),
   dateExportColumn("expires_at", "Expires At"),
   dateExportColumn("created_at", "Posted On"),
 ]

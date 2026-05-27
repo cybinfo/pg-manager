@@ -26,6 +26,8 @@ interface BillBreakdownProps {
   payments: Payment[]
   billId: string
   notes: string | null
+  showGst?: boolean
+  gstRate?: number
 }
 
 export function BillBreakdown({
@@ -38,7 +40,13 @@ export function BillBreakdown({
   payments,
   billId,
   notes,
+  showGst = false,
+  gstRate = 18,
 }: BillBreakdownProps) {
+  const halfGstRate = gstRate / 2
+  const cgstAmount = showGst ? Math.round((totalAmount * halfGstRate) / 100) : 0
+  const sgstAmount = cgstAmount
+  const totalWithGst = totalAmount + cgstAmount + sgstAmount
   return (
     <div className="lg:col-span-2 space-y-6">
       {/* Line Items */}
@@ -84,6 +92,23 @@ export function BillBreakdown({
               <span>Total</span>
               <span>{formatCurrency(totalAmount)}</span>
             </div>
+            {showGst && (
+              <div className="pt-3 mt-1 border-t border-dashed space-y-1.5">
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">GST Breakdown ({gstRate}%)</p>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>CGST ({halfGstRate}%)</span>
+                  <span>{formatCurrency(cgstAmount)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>SGST ({halfGstRate}%)</span>
+                  <span>{formatCurrency(sgstAmount)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-base pt-1.5 border-t">
+                  <span>Total with GST</span>
+                  <span className="text-primary">{formatCurrency(totalWithGst)}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </DetailSection>

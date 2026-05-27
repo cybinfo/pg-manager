@@ -803,6 +803,44 @@ export default function LibraryMemberDetailPage() {
           />
         )}
 
+        {/* Subscription History */}
+        <FeatureGuard module="subscriptions" feature="subscriptionHistory">
+          <DetailListSection
+            title="Subscription History"
+            description={`All ${memberships.length} subscription period(s)`}
+            icon={RefreshCw}
+            items={memberships}
+            keyExtractor={(membership) => `hist-${membership.id}`}
+            renderItem={(membership) => {
+              const config = LIBRARY_MEMBERSHIP_STATUS_CONFIG[membership.status as keyof typeof LIBRARY_MEMBERSHIP_STATUS_CONFIG]
+              return (
+                <Link href={`/library-subscriptions/${membership.id}`}>
+                  <div className="p-3 border rounded-lg mb-2 last:mb-0 hover:bg-muted/50 transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-sm">{membership.plan_name}</span>
+                      <StatusBadge
+                        status={config?.variant || "muted"}
+                        label={config?.label || membership.status}
+                        size="sm"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span>{formatDate(membership.start_date)} – {formatDate(membership.end_date)}</span>
+                      <span className="text-right font-medium text-foreground">
+                        <Currency amount={membership.final_amount} />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              )
+            }}
+            initialLimit={5}
+            viewAllMode="expand"
+            emptyIcon={CreditCard}
+            emptyText="No subscription history"
+          />
+        </FeatureGuard>
+
         {/* QR Code for Check-in */}
         <MemberQRCode
           memberId={member.id}

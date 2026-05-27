@@ -21,6 +21,7 @@ import { getNowISO } from "@/lib/date-helpers"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { logger } from "@/lib/logger"
 import { FeatureGuard } from "@/components/auth"
+import { parseTimeSlots } from "@/lib/time-slots"
 
 interface QRPayload {
   type: string
@@ -70,7 +71,7 @@ export default function QRScannerPage() {
       // Get member details with person data for live name
       const { data: member, error: memberError } = await supabase
         .from("library_members")
-        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id, person:people(id, name)")
+        .select("id, name, member_code, status, hours_balance, library_id, current_subscription_id, time_slot, person:people(id, name)")
         .eq("id", payload.member_id)
         .single()
 
@@ -161,6 +162,25 @@ export default function QRScannerPage() {
       const checkInTime = getNowISO()
       const attendanceDate = checkInTime.split("T")[0]
 
+      // Late-entry detection
+      let isLate = false
+      let scheduledSlot: string | null = null
+      const memberWithSlot = member as typeof member & { time_slot?: string | null }
+      if (memberWithSlot.time_slot) {
+        const slots = parseTimeSlots(memberWithSlot.time_slot)
+        if (slots.length > 0) {
+          const now = new Date()
+          const nowMinutes = now.getHours() * 60 + now.getMinutes()
+          const inAnySlot = slots.some((s) => {
+            const [sh, sm] = s.start.split(":").map(Number)
+            const [eh, em] = s.end.split(":").map(Number)
+            return nowMinutes >= sh * 60 + sm && nowMinutes <= eh * 60 + em
+          })
+          isLate = !inAnySlot
+          scheduledSlot = slots.map((s) => `${s.start}-${s.end}`).join(", ")
+        }
+      }
+
       const attendanceData = withCreatedBy(
         {
           owner_id: workspace.owner_user_id,
@@ -170,6 +190,8 @@ export default function QRScannerPage() {
           attendance_date: attendanceDate,
           check_in_time: checkInTime,
           notes: "QR scan check-in",
+          is_late: isLate,
+          scheduled_slot: scheduledSlot,
         },
         user.id
       )

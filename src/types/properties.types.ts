@@ -52,6 +52,9 @@ export interface Property {
   website_slug: string | null
   website_enabled: boolean
 
+  // Maintenance mode (migration 078)
+  is_under_maintenance?: boolean
+
   // Audit fields
   created_by?: string | null
   deleted_at?: string | null

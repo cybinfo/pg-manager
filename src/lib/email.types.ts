@@ -202,3 +202,32 @@ export interface MonthlyAttendanceSummaryData {
   hoursRemaining: number
   ownerPhone?: string
 }
+
+export interface LockerRenewalData {
+  to: string
+  memberName: string
+  libraryName: string
+  lockerNumber: string
+  expiryDate: string
+  daysUntilExpiry: number
+}
+
+export interface ComplaintEscalationData {
+  to: string
+  ownerName: string
+  complaintTitle: string
+  tenantName: string
+  daysOpen: number
+  priority: string
+  complaintUrl: string
+}
+
+export interface ConsumptionAlertData {
+  to: string
+  ownerName: string
+  roomNumber: string
+  chargeType: string
+  currentUnits: number
+  averageUnits: number
+  alertType: 'high' | 'low'
+}

@@ -26,6 +26,7 @@ import {
 import { showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
+import { useFeatures } from "@/lib/features/use-features"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { BILL_STATUS } from "@/lib/status"
 import { BillPaymentForm, BillBreakdown, BillInfoSidebar } from "./_components"
@@ -70,6 +71,9 @@ export default function BillDetailPage() {
     config: BILL_DETAIL_CONFIG,
     id: billId,
   })
+
+  const { isFeatureEnabled } = useFeatures()
+  const gstEnabled = isFeatureEnabled("billing", "gstInvoicing")
 
   const [paymentFormOpen, setPaymentFormOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -241,6 +245,7 @@ ManageKar`
           payments={payments}
           billId={billId}
           notes={bill.notes}
+          showGst={gstEnabled}
         />
 
         {/* Right Column - Info Sidebar */}

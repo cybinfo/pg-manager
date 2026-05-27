@@ -158,7 +158,7 @@ export function ReportIssueDialog({
     const typeLabel = APPROVAL_TYPE_LABELS[approvalType]
     const title = `${typeLabel} Request: ${fieldLabel}`
 
-    const { error } = await supabase.from("approvals").insert(
+    const { data: newApproval, error } = await supabase.from("approvals").insert(
       withCreatedBy({
         requester_tenant_id: tenantId,
         workspace_id: workspaceId,
@@ -170,7 +170,33 @@ export function ReportIssueDialog({
         status: "pending",
         document_ids: selectedDocIds.length > 0 ? selectedDocIds : null,
       }, user?.id || tenantId)
-    )
+    ).select("id").single()
+
+    if (!error && newApproval) {
+      // Auto-approval: check workspace config for enabled types
+      try {
+        const { data: wsData } = await supabase
+          .from("workspaces")
+          .select("module_config")
+          .eq("id", workspaceId)
+          .single()
+
+        if (wsData?.module_config) {
+          const config = wsData.module_config as Record<string, unknown>
+          const approvalsConfig = config.approvals as Record<string, unknown> | undefined
+          const autoTypes = (approvalsConfig?.auto_approval_types || []) as string[]
+
+          if (autoTypes.includes(approvalType)) {
+            await supabase
+              .from("approvals")
+              .update({ status: "approved", decided_at: new Date().toISOString() })
+              .eq("id", newApproval.id)
+          }
+        }
+      } catch (autoErr) {
+        logger.error("Auto-approval check failed:", { detail: autoErr })
+      }
+    }
 
     setLoading(false)
 

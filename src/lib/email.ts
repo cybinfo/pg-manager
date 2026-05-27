@@ -31,6 +31,9 @@ import type {
   RefundProcessedData,
   WaitlistSeatAvailableData,
   MonthlyAttendanceSummaryData,
+  LockerRenewalData,
+  ComplaintEscalationData,
+  ConsumptionAlertData,
 } from "./email.types"
 
 export type {
@@ -51,6 +54,9 @@ export type {
   RefundProcessedData,
   WaitlistSeatAvailableData,
   MonthlyAttendanceSummaryData,
+  LockerRenewalData,
+  ComplaintEscalationData,
+  ConsumptionAlertData,
 }
 
 const emailLogger = logger.child("email")
@@ -521,6 +527,78 @@ export async function sendCronFailureAlert(data: {
     if (sendError) return { success: false, error: sendError.message }
     return { success: true }
   } catch (err) {
+    return { success: false, error: String(err) }
+  }
+}
+
+export async function sendLockerRenewalReminder(
+  data: LockerRenewalData
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    const client = getResendClient()
+    const { data: result, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: data.to,
+      subject: emailSubjects.lockerRenewal(data),
+      html: emailBodyTemplates.lockerRenewal(data),
+    })
+
+    if (error) {
+      emailLogger.error("Failed to send locker renewal reminder", extractErrorMeta(error))
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, id: result?.id }
+  } catch (err) {
+    emailLogger.error("Error sending locker renewal reminder", extractErrorMeta(err))
+    return { success: false, error: String(err) }
+  }
+}
+
+export async function sendComplaintEscalationAlert(
+  data: ComplaintEscalationData
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    const client = getResendClient()
+    const { data: result, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: data.to,
+      subject: emailSubjects.complaintEscalation(data),
+      html: emailBodyTemplates.complaintEscalation(data),
+    })
+
+    if (error) {
+      emailLogger.error("Failed to send complaint escalation alert", extractErrorMeta(error))
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, id: result?.id }
+  } catch (err) {
+    emailLogger.error("Error sending complaint escalation alert", extractErrorMeta(err))
+    return { success: false, error: String(err) }
+  }
+}
+
+export async function sendConsumptionAlert(
+  data: ConsumptionAlertData
+): Promise<{ success: boolean; error?: string; id?: string }> {
+  try {
+    const client = getResendClient()
+    const { data: result, error } = await client.emails.send({
+      from: FROM_EMAIL,
+      to: data.to,
+      subject: emailSubjects.consumptionAlert(data),
+      html: emailBodyTemplates.consumptionAlert(data),
+    })
+
+    if (error) {
+      emailLogger.error("Failed to send consumption alert", extractErrorMeta(error))
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, id: result?.id }
+  } catch (err) {
+    emailLogger.error("Error sending consumption alert", extractErrorMeta(err))
     return { success: false, error: String(err) }
   }
 }

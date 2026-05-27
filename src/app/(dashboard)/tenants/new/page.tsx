@@ -13,7 +13,7 @@ import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   ArrowLeft, Users, Loader2, Building2, Home, RefreshCw,
-  Shield, ChevronRight, FileText
+  Shield, ChevronRight, FileText, Wrench
 } from "lucide-react"
 import { showSuccess, showError, toast } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
@@ -44,6 +44,7 @@ interface Room {
   total_beds: number
   occupied_beds: number
   property_id: string
+  is_under_maintenance?: boolean
 }
 
 export default function NewTenantPage() {
@@ -222,6 +223,18 @@ export default function NewTenantPage() {
         description: "Select an existing person or create a new one first",
       })
       return
+    }
+
+    // Block assignment to rooms under maintenance
+    if (isFeatureEnabled("properties", "maintenanceMode") && formData.room_id) {
+      const selectedRoom = availableRooms.find(r => r.id === formData.room_id)
+      if (selectedRoom?.is_under_maintenance) {
+        toast.error("Room Under Maintenance", {
+          description: "This room is currently under maintenance and cannot accept new tenants.",
+          duration: 8000,
+        })
+        return
+      }
     }
 
     // Validate required fields
@@ -701,6 +714,17 @@ export default function NewTenantPage() {
                   searchPlaceholder="Search rooms..."
                   disabled={loading || availableRooms.length === 0}
                 />
+                {isFeatureEnabled("properties", "maintenanceMode") && formData.room_id && (() => {
+                  const selectedRoom = availableRooms.find(r => r.id === formData.room_id)
+                  return selectedRoom?.is_under_maintenance ? (
+                    <div className="mt-2 flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                      <Wrench className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                      <p className="text-sm text-warning">
+                        This room is under maintenance and cannot accept new tenants.
+                      </p>
+                    </div>
+                  ) : null
+                })()}
               </div>
             </div>
 
