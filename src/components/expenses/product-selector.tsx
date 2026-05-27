@@ -204,13 +204,13 @@ export function ProductSelector({
   categories = [],
   compact = false,
 }: ProductSelectorProps) {
+  const supabase = createClient()
   const [localCategories, setLocalCategories] = useState<ProductCategory[]>(categories)
 
   // Load categories if not provided
   useEffect(() => {
     if (categories.length === 0 && workspaceId) {
       const loadCategories = async () => {
-        const supabase = createClient()
         const { data } = await supabase
           .from("product_categories")
           .select("*")

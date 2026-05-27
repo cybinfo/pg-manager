@@ -38,6 +38,7 @@ export function RecordMetadata({
   showDeleted = true,
   compact = false,
 }: RecordMetadataProps) {
+  const supabase = createClient()
   const [createdByUser, setCreatedByUser] = useState<UserInfo | null>(null)
   const [deletedByUser, setDeletedByUser] = useState<UserInfo | null>(null)
   const [loading, setLoading] = useState(false)
@@ -50,7 +51,6 @@ export function RecordMetadata({
 
       setLoading(true)
       try {
-        const supabase = createClient()
         const { data } = await supabase
           .from("user_profiles")
           .select("id, email, name")
@@ -218,6 +218,7 @@ export function RecordMetadataContent({
   }
   showDeleted?: boolean
 }) {
+  const supabase = createClient()
   const [createdByUser, setCreatedByUser] = useState<UserInfo | null>(null)
   const [deletedByUser, setDeletedByUser] = useState<UserInfo | null>(null)
   const [loading, setLoading] = useState(false)
@@ -230,7 +231,6 @@ export function RecordMetadataContent({
 
       setLoading(true)
       try {
-        const supabase = createClient()
         const { data } = await supabase
           .from("user_profiles")
           .select("id, email, name")

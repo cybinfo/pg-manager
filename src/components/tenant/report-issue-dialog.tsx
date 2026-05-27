@@ -83,6 +83,7 @@ export function ReportIssueDialog({
   ownerId,
   onSuccess,
 }: ReportIssueDialogProps) {
+  const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [requestedValue, setRequestedValue] = useState("")
   const [reason, setReason] = useState("")
@@ -96,7 +97,6 @@ export function ReportIssueDialog({
       if (!open || !tenantId) return
 
       setLoadingDocs(true)
-      const supabase = createClient()
 
       const { data } = await supabase
         .from("tenant_documents")
@@ -134,7 +134,6 @@ export function ReportIssueDialog({
     }
 
     setLoading(true)
-    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     // Build payload based on approval type

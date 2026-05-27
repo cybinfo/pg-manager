@@ -26,10 +26,10 @@ export default function MemberLayout({
 }: {
   children: React.ReactNode
 }) {
+  const supabase = createClient()
   const [member, setMember] = useState<MemberPortalInfo | null>(null)
 
   const handleAuthCheck = useCallback(async (userId: string): Promise<boolean> => {
-    const supabase = createClient()
 
     const { data: memberData, error } = await supabase
       .from("library_members")

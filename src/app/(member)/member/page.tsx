@@ -47,6 +47,7 @@ interface DashboardExtra {
 }
 
 export default function MemberHomePage() {
+  const supabase = createClient()
   const { member, loading: memberLoading } = useMemberPortalData()
   const [loading, setLoading] = useState(true)
   const [extra, setExtra] = useState<DashboardExtra>({
@@ -65,7 +66,6 @@ export default function MemberHomePage() {
     }
 
     const fetchDashboardData = async () => {
-      const supabase = createClient()
 
       // Fetch recent attendance
       const { data: attendance } = await supabase
