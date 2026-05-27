@@ -87,6 +87,11 @@ export interface SimpleNavItem {
   icon: LucideIcon
 }
 
+/** NavItem extended with an optional children array for collapsible sidebar groups. */
+export interface GroupedNavItem extends NavItem {
+  children?: GroupedNavItem[]
+}
+
 // ============================================================================
 // DASHBOARD NAVIGATION
 // ============================================================================
@@ -132,6 +137,99 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Library Payments", href: "/library-payments", icon: CreditCard, permission: "library_payments.view", module: "payments" },
   { name: "Library Reports", href: "/library-reports", icon: BarChart3, permission: "library.view", module: "reports" },
   { name: "Plans", href: "/library-plans", icon: Receipt, permission: "library.view", module: "plans" },
+]
+
+/**
+ * Grouped dashboard navigation for the sidebar.
+ * Parent items with children render as collapsible groups; leaf items render
+ * as direct links.  This is the single source of truth consumed by
+ * src/app/(dashboard)/layout.tsx — do not maintain a parallel copy there.
+ */
+export const DASHBOARD_NAVIGATION_GROUPED: GroupedNavItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: null, module: null },
+
+  // PG Management
+  {
+    name: "PG Management",
+    href: "/properties",
+    icon: Building2,
+    permission: "properties.view",
+    module: null,
+    children: [
+      { name: "Properties",     href: "/properties",    icon: Building2,  permission: "properties.view",         module: "properties" },
+      { name: "Rooms",          href: "/rooms",          icon: Home,       permission: "rooms.view",               module: "rooms" },
+      { name: "Tenants",        href: "/tenants",        icon: Users,      permission: "tenants.view",             module: "tenants" },
+      { name: "Bills",          href: "/bills",          icon: Receipt,    permission: "bills.view",               module: "billing" },
+      { name: "Payments",       href: "/payments",       icon: CreditCard, permission: "payments.view",            module: "payments" },
+      { name: "Refunds",        href: "/refunds",        icon: Wallet,     permission: "payments.view",            module: "refunds" },
+      { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus,  permission: "exit_clearance.initiate",  module: "exitClearance" },
+      { name: "Architecture",   href: "/architecture",   icon: Grid3X3,    permission: "properties.view",          module: "properties",  feature: "architectureView" },
+    ],
+  },
+
+  // Library Management
+  {
+    name: "Library",
+    href: "/library",
+    icon: Library,
+    permission: "library.view",
+    module: "members",
+    children: [
+      { name: "Libraries",     href: "/library",               icon: Library,     permission: "library.view",            module: "members" },
+      { name: "Sections",      href: "/library-sections",      icon: Grid3X3,     permission: "library_sections.view",   module: "sections" },
+      { name: "Seats",         href: "/library-seats",         icon: Armchair,    permission: "library_seats.view",      module: "seats" },
+      { name: "Members",       href: "/library-members",       icon: Users,       permission: "library_members.view",    module: "members" },
+      { name: "Waitlist",      href: "/library-waitlist",      icon: ListOrdered, permission: "library_waitlist.view",   module: "waitlist" },
+      { name: "Attendance",    href: "/library-attendance",    icon: Clock,       permission: "library_attendance.view", module: "attendance" },
+      { name: "Lockers",       href: "/library-lockers",       icon: Lock,        permission: "library_lockers.view",    module: "lockers" },
+      { name: "Subscriptions", href: "/library-subscriptions", icon: BookOpen,    permission: "library_members.view",    module: "subscriptions" },
+      { name: "Payments",      href: "/library-payments",      icon: CreditCard,  permission: "library_payments.view",   module: "payments" },
+      { name: "Plans",         href: "/library-plans",         icon: Receipt,     permission: "library.view",            module: "plans" },
+      { name: "Reports",       href: "/library-reports",       icon: BarChart3,   permission: "library.view",            module: "reports" },
+    ],
+  },
+
+  // Meters
+  {
+    name: "Meters",
+    href: "/meters",
+    icon: Gauge,
+    permission: "meters.view",
+    module: "meters",
+    children: [
+      { name: "All Meters", href: "/meters",         icon: Gauge, permission: "meters.view",         module: "meters" },
+      { name: "Readings",   href: "/meter-readings", icon: Gauge, permission: "meter_readings.view", module: "meters", feature: "meterReadings" },
+    ],
+  },
+
+  // Expenses
+  {
+    name: "Expenses",
+    href: "/expenses",
+    icon: TrendingDown,
+    permission: "expenses.view",
+    module: "expenses",
+    children: [
+      { name: "Overview",          href: "/expenses",                    icon: TrendingDown,   permission: "expenses.view", module: "expenses" },
+      { name: "Daily Spend",       href: "/expenses/daily-spend",        icon: ShoppingCart,   permission: "expenses.view", module: "expenses", feature: "dailySpend" },
+      { name: "Products",          href: "/expenses/products",           icon: Package,        permission: "expenses.view", module: "expenses" },
+      { name: "Vendors/Shops",     href: "/expenses/vendors",            icon: Store,          permission: "expenses.view", module: "expenses", feature: "vendorManagement" },
+      { name: "Bill Payments",     href: "/expenses/bills",              icon: Receipt,        permission: "expenses.view", module: "expenses", feature: "billPayments" },
+      { name: "Providers",         href: "/expenses/services/providers", icon: Wrench,         permission: "expenses.view", module: "expenses", feature: "serviceTracking" },
+      { name: "Services",          href: "/expenses/services",           icon: Hammer,         permission: "expenses.view", module: "expenses", feature: "serviceTracking" },
+      { name: "Misc Transactions", href: "/expenses/misc",               icon: ArrowLeftRight, permission: "expenses.view", module: "expenses", feature: "miscTransactions" },
+    ],
+  },
+
+  { name: "People",       href: "/people",     icon: Contact,        permission: "tenants.view",     module: "people" },
+  { name: "Visitors",     href: "/visitors",   icon: UserPlus,       permission: "visitors.view",    module: "visitors" },
+  { name: "Complaints",   href: "/complaints", icon: MessageSquare,  permission: "complaints.view",  module: "complaints" },
+  { name: "Notices",      href: "/notices",    icon: Bell,           permission: "notices.view",     module: "notices" },
+  { name: "Approvals",    href: "/approvals",  icon: ClipboardCheck, permission: "tenants.view",     module: "approvals" },
+  { name: "Reports",      href: "/reports",    icon: FileText,       permission: "reports.view",     module: "reports" },
+  { name: "Activity Log", href: "/activity",   icon: Activity,       permission: null,               module: "activityLog" },
+  { name: "Staff",        href: "/staff",      icon: UserCog,        permission: "staff.view",       module: "staff" },
+  { name: "Inquiries",    href: "/inquiries",  icon: Inbox,          permission: "tenants.view",     module: "inquiries" },
 ]
 
 /**
@@ -216,6 +314,43 @@ export function filterNavigation(
 
     return hasPermission(item.permission)
   })
+}
+
+/**
+ * Filter grouped (nested) navigation items based on permissions, module flags,
+ * and feature flags.  Parent items whose children are all filtered out are also
+ * removed.  Parent items whose own module is null are kept as long as at least
+ * one child passes.
+ */
+export function filterGroupedNavigation(
+  items: GroupedNavItem[],
+  options: FilterOptions
+): GroupedNavItem[] {
+  const { hasPermission, isModuleEnabled, isFeatureEnabled, isPlatformAdmin = false } = options
+
+  const passes = (item: GroupedNavItem): boolean => {
+    if (item.module !== null && !isModuleEnabled(item.module)) return false
+    if (item.module !== null && item.feature && isFeatureEnabled) {
+      if (!isFeatureEnabled(item.module, item.feature)) return false
+    }
+    if (isPlatformAdmin) return true
+    if (item.permission === null) return true
+    return hasPermission(item.permission)
+  }
+
+  return items.reduce<GroupedNavItem[]>((acc, item) => {
+    if (!item.children) {
+      if (passes(item)) acc.push(item)
+      return acc
+    }
+    // For parent groups: filter children first
+    const filteredChildren = filterGroupedNavigation(item.children, options)
+    if (filteredChildren.length === 0) return acc
+    // Parent itself must pass its own permission check (or have module: null)
+    if (!passes(item)) return acc
+    acc.push({ ...item, children: filteredChildren })
+    return acc
+  }, [])
 }
 
 // ============================================================================
