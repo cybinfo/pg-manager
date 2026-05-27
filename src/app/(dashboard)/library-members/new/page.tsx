@@ -24,16 +24,15 @@ import { ArrowLeft, Users, Loader2, CreditCard, UserCheck, Trash2, Plus } from "
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { getTodayISO, getNowISO, computeEndDate } from "@/lib/date-helpers"
-import { TimeSlot, formatTime12h, calcSlotHours, serializeTimeSlots } from "@/lib/time-slots"
+import { getTodayISO, computeEndDate } from "@/lib/date-helpers"
+import { TimeSlot, formatTime12h, calcSlotHours } from "@/lib/time-slots"
 import { formatDate, formatNumber} from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
-import { showError } from "@/lib/toast-helpers"
+import { showError, showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
-import { withCreatedBy } from "@/lib/audit"
 import { useFeatures } from "@/lib/features/use-features"
-import { logger } from "@/lib/logger"
 import { GENDER_OPTIONS, ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
+import { createLibraryMember } from "@/lib/workflows/library-member.workflow"
 import type { LibraryOption, LibraryPlanOption } from "@/types/library.types"
 
 export default function NewLibraryMemberPage() {
@@ -213,224 +212,49 @@ function NewLibraryMemberContent() {
 
     try {
       const supabase = createClient()
-
-      // Get library's owner_id
-      const { data: library } = await supabase
-        .from("libraries")
-        .select("owner_id, code, name")
-        .eq("id", formData.library_id)
-        .single()
-
-      if (!library) {
-        throw new Error("Library not found")
-      }
-
-      // Get workspace_id from user context
-      const { data: context } = await supabase
-        .from("user_contexts")
-        .select("workspace_id")
-        .eq("user_id", user.id)
-        .single()
-
-      const workspaceId = context?.workspace_id
-
-      // Generate member code — find highest existing number and increment
-      const libraryCode = library.code || library.name.slice(0, 3).toUpperCase()
-      const { data: existingMembers } = await supabase
-        .from("library_members")
-        .select("member_code")
-        .eq("library_id", formData.library_id)
-        .not("member_code", "is", null)
-        .order("member_code", { ascending: false })
-        .limit(100)
-
-      // Extract the highest numeric suffix from existing codes (e.g., "NGH-0497" → 497)
-      let maxNum = 0
-      for (const m of existingMembers || []) {
-        const match = m.member_code?.match(/(\d+)$/)
-        if (match) {
-          const num = parseInt(match[1], 10)
-          if (num > maxNum) maxNum = num
-        }
-      }
-      const nextNum = maxNum + 1
-      const memberCode = `${libraryCode}-${String(nextNum).padStart(4, "0")}`
-
-      // Calculate subscription dates
       const selectedPlan = plans.find((p) => p.id === formData.plan_id)
 
-      // Validate total slot hours don't exceed plan hours
-      const validSlots = formData.time_slots.filter((s: TimeSlot) => s.start && s.end)
-      if (validSlots.length > 0 && selectedPlan?.hours_included) {
-        const totalSlotHours = validSlots.reduce((sum: number, s: TimeSlot) => sum + calcSlotHours(s), 0)
-        if (totalSlotHours > selectedPlan.hours_included) {
-          showError(`Total slot hours (${totalSlotHours.toFixed(1)}h) exceeds plan limit (${selectedPlan.hours_included}h/day)`)
-          setSaving(false)
-          return
-        }
+      const result = await createLibraryMember(
+        supabase,
+        {
+          library_id: formData.library_id,
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          photo_url: formData.photo_url,
+          gender: formData.gender,
+          father_name: formData.father_name,
+          date_of_birth: formData.date_of_birth,
+          id_proof_type: formData.id_proof_type,
+          id_proof_number: formData.id_proof_number,
+          preferred_slot: formData.preferred_slot,
+          notes: formData.notes,
+          plan_id: formData.plan_id,
+          plan_name: selectedPlan?.name,
+          plan_hours_included: selectedPlan?.hours_included ?? null,
+          plan_base_price: selectedPlan?.base_price,
+          start_date: formData.start_date,
+          duration_months: formData.duration_months,
+          amount: formData.amount,
+          discount: formData.discount,
+          time_slots: formData.time_slots,
+          waitlist_id: waitlistId || undefined,
+          send_welcome_email: !!(formData.email && isFeatureEnabled("members", "welcomeEmail")),
+        },
+        user.id
+      )
+
+      if (!result.success) {
+        showError(result.error || "Failed to register member")
+        return
       }
 
-      const endDate = computeEndDate(formData.start_date, formData.duration_months)
+      showSuccess("Member registered successfully!")
 
-      const finalAmount = formData.amount - formData.discount
-
-      // Build time_slot string
-      const timeSlot = serializeTimeSlots(formData.time_slots)
-
-      // Auto-uppercase name
-      const memberName = formData.name.toUpperCase()
-
-      // Create person record first (central registry)
-      const personData = withCreatedBy({
-        owner_id: library.owner_id,
-        name: memberName,
-        phone: formData.phone || null,
-        email: formData.email || null,
-        photo_url: formData.photo_url || null,
-        gender: formData.gender || null,
-        date_of_birth: formData.date_of_birth || null,
-        tags: ["library_member"],
-      }, user.id)
-
-      const { data: person, error: personError } = await supabase
-        .from("people")
-        .insert(personData)
-        .select("id")
-        .single()
-
-      if (personError) {
-        logger.error("Error creating person:", { detail: personError })
-        // Continue without person_id — non-blocking
-      }
-
-      // Create member linked to person
-      const memberData = withCreatedBy({
-        owner_id: library.owner_id,
-        workspace_id: workspaceId,
-        library_id: formData.library_id,
-        person_id: person?.id || null,
-        name: memberName,
-        phone: formData.phone,
-        email: formData.email || null,
-        member_code: memberCode,
-        id_proof_type: formData.id_proof_type || null,
-        id_proof_number: formData.id_proof_number || null,
-        preferred_slot: formData.preferred_slot || null,
-        notes: formData.notes || null,
-        status: "active",
-        join_date: formData.start_date,
-        expiry_date: endDate,
-        hours_balance: selectedPlan?.hours_included || 0,
-        hours_used: 0,
-      }, user.id)
-
-      const { data: member, error: memberError } = await supabase
-        .from("library_members")
-        .insert(memberData)
-        .select()
-        .single()
-
-      if (memberError || !member) {
-        throw new Error(memberError?.message || "Failed to create member")
-      }
-
-      // Create membership record (no payment — that is done on the subscription detail page)
-      const membershipData = withCreatedBy({
-        owner_id: library.owner_id,
-        workspace_id: workspaceId,
-        member_id: member.id,
-        plan_id: formData.plan_id || null,
-        plan_name: selectedPlan?.name || "Custom",
-        hours_included: selectedPlan?.hours_included || null,
-        amount: formData.amount,
-        discount_amount: formData.discount,
-        final_amount: finalAmount,
-        time_slot: timeSlot,
-        start_date: formData.start_date,
-        end_date: endDate,
-        hours_remaining: selectedPlan?.hours_included || null,
-        hours_used: 0,
-        status: "active",
-        payment_id: null,
-      }, user.id)
-
-      const { data: membership, error: membershipError } = await supabase
-        .from("library_memberships")
-        .insert(membershipData)
-        .select()
-        .single()
-
-      if (membershipError) {
-        logger.error("Error creating membership:", { detail: membershipError })
-      }
-
-      // Update member with current subscription
-      if (membership) {
-        await supabase
-          .from("library_members")
-          .update({ current_subscription_id: membership.id })
-          .eq("id", member.id)
-      }
-
-      // Update person record with additional fields (gender, DOB, father/guardian)
-      if (member.person_id || formData.gender || formData.date_of_birth || formData.father_name) {
-        const personUpdates: Record<string, unknown> = {}
-        if (formData.gender) personUpdates.gender = formData.gender
-        if (formData.date_of_birth) personUpdates.date_of_birth = formData.date_of_birth
-        if (formData.father_name) {
-          personUpdates.emergency_contacts = [
-            { name: formData.father_name.toUpperCase(), phone: "", relation: "Father/Guardian" },
-          ]
-        }
-
-        if (Object.keys(personUpdates).length > 0 && member.person_id) {
-          await supabase
-            .from("people")
-            .update(personUpdates)
-            .eq("id", member.person_id)
-        }
-      }
-
-      // Send welcome email (non-blocking)
-      if (formData.email && isFeatureEnabled("members", "welcomeEmail")) {
-        import("@/lib/email").then(({ sendLibraryMemberWelcomeEmail }) => {
-          sendLibraryMemberWelcomeEmail({
-            to: formData.email,
-            memberName: memberName,
-            libraryName: library.name,
-            memberCode: memberCode,
-            planName: selectedPlan?.name,
-            hoursIncluded: selectedPlan?.hours_included || undefined,
-          }).catch((err: unknown) => {
-            logger.warn("Failed to send welcome email", { error: err instanceof Error ? err.message : String(err) })
-          })
-        }).catch((err: unknown) => {
-          logger.warn("Failed to load email module", { error: err instanceof Error ? err.message : String(err) })
-        })
-      }
-
-      // If converting from waitlist, update the waitlist entry
-      if (waitlistId) {
-        const { error: waitlistError } = await supabase
-          .from("library_waitlist")
-          .update({
-            status: "converted",
-            converted_member_id: member.id,
-            converted_at: getNowISO(),
-            updated_at: getNowISO(),
-          })
-          .eq("id", waitlistId)
-
-        if (waitlistError) {
-          logger.error("Error updating waitlist entry:", { detail: waitlistError })
-        }
-      }
-
-      // Redirect to the subscription detail page for payment recording
-      if (membership) {
-        router.push(`/library-subscriptions/${membership.id}`)
+      if (result.membershipId) {
+        router.push(`/library-subscriptions/${result.membershipId}`)
       } else {
-        router.push(`/library-members/${member.id}`)
+        router.push(`/library-members/${result.memberId}`)
       }
     } catch (error) {
       handleClientError(error, "Registering member")

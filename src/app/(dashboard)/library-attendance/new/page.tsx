@@ -22,10 +22,9 @@ import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { ArrowLeft, Clock, Loader2, Users, AlertCircle, Armchair } from "lucide-react"
 import { PageLoading } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { getNowISO } from "@/lib/date-helpers"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
-import { parseTimeSlots } from "@/lib/time-slots"
+import { checkInLibraryMember } from "@/lib/services/library-attendance"
 
 interface MemberOption {
   id: string
@@ -107,105 +106,31 @@ function NewLibraryAttendanceContent() {
         throw new Error("Member not found")
       }
 
-      // Get owner_id from workspace
-      const { data: workspace } = await supabase
-        .from("workspaces")
-        .select("owner_user_id")
-        .eq("id", workspaceId)
-        .single()
-
-      if (!workspace) {
-        throw new Error("Workspace not found")
-      }
-
-      // Check if member already has an active check-in (no check-out)
-      const { data: activeCheckIn } = await supabase
-        .from("library_attendance")
-        .select("id")
-        .eq("member_id", data.member_id)
-        .is("check_out_time", null)
-        .is("deleted_at", null)
-        .single()
-
-      if (activeCheckIn) {
-        throw new Error("Member already has an active check-in. Please check out first.")
-      }
-
-      const { withCreatedBy } = await import("@/lib/audit")
-
-      // Create attendance record
-      const checkInTime = new Date(data.check_in_time as string).toISOString()
-      const attendanceDate = (data.check_in_time as string).split("T")[0]
-
-      // Late-entry detection — check if check-in time falls outside any assigned slot
-      let isLate = false
-      let scheduledSlot: string | null = null
-      if (selectedMember.time_slot) {
-        const slots = parseTimeSlots(selectedMember.time_slot)
-        if (slots.length > 0) {
-          const checkInDate = new Date(checkInTime)
-          const checkInMinutes = checkInDate.getHours() * 60 + checkInDate.getMinutes()
-          const inAnySlot = slots.some((s) => {
-            const [sh, sm] = s.start.split(":").map(Number)
-            const [eh, em] = s.end.split(":").map(Number)
-            const slotStart = sh * 60 + sm
-            const slotEnd = eh * 60 + em
-            return checkInMinutes >= slotStart && checkInMinutes <= slotEnd
-          })
-          isLate = !inAnySlot
-          scheduledSlot = slots.map((s) => `${s.start}-${s.end}`).join(", ")
-        }
-      }
-
-      const attendanceData = withCreatedBy(
+      const result = await checkInLibraryMember(
+        supabase,
         {
-          owner_id: workspace.owner_user_id,
-          workspace_id: workspaceId,
-          member_id: data.member_id,
-          membership_id: selectedMember.current_subscription_id,
-          attendance_date: attendanceDate,
-          check_in_time: checkInTime,
-          seat_id: data.seat_id || null,
-          notes: data.notes || null,
-          is_late: isLate,
-          scheduled_slot: scheduledSlot,
+          memberId: data.member_id as string,
+          libraryId: data.library_id as string,
+          workspaceId,
+          seatId: (data.seat_id as string) || null,
+          checkInTime: data.check_in_time as string,
+          notes: (data.notes as string) || null,
+          membershipId: selectedMember.current_subscription_id,
+          memberTimeSlot: selectedMember.time_slot ?? null,
         },
         userId
       )
 
-      const { data: newAttendance, error } = await supabase
-        .from("library_attendance")
-        .insert(attendanceData)
-        .select()
-        .single()
-
-      if (error) {
-        throw new Error(error.message)
+      if (!result.success) {
+        throw new Error(result.error || "Check-in failed")
       }
 
-      // If seat was assigned, update seat status to occupied
-      if (data.seat_id) {
-        const { error: seatError } = await supabase
-          .from("library_seats")
-          .update({
-            status: "occupied",
-            current_member_id: data.member_id,
-            updated_at: getNowISO(),
-          })
-          .eq("id", data.seat_id)
-
-        if (seatError) {
-          logger.error("Error updating seat status:", { detail: seatError })
-          // Don't fail the check-in, just log the error
-        }
-      }
-
-      const selectedSeat = seats.find(s => s.id === data.seat_id)
+      const selectedSeat = seats.find((s) => s.id === data.seat_id)
       const seatInfo = selectedSeat ? ` at seat ${selectedSeat.seat_number}` : ""
       const { showSuccess } = await import("@/lib/toast-helpers")
       showSuccess(`${getMemberDisplayName(selectedMember)} checked in${seatInfo} successfully!`)
 
-      return `/library-attendance/${newAttendance.id}`
+      return `/library-attendance/${result.attendanceId}`
     },
   })
 

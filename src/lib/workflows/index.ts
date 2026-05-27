@@ -69,3 +69,10 @@ export type {
   CreateApprovalInput,
   CreateApprovalOutput,
 } from "./approval.workflow"
+
+// Library Member Workflows
+export { createLibraryMember } from "./library-member.workflow"
+export type {
+  CreateLibraryMemberInput,
+  CreateLibraryMemberResult,
+} from "./library-member.workflow"
