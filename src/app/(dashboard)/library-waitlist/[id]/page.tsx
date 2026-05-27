@@ -220,6 +220,10 @@ export default function WaitlistDetailPage({
         }
         backHref={backHref}
         backLabel={backLabel}
+        breadcrumbs={[
+          { label: "Library Waitlist", href: "/library-waitlist" },
+          { label: entry.name || "Waitlist Entry" },
+        ]}
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className={`p-3 rounded-xl ${

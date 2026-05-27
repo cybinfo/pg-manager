@@ -17,7 +17,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { useAuth, useCurrentContext } from "./auth-context"
+import { useAuth, useCurrentContext } from "./hooks"
 
 // ============================================================================
 // TYPES

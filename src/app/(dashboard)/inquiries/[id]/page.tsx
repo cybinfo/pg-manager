@@ -169,6 +169,10 @@ export default function InquiryDetailPage() {
         subtitle={`Inquiry from ${sourceLabels[inquiry.source]}`}
         backHref={backHref}
         backLabel={backLabel}
+        breadcrumbs={[
+          { label: "Inquiries", href: "/inquiries" },
+          { label: inquiry.name || "Inquiry Detail" },
+        ]}
         avatar={
           <div className="p-3 bg-primary/10 rounded-lg">
             <Inbox className="h-8 w-8 text-primary" />

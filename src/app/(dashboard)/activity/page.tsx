@@ -38,6 +38,7 @@ import { brandGradient } from "@/lib/design-tokens"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateTimeExportColumn } from "@/lib/export-columns"
 import { useFeatures } from "@/lib/features/use-features"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 
 // ============================================
 // Types
@@ -255,6 +256,48 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
 ]
 
 // ============================================
+// Advanced Filter Columns
+// ============================================
+
+const advancedFilterColumns: FilterableColumn[] = [
+  {
+    key: "occurred_at",
+    header: "Date",
+    filterType: "date",
+    filterOperators: ["eq", "gt", "lt", "gte", "lte", "between"],
+  },
+  {
+    key: "actor_name",
+    header: "User",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "neq", "starts"],
+  },
+  {
+    key: "actor_email",
+    header: "Email",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "starts"],
+  },
+  {
+    key: "action",
+    header: "Action",
+    filterType: "select",
+    filterOperators: ["eq", "neq", "in", "not_in"],
+    filterOptions: [
+      { value: "create", label: "Created" },
+      { value: "update", label: "Updated" },
+      { value: "delete", label: "Deleted" },
+    ],
+  },
+  {
+    key: "entity_type",
+    header: "Entity Type",
+    filterType: "text",
+    filterOperators: ["contains", "eq", "neq"],
+  },
+]
+
+// ============================================
 // Page Component
 // ============================================
 
@@ -277,6 +320,9 @@ export default function ActivityLogPage() {
       exportFilename="activity-log"
       emptyTitle="No activity yet"
       emptyDescription="Activity will appear here as changes are made"
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableColumnManager={true}
     />
   )
 }

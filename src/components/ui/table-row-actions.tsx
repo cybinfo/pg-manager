@@ -19,7 +19,7 @@
 import * as React from "react"
 import { Pencil, Trash2, MoreHorizontal, Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/lib/auth/auth-context"
+import { useAuth } from "@/lib/auth/hooks"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import {
   DropdownMenu,

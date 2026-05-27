@@ -20,7 +20,7 @@ import type {
   LibraryLowHoursData,
   LibraryExpiringMembershipData,
   LibraryExpiredMembershipData,
-} from "./email"
+} from "./email.types"
 
 // Delegate to centralized templates, preserving the original function signatures
 

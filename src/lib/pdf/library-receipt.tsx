@@ -6,6 +6,7 @@ import {
   View,
   StyleSheet,
 } from "@react-pdf/renderer"
+import { formatCurrency, formatDate } from "@/lib/format"
 
 // Create styles
 const styles = StyleSheet.create({
@@ -210,22 +211,6 @@ export interface LibraryReceiptData {
 }
 
 export function LibraryReceiptPDF({ data }: { data: LibraryReceiptData }) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    })
-  }
-
   const getPaymentTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       subscription: "Subscription",

@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback, useMemo, useRef, ReactNode } from 'react'
+import { createContext, useEffect, useLayoutEffect, useState, useCallback, useMemo, useRef, ReactNode } from 'react'
 import { User, SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -80,7 +80,7 @@ interface AuthState {
   logout: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthState | undefined>(undefined)
+export const AuthContext = createContext<AuthState | undefined>(undefined)
 
 // ============================================
 // Auth Provider Component
@@ -599,48 +599,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
   )
 }
 
-// ============================================
-// Hooks
-// ============================================
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
-
-export function usePermission(permission: Permission | string): boolean {
-  const { hasPermission } = useAuth()
-  return hasPermission(permission)
-}
-
-export function usePermissions(permissions: (Permission | string)[]): {
-  hasAny: boolean
-  hasAll: boolean
-  check: (p: Permission | string) => boolean
-} {
-  const { hasPermission, hasAnyPermission, hasAllPermissions } = useAuth()
-  return {
-    hasAny: hasAnyPermission(permissions),
-    hasAll: hasAllPermissions(permissions),
-    check: hasPermission,
-  }
-}
-
-export function useCurrentContext() {
-  const { currentContext, contexts, switchContext, hasMultipleContexts, isPlatformAdmin } = useAuth()
-  return {
-    context: currentContext,
-    contexts,
-    switchContext,
-    hasMultipleContexts,
-    isPlatformAdmin,
-    isOwner: currentContext?.context_type === 'owner',
-    isStaff: currentContext?.context_type === 'staff',
-    isTenant: currentContext?.context_type === 'tenant',
-    workspaceName: currentContext?.workspace_name || '',
-    roleName: currentContext?.role_name || currentContext?.context_type || '',
-  }
-}
+// Hooks live in ./hooks — exported from @/lib/auth via index.ts

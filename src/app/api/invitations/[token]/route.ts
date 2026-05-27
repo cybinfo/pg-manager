@@ -1,10 +1,13 @@
 import { apiSuccess, notFound } from "@/lib/api-response"
-import { getAdminSupabaseClient } from "@/lib/api-middleware"
+import { getAdminSupabaseClient, checkApiRateLimit } from "@/lib/api-middleware"
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  const rl = await checkApiRateLimit(request)
+  if (!rl.success) return rl.response!
+
   const { token } = await params
   const supabase = getAdminSupabaseClient()
 

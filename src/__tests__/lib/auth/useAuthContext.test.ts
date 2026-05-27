@@ -6,13 +6,13 @@
  */
 
 // Mocks must be declared before imports
-jest.mock("@/lib/auth/auth-context", () => ({
+jest.mock("@/lib/auth/hooks", () => ({
   useAuth: jest.fn(),
   useCurrentContext: jest.fn(),
 }))
 
 import { renderHook } from "@testing-library/react"
-import { useAuth, useCurrentContext } from "@/lib/auth/auth-context"
+import { useAuth, useCurrentContext } from "@/lib/auth/hooks"
 import {
   useAuthContext,
   useHasAllPermissions,
@@ -58,10 +58,15 @@ function makeContextReturn(
 ): ReturnType<typeof useCurrentContext> {
   return {
     context: null,
+    contexts: [],
+    switchContext: jest.fn().mockResolvedValue(true),
+    hasMultipleContexts: false,
+    isPlatformAdmin: false,
     isOwner: false,
     isStaff: false,
     isTenant: false,
     workspaceName: "",
+    roleName: "",
     ...overrides,
   }
 }

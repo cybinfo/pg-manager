@@ -107,6 +107,10 @@ export default function LibraryDetailPage() {
         }
         backHref={backHref}
         backLabel={backLabel}
+        breadcrumbs={[
+          { label: "Libraries", href: "/library" },
+          { label: library.name || "Library Detail" },
+        ]}
         status={library.is_active ? "active" : "inactive"}
         avatar={
           <div className="p-3 bg-primary/10 rounded-lg">

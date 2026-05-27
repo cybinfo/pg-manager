@@ -437,6 +437,10 @@ export default function PersonDetailPage() {
           }
           backHref={backHref}
           backLabel={backLabel}
+          breadcrumbs={[
+            { label: "People", href: "/people" },
+            { label: person.name || "Person Detail" },
+          ]}
           status={getStatus()}
           statusLabel={getStatusLabel()}
           avatar={<Avatar name={person.name} src={person.photo_url} size="xl" clickable />}

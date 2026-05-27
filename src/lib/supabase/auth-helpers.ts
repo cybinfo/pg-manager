@@ -16,26 +16,10 @@
  */
 
 import { logger } from "@/lib/logger"
-import { createClient as createBrowserClient } from "@supabase/supabase-js"
 import { createClient } from "./client"
+import { getAdminSupabaseClient } from "@/lib/api-middleware"
 import { unauthorized, internalError } from "@/lib/api-response"
 import type { User, SupabaseClient } from "@supabase/supabase-js"
-
-/**
- * Create admin client with service role key
- * Only use server-side for privileged operations
- */
-function createAdminClient(): SupabaseClient | null {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    logger.error("Missing Supabase admin credentials")
-    return null
-  }
-
-  return createBrowserClient(supabaseUrl, serviceRoleKey)
-}
 
 // ============================================================================
 // TYPES
@@ -174,9 +158,11 @@ export async function requireAdminClient(): Promise<RequireUserWithClientResult>
   }
 
   // Create admin client for privileged operations
-  const supabaseAdmin = createAdminClient()
-
-  if (!supabaseAdmin) {
+  let supabaseAdmin: SupabaseClient
+  try {
+    supabaseAdmin = getAdminSupabaseClient()
+  } catch {
+    logger.error("Missing Supabase admin credentials")
     return {
       user: null,
       supabase: null,

@@ -53,6 +53,7 @@ import {
   QrCode,
   BookOpen,
   RefreshCw,
+  ArrowLeftRight,
   type LucideIcon,
 } from "lucide-react"
 import type { ModuleKey } from "@/lib/features"
@@ -106,6 +107,7 @@ export const DASHBOARD_NAVIGATION: NavItem[] = [
   { name: "Bill Payments", href: "/expenses/bills", icon: Receipt, permission: "expenses.view", module: "expenses", feature: "billPayments" },
   { name: "Service Providers", href: "/expenses/services/providers", icon: Wrench, permission: "expenses.view", module: "expenses", feature: "serviceTracking" },
   { name: "Services", href: "/expenses/services", icon: Hammer, permission: "expenses.view", module: "expenses", feature: "serviceTracking" },
+  { name: "Misc Transactions", href: "/expenses/misc", icon: ArrowLeftRight, permission: "expenses.view", module: "expenses", feature: "miscTransactions" },
   { name: "Meter Readings", href: "/meter-readings", icon: TrendingUp, permission: "meter_readings.view", module: "meters", feature: "meterReadings" },
   { name: "Meters", href: "/meters", icon: Gauge, permission: "meters.view", module: "meters" },
   { name: "Exit Clearance", href: "/exit-clearance", icon: UserMinus, permission: "exit_clearance.initiate", module: "exitClearance" },
@@ -293,7 +295,8 @@ export const ROUTE_CONFIGS: Record<string, RouteConfig> = {
   "/bills":       { path: "/bills",       permission: "bills.view",              module: "billing",      title: "Bills",            icon: Receipt },
   "/payments":    { path: "/payments",    permission: "payments.view",           module: "payments",     title: "Payments",         icon: CreditCard },
   "/refunds":     { path: "/refunds",     permission: "payments.view",           module: "refunds",      title: "Refunds",          icon: Wallet },
-  "/expenses":    { path: "/expenses",    permission: "expenses.view",           module: "expenses",     title: "Expenses",         icon: TrendingDown },
+  "/expenses":         { path: "/expenses",         permission: "expenses.view", module: "expenses", title: "Expenses",          icon: TrendingDown },
+  "/expenses/misc":    { path: "/expenses/misc",    permission: "expenses.view", module: "expenses", title: "Misc Transactions", icon: ArrowLeftRight },
   "/meter-readings": { path: "/meter-readings", permission: "meter_readings.view", module: "meters",   title: "Meter Readings",   icon: TrendingUp },
   "/meters":      { path: "/meters",      permission: "meters.view",             module: "meters",       title: "Meters",           icon: Gauge },
   "/exit-clearance": { path: "/exit-clearance", permission: "exit_clearance.initiate", module: "exitClearance", title: "Exit Clearance", icon: UserMinus },

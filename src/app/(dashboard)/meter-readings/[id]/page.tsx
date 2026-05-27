@@ -294,6 +294,10 @@ export default function MeterReadingDetailPage() {
         }
         backHref={backHref}
         backLabel={backLabel}
+        breadcrumbs={[
+          { label: "Meter Readings", href: "/meter-readings" },
+          { label: `${config.label} Reading` },
+        ]}
         avatar={
           <div className={`p-3 rounded-lg ${config.bgColor}`}>
             <Icon className={`h-8 w-8 ${config.color}`} />

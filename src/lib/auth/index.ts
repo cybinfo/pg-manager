@@ -5,14 +5,16 @@
 // Types
 export * from './types'
 
-// Context and Hooks
+// Context
+export { AuthProvider } from './auth-context'
+
+// Hooks
 export {
-  AuthProvider,
   useAuth,
   usePermission,
   usePermissions,
   useCurrentContext,
-} from './auth-context'
+} from './hooks'
 
 // Session Management (Centralized)
 export {

@@ -205,6 +205,10 @@ export default function LibraryAttendanceDetailPage() {
         }
         backHref={backHref}
         backLabel={backLabel}
+        breadcrumbs={[
+          { label: "Library Attendance", href: "/library-attendance" },
+          { label: displayName },
+        ]}
         status={isActive ? "success" : "muted"}
         avatar={
           <Avatar name={displayName} src={photoUrl} size="xl" />

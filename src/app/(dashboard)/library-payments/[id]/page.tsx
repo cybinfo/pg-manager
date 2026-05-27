@@ -126,6 +126,10 @@ export default function LibraryPaymentDetailPage() {
         }
         backHref={backHref}
         backLabel={backLabel}
+        breadcrumbs={[
+          { label: "Library Payments", href: "/library-payments" },
+          { label: payment.receipt_number || "Payment Detail" },
+        ]}
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className="p-3 bg-success/10 rounded-xl">

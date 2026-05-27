@@ -5,6 +5,9 @@
  * Centralized from src/app/(dashboard)/settings/page.tsx
  */
 
+import type { RoomType } from "./rooms.types"
+export type { RoomType }
+
 // ============================================================================
 // OWNER PROFILE
 // ============================================================================
@@ -105,7 +108,6 @@ export interface ConfigurableRoomType {
 }
 
 export type PropertyType = 'pg' | 'hostel' | 'coliving'
-export type RoomType = 'single' | 'double' | 'triple' | 'dormitory'
 
 // ============================================================================
 // BILLING CONFIGURATION
