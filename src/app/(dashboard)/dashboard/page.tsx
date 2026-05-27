@@ -46,7 +46,7 @@ import {
 } from "lucide-react"
 import { ModuleGuard } from "@/components/auth/module-guard"
 import { InfoBanner } from "@/components/ui/info-banner"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, calculateOccupancyRate } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
 
 interface DashboardStats {
@@ -309,7 +309,7 @@ export default function DashboardPage() {
     fetchDashboardData()
   }, [])
 
-  const occupancyRate = stats.totalBeds > 0 ? Math.round((stats.occupiedBeds / stats.totalBeds) * 100) : 0
+  const occupancyRate = calculateOccupancyRate(stats.occupiedBeds, stats.totalBeds)
 
   // Check if user has permission (owners always have access)
   const canView = (permission: string) => isOwner || hasPermission(permission)

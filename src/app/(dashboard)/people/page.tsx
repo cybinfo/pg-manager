@@ -28,7 +28,7 @@ import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
 import { dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PEOPLE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
-import { createTotalMetric, MetricConfig } from "@/lib/metric-factories"
+import { createTotalMetric, createCountMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter } from "@/lib/filter-presets"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -318,43 +318,20 @@ const advancedFilterColumns: FilterableColumn[] = [
 
 const metrics: MetricConfig<Record<string, unknown>>[] = [
   createTotalMetric({ icon: Users }),
-  {
-    // Custom: tags array contains filter
-    id: "tenants",
-    label: "Tenants",
-    icon: Home,
-    compute: (items) => items.filter((p) => (p.tags as string[] | null)?.includes("tenant")).length,
-    serverFilter: { column: "tags", operator: "contains", value: ["tenant"] },
-  },
-  {
-    id: "staff",
-    label: "Staff",
-    icon: Briefcase,
-    compute: (items) => items.filter((p) => (p.tags as string[] | null)?.includes("staff")).length,
-    serverFilter: { column: "tags", operator: "contains", value: ["staff"] },
-  },
-  {
-    id: "visitors",
-    label: "Visitors",
-    icon: UserCircle,
-    compute: (items) => items.filter((p) => (p.tags as string[] | null)?.includes("visitor")).length,
-    serverFilter: { column: "tags", operator: "contains", value: ["visitor"] },
-  },
-  {
-    id: "verified",
-    label: "Verified",
-    icon: BadgeCheck,
-    compute: (items) => items.filter((p) => Boolean(p.is_verified)).length,
-    serverFilter: { column: "is_verified", operator: "eq", value: true },
-  },
-  {
-    id: "blocked",
-    label: "Blocked",
-    icon: Ban,
-    compute: (items) => items.filter((p) => Boolean(p.is_blocked)).length,
-    highlight: (value) => (value as number) > 0,
-    serverFilter: { column: "is_blocked", operator: "eq", value: true },
-  },
+  createCountMetric("tenants", "Tenants", Home,
+    (p) => (p.tags as string[] | null)?.includes("tenant") ?? false,
+    { serverFilter: { column: "tags", operator: "contains", value: ["tenant"] } }
+  ),
+  createCountMetric("staff", "Staff", Briefcase,
+    (p) => (p.tags as string[] | null)?.includes("staff") ?? false,
+    { serverFilter: { column: "tags", operator: "contains", value: ["staff"] } }
+  ),
+  createCountMetric("visitors", "Visitors", UserCircle,
+    (p) => (p.tags as string[] | null)?.includes("visitor") ?? false,
+    { serverFilter: { column: "tags", operator: "contains", value: ["visitor"] } }
+  ),
+  createBooleanMetric("is_verified", true, "Verified", BadgeCheck),
+  createBooleanMetric("is_blocked", true, "Blocked", Ban, { highlight: true }),
 ]
 
 // ============================================

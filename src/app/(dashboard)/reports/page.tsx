@@ -49,6 +49,7 @@ import {
 import { StatCard } from "@/components/ui/stat-card"
 import { SummaryCard } from "@/components/ui/quick-stats-grid"
 import { logger } from "@/lib/logger"
+import { formatCurrencyTick } from "@/lib/format"
 
 interface Property {
   id: string
@@ -541,12 +542,7 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={reportData.expensesByCategory} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(value: number) => {
-                  if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
-                  if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
-                  if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
-                  return `\u20B9${value}`
-                }} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={formatCurrencyTick} />
                 <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                 <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                 <Bar dataKey="value" fill="hsl(var(--chart-5))" radius={[0, 4, 4, 0]}>
@@ -625,12 +621,7 @@ export default function ReportsPage() {
             <BarChart data={reportData.propertyStats} margin={{ bottom: 30 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} angle={-30} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={(value: number) => {
-                if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
-                if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
-                if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
-                return `\u20B9${value}`
-              }} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatCurrencyTick} />
               <Tooltip formatter={(value) => formatCurrency(Number(value))} />
               <Legend />
               <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />

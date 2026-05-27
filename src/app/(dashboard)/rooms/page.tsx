@@ -13,6 +13,7 @@ import { statusColumn, currencyColumn, dateColumn, badgeColumn, booleanColumn } 
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { ROOM_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
+import { ROOM_STATUS } from "@/lib/status"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, ROOM_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { ROOM_STATUS_OPTIONS } from "@/lib/filters/common-filters"
@@ -53,26 +54,6 @@ interface Room {
   bathroom_label?: string
   beds_label?: string
   floor_label?: string
-}
-
-// ============================================
-// Status Helper
-// ============================================
-
-const getStatusInfo = (status: string): { status: "success" | "warning" | "error" | "muted"; label: string } => {
-  switch (status) {
-    case "available":
-      return { status: "success", label: "Available" }
-    case "occupied":
-      return { status: "error", label: "Occupied" }
-    case "partially_occupied":
-    case "partial":
-      return { status: "warning", label: "Partial" }
-    case "maintenance":
-      return { status: "muted", label: "Maintenance" }
-    default:
-      return { status: "muted", label: status }
-  }
 }
 
 // ============================================
@@ -125,7 +106,7 @@ const columns: Column<Room>[] = [
     editType: "number",
     editValidation: { min: 0 },
   }),
-  statusColumn(getStatusInfo, {
+  statusColumn(ROOM_STATUS, {
     editable: true,
     editType: "select",
     editOptions: ROOM_STATUS_OPTIONS,

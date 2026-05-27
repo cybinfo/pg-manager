@@ -14,7 +14,7 @@ import { baseCronHandler } from "@/lib/cron-handler"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
-import { getNowISO } from "@/lib/date-helpers"
+import { getNowISO, formatDateIndian } from "@/lib/date-helpers"
 import { isFeatureEnabled } from "@/lib/features/checks"
 import type { WorkspaceModuleConfig } from "@/lib/features"
 import {
@@ -497,7 +497,7 @@ export const GET = (request: Request) =>
               memberName,
               libraryName: library.name,
               lockerNumber: String(locker.locker_number),
-              expiryDate: expiryDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
+              expiryDate: formatDateIndian(expiryDate),
               daysUntilExpiry: daysUntil,
             })
 

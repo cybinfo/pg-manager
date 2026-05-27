@@ -14,6 +14,7 @@ import { PropertyGrid, RoomGrid, BedView } from "./_components"
 import type { ArchProperty } from "./_components"
 import type { ArchRoom } from "./_components"
 import { logger } from "@/lib/logger"
+import { calculateOccupancyRate } from "@/lib/format"
 
 interface Tenant {
   id: string
@@ -135,7 +136,7 @@ export default function ArchitecturePage() {
   const totalBeds = properties.reduce((sum, p) => sum + p.total_beds, 0)
   const occupiedBeds = properties.reduce((sum, p) => sum + p.occupied_beds, 0)
   const availableBeds = totalBeds - occupiedBeds
-  const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
+  const occupancyRate = calculateOccupancyRate(occupiedBeds, totalBeds)
 
   const metrics: MetricItem[] = [
     { label: "Properties", value: properties.length, icon: Building2 },

@@ -55,6 +55,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getTodayISO } from "@/lib/date-helpers"
 import { cn } from "@/lib/utils"
 import { logger } from "@/lib/logger"
+import { formatCurrencyTick } from "@/lib/format"
+import { getWeekNumber, formatPeriodLabel, getPeriodKey, type GroupByPeriod } from "@/lib/report-utils"
 
 
 interface LibraryOption {
@@ -107,8 +109,6 @@ interface LibraryReportData {
 // Payment Report Types
 // ============================================================================
 
-type GroupByPeriod = "day" | "week" | "month" | "year"
-
 interface PaymentReportData {
   totalCollections: number
   paymentCount: number
@@ -130,51 +130,6 @@ interface PaymentReportData {
     paymentCount: number
     avgAmount: number
   }[]
-}
-
-// ============================================================================
-// Payment Report Helper Functions
-// ============================================================================
-
-function getWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-}
-
-function formatPeriodLabel(date: Date, groupBy: GroupByPeriod): string {
-  switch (groupBy) {
-    case "day":
-      return `${date.getDate()} ${MONTH_NAMES[date.getMonth()]}`
-    case "week":
-      return `W${getWeekNumber(date)} ${MONTH_NAMES[date.getMonth()]}`
-    case "month":
-      return `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`
-    case "year":
-      return `${date.getFullYear()}`
-  }
-}
-
-function getPeriodKey(date: Date, groupBy: GroupByPeriod): string {
-  switch (groupBy) {
-    case "day":
-      return date.toISOString().split("T")[0]
-    case "week":
-      return `${date.getFullYear()}-W${getWeekNumber(date)}`
-    case "month":
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
-    case "year":
-      return `${date.getFullYear()}`
-  }
-}
-
-function formatTickValue(value: number): string {
-  if (value >= 10000000) return `\u20B9${(value / 10000000).toFixed(1)}Cr`
-  if (value >= 100000) return `\u20B9${(value / 100000).toFixed(1)}L`
-  if (value >= 1000) return `\u20B9${(value / 1000).toFixed(0)}k`
-  return `\u20B9${value}`
 }
 
 // ============================================================================
@@ -938,7 +893,7 @@ export default function LibraryReportsPage() {
                           yAxisId="left"
                           tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                           width={55}
-                          tickFormatter={formatTickValue}
+                          tickFormatter={formatCurrencyTick}
                         />
                         <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                         <Tooltip
@@ -1074,7 +1029,7 @@ export default function LibraryReportsPage() {
                       <BarChart data={reportData.libraryStats} margin={{ bottom: 30 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} angle={-30} textAnchor="end" />
-                        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatTickValue} />
+                        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatCurrencyTick} />
                         <Tooltip formatter={(value, name) => [
                           name === "revenue" ? formatCurrency(Number(value)) : value,
                           name === "revenue" ? "Revenue" : name === "activeMembers" ? "Active Members" : "Check-ins"
@@ -1264,7 +1219,7 @@ export default function LibraryReportsPage() {
                           <BarChart data={paymentReportData.revenueByPeriod}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                             <XAxis dataKey="period" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                            <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatTickValue} />
+                            <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatCurrencyTick} />
                             <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                             <Legend />
                             <Bar dataKey="subscriptionAmount" name="Subscription" fill="hsl(var(--chart-3))" stackId="revenue" radius={[0, 0, 0, 0]} />

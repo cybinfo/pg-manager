@@ -15,7 +15,7 @@ import {
   ArrowLeft, Users, Loader2, Building2, Home, RefreshCw,
   Shield, ChevronRight, FileText, Wrench
 } from "lucide-react"
-import { showSuccess, showError, toast } from "@/lib/toast-helpers"
+import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -219,9 +219,7 @@ export default function NewTenantPage() {
 
     // Person selection is required - get data from selected person
     if (!selectedPerson) {
-      toast.error("Please select a person", {
-        description: "Select an existing person or create a new one first",
-      })
+      showError("Please select a person", "Select an existing person or create a new one first")
       return
     }
 
@@ -229,24 +227,18 @@ export default function NewTenantPage() {
     if (isFeatureEnabled("properties", "maintenanceMode") && formData.room_id) {
       const selectedRoom = availableRooms.find(r => r.id === formData.room_id)
       if (selectedRoom?.is_under_maintenance) {
-        toast.error("Room Under Maintenance", {
-          description: "This room is currently under maintenance and cannot accept new tenants.",
-          duration: 8000,
-        })
+        showError("Room Under Maintenance", "This room is currently under maintenance and cannot accept new tenants.")
         return
       }
     }
 
     // Validate required fields
     if (!formData.property_id || !formData.room_id || !formData.monthly_rent) {
-      toast.error("Validation Error: Please fill in all required fields", {
-        description: `Missing: ${[
-          !formData.property_id && "Property",
-          !formData.room_id && "Room",
-          !formData.monthly_rent && "Rent"
-        ].filter(Boolean).join(", ")}`,
-        duration: 8000,
-      })
+      showError("Validation Error: Please fill in all required fields", `Missing: ${[
+        !formData.property_id && "Property",
+        !formData.room_id && "Room",
+        !formData.monthly_rent && "Rent"
+      ].filter(Boolean).join(", ")}`)
       return
     }
 
@@ -266,10 +258,7 @@ export default function NewTenantPage() {
       }
 
       if (!user) {
-        toast.error("Authentication Error", {
-          description: "No user session found. Please login again.\n\nThis usually happens when:\n- Session has expired\n- Cookies were cleared\n- You were logged out",
-          duration: 10000,
-        })
+        showError("Authentication Error", "No user session found. Please login again.")
         router.push("/login")
         return
       }
@@ -311,18 +300,12 @@ export default function NewTenantPage() {
       }
 
       if (roomCheck.property_id !== formData.property_id) {
-        toast.error("Room Mismatch Error", {
-          description: `Room ${roomCheck.room_number} doesn't belong to the selected property.\n\nRoom's property_id: ${roomCheck.property_id}\nSelected property_id: ${formData.property_id}`,
-          duration: 10000,
-        })
+        showError("Room Mismatch Error", `Room ${roomCheck.room_number} doesn't belong to the selected property.`)
         return
       }
 
       if (roomCheck.occupied_beds >= roomCheck.total_beds) {
-        toast.error("Room Full Error", {
-          description: `Room ${roomCheck.room_number} is already full.\n\nOccupied beds: ${roomCheck.occupied_beds}\nTotal beds: ${roomCheck.total_beds}`,
-          duration: 10000,
-        })
+        showError("Room Full Error", `Room ${roomCheck.room_number} is already full (${roomCheck.occupied_beds}/${roomCheck.total_beds} beds).`)
         return
       }
 
@@ -376,9 +359,7 @@ export default function NewTenantPage() {
 
       const newTenantId = workflowResult.data?.tenant_id
       if (!newTenantId) {
-        toast.error("Tenant creation failed", {
-          description: "No tenant ID returned from workflow",
-        })
+        showError("Tenant creation failed", "No tenant ID returned from workflow")
         return
       }
 
@@ -523,9 +504,7 @@ export default function NewTenantPage() {
         })
       }
 
-      toast.success("Tenant added successfully!", {
-        description: `${selectedPerson.name} has been added to Room ${roomCheck.room_number}`,
-      })
+      showSuccess("Tenant added successfully!", `${selectedPerson.name} has been added to Room ${roomCheck.room_number}`)
       router.push("/tenants")
     } catch (error) {
       showDetailedError(error, {

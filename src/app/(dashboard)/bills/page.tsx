@@ -14,6 +14,7 @@ import { statusColumn, currencyColumn, dateColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { BILL_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createSumMetric, MetricConfig } from "@/lib/metric-factories"
+import { BILL_STATUS } from "@/lib/status"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { BILL_STATUS_OPTIONS } from "@/lib/filters/common-filters"
@@ -44,25 +45,6 @@ interface Bill {
   property: { id: string; name: string; address?: string } | null
   bill_month?: string
   bill_year?: string
-}
-
-// ============================================
-// Status Helper
-// ============================================
-
-const getStatusInfo = (status: string): { status: "success" | "warning" | "error" | "muted"; label: string } => {
-  switch (status) {
-    case "paid":
-      return { status: "success", label: "Paid" }
-    case "pending":
-      return { status: "warning", label: "Pending" }
-    case "partial":
-      return { status: "warning", label: "Partial" }
-    case "overdue":
-      return { status: "error", label: "Overdue" }
-    default:
-      return { status: "muted", label: status }
-  }
 }
 
 // ============================================
@@ -129,7 +111,7 @@ const columns: Column<Bill>[] = [
     ),
   },
   dateColumn("due_date", "Due", { hideOnMobile: true }),
-  statusColumn(getStatusInfo, {
+  statusColumn(BILL_STATUS, {
     editable: true,
     editType: "select",
     editOptions: BILL_STATUS_OPTIONS,

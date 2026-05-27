@@ -73,6 +73,19 @@ export const formatCurrencyCompact = (amount: number | null | undefined): string
 }
 
 /**
+ * Format currency for chart axis ticks (compact, no decimals on K)
+ * @example formatCurrencyTick(10000000) => "₹1.0Cr"
+ * @example formatCurrencyTick(150000)   => "₹1.5L"
+ * @example formatCurrencyTick(5000)     => "₹5k"
+ */
+export const formatCurrencyTick = (value: number): string => {
+  if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`
+  if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`
+  if (value >= 1000) return `₹${(value / 1000).toFixed(0)}k`
+  return `₹${value}`
+}
+
+/**
  * Parse currency string to number
  * @example parseCurrency("₹1,50,000") => 150000
  */
@@ -104,6 +117,16 @@ export const formatPercent = (value: number | null | undefined, decimals = 1): s
   if (value === null || value === undefined) return "0%"
 
   return `${(value * 100).toFixed(decimals)}%`
+}
+
+/**
+ * Calculate occupancy rate as a rounded percentage.
+ * Returns 0 if totalBeds is 0 to avoid division by zero.
+ * @example calculateOccupancyRate(80, 100) => 80
+ */
+export const calculateOccupancyRate = (occupiedBeds: number, totalBeds: number): number => {
+  if (totalBeds === 0) return 0
+  return Math.round((occupiedBeds / totalBeds) * 100)
 }
 
 /**
