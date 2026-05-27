@@ -18,6 +18,7 @@ import { createTotalMetric, createStatusMetric, createCountMetric, MetricConfig 
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_FILTER, TIME_SLOT_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { LIBRARY_MEMBER_STATUS_CONFIG } from "@/types/library.types"
+import { LIBRARY_MEMBER_STATUS_LABELS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -69,6 +70,19 @@ interface LibraryMemberItem {
   days_until_expiry?: number
   overdue_status?: string
   missing_data_count?: number
+}
+
+// ============================================
+// Helpers
+// ============================================
+
+function computeOverdueDays(expiryDate: string | null): number {
+  if (!expiryDate) return 0
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const expiry = new Date(expiryDate)
+  expiry.setHours(0, 0, 0, 0)
+  return Math.ceil((today.getTime() - expiry.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 // ============================================
@@ -157,14 +171,11 @@ const columns: Column<LibraryMemberItem>[] = [
     defaultVisible: false,
     render: (member) => {
       if (!member.expiry_date) return "\u2014"
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const expiry = new Date(member.expiry_date)
-      expiry.setHours(0, 0, 0, 0)
-      const diff = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-      if (diff < -30) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive">Severely Overdue</span>
-      if (diff < 0) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-warning/10 text-warning">Overdue</span>
-      if (diff <= 7) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Expiring Soon</span>
+      // positive = overdue, negative = days until expiry
+      const overdueDays = computeOverdueDays(member.expiry_date)
+      if (overdueDays > 30) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-destructive/10 text-destructive">Severely Overdue</span>
+      if (overdueDays > 0) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-warning/10 text-warning">Overdue</span>
+      if (overdueDays >= -7) return <span className="px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Expiring Soon</span>
       return <span className="px-2 py-0.5 rounded text-xs font-medium bg-success/10 text-success">Current</span>
     },
   },
@@ -178,13 +189,9 @@ const columns: Column<LibraryMemberItem>[] = [
     defaultVisible: false,
     render: (member) => {
       if (!member.expiry_date) return "\u2014"
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const expiry = new Date(member.expiry_date)
-      expiry.setHours(0, 0, 0, 0)
-      const diff = Math.ceil((today.getTime() - expiry.getTime()) / (1000 * 60 * 60 * 24))
-      if (diff <= 0) return "\u2014"
-      return <span className="text-destructive font-medium">{diff}d</span>
+      const overdueDays = computeOverdueDays(member.expiry_date)
+      if (overdueDays <= 0) return "\u2014"
+      return <span className="text-destructive font-medium">{overdueDays}d</span>
     },
   },
 ]
@@ -260,12 +267,9 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
   createCountMetric("expiring_soon", "Expiring Soon", CalendarClock,
     (item) => {
       if (!item.expiry_date || item.status !== "active") return false
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const expiry = new Date(item.expiry_date as string)
-      expiry.setHours(0, 0, 0, 0)
-      const diff = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-      return diff >= 0 && diff <= 7
+      const overdueDays = computeOverdueDays(item.expiry_date as string)
+      // overdueDays <= 0 means not yet expired; -overdueDays is days until expiry
+      return overdueDays <= 0 && overdueDays >= -7
     }
   ),
 ]
@@ -342,12 +346,6 @@ function BulkStatusActions({
     }
   }
 
-  const statusLabel: Record<string, string> = {
-    active: "Active",
-    suspended: "Suspended",
-    cancelled: "Cancelled",
-  }
-
   return (
     <>
       <div className="flex items-center gap-2">
@@ -378,7 +376,7 @@ function BulkStatusActions({
             <AlertDialogTitle>Confirm Bulk Status Update</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to update {selectedIds.length} member{selectedIds.length !== 1 ? "s" : ""}{" "}
-              to <strong>{statusLabel[targetStatus] || targetStatus}</strong>? This action will be applied immediately.
+              to <strong>{LIBRARY_MEMBER_STATUS_LABELS[targetStatus] || targetStatus}</strong>? This action will be applied immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

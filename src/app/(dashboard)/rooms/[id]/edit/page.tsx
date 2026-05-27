@@ -18,19 +18,7 @@ import { PhotoGallery } from "@/components/forms"
 import { PermissionGuard } from "@/components/auth"
 import { ConfigurableRoomType, defaultConfigurableRoomTypes } from "@/types/rooms.types"
 import type { PropertyOption } from "@/types/properties.types"
-
-// Extended amenities list - same as new room page
-const availableAmenities = [
-  { key: "has_ac", label: "Air Conditioned (AC)" },
-  { key: "has_attached_bathroom", label: "Attached Bathroom" },
-  { key: "has_wifi", label: "WiFi" },
-  { key: "has_tv", label: "TV" },
-  { key: "has_geyser", label: "Geyser/Hot Water" },
-  { key: "has_balcony", label: "Balcony" },
-  { key: "has_wardrobe", label: "Wardrobe" },
-  { key: "has_study_table", label: "Study Table" },
-  { key: "has_refrigerator", label: "Refrigerator" },
-]
+import { AVAILABLE_AMENITIES } from "@/lib/constants/form-options"
 
 export default function EditRoomPage() {
   return (
@@ -106,7 +94,7 @@ function EditRoomContent() {
     },
     transform: (data) => {
       // Build amenities array from checkboxes
-      const amenities = availableAmenities
+      const amenities = AVAILABLE_AMENITIES
         .filter((amenity) => data[amenity.key as keyof typeof data])
         .map((amenity) => amenity.label.split(" (")[0])
 
@@ -304,7 +292,7 @@ function EditRoomContent() {
             <div className="border-t pt-4 mt-4">
               <h3 className="font-medium mb-3">Amenities</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {availableAmenities.map((amenity) => (
+                {AVAILABLE_AMENITIES.map((amenity) => (
                   <label
                     key={amenity.key}
                     className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border hover:bg-muted/50 transition-colors"

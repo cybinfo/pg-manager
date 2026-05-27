@@ -10,15 +10,13 @@ import { Label } from "@/components/ui/label"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { requiredField } from "@/lib/validation"
+import { NOTICE_TYPE_DISPLAY_CONFIG, NOTICE_AUDIENCE_OPTIONS } from "@/lib/status"
 import {
   ArrowLeft,
   Bell,
   Loader2,
   Building2,
   Megaphone,
-  AlertTriangle,
-  Wrench,
-  CreditCard,
   Users,
   Library,
   Clock,
@@ -39,18 +37,31 @@ interface Room {
   property_id: string
 }
 
-const noticeTypes = [
-  { value: "general", label: "General", description: "General announcements", icon: Megaphone, color: "text-info" },
-  { value: "maintenance", label: "Maintenance", description: "Scheduled maintenance", icon: Wrench, color: "text-warning" },
-  { value: "payment_reminder", label: "Payment Reminder", description: "Payment due reminders", icon: CreditCard, color: "text-success" },
-  { value: "emergency", label: "Emergency", description: "Urgent notifications", icon: AlertTriangle, color: "text-destructive" },
-]
+const NOTICE_TYPE_DESCRIPTIONS: Record<string, string> = {
+  general: "General announcements",
+  maintenance: "Scheduled maintenance",
+  payment_reminder: "Payment due reminders",
+  emergency: "Urgent notifications",
+}
 
-const audiences = [
-  { value: "all", label: "All Residents", description: "Everyone in the property" },
-  { value: "tenants_only", label: "Tenants Only", description: "Only registered tenants" },
-  { value: "specific_rooms", label: "Specific Rooms", description: "Select specific rooms" },
-]
+const noticeTypes = Object.entries(NOTICE_TYPE_DISPLAY_CONFIG).map(([value, cfg]) => ({
+  value,
+  label: cfg.label,
+  description: NOTICE_TYPE_DESCRIPTIONS[value] ?? "",
+  icon: cfg.icon,
+  color: cfg.color,
+}))
+
+const AUDIENCE_DESCRIPTIONS: Record<string, string> = {
+  all: "Everyone in the property",
+  tenants_only: "Only registered tenants",
+  specific_rooms: "Select specific rooms",
+}
+
+const audiences = NOTICE_AUDIENCE_OPTIONS.map((opt) => ({
+  ...opt,
+  description: AUDIENCE_DESCRIPTIONS[opt.value] ?? "",
+}))
 
 function NewNoticeContent() {
   const [loadingData, setLoadingData] = useState(true)

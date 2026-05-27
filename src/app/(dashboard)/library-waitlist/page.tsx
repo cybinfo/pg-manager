@@ -17,6 +17,7 @@ import { createStatusFilter, TIME_SLOT_FILTER } from "@/lib/filter-presets"
 import { Users, Clock, Check, Phone } from "lucide-react"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist } from "@/types/library.types"
+import { LIBRARY_WAITLIST_STATUS_LABELS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { useFeatures } from "@/lib/features/use-features"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
@@ -74,19 +75,12 @@ const groupByOptions: GroupByOption[] = [
 // Export Columns
 // ============================================
 
-const WAITLIST_STATUS_LABELS: Record<string, string> = {
-  waiting: "Waiting",
-  contacted: "Contacted",
-  converted: "Converted",
-  cancelled: "Cancelled",
-}
-
 const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   { key: "position", header: "Position", format: (v) => String(v ?? "") },
   { key: "name", header: "Name" },
   { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
   { key: "email", header: "Email", format: (v) => String(v ?? "") },
-  labelMapColumn("status", "Status", WAITLIST_STATUS_LABELS),
+  labelMapColumn("status", "Status", LIBRARY_WAITLIST_STATUS_LABELS),
   { key: "preferred_slot", header: "Preferred Slot", format: (v) => String(v ?? "") },
   dateExportColumn("created_at", "Joined On"),
 ]

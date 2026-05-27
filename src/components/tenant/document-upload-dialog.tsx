@@ -19,6 +19,7 @@ import { Loader2, Upload } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { logger } from "@/lib/logger"
+import { useAuth } from "@/lib/auth"
 
 export type DocumentType = "id_proof" | "address_proof" | "income_proof" | "agreement" | "receipt" | "other"
 
@@ -48,6 +49,7 @@ export function DocumentUploadDialog({
   ownerId,
   onSuccess,
 }: DocumentUploadDialogProps) {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState("")
   const [documentType, setDocumentType] = useState<DocumentType>("id_proof")
@@ -67,9 +69,13 @@ export function DocumentUploadDialog({
       return
     }
 
+    if (!user) {
+      showError("Session expired. Please log in again.")
+      return
+    }
+
     setLoading(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     // Extract filename and mime type from URL
     const fileName = fileUrl.split("/").pop() || "document"

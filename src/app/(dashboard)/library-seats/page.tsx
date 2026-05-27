@@ -15,6 +15,7 @@ import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metri
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter } from "@/lib/filter-presets"
 import { LIBRARY_SEAT_STATUS_CONFIG } from "@/types/library.types"
+import { LIBRARY_SEAT_STATUS_LABELS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -185,19 +186,12 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 // Export Columns
 // ============================================
 
-const SEAT_STATUS_LABELS: Record<string, string> = {
-  available: "Available",
-  occupied: "Occupied",
-  reserved: "Reserved",
-  maintenance: "Maintenance",
-}
-
 const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   { key: "seat_number", header: "Seat Number" },
   nestedColumn("section_name", "Section", "section.name"),
   nestedColumn("library_name", "Library", "section.library.name"),
   { key: "row_number", header: "Row", format: (v) => String(v ?? "") },
-  labelMapColumn("status", "Status", SEAT_STATUS_LABELS),
+  labelMapColumn("status", "Status", LIBRARY_SEAT_STATUS_LABELS),
   nestedColumn("member_name", "Assigned To", "current_member.name"),
   nestedColumn("member_code", "Member Code", "current_member.member_code"),
   { key: "has_power_outlet", header: "Power Outlet", format: (v) => (v ? "Yes" : "No") },

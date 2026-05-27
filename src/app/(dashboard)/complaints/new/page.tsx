@@ -14,6 +14,7 @@ import { ArrowLeft, MessageSquare, Loader2, Building2, AlertTriangle, Library } 
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
 import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
+import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITY } from "@/lib/status"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import type { PropertyOption } from "@/types/properties.types"
@@ -57,23 +58,20 @@ interface Tenant {
   } | null
 }
 
-const categories = [
-  { value: "electrical", label: "Electrical" },
-  { value: "plumbing", label: "Plumbing" },
-  { value: "furniture", label: "Furniture" },
-  { value: "cleanliness", label: "Cleanliness" },
-  { value: "appliances", label: "Appliances" },
-  { value: "security", label: "Security" },
-  { value: "noise", label: "Noise/Disturbance" },
-  { value: "other", label: "Other" },
-]
+const CATEGORY_OPTIONS = Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label }))
 
-const priorities = [
-  { value: "low", label: "Low", description: "Can be addressed within a week" },
-  { value: "medium", label: "Medium", description: "Should be addressed within 2-3 days" },
-  { value: "high", label: "High", description: "Needs attention within 24 hours" },
-  { value: "urgent", label: "Urgent", description: "Requires immediate attention" },
-]
+const PRIORITY_DESCRIPTIONS: Record<string, string> = {
+  low: "Can be addressed within a week",
+  medium: "Should be addressed within 2-3 days",
+  high: "Needs attention within 24 hours",
+  urgent: "Requires immediate attention",
+}
+
+const PRIORITY_OPTIONS = Object.entries(COMPLAINT_PRIORITY).map(([value, config]) => ({
+  value,
+  label: config.label,
+  description: PRIORITY_DESCRIPTIONS[value] ?? "",
+}))
 
 function NewComplaintForm() {
   const { backHref } = useBackNavigation({ defaultHref: "/complaints" })
@@ -465,10 +463,7 @@ function NewComplaintForm() {
                   onChange={handleChange}
                   required
                   disabled={saving}
-                  options={categories.map((cat) => ({
-                    value: cat.value,
-                    label: cat.label,
-                  }))}
+                  options={CATEGORY_OPTIONS}
                 />
               </FormField>
               <FormField label="Priority" htmlFor="priority" required>
@@ -479,10 +474,7 @@ function NewComplaintForm() {
                   onChange={handleChange}
                   required
                   disabled={saving}
-                  options={priorities.map((p) => ({
-                    value: p.value,
-                    label: p.label,
-                  }))}
+                  options={PRIORITY_OPTIONS}
                 />
               </FormField>
             </div>
@@ -516,7 +508,7 @@ function NewComplaintForm() {
             <div className="p-3 bg-muted rounded-lg text-sm">
               <p className="font-medium mb-1">Priority Guide:</p>
               <ul className="text-muted-foreground space-y-1 text-xs">
-                {priorities.map((p) => (
+                {PRIORITY_OPTIONS.map((p) => (
                   <li key={p.value}>
                     <strong>{p.label}:</strong> {p.description}
                   </li>

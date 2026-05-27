@@ -16,6 +16,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { Currency } from "@/components/ui/currency"
 import { LIBRARY_LOCKER_STATUS_CONFIG, LIBRARY_LOCKER_SIZE_CONFIG } from "@/types/library.types"
+import { LIBRARY_LOCKER_SIZE_LABELS, LIBRARY_LOCKER_STATUS_LABELS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -232,23 +233,11 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 // Export Columns
 // ============================================
 
-const LOCKER_SIZE_LABELS: Record<string, string> = {
-  small: "Small",
-  medium: "Medium",
-  large: "Large",
-}
-
-const LOCKER_STATUS_LABELS: Record<string, string> = {
-  available: "Available",
-  occupied: "Occupied",
-  maintenance: "Maintenance",
-}
-
 const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   { key: "locker_number", header: "Locker Number" },
   nestedColumn("library_name", "Library", "library.name"),
-  labelMapColumn("size", "Size", LOCKER_SIZE_LABELS),
-  labelMapColumn("status", "Status", LOCKER_STATUS_LABELS),
+  labelMapColumn("size", "Size", LIBRARY_LOCKER_SIZE_LABELS),
+  labelMapColumn("status", "Status", LIBRARY_LOCKER_STATUS_LABELS),
   currencyExportColumn("monthly_rent", "Monthly Rent"),
   currencyExportColumn("deposit_amount", "Deposit"),
   { key: "floor", header: "Floor", format: (v) => (Number(v) === 0 ? "Ground" : `Floor ${v}`) },

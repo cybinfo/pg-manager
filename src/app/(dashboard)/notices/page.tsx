@@ -280,16 +280,10 @@ const NOTICE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
   Object.entries(NOTICE_TYPE_DISPLAY_CONFIG).map(([k, v]) => [k, v.label])
 )
 
-const AUDIENCE_LABELS: Record<string, string> = {
-  all: "All Residents",
-  tenants_only: "Tenants Only",
-  specific_rooms: "Specific Rooms",
-}
-
 const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   { key: "title", header: "Title" },
   labelMapColumn("type", "Type", NOTICE_TYPE_LABELS),
-  labelMapColumn("target_audience", "Audience", AUDIENCE_LABELS),
+  labelMapColumn("target_audience", "Audience", audienceLabels),
   { key: "is_active", header: "Active", format: (v) => (v ? "Yes" : "No") },
   { key: "is_published", header: "Published", format: (v) => (v === false ? "No (Scheduled)" : "Yes") },
   dateExportColumn("scheduled_at", "Scheduled At"),

@@ -21,8 +21,11 @@ import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDate, formatPhone } from "@/lib/format"
 import { dateColumn } from "@/lib/columns"
 import { INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_COLORS } from "@/lib/status-config"
+import { INQUIRY_SOURCE_LABELS } from "@/lib/status"
 import type { CSVColumn } from "@/lib/download-utils"
 import { nestedColumn, dateExportColumn } from "@/lib/export-columns"
+
+const INQUIRY_SOURCE_OPTIONS = Object.entries(INQUIRY_SOURCE_LABELS).map(([value, label]) => ({ value, label }))
 
 // ============================================
 // Types
@@ -171,12 +174,7 @@ const filters: FilterConfig[] = [
     label: "Source",
     type: "select",
     placeholder: "All Sources",
-    options: [
-      { value: "website", label: "Website" },
-      { value: "whatsapp", label: "WhatsApp" },
-      { value: "phone", label: "Phone" },
-      { value: "walk_in", label: "Walk-in" },
-    ],
+    options: INQUIRY_SOURCE_OPTIONS,
   },
   PROPERTY_FILTER,
   createDateRangeFilter("created_at", "Received Date"),
@@ -222,12 +220,7 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Source",
     filterType: "select",
     filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "website", label: "Website" },
-      { value: "whatsapp", label: "WhatsApp" },
-      { value: "phone", label: "Phone" },
-      { value: "walk_in", label: "Walk-in" },
-    ],
+    filterOptions: INQUIRY_SOURCE_OPTIONS,
   },
   {
     key: "created_at",

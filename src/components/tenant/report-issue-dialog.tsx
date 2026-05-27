@@ -19,6 +19,8 @@ import { Loader2, AlertCircle, FileText } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { logger } from "@/lib/logger"
+import { useAuth } from "@/lib/auth"
+import { APPROVAL_TYPE_LABELS } from "@/lib/status"
 
 interface TenantDocument {
   id: string
@@ -52,21 +54,6 @@ interface ReportIssueDialogProps {
   onSuccess?: () => void
 }
 
-const APPROVAL_TYPE_LABELS: Record<ApprovalType, string> = {
-  name_change: "Name Change",
-  address_change: "Address Change",
-  phone_change: "Phone Number Change",
-  email_change: "Email Change",
-  room_change: "Room Change",
-  complaint: "Complaint",
-  other: "Other",
-  // New types
-  bill_dispute: "Bill Dispute",
-  payment_dispute: "Payment Dispute",
-  tenancy_issue: "Tenancy Issue",
-  room_issue: "Room Issue",
-}
-
 // Types that use textarea for description instead of input for new value
 const DESCRIPTION_TYPES: ApprovalType[] = [
   "complaint", "other", "bill_dispute", "payment_dispute"
@@ -83,6 +70,7 @@ export function ReportIssueDialog({
   ownerId,
   onSuccess,
 }: ReportIssueDialogProps) {
+  const { user } = useAuth()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [requestedValue, setRequestedValue] = useState("")
@@ -133,8 +121,12 @@ export function ReportIssueDialog({
       return
     }
 
+    if (!user) {
+      showError("Session expired. Please log in again.")
+      return
+    }
+
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
 
     // Build payload based on approval type
     const payload: Record<string, unknown> = {

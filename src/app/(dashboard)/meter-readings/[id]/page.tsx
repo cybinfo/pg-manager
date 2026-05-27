@@ -348,12 +348,14 @@ export default function MeterReadingDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2">
-            <Link href={`/meter-readings/${reading.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </Link>
+            <PermissionGate permission="meter_readings.edit" hide>
+              <Link href={`/meter-readings/${reading.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             <PermissionGate permission="meter_readings.delete" hide>
               <Button
                 variant="destructive"

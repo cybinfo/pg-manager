@@ -22,6 +22,7 @@ import { PageLoading } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import { LIBRARY_WAITLIST_STATUS_CONFIG, labelsToOptions } from "@/lib/status"
 import { TIME_SLOT_OPTIONS } from "@/types/library.types"
+import { WAITLIST_PRIORITY_OPTIONS } from "@/lib/constants/form-options"
 
 const WAITLIST_STATUS_OPTIONS = labelsToOptions(
   Object.fromEntries(Object.entries(LIBRARY_WAITLIST_STATUS_CONFIG).map(([k, v]) => [k, v.label]))
@@ -32,11 +33,6 @@ const SLOT_OPTIONS = [
   ...TIME_SLOT_OPTIONS,
 ]
 
-const PRIORITY_OPTIONS = [
-  { value: "normal", label: "Normal" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
-]
 
 export default function EditWaitlistPage({
   params,
@@ -201,7 +197,7 @@ function EditWaitlistContent({
                   onChange={handleChange}
                   name="priority"
                   disabled={saving}
-                  options={PRIORITY_OPTIONS}
+                  options={WAITLIST_PRIORITY_OPTIONS}
                 />
               </FormField>
             </div>

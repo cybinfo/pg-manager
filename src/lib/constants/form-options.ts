@@ -234,6 +234,34 @@ export const PROPERTY_TYPE_OPTIONS = [
 ]
 
 // ============================================================================
+// ROOMS — AMENITIES
+// ============================================================================
+
+/** Amenity checkboxes for room create/edit forms */
+export const AVAILABLE_AMENITIES = [
+  { key: "has_ac", label: "Air Conditioned (AC)" },
+  { key: "has_attached_bathroom", label: "Attached Bathroom" },
+  { key: "has_wifi", label: "WiFi" },
+  { key: "has_tv", label: "TV" },
+  { key: "has_geyser", label: "Geyser/Hot Water" },
+  { key: "has_balcony", label: "Balcony" },
+  { key: "has_wardrobe", label: "Wardrobe" },
+  { key: "has_study_table", label: "Study Table" },
+  { key: "has_refrigerator", label: "Refrigerator" },
+]
+
+// ============================================================================
+// LIBRARY — WAITLIST
+// ============================================================================
+
+/** Priority options for library waitlist entries */
+export const WAITLIST_PRIORITY_OPTIONS = [
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "High" },
+  { value: "urgent", label: "Urgent" },
+]
+
+// ============================================================================
 // VISITORS
 // ============================================================================
 

@@ -230,7 +230,7 @@ export default function ComplaintDetailPage() {
                   </Button>
                 </Link>
               </PermissionGate>
-              <PermissionGate permission="complaints.edit" hide>
+              <PermissionGate permission="complaints.delete" hide>
                 <Button
                   variant="destructive"
                   size="sm"

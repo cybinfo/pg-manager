@@ -96,6 +96,8 @@ export const LIBRARY_LOCKER_STATUS_LABELS: Record<string, string> = toLabels(LIB
 
 export const LIBRARY_LOCKER_SIZE_LABELS: Record<string, string> = toLabels(LIBRARY_LOCKER_SIZE_CONFIG)
 
+export const LIBRARY_WAITLIST_STATUS_LABELS: Record<string, string> = toLabels(LIBRARY_WAITLIST_STATUS_CONFIG)
+
 export const LIBRARY_PAYMENT_TYPE_LABELS: Record<string, string> = toLabels(LIBRARY_PAYMENT_TYPE_CONFIG)
 
 export const LIBRARY_PAYMENT_STATUS_LABELS: Record<string, string> = toLabels(LIBRARY_PAYMENT_STATUS_CONFIG)

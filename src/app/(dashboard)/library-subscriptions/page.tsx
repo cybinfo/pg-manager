@@ -16,6 +16,7 @@ import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } 
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter } from "@/lib/filter-presets"
 import { LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
+import { LIBRARY_MEMBERSHIP_STATUS_LABELS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -129,17 +130,19 @@ const columns: Column<SubscriptionItem>[] = [
 // Filter Configurations
 // ============================================
 
+const TIME_SLOT_FILTER_OPTIONS = [
+  { value: "Morning", label: "Morning" },
+  { value: "Evening", label: "Evening" },
+  { value: "Night", label: "Night" },
+  { value: "24 Hours", label: "24 Hours" },
+]
+
 const TIME_SLOT_SUBSCRIPTION_FILTER: FilterConfig = {
   id: "time_slot",
   label: "Slot",
   type: "select",
   placeholder: "All Slots",
-  options: [
-    { value: "Morning", label: "Morning" },
-    { value: "Evening", label: "Evening" },
-    { value: "Night", label: "Night" },
-    { value: "24 Hours", label: "24 Hours" },
-  ],
+  options: TIME_SLOT_FILTER_OPTIONS,
 }
 
 const filters: FilterConfig[] = [
@@ -185,12 +188,7 @@ const advancedFilterColumns: FilterableColumn[] = [
     { value: "cancelled", label: "Cancelled" },
     { value: "upgraded", label: "Upgraded" },
   ]),
-  selectFilterColumn("time_slot", "Time Slot", [
-    { value: "Morning", label: "Morning" },
-    { value: "Evening", label: "Evening" },
-    { value: "Night", label: "Night" },
-    { value: "24 Hours", label: "24 Hours" },
-  ]),
+  selectFilterColumn("time_slot", "Time Slot", TIME_SLOT_FILTER_OPTIONS),
   numberFilterColumn("hours_used", "Hours Used"),
   numberFilterColumn("hours_remaining", "Hours Remaining"),
   numberFilterColumn("discount_amount", "Discount"),
@@ -211,13 +209,6 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 // ============================================
 // Export Columns
 // ============================================
-
-const MEMBERSHIP_STATUS_LABELS: Record<string, string> = {
-  active: "Active",
-  expired: "Expired",
-  cancelled: "Cancelled",
-  upgraded: "Upgraded",
-}
 
 const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   nestedColumn("member_name", "Member Name", "member.person.name", (val, row) => {
@@ -240,7 +231,7 @@ const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   { key: "hours_used" as keyof Record<string, unknown>, header: "Hours Used", format: (v) => String(v ?? "0") },
   { key: "hours_remaining" as keyof Record<string, unknown>, header: "Hours Remaining", format: (v) => v != null ? String(v) : "Unlimited" },
   currencyExportColumn("discount_amount", "Discount"),
-  { key: "status" as keyof Record<string, unknown>, header: "Status", format: (v) => MEMBERSHIP_STATUS_LABELS[String(v)] || String(v ?? "") },
+  { key: "status" as keyof Record<string, unknown>, header: "Status", format: (v) => LIBRARY_MEMBERSHIP_STATUS_LABELS[String(v)] || String(v ?? "") },
 ]
 
 // ============================================

@@ -251,6 +251,7 @@ export default function ApprovalsPage() {
           groupByOptions={groupByOptions}
           metrics={metrics}
           searchPlaceholder="Search requests..."
+          enableColumnManager={true}
           enableAdvancedFilters={true}
           advancedFilterColumns={advancedFilterColumns}
           enableInlineEdit={true}

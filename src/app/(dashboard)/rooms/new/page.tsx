@@ -21,6 +21,7 @@ import { PermissionGuard } from "@/components/auth"
 import { ConfigurableRoomType, defaultConfigurableRoomTypes } from "@/types/rooms.types"
 import { logger } from "@/lib/logger"
 import type { PropertyOption } from "@/types/properties.types"
+import { AVAILABLE_AMENITIES } from "@/lib/constants/form-options"
 
 type Property = PropertyOption & { website_config?: { property_type?: string } | null }
 
@@ -31,18 +32,6 @@ const roomTypeBedCounts: Record<string, number> = {
   dormitory: 6,
 }
 
-// Extended amenities list
-const availableAmenities = [
-  { key: "has_ac", label: "Air Conditioned (AC)" },
-  { key: "has_attached_bathroom", label: "Attached Bathroom" },
-  { key: "has_wifi", label: "WiFi" },
-  { key: "has_tv", label: "TV" },
-  { key: "has_geyser", label: "Geyser/Hot Water" },
-  { key: "has_balcony", label: "Balcony" },
-  { key: "has_wardrobe", label: "Wardrobe" },
-  { key: "has_study_table", label: "Study Table" },
-  { key: "has_refrigerator", label: "Refrigerator" },
-]
 
 export default function NewRoomPage() {
   return (
@@ -100,7 +89,7 @@ function NewRoomContent() {
     },
     transform: (data, userId) => {
       // Build amenities array from checkboxes
-      const amenities = availableAmenities
+      const amenities = AVAILABLE_AMENITIES
         .filter((amenity) => data[amenity.key as keyof typeof data])
         .map((amenity) => amenity.label.split(" (")[0])
 
@@ -376,7 +365,7 @@ function NewRoomContent() {
             <div className="border-t pt-4 mt-4">
               <h3 className="font-medium mb-3">Amenities</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {availableAmenities.map((amenity) => (
+                {AVAILABLE_AMENITIES.map((amenity) => (
                   <label
                     key={amenity.key}
                     className="flex items-center gap-2 cursor-pointer p-2 rounded-lg border hover:bg-muted/50 transition-colors"

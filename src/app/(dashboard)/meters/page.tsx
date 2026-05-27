@@ -24,6 +24,7 @@ import { METER_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG, MeterType, MeterStatus } from "@/types/meters.types"
+import { METER_TYPE_LABELS, METER_STATUS_LABELS } from "@/lib/status"
 import type { CSVColumn } from "@/lib/download-utils"
 import { nestedColumn, dateExportColumn, labelMapColumn } from "@/lib/export-columns"
 import { formatNumber } from "@/lib/format"
@@ -255,19 +256,6 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 // ============================================
 // Export Columns
 // ============================================
-
-const METER_TYPE_LABELS: Record<string, string> = {
-  electricity: "Electricity",
-  water: "Water",
-  gas: "Gas",
-}
-
-const METER_STATUS_LABELS: Record<string, string> = {
-  active: "Active",
-  faulty: "Faulty",
-  replaced: "Replaced",
-  retired: "Retired",
-}
 
 const exportColumns: CSVColumn<Record<string, unknown>>[] = [
   { key: "meter_number", header: "Meter Number" },

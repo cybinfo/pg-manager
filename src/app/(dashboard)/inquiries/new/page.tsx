@@ -16,12 +16,9 @@ import { ArrowLeft, Inbox, Loader2 } from "lucide-react"
 import { PermissionGuard } from "@/components/auth"
 import { defaultConfigurableRoomTypes, ConfigurableRoomType } from "@/types/rooms.types"
 import type { PropertyOption } from "@/types/properties.types"
+import { INQUIRY_SOURCE_LABELS } from "@/lib/status"
 
-const SOURCE_OPTIONS = [
-  { value: "phone", label: "Phone Call" },
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "walk_in", label: "Walk-in" },
-]
+const SOURCE_OPTIONS = Object.entries(INQUIRY_SOURCE_LABELS).map(([value, label]) => ({ value, label }))
 
 export default function NewInquiryPage() {
   return (

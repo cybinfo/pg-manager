@@ -21,11 +21,7 @@ import { ArrowLeft, User, Loader2 } from "lucide-react"
 import { requiredField } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
-
-const IS_ACTIVE_OPTIONS = [
-  { value: "true", label: "Active" },
-  { value: "false", label: "Inactive" },
-]
+import { BOOLEAN_STRING_OPTIONS } from "@/lib/status"
 
 export default function EditStaffPage({
   params,
@@ -188,7 +184,7 @@ function EditStaffContent({
                   onChange={handleChange}
                   name="is_active"
                   disabled={saving}
-                  options={IS_ACTIVE_OPTIONS}
+                  options={BOOLEAN_STRING_OPTIONS}
                 />
               </FormField>
             </div>

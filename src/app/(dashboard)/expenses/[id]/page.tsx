@@ -84,12 +84,14 @@ export default function ExpenseDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2">
-            <Link href={`/expenses/${expense.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </Link>
+            <PermissionGate permission="expenses.edit" hide>
+              <Link href={`/expenses/${expense.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             <PermissionGate permission="expenses.delete" hide>
               <Button
                 variant="destructive"

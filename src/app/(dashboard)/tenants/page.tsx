@@ -22,7 +22,7 @@ import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } 
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
 import { TENANT_STATUS_OPTIONS } from "@/lib/filters/common-filters"
-import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
+import { POLICE_VERIFICATION_STATUS_OPTIONS, POLICE_VERIFICATION_STATUS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn, booleanFilterColumn } from "@/lib/advanced-filter-builders"
@@ -136,17 +136,19 @@ const columns: ExtendedColumn<Tenant>[] = [
     editType: "select",
     editOptions: POLICE_VERIFICATION_STATUS_OPTIONS,
     render: (tenant) => {
-      const statusMap: Record<string, { label: string; className: string }> = {
-        pending: { label: "Pending", className: "text-warning bg-warning/10" },
-        submitted: { label: "Submitted", className: "text-info bg-info/10" },
-        verified: { label: "Verified", className: "text-success bg-success/10" },
-        rejected: { label: "Rejected", className: "text-destructive bg-destructive/10" },
-        not_required: { label: "Not Required", className: "text-muted-foreground bg-muted" },
+      const variantToClass: Record<string, string> = {
+        success: "text-success bg-success/10",
+        warning: "text-warning bg-warning/10",
+        muted: "text-muted-foreground bg-muted",
+        error: "text-destructive bg-destructive/10",
+        default: "text-foreground bg-muted",
       }
-      const status = statusMap[tenant.police_verification_status] || statusMap.pending
+      const config = POLICE_VERIFICATION_STATUS[tenant.police_verification_status]
+      const label = config?.label ?? tenant.police_verification_status
+      const className = variantToClass[config?.variant ?? "default"] ?? variantToClass.default
       return (
-        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${status.className}`}>
-          {status.label}
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${className}`}>
+          {label}
         </span>
       )
     },

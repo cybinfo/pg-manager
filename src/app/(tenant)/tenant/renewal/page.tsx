@@ -14,6 +14,7 @@ import { formatDate, formatCurrency } from "@/lib/format"
 import { withCreatedBy } from "@/lib/audit"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 import { FeatureGuard } from "@/components/auth"
+import { APPROVAL_STATUS } from "@/lib/status"
 
 interface RenewalRequest {
   id: string
@@ -105,12 +106,14 @@ function TenantRenewalContent() {
     )
   }
 
-  const statusColors: Record<string, string> = {
-    pending: "bg-warning/10 text-warning border-warning/20",
-    approved: "bg-success/10 text-success border-success/20",
-    rejected: "bg-destructive/10 text-destructive border-destructive/20",
-    cancelled: "bg-muted text-muted-foreground border-border",
+  const variantClassMap: Record<string, string> = {
+    warning: "bg-warning/10 text-warning border-warning/20",
+    success: "bg-success/10 text-success border-success/20",
+    error: "bg-destructive/10 text-destructive border-destructive/20",
+    muted: "bg-muted text-muted-foreground border-border",
   }
+  const statusColorClass = (status: string) =>
+    variantClassMap[APPROVAL_STATUS[status]?.variant ?? "muted"] ?? variantClassMap.muted
 
   const hasPendingRequest = requests.some((r) => r.status === "pending")
 
@@ -262,7 +265,7 @@ function TenantRenewalContent() {
                 {requests.map((req) => (
                   <div
                     key={req.id}
-                    className={`p-4 rounded-lg border ${statusColors[req.status] || statusColors.cancelled}`}
+                    className={`p-4 rounded-lg border ${statusColorClass(req.status)}`}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-1 flex-1 min-w-0">

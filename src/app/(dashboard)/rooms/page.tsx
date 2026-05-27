@@ -23,10 +23,21 @@ import { ROOM_TYPES } from "@/types/rooms.types"
 import type { CSVColumn } from "@/lib/download-utils"
 import { currencyExportColumn, dateExportColumn, nestedColumn } from "@/lib/export-columns"
 
-// Room type labels for badgeColumn
+// Room type labels for badgeColumn and export
 const ROOM_TYPE_LABELS: Record<string, string> = Object.fromEntries(
   ROOM_TYPES.map(({ value, label }) => [value, label])
 )
+
+// Room type options derived from canonical ROOM_TYPES (includes all types incl. quad)
+const ROOM_TYPE_FILTER_OPTIONS = ROOM_TYPES.map(({ value, label }) => ({ value, label }))
+
+// Room status options — single source for both filters and advancedFilterColumns
+const ROOM_STATUS_FILTER_OPTIONS = [
+  { value: "available", label: "Available" },
+  { value: "occupied", label: "Occupied" },
+  { value: "partially_occupied", label: "Partially Occupied" },
+  { value: "maintenance", label: "Maintenance" },
+]
 
 // ============================================
 // Types
@@ -150,12 +161,7 @@ const columns: Column<Room>[] = [
 
 const filters: FilterConfig[] = [
   PROPERTY_FILTER,
-  createStatusFilter([
-    { value: "available", label: "Available" },
-    { value: "occupied", label: "Occupied" },
-    { value: "partially_occupied", label: "Partially Occupied" },
-    { value: "maintenance", label: "Maintenance" },
-  ]),
+  createStatusFilter(ROOM_STATUS_FILTER_OPTIONS),
   ROOM_TYPE_FILTER,
 ]
 
@@ -189,24 +195,14 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Room Type",
     filterType: "select",
     filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "single", label: "Single" },
-      { value: "double", label: "Double" },
-      { value: "triple", label: "Triple" },
-      { value: "dormitory", label: "Dormitory" },
-    ],
+    filterOptions: ROOM_TYPE_FILTER_OPTIONS,
   },
   {
     key: "status",
     header: "Status",
     filterType: "select",
     filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "available", label: "Available" },
-      { value: "occupied", label: "Occupied" },
-      { value: "partially_occupied", label: "Partially Occupied" },
-      { value: "maintenance", label: "Maintenance" },
-    ],
+    filterOptions: ROOM_STATUS_FILTER_OPTIONS,
   },
   {
     key: "rent_amount",
