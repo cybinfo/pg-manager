@@ -1,32 +1,45 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { PermissionGuard } from "@/components/auth"
-import { PageHeader } from "@/components/ui/page-header"
-import { DataTable, Column } from "@/components/ui/data-table"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { Currency } from "@/components/ui/currency"
-import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
-import { Receipt, Plus, ArrowLeft, User } from "lucide-react"
-import { formatDate } from "@/lib/format"
-import { dateColumn } from "@/lib/columns"
+import { Receipt, FileText, CheckCircle, Clock, AlertCircle, ArrowLeft, User } from "lucide-react"
+import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
+import { BILL_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createSumMetric, MetricConfig } from "@/lib/metric-factories"
+import { statusColumn, currencyColumn, dateColumn } from "@/lib/columns"
+import { BILL_STATUS } from "@/lib/status"
+import { createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { BILL_STATUS_OPTIONS } from "@/lib/filters/common-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { textFilterColumn, statusFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
+import { Column } from "@/components/ui/data-table"
+import { FilterConfig } from "@/components/ui/list-page-filters"
+import { TenantLink } from "@/components/ui/entity-link"
+import { formatCurrency } from "@/lib/format"
+import type { CSVColumn } from "@/lib/download-utils"
+import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { logger } from "@/lib/logger"
 
 interface Bill {
   id: string
   bill_number: string
   bill_date: string
   due_date: string
+  for_month: string
   total_amount: number
   paid_amount: number
+  balance_due: number
   status: string
-  billing_period_start: string
-  billing_period_end: string
+  notes: string | null
+  created_at: string
+  tenant: { id: string; name: string; phone: string } | null
+  bill_month?: string
+  bill_year?: string
 }
 
 interface Tenant {
@@ -36,31 +49,163 @@ interface Tenant {
   room: { room_number: string } | null
 }
 
+// ============================================
+// Column Definitions
+// ============================================
+
+const columns: Column<Bill>[] = [
+  {
+    key: "bill_number",
+    header: "Bill",
+    width: "primary",
+    sortable: true,
+    canHide: false,
+    render: (bill) => (
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg bg-info/10 flex items-center justify-center shrink-0">
+          <FileText className="h-4 w-4 text-info" />
+        </div>
+        <div className="min-w-0">
+          <div className="font-medium truncate">{bill.bill_number}</div>
+          {bill.tenant && (
+            <div><TenantLink id={bill.tenant.id} name={bill.tenant.name} size="sm" /></div>
+          )}
+        </div>
+      </div>
+    ),
+  },
+  {
+    key: "for_month",
+    header: "Period",
+    width: "tertiary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: true,
+    render: (bill) => bill.for_month,
+  },
+  {
+    key: "total_amount",
+    header: "Amount",
+    width: "amount",
+    sortable: true,
+    sortType: "number",
+    canHide: true,
+    defaultVisible: true,
+    render: (bill) => (
+      <div>
+        <div className="font-medium tabular-nums">{formatCurrency(bill.total_amount)}</div>
+        {bill.balance_due > 0 && bill.status !== "paid" && (
+          <div className="text-xs text-destructive">Due: {formatCurrency(bill.balance_due)}</div>
+        )}
+      </div>
+    ),
+  },
+  dateColumn("due_date", "Due", { hideOnMobile: true }),
+  statusColumn(BILL_STATUS, {
+    editable: true,
+    editType: "select",
+    editOptions: BILL_STATUS_OPTIONS,
+  }),
+  currencyColumn("paid_amount", "Paid Amount", { defaultVisible: false, color: "text-success", bold: false }),
+  currencyColumn("balance_due", "Balance Due", { defaultVisible: false, color: "text-destructive", bold: false }),
+  dateColumn("bill_date", "Bill Date", { defaultVisible: false }),
+  {
+    key: "notes",
+    header: "Notes",
+    width: "secondary",
+    canHide: true,
+    defaultVisible: false,
+    editable: true,
+    editType: "text",
+    render: (bill) => bill.notes ? (
+      <span className="truncate max-w-[150px]" title={bill.notes}>{bill.notes}</span>
+    ) : <span className="text-muted-foreground">—</span>,
+  },
+  dateColumn("created_at", "Created", { defaultVisible: false }),
+]
+
+const filters: FilterConfig[] = [
+  createStatusFilter([
+    { value: "pending", label: "Pending" },
+    { value: "partial", label: "Partial" },
+    { value: "paid", label: "Paid" },
+    { value: "overdue", label: "Overdue" },
+  ]),
+  createDateRangeFilter("bill_date", "Bill Date"),
+]
+
+const groupByOptions: GroupByOption[] = [
+  { value: "status", label: "Status" },
+  { value: "for_month", label: "Period" },
+  { value: "bill_month", label: "Bill Month" },
+]
+
+const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("bill_number", "Bill Number"),
+  statusFilterColumn([
+    { value: "pending", label: "Pending" },
+    { value: "partial", label: "Partial" },
+    { value: "paid", label: "Paid" },
+    { value: "overdue", label: "Overdue" },
+  ]),
+  numberFilterColumn("total_amount", "Total Amount"),
+  numberFilterColumn("balance_due", "Balance Due"),
+  dateFilterColumn("bill_date", "Bill Date"),
+  dateFilterColumn("due_date", "Due Date"),
+]
+
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createSumMetric("total_amount", "total", "Total Billed", FileText),
+  createSumMetric("paid_amount", "collected", "Collected", CheckCircle),
+  createSumMetric("balance_due", "pending", "Pending", Clock, {
+    filter: { column: "status", operator: "in", value: ["pending", "partial"] },
+    highlight: true,
+  }),
+  createSumMetric("balance_due", "overdue", "Overdue", AlertCircle, {
+    filter: { column: "status", operator: "eq", value: "overdue" },
+    highlight: true,
+  }),
+]
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "bill_number", header: "Bill Number" },
+  { key: "for_month", header: "Period", format: (v) => String(v ?? "") },
+  currencyExportColumn("total_amount", "Total Amount"),
+  currencyExportColumn("paid_amount", "Paid Amount"),
+  currencyExportColumn("balance_due", "Balance Due"),
+  dateExportColumn("due_date", "Due Date"),
+  dateExportColumn("bill_date", "Bill Date"),
+  { key: "status", header: "Status", format: (v) => String(v ?? "") },
+  dateExportColumn("created_at", "Created On"),
+]
+
+// ============================================
+// Page Component
+// ============================================
+
 export default function TenantBillsPage() {
   const params = useParams()
   const tenantId = params.id as string
 
-  const [loading, setLoading] = useState(true)
   const [tenant, setTenant] = useState<Tenant | null>(null)
-  const [bills, setBills] = useState<Bill[]>([])
+  const [notFound, setNotFound] = useState(false)
+  const [parentLoading, setParentLoading] = useState(true)
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchTenant = async () => {
       const supabase = createClient()
-
-      // Fetch tenant details
-      const { data: tenantData } = await supabase
+      const { data, error } = await supabase
         .from("tenants")
-        .select(`
-          id, name,
-          property:properties(name),
-          room:rooms(room_number)
-        `)
+        .select(`id, name, property:properties(name), room:rooms(room_number)`)
         .eq("id", tenantId)
+        .is("deleted_at", null)
         .single()
 
-      if (tenantData) {
-        const t = tenantData as {
+      if (error || !data) {
+        logger.error("[TenantBillsPage] Failed to fetch tenant", { tenantId, error: String(error) })
+        setNotFound(true)
+      } else {
+        const t = data as {
           id: string; name: string;
           property: { name: string }[] | null;
           room: { room_number: string }[] | null
@@ -69,63 +214,20 @@ export default function TenantBillsPage() {
           id: t.id,
           name: t.name,
           property: transformJoin(t.property),
-          room: transformJoin(t.room)
+          room: transformJoin(t.room),
         })
       }
-
-      // Fetch bills for this tenant
-      const { data: billsData } = await supabase
-        .from("bills")
-        .select("*")
-        .eq("tenant_id", tenantId)
-        .order("bill_date", { ascending: false })
-
-      if (billsData) {
-        setBills(billsData)
-      }
-
-      setLoading(false)
+      setParentLoading(false)
     }
-
-    fetchData()
+    fetchTenant()
   }, [tenantId])
 
-  const columns: Column<Bill>[] = [
-    {
-      key: "bill_number",
-      header: "Bill #",
-      render: (bill) => (
-        <Link href={`/bills/${bill.id}`} className="font-medium text-primary hover:underline">
-          {bill.bill_number}
-        </Link>
-      )
-    },
-    dateColumn("bill_date", "Bill Date"),
-    {
-      key: "billing_period",
-      header: "Period",
-      render: (bill) => `${formatDate(bill.billing_period_start)} - ${formatDate(bill.billing_period_end)}`
-    },
-    {
-      key: "total_amount",
-      header: "Amount",
-      render: (bill) => <Currency amount={bill.total_amount} />
-    },
-    {
-      key: "paid_amount",
-      header: "Paid",
-      render: (bill) => <Currency amount={bill.paid_amount} className="text-success" />
-    },
-    {
-      key: "status",
-      header: "Status",
-      render: (bill) => <StatusBadge status={bill.status} />
-    }
-  ]
+  const config = useMemo(() => ({
+    ...BILL_LIST_CONFIG,
+    fixedFilters: [{ column: "tenant_id", operator: "eq" as const, value: tenantId }],
+  }), [tenantId])
 
-  if (loading) return <PageSkeleton variant="list" />
-
-  if (!tenant) {
+  if (notFound) {
     return (
       <EmptyState
         icon={User}
@@ -136,54 +238,51 @@ export default function TenantBillsPage() {
     )
   }
 
-  return (
-    <PermissionGuard permission="bills.view">
-      <div className="space-y-6">
-        <PageHeader
-          title={`Bills for ${tenant.name}`}
-          description={`${tenant.property?.name || ''} ${tenant.room ? `• Room ${tenant.room.room_number}` : ''}`}
-          icon={Receipt}
-          breadcrumbs={[
-            { label: "Tenants", href: "/tenants" },
-            { label: tenant.name, href: `/tenants/${tenantId}` },
-            { label: "Bills" }
-          ]}
-          actions={
-            <div className="flex gap-2">
-              <Link href={`/tenants/${tenantId}`}>
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Tenant
-                </Button>
-              </Link>
-              <Link href={`/bills/new?tenant_id=${tenantId}`}>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Bill
-                </Button>
-              </Link>
-            </div>
-          }
-        />
+  // Wait for parent context before rendering the template so breadcrumbs/title are correct
+  if (parentLoading) return null
 
-        {bills.length === 0 ? (
-          <EmptyState
-            icon={Receipt}
-            title="No bills yet"
-            description={`No bills have been generated for ${tenant.name}.`}
-            action={{ label: "Create Bill", href: `/bills/new?tenant_id=${tenantId}` }}
-          />
-        ) : (
-          <DataTable
-            data={bills}
-            columns={columns}
-            keyField="id"
-            searchable
-            searchFields={["bill_number"]}
-            searchPlaceholder="Search bills..."
-          />
-        )}
-      </div>
-    </PermissionGuard>
+  const tenantName = tenant?.name ?? "..."
+  const contextLine = [tenant?.property?.name, tenant?.room ? `Room ${tenant.room.room_number}` : null]
+    .filter(Boolean)
+    .join(" • ")
+
+  return (
+    <ListPageTemplate
+      tableKey={`tenant-${tenantId}-bills`}
+      title={`Bills for ${tenantName}`}
+      description={contextLine || "Tenant billing history"}
+      icon={Receipt}
+      permission="bills.view"
+      breadcrumbs={[
+        { label: "Tenants", href: "/tenants" },
+        { label: tenantName, href: `/tenants/${tenantId}` },
+        { label: "Bills" },
+      ]}
+      config={config}
+      columns={columns}
+      filters={filters}
+      groupByOptions={groupByOptions}
+      metrics={metrics}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableColumnManager={true}
+      enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename={`bills-tenant-${tenantId}`}
+      createHref={`/bills/new?tenant_id=${tenantId}`}
+      createLabel="Generate Bill"
+      createPermission="bills.create"
+      detailHref={(bill) => `/bills/${bill.id}`}
+      headerActions={
+        <Link href={`/tenants/${tenantId}`}>
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Tenant
+          </Button>
+        </Link>
+      }
+      emptyTitle="No bills yet"
+      emptyDescription={`No bills have been generated for ${tenantName}.`}
+    />
   )
 }

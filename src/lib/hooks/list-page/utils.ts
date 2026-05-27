@@ -106,6 +106,13 @@ export function applyBaseFiltersToQuery<T>(
   currentFilters: Record<string, string>,
   currentSearchQuery: string
 ): PostgrestQueryChain {
+  // Apply fixed server-side filters (always applied, cannot be cleared by the user)
+  if (config.fixedFilters && config.fixedFilters.length > 0) {
+    for (const filter of config.fixedFilters) {
+      query = applyServerFilter(query, filter)
+    }
+  }
+
   // Filter out soft-deleted records by default
   if (!config.includeSoftDeleted) {
     query = query.is("deleted_at", null)

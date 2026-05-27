@@ -1,32 +1,27 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { PermissionGuard } from "@/components/auth"
-import { PageHeader } from "@/components/ui/page-header"
-import { DataTable, Column } from "@/components/ui/data-table"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { Currency } from "@/components/ui/currency"
-import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
-import { Users, Plus, ArrowLeft, Building2 } from "lucide-react"
-import { formatCurrency } from "@/lib/format"
-import { dateColumn } from "@/lib/columns"
-import { transformJoin } from "@/lib/supabase/transforms"
-
-interface Tenant {
-  id: string
-  name: string
-  phone: string
-  email: string | null
-  check_in_date: string
-  monthly_rent: number
-  status: string
-  room: { room_number: string } | null
-}
+import { Users, UserCheck, UserMinus, Clock, ArrowLeft, Building2 } from "lucide-react"
+import { Column } from "@/components/ui/data-table"
+import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
+import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
+import { FilterConfig } from "@/components/ui/list-page-filters"
+import { createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { TENANT_STATUS_OPTIONS } from "@/lib/filters/common-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
+import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
+import { textFilterColumn, statusFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
+import { brandGradient } from "@/lib/design-tokens"
+import type { CSVColumn } from "@/lib/download-utils"
+import { nestedColumn, dateExportColumn, currencyExportColumn } from "@/lib/export-columns"
+import { logger } from "@/lib/logger"
 
 interface Property {
   id: string
@@ -34,112 +29,178 @@ interface Property {
   address: string
 }
 
+// ============================================
+// Types
+// ============================================
+
+interface Tenant {
+  id: string
+  name: string
+  email: string | null
+  phone: string
+  photo_url: string | null
+  profile_photo: string | null
+  check_in_date: string
+  check_out_date: string | null
+  monthly_rent: number
+  security_deposit: number
+  status: string
+  notes: string | null
+  created_at: string
+  property: { id: string; name: string } | null
+  room: { id: string; room_number: string } | null
+  person: { id: string; name: string; photo_url: string | null } | null
+  checkin_month?: string
+  checkin_year?: string
+}
+
+// ============================================
+// Column Definitions
+// ============================================
+
+const columns: Column<Tenant>[] = [
+  personNameWithAvatarColumn("Tenant", {
+    avatarClassName: `${brandGradient.solid} text-white shrink-0`,
+  }),
+  {
+    key: "room",
+    header: "Room",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: true,
+    render: (tenant) => (
+      <span className="text-muted-foreground text-sm">
+        Room {tenant.room?.room_number || "—"}
+      </span>
+    ),
+  },
+  currencyColumn("monthly_rent", "Rent", {
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
+  }),
+  dateColumn("check_in_date", "Since", { hideOnMobile: true }),
+  statusColumn((status) => getTenantStatusInfo("tenant", status), {
+    editable: true,
+    editType: "select",
+    editOptions: TENANT_STATUS_OPTIONS,
+  }),
+  {
+    key: "phone",
+    header: "Phone",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => tenant.phone,
+  },
+  {
+    key: "email",
+    header: "Email",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => tenant.email || <span className="text-muted-foreground">—</span>,
+  },
+  currencyColumn("security_deposit", "Security Deposit", {
+    defaultVisible: false,
+    bold: false,
+  }),
+  dateColumn("check_out_date", "Check-out Date", { defaultVisible: false }),
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
+]
+
+// ============================================
+// Filter Configurations
+// ============================================
+
+const filters: FilterConfig[] = [
+  createStatusFilter([
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+    { value: "notice", label: "On Notice" },
+    { value: "exited", label: "Exited" },
+  ]),
+  createDateRangeFilter("check_in_date", "Check-in Date"),
+]
+
+const groupByOptions: GroupByOption[] = [
+  { value: "room.room_number", label: "Room" },
+  { value: "status", label: "Status" },
+  { value: "checkin_year", label: "Year" },
+]
+
+const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("name", "Tenant Name"),
+  statusFilterColumn([
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+    { value: "notice", label: "On Notice" },
+    { value: "exited", label: "Exited" },
+  ]),
+  numberFilterColumn("monthly_rent", "Monthly Rent"),
+  dateFilterColumn("check_in_date", "Check-in Date"),
+]
+
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Tenants", icon: Users }),
+  createStatusMetric("active", "Active", UserCheck),
+  createStatusMetric("notice", "On Notice", Clock),
+  createStatusMetric("exited", "Exited", UserMinus),
+  createSumMetric("monthly_rent", "total_rent", "Total Rent", Users, { format: "currency" }),
+]
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Name" },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email", header: "Email", format: (v) => String(v ?? "") },
+  nestedColumn("room_number", "Room", "room.room_number"),
+  dateExportColumn("check_in_date", "Check-in Date"),
+  currencyExportColumn("monthly_rent", "Monthly Rent"),
+  { key: "status", header: "Status", format: (v) => String(v ?? "") },
+]
+
+// ============================================
+// Page Component
+// ============================================
+
 export default function PropertyTenantsPage() {
   const params = useParams()
   const propertyId = params.id as string
 
-  const [loading, setLoading] = useState(true)
   const [property, setProperty] = useState<Property | null>(null)
-  const [tenants, setTenants] = useState<Tenant[]>([])
+  const [notFound, setNotFound] = useState(false)
+  const [parentLoading, setParentLoading] = useState(true)
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProperty = async () => {
       const supabase = createClient()
-
-      // Fetch property details
-      const { data: propertyData } = await supabase
+      const { data, error } = await supabase
         .from("properties")
         .select("id, name, address")
         .eq("id", propertyId)
+        .is("deleted_at", null)
         .single()
 
-      if (propertyData) {
-        setProperty(propertyData)
+      if (error || !data) {
+        logger.error("[PropertyTenantsPage] Failed to fetch property", { propertyId, error: String(error) })
+        setNotFound(true)
+      } else {
+        setProperty(data as Property)
       }
-
-      // Fetch tenants in this property
-      const { data: tenantsData } = await supabase
-        .from("tenants")
-        .select(`
-          id, name, phone, email, check_in_date, monthly_rent, status,
-          room:rooms(room_number)
-        `)
-        .eq("property_id", propertyId)
-        .order("name", { ascending: true })
-
-      if (tenantsData) {
-        const processed = tenantsData.map((t: {
-          id: string; name: string; phone: string; email: string | null;
-          check_in_date: string; monthly_rent: number; status: string;
-          room: { room_number: string }[] | null
-        }) => ({
-          ...t,
-          room: transformJoin(t.room)
-        }))
-        setTenants(processed)
-      }
-
-      setLoading(false)
+      setParentLoading(false)
     }
-
-    fetchData()
+    fetchProperty()
   }, [propertyId])
 
-  const activeTenants = tenants.filter(t => t.status === 'active').length
-  const totalRent = tenants.filter(t => t.status === 'active').reduce((sum, t) => sum + t.monthly_rent, 0)
+  const config = useMemo(() => ({
+    ...TENANT_LIST_CONFIG,
+    fixedFilters: [{ column: "property_id", operator: "eq" as const, value: propertyId }],
+  }), [propertyId])
 
-  const columns: Column<Tenant>[] = [
-    {
-      key: "name",
-      header: "Tenant",
-      render: (tenant) => (
-        <Link href={`/tenants/${tenant.id}`} className="font-medium text-primary hover:underline">
-          {tenant.name}
-        </Link>
-      )
-    },
-    {
-      key: "room",
-      header: "Room",
-      render: (tenant) => tenant.room ? (
-        <span className="text-muted-foreground">Room {tenant.room.room_number}</span>
-      ) : "-"
-    },
-    {
-      key: "phone",
-      header: "Phone",
-      render: (tenant) => tenant.phone
-    },
-    dateColumn("check_in_date", "Check-in"),
-    {
-      key: "monthly_rent",
-      header: "Rent",
-      render: (tenant) => <Currency amount={tenant.monthly_rent} />
-    },
-    {
-      key: "status",
-      header: "Status",
-      render: (tenant) => <StatusBadge status={tenant.status} />
-    },
-    {
-      key: "actions",
-      header: "",
-      render: (tenant) => (
-        <div className="flex gap-1">
-          <Link href={`/tenants/${tenant.id}/bills`}>
-            <Button variant="ghost" size="sm">Bills</Button>
-          </Link>
-          <Link href={`/tenants/${tenant.id}/payments`}>
-            <Button variant="ghost" size="sm">Payments</Button>
-          </Link>
-        </div>
-      )
-    }
-  ]
-
-  if (loading) return <PageSkeleton variant="list" />
-
-  if (!property) {
+  if (notFound) {
     return (
       <EmptyState
         icon={Building2}
@@ -150,54 +211,47 @@ export default function PropertyTenantsPage() {
     )
   }
 
-  return (
-    <PermissionGuard permission="tenants.view">
-      <div className="space-y-6">
-        <PageHeader
-          title={`Tenants in ${property.name}`}
-          description={`${activeTenants} active tenants • Total rent: ${formatCurrency(totalRent)}/month`}
-          icon={Users}
-          breadcrumbs={[
-            { label: "Properties", href: "/properties" },
-            { label: property.name, href: `/properties/${propertyId}` },
-            { label: "Tenants" }
-          ]}
-          actions={
-            <div className="flex gap-2">
-              <Link href={`/properties/${propertyId}`}>
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Property
-                </Button>
-              </Link>
-              <Link href={`/tenants/new?property_id=${propertyId}`}>
-                <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Tenant
-                </Button>
-              </Link>
-            </div>
-          }
-        />
+  if (parentLoading) return null
 
-        {tenants.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No tenants yet"
-            description={`${property.name} has no tenants.`}
-            action={{ label: "Add Tenant", href: `/tenants/new?property_id=${propertyId}` }}
-          />
-        ) : (
-          <DataTable
-            data={tenants}
-            columns={columns}
-            keyField="id"
-            searchable
-            searchFields={["name", "phone"]}
-            searchPlaceholder="Search tenants..."
-          />
-        )}
-      </div>
-    </PermissionGuard>
+  const propertyName = property?.name ?? "..."
+
+  return (
+    <ListPageTemplate
+      tableKey={`property-${propertyId}-tenants`}
+      title={`Tenants in ${propertyName}`}
+      description={property?.address || "Property tenants"}
+      icon={Users}
+      permission="tenants.view"
+      breadcrumbs={[
+        { label: "Properties", href: "/properties" },
+        { label: propertyName, href: `/properties/${propertyId}` },
+        { label: "Tenants" },
+      ]}
+      config={config}
+      columns={columns}
+      filters={filters}
+      groupByOptions={groupByOptions}
+      metrics={metrics}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableColumnManager={true}
+      enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename={`tenants-property-${propertyId}`}
+      createHref={`/tenants/new?property_id=${propertyId}`}
+      createLabel="Add Tenant"
+      createPermission="tenants.create"
+      detailHref={(tenant) => `/tenants/${tenant.id}`}
+      headerActions={
+        <Link href={`/properties/${propertyId}`}>
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Property
+          </Button>
+        </Link>
+      }
+      emptyTitle="No tenants yet"
+      emptyDescription={`${propertyName} has no tenants.`}
+    />
   )
 }

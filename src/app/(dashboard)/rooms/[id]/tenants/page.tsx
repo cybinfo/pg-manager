@@ -1,30 +1,28 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { PermissionGuard } from "@/components/auth"
-import { PageHeader } from "@/components/ui/page-header"
-import { DataTable, Column } from "@/components/ui/data-table"
-import { StatusBadge } from "@/components/ui/status-badge"
-import { Currency } from "@/components/ui/currency"
-import { PageSkeleton } from "@/components/ui/loading"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
-import { Users, Plus, ArrowLeft, Home } from "lucide-react"
-import { formatDate } from "@/lib/format"
+import { Users, UserCheck, UserMinus, Clock, ArrowLeft, Home } from "lucide-react"
+import { Column } from "@/components/ui/data-table"
+import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
+import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
+import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
+import { FilterConfig } from "@/components/ui/list-page-filters"
+import { createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { TENANT_STATUS_OPTIONS } from "@/lib/filters/common-filters"
+import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
+import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
+import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
+import { textFilterColumn, statusFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
+import { brandGradient } from "@/lib/design-tokens"
+import type { CSVColumn } from "@/lib/download-utils"
+import { dateExportColumn, currencyExportColumn } from "@/lib/export-columns"
 import { transformJoin } from "@/lib/supabase/transforms"
-
-interface Tenant {
-  id: string
-  name: string
-  phone: string
-  email: string | null
-  check_in_date: string
-  monthly_rent: number
-  status: string
-}
+import { logger } from "@/lib/logger"
 
 interface Room {
   id: string
@@ -35,107 +33,167 @@ interface Room {
   property: { id: string; name: string } | null
 }
 
+// ============================================
+// Types
+// ============================================
+
+interface Tenant {
+  id: string
+  name: string
+  email: string | null
+  phone: string
+  photo_url: string | null
+  profile_photo: string | null
+  check_in_date: string
+  check_out_date: string | null
+  monthly_rent: number
+  security_deposit: number
+  status: string
+  notes: string | null
+  created_at: string
+  property: { id: string; name: string } | null
+  room: { id: string; room_number: string } | null
+  person: { id: string; name: string; photo_url: string | null } | null
+  checkin_month?: string
+  checkin_year?: string
+}
+
+// ============================================
+// Column Definitions
+// ============================================
+
+const columns: Column<Tenant>[] = [
+  personNameWithAvatarColumn("Tenant", {
+    avatarClassName: `${brandGradient.solid} text-white shrink-0`,
+  }),
+  {
+    key: "phone",
+    header: "Phone",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: true,
+    render: (tenant) => tenant.phone,
+  },
+  currencyColumn("monthly_rent", "Rent", {
+    editable: true,
+    editType: "number",
+    editValidation: { min: 0 },
+  }),
+  dateColumn("check_in_date", "Since", { hideOnMobile: true }),
+  statusColumn((status) => getTenantStatusInfo("tenant", status), {
+    editable: true,
+    editType: "select",
+    editOptions: TENANT_STATUS_OPTIONS,
+  }),
+  {
+    key: "email",
+    header: "Email",
+    width: "secondary",
+    sortable: true,
+    canHide: true,
+    defaultVisible: false,
+    render: (tenant) => tenant.email || <span className="text-muted-foreground">—</span>,
+  },
+  currencyColumn("security_deposit", "Security Deposit", {
+    defaultVisible: false,
+    bold: false,
+  }),
+  dateColumn("check_out_date", "Check-out Date", { defaultVisible: false }),
+  dateColumn("created_at", "Added On", { defaultVisible: false }),
+]
+
+// ============================================
+// Filter Configurations
+// ============================================
+
+const filters: FilterConfig[] = [
+  createStatusFilter([
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+    { value: "notice", label: "On Notice" },
+    { value: "exited", label: "Exited" },
+  ]),
+  createDateRangeFilter("check_in_date", "Check-in Date"),
+]
+
+const groupByOptions: GroupByOption[] = [
+  { value: "status", label: "Status" },
+  { value: "checkin_year", label: "Year" },
+]
+
+const advancedFilterColumns: FilterableColumn[] = [
+  textFilterColumn("name", "Tenant Name"),
+  statusFilterColumn([
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+    { value: "notice", label: "On Notice" },
+    { value: "exited", label: "Exited" },
+  ]),
+  numberFilterColumn("monthly_rent", "Monthly Rent"),
+  dateFilterColumn("check_in_date", "Check-in Date"),
+]
+
+const metrics: MetricConfig<Record<string, unknown>>[] = [
+  createTotalMetric({ label: "Total Tenants", icon: Users }),
+  createStatusMetric("active", "Active", UserCheck),
+  createStatusMetric("notice", "On Notice", Clock),
+  createStatusMetric("exited", "Exited", UserMinus),
+  createSumMetric("monthly_rent", "total_rent", "Total Rent", Users, { format: "currency" }),
+]
+
+const exportColumns: CSVColumn<Record<string, unknown>>[] = [
+  { key: "name", header: "Name" },
+  { key: "phone", header: "Phone", format: (v) => String(v ?? "") },
+  { key: "email", header: "Email", format: (v) => String(v ?? "") },
+  dateExportColumn("check_in_date", "Check-in Date"),
+  currencyExportColumn("monthly_rent", "Monthly Rent"),
+  { key: "status", header: "Status", format: (v) => String(v ?? "") },
+]
+
+// ============================================
+// Page Component
+// ============================================
+
 export default function RoomTenantsPage() {
   const params = useParams()
   const roomId = params.id as string
 
-  const [loading, setLoading] = useState(true)
   const [room, setRoom] = useState<Room | null>(null)
-  const [tenants, setTenants] = useState<Tenant[]>([])
+  const [notFound, setNotFound] = useState(false)
+  const [parentLoading, setParentLoading] = useState(true)
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchRoom = async () => {
       const supabase = createClient()
-
-      // Fetch room details
-      const { data: roomData } = await supabase
+      const { data, error } = await supabase
         .from("rooms")
-        .select(`
-          id, room_number, room_type, total_beds, occupied_beds,
-          property:properties(id, name)
-        `)
+        .select(`id, room_number, room_type, total_beds, occupied_beds, property:properties(id, name)`)
         .eq("id", roomId)
         .single()
 
-      if (roomData) {
-        const r = roomData as {
+      if (error || !data) {
+        logger.error("[RoomTenantsPage] Failed to fetch room", { roomId, error: String(error) })
+        setNotFound(true)
+      } else {
+        const r = data as {
           id: string; room_number: string; room_type: string;
           total_beds: number; occupied_beds: number;
           property: { id: string; name: string }[] | null
         }
-        setRoom({
-          ...r,
-          property: transformJoin(r.property)
-        })
+        setRoom({ ...r, property: transformJoin(r.property) })
       }
-
-      // Fetch tenants in this room
-      const { data: tenantsData } = await supabase
-        .from("tenants")
-        .select("id, name, phone, email, check_in_date, monthly_rent, status")
-        .eq("room_id", roomId)
-        .eq("status", "active")
-        .order("check_in_date", { ascending: false })
-
-      if (tenantsData) {
-        setTenants(tenantsData)
-      }
-
-      setLoading(false)
+      setParentLoading(false)
     }
-
-    fetchData()
+    fetchRoom()
   }, [roomId])
 
-  const columns: Column<Tenant>[] = [
-    {
-      key: "name",
-      header: "Tenant",
-      render: (tenant) => (
-        <Link href={`/tenants/${tenant.id}`} className="font-medium text-primary hover:underline">
-          {tenant.name}
-        </Link>
-      )
-    },
-    {
-      key: "phone",
-      header: "Phone",
-      render: (tenant) => tenant.phone
-    },
-    {
-      key: "check_in_date",
-      header: "Check-in",
-      render: (tenant) => formatDate(tenant.check_in_date)
-    },
-    {
-      key: "monthly_rent",
-      header: "Rent",
-      render: (tenant) => <Currency amount={tenant.monthly_rent} />
-    },
-    {
-      key: "status",
-      header: "Status",
-      render: (tenant) => <StatusBadge status={tenant.status} />
-    },
-    {
-      key: "actions",
-      header: "",
-      render: (tenant) => (
-        <div className="flex gap-1">
-          <Link href={`/tenants/${tenant.id}/bills`}>
-            <Button variant="ghost" size="sm">Bills</Button>
-          </Link>
-          <Link href={`/tenants/${tenant.id}/payments`}>
-            <Button variant="ghost" size="sm">Payments</Button>
-          </Link>
-        </div>
-      )
-    }
-  ]
+  const config = useMemo(() => ({
+    ...TENANT_LIST_CONFIG,
+    fixedFilters: [{ column: "room_id", operator: "eq" as const, value: roomId }],
+  }), [roomId])
 
-  if (loading) return <PageSkeleton variant="list" />
-
-  if (!room) {
+  if (notFound) {
     return (
       <EmptyState
         icon={Home}
@@ -146,56 +204,52 @@ export default function RoomTenantsPage() {
     )
   }
 
-  return (
-    <PermissionGuard permission="tenants.view">
-      <div className="space-y-6">
-        <PageHeader
-          title={`Tenants in Room ${room.room_number}`}
-          description={`${room.property?.name || ''} • ${room.room_type} • ${room.occupied_beds}/${room.total_beds} beds occupied`}
-          icon={Users}
-          breadcrumbs={[
-            { label: "Rooms", href: "/rooms" },
-            { label: `Room ${room.room_number}`, href: `/rooms/${roomId}` },
-            { label: "Tenants" }
-          ]}
-          actions={
-            <div className="flex gap-2">
-              <Link href={`/rooms/${roomId}`}>
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Room
-                </Button>
-              </Link>
-              {room.occupied_beds < room.total_beds && (
-                <Link href={`/tenants/new?room_id=${roomId}`}>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Tenant
-                  </Button>
-                </Link>
-              )}
-            </div>
-          }
-        />
+  if (parentLoading) return null
 
-        {tenants.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No tenants"
-            description={`Room ${room.room_number} has no active tenants.`}
-            action={{ label: "Add Tenant", href: `/tenants/new?room_id=${roomId}` }}
-          />
-        ) : (
-          <DataTable
-            data={tenants}
-            columns={columns}
-            keyField="id"
-            searchable
-            searchFields={["name", "phone"]}
-            searchPlaceholder="Search tenants..."
-          />
-        )}
-      </div>
-    </PermissionGuard>
+  const roomLabel = room ? `Room ${room.room_number}` : "..."
+  const contextLine = [room?.property?.name, room?.room_type]
+    .filter(Boolean)
+    .join(" • ")
+
+  const canAddTenant = room ? room.occupied_beds < room.total_beds : false
+
+  return (
+    <ListPageTemplate
+      tableKey={`room-${roomId}-tenants`}
+      title={`Tenants in ${roomLabel}`}
+      description={contextLine || "Room tenants"}
+      icon={Users}
+      permission="tenants.view"
+      breadcrumbs={[
+        { label: "Rooms", href: "/rooms" },
+        { label: roomLabel, href: `/rooms/${roomId}` },
+        { label: "Tenants" },
+      ]}
+      config={config}
+      columns={columns}
+      filters={filters}
+      groupByOptions={groupByOptions}
+      metrics={metrics}
+      enableAdvancedFilters={true}
+      advancedFilterColumns={advancedFilterColumns}
+      enableColumnManager={true}
+      enableInlineEdit={true}
+      exportColumns={exportColumns}
+      exportFilename={`tenants-room-${roomId}`}
+      createHref={canAddTenant ? `/tenants/new?room_id=${roomId}` : undefined}
+      createLabel="Add Tenant"
+      createPermission="tenants.create"
+      detailHref={(tenant) => `/tenants/${tenant.id}`}
+      headerActions={
+        <Link href={`/rooms/${roomId}`}>
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Room
+          </Button>
+        </Link>
+      }
+      emptyTitle="No tenants"
+      emptyDescription={`${roomLabel} has no tenants.`}
+    />
   )
 }

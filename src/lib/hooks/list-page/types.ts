@@ -25,6 +25,9 @@ export interface ListPageConfig<T> {
   enableServerPagination?: boolean // defaults to true
   // Soft delete settings
   includeSoftDeleted?: boolean // defaults to false - set to true to include deleted records
+  // Fixed server-side filters that are always applied and cannot be cleared by the user.
+  // Use for sub-list pages that must be scoped to a parent entity (e.g. tenant_id, property_id).
+  fixedFilters?: ServerFilter[]
 }
 
 export interface FilterConfig {
