@@ -79,6 +79,7 @@ function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
   )
 }
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { logger } from "@/lib/logger"
 import { LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryMembership, LibraryPayment } from "@/types/library.types"
 import { LIBRARY_PAYMENT_METHOD_OPTIONS, LIBRARY_PAYMENT_METHOD_LABELS } from "@/lib/status"
