@@ -60,3 +60,7 @@ export * from "./useFormSubmit"
 
 // Unsaved changes warning
 export * from "./useUnsavedChanges"
+
+// File upload hooks
+export * from "./useFileUpload"
+export * from "./useProfilePhotoUpload"

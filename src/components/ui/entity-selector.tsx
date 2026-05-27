@@ -1,15 +1,8 @@
-/**
- * EntitySelector - Unified base component for entity search, selection, and quick creation.
- *
- * Used by PersonSelector, ProductSelector, and VendorSelector as thin wrappers.
- * Handles: debounced search, dropdown results, selected display, quick-create form,
- * duplicate detection, click-outside-to-close, compact mode, loading/error states.
- */
-
 "use client"
 
-import { useState, useEffect, useCallback, type ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useEntitySelector } from "@/lib/hooks/useEntitySelector"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -24,7 +17,6 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
-import { logger } from "@/lib/logger"
 
 // ============================================================================
 // TYPES
@@ -175,9 +167,6 @@ export function EntitySelector<T extends { id: string }>({
   extraFilterData = {},
 }: EntitySelectorProps<T>) {
   const [search, setSearch] = useState(initialSearch)
-  const [results, setResults] = useState<T[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedItem, setSelectedItem] = useState<T | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [showQuickCreate, setShowQuickCreate] = useState(false)
   const [quickCreateForm, setQuickCreateForm] = useState<Record<string, string>>(
@@ -185,106 +174,17 @@ export function EntitySelector<T extends { id: string }>({
   )
   const [creating, setCreating] = useState(false)
 
+  const { selectedItem, setSelectedItem, results, loading } = useEntitySelector({
+    config,
+    scopeId,
+    selectedId,
+    isOpen,
+    search,
+    extraFilterData,
+  })
+
   const minSearchLength = config.minSearchLength ?? 0
   const effectivePlaceholder = placeholder ?? `Search ${config.entityLabel.toLowerCase()}s...`
-
-  // --------------------------------------------------
-  // Fetch selected item by ID on mount
-  // --------------------------------------------------
-  useEffect(() => {
-    if (selectedId && !selectedItem) {
-      const fetchItem = async () => {
-        const supabase = createClient()
-        const { data } = await supabase
-          .from(config.table)
-          .select(config.select)
-          .eq("id", selectedId)
-          .single()
-
-        if (data) {
-          setSelectedItem(data as T)
-        }
-      }
-      fetchItem()
-    }
-  }, [selectedId, selectedItem, config.table, config.select])
-
-  // --------------------------------------------------
-  // Search function
-  // --------------------------------------------------
-  const searchEntities = useCallback(async (query: string) => {
-    if (minSearchLength > 0 && (!query || query.length < minSearchLength)) {
-      setResults([])
-      return
-    }
-
-    setLoading(true)
-    const supabase = createClient()
-
-        let queryBuilder = supabase
-      .from(config.table)
-      .select(config.select)
-      .eq(config.scopeColumn, scopeId)
-
-    // Apply static filters
-    if (config.staticFilters) {
-      for (const filter of config.staticFilters) {
-        if (filter.op === "eq") {
-          queryBuilder = queryBuilder.eq(filter.column, filter.value)
-        } else if (filter.op === "is") {
-          queryBuilder = queryBuilder.is(filter.column, filter.value)
-        }
-      }
-    }
-
-    // Apply search OR clause
-    if (query && query.length > 0 && config.searchColumns.length > 0) {
-      const orClause = config.searchColumns
-        .map((col: string) => `${col}.ilike.%${query}%`)
-        .join(",")
-      queryBuilder = queryBuilder.or(orClause)
-    }
-
-    // Apply extra filters from wrapper
-    if (config.applyExtraFilters) {
-      queryBuilder = config.applyExtraFilters(queryBuilder, extraFilterData)
-    }
-
-    queryBuilder = queryBuilder
-      .order(config.orderBy ?? "name")
-      .limit(config.limit ?? 20)
-
-    const { data, error: searchError } = await queryBuilder
-
-    if (searchError) {
-      logger.error("Search error:", { detail: searchError })
-      setResults([])
-    } else {
-      let items = (data || []) as T[]
-      // Client-side filtering
-      if (config.clientFilter) {
-        items = config.clientFilter(items, extraFilterData)
-      }
-      setResults(items)
-    }
-
-    setLoading(false)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scopeId, config, extraFilterData])
-
-  // --------------------------------------------------
-  // Debounced search effect
-  // --------------------------------------------------
-  useEffect(() => {
-    if (!isOpen) return
-
-    const delay = search ? 300 : (minSearchLength === 0 ? 0 : 300)
-    const timer = setTimeout(() => {
-      searchEntities(search)
-    }, delay)
-
-    return () => clearTimeout(timer)
-  }, [search, isOpen, searchEntities, minSearchLength])
 
   // --------------------------------------------------
   // Handlers

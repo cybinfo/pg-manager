@@ -1,77 +1,25 @@
 "use client"
 
-import React, { useState, useRef, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
+import React, { useRef, useCallback } from "react"
 import { Button } from "./button"
 import { Upload, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react"
-import { showSuccess, showError } from "@/lib/toast-helpers"
 import { cn } from "@/lib/utils"
-import { logger } from "@/lib/logger"
-
-/** Compress an image file using Canvas API. Non-image files pass through unchanged. */
-async function compressImage(file: File, maxKB: number, maxDimension: number): Promise<File> {
-  if (!file.type.startsWith("image/") || file.type === "image/gif") return file
-
-  return new Promise((resolve) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-
-      let { width, height } = img
-      if (width > maxDimension || height > maxDimension) {
-        if (width > height) {
-          height = Math.round((height * maxDimension) / width)
-          width = maxDimension
-        } else {
-          width = Math.round((width * maxDimension) / height)
-          height = maxDimension
-        }
-      }
-
-      const canvas = document.createElement("canvas")
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext("2d")!
-      ctx.drawImage(img, 0, 0, width, height)
-
-      // Try quality 0.85 first, drop to 0.7 if still over limit
-      const tryQuality = (quality: number) => {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) { resolve(file); return }
-            if (blob.size > maxKB * 1024 && quality > 0.5) {
-              tryQuality(quality - 0.15)
-            } else {
-              resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }))
-            }
-          },
-          "image/jpeg",
-          quality
-        )
-      }
-      tryQuality(0.85)
-    }
-
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
-    img.src = url
-  })
-}
+import { useFileUpload } from "@/lib/hooks/useFileUpload"
+import { useProfilePhotoUpload } from "@/lib/hooks/useProfilePhotoUpload"
 
 interface FileUploadProps {
-  bucket: string // Supabase storage bucket name
-  folder?: string // Optional folder path within bucket
-  accept?: string // Accepted file types (e.g., "image/*", ".pdf,.jpg")
-  maxSize?: number // Max file size in MB (default 5MB)
-  multiple?: boolean // Allow multiple files
-  value?: string | string[] // Current file URL(s)
+  bucket: string
+  folder?: string
+  accept?: string
+  maxSize?: number
+  multiple?: boolean
+  value?: string | string[]
   onChange?: (urls: string | string[]) => void
   onRemove?: (url: string) => void
   label?: string
   description?: string
   className?: string
-  showPreview?: boolean // Show image preview
+  showPreview?: boolean
   disabled?: boolean
 }
 
@@ -90,100 +38,24 @@ export function FileUpload({
   showPreview = true,
   disabled = false,
 }: FileUploadProps) {
-  const [uploading, setUploading] = useState(false)
-  const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Normalize value to array for internal use
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const files = Array.isArray(value) ? value : value ? [value] : []
 
-  const handleFileSelect = useCallback(
-    async (selectedFiles: FileList | null) => {
-      if (!selectedFiles || selectedFiles.length === 0) return
-
-      const filesToUpload = Array.from(selectedFiles)
-
-      // Validate file sizes
-      const oversizedFiles = filesToUpload.filter(
-        (file) => file.size > maxSize * 1024 * 1024
-      )
-      if (oversizedFiles.length > 0) {
-        showError(`File(s) too large. Maximum size is ${maxSize}MB`)
-        return
-      }
-
-      setUploading(true)
-
-      try {
-        const supabase = createClient()
-        const uploadedUrls: string[] = []
-
-        for (const rawFile of filesToUpload) {
-          // Compress images before upload (max 500KB, 1200px — C6 principle)
-          const file = await compressImage(rawFile, 500, 1200)
-
-          // Generate unique filename
-          const timestamp = Date.now()
-          const randomId = Math.random().toString(36).substring(2, 8)
-          const ext = file.name.split(".").pop()
-          const filename = `${timestamp}-${randomId}.${ext}`
-          const path = folder ? `${folder}/${filename}` : filename
-
-          // Upload to Supabase Storage
-          const { data, error } = await supabase.storage
-            .from(bucket)
-            .upload(path, file, {
-              cacheControl: "3600",
-              upsert: false,
-            })
-
-          if (error) {
-            logger.error("Upload error:", { detail: error })
-            showError(`Failed to upload ${file.name}`)
-            continue
-          }
-
-          // Get public URL
-          const { data: urlData } = supabase.storage
-            .from(bucket)
-            .getPublicUrl(data.path)
-
-          if (urlData?.publicUrl) {
-            uploadedUrls.push(urlData.publicUrl)
-          }
-        }
-
-        if (uploadedUrls.length > 0) {
-          if (multiple) {
-            onChange?.([...files, ...uploadedUrls])
-          } else {
-            onChange?.(uploadedUrls[0])
-          }
-          showSuccess(
-            uploadedUrls.length === 1
-              ? "File uploaded successfully"
-              : `${uploadedUrls.length} files uploaded`
-          )
-        }
-      } catch (error) {
-        logger.error("Upload error:", { detail: error })
-        showError("Failed to upload file(s)")
-      } finally {
-        setUploading(false)
-        // Reset input
-        if (inputRef.current) {
-          inputRef.current.value = ""
-        }
-      }
-    },
-    [bucket, folder, maxSize, multiple, files, onChange]
-  )
+  const { uploading, handleFileSelect, handleRemove } = useFileUpload({
+    bucket,
+    folder,
+    maxSize,
+    multiple,
+    files,
+    onChange,
+    onRemove,
+  })
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault()
-      setDragOver(false)
       if (!disabled && !uploading) {
         handleFileSelect(e.dataTransfer.files)
       }
@@ -193,40 +65,34 @@ export function FileUpload({
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setDragOver(true)
   }, [])
+
+  const [dragOver, setDragOver] = React.useState(false)
+
+  const handleDragOverWithState = useCallback((e: React.DragEvent) => {
+    handleDragOver(e)
+    setDragOver(true)
+  }, [handleDragOver])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
   }, [])
 
-  const handleRemove = useCallback(
-    async (urlToRemove: string) => {
-      try {
-        // Extract path from URL
-        const url = new URL(urlToRemove)
-        const path = url.pathname.split(`/storage/v1/object/public/${bucket}/`)[1]
-
-        if (path) {
-          const supabase = createClient()
-          await supabase.storage.from(bucket).remove([path])
-        }
-
-        // Update state
-        if (multiple) {
-          onChange?.(files.filter((f) => f !== urlToRemove))
-        } else {
-          onChange?.("")
-        }
-        onRemove?.(urlToRemove)
-        showSuccess("File removed")
-      } catch (error) {
-        logger.error("Remove error:", { detail: error })
-        showError("Failed to remove file")
-      }
+  const handleDropWithState = useCallback(
+    (e: React.DragEvent) => {
+      setDragOver(false)
+      handleDrop(e)
     },
-    [bucket, multiple, files, onChange, onRemove]
+    [handleDrop]
+  )
+
+  const handleSelectAndReset = useCallback(
+    async (selectedFiles: FileList | null) => {
+      await handleFileSelect(selectedFiles)
+      if (inputRef.current) inputRef.current.value = ""
+    },
+    [handleFileSelect]
   )
 
   const isImage = (url: string) => {
@@ -246,8 +112,8 @@ export function FileUpload({
 
       {/* Drop Zone */}
       <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
+        onDrop={handleDropWithState}
+        onDragOver={handleDragOverWithState}
         onDragLeave={handleDragLeave}
         role="button"
         aria-label={`Upload file${multiple ? 's' : ''}`}
@@ -274,7 +140,7 @@ export function FileUpload({
           accept={accept}
           multiple={multiple}
           disabled={disabled || uploading}
-          onChange={(e) => handleFileSelect(e.target.files)}
+          onChange={(e) => handleSelectAndReset(e.target.files)}
           className="hidden"
         />
 
@@ -368,7 +234,6 @@ export function FileUpload({
   )
 }
 
-// Simplified single image upload with circular preview and cropping (for profile photos)
 interface ProfilePhotoUploadProps {
   bucket: string
   folder?: string
@@ -388,10 +253,24 @@ export function ProfilePhotoUpload({
   disabled = false,
   placeholder,
 }: ProfilePhotoUploadProps) {
-  const [uploading, setUploading] = useState(false)
-  const [cropperOpen, setCropperOpen] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const {
+    uploading,
+    selectedImage,
+    cropperOpen,
+    handleFileSelect,
+    handleCropComplete,
+    handleCropperClose,
+  } = useProfilePhotoUpload({ bucket, folder, onChange })
+
+  const handleSelectAndReset = useCallback(
+    (files: FileList | null) => {
+      handleFileSelect(files)
+      if (inputRef.current) inputRef.current.value = ""
+    },
+    [handleFileSelect]
+  )
 
   const sizeClasses = {
     sm: "h-16 w-16",
@@ -399,79 +278,6 @@ export function ProfilePhotoUpload({
     lg: "h-32 w-32",
   }
 
-  const handleFileSelect = (files: FileList | null) => {
-    if (!files || files.length === 0) return
-
-    const file = files[0]
-    if (file.size > 10 * 1024 * 1024) {
-      showError("File too large. Maximum size is 10MB")
-      return
-    }
-
-    // Create object URL for the cropper
-    const imageUrl = URL.createObjectURL(file)
-    setSelectedImage(imageUrl)
-    setCropperOpen(true)
-
-    // Reset input
-    if (inputRef.current) inputRef.current.value = ""
-  }
-
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    setUploading(true)
-
-    try {
-      const supabase = createClient()
-      const timestamp = Date.now()
-      const randomId = Math.random().toString(36).substring(2, 8)
-      const filename = `${timestamp}-${randomId}.jpg`
-
-      // Compress profile photo to max 200KB, 800px (C6 principle)
-      const rawFile = new File([croppedBlob], filename, { type: "image/jpeg" })
-      const compressed = await compressImage(rawFile, 200, 800)
-
-      const path = folder ? `${folder}/${filename}` : filename
-
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(path, compressed, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: "image/jpeg"
-        })
-
-      if (error) throw error
-
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path)
-
-      if (urlData?.publicUrl) {
-        onChange?.(urlData.publicUrl)
-        showSuccess("Photo uploaded")
-      }
-    } catch (error) {
-      logger.error("Upload error:", { detail: error })
-      showError("Failed to upload photo")
-    } finally {
-      setUploading(false)
-      // Clean up object URL
-      if (selectedImage) {
-        URL.revokeObjectURL(selectedImage)
-        setSelectedImage(null)
-      }
-    }
-  }
-
-  const handleCropperClose = () => {
-    setCropperOpen(false)
-    if (selectedImage) {
-      URL.revokeObjectURL(selectedImage)
-      setSelectedImage(null)
-    }
-  }
-
-  // Dynamically import ImageCropper to avoid SSR issues
   const ImageCropper = React.lazy(() =>
     import("./image-cropper").then(mod => ({ default: mod.ImageCropper }))
   )
@@ -483,7 +289,7 @@ export function ProfilePhotoUpload({
         type="file"
         accept="image/*"
         disabled={disabled || uploading}
-        onChange={(e) => handleFileSelect(e.target.files)}
+        onChange={(e) => handleSelectAndReset(e.target.files)}
         className="hidden"
       />
 
@@ -530,7 +336,6 @@ export function ProfilePhotoUpload({
         </Button>
       )}
 
-      {/* Image Cropper Modal */}
       {selectedImage && (
         <React.Suspense fallback={null}>
           <ImageCropper
