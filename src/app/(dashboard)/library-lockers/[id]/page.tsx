@@ -13,7 +13,7 @@ import { useDetailPage, LIBRARY_LOCKER_DETAIL_CONFIG } from "@/lib/hooks/useDeta
 import { useAuth } from "@/lib/auth"
 import { softDelete } from "@/lib/audit"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
@@ -193,10 +193,6 @@ export default function LibraryLockerDetailPage() {
         }
         backHref={backHref}
         backLabel={backLabel}
-        breadcrumbs={[
-          { label: "Library Lockers", href: "/library-lockers" },
-          { label: `Locker #${locker.locker_number}` },
-        ]}
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className={`p-3 rounded-xl ${
@@ -401,42 +397,44 @@ export default function LibraryLockerDetailPage() {
         )}
 
         {/* Assignment History */}
-        <DetailListSection
-          title="Assignment History"
-          description="Past and current assignments"
-          icon={Users}
-          items={assignments}
-          keyExtractor={(assignment) => assignment.id}
-          renderItem={(assignment) => (
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-              <div>
-                <p className="font-medium text-sm">
-                  {(assignment.member as { name?: string })?.name || "Unknown Member"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(assignment.start_date)}
-                  {assignment.end_date && ` - ${formatDate(assignment.end_date)}`}
-                </p>
-              </div>
-              <div className="text-right">
-                <StatusBadge
-                  status={assignment.status === "active" ? "success" : "muted"}
-                  label={assignment.status}
-                  size="sm"
-                />
-                {assignment.rent_amount && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    <Currency amount={assignment.rent_amount} />/mo
+        <FeatureGuard module="lockers" feature="lockerHistory">
+          <DetailListSection
+            title="Assignment History"
+            description="Past and current assignments"
+            icon={Users}
+            items={assignments}
+            keyExtractor={(assignment) => assignment.id}
+            renderItem={(assignment) => (
+              <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div>
+                  <p className="font-medium text-sm">
+                    {(assignment.member as { name?: string })?.name || "Unknown Member"}
                   </p>
-                )}
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(assignment.start_date)}
+                    {assignment.end_date && ` - ${formatDate(assignment.end_date)}`}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <StatusBadge
+                    status={assignment.status === "active" ? "success" : "muted"}
+                    label={assignment.status}
+                    size="sm"
+                  />
+                  {assignment.rent_amount && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <Currency amount={assignment.rent_amount} />/mo
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-          initialLimit={5}
-          viewAllMode="expand"
-          emptyIcon={Users}
-          emptyText="No assignment history"
-        />
+            )}
+            initialLimit={5}
+            viewAllMode="expand"
+            emptyIcon={Users}
+            emptyText="No assignment history"
+          />
+        </FeatureGuard>
       </DetailPageTemplate>
 
       {ConfirmDialogElement}

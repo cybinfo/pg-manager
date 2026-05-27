@@ -17,6 +17,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { Currency } from "@/components/ui/currency"
 import { createClient } from "@/lib/supabase/client"
+import { useFeatures } from "@/lib/features/use-features"
 import { GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, numberFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
@@ -143,6 +144,8 @@ const groupByOptions: GroupByOption[] = [
 
 export default function LibraryPlansPage() {
   const enrollmentStats = useEnrollmentStats()
+  const { isFeatureEnabled } = useFeatures()
+  const planUsageEnabled = isFeatureEnabled("plans", "planUsageTracking")
 
   // ============================================
   // Column Definitions (uses enrollment stats)
@@ -213,51 +216,53 @@ export default function LibraryPlansPage() {
         </span>
       ),
     },
-    {
-      key: "active_enrollments",
-      header: "Active",
-      width: "count",
-      sortable: false,
-      canHide: true,
-      defaultVisible: true,
-      render: (plan) => {
-        const stat = enrollmentStats.get(plan.id)
-        const active = stat?.active || 0
-        return active > 0 ? (
-          <span className="inline-flex items-center gap-1.5 font-medium text-success">
-            <Users className="h-3.5 w-3.5" />
-            {active}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">0</span>
-        )
+    ...(planUsageEnabled ? [
+      {
+        key: "active_enrollments",
+        header: "Active",
+        width: "count" as const,
+        sortable: false,
+        canHide: true,
+        defaultVisible: true,
+        render: (plan: PlanItem) => {
+          const stat = enrollmentStats.get(plan.id)
+          const active = stat?.active || 0
+          return active > 0 ? (
+            <span className="inline-flex items-center gap-1.5 font-medium text-success">
+              <Users className="h-3.5 w-3.5" />
+              {active}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">0</span>
+          )
+        },
       },
-    },
-    {
-      key: "total_enrollments",
-      header: "Total Enrolled",
-      width: "count",
-      sortable: false,
-      canHide: true,
-      defaultVisible: false,
-      render: (plan) => {
-        const stat = enrollmentStats.get(plan.id)
-        const total = stat?.total || 0
-        const active = stat?.active || 0
-        return total > 0 ? (
-          <div>
-            <span className="font-medium">{total}</span>
-            {active > 0 && (
-              <span className="text-xs text-muted-foreground ml-1">
-                ({active} active)
-              </span>
-            )}
-          </div>
-        ) : (
-          <span className="text-muted-foreground">0</span>
-        )
+      {
+        key: "total_enrollments",
+        header: "Total Enrolled",
+        width: "count" as const,
+        sortable: false,
+        canHide: true,
+        defaultVisible: false,
+        render: (plan: PlanItem) => {
+          const stat = enrollmentStats.get(plan.id)
+          const total = stat?.total || 0
+          const active = stat?.active || 0
+          return total > 0 ? (
+            <div>
+              <span className="font-medium">{total}</span>
+              {active > 0 && (
+                <span className="text-xs text-muted-foreground ml-1">
+                  ({active} active)
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-muted-foreground">0</span>
+          )
+        },
       },
-    },
+    ] : []),
     {
       key: "is_active",
       header: "Status",
@@ -313,26 +318,28 @@ export default function LibraryPlansPage() {
       suffix: "h",
       filterNulls: true,
     }),
-    {
-      id: "total_enrollments",
-      label: "Total Enrollments",
-      icon: TrendingUp,
-      compute: () => {
-        let total = 0
-        for (const stat of enrollmentStats.values()) total += stat.total
-        return total
+    ...(planUsageEnabled ? [
+      {
+        id: "total_enrollments",
+        label: "Total Enrollments",
+        icon: TrendingUp,
+        compute: () => {
+          let total = 0
+          for (const stat of enrollmentStats.values()) total += stat.total
+          return total
+        },
       },
-    },
-    {
-      id: "active_members",
-      label: "Active Members",
-      icon: Users,
-      compute: () => {
-        let active = 0
-        for (const stat of enrollmentStats.values()) active += stat.active
-        return active
+      {
+        id: "active_members",
+        label: "Active Members",
+        icon: Users,
+        compute: () => {
+          let active = 0
+          for (const stat of enrollmentStats.values()) active += stat.active
+          return active
+        },
       },
-    },
+    ] : []),
   ]
 
   return (

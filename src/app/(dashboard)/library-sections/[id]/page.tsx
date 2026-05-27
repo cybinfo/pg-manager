@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth"
 import { softDelete } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -213,6 +213,20 @@ export default function LibrarySectionDetailPage() {
             <InfoRow label="Monthly Rate" value={<Currency amount={section.monthly_rate} />} />
           )}
         </DetailSection>
+
+        {/* AC / Non-AC Classification */}
+        <FeatureGuard module="sections" feature="acNonAcTracking">
+          <DetailSection
+            title="AC Classification"
+            description="Comfort level and cooling type"
+            icon={Grid3X3}
+          >
+            <InfoRow
+              label="Air Conditioning"
+              value={section.is_ac ? "AC" : "Non-AC"}
+            />
+          </DetailSection>
+        </FeatureGuard>
 
         {/* Seats List */}
         <DetailListSection

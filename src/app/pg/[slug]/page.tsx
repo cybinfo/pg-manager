@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PublicPropertyPage } from "./client"
 import { CONTACT } from "@/lib/constants/contact"
+import { isFeatureEnabled } from "@/lib/features/checks"
+import type { WorkspaceModuleConfig } from "@/lib/features"
 
 // ============================================================================
 // TYPES
@@ -84,6 +86,22 @@ async function getProperty(slug: string): Promise<PropertyWebsite | null> {
 
   if (error || !data) {
     return null
+  }
+
+  // Check publicWebsite feature is enabled for this workspace
+  if (data.owner_id) {
+    const { data: workspace } = await supabase
+      .from("workspaces")
+      .select("module_config")
+      .eq("owner_user_id", data.owner_id)
+      .single()
+
+    if (workspace) {
+      const config = workspace.module_config as WorkspaceModuleConfig | null
+      if (!isFeatureEnabled(config, "properties", "publicWebsite")) {
+        return null
+      }
+    }
   }
 
   // Transform data (handle Supabase join array format)

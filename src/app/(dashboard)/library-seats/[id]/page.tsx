@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth"
 import { softDelete } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
   DetailHero,
@@ -235,27 +235,29 @@ export default function LibrarySeatDetailPage() {
 
         {/* Current Assignment */}
         {seat.status === "occupied" && seat.current_member && (
-          <DetailSection
-            title="Current Assignment"
-            description="Currently assigned to"
-            icon={Users}
-          >
-            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-              <div>
-                <Link
-                  href={`/library-members/${seat.current_member.id}`}
-                  className="font-semibold hover:text-primary hover:underline"
-                >
-                  {seat.current_member.name}
-                </Link>
-                {seat.current_member.member_code && (
-                  <p className="text-sm text-muted-foreground font-mono">
-                    {seat.current_member.member_code}
-                  </p>
-                )}
+          <FeatureGuard module="seats" feature="seatAssignment">
+            <DetailSection
+              title="Current Assignment"
+              description="Currently assigned to"
+              icon={Users}
+            >
+              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <Link
+                    href={`/library-members/${seat.current_member.id}`}
+                    className="font-semibold hover:text-primary hover:underline"
+                  >
+                    {seat.current_member.name}
+                  </Link>
+                  {seat.current_member.member_code && (
+                    <p className="text-sm text-muted-foreground font-mono">
+                      {seat.current_member.member_code}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          </DetailSection>
+            </DetailSection>
+          </FeatureGuard>
         )}
       </DetailPageTemplate>
 

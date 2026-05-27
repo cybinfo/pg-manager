@@ -32,7 +32,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
-import { PermissionGuard, PermissionGate } from "@/components/auth"
+import { PermissionGuard, PermissionGate, FeatureGuard } from "@/components/auth"
 import {
   CreditCard,
   Phone,
@@ -734,27 +734,31 @@ function LibrarySubscriptionDetailContent() {
           emptyIcon={Receipt}
           emptyText="No payments recorded for this subscription"
           actions={
-            <RecordPaymentForm
-              subscription={subscription}
-              balanceDue={balanceDue}
-              onSuccess={refetch}
-            />
+            <FeatureGuard module="subscriptions" feature="partialPayment">
+              <RecordPaymentForm
+                subscription={subscription}
+                balanceDue={balanceDue}
+                onSuccess={refetch}
+              />
+            </FeatureGuard>
           }
         />
 
         {/* Record Payment (standalone section when no payments yet) */}
         {payments.length === 0 && balanceDue > 0 && (
-          <DetailSection
-            title="Record Payment"
-            description="Record a partial or full payment for this subscription"
-            icon={Plus}
-          >
-            <RecordPaymentForm
-              subscription={subscription}
-              balanceDue={balanceDue}
-              onSuccess={refetch}
-            />
-          </DetailSection>
+          <FeatureGuard module="subscriptions" feature="partialPayment">
+            <DetailSection
+              title="Record Payment"
+              description="Record a partial or full payment for this subscription"
+              icon={Plus}
+            >
+              <RecordPaymentForm
+                subscription={subscription}
+                balanceDue={balanceDue}
+                onSuccess={refetch}
+              />
+            </DetailSection>
+          </FeatureGuard>
         )}
       </DetailPageTemplate>
       {ConfirmDialogElement}

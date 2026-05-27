@@ -12,6 +12,7 @@
 
 import Link from "next/link"
 import { Users, UserCheck, CalendarDays, Search, Wrench, User, Star, Ban, BookUser } from "lucide-react"
+import { FeatureGuard } from "@/components/auth"
 import { Column } from "@/components/ui/data-table"
 import { statusColumn, dateColumn } from "@/lib/columns"
 import { Button } from "@/components/ui/button"
@@ -363,39 +364,41 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 
 export default function VisitorsPage() {
   return (
-    <ListPageTemplate
-      tableKey="visitors"
-      title="Visitors"
-      description="Manage all visitor entries - tenants, enquiries, service providers"
-      icon={Users}
-      permission="visitors.view"
-      module="visitors"
-      config={VISITOR_LIST_CONFIG}
-      filters={filters}
-      groupByOptions={groupByOptions}
-      metrics={metrics}
-      columns={columns}
-      searchPlaceholder="Search by visitor name, phone, company..."
-      enableColumnManager={true}
-      enableAdvancedFilters={true}
-      advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
-      exportFilename="visitors"
-      createHref="/visitors/new"
-      createLabel="Check In Visitor"
-      createPermission="visitors.create"
-      detailHref={(visitor) => `/visitors/${visitor.id}`}
-      emptyTitle="No visitors logged"
-      emptyDescription="Start logging visitor entries"
-      headerActions={
-        <Link href="/visitors/directory">
-          <Button variant="outline" size="sm">
-            <BookUser className="mr-2 h-4 w-4" />
-            Directory
-          </Button>
-        </Link>
-      }
-    />
+    <FeatureGuard module="visitors" feature="visitorLog">
+      <ListPageTemplate
+        tableKey="visitors"
+        title="Visitors"
+        description="Manage all visitor entries - tenants, enquiries, service providers"
+        icon={Users}
+        permission="visitors.view"
+        module="visitors"
+        config={VISITOR_LIST_CONFIG}
+        filters={filters}
+        groupByOptions={groupByOptions}
+        metrics={metrics}
+        columns={columns}
+        searchPlaceholder="Search by visitor name, phone, company..."
+        enableColumnManager={true}
+        enableAdvancedFilters={true}
+        advancedFilterColumns={advancedFilterColumns}
+        enableInlineEdit={true}
+        exportColumns={exportColumns}
+        exportFilename="visitors"
+        createHref="/visitors/new"
+        createLabel="Check In Visitor"
+        createPermission="visitors.create"
+        detailHref={(visitor) => `/visitors/${visitor.id}`}
+        emptyTitle="No visitors logged"
+        emptyDescription="Start logging visitor entries"
+        headerActions={
+          <Link href="/visitors/directory">
+            <Button variant="outline" size="sm">
+              <BookUser className="mr-2 h-4 w-4" />
+              Directory
+            </Button>
+          </Link>
+        }
+      />
+    </FeatureGuard>
   )
 }

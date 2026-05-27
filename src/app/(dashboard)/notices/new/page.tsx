@@ -24,7 +24,7 @@ import {
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
-import { PermissionGuard } from "@/components/auth"
+import { PermissionGuard, FeatureGuard } from "@/components/auth"
 
 interface Property {
   id: string
@@ -359,25 +359,40 @@ function NewNoticeContent() {
             <div className="space-y-2">
               <Label>Audience</Label>
               <div className="space-y-2">
-                {audiences.map((audience) => (
-                  <button
-                    key={audience.value}
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, target_audience: audience.value }))}
-                    className={`w-full p-3 rounded-lg border text-left transition-all ${
-                      formData.target_audience === audience.value
-                        ? "border-primary bg-primary/5 ring-1 ring-primary"
-                        : "border-input hover:border-primary/50"
-                    }`}
-                  >
-                    <span className="font-medium text-sm">{audience.label}</span>
-                    <p className="text-xs text-muted-foreground">{audience.description}</p>
-                  </button>
-                ))}
+                {audiences.map((audience) => {
+                  const button = (
+                    <button
+                      key={audience.value}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, target_audience: audience.value }))}
+                      className={`w-full p-3 rounded-lg border text-left transition-all ${
+                        formData.target_audience === audience.value
+                          ? "border-primary bg-primary/5 ring-1 ring-primary"
+                          : "border-input hover:border-primary/50"
+                      }`}
+                    >
+                      <span className="font-medium text-sm">{audience.label}</span>
+                      <p className="text-xs text-muted-foreground">{audience.description}</p>
+                    </button>
+                  )
+                  if (audience.value === "specific_rooms") {
+                    return (
+                      <FeatureGuard key={audience.value} module="notices" feature="targetedNotices">
+                        {button}
+                      </FeatureGuard>
+                    )
+                  }
+                  return (
+                    <FeatureGuard key={audience.value} module="notices" feature="broadcastNotices">
+                      {button}
+                    </FeatureGuard>
+                  )
+                })}
               </div>
             </div>
 
             {/* Room Selection - only for property */}
+            <FeatureGuard module="notices" feature="targetedNotices">
             {formData.entity_type === "property" && formData.target_audience === "specific_rooms" && formData.property_id && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -420,6 +435,7 @@ function NewNoticeContent() {
                 Please select a property first to choose specific rooms
               </p>
             )}
+            </FeatureGuard>
 
             {formData.entity_type === "library" && (
               <p className="text-sm text-muted-foreground p-3 bg-muted rounded-lg">

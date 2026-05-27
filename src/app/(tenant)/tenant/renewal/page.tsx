@@ -12,6 +12,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { withCreatedBy } from "@/lib/audit"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
+import { FeatureGuard } from "@/components/auth"
 
 interface RenewalRequest {
   id: string
@@ -21,7 +22,7 @@ interface RenewalRequest {
   decided_at: string | null
 }
 
-export default function TenantRenewalPage() {
+function TenantRenewalContent() {
   const { tenant, tenantContext, loading: tenantLoading } = useTenantPortalData()
   const [requests, setRequests] = useState<RenewalRequest[]>([])
   const [loadingRequests, setLoadingRequests] = useState(false)
@@ -283,5 +284,13 @@ export default function TenantRenewalPage() {
         </Card>
       )}
     </div>
+  )
+}
+
+export default function TenantRenewalPage() {
+  return (
+    <FeatureGuard module="approvals" feature="tenantRequests">
+      <TenantRenewalContent />
+    </FeatureGuard>
   )
 }

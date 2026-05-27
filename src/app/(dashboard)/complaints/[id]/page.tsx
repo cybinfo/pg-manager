@@ -42,7 +42,8 @@ import {
 import { RoomLink, TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime } from "@/lib/format"
 import { getNowISO } from "@/lib/date-helpers"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
+import { useFeatures } from "@/lib/features/use-features"
 import { StatusBadge, PriorityBadge } from "@/components/ui/status-badge"
 import { COMPLAINT_STATUS, COMPLAINT_CATEGORIES } from "@/lib/status"
 
@@ -59,6 +60,7 @@ export default function ComplaintDetailPage() {
   const router = useRouter()
   const { user } = useAuth()
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
+  const { isFeatureEnabled } = useFeatures()
   const [editing, setEditing] = useState(false)
 
   const [editData, setEditData] = useState({
@@ -131,7 +133,9 @@ export default function ComplaintDetailPage() {
 
     // Send email when status changes to resolved
     if (success && newStatus === "resolved" && complaint?.status !== "resolved" && complaint) {
-      sendResolvedEmail(complaint)
+      if (isFeatureEnabled("complaints", "resolutionEmail")) {
+        sendResolvedEmail(complaint)
+      }
     }
   }
 
@@ -153,10 +157,12 @@ export default function ComplaintDetailPage() {
 
       // Send email when status changes to resolved via edit
       if (editData.status === "resolved" && complaint?.status !== "resolved" && complaint) {
-        sendResolvedEmail({
-          ...complaint,
-          resolution_notes: editData.resolution_notes || null,
-        })
+        if (isFeatureEnabled("complaints", "resolutionEmail")) {
+          sendResolvedEmail({
+            ...complaint,
+            resolution_notes: editData.resolution_notes || null,
+          })
+        }
       }
     }
   }
@@ -326,6 +332,7 @@ export default function ComplaintDetailPage() {
           </DetailSection>
 
           {/* Resolution Notes */}
+          <FeatureGuard module="complaints" feature="complaintResolution">
           <DetailSection
             title="Resolution Notes"
             description="Notes about how this complaint was resolved"
@@ -345,6 +352,7 @@ export default function ComplaintDetailPage() {
               <p className="text-muted-foreground italic">No resolution notes yet</p>
             )}
           </DetailSection>
+          </FeatureGuard>
 
         {/* Details */}
         <DetailSection

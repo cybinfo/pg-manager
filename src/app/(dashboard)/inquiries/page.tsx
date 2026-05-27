@@ -8,6 +8,7 @@
 "use client"
 
 import { Inbox, Clock, UserCheck, Phone } from "lucide-react"
+import { FeatureGuard } from "@/components/auth"
 import { Column } from "@/components/ui/data-table"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { INQUIRY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -278,28 +279,30 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 
 export default function InquiriesPage() {
   return (
-    <ListPageTemplate
-      tableKey="inquiries"
-      title="Inquiries"
-      description="Manage leads from your PG websites"
-      icon={Inbox}
-      permission="tenants.view"
-      config={INQUIRY_LIST_CONFIG}
-      filters={filters}
-      groupByOptions={groupByOptions}
-      metrics={metrics}
-      columns={columns}
-      searchPlaceholder="Search by name, phone, email..."
-      enableColumnManager={true}
-      enableAdvancedFilters={true}
-      advancedFilterColumns={advancedFilterColumns}
-      enableInlineEdit={true}
-      exportColumns={exportColumns}
-      detailHref={(inquiry) => `/inquiries/${inquiry.id}`}
-      createHref="/inquiries/new"
-      createLabel="Log Inquiry"
-      emptyTitle="No inquiries yet"
-      emptyDescription="Inquiries from your public PG websites will appear here"
-    />
+    <FeatureGuard module="inquiries" feature="inquiryTracking">
+      <ListPageTemplate
+        tableKey="inquiries"
+        title="Inquiries"
+        description="Manage leads from your PG websites"
+        icon={Inbox}
+        permission="tenants.view"
+        config={INQUIRY_LIST_CONFIG}
+        filters={filters}
+        groupByOptions={groupByOptions}
+        metrics={metrics}
+        columns={columns}
+        searchPlaceholder="Search by name, phone, email..."
+        enableColumnManager={true}
+        enableAdvancedFilters={true}
+        advancedFilterColumns={advancedFilterColumns}
+        enableInlineEdit={true}
+        exportColumns={exportColumns}
+        detailHref={(inquiry) => `/inquiries/${inquiry.id}`}
+        createHref="/inquiries/new"
+        createLabel="Log Inquiry"
+        emptyTitle="No inquiries yet"
+        emptyDescription="Inquiries from your public PG websites will appear here"
+      />
+    </FeatureGuard>
   )
 }

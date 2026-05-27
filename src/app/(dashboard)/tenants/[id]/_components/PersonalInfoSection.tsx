@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { DetailSection, InfoRow, DetailListSection } from "@/components/ui"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { FeatureGuard } from "@/components/auth"
 import {
   User,
   Phone,
@@ -173,11 +174,13 @@ export function PersonalInfoSection({ tenant }: PersonalInfoSectionProps) {
 
       {/* Tenancy Verification Status */}
       <DetailSection title="Verification Status" description="Tenancy verification" icon={Shield}>
-        <InfoRow
-          label="Police Verification"
-          value={<StatusBadge status={tenant.police_verification_status === "verified" ? "verified" : tenant.police_verification_status === "submitted" ? "pending" : "unverified"} size="sm" />}
-          icon={Shield}
-        />
+        <FeatureGuard module="tenants" feature="policeVerification">
+          <InfoRow
+            label="Police Verification"
+            value={<StatusBadge status={tenant.police_verification_status === "verified" ? "verified" : tenant.police_verification_status === "submitted" ? "pending" : "unverified"} size="sm" />}
+            icon={Shield}
+          />
+        </FeatureGuard>
         <InfoRow
           label="Agreement"
           value={

@@ -24,6 +24,7 @@ import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
+import { FeatureGuard } from "@/components/auth"
 
 interface DashboardExtra {
   recentAttendance: Array<{
@@ -165,37 +166,39 @@ export default function MemberHomePage() {
       </div>
 
       {/* Today's Hours Card - Per-Day Model */}
-      <Card className={`${brandGradient.memberSolid} text-white`}>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-white/70 text-sm font-medium">Today&apos;s Hours</p>
-              <p className="text-4xl font-bold mt-1">
-                {todayRemaining.toFixed(1)}h
-              </p>
-              {dailyAllowance > 0 && (
-                <p className="text-white/70 text-sm mt-2">
-                  of {dailyAllowance}h daily allowance
+      <FeatureGuard module="members" feature="hoursTracking">
+        <Card className={`${brandGradient.memberSolid} text-white`}>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-white/70 text-sm font-medium">Today&apos;s Hours</p>
+                <p className="text-4xl font-bold mt-1">
+                  {todayRemaining.toFixed(1)}h
                 </p>
-              )}
+                {dailyAllowance > 0 && (
+                  <p className="text-white/70 text-sm mt-2">
+                    of {dailyAllowance}h daily allowance
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                <Timer className="h-12 w-12 text-white/40" />
+              </div>
             </div>
-            <div className="text-right">
-              <Timer className="h-12 w-12 text-white/40" />
-            </div>
-          </div>
-          {dailyAllowance > 0 && (
-            <div className="mt-4">
-              <Progress
-                value={100 - hoursPercentUsed}
-                className="h-2 bg-white/30"
-              />
-              <p className="text-xs text-white/70 mt-2">
-                {todayUsed.toFixed(1)}h used today
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {dailyAllowance > 0 && (
+              <div className="mt-4">
+                <Progress
+                  value={100 - hoursPercentUsed}
+                  className="h-2 bg-white/30"
+                />
+                <p className="text-xs text-white/70 mt-2">
+                  {todayUsed.toFixed(1)}h used today
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </FeatureGuard>
 
       {/* Quick Stats */}
       <StatsGrid

@@ -43,7 +43,7 @@ import { formatCurrency, formatDate } from "@/lib/format"
 import { Avatar } from "@/components/ui/avatar"
 import { METER_TYPE_CONFIG, METER_STATUS_CONFIG } from "@/types/meters.types"
 import { ROOM_STATUS } from "@/lib/status"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
 
 interface MeterReading {
   id: string
@@ -213,7 +213,9 @@ export default function RoomDetailPage() {
           description="Configuration and amenities"
           icon={Home}
         >
-          <InfoRow label="Room Type" value={<span className="capitalize">{room.room_type}</span>} />
+          <FeatureGuard module="rooms" feature="roomTypeClassification">
+            <InfoRow label="Room Type" value={<span className="capitalize">{room.room_type}</span>} />
+          </FeatureGuard>
           <InfoRow
             label="Floor"
             value={room.floor === 0 ? "Ground Floor" : `Floor ${room.floor}`}
@@ -228,26 +230,28 @@ export default function RoomDetailPage() {
               </span>
             }
           />
-          <div className="pt-2 mt-2 border-t">
-            <p className="text-sm text-muted-foreground mb-3">Amenities</p>
-            <div className="flex flex-wrap gap-2">
-              {room.has_ac && (
-                <span className="flex items-center gap-1 px-2 py-1 bg-info/10 text-info rounded text-sm">
-                  <Thermometer className="h-3 w-3" />
-                  Air Conditioned
-                </span>
-              )}
-              {room.has_attached_bathroom && (
-                <span className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded text-sm">
-                  <Bath className="h-3 w-3" />
-                  Attached Bathroom
-                </span>
-              )}
-              {!room.has_ac && !room.has_attached_bathroom && (
-                <span className="text-muted-foreground text-sm">No special amenities</span>
-              )}
+          <FeatureGuard module="rooms" feature="amenityTracking">
+            <div className="pt-2 mt-2 border-t">
+              <p className="text-sm text-muted-foreground mb-3">Amenities</p>
+              <div className="flex flex-wrap gap-2">
+                {room.has_ac && (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-info/10 text-info rounded text-sm">
+                    <Thermometer className="h-3 w-3" />
+                    Air Conditioned
+                  </span>
+                )}
+                {room.has_attached_bathroom && (
+                  <span className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded text-sm">
+                    <Bath className="h-3 w-3" />
+                    Attached Bathroom
+                  </span>
+                )}
+                {!room.has_ac && !room.has_attached_bathroom && (
+                  <span className="text-muted-foreground text-sm">No special amenities</span>
+                )}
+              </div>
             </div>
-          </div>
+          </FeatureGuard>
         </DetailSection>
 
         {/* Room Status */}

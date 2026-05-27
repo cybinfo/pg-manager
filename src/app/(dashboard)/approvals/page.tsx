@@ -33,6 +33,7 @@ import { formatDate } from "@/lib/format"
 import { APPROVAL_PRIORITY, APPROVAL_TYPE_LABELS, getStatusInfo as getApprovalStatusInfo } from "@/lib/status-config"
 import { ApprovalReviewDialog } from "./_components/ApprovalReviewDialog"
 import type { ApprovalData } from "./_components/ApprovalReviewDialog"
+import { FeatureGuard } from "@/components/auth"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -234,37 +235,39 @@ export default function ApprovalsPage() {
   }, [])
 
   return (
-    <>
-      <ListPageTemplate
-        key={refreshKey}
-        tableKey="approvals"
-        title="Approvals Hub"
-        description="Review and manage tenant requests"
-        icon={ClipboardCheck}
-        permission="tenants.view"
-        module="approvals"
-        config={APPROVALS_LIST_CONFIG}
-        columns={columns}
-        filters={filters}
-        groupByOptions={groupByOptions}
-        metrics={metrics}
-        searchPlaceholder="Search requests..."
-        enableAdvancedFilters={true}
-        advancedFilterColumns={advancedFilterColumns}
-        enableInlineEdit={true}
-        exportColumns={exportColumns}
-        exportFilename="approvals"
-        onRowClick={handleRowClick}
-        emptyTitle="No requests found"
-        emptyDescription="No approval requests to review"
-      />
+    <FeatureGuard module="approvals" feature="tenantRequests">
+      <>
+        <ListPageTemplate
+          key={refreshKey}
+          tableKey="approvals"
+          title="Approvals Hub"
+          description="Review and manage tenant requests"
+          icon={ClipboardCheck}
+          permission="tenants.view"
+          module="approvals"
+          config={APPROVALS_LIST_CONFIG}
+          columns={columns}
+          filters={filters}
+          groupByOptions={groupByOptions}
+          metrics={metrics}
+          searchPlaceholder="Search requests..."
+          enableAdvancedFilters={true}
+          advancedFilterColumns={advancedFilterColumns}
+          enableInlineEdit={true}
+          exportColumns={exportColumns}
+          exportFilename="approvals"
+          onRowClick={handleRowClick}
+          emptyTitle="No requests found"
+          emptyDescription="No approval requests to review"
+        />
 
-      <ApprovalReviewDialog
-        approval={selectedApproval}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onActionComplete={handleActionComplete}
-      />
-    </>
+        <ApprovalReviewDialog
+          approval={selectedApproval}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onActionComplete={handleActionComplete}
+        />
+      </>
+    </FeatureGuard>
   )
 }

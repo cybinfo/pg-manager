@@ -24,7 +24,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Currency } from "@/components/ui/currency"
 import { PageLoading } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, FeatureGuard } from "@/components/auth"
 import {
   Users,
   Phone,
@@ -397,13 +397,15 @@ export default function LibraryMemberDetailPage() {
       />
 
       {/* Hours Balance Card — Per-Day Model */}
-      <MemberHoursCard
-        hoursUsed={totalHoursUsed}
-        hoursRemaining={hoursRemaining}
-        dailyAllowance={dailyAllowance}
-        todayUsed={todayUsed}
-        memberName={displayName}
-      />
+      <FeatureGuard module="members" feature="hoursTracking">
+        <MemberHoursCard
+          hoursUsed={totalHoursUsed}
+          hoursRemaining={hoursRemaining}
+          dailyAllowance={dailyAllowance}
+          todayUsed={todayUsed}
+          memberName={displayName}
+        />
+      </FeatureGuard>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

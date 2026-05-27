@@ -42,7 +42,7 @@ import {
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatDateTime, formatDate, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
-import { PermissionGate, FeatureGate } from "@/components/auth"
+import { PermissionGate, FeatureGate, FeatureGuard } from "@/components/auth"
 import { showSuccess } from "@/lib/toast-helpers"
 import { INQUIRY_STATUS_LABELS, INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_LABELS } from "@/lib/status"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -235,6 +235,7 @@ export default function InquiryDetailPage() {
       />
 
       {/* Quick Status Actions */}
+      <FeatureGuard module="inquiries" feature="inquiryTracking">
       <PermissionGate permission="tenants.create">
         {!editing && inquiry.status !== "converted" && inquiry.status !== "closed" && (
           <div className="bg-muted/50 rounded-lg p-4">
@@ -281,6 +282,7 @@ export default function InquiryDetailPage() {
           </div>
         )}
       </PermissionGate>
+      </FeatureGuard>
 
       <DetailPageTemplate layoutKey="inquiry-detail" entityType="inquiry" record={inquiry}>
         {/* Contact Information */}

@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { TenantWithContext } from "@/types/tenants.types"
+import { isFeatureEnabled } from "@/lib/features/checks"
+import type { WorkspaceModuleConfig } from "@/lib/features"
 
 interface TenantDocument {
   id: string
@@ -59,6 +61,7 @@ const documentTypeLabels: Record<string, string> = {
 
 export default function TenantDocumentsPage() {
   const [loading, setLoading] = useState(true)
+  const [featureEnabled, setFeatureEnabled] = useState(true)
   const [documents, setDocuments] = useState<TenantDocument[]>([])
   const [tenantInfo, setTenantInfo] = useState<TenantWithContext | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -92,9 +95,18 @@ export default function TenantDocumentsPage() {
     // Get workspace_id from workspaces table via owner
     const { data: workspace } = await supabase
       .from("workspaces")
-      .select("id")
+      .select("id, module_config")
       .eq("owner_user_id", ownerId)
       .single()
+
+    if (workspace) {
+      const config = workspace.module_config as WorkspaceModuleConfig | null
+      if (!isFeatureEnabled(config, "tenants", "documentsUpload")) {
+        setFeatureEnabled(false)
+        setLoading(false)
+        return
+      }
+    }
 
     setTenantInfo({
       id: tenant.id,
@@ -157,6 +169,18 @@ export default function TenantDocumentsPage() {
 
   if (loading) {
     return <PageSkeleton variant="list" />
+  }
+
+  if (!featureEnabled) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-3">
+        <FileText className="h-12 w-12 text-muted-foreground/50" />
+        <h2 className="text-lg font-semibold">Feature Not Available</h2>
+        <p className="text-muted-foreground text-sm max-w-xs">
+          Document management has not been enabled for your account. Please contact your property administrator.
+        </p>
+      </div>
+    )
   }
 
   return (
