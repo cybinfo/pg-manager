@@ -51,50 +51,13 @@ import {
   Trash2,
 } from "lucide-react"
 
+import { parseTimeSlots, formatTime12h, calcSlotHours, getDurationDays } from "@/lib/time-slots"
+import type { TimeSlot } from "@/lib/time-slots"
+import { formatDate } from "@/lib/format"
+
 // ============================================
-// Time Slot Helpers
+// Time Slot Display (JSX variant \u2014 wraps lib helpers)
 // ============================================
-
-interface TimeSlotEntry {
-  start: string
-  end: string
-}
-
-function formatTime12h(time: string): string {
-  const [h, m] = time.split(":").map(Number)
-  const ampm = h >= 12 ? "PM" : "AM"
-  const hour12 = h % 12 || 12
-  return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`
-}
-
-function parseTimeSlots(raw: string | null): TimeSlotEntry[] {
-  if (!raw) return []
-  try {
-    const parsed = JSON.parse(raw)
-    if (Array.isArray(parsed)) {
-      return parsed.map((s: { start: string; end: string }) => ({
-        start: s.start || "",
-        end: s.end || "",
-      }))
-    }
-  } catch (error) {
-    logger.error("Failed to parse subscription data", { error: String(error) })
-  }
-  if (raw.includes("-")) {
-    const [st, et] = raw.split("-")
-    return [{ start: st.trim(), end: et.trim() }]
-  }
-  return []
-}
-
-function calcSlotHours(slot: TimeSlotEntry): number {
-  if (!slot.start || !slot.end) return 0
-  const [sh, sm] = slot.start.split(":").map(Number)
-  const [eh, em] = slot.end.split(":").map(Number)
-  let hours = (eh * 60 + em - sh * 60 - sm) / 60
-  if (hours < 0) hours += 24
-  return hours
-}
 
 function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
   const slots = parseTimeSlots(raw)
@@ -103,10 +66,10 @@ function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
     const s = slots[0]
     return `${formatTime12h(s.start)} \u2013 ${formatTime12h(s.end)} (${calcSlotHours(s).toFixed(1)}h)`
   }
-  const total = slots.reduce((sum: number, s: TimeSlotEntry) => sum + calcSlotHours(s), 0)
+  const total = slots.reduce((sum: number, s: TimeSlot) => sum + calcSlotHours(s), 0)
   return (
     <span className="flex flex-col gap-0.5">
-      {slots.map((s: TimeSlotEntry, i: number) => (
+      {slots.map((s: TimeSlot, i: number) => (
         <span key={i}>
           {formatTime12h(s.start)} &ndash; {formatTime12h(s.end)} ({calcSlotHours(s).toFixed(1)}h)
         </span>
@@ -115,9 +78,7 @@ function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
     </span>
   )
 }
-import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { logger } from "@/lib/logger"
 import { LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryMembership, LibraryPayment } from "@/types/library.types"
 import { LIBRARY_PAYMENT_METHOD_OPTIONS, LIBRARY_PAYMENT_METHOD_LABELS } from "@/lib/status"
@@ -167,16 +128,6 @@ function getPaymentStatus(finalAmount: number, totalPaid: number) {
     return { label: "Partial", variant: "warning" as const, color: "text-warning" }
   }
   return { label: "Unpaid", variant: "error" as const, color: "text-destructive" }
-}
-
-// ============================================
-// Helper: Duration in days
-// ============================================
-
-function getDurationDays(startDate: string, endDate: string): number {
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 // ============================================
@@ -499,7 +450,7 @@ function LibrarySubscriptionDetailContent() {
             {subscription.time_slot && (() => {
               const slots = parseTimeSlots(subscription.time_slot)
               const display = slots.length > 0
-                ? slots.map((s: TimeSlotEntry) => `${formatTime12h(s.start)}\u2013${formatTime12h(s.end)}`).join(", ")
+                ? slots.map((s: TimeSlot) => `${formatTime12h(s.start)}\u2013${formatTime12h(s.end)}`).join(", ")
                 : subscription.time_slot
               return (
                 <span className="px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">

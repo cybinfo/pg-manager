@@ -925,3 +925,59 @@ export async function completeExitClearance(
     workspaceId
   )
 }
+
+// ============================================
+// Simple completion helper (used by the detail page UI)
+// Applies the three direct Supabase updates that finalise a clearance:
+//   1. exit_clearance → settlement_status = "cleared"
+//   2. tenants        → status = "checked_out", check_out_date
+//   3. rooms          → status = "available"
+// The full completeExitWorkflow above handles the broader workflow
+// (stay records, bed release, refund creation) and is used via the API.
+// ============================================
+
+export async function applyExitClearanceCompletion(
+  supabase: ReturnType<typeof createClient>,
+  clearanceId: string,
+  tenantId: string,
+  roomId: string | null,
+  exitDate: string,
+): Promise<{ success: boolean; error?: string }> {
+  const { error: clearanceError } = await supabase
+    .from("exit_clearance")
+    .update({
+      settlement_status: "cleared",
+      actual_exit_date: exitDate,
+      completed_at: getNowISO(),
+    })
+    .eq("id", clearanceId)
+
+  if (clearanceError) {
+    return { success: false, error: clearanceError.message }
+  }
+
+  const { error: tenantError } = await supabase
+    .from("tenants")
+    .update({
+      status: "checked_out",
+      check_out_date: exitDate,
+    })
+    .eq("id", tenantId)
+
+  if (tenantError) {
+    return { success: false, error: tenantError.message }
+  }
+
+  if (roomId) {
+    const { error: roomError } = await supabase
+      .from("rooms")
+      .update({ status: "available" })
+      .eq("id", roomId)
+
+    if (roomError) {
+      return { success: false, error: roomError.message }
+    }
+  }
+
+  return { success: true }
+}

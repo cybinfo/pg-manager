@@ -49,9 +49,10 @@ import {
   isRefundDue,
   getDaysStayed,
 } from "@/types/exit-clearance.types"
-import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { getTodayISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PermissionGate, FeatureGate, FeatureGuard } from "@/components/auth"
+import { applyExitClearanceCompletion } from "@/lib/workflows/exit.workflow"
 import { FileWarning, Calculator } from "lucide-react"
 
 export default function ExitClearanceDetailPage() {
@@ -199,53 +200,28 @@ export default function ExitClearanceDetailPage() {
       return
     }
 
+    if (!clearance.tenant) {
+      showError("Tenant data not found")
+      return
+    }
+
     setSaving(true)
     try {
       const supabase = createClient()
       const exitDate = formData.actual_exit_date || getTodayISO()
 
-      // Update clearance status
-      const { error: clearanceError } = await supabase
-        .from("exit_clearance")
-        .update({
-          settlement_status: "cleared",
-          actual_exit_date: exitDate,
-          completed_at: getNowISO(),
-        })
-        .eq("id", clearance.id)
+      const result = await applyExitClearanceCompletion(
+        supabase,
+        clearance.id,
+        clearance.tenant.id,
+        clearance.room?.id ?? null,
+        exitDate,
+      )
 
-      if (clearanceError) throw clearanceError
-
-      // Update tenant status
-      if (!clearance.tenant) {
-        showError("Tenant data not found")
-        setSaving(false)
+      if (!result.success) {
+        showError(result.error || "Failed to complete exit")
         return
       }
-
-      const { error: tenantError } = await supabase
-        .from("tenants")
-        .update({
-          status: "checked_out",
-          check_out_date: exitDate,
-        })
-        .eq("id", clearance.tenant.id)
-
-      if (tenantError) throw tenantError
-
-      // Update room status
-      if (!clearance.room) {
-        showError("Room data not found")
-        setSaving(false)
-        return
-      }
-
-      const { error: roomError } = await supabase
-        .from("rooms")
-        .update({ status: "available" })
-        .eq("id", clearance.room.id)
-
-      if (roomError) throw roomError
 
       showSuccess("Exit clearance completed! Room is now available.")
       router.push("/exit-clearance")

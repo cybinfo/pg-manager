@@ -2,7 +2,8 @@
  * Time Slot Utilities
  *
  * Shared helpers for library membership time slot parsing, serialization,
- * and hour calculation. Used by library-members/new and library-members/renew.
+ * hour calculation, and display formatting.
+ * Used by library-members/new, library-members/renew, and library-subscriptions detail.
  *
  * Time slots are stored in the DB as a JSON string: '[{"start":"09:00","end":"13:00"}]'
  * Old format (single slot): "09:00-13:00" — still supported for reading.
@@ -68,4 +69,37 @@ export function parseTimeSlots(raw: string | null): TimeSlot[] {
     return [{ start: st.trim(), end: et.trim() }]
   }
   return []
+}
+
+/**
+ * Render time slot(s) as a human-readable string.
+ * Single slot: "9:00 AM – 1:00 PM (4.0h)"
+ * Multiple slots: one line per slot + total hours footer.
+ * Falls back to raw value or "Full Day" when no slots parsed.
+ *
+ * Returns a plain string for single/zero-slot cases so callers without
+ * JSX support can still use it. Multi-slot returns a newline-joined string
+ * with a "Total:" suffix — callers that need React nodes should build their
+ * own renderer using parseTimeSlots + formatTime12h + calcSlotHours.
+ */
+export function formatTimeSlotsDisplay(raw: string | null): string {
+  const slots = parseTimeSlots(raw)
+  if (slots.length === 0) return raw || "Full Day"
+  if (slots.length === 1) {
+    const s = slots[0]
+    return `${formatTime12h(s.start)} – ${formatTime12h(s.end)} (${calcSlotHours(s).toFixed(1)}h)`
+  }
+  const total = slots.reduce((sum, s) => sum + calcSlotHours(s), 0)
+  const lines = slots.map((s) => `${formatTime12h(s.start)} – ${formatTime12h(s.end)} (${calcSlotHours(s).toFixed(1)}h)`)
+  return [...lines, `Total: ${total.toFixed(1)}h`].join("\n")
+}
+
+/**
+ * Calculate the number of calendar days between two ISO date strings.
+ * Uses ceiling so partial days count as full days.
+ */
+export function getDurationDays(startDate: string, endDate: string): number {
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
 }
