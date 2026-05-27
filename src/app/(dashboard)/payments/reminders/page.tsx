@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -52,6 +53,7 @@ interface TenantWithDues {
 }
 
 export default function PaymentRemindersPage() {
+  const { user } = useAuth()
   const [tenants, setTenants] = useState<TenantWithDues[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -61,12 +63,12 @@ export default function PaymentRemindersPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
     fetchTenantsWithDues()
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const fetchTenantsWithDues = async () => {
     const supabase = createClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
     // Get owner info

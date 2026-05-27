@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -73,6 +74,7 @@ interface Bill {
 function NewPaymentForm() {
   const { backHref } = useBackNavigation({ defaultHref: "/payments" })
   const { isFeatureEnabled } = useFeatures()
+  const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedTenantId = searchParams.get("tenant")
@@ -100,7 +102,6 @@ function NewPaymentForm() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
 
       const [tenantsRes, chargeTypesRes] = await Promise.all([
         supabase
@@ -160,7 +161,7 @@ function NewPaymentForm() {
     }
 
     fetchData()
-  }, [preselectedTenantId])
+  }, [preselectedTenantId, user])
 
   // Update selected tenant and fetch bills when tenant changes
   useEffect(() => {

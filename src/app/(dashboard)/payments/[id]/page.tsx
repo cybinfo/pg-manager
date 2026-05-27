@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useDetailPage, PAYMENT_DETAIL_CONFIG } from "@/lib/hooks/useDetailPage"
 import { Payment } from "@/types/payments.types"
@@ -48,6 +49,7 @@ interface PaymentWithOwner extends Payment {
 
 export default function PaymentReceiptPage() {
   const params = useParams()
+  const { user } = useAuth()
   const receiptRef = useRef<HTMLDivElement>(null)
 
   // Use centralized hook for data fetching
@@ -69,9 +71,8 @@ export default function PaymentReceiptPage() {
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/payments", defaultLabel: "All Payments" })
   useEffect(() => {
     const fetchOwnerInfo = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      const supabase = createClient()
 
       const { data: ownerData } = await supabase
         .from("owners")
@@ -85,7 +86,7 @@ export default function PaymentReceiptPage() {
     }
 
     fetchOwnerInfo()
-  }, [])
+  }, [user])
 
   const handleDelete = async () => {
     await deleteRecord({ confirm: false })

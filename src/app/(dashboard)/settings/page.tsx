@@ -163,7 +163,6 @@ function SettingsContent() {
     const supabase = createClient()
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
       const [ownerRes, chargeTypesRes, configRes, expenseTypesRes] = await Promise.all([

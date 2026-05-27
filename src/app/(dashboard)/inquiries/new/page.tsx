@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,7 @@ export default function NewInquiryPage() {
 
 function NewInquiryContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/inquiries" })
+  const { user } = useAuth()
   const [properties, setProperties] = useState<Property[]>([])
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
 
@@ -83,7 +85,6 @@ function NewInquiryContent() {
   useEffect(() => {
     const fetchData = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
 
       const [propertiesRes, configRes] = await Promise.all([
         supabase.from("properties").select("id, name").order("name"),
@@ -100,7 +101,7 @@ function NewInquiryContent() {
     }
 
     fetchData()
-  }, [])
+  }, [user])
 
   const enabledRoomTypes = roomTypes.filter((rt) => rt.is_enabled).sort((a, b) => a.display_order - b.display_order)
 
