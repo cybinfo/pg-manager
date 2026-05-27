@@ -86,7 +86,7 @@ export interface EmailVerificationData {
   expiresInMinutes: number
 }
 
-export interface DailySummaryData {
+export interface SendDailySummaryOptions {
   to: string
   ownerName: string
   businessName?: string
@@ -382,7 +382,7 @@ export async function sendVerificationEmail(
 
 // Daily summary email for owners
 export async function sendDailySummary(
-  data: DailySummaryData
+  data: SendDailySummaryOptions
 ): Promise<{ success: boolean; error?: string; id?: string }> {
   try {
     const client = getResendClient()

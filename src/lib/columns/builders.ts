@@ -5,7 +5,7 @@
  * Each builder returns a Column<Record<string, unknown>> compatible with ListPageTemplate.
  *
  * @example
- * import { statusColumn, currencyColumn, dateColumn, badgeColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
+ * import { statusColumn, currencyColumn, dateColumn, badgeColumn, personNameWithAvatarColumn } from "@/lib/columns"
  *
  * const columns = [
  *   personNameWithAvatarColumn("Tenant", { nameField: "name", personNameField: "person.name", photoField: "person.photo_url", subtitleField: "phone" }),

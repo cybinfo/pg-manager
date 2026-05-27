@@ -16,7 +16,7 @@ import type {
   PaymentReceiptData,
   InvitationEmailData,
   EmailVerificationData,
-  DailySummaryData,
+  SendDailySummaryOptions,
   LibraryLowHoursData,
   LibraryExpiringMembershipData,
   LibraryExpiredMembershipData,
@@ -44,7 +44,7 @@ export function emailVerificationTemplate(data: EmailVerificationData): string {
   return emailBodyTemplates.emailVerification(data)
 }
 
-export function dailySummaryTemplate(data: DailySummaryData): string {
+export function dailySummaryTemplate(data: SendDailySummaryOptions): string {
   return emailBodyTemplates.dailySummary(data)
 }
 

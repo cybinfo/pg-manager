@@ -53,7 +53,7 @@ export async function POST(
       })
 
     if (contextError) {
-      return internalError("Failed to create user context")
+      return apiError(ErrorCodes.INTERNAL_ERROR, "Failed to create user context")
     }
   }
 
