@@ -40,15 +40,11 @@ import {
 import { getTodayISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
+import type { PropertyOption } from "@/types/properties.types"
 
 // ============================================
 // Types
 // ============================================
-
-interface Property {
-  id: string
-  name: string
-}
 
 interface Room {
   id: string
@@ -62,7 +58,7 @@ interface Room {
 
 export default function NewMeterPage() {
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meters", defaultLabel: "All Meters" })
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})

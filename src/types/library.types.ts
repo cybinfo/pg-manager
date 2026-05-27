@@ -9,6 +9,19 @@ import type { AuditableEntity } from "./audit.types"
 import type { Person } from "./people.types"
 
 // ============================================================================
+// NARROW VIEW TYPES
+// ============================================================================
+
+export type LibraryOption = { id: string; name: string; code?: string | null }
+export type LibraryPlanOption = {
+  id: string
+  name: string
+  hours_included: number | null
+  validity_days: number
+  base_price: number
+}
+
+// ============================================================================
 // ENUMS AND CONSTANTS
 // ============================================================================
 

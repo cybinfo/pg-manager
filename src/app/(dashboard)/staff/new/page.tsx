@@ -36,17 +36,13 @@ import { PersonSearchResult } from "@/types/people.types"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import { logger } from "@/lib/logger"
 import { useFeatures } from "@/lib/features/use-features"
+import type { PropertyOption } from "@/types/properties.types"
 
 interface Role {
   id: string
   name: string
   description: string | null
   is_system_role: boolean
-}
-
-interface Property {
-  id: string
-  name: string
 }
 
 interface RoleAssignment {
@@ -75,7 +71,7 @@ function NewStaffContent() {
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [roles, setRoles] = useState<Role[]>([])
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([])
 
   // Person-centric: Select person first

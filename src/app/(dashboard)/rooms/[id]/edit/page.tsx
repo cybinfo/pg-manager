@@ -17,11 +17,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PhotoGallery } from "@/components/forms"
 import { PermissionGuard } from "@/components/auth"
 import { ConfigurableRoomType, defaultConfigurableRoomTypes } from "@/types/rooms.types"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 // Extended amenities list - same as new room page
 const availableAmenities = [
@@ -48,7 +44,7 @@ function EditRoomContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/rooms" })
   const { user } = useAuth()
   const params = useParams()
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
 
   const {

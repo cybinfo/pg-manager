@@ -11,16 +11,7 @@ import {
   Download,
   UserCog,
 } from "lucide-react"
-
-interface TenantFeatures {
-  view_bills: boolean
-  view_payments: boolean
-  submit_complaints: boolean
-  view_notices: boolean
-  request_visitors: boolean
-  download_receipts: boolean
-  update_profile: boolean
-}
+import type { TenantFeatures } from "@/types/portal.types"
 
 const tenantFeatureOptions = [
   { key: "view_bills", label: "View Bills", desc: "Allow tenants to see their bills", icon: FileText },

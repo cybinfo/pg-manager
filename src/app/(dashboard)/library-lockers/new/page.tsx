@@ -20,12 +20,7 @@ import { requiredField, requiredSelect } from "@/lib/validation"
 import { ArrowLeft, Lock, Loader2 } from "lucide-react"
 import { PermissionGuard } from "@/components/auth"
 import { LOCKER_SIZE_OPTIONS } from "@/lib/constants/form-options"
-
-interface Library {
-  id: string
-  name: string
-  code: string | null
-}
+import type { LibraryOption } from "@/types/library.types"
 
 export default function NewLibraryLockerPage() {
   return (
@@ -37,7 +32,7 @@ export default function NewLibraryLockerPage() {
 
 function NewLibraryLockerContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/library-lockers" })
-  const [libraries, setLibraries] = useState<Library[]>([])
+  const [libraries, setLibraries] = useState<LibraryOption[]>([])
   const [loadingLibraries, setLoadingLibraries] = useState(true)
 
   const {

@@ -16,11 +16,7 @@ import {
 } from "@/types/visitors.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 interface Room {
   id: string
@@ -107,7 +103,7 @@ export function useVisitorForm() {
   const personIdFromUrl = searchParams.get("person_id")
 
   const [loading, setLoading] = useState(false)
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [filteredTenants, setFilteredTenants] = useState<Tenant[]>([])

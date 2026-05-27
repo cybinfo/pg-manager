@@ -17,6 +17,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
+import type { TenantFeatures } from "@/types/portal.types"
 
 import {
   PropertyDetailsTab,
@@ -40,16 +41,6 @@ interface WebsiteConfig {
   show_rooms: boolean
   show_pricing: boolean
   show_contact_form: boolean
-}
-
-interface TenantFeatures {
-  view_bills: boolean
-  view_payments: boolean
-  submit_complaints: boolean
-  view_notices: boolean
-  request_visitors: boolean
-  download_receipts: boolean
-  update_profile: boolean
 }
 
 const defaultTenantFeatures: TenantFeatures = {

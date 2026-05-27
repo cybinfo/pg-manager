@@ -21,12 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Combobox } from "@/components/ui/combobox"
 import { ArrowLeft, Grid3X3, Loader2 } from "lucide-react"
 import { PermissionGuard } from "@/components/auth"
-
-interface Library {
-  id: string
-  name: string
-  code: string | null
-}
+import type { LibraryOption } from "@/types/library.types"
 
 export default function NewLibrarySectionPage() {
   return (
@@ -38,7 +33,7 @@ export default function NewLibrarySectionPage() {
 
 function NewLibrarySectionContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/library-sections" })
-  const [libraries, setLibraries] = useState<Library[]>([])
+  const [libraries, setLibraries] = useState<LibraryOption[]>([])
   const [loadingLibraries, setLoadingLibraries] = useState(true)
 
   const {

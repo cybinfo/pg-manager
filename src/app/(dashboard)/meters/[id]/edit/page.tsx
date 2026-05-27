@@ -37,17 +37,13 @@ import {
   METER_TYPE_CONFIG,
 } from "@/types/meters.types"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 export default function EditMeterPage() {
   const params = useParams()
   const id = params.id as string
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meters", defaultLabel: "All Meters" })
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const {

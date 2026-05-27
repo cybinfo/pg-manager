@@ -24,16 +24,12 @@ import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
+import type { PropertyOption } from "@/types/properties.types"
 
 interface ExpenseType {
   id: string
   name: string
   code: string
-}
-
-interface Property {
-  id: string
-  name: string
 }
 
 export default function NewExpensePage() {
@@ -48,7 +44,7 @@ function NewExpenseContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/expenses" })
   const { user: authUser } = useAuth()
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
   const {

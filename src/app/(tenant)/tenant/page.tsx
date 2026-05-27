@@ -23,6 +23,7 @@ import { QuickActionLink, PaymentListItem } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
+import type { TenantFeatures } from "@/types/portal.types"
 
 interface RecentPayment {
   id: string
@@ -30,16 +31,6 @@ interface RecentPayment {
   payment_date: string
   payment_method: string
   for_period: string | null
-}
-
-interface TenantFeatures {
-  view_bills: boolean
-  view_payments: boolean
-  submit_complaints: boolean
-  view_notices: boolean
-  request_visitors: boolean
-  download_receipts: boolean
-  update_profile: boolean
 }
 
 const defaultTenantFeatures: TenantFeatures = {

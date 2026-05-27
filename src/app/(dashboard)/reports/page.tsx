@@ -50,11 +50,7 @@ import { StatCard } from "@/components/ui/stat-card"
 import { SummaryCard } from "@/components/ui/quick-stats-grid"
 import { logger } from "@/lib/logger"
 import { formatCurrencyTick } from "@/lib/format"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 interface ReportData {
   // Occupancy
@@ -106,7 +102,7 @@ interface ReportData {
 
 export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [selectedProperty, setSelectedProperty] = useState<string>("all")
   const [reportData, setReportData] = useState<ReportData | null>(null)
   const { dateRange, setDateRange, startDate, endDate, lastMonthStart, lastMonthEnd } = useReportDateRange()

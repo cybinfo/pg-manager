@@ -30,12 +30,7 @@ import { PersonSearchResult } from "@/types/people.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
 import { logger } from "@/lib/logger"
-
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 interface Room {
   id: string
@@ -56,7 +51,7 @@ export default function NewTenantPage() {
   const searchParams = useSearchParams()
   const personIdFromUrl = searchParams.get("person_id")
   const [loading, setLoading] = useState(false)
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [availableRooms, setAvailableRooms] = useState<Room[]>([])
   const [loadingData, setLoadingData] = useState(true)

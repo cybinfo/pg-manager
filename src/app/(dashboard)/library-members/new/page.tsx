@@ -34,20 +34,7 @@ import { withCreatedBy } from "@/lib/audit"
 import { useFeatures } from "@/lib/features/use-features"
 import { logger } from "@/lib/logger"
 import { GENDER_OPTIONS, ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
-
-interface Library {
-  id: string
-  name: string
-  code: string | null
-}
-
-interface Plan {
-  id: string
-  name: string
-  hours_included: number | null
-  validity_days: number
-  base_price: number
-}
+import type { LibraryOption, LibraryPlanOption } from "@/types/library.types"
 
 export default function NewLibraryMemberPage() {
   return (
@@ -69,8 +56,8 @@ function NewLibraryMemberContent() {
   const { user } = useAuthContext()
   const { backHref } = useBackNavigation({ defaultHref: "/library-members" })
   const { isFeatureEnabled } = useFeatures()
-  const [libraries, setLibraries] = useState<Library[]>([])
-  const [plans, setPlans] = useState<Plan[]>([])
+  const [libraries, setLibraries] = useState<LibraryOption[]>([])
+  const [plans, setPlans] = useState<LibraryPlanOption[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
 

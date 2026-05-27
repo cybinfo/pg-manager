@@ -44,11 +44,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { PERMISSIONS } from "@/lib/auth/types"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 export default function StaffDetailPage() {
   const params = useParams()
@@ -75,7 +71,7 @@ export default function StaffDetailPage() {
 
   // Additional state for role management and form editing
   const [allRoles, setAllRoles] = useState<Role[]>([])
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [isEditing, setIsEditing] = useState(false)
   const [roleLoading, setRoleLoading] = useState(false)
 

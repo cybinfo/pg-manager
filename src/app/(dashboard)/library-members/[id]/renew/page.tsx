@@ -34,6 +34,7 @@ import { useFormValidation } from "@/lib/hooks/useFormValidation"
 import { requiredSelect, requiredDate } from "@/lib/validation"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
+import type { LibraryPlanOption } from "@/types/library.types"
 
 interface MemberData {
   id: string
@@ -49,14 +50,6 @@ interface MemberData {
   workspace_id: string
   library?: { id: string; name: string } | null
   person?: { id: string; name?: string } | null
-}
-
-interface Plan {
-  id: string
-  name: string
-  hours_included: number | null
-  validity_days: number
-  base_price: number
 }
 
 interface CurrentMembership {
@@ -79,7 +72,7 @@ export default function RenewLibraryMemberPage({
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [member, setMember] = useState<MemberData | null>(null)
-  const [plans, setPlans] = useState<Plan[]>([])
+  const [plans, setPlans] = useState<LibraryPlanOption[]>([])
   const [currentMembership, setCurrentMembership] = useState<CurrentMembership | null>(null)
 
   const [formData, setFormData] = useState({

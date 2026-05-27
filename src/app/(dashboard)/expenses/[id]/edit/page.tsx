@@ -21,16 +21,12 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
+import type { PropertyOption } from "@/types/properties.types"
 
 interface ExpenseType {
   id: string
   name: string
   code: string
-}
-
-interface Property {
-  id: string
-  name: string
 }
 
 export default function EditExpensePage() {
@@ -49,7 +45,7 @@ function EditExpenseContent() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([])
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
 
   const [formData, setFormData] = useState({
     expense_type_id: "",

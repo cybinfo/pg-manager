@@ -26,11 +26,7 @@ import {
 import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 interface LibraryItem {
   id: string
@@ -58,7 +54,7 @@ const audiences = [
 
 function NewNoticeContent() {
   const [loadingData, setLoadingData] = useState(true)
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [libraries, setLibraries] = useState<LibraryItem[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])

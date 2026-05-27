@@ -40,11 +40,7 @@ import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Notice, NoticeType } from "@/types/notices.types"
 import { NOTICE_AUDIENCE_OPTIONS } from "@/lib/status"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 interface Room {
   id: string
@@ -63,7 +59,7 @@ export default function NoticeDetailPage() {
   const params = useParams()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/notices", defaultLabel: "All Notices" })
   const [rooms, setRooms] = useState<Room[]>([])
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([])

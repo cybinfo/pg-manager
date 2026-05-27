@@ -21,12 +21,9 @@ import { ROOM_TYPES } from "@/types/rooms.types"
 import type { CSVColumn } from "@/lib/download-utils"
 import { currencyExportColumn, dateExportColumn } from "@/lib/export-columns"
 import { logger } from "@/lib/logger"
+import type { PropertyOption } from "@/types/properties.types"
 
-interface Property {
-  id: string
-  name: string
-  address: string
-}
+type Property = PropertyOption & { address: string }
 
 const ROOM_TYPE_LABELS: Record<string, string> = Object.fromEntries(
   ROOM_TYPES.map(({ value, label }) => [value, label])

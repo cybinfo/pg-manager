@@ -15,11 +15,7 @@ import { requiredField, requiredPhone, requiredSelect } from "@/lib/validation"
 import { ArrowLeft, Inbox, Loader2 } from "lucide-react"
 import { PermissionGuard } from "@/components/auth"
 import { defaultConfigurableRoomTypes, ConfigurableRoomType } from "@/types/rooms.types"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 const SOURCE_OPTIONS = [
   { value: "phone", label: "Phone Call" },
@@ -38,7 +34,7 @@ export default function NewInquiryPage() {
 function NewInquiryContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/inquiries" })
   const { user } = useAuth()
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [roomTypes, setRoomTypes] = useState<ConfigurableRoomType[]>(defaultConfigurableRoomTypes)
 
   const {

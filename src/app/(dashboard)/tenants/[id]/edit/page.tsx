@@ -34,11 +34,7 @@ import { PermissionGuard } from "@/components/auth"
 import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
 import { TENANT_STATUS_OPTIONS } from "@/lib/constants/form-options"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 interface Room {
   id: string
@@ -62,7 +58,7 @@ function EditTenantContent() {
   const params = useParams()
   const id = params.id as string
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/tenants", defaultLabel: "All Tenants" })
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [availableRooms, setAvailableRooms] = useState<Room[]>([])
   const [originalRoomId, setOriginalRoomId] = useState<string>("")

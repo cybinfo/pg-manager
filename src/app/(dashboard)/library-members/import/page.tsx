@@ -26,25 +26,13 @@ import { withCreatedBy } from "@/lib/audit/audit-utils"
 import { getTodayISO } from "@/lib/date-helpers"
 import { parseCSV, validateRow } from "@/lib/import/library-members"
 import type { ParsedRow } from "@/lib/import/library-members"
+import type { LibraryOption, LibraryPlanOption } from "@/types/library.types"
 
 // ============================================
 // Types
 // ============================================
 
-interface Library {
-  id: string
-  name: string
-  code: string | null
-  owner_id: string
-}
-
-interface Plan {
-  id: string
-  name: string
-  hours_included: number | null
-  validity_days: number
-  base_price: number
-}
+type Library = LibraryOption & { owner_id: string }
 
 interface ImportResult {
   total: number
@@ -63,7 +51,7 @@ function BulkImportContent() {
 
   // Data state
   const [libraries, setLibraries] = useState<Library[]>([])
-  const [plans, setPlans] = useState<Plan[]>([])
+  const [plans, setPlans] = useState<LibraryPlanOption[]>([])
   const [selectedLibrary, setSelectedLibrary] = useState("")
   const [loadingData, setLoadingData] = useState(true)
 

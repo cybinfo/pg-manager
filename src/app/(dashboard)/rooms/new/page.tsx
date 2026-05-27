@@ -20,12 +20,9 @@ import { PhotoGallery } from "@/components/forms"
 import { PermissionGuard } from "@/components/auth"
 import { ConfigurableRoomType, defaultConfigurableRoomTypes } from "@/types/rooms.types"
 import { logger } from "@/lib/logger"
+import type { PropertyOption } from "@/types/properties.types"
 
-interface Property {
-  id: string
-  name: string
-  website_config?: { property_type?: string } | null
-}
+type Property = PropertyOption & { website_config?: { property_type?: string } | null }
 
 const roomTypeBedCounts: Record<string, number> = {
   single: 1,

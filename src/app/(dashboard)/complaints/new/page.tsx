@@ -16,11 +16,7 @@ import { requiredField } from "@/lib/validation"
 import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
-
-interface Property {
-  id: string
-  name: string
-}
+import type { PropertyOption } from "@/types/properties.types"
 
 interface LibraryItem {
   id: string
@@ -82,7 +78,7 @@ const priorities = [
 function NewComplaintForm() {
   const { backHref } = useBackNavigation({ defaultHref: "/complaints" })
   const [loadingData, setLoadingData] = useState(true)
-  const [properties, setProperties] = useState<Property[]>([])
+  const [properties, setProperties] = useState<PropertyOption[]>([])
   const [libraries, setLibraries] = useState<LibraryItem[]>([])
   const [libraryMembers, setLibraryMembers] = useState<LibraryMember[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
