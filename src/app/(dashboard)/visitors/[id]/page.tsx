@@ -55,11 +55,20 @@ import {
   Visitor,
   VisitorType,
   VISITOR_TYPE_LABELS,
+  VISITOR_TYPE_BADGE_COLORS,
   EnquiryStatus,
   ENQUIRY_STATUS_LABELS,
   ENQUIRY_SOURCE_LABELS,
 } from "@/types/visitors.types"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { VisitorTypeBadge } from "@/components/visitors/VisitorTypeBadge"
+
+const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
+  tenant_visitor: <Users className="h-5 w-5" />,
+  enquiry: <Search className="h-5 w-5" />,
+  service_provider: <Wrench className="h-5 w-5" />,
+  general: <User className="h-5 w-5" />,
+}
 
 interface VisitHistoryEntry {
   id: string
@@ -70,26 +79,6 @@ interface VisitHistoryEntry {
   property: { name: string } | null
 }
 
-const VISITOR_TYPE_BADGE_COLORS: Record<VisitorType, string> = {
-  tenant_visitor: "bg-info/10 text-info",
-  enquiry: "bg-purple-100 text-purple-700",
-  service_provider: "bg-warning/10 text-warning",
-  general: "bg-muted text-foreground",
-}
-
-const VISITOR_TYPE_ICONS: Record<VisitorType, React.ReactNode> = {
-  tenant_visitor: <Users className="h-4 w-4" />,
-  enquiry: <Search className="h-4 w-4" />,
-  service_provider: <Wrench className="h-4 w-4" />,
-  general: <User className="h-4 w-4" />,
-}
-
-const VisitorTypeBadge = ({ type }: { type: VisitorType }) => (
-  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${VISITOR_TYPE_BADGE_COLORS[type]}`}>
-    {VISITOR_TYPE_ICONS[type]}
-    {VISITOR_TYPE_LABELS[type]}
-  </span>
-)
 
 export default function VisitorDetailPage() {
   const params = useParams()
@@ -238,7 +227,7 @@ export default function VisitorDetailPage() {
         title={displayName}
         subtitle={
           <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-            <VisitorTypeBadge type={visitor.visitor_type} />
+            <VisitorTypeBadge type={visitor.visitor_type} size="md" />
             {visitor.is_overnight && (
               <StatusBadge status="info" label="Overnight" size="sm" />
             )}

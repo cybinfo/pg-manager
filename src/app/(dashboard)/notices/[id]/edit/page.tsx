@@ -19,7 +19,7 @@ import { ArrowLeft, Megaphone, Loader2 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
-import { NOTICE_TYPE_OPTIONS, NOTICE_AUDIENCE_OPTIONS } from "@/lib/status"
+import { NOTICE_TYPE_OPTIONS, NOTICE_AUDIENCE_OPTIONS, BOOLEAN_STRING_OPTIONS } from "@/lib/status"
 import { NOTICE_PRIORITY_OPTIONS } from "@/lib/constants/form-options"
 import { PermissionGuard } from "@/components/auth"
 
@@ -192,10 +192,7 @@ function EditNoticeContent({
                   onChange={handleChange}
                   name="is_active"
                   disabled={saving}
-                  options={[
-                    { value: "true", label: "Active" },
-                    { value: "false", label: "Inactive" },
-                  ]}
+                  options={BOOLEAN_STRING_OPTIONS}
                 />
               </FormField>
             </div>

@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { withCreatedBy } from "@/lib/audit"
+import { useAuth } from "@/lib/auth"
 import { FeatureGate } from "@/components/auth"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
@@ -65,6 +66,7 @@ export function BillingSettings({
   config,
   setConfig,
 }: BillingSettingsProps) {
+  const { user } = useAuth()
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
   const { saving, save: saveOwnerConfig } = useSettingsMutation({ configId: config?.id, setConfig })
   const [savingCharge, setSavingCharge] = useState(false)
@@ -98,8 +100,11 @@ export function BillingSettings({
 
     setSavingCharge(true)
     try {
+      if (!user) {
+        showError("Not authenticated")
+        return
+      }
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
 
       const { data, error } = await supabase
         .from("charge_types")
@@ -174,9 +179,8 @@ export function BillingSettings({
   const saveUtilityRates = async () => {
     setSavingUtilityRates(true)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
+      const supabase = createClient()
 
       for (const utility of utilityRates) {
         const calculation_config = utility.billing_type === 'per_unit'

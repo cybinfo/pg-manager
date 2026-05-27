@@ -281,6 +281,12 @@ export const METER_STATUS_OPTIONS = labelsToOptions(METER_STATUS_LABELS)
 /** Meter type options for form selects */
 export const METER_TYPE_OPTIONS = labelsToOptions(METER_TYPE_LABELS)
 
+/** Boolean string options for active/inactive selects */
+export const BOOLEAN_STRING_OPTIONS = [
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+]
+
 /** Unit options for products and daily-spend expense entries */
 export const UNIT_OPTIONS = [
   { value: "Kg", label: "Kilogram (Kg)" },

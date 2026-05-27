@@ -24,6 +24,7 @@ import type { CSVColumn } from "@/lib/download-utils"
 import { currencyExportColumn, dateExportColumn, labelMapColumn, nestedColumn } from "@/lib/export-columns"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { logger } from "@/lib/logger"
+import { formatCurrency } from "@/lib/format"
 
 interface Payment {
   id: string
@@ -70,7 +71,7 @@ const columns: Column<Payment>[] = [
         </div>
         <div className="min-w-0">
           <div className="font-semibold text-success tabular-nums">
-            {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(payment.amount)}
+            {formatCurrency(payment.amount)}
           </div>
           {payment.for_period && (
             <div className="text-xs text-muted-foreground">{payment.for_period}</div>

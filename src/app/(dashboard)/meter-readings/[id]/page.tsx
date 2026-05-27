@@ -41,6 +41,7 @@ import { METER_TYPE_ICON_CONFIG } from "@/types/meters.types"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatDate, formatDateTime, formatMonthYear, formatNumber} from "@/lib/format"
 import { PermissionGate, FeatureGuard } from "@/components/auth"
+import { useAuth } from "@/lib/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
@@ -79,6 +80,7 @@ const meterTypeConfig: Record<string, typeof METER_TYPE_ICON_CONFIG[keyof typeof
 export default function MeterReadingDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { user } = useAuth()
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meter-readings", defaultLabel: "All Readings" })
   const [generating, setGenerating] = useState(false)
   const [charges, setCharges] = useState<Charge[]>([])
@@ -190,16 +192,16 @@ export default function MeterReadingDetailPage() {
     }
 
     setGenerating(true)
+
+    if (!user) {
+      showError("Session expired. Please login again.")
+      router.push("/login")
+      return
+    }
+
     const supabase = createClient()
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        showError("Session expired. Please login again.")
-        router.push("/login")
-        return
-      }
-
       const { data: tenants, error: tenantsError } = await supabase
         .from("tenants")
         .select("id, name")
