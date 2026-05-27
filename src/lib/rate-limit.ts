@@ -1,8 +1,8 @@
 /**
  * Rate Limiting Utility
  *
- * Implements sliding window rate limiting for API protection.
- * Uses in-memory storage by default, can be swapped to Redis for distributed deployments.
+ * Uses Upstash Redis (sliding window) in production when UPSTASH_REDIS_REST_URL is set.
+ * Falls back to in-memory for local development and tests.
  *
  * Usage:
  *   const limiter = createRateLimiter({ windowMs: 60000, max: 10 })
@@ -23,95 +23,64 @@ export interface RateLimitResult {
   success: boolean
   limit: number
   remaining: number
-  reset: number // Unix timestamp when the limit resets
+  reset: number // Unix timestamp (seconds) when the limit resets
   retryAfter?: number // Seconds until retry is allowed
 }
+
+// ---- In-memory fallback (local dev / tests) ----
 
 interface RateLimitEntry {
   count: number
   resetTime: number
 }
 
-// In-memory store for rate limiting
-// NOTE: This works for single-instance deployments
-// For multi-instance/serverless, use Redis or Upstash
 const store = new Map<string, RateLimitEntry>()
-
-// Cleanup old entries periodically to prevent memory leaks
-const CLEANUP_INTERVAL = 60000 // 1 minute
+const CLEANUP_INTERVAL = 60000
 let lastCleanup = Date.now()
 
 function cleanup() {
   const now = Date.now()
   if (now - lastCleanup < CLEANUP_INTERVAL) return
-
   lastCleanup = now
   for (const [key, entry] of store.entries()) {
-    if (entry.resetTime < now) {
-      store.delete(key)
-    }
+    if (entry.resetTime < now) store.delete(key)
   }
 }
 
-/**
- * Creates a rate limiter with the specified configuration
- */
-export function createRateLimiter(config: RateLimitConfig) {
+function createInMemoryLimiter(config: RateLimitConfig) {
   const { windowMs, max, prefix = "" } = config
 
   return {
-    /**
-     * Check if a request should be allowed
-     * @param identifier - Unique identifier (IP, user ID, API key, etc.)
-     */
     check: async (identifier: string): Promise<RateLimitResult> => {
       cleanup()
-
       const key = prefix ? `${prefix}:${identifier}` : identifier
       const now = Date.now()
       const entry = store.get(key)
 
-      // If no entry or window expired, create new entry
       if (!entry || entry.resetTime < now) {
         const resetTime = now + windowMs
         store.set(key, { count: 1, resetTime })
-        return {
-          success: true,
-          limit: max,
-          remaining: max - 1,
-          reset: Math.ceil(resetTime / 1000),
-        }
+        return { success: true, limit: max, remaining: max - 1, reset: Math.ceil(resetTime / 1000) }
       }
 
-      // Increment count
       entry.count++
       store.set(key, entry)
-
       const remaining = Math.max(0, max - entry.count)
       const reset = Math.ceil(entry.resetTime / 1000)
 
       if (entry.count > max) {
-        const retryAfter = Math.ceil((entry.resetTime - now) / 1000)
         return {
           success: false,
           limit: max,
           remaining: 0,
           reset,
-          retryAfter,
+          retryAfter: Math.ceil((entry.resetTime - now) / 1000),
         }
       }
 
-      return {
-        success: true,
-        limit: max,
-        remaining,
-        reset,
-      }
+      return { success: true, limit: max, remaining, reset }
     },
 
-    /**
-     * Reset the rate limit for an identifier
-     */
     reset: async (identifier: string): Promise<void> => {
       const key = prefix ? `${prefix}:${identifier}` : identifier
       store.delete(key)
@@ -119,91 +88,148 @@ export function createRateLimiter(config: RateLimitConfig) {
   }
 }
 
+// ---- Upstash Redis-backed limiter (production) ----
+
+type UpstashDuration = `${number} ${"ms" | "s" | "m" | "h" | "d"}`
+
+function msToUpstashDuration(ms: number): UpstashDuration {
+  if (ms % (24 * 60 * 60 * 1000) === 0) return `${ms / (24 * 60 * 60 * 1000)} d`
+  if (ms % (60 * 60 * 1000) === 0) return `${ms / (60 * 60 * 1000)} h`
+  if (ms % (60 * 1000) === 0) return `${ms / (60 * 1000)} m`
+  if (ms % 1000 === 0) return `${ms / 1000} s`
+  return `${ms} ms`
+}
+
+function createUpstashLimiter(config: RateLimitConfig) {
+  const { windowMs, max, prefix = "rl" } = config
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let ratelimit: any = null
+
+  function getRatelimit() {
+    if (ratelimit) return ratelimit
+    // Lazy require so the module loads cleanly without env vars (tests use in-memory path)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Ratelimit } = require("@upstash/ratelimit")
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Redis } = require("@upstash/redis")
+    ratelimit = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(max, msToUpstashDuration(windowMs)),
+      prefix,
+      analytics: false,
+    })
+    return ratelimit
+  }
+
+  return {
+    check: async (identifier: string): Promise<RateLimitResult> => {
+      const rl = getRatelimit()
+      const result = await rl.limit(identifier)
+      const now = Date.now()
+      // Upstash reset is a Unix timestamp in milliseconds; convert to seconds
+      const resetSec = Math.ceil(result.reset / 1000)
+      return {
+        success: result.success,
+        limit: result.limit,
+        remaining: result.remaining,
+        reset: resetSec,
+        retryAfter: result.success ? undefined : Math.ceil((result.reset - now) / 1000),
+      }
+    },
+
+    reset: async (identifier: string): Promise<void> => {
+      // Upstash sliding window uses multiple keys internally; clear via pattern scan
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Redis } = require("@upstash/redis")
+      const redis = Redis.fromEnv()
+      const keys: string[] = await redis.keys(`${prefix}:${identifier}*`)
+      if (keys.length > 0) await redis.del(...keys)
+    },
+  }
+}
+
+// ---- Public API ----
+
+const USE_UPSTASH = Boolean(
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+)
+
+/**
+ * Creates a rate limiter with the specified configuration.
+ * Uses Upstash Redis when env vars are present, in-memory otherwise.
+ */
+export function createRateLimiter(config: RateLimitConfig) {
+  return USE_UPSTASH ? createUpstashLimiter(config) : createInMemoryLimiter(config)
+}
+
 // Pre-configured rate limiters for different use cases
 
 /** Strict limiter for auth endpoints (login, register, password reset) */
 export const authLimiter = createRateLimiter({
-  windowMs: 60 * 1000, // 1 minute
-  max: 5, // 5 requests per minute
+  windowMs: 60 * 1000,
+  max: 5,
   prefix: "auth",
 })
 
 /** Moderate limiter for admin endpoints */
 export const adminLimiter = createRateLimiter({
-  windowMs: 60 * 1000, // 1 minute
-  max: 20, // 20 requests per minute
+  windowMs: 60 * 1000,
+  max: 20,
   prefix: "admin",
 })
 
 /** Standard limiter for regular API endpoints */
 export const apiLimiter = createRateLimiter({
-  windowMs: 60 * 1000, // 1 minute
-  max: 100, // 100 requests per minute
+  windowMs: 60 * 1000,
+  max: 100,
   prefix: "api",
 })
 
 /** Strict limiter for sensitive operations (email update, password change) */
 export const sensitiveLimiter = createRateLimiter({
-  windowMs: 60 * 1000, // 1 minute
-  max: 3, // 3 requests per minute
+  windowMs: 60 * 1000,
+  max: 3,
   prefix: "sensitive",
 })
 
 /** Limiter for cron jobs */
 export const cronLimiter = createRateLimiter({
-  windowMs: 60 * 1000, // 1 minute
-  max: 2, // 2 requests per minute (crons shouldn't hit more than once)
+  windowMs: 60 * 1000,
+  max: 2,
   prefix: "cron",
 })
 
 /**
- * Get client identifier from request
- * Uses X-Forwarded-For for proxied requests, falls back to IP
- * SEC-002: Improved fallback to generate unique identifier from request fingerprint
+ * Get client identifier from request.
+ * Uses X-Forwarded-For for proxied requests, falls back to IP.
  */
 export function getClientIdentifier(request: Request): string {
-  // Check for forwarded IP (from proxy/load balancer)
   const forwarded = request.headers.get("x-forwarded-for")
-  if (forwarded) {
-    // Take the first IP in the chain (original client)
-    return forwarded.split(",")[0].trim()
-  }
+  if (forwarded) return forwarded.split(",")[0].trim()
 
-  // Check for real IP header (Cloudflare, etc.)
   const realIp = request.headers.get("x-real-ip")
-  if (realIp) {
-    return realIp
-  }
+  if (realIp) return realIp
 
-  // Check for CF-Connecting-IP (Cloudflare specific)
   const cfIp = request.headers.get("cf-connecting-ip")
-  if (cfIp) {
-    return cfIp
-  }
+  if (cfIp) return cfIp
 
-  // SEC-002: Generate fingerprint from available headers when no IP available
-  // This creates a somewhat unique identifier for rate limiting purposes
+  // Fingerprint from headers when no IP is available
   const userAgent = request.headers.get("user-agent") || ""
   const acceptLang = request.headers.get("accept-language") || ""
   const acceptEnc = request.headers.get("accept-encoding") || ""
-
-  // Create a simple hash-like string from available headers
-  // This isn't cryptographically secure but provides differentiation for rate limiting
   const fingerprint = `${userAgent.slice(0, 50)}|${acceptLang.slice(0, 10)}|${acceptEnc.slice(0, 10)}`
 
-  // If we have some fingerprint data, use it with prefix
   if (fingerprint.length > 3) {
-    // Simple string-based hash for consistent identifier
     let hash = 0
     for (let i = 0; i < fingerprint.length; i++) {
       const char = fingerprint.charCodeAt(i)
       hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32-bit integer
+      hash = hash & hash
     }
     return `fp_${Math.abs(hash).toString(36)}`
   }
 
-  // Ultimate fallback - should rarely happen in real requests
   return `unknown_${Date.now().toString(36)}`
 }
 
@@ -252,10 +278,8 @@ export async function withRateLimit(
     )
   }
 
-  // Execute the handler and add rate limit headers to response
   const response = await handler()
 
-  // Clone response to add headers
   const newHeaders = new Headers(response.headers)
   Object.entries(rateLimitHeaders(result)).forEach(([key, value]) => {
     newHeaders.set(key, value)
