@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useMemo, useCallback } from "react"
+import { useEffect, useState, useMemo } from "react"
+import { useSortState } from "@/lib/hooks/useSortState"
 import { createClient } from "@/lib/supabase/client"
 import {
   LineChart,
@@ -86,10 +87,8 @@ export default function LibraryReportsPage() {
   const [paymentGroupBy, setPaymentGroupBy] = useState<GroupByPeriod>("month")
   const [paymentReportData, setPaymentReportData] = useState<PaymentReportData | null>(null)
   const [paymentReportLoading, setPaymentReportLoading] = useState(false)
-  const [paymentSortColumn, setPaymentSortColumn] = useState<string>("period")
-  const [paymentSortDirection, setPaymentSortDirection] = useState<"asc" | "desc">("asc")
-  const [topMembersSortColumn, setTopMembersSortColumn] = useState<string>("totalPaid")
-  const [topMembersSortDirection, setTopMembersSortDirection] = useState<"asc" | "desc">("desc")
+  const { sortColumn: paymentSortColumn, sortDirection: paymentSortDirection, toggleSort: togglePaymentSort } = useSortState("period", "asc")
+  const { sortColumn: topMembersSortColumn, sortDirection: topMembersSortDirection, toggleSort: toggleTopMembersSort } = useSortState("totalPaid", "desc")
 
   useEffect(() => {
     fetchReportData()
@@ -388,15 +387,6 @@ export default function LibraryReportsPage() {
     })
     return data
   }, [paymentReportData, topMembersSortColumn, topMembersSortDirection])
-
-  const toggleSort = useCallback((column: string, currentCol: string, currentDir: "asc" | "desc", setCol: (c: string) => void, setDir: (d: "asc" | "desc") => void) => {
-    if (currentCol === column) {
-      setDir(currentDir === "asc" ? "desc" : "asc")
-    } else {
-      setCol(column)
-      setDir("desc")
-    }
-  }, [])
 
   // ============================================================================
   // Render
@@ -914,7 +904,7 @@ export default function LibraryReportsPage() {
                                   "py-2 px-3 font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors",
                                   col.align === "right" ? "text-right" : "text-left"
                                 )}
-                                onClick={() => toggleSort(col.key, paymentSortColumn, paymentSortDirection, setPaymentSortColumn, setPaymentSortDirection)}
+                                onClick={() => togglePaymentSort(col.key)}
                               >
                                 <span className="inline-flex items-center gap-1">
                                   {col.label}
@@ -989,7 +979,7 @@ export default function LibraryReportsPage() {
                                   "py-2 px-3 font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors",
                                   col.align === "right" ? "text-right" : "text-left"
                                 )}
-                                onClick={() => toggleSort(col.key, topMembersSortColumn, topMembersSortDirection, setTopMembersSortColumn, setTopMembersSortDirection)}
+                                onClick={() => toggleTopMembersSort(col.key)}
                               >
                                 <span className="inline-flex items-center gap-1">
                                   {col.label}
