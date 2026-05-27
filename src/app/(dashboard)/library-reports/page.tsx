@@ -43,93 +43,30 @@ import {
   StatusBreakdownCard,
   useReportDateRange,
   formatCurrency,
-  calculateGrowth,
-  buildPaymentMethodBreakdown,
   CHART_COLORS,
-  MONTH_NAMES,
-  DAY_NAMES,
   exportCSV,
 } from "@/components/reports"
 import { StatCard } from "@/components/ui/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getTodayISO } from "@/lib/date-helpers"
 import { cn } from "@/lib/utils"
 import { logger } from "@/lib/logger"
 import { formatCurrencyTick } from "@/lib/format"
-import { getWeekNumber, formatPeriodLabel, getPeriodKey, type GroupByPeriod } from "@/lib/report-utils"
-
+import { type GroupByPeriod } from "@/lib/report-utils"
+import {
+  computeLibraryOverviewReport,
+  computePaymentReport,
+  type LibraryReportResult as LibraryReportData,
+  type PaymentReportResult as PaymentReportData,
+  type RawSeat,
+  type RawMember,
+  type RawPayment,
+  type RawAttendance,
+  type RawMembership,
+} from "@/lib/reports/library"
 
 interface LibraryOption {
   id: string
   name: string
-}
-
-interface LibraryReportData {
-  // Utilization
-  totalSeats: number
-  occupiedSeats: number
-  availableSeats: number
-  utilizationRate: number
-  currentlyCheckedIn: number
-  // Members
-  totalMembers: number
-  activeMembers: number
-  expiredMembers: number
-  newMembersThisMonth: number
-  churnsThisMonth: number
-  // Revenue
-  totalRevenueThisMonth: number
-  totalRevenueLastMonth: number
-  revenueGrowth: number
-  subscriptionRevenue: number
-  lockerRevenue: number
-  otherRevenue: number
-  // Hours
-  totalHoursUsed: number
-  avgHoursPerMember: number
-  hoursRemaining: number
-  // Attendance
-  totalCheckInsThisMonth: number
-  avgDailyCheckIns: number
-  peakHour: string
-  peakDay: string
-  // Monthly trends
-  monthlyRevenue: { month: string; revenue: number; members: number }[]
-  // Payment methods
-  paymentMethods: { name: string; value: number; count: number }[]
-  // Time slot distribution
-  timeSlotDistribution: { slot: string; count: number; percentage: number }[]
-  // Daily attendance (last 7 days)
-  dailyAttendance: { date: string; checkIns: number }[]
-  // Library-wise stats
-  libraryStats: { id: string; name: string; totalSeats: number; activeMembers: number; revenue: number; checkIns: number }[]
-}
-
-// ============================================================================
-// Payment Report Types
-// ============================================================================
-
-interface PaymentReportData {
-  totalCollections: number
-  paymentCount: number
-  avgPaymentAmount: number
-  outstanding: number
-  revenueByPeriod: {
-    period: string
-    subscriptionAmount: number
-    lockerAmount: number
-    otherAmount: number
-    total: number
-    count: number
-  }[]
-  paymentMethodBreakdown: { name: string; value: number; count: number }[]
-  topMembers: {
-    memberName: string
-    memberCode: string
-    totalPaid: number
-    paymentCount: number
-    avgAmount: number
-  }[]
 }
 
 // ============================================================================
@@ -238,194 +175,22 @@ export default function LibraryReportsPage() {
 
       setLibraries(librariesData.map((l: { id: string; name: string }) => ({ id: l.id, name: l.name })))
 
-      // Filter by library if selected
-      const filterByLibrary = (items: Record<string, unknown>[], libraryIdField: string = "library_id") => {
-        if (selectedLibrary === "all") return items
-        return items.filter((item) => {
-          if (libraryIdField === "section.library_id") return (item.section as Record<string, unknown>)?.library_id === selectedLibrary
-          if (libraryIdField === "member.library_id") return (item.member as Record<string, unknown>)?.library_id === selectedLibrary
-          return item[libraryIdField] === selectedLibrary
-        })
-      }
+      const result = computeLibraryOverviewReport(
+        {
+          seats: seatsData as unknown as RawSeat[],
+          members: membersData as unknown as RawMember[],
+          payments: paymentsData as unknown as RawPayment[],
+          attendance: attendanceData as unknown as RawAttendance[],
+          libraries: librariesData as unknown as { id: string; name: string; total_seats: number }[],
+          startDate,
+          endDate,
+          lastMonthStart,
+          lastMonthEnd,
+        },
+        selectedLibrary
+      )
 
-      const filteredSeats = filterByLibrary(seatsData, "section.library_id")
-      const filteredMembers = filterByLibrary(membersData)
-      const filteredPayments = filterByLibrary(paymentsData, "member.library_id")
-      const filteredAttendance = filterByLibrary(attendanceData, "member.library_id")
-
-      const now = new Date()
-
-      // Utilization
-      const totalSeats = filteredSeats.length
-      const occupiedSeats = filteredSeats.filter((s) => s.status === "occupied").length
-      const availableSeats = filteredSeats.filter((s) => s.status === "available").length
-      const utilizationRate = totalSeats > 0 ? (occupiedSeats / totalSeats) * 100 : 0
-
-      const today = getTodayISO()
-      const currentlyCheckedIn = filteredAttendance.filter(
-        (a) => a.attendance_date === today && !a.check_out_time
-      ).length
-
-      // Members
-      const totalMembers = filteredMembers.length
-      const activeMembers = filteredMembers.filter((m) => m.status === "active").length
-      const expiredMembers = filteredMembers.filter((m) => m.status === "expired").length
-      const newMembersThisMonth = filteredMembers.filter((m) => {
-        const joinDate = new Date((m.join_date || m.created_at) as string)
-        return joinDate >= startDate && joinDate <= endDate
-      }).length
-      const churnsThisMonth = filteredMembers.filter((m) => {
-        if (!m.expiry_date) return false
-        const expiry = new Date(m.expiry_date as string)
-        return expiry >= startDate && expiry <= endDate && m.status === "expired"
-      }).length
-
-      // Revenue
-      const periodPayments = filteredPayments.filter((p) => {
-        const paymentDate = new Date(p.payment_date as string)
-        return paymentDate >= startDate && paymentDate <= endDate
-      })
-      const lastMonthPayments = filteredPayments.filter((p) => {
-        const paymentDate = new Date(p.payment_date as string)
-        return paymentDate >= lastMonthStart && paymentDate <= lastMonthEnd
-      })
-      const totalRevenueThisMonth = periodPayments.reduce((sum, p) => sum + Number(p.amount), 0)
-      const totalRevenueLastMonth = lastMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0)
-      const revenueGrowth = calculateGrowth(totalRevenueThisMonth, totalRevenueLastMonth)
-
-      const subscriptionRevenue = periodPayments
-        .filter((p) => p.payment_type === "subscription")
-        .reduce((sum, p) => sum + Number(p.amount), 0)
-      const lockerRevenue = periodPayments
-        .filter((p) => p.payment_type === "locker_rent" || p.payment_type === "locker_deposit")
-        .reduce((sum, p) => sum + Number(p.amount), 0)
-      const otherRevenue = periodPayments
-        .filter((p) => p.payment_type !== "subscription" && p.payment_type !== "locker_rent" && p.payment_type !== "locker_deposit")
-        .reduce((sum, p) => sum + Number(p.amount), 0)
-
-      // Hours
-      const totalHoursUsed = filteredMembers.reduce((sum, m) => sum + Number(m.hours_used || 0), 0)
-      const hoursRemaining = filteredMembers
-        .filter((m) => m.status === "active")
-        .reduce((sum, m) => sum + Number(m.hours_balance || 0), 0)
-      const avgHoursPerMember = activeMembers > 0 ? totalHoursUsed / activeMembers : 0
-
-      // Attendance
-      const periodAttendance = filteredAttendance.filter((a) => {
-        const date = new Date(a.attendance_date as string)
-        return date >= startDate && date <= endDate
-      })
-      const totalCheckInsThisMonth = periodAttendance.length
-      const daysInPeriod = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1
-      const avgDailyCheckIns = totalCheckInsThisMonth / daysInPeriod
-
-      // Peak hour
-      const hourCounts: Record<number, number> = {}
-      periodAttendance.forEach((a) => {
-        const hour = new Date(a.check_in_time as string).getHours()
-        hourCounts[hour] = (hourCounts[hour] || 0) + 1
-      })
-      const peakHourNum = Object.entries(hourCounts).reduce(
-        (max, [hour, count]) => (count > max.count ? { hour: Number(hour), count } : max),
-        { hour: 0, count: 0 }
-      ).hour
-      const peakHour = peakHourNum >= 12 ? `${peakHourNum - 12 || 12} PM` : `${peakHourNum || 12} AM`
-
-      // Peak day
-      const dayCounts: Record<number, number> = {}
-      periodAttendance.forEach((a) => {
-        const day = new Date(a.attendance_date as string).getDay()
-        dayCounts[day] = (dayCounts[day] || 0) + 1
-      })
-      const peakDayNum = Object.entries(dayCounts).reduce(
-        (max, [day, count]) => (count > max.count ? { day: Number(day), count } : max),
-        { day: 0, count: 0 }
-      ).day
-      const peakDay = DAY_NAMES[peakDayNum]
-
-      // Monthly revenue trend (last 6 months)
-      const monthlyRevenue = []
-      for (let i = 5; i >= 0; i--) {
-        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
-        const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
-        const monthPayments = filteredPayments.filter((p) => {
-          const paymentDate = new Date(p.payment_date as string)
-          return paymentDate >= monthStart && paymentDate <= monthEnd
-        })
-        const monthNewMembers = filteredMembers.filter((m) => {
-          const joinDate = new Date((m.join_date || m.created_at) as string)
-          return joinDate >= monthStart && joinDate <= monthEnd
-        }).length
-        monthlyRevenue.push({
-          month: MONTH_NAMES[monthStart.getMonth()],
-          revenue: monthPayments.reduce((sum, p) => sum + Number(p.amount), 0),
-          members: monthNewMembers,
-        })
-      }
-
-      // Payment method breakdown
-      const paymentMethods = buildPaymentMethodBreakdown(periodPayments as Array<{ payment_method?: string; amount: number | string }>)
-
-      // Time slot distribution
-      const slotCounts: Record<string, number> = {}
-      filteredMembers.forEach((m) => {
-        const slot = (m.preferred_slot as string) || "Not Set"
-        slotCounts[slot] = (slotCounts[slot] || 0) + 1
-      })
-      const totalSlotCount = Object.values(slotCounts).reduce((a: number, b: number) => a + b, 0)
-      const timeSlotDistribution = Object.entries(slotCounts).map(([slot, count]) => ({
-        slot,
-        count,
-        percentage: totalSlotCount > 0 ? (count / totalSlotCount) * 100 : 0,
-      }))
-
-      // Daily attendance (last 7 days)
-      const dailyAttendance = []
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date()
-        date.setDate(date.getDate() - i)
-        const dateStr = date.toISOString().split("T")[0]
-        const dayCheckIns = filteredAttendance.filter((a) => a.attendance_date === dateStr).length
-        dailyAttendance.push({
-          date: DAY_NAMES[date.getDay()],
-          checkIns: dayCheckIns,
-        })
-      }
-
-      // Library-wise stats
-      const libraryStats = librariesData.map((library: { id: string; name: string; total_seats: number }) => {
-        const libMembers = membersData.filter((m) => m.library_id === library.id)
-        const libPayments = paymentsData.filter((p) => (p.member as Record<string, unknown>)?.library_id === library.id)
-        const libAttendance = attendanceData.filter((a) => (a.member as Record<string, unknown>)?.library_id === library.id)
-
-        const libPeriodPayments = libPayments.filter((p) => {
-          const paymentDate = new Date((p as Record<string, unknown>).payment_date as string)
-          return paymentDate >= startDate && paymentDate <= endDate
-        })
-        const libPeriodAttendance = libAttendance.filter((a) => {
-          const date = new Date((a as Record<string, unknown>).attendance_date as string)
-          return date >= startDate && date <= endDate
-        })
-
-        return {
-          id: library.id,
-          name: library.name,
-          totalSeats: library.total_seats,
-          activeMembers: libMembers.filter((m) => m.status === "active").length,
-          revenue: libPeriodPayments.reduce((sum: number, p) => sum + Number((p as Record<string, unknown>).amount), 0),
-          checkIns: libPeriodAttendance.length,
-        }
-      })
-
-      setReportData({
-        totalSeats, occupiedSeats, availableSeats, utilizationRate, currentlyCheckedIn,
-        totalMembers, activeMembers, expiredMembers, newMembersThisMonth, churnsThisMonth,
-        totalRevenueThisMonth, totalRevenueLastMonth, revenueGrowth,
-        subscriptionRevenue, lockerRevenue, otherRevenue,
-        totalHoursUsed, avgHoursPerMember, hoursRemaining,
-        totalCheckInsThisMonth, avgDailyCheckIns, peakHour, peakDay,
-        monthlyRevenue, paymentMethods, timeSlotDistribution, dailyAttendance, libraryStats,
-      })
+      setReportData(result)
     } catch (error) {
       logger.error("Error fetching library report data:", { detail: error })
     } finally {
@@ -462,134 +227,19 @@ export default function LibraryReportsPage() {
         member: transformJoin(m.member),
       }))
 
-      // Filter by library
-      const filterByLibrary = (items: Record<string, unknown>[], field: string = "library_id") => {
-        if (selectedLibrary === "all") return items
-        return items.filter((item) => {
-          if (field === "member.library_id") return (item.member as Record<string, unknown>)?.library_id === selectedLibrary
-          return item[field] === selectedLibrary
-        })
-      }
-
-      const filteredPayments = filterByLibrary(paymentsData, "member.library_id")
-      const filteredMembers = filterByLibrary(membersData)
-      const filteredMemberships = filterByLibrary(membershipsData, "member.library_id")
-
-      // Period payments
-      const periodPayments = filteredPayments.filter((p: Record<string, unknown>) => {
-        const paymentDate = new Date(p.payment_date as string)
-        return paymentDate >= startDate && paymentDate <= endDate
-      })
-
-      // KPIs
-      const totalCollections = periodPayments.reduce((sum: number, p: Record<string, unknown>) => sum + Number(p.amount), 0)
-      const paymentCount = periodPayments.length
-      const avgPaymentAmount = paymentCount > 0 ? totalCollections / paymentCount : 0
-
-      // Outstanding: sum of (final_amount - linked payments) for active memberships
-      const activeMembers = filteredMembers.filter((m: Record<string, unknown>) => m.status === "active")
-      const activeMemberIds = new Set(activeMembers.map((m: Record<string, unknown>) => m.id as string))
-      const activeMemberships = filteredMemberships.filter(
-        (ms: Record<string, unknown>) => ms.status === "active" && activeMemberIds.has(ms.member_id as string)
-      )
-      const totalSubscriptionFees = activeMemberships.reduce(
-        (sum: number, ms: Record<string, unknown>) => sum + Number(ms.final_amount || 0), 0
-      )
-      // Total payments by active members for subscriptions
-      const activeSubPayments = filteredPayments.filter(
-        (p: Record<string, unknown>) => activeMemberIds.has(p.member_id as string) && p.payment_type === "subscription"
-      )
-      const totalPaidByActive = activeSubPayments.reduce(
-        (sum: number, p: Record<string, unknown>) => sum + Number(p.amount), 0
-      )
-      const outstanding = Math.max(0, totalSubscriptionFees - totalPaidByActive)
-
-      // Revenue grouped by period
-      const periodMap: Record<string, {
-        period: string
-        label: string
-        sortKey: string
-        subscriptionAmount: number
-        lockerAmount: number
-        otherAmount: number
-        total: number
-        count: number
-      }> = {}
-
-      periodPayments.forEach((p: Record<string, unknown>) => {
-        const date = new Date(p.payment_date as string)
-        const key = getPeriodKey(date, paymentGroupBy)
-        if (!periodMap[key]) {
-          periodMap[key] = {
-            period: formatPeriodLabel(date, paymentGroupBy),
-            label: formatPeriodLabel(date, paymentGroupBy),
-            sortKey: key,
-            subscriptionAmount: 0,
-            lockerAmount: 0,
-            otherAmount: 0,
-            total: 0,
-            count: 0,
-          }
-        }
-        const amount = Number(p.amount)
-        periodMap[key].total += amount
-        periodMap[key].count++
-        if (p.payment_type === "subscription") {
-          periodMap[key].subscriptionAmount += amount
-        } else if (p.payment_type === "locker_rent" || p.payment_type === "locker_deposit") {
-          periodMap[key].lockerAmount += amount
-        } else {
-          periodMap[key].otherAmount += amount
-        }
-      })
-
-      const revenueByPeriod = Object.values(periodMap).sort(
-        (a, b) => a.sortKey.localeCompare(b.sortKey)
+      const result = computePaymentReport(
+        {
+          payments: paymentsData as unknown as RawPayment[],
+          members: membersData as unknown as RawMember[],
+          memberships: membershipsData as unknown as RawMembership[],
+          startDate,
+          endDate,
+          groupBy: paymentGroupBy,
+        },
+        selectedLibrary
       )
 
-      // Payment method breakdown
-      const paymentMethodBreakdown = buildPaymentMethodBreakdown(periodPayments as Array<{ payment_method?: string; amount: number | string }>)
-
-      // Top 10 members by total payment
-      const memberTotals: Record<string, {
-        memberName: string
-        memberCode: string
-        totalPaid: number
-        paymentCount: number
-      }> = {}
-
-      periodPayments.forEach((p: Record<string, unknown>) => {
-        const memberId = p.member_id as string
-        if (!memberTotals[memberId]) {
-          const memberObj = p.member as Record<string, unknown> | null
-          memberTotals[memberId] = {
-            memberName: (memberObj?.name as string) || "Unknown",
-            memberCode: (memberObj?.member_code as string) || "-",
-            totalPaid: 0,
-            paymentCount: 0,
-          }
-        }
-        memberTotals[memberId].totalPaid += Number(p.amount)
-        memberTotals[memberId].paymentCount++
-      })
-
-      const topMembers = Object.values(memberTotals)
-        .map((m) => ({
-          ...m,
-          avgAmount: m.paymentCount > 0 ? m.totalPaid / m.paymentCount : 0,
-        }))
-        .sort((a, b) => b.totalPaid - a.totalPaid)
-        .slice(0, 10)
-
-      setPaymentReportData({
-        totalCollections,
-        paymentCount,
-        avgPaymentAmount,
-        outstanding,
-        revenueByPeriod,
-        paymentMethodBreakdown,
-        topMembers,
-      })
+      setPaymentReportData(result)
     } catch (error) {
       logger.error("Error fetching payment report data:", { detail: error })
     } finally {
