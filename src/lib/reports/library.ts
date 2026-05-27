@@ -493,3 +493,103 @@ export function computePaymentReport(
     topMembers,
   }
 }
+
+// ============================================================================
+// CSV export helpers — pure row-building, no side effects
+// ============================================================================
+
+export function buildLibraryOverviewCSV(
+  type: string,
+  reportData: LibraryReportResult,
+  formatCurrencyFn: (n: number) => string
+): { rows: (string | number)[][]; filename: string } | null {
+  switch (type) {
+    case "summary":
+      return {
+        filename: "library-summary-report.csv",
+        rows: [
+          ["Metric", "Value"],
+          ["Total Seats", reportData.totalSeats],
+          ["Occupied Seats", reportData.occupiedSeats],
+          ["Available Seats", reportData.availableSeats],
+          ["Utilization Rate", `${reportData.utilizationRate.toFixed(1)}%`],
+          ["Active Members", reportData.activeMembers],
+          ["New Members (Period)", reportData.newMembersThisMonth],
+          ["Revenue (Period)", formatCurrencyFn(reportData.totalRevenueThisMonth)],
+          ["Total Hours Used", reportData.totalHoursUsed.toFixed(1)],
+          ["Total Check-ins (Period)", reportData.totalCheckInsThisMonth],
+        ],
+      }
+    case "libraries":
+      return {
+        filename: "library-performance-report.csv",
+        rows: [
+          ["Library", "Total Seats", "Active Members", "Revenue", "Check-ins"],
+          ...reportData.libraryStats.map((l) => [
+            l.name, l.totalSeats, l.activeMembers,
+            formatCurrencyFn(l.revenue), l.checkIns,
+          ]),
+        ],
+      }
+    case "revenue":
+      return {
+        filename: "library-revenue-report.csv",
+        rows: [
+          ["Month", "Revenue", "New Members"],
+          ...reportData.monthlyRevenue.map((m) => [
+            m.month, formatCurrencyFn(m.revenue), m.members,
+          ]),
+        ],
+      }
+    default:
+      return null
+  }
+}
+
+export function buildLibraryPaymentCSV(
+  type: string,
+  paymentData: PaymentReportResult,
+  formatCurrencyFn: (n: number) => string
+): { rows: (string | number)[][]; filename: string } | null {
+  switch (type) {
+    case "collections":
+      return {
+        filename: "library-collections-report.csv",
+        rows: [
+          ["Period", "Subscription", "Locker", "Other", "Total", "Count"],
+          ...paymentData.revenueByPeriod.map((r) => [
+            r.period,
+            formatCurrencyFn(r.subscriptionAmount),
+            formatCurrencyFn(r.lockerAmount),
+            formatCurrencyFn(r.otherAmount),
+            formatCurrencyFn(r.total),
+            r.count,
+          ]),
+          [
+            "TOTAL",
+            formatCurrencyFn(paymentData.revenueByPeriod.reduce((s: number, r) => s + r.subscriptionAmount, 0)),
+            formatCurrencyFn(paymentData.revenueByPeriod.reduce((s: number, r) => s + r.lockerAmount, 0)),
+            formatCurrencyFn(paymentData.revenueByPeriod.reduce((s: number, r) => s + r.otherAmount, 0)),
+            formatCurrencyFn(paymentData.totalCollections),
+            paymentData.paymentCount,
+          ],
+        ],
+      }
+    case "top-members":
+      return {
+        filename: "library-top-members-report.csv",
+        rows: [
+          ["Member Name", "Member Code", "Total Paid", "Payment Count", "Avg Amount"],
+          ...paymentData.topMembers.map((m) => [
+            m.memberName,
+            m.memberCode,
+            formatCurrencyFn(m.totalPaid),
+            m.paymentCount,
+            formatCurrencyFn(m.avgAmount),
+          ]),
+        ],
+      }
+    default:
+      return null
+  }
+}

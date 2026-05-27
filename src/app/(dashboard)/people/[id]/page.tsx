@@ -65,6 +65,7 @@ import {
 } from "@/types/people.types"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
+import { buildPersonTimeline, getEventIcon, getEventBg, type TimelineEvent } from "@/lib/people/timeline"
 
 // Types for related data
 interface PersonStaffHistory {
@@ -89,14 +90,6 @@ interface VisitorContact {
   visit_count: number
   is_frequent: boolean
   is_blocked: boolean
-}
-
-interface TimelineEvent {
-  id: string
-  type: "tenant_join" | "tenant_leave" | "staff_join" | "verified" | "blocked"
-  date: string
-  title: string
-  subtitle?: string
 }
 
 // ============================================
@@ -161,68 +154,10 @@ export default function PersonDetailPage() {
   }, [rawTenants, staffHistory, visitorContacts])
 
   // Build unified timeline
-  const timeline = useMemo(() => {
-    if (!person) return []
-
-    const events: TimelineEvent[] = []
-
-    // Add tenant events
-    rawTenants.forEach((t) => {
-      events.push({
-        id: `tenant_join_${t.id}`,
-        type: "tenant_join",
-        date: t.check_in_date,
-        title: "Joined as Tenant",
-        subtitle: `${t.property?.name || "Unknown"} - Room ${t.room?.room_number || "Unknown"}`,
-      })
-
-      if (t.check_out_date) {
-        events.push({
-          id: `tenant_leave_${t.id}`,
-          type: "tenant_leave",
-          date: t.check_out_date,
-          title: "Checked Out",
-          subtitle: `${t.property?.name || "Unknown"} - Room ${t.room?.room_number || "Unknown"}`,
-        })
-      }
-    })
-
-    // Add staff events
-    staffHistory.forEach((s) => {
-      events.push({
-        id: `staff_join_${s.id}`,
-        type: "staff_join",
-        date: s.created_at,
-        title: "Added as Staff",
-        subtitle: s.is_active ? "Currently Active" : "No longer active",
-      })
-    })
-
-    // Add verification event
-    if (person.verified_at) {
-      events.push({
-        id: "verified",
-        type: "verified",
-        date: person.verified_at,
-        title: "Identity Verified",
-        subtitle: "Documents verified successfully",
-      })
-    }
-
-    // Add blocked event
-    if (person.is_blocked && person.blocked_at) {
-      events.push({
-        id: "blocked",
-        type: "blocked",
-        date: person.blocked_at,
-        title: "Account Blocked",
-        subtitle: person.blocked_reason || "No reason provided",
-      })
-    }
-
-    // Sort by date (newest first)
-    return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [person, rawTenants, staffHistory])
+  const timeline = useMemo(
+    () => (person ? buildPersonTimeline(rawTenants, staffHistory, person) : []),
+    [person, rawTenants, staffHistory]
+  )
 
   // Fetch visit history (requires intermediate lookup)
   useEffect(() => {
@@ -854,32 +789,10 @@ export default function PersonDetailPage() {
               <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-border" />
               <div className="space-y-4">
                 {timeline.map((event) => {
-                  const getEventIcon = () => {
-                    switch (event.type) {
-                      case "tenant_join": return <Home className="h-4 w-4 text-info" />
-                      case "tenant_leave": return <Home className="h-4 w-4 text-muted-foreground" />
-                      case "staff_join": return <Briefcase className="h-4 w-4 text-success" />
-                      case "verified": return <BadgeCheck className="h-4 w-4 text-success" />
-                      case "blocked": return <Ban className="h-4 w-4 text-destructive" />
-                      default: return <Clock className="h-4 w-4 text-muted-foreground" />
-                    }
-                  }
-
-                  const getEventBg = () => {
-                    switch (event.type) {
-                      case "tenant_join": return "bg-info/10"
-                      case "tenant_leave": return "bg-muted"
-                      case "staff_join": return "bg-success/10"
-                      case "verified": return "bg-success/10"
-                      case "blocked": return "bg-destructive/10"
-                      default: return "bg-muted"
-                    }
-                  }
-
                   return (
                     <div key={event.id} className="relative flex items-start gap-4 pl-2">
-                      <div className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${getEventBg()}`}>
-                        {getEventIcon()}
+                      <div className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${getEventBg(event)}`}>
+                        {getEventIcon(event)}
                       </div>
                       <div className="flex-1 pt-0.5">
                         <div className="flex items-center justify-between">

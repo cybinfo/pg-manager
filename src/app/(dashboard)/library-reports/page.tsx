@@ -56,6 +56,8 @@ import { type GroupByPeriod, fetchAllRows } from "@/lib/report-utils"
 import {
   computeLibraryOverviewReport,
   computePaymentReport,
+  buildLibraryOverviewCSV,
+  buildLibraryPaymentCSV,
   type LibraryReportResult as LibraryReportData,
   type PaymentReportResult as PaymentReportData,
   type RawSeat,
@@ -231,99 +233,16 @@ export default function LibraryReportsPage() {
 
   const handleExportCSV = (type: string) => {
     if (!reportData) return
-
-    const rows: (string | number)[][] = []
-    let filename = ""
-
-    switch (type) {
-      case "summary":
-        filename = "library-summary-report.csv"
-        rows.push(
-          ["Metric", "Value"],
-          ["Total Seats", reportData.totalSeats],
-          ["Occupied Seats", reportData.occupiedSeats],
-          ["Available Seats", reportData.availableSeats],
-          ["Utilization Rate", `${reportData.utilizationRate.toFixed(1)}%`],
-          ["Active Members", reportData.activeMembers],
-          ["New Members (Period)", reportData.newMembersThisMonth],
-          ["Revenue (Period)", formatCurrency(reportData.totalRevenueThisMonth)],
-          ["Total Hours Used", reportData.totalHoursUsed.toFixed(1)],
-          ["Total Check-ins (Period)", reportData.totalCheckInsThisMonth],
-        )
-        break
-      case "libraries":
-        filename = "library-performance-report.csv"
-        rows.push(
-          ["Library", "Total Seats", "Active Members", "Revenue", "Check-ins"],
-          ...reportData.libraryStats.map((l) => [
-            l.name, l.totalSeats, l.activeMembers,
-            formatCurrency(l.revenue), l.checkIns,
-          ]),
-        )
-        break
-      case "revenue":
-        filename = "library-revenue-report.csv"
-        rows.push(
-          ["Month", "Revenue", "New Members"],
-          ...reportData.monthlyRevenue.map((m) => [
-            m.month, formatCurrency(m.revenue), m.members,
-          ]),
-        )
-        break
-      default:
-        return
-    }
-
-    exportCSV(rows, filename, canPerformAction, getDemoMessage)
+    const result = buildLibraryOverviewCSV(type, reportData, formatCurrency)
+    if (!result) return
+    exportCSV(result.rows, result.filename, canPerformAction, getDemoMessage)
   }
 
   const handlePaymentExportCSV = (type: string) => {
     if (!paymentReportData) return
-
-    const rows: (string | number)[][] = []
-    let filename = ""
-
-    switch (type) {
-      case "collections":
-        filename = "library-collections-report.csv"
-        rows.push(
-          ["Period", "Subscription", "Locker", "Other", "Total", "Count"],
-          ...paymentReportData.revenueByPeriod.map((r) => [
-            r.period,
-            formatCurrency(r.subscriptionAmount),
-            formatCurrency(r.lockerAmount),
-            formatCurrency(r.otherAmount),
-            formatCurrency(r.total),
-            r.count,
-          ]),
-          [
-            "TOTAL",
-            formatCurrency(paymentReportData.revenueByPeriod.reduce((s: number, r) => s + r.subscriptionAmount, 0)),
-            formatCurrency(paymentReportData.revenueByPeriod.reduce((s: number, r) => s + r.lockerAmount, 0)),
-            formatCurrency(paymentReportData.revenueByPeriod.reduce((s: number, r) => s + r.otherAmount, 0)),
-            formatCurrency(paymentReportData.totalCollections),
-            paymentReportData.paymentCount,
-          ],
-        )
-        break
-      case "top-members":
-        filename = "library-top-members-report.csv"
-        rows.push(
-          ["Member Name", "Member Code", "Total Paid", "Payment Count", "Avg Amount"],
-          ...paymentReportData.topMembers.map((m) => [
-            m.memberName,
-            m.memberCode,
-            formatCurrency(m.totalPaid),
-            m.paymentCount,
-            formatCurrency(m.avgAmount),
-          ]),
-        )
-        break
-      default:
-        return
-    }
-
-    exportCSV(rows, filename, canPerformAction, getDemoMessage)
+    const result = buildLibraryPaymentCSV(type, paymentReportData, formatCurrency)
+    if (!result) return
+    exportCSV(result.rows, result.filename, canPerformAction, getDemoMessage)
   }
 
   // ============================================================================
