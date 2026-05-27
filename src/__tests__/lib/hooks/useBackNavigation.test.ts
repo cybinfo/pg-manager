@@ -56,7 +56,7 @@ describe("useBackNavigation", () => {
     )
 
     expect(result.current.backHref).toBe("/payments/detail")
-    expect(result.current.backLabel).toBe("All Payments")
+    expect(result.current.backLabel).toBe("Payments")
     expect(result.current.isDynamic).toBe(true)
   })
 
@@ -77,7 +77,7 @@ describe("useBackNavigation", () => {
       useBackNavigation({ defaultHref: "/library-members" })
     )
 
-    expect(result.current.backLabel).toBe("All Members")
+    expect(result.current.backLabel).toBe("Members")
   })
 })
 

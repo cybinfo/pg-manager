@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 import { Loader2, Check, X, Pencil } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select } from "@/components/ui/form-components"
 import type {
   EditType,
   EditValidation,
@@ -60,7 +61,6 @@ export function InlineEditCell({
   const [saving, setSaving] = React.useState(false)
 
   const inputRef = React.useRef<HTMLInputElement>(null)
-  const selectRef = React.useRef<HTMLSelectElement>(null)
 
   // Reset temp value when the actual value changes
   React.useEffect(() => {
@@ -71,13 +71,9 @@ export function InlineEditCell({
 
   // Focus input when editing starts
   React.useEffect(() => {
-    if (isEditing) {
-      if (editType === "select") {
-        selectRef.current?.focus()
-      } else if (editType !== "boolean") {
-        inputRef.current?.focus()
-        inputRef.current?.select()
-      }
+    if (isEditing && editType !== "select" && editType !== "boolean") {
+      inputRef.current?.focus()
+      inputRef.current?.select()
     }
   }, [isEditing, editType])
 
@@ -202,33 +198,18 @@ export function InlineEditCell({
       onClick={(e) => e.stopPropagation()}
     >
       {editType === "select" ? (
-        <select
-          ref={selectRef}
+        <Select
           value={String(tempValue ?? "")}
           onChange={(e) => setTempValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={() => {
-            // Small delay to allow click on save/cancel buttons
-            setTimeout(() => {
-              if (document.activeElement !== selectRef.current) {
-                handleSave()
-              }
-            }, 150)
+            setTimeout(() => handleSave(), 150)
           }}
           disabled={saving}
-          className={cn(
-            "h-8 text-sm rounded border border-input bg-card px-2 pr-6",
-            "focus:outline-none focus:ring-1 focus:ring-ring",
-            error && "border-destructive"
-          )}
-        >
-          <option value="">Select...</option>
-          {editOptions.map((opt) => (
-            <option key={opt.value} value={opt.value} disabled={opt.disabled}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+          autoFocus
+          options={[{ value: "", label: "Select..." }, ...editOptions]}
+          className={cn("h-8 text-sm", error && "border-destructive")}
+        />
       ) : editType === "date" ? (
         <Input
           ref={inputRef}

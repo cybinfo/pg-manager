@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/form-components"
 import { Trash2 } from "lucide-react"
+import { GUARDIAN_RELATION_TYPES } from "@/lib/constants/form-options"
 
 export interface GuardianData {
   name: string
@@ -12,8 +13,6 @@ export interface GuardianData {
   email: string
   is_primary: boolean
 }
-
-export const RELATION_TYPES = ["Parent", "Guardian", "Spouse", "Sibling", "Relative", "Friend", "Other"]
 
 export const DEFAULT_GUARDIAN: GuardianData = {
   name: "",
@@ -51,7 +50,7 @@ export function GuardianEntry({
         <Select
           value={value.relation}
           onChange={(e) => onChange("relation", e.target.value)}
-          options={RELATION_TYPES.map((r) => ({ value: r, label: r }))}
+          options={GUARDIAN_RELATION_TYPES.map((r) => ({ value: r, label: r }))}
           disabled={disabled}
           className="w-auto"
         />

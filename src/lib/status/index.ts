@@ -12,6 +12,9 @@ export type { StatusDotVariant, StatusVariant, StatusConfig, StatusConfigWithIco
 export { ACTIVE_STATUS, VISITOR_STATUS, getStatusConfig, getStatusInfo } from "./shared"
 export { INQUIRY_STATUS_LABELS, INQUIRY_SOURCE_LABELS, INQUIRY_STATUS_COLORS, INQUIRY_SOURCE_COLORS } from "./shared"
 export { OCCUPANCY_STATUS_COLORS, PG_ROOM_STATUS_COLORS } from "./shared"
+export { MATCH_TYPE_LABELS, MATCH_TYPE_COLORS } from "./shared"
+export { AUDIT_ACTION_LABELS, AUDIT_ACTION_COLORS, AUDIT_ACTION_ICONS } from "./shared"
+export { NOTIFICATION_TYPE_STYLES } from "./shared"
 
 // Tenant & Approval
 export { TENANT_STATUS, APPROVAL_STATUS, APPROVAL_TYPE_LABELS, APPROVAL_PRIORITY } from "./tenant"

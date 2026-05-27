@@ -36,6 +36,7 @@ import { showError } from "@/lib/toast-helpers"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
 import { logger } from "@/lib/logger"
+import { MATCH_TYPE_LABELS, MATCH_TYPE_COLORS } from "@/lib/status"
 
 interface DuplicateGroup {
   match_type: string
@@ -63,22 +64,10 @@ interface DuplicatePerson extends PersonBase {
   visitor_count: number
 }
 
-const MATCH_TYPE_LABELS: Record<string, string> = {
-  phone: "Same Phone Number",
-  email: "Same Email Address",
-  aadhaar: "Same Aadhaar Number",
-}
-
 const MATCH_TYPE_ICONS: Record<string, React.ReactNode> = {
   phone: <Phone className="h-4 w-4" />,
   email: <Mail className="h-4 w-4" />,
   aadhaar: <CreditCard className="h-4 w-4" />,
-}
-
-const MATCH_TYPE_COLORS: Record<string, string> = {
-  phone: "bg-info/10 text-info border-info/30",
-  email: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700",
-  aadhaar: "bg-warning/10 text-warning border-warning/30",
 }
 
 export default function DuplicatesPage() {

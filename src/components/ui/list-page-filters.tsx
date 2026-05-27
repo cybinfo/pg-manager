@@ -2,6 +2,7 @@
 
 import { X, Filter, Calendar } from "lucide-react"
 import { Button } from "./button"
+import { Select } from "@/components/ui/form-components"
 import { cn } from "@/lib/utils"
 
 export interface FilterOption {
@@ -50,19 +51,16 @@ export function ListPageFilters({
         {filters.map((filter) => (
           <div key={filter.id} className="flex items-center gap-1">
             {filter.type === "select" && (
-              <select
+              <Select
                 value={values[filter.id] || "all"}
                 onChange={(e) => onChange(filter.id, e.target.value)}
-                className="h-9 px-3 rounded-md border border-input bg-card text-sm min-w-[140px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                 aria-label={filter.label}
-              >
-                <option value="all">{filter.placeholder || `All ${filter.label}`}</option>
-                {filter.options?.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "all", label: filter.placeholder || `All ${filter.label}` },
+                  ...(filter.options || []),
+                ]}
+                className="h-9 min-w-[140px]"
+              />
             )}
 
             {filter.type === "date" && (

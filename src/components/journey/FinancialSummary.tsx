@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { FinancialSummary as FinancialSummaryType } from "@/types/journey.types"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { JOURNEY_COLOR_CLASSES } from "@/lib/design-tokens"
 
 // ============================================
 // Financial Summary Component
@@ -250,35 +251,7 @@ interface StatBoxProps {
 }
 
 function StatBox({ label, value, icon: Icon, color, highlight = false }: StatBoxProps) {
-  const colorClasses: Record<string, { bg: string; text: string; icon: string }> = {
-    slate: {
-      bg: "bg-muted",
-      text: "text-foreground",
-      icon: "text-muted-foreground",
-    },
-    emerald: {
-      bg: "bg-success/10",
-      text: "text-success",
-      icon: "text-success",
-    },
-    amber: {
-      bg: "bg-warning/10",
-      text: "text-warning",
-      icon: "text-warning",
-    },
-    rose: {
-      bg: "bg-destructive/10",
-      text: "text-destructive",
-      icon: "text-destructive",
-    },
-    teal: {
-      bg: "bg-primary/10",
-      text: "text-primary",
-      icon: "text-primary",
-    },
-  }
-
-  const colors = colorClasses[color] || colorClasses.slate
+  const colors = JOURNEY_COLOR_CLASSES[color] || JOURNEY_COLOR_CLASSES.slate
 
   return (
     <div

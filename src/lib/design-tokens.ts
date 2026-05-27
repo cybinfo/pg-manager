@@ -118,6 +118,48 @@ export const statusColors = {
 } as const
 
 // ============================================
+// JOURNEY COLOR CLASSES
+// Shared color-name → Tailwind-class mapping used across journey components.
+// ============================================
+export const JOURNEY_COLOR_CLASSES: Record<string, { bg: string; text: string; icon: string }> = {
+  teal: {
+    bg: "bg-primary/5",
+    text: "text-primary",
+    icon: "text-primary",
+  },
+  emerald: {
+    bg: "bg-success/10",
+    text: "text-success",
+    icon: "text-success",
+  },
+  amber: {
+    bg: "bg-warning/5",
+    text: "text-warning",
+    icon: "text-warning",
+  },
+  rose: {
+    bg: "bg-destructive/10",
+    text: "text-destructive",
+    icon: "text-destructive",
+  },
+  slate: {
+    bg: "bg-muted",
+    text: "text-foreground",
+    icon: "text-muted-foreground",
+  },
+  violet: {
+    bg: "bg-primary/10",
+    text: "text-primary",
+    icon: "text-primary",
+  },
+  sky: {
+    bg: "bg-info/10",
+    text: "text-info",
+    icon: "text-info",
+  },
+} as const
+
+// ============================================
 // Z-INDEX LAYERS
 // Uses CSS custom properties defined in globals.css:
 //   --z-dropdown: 40   (dropdowns, popovers, tooltips)
@@ -138,3 +180,38 @@ export const zIndex = {
   header: "z-30",
   sidebar: "z-20",
 } as const
+
+// ============================================
+// ICON COLOR VARIANTS
+// Semantic color names → Tailwind bg+text class pairs for icon containers.
+// Used by FormPageTemplate and any component that accepts an iconColor prop.
+// ============================================
+export const iconColorVariants = {
+  teal: "bg-primary/10 text-primary",
+  emerald: "bg-success/10 text-success",
+  green: "bg-success/10 text-success",
+  blue: "bg-info/10 text-info",
+  purple: "bg-purple-100 text-purple-600",
+  orange: "bg-warning/10 text-warning",
+  red: "bg-destructive/10 text-destructive",
+  amber: "bg-warning/10 text-warning",
+  indigo: "bg-indigo-100 text-indigo-600",
+  pink: "bg-pink-100 text-pink-600",
+  gray: "bg-muted text-muted-foreground",
+} as const
+
+export type IconColor = keyof typeof iconColorVariants
+
+// ============================================
+// VARIANT CLASS MAP
+// Maps status-badge variant names to Tailwind class strings for inline badge rendering.
+// Use this wherever APPROVAL_STATUS[x].variant drives a CSS class lookup.
+// ============================================
+export const variantClassMap: Record<string, string> = {
+  warning: "bg-warning/10 text-warning border-warning/20",
+  success: "bg-success/10 text-success border-success/20",
+  error: "bg-destructive/10 text-destructive border-destructive/20",
+  muted: "bg-muted text-muted-foreground border-border",
+  info: "bg-info/10 text-info border-info/20",
+  default: "bg-muted text-muted-foreground border-border",
+}

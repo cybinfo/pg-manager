@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FormField, Select } from "@/components/ui/form-components"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Loader2,
   MessageSquare,
@@ -206,13 +207,12 @@ export default function MemberComplaintsPage() {
                 htmlFor="complaint-description"
                 hint="Provide as much detail as possible to help resolve the issue faster"
               >
-                <textarea
+                <Textarea
                   id="complaint-description"
                   placeholder="Describe the issue in more detail..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={4}
-                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
                 />
               </FormField>
 

@@ -2,6 +2,8 @@
  * Shared Status Configurations & Helper Functions
  */
 
+import { Plus, Pencil, Trash2, type LucideIcon } from "lucide-react"
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -85,6 +87,60 @@ export const PG_ROOM_STATUS_COLORS: Record<string, string> = {
   occupied: "bg-destructive/10 text-destructive",
   partially_occupied: "bg-warning/10 text-warning",
   maintenance: "bg-muted text-muted-foreground",
+}
+
+// ============================================================================
+// DUPLICATE DETECTION (people/duplicates page)
+// ============================================================================
+
+export const MATCH_TYPE_LABELS: Record<string, string> = {
+  phone: "Same Phone Number",
+  email: "Same Email Address",
+  aadhaar: "Same Aadhaar Number",
+}
+
+export const MATCH_TYPE_COLORS: Record<string, string> = {
+  phone: "bg-info/10 text-info border-info/30",
+  email: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700",
+  aadhaar: "bg-warning/10 text-warning border-warning/30",
+}
+
+// ============================================================================
+// AUDIT ACTION DISPLAY (activity-history component)
+// ============================================================================
+
+export const AUDIT_ACTION_LABELS: Record<string, string> = {
+  insert: "Created",
+  update: "Updated",
+  delete: "Deleted",
+  status_change: "Status Changed",
+}
+
+export const AUDIT_ACTION_COLORS: Record<string, string> = {
+  insert: "text-success bg-success/10",
+  update: "text-info bg-info/10",
+  delete: "text-destructive bg-destructive/10",
+  status_change: "text-warning bg-warning/10",
+}
+
+export const AUDIT_ACTION_ICONS: Record<string, LucideIcon> = {
+  insert: Plus,
+  update: Pencil,
+  delete: Trash2,
+  status_change: Pencil,
+}
+
+// ============================================================================
+// NOTIFICATION TYPE STYLES (notification-bell component)
+// ============================================================================
+
+export const NOTIFICATION_TYPE_STYLES: Record<string, string> = {
+  payment: "bg-success/10 text-success",
+  bill: "bg-warning/10 text-warning",
+  complaint: "bg-destructive/10 text-destructive",
+  approval: "bg-primary/10 text-primary",
+  notice: "bg-info/10 text-info",
+  system: "bg-muted text-muted-foreground",
 }
 
 // ============================================================================

@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { pdfBrand } from "@/lib/pdf/theme"
 
 // Create styles
 const styles = StyleSheet.create({
@@ -182,8 +183,8 @@ export function RentReceiptPDF({ data }: { data: ReceiptData }) {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.brandSection}>
-            <Text style={styles.brandName}>ManageKar</Text>
-            <Text style={styles.brandTagline}>From Chaos to Clarity</Text>
+            <Text style={styles.brandName}>{pdfBrand.name}</Text>
+            <Text style={styles.brandTagline}>{pdfBrand.tagline}</Text>
           </View>
           <View style={styles.receiptInfo}>
             <Text style={styles.receiptTitle}>PAYMENT RECEIPT</Text>
@@ -292,7 +293,7 @@ export function RentReceiptPDF({ data }: { data: ReceiptData }) {
             This is a computer-generated receipt. For queries, contact {data.ownerPhone || data.ownerEmail || "the property owner"}.
           </Text>
           <Text style={styles.footerBrand}>
-            Powered by ManageKar - managekar.com
+            {pdfBrand.poweredBy}
           </Text>
         </View>
       </Page>

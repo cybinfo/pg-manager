@@ -1,6 +1,6 @@
 "use client"
 
-import { History, Plus, Pencil, Trash2, User, ChevronDown, ChevronUp, LucideIcon } from "lucide-react"
+import { History, Pencil, User, ChevronDown, ChevronUp } from "lucide-react"
 import { formatDateTime, formatTimeAgo } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,29 +8,7 @@ import { Skeleton } from "@/components/ui/loading"
 import { cn } from "@/lib/utils"
 import { useActivityHistory } from "@/lib/hooks/useActivityHistory"
 import type { AuditEventRecord, ChangedField } from "@/lib/hooks/useActivityHistory"
-
-// ── Display constants ──────────────────────────────────────────────────────
-
-const actionIcons: Record<string, LucideIcon> = {
-  insert: Plus,
-  update: Pencil,
-  delete: Trash2,
-  status_change: Pencil,  // Status changes are a type of update
-}
-
-const actionLabels: Record<string, string> = {
-  insert: "Created",
-  update: "Updated",
-  delete: "Deleted",
-  status_change: "Status Changed",
-}
-
-const actionColors: Record<string, string> = {
-  insert: "text-success bg-success/10",
-  update: "text-info bg-info/10",
-  delete: "text-destructive bg-destructive/10",
-  status_change: "text-warning bg-warning/10",
-}
+import { AUDIT_ACTION_LABELS, AUDIT_ACTION_COLORS, AUDIT_ACTION_ICONS } from "@/lib/status"
 
 // ── Shared timeline rendering ──────────────────────────────────────────────
 
@@ -61,8 +39,7 @@ function ActivityTimeline({
       <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
 
       {events.map((event) => {
-        // Use fallback for unknown action types
-        const Icon = actionIcons[event.action] || Pencil
+        const Icon = AUDIT_ACTION_ICONS[event.action] || Pencil
         const changes = showChanges ? formatChanges(event.changes) : null
         const isExpanded = expanded.has(event.id)
         const hasChanges = changes && changes.length > 0
@@ -73,7 +50,7 @@ function ActivityTimeline({
             <div
               className={cn(
                 "relative z-10 flex h-8 w-8 items-center justify-center rounded-full",
-                actionColors[event.action] || "text-foreground bg-muted"
+                AUDIT_ACTION_COLORS[event.action] || "text-foreground bg-muted"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -83,7 +60,7 @@ function ActivityTimeline({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm">
-                  {actionLabels[event.action]}
+                  {AUDIT_ACTION_LABELS[event.action]}
                 </span>
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <User className="h-3 w-3" />

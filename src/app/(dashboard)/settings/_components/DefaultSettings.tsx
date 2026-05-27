@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Check } from "lucide-react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import { OwnerConfig } from "@/types/settings.types"
-import { NOTICE_PERIOD_OPTIONS } from "@/lib/constants/form-options"
+import { NOTICE_PERIOD_OPTIONS, AVAILABLE_AMENITIES } from "@/lib/constants/form-options"
 
 interface DefaultSettingsProps {
   configForm: {
@@ -101,29 +101,13 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {[
-              "AC",
-              "Attached Bathroom",
-              "Balcony",
-              "TV",
-              "WiFi",
-              "Geyser",
-              "Wardrobe",
-              "Study Table",
-              "Chair",
-              "Bed",
-              "Mattress",
-              "Fan",
-              "Window",
-              "Power Backup",
-              "Refrigerator",
-            ].map((amenity) => (
+            {AVAILABLE_AMENITIES.map((amenity) => (
               <div
-                key={amenity}
+                key={amenity.key}
                 className="flex items-center gap-2 p-2 border rounded-lg"
               >
                 <Check className="h-4 w-4 text-success" />
-                <span className="text-sm">{amenity}</span>
+                <span className="text-sm">{amenity.label}</span>
               </div>
             ))}
           </div>

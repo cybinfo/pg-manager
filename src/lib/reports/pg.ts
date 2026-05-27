@@ -1,5 +1,5 @@
 import { calculateGrowth, buildPaymentMethodBreakdown } from "@/components/reports"
-import { MONTH_NAMES } from "@/lib/format"
+import { MONTH_NAMES, calculateOccupancyRate } from "@/lib/format"
 
 // ============================================================================
 // Input types — raw Supabase rows (expenses already have transformJoin applied)
@@ -104,7 +104,7 @@ export function computePGReport(input: PGReportInput): PGReportData {
   const maintenanceRooms = filteredRooms.filter((r) => r.status === "maintenance").length
   const totalBeds = filteredRooms.reduce((sum, r) => sum + (Number(r.total_beds) || 1), 0)
   const activeTenants = filteredTenants.filter((t) => t.status === "active").length
-  const occupancyRate = totalBeds > 0 ? (activeTenants / totalBeds) * 100 : 0
+  const occupancyRate = calculateOccupancyRate(activeTenants, totalBeds)
 
   // Tenant calculations
   const totalTenants = filteredTenants.length

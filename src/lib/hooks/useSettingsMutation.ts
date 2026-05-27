@@ -16,6 +16,7 @@
 import { logger } from "@/lib/logger"
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import type { OwnerConfig } from "@/types/settings.types"
@@ -38,6 +39,7 @@ interface SaveMessages {
  */
 export function useSettingsMutation({ configId, setConfig }: UseSettingsMutationOptions) {
   const [saving, setSaving] = useState(false)
+  const { user } = useAuth()
 
   const save = async (
     fields: Record<string, unknown>,
@@ -54,8 +56,6 @@ export function useSettingsMutation({ configId, setConfig }: UseSettingsMutation
           .eq("id", configId)
         if (error) throw error
       } else {
-        // Upsert: create new config row
-        const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("Not authenticated")
 
         const { data, error } = await supabase

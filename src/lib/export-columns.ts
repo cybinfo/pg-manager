@@ -7,6 +7,7 @@
  */
 
 import type { CSVColumn } from "@/lib/download-utils"
+import { formatCurrency as _formatCurrency, formatTime as _formatTime } from "@/lib/format"
 
 // ============================================
 // Format Helpers
@@ -36,12 +37,12 @@ export function formatDateTimeForExport(value: unknown): string {
   return `${day}/${month}/${year} ${hours}:${mins}`
 }
 
-/** Format a time value as HH:MM */
+/** Format a time value as HH:MM AM/PM */
 export function formatTimeForExport(value: unknown): string {
   if (!value) return ""
   const d = new Date(value as string)
   if (isNaN(d.getTime())) return String(value)
-  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
+  return _formatTime(d)
 }
 
 /** Format currency with ₹ symbol */
@@ -49,7 +50,7 @@ export function formatCurrencyForExport(value: unknown): string {
   if (value === null || value === undefined || value === "") return ""
   const num = Number(value)
   if (isNaN(num)) return String(value)
-  return `₹${num.toLocaleString("en-IN")}`
+  return _formatCurrency(num)
 }
 
 /** Format a number to 1 decimal place */

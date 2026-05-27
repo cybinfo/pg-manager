@@ -31,6 +31,7 @@
 
 import { useSearchParams } from "next/navigation"
 import { useMemo } from "react"
+import { getRouteConfig } from "@/lib/navigation/config"
 
 // ============================================================================
 // TYPES
@@ -50,38 +51,6 @@ export interface UseBackNavigationReturn {
   backLabel: string
   /** Whether navigation is using the dynamic `from` parameter */
   isDynamic: boolean
-}
-
-// ============================================================================
-// MODULE-TO-LABEL MAP
-// ============================================================================
-
-const MODULE_LABELS: Record<string, string> = {
-  "/tenants": "All Tenants",
-  "/bills": "All Bills",
-  "/payments": "All Payments",
-  "/properties": "All Properties",
-  "/rooms": "All Rooms",
-  "/expenses": "All Expenses",
-  "/refunds": "All Refunds",
-  "/complaints": "All Complaints",
-  "/notices": "All Notices",
-  "/visitors": "All Visitors",
-  "/staff": "All Staff",
-  "/meters": "All Meters",
-  "/meter-readings": "All Readings",
-  "/exit-clearance": "Exit Clearance",
-  "/inquiries": "All Inquiries",
-  "/people": "All People",
-  "/library": "All Libraries",
-  "/library-members": "All Members",
-  "/library-sections": "All Sections",
-  "/library-seats": "All Seats",
-  "/library-lockers": "All Lockers",
-  "/library-attendance": "All Attendance",
-  "/library-payments": "All Payments",
-  "/library-waitlist": "Waitlist",
-  "/library-plans": "All Plans",
 }
 
 // ============================================================================
@@ -114,9 +83,8 @@ export function useBackNavigation(
       }
     }
 
-    // Extract the base path for label lookup
-    const basePath = "/" + from.split("/").filter(Boolean)[0]
-    const label = MODULE_LABELS[basePath] || defaultLabel
+    // Derive label from centralized route config
+    const label = getRouteConfig(from)?.title ?? defaultLabel
 
     return {
       backHref: from,

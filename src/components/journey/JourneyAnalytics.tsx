@@ -11,7 +11,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { JourneyAnalytics as JourneyAnalyticsType } from "@/types/journey.types"
-import { formatCurrencyCompact } from "@/lib/format"
+import { formatCurrencyCompact, formatDurationDaysCompact } from "@/lib/format"
+import { JOURNEY_COLOR_CLASSES } from "@/lib/design-tokens"
 
 // ============================================
 // Journey Analytics Component
@@ -23,23 +24,10 @@ interface JourneyAnalyticsProps {
 }
 
 export function JourneyAnalytics({ analytics, className }: JourneyAnalyticsProps) {
-  const formatDays = (days: number) => {
-    if (days >= 365) {
-      const years = Math.floor(days / 365)
-      const months = Math.floor((days % 365) / 30)
-      if (months === 0) return `${years}y`
-      return `${years}y ${months}m`
-    }
-    if (days >= 30) {
-      return `${Math.floor(days / 30)}m`
-    }
-    return `${days}d`
-  }
-
   const cards = [
     {
       title: "Total Stay",
-      value: formatDays(analytics.total_stay_days),
+      value: formatDurationDaysCompact(analytics.total_stay_days),
       subtitle: analytics.total_stays > 1 ? `${analytics.total_stays} stays` : "Current stay",
       icon: Calendar,
       color: "teal",
@@ -89,40 +77,7 @@ interface AnalyticsCardProps {
 }
 
 function AnalyticsCard({ title, value, subtitle, icon: Icon, color }: AnalyticsCardProps) {
-  const colorClasses: Record<string, { bg: string; text: string; icon: string }> = {
-    teal: {
-      bg: "bg-primary/5",
-      text: "text-primary",
-      icon: "text-primary",
-    },
-    emerald: {
-      bg: "bg-success/10",
-      text: "text-success",
-      icon: "text-success",
-    },
-    amber: {
-      bg: "bg-warning/5",
-      text: "text-warning",
-      icon: "text-warning",
-    },
-    rose: {
-      bg: "bg-destructive/10",
-      text: "text-destructive",
-      icon: "text-destructive",
-    },
-    violet: {
-      bg: "bg-primary/10",
-      text: "text-primary",
-      icon: "text-primary",
-    },
-    sky: {
-      bg: "bg-info/10",
-      text: "text-info",
-      icon: "text-info",
-    },
-  }
-
-  const colors = colorClasses[color] || colorClasses.teal
+  const colors = JOURNEY_COLOR_CLASSES[color] || JOURNEY_COLOR_CLASSES.teal
 
   return (
     <div className="bg-card rounded-xl border border-border p-4 hover:shadow-md transition-shadow">

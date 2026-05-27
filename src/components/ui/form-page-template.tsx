@@ -43,23 +43,9 @@ import {
   CardContent,
 } from "@/components/ui/card"
 import type { ModuleKey } from "@/lib/features"
+import { iconColorVariants, type IconColor } from "@/lib/design-tokens"
 
-// Icon background color variants
-const iconColorVariants = {
-  teal: "bg-primary/10 text-primary",
-  emerald: "bg-success/10 text-success",
-  green: "bg-success/10 text-success",
-  blue: "bg-info/10 text-info",
-  purple: "bg-purple-100 text-purple-600",
-  orange: "bg-warning/10 text-warning",
-  red: "bg-destructive/10 text-destructive",
-  amber: "bg-warning/10 text-warning",
-  indigo: "bg-indigo-100 text-indigo-600",
-  pink: "bg-pink-100 text-pink-600",
-  gray: "bg-muted text-muted-foreground",
-} as const
-
-export type IconColor = keyof typeof iconColorVariants
+export type { IconColor }
 
 export interface FormPageTemplateProps {
   /** Form title displayed in card header */

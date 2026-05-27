@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Plus, X, ChevronDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/form-components"
 import {
   Popover,
   PopoverContent,
@@ -279,18 +280,12 @@ function FilterValueInput({
   // Select input for select/multi-select with options
   if ((filterType === "select" || filterType === "multi-select") && options) {
     return (
-      <select
+      <Select
         value={value === null || value === undefined ? "" : String(value)}
         onChange={(e) => onChange(e.target.value || null)}
-        className="h-8 px-2 text-sm border rounded bg-card flex-1 min-w-[120px]"
-      >
-        <option value="">{placeholder}</option>
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        options={[{ value: "", label: placeholder }, ...options]}
+        className="h-8 text-sm flex-1 min-w-[120px]"
+      />
     )
   }
 

@@ -53,7 +53,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { softDelete, cascadeSoftDelete } from "@/lib/audit"
+import { deletePerson } from "@/lib/services/people.service"
 import { useAuth } from "@/lib/auth"
 import { PermissionGuard, PermissionGate, FeatureGate, FeatureGuard } from "@/components/auth"
 import { TagBadge } from "@/components/people"
@@ -64,7 +64,6 @@ import {
   GENDER_LABELS,
 } from "@/types/people.types"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { logger } from "@/lib/logger"
 import { buildPersonTimeline, getEventIcon, getEventBg, type TimelineEvent } from "@/lib/people/timeline"
 
 // Types for related data
@@ -325,39 +324,10 @@ export default function PersonDetailPage() {
         const supabase = createClient()
 
         try {
-          // Soft delete related records first using cascade
-          const cascadeConfigs: { table: "tenants" | "staff_members" | "visitor_contacts"; foreignKey: string }[] = [
-            { table: "visitor_contacts", foreignKey: "person_id" },
-          ]
-
-          if (staffHistory.length > 0) {
-            cascadeConfigs.push({ table: "staff_members", foreignKey: "person_id" })
-          }
-          if (tenantHistory.length > 0) {
-            cascadeConfigs.push({ table: "tenants", foreignKey: "person_id" })
-          }
-
-          // Cascade soft delete related records
-          const { errors: cascadeErrors } = await cascadeSoftDelete(
-            person.id,
-            user.id,
-            cascadeConfigs
-          )
-
-          if (cascadeErrors.length > 0) {
-            logger.error("Cascade soft delete errors:", { detail: cascadeErrors })
-          }
-
-          // Hard delete person_roles (join table, not auditable per user request)
-          await supabase.from("person_roles").delete().eq("person_id", person.id)
-
-          // Soft delete the person
-          const { error } = await softDelete("people", person.id, user.id)
-
-          if (error) {
-            showError("Failed to delete person")
-            return
-          }
+          await deletePerson(supabase, person.id, user.id, {
+            hasTenantHistory: tenantHistory.length > 0,
+            hasStaffHistory: staffHistory.length > 0,
+          })
 
           showSuccess("Person deleted successfully")
           router.push("/people")

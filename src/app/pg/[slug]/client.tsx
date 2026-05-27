@@ -53,10 +53,12 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency, formatPhone } from "@/lib/format"
 import { generateWhatsAppLink } from "@/lib/notifications"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
+import { validateEmail } from "@/lib/validators"
 import type { PropertyWebsite } from "./page"
 import { logger } from "@/lib/logger"
 import { RATE_LIMIT_WINDOW, MAX_SUBMISSIONS } from "@/lib/constants/business-rules"
 import { WEBSITE_AMENITIES } from "@/lib/constants/form-options"
+import { submitInquiry } from "@/lib/services/inquiry.service"
 
 // ============================================================================
 // CONSTANTS
@@ -359,13 +361,6 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
     }
   }
 
-  // Simple email validation
-  const isValidEmail = (email: string): boolean => {
-    if (!email) return true // Optional field
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-  }
-
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -397,7 +392,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
     setPhoneError(null)
 
     // Validate email if provided
-    if (inquiryForm.email.trim() && !isValidEmail(inquiryForm.email.trim())) {
+    if (inquiryForm.email.trim() && !validateEmail(inquiryForm.email.trim()).isValid) {
       showError("Please enter a valid email address")
       return
     }
@@ -413,7 +408,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
     try {
       const supabase = createClient()
 
-      const { error } = await supabase.from("website_inquiries").insert({
+      await submitInquiry(supabase, {
         property_id: property.id,
         owner_id: property.owner_id,
         name: inquiryForm.name.trim(),
@@ -422,10 +417,7 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
         message: inquiryForm.message.trim() || null,
         preferred_room_type: inquiryForm.preferred_room_type || null,
         expected_move_in: inquiryForm.expected_move_in || null,
-        source: "website",
       })
-
-      if (error) throw error
 
       setSubmitted(true)
       showSuccess("Inquiry submitted successfully!")

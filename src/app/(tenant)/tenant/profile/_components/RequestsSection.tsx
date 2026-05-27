@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, CheckCircle, AlertCircle, Clock, ChevronDown, ChevronUp, Flag } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
+import { APPROVAL_STATUS } from "@/lib/status"
 
 interface ApprovalRequest {
   id: string
@@ -64,20 +65,24 @@ export function RequestsSection({ requests, showRequests, onToggleRequests }: Re
                           Submitted {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
                         </p>
                       </div>
-                      <span
-                        className={"inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium " +
-                          (request.status === "approved"
-                            ? "bg-success/10 text-success"
-                            : request.status === "rejected"
-                            ? "bg-destructive/10 text-destructive"
-                            : "bg-warning/10 text-warning")
+                      {(() => {
+                        const cfg = APPROVAL_STATUS[request.status]
+                        const variantClasses: Record<string, string> = {
+                          success: "bg-success/10 text-success",
+                          warning: "bg-warning/10 text-warning",
+                          error: "bg-destructive/10 text-destructive",
+                          muted: "bg-muted text-muted-foreground",
                         }
-                      >
-                        {request.status === "approved" && <CheckCircle className="h-3 w-3" />}
-                        {request.status === "rejected" && <AlertCircle className="h-3 w-3" />}
-                        {request.status === "pending" && <Clock className="h-3 w-3" />}
-                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                      </span>
+                        const cls = variantClasses[cfg?.variant ?? "muted"] ?? variantClasses.muted
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${cls}`}>
+                            {request.status === "approved" && <CheckCircle className="h-3 w-3" />}
+                            {request.status === "rejected" && <AlertCircle className="h-3 w-3" />}
+                            {request.status === "pending" && <Clock className="h-3 w-3" />}
+                            {cfg?.label ?? request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                          </span>
+                        )
+                      })()}
                     </div>
                   )
                 })}

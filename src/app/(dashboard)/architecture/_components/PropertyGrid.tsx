@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Building2, Home, Bed } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { calculateOccupancyRate } from "@/lib/format"
 
 export interface ArchProperty {
   id: string
@@ -33,9 +34,7 @@ export function PropertyGrid({ properties, onPropertyClick }: PropertyGridProps)
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {properties.map(property => {
         const availableBeds = property.total_beds - property.occupied_beds
-        const occupancy = property.total_beds > 0
-          ? Math.round((property.occupied_beds / property.total_beds) * 100)
-          : 0
+        const occupancy = calculateOccupancyRate(property.occupied_beds, property.total_beds)
 
         return (
           <Card

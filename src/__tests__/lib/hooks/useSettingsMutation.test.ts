@@ -7,6 +7,7 @@
 
 import { renderHook, act } from "@testing-library/react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
+import { useAuth } from "@/lib/auth"
 
 // ============================================================================
 // Mocks
@@ -29,6 +30,8 @@ jest.mock("@/lib/toast-helpers", () => ({
 jest.mock("@/lib/audit", () => ({
   withCreatedBy: (...args: unknown[]) => mockWithCreatedBy(...args),
 }))
+
+jest.mock("@/lib/auth", () => ({ useAuth: jest.fn() }))
 
 // ============================================================================
 // Supabase chain builder helpers
@@ -63,14 +66,11 @@ function makeInsertChain(result: { data: unknown; error: unknown }) {
 /**
  * Assemble a full supabase client mock for the UPDATE path.
  */
-function makeUpdateSupabase(
-  updateResult: { error: unknown },
-  getUserResult = { data: { user: { id: "user-1" } } }
-) {
+function makeUpdateSupabase(updateResult: { error: unknown }) {
   const { update, eqMock } = makeUpdateChain(updateResult)
   const from = jest.fn().mockReturnValue({ update })
   return {
-    client: { from, auth: { getUser: jest.fn().mockResolvedValue(getUserResult) } },
+    client: { from },
     from,
     update,
     eqMock,
@@ -80,14 +80,11 @@ function makeUpdateSupabase(
 /**
  * Assemble a full supabase client mock for the INSERT path.
  */
-function makeInsertSupabase(
-  insertResult: { data: unknown; error: unknown },
-  getUserResult: { data: { user: { id: string } | null } }
-) {
+function makeInsertSupabase(insertResult: { data: unknown; error: unknown }) {
   const { insert, selectMock, singleMock } = makeInsertChain(insertResult)
   const from = jest.fn().mockReturnValue({ insert })
   return {
-    client: { from, auth: { getUser: jest.fn().mockResolvedValue(getUserResult) } },
+    client: { from },
     from,
     insert,
     selectMock,
@@ -105,6 +102,7 @@ beforeEach(() => {
   mockShowError.mockReset()
   // withCreatedBy is transparent — returns its first argument unchanged
   mockWithCreatedBy.mockImplementation((data: unknown) => data)
+  ;(useAuth as jest.Mock).mockReturnValue({ user: { id: "user-1" } })
 })
 
 // ============================================================================
@@ -160,8 +158,8 @@ describe("useSettingsMutation — update path", () => {
     expect(mockShowError).not.toHaveBeenCalled()
   })
 
-  it("does NOT call auth.getUser on the update path", async () => {
-    const { client } = makeUpdateSupabase({ error: null })
+  it("calls from() on owner_config on the update path", async () => {
+    const { client, from } = makeUpdateSupabase({ error: null })
     mockCreateClient.mockReturnValue(client)
 
     const { result } = renderHook(() =>
@@ -172,7 +170,7 @@ describe("useSettingsMutation — update path", () => {
       await result.current.save({ currency: "INR" })
     })
 
-    expect(client.auth.getUser).not.toHaveBeenCalled()
+    expect(from).toHaveBeenCalledWith("owner_config")
   })
 
   it("returns false and shows default error toast when update throws a Supabase error", async () => {
@@ -200,12 +198,10 @@ describe("useSettingsMutation — update path", () => {
 
 describe("useSettingsMutation — insert path", () => {
   const newConfig = { id: "cfg-new", owner_id: "user-1", currency: "INR" }
-  const getUserOk = { data: { user: { id: "user-1" } } }
 
-  it("calls auth.getUser, then insert().select().single() on owner_config", async () => {
+  it("calls insert().select().single() on owner_config", async () => {
     const { client, from, insert } = makeInsertSupabase(
-      { data: newConfig, error: null },
-      getUserOk
+      { data: newConfig, error: null }
     )
     mockCreateClient.mockReturnValue(client)
 
@@ -217,15 +213,13 @@ describe("useSettingsMutation — insert path", () => {
       await result.current.save({ currency: "INR" })
     })
 
-    expect(client.auth.getUser).toHaveBeenCalled()
     expect(from).toHaveBeenCalledWith("owner_config")
     expect(insert).toHaveBeenCalled()
   })
 
   it("passes fields merged with owner_id into withCreatedBy, then insert", async () => {
     const { client, insert } = makeInsertSupabase(
-      { data: newConfig, error: null },
-      getUserOk
+      { data: newConfig, error: null }
     )
     mockCreateClient.mockReturnValue(client)
 
@@ -250,8 +244,7 @@ describe("useSettingsMutation — insert path", () => {
 
   it("calls setConfig with the newly inserted row", async () => {
     const { client } = makeInsertSupabase(
-      { data: newConfig, error: null },
-      getUserOk
+      { data: newConfig, error: null }
     )
     mockCreateClient.mockReturnValue(client)
 
@@ -269,8 +262,7 @@ describe("useSettingsMutation — insert path", () => {
 
   it("returns true and shows default success toast on a successful insert", async () => {
     const { client } = makeInsertSupabase(
-      { data: newConfig, error: null },
-      getUserOk
+      { data: newConfig, error: null }
     )
     mockCreateClient.mockReturnValue(client)
 
@@ -287,11 +279,9 @@ describe("useSettingsMutation — insert path", () => {
     expect(mockShowSuccess).toHaveBeenCalledWith("Settings saved")
   })
 
-  it("returns false and shows error toast when getUser returns no user", async () => {
-    const { client } = makeInsertSupabase(
-      { data: null, error: null },
-      { data: { user: null } }
-    )
+  it("returns false and shows error toast when there is no user", async () => {
+    ;(useAuth as jest.Mock).mockReturnValue({ user: null })
+    const { client } = makeInsertSupabase({ data: null, error: null })
     mockCreateClient.mockReturnValue(client)
 
     const setConfig = jest.fn()
@@ -311,8 +301,7 @@ describe("useSettingsMutation — insert path", () => {
 
   it("returns false and shows error toast when insert returns a Supabase error", async () => {
     const { client } = makeInsertSupabase(
-      { data: null, error: { message: "insert conflict" } },
-      getUserOk
+      { data: null, error: { message: "insert conflict" } }
     )
     mockCreateClient.mockReturnValue(client)
 
@@ -333,8 +322,7 @@ describe("useSettingsMutation — insert path", () => {
 
   it("does not call setConfig when insert errors", async () => {
     const { client } = makeInsertSupabase(
-      { data: null, error: { message: "db error" } },
-      getUserOk
+      { data: null, error: { message: "db error" } }
     )
     mockCreateClient.mockReturnValue(client)
 
@@ -439,10 +427,7 @@ describe("useSettingsMutation — saving flag", () => {
 
   it("saving is false after a successful insert completes", async () => {
     const newConfig = { id: "cfg-new", owner_id: "user-1", currency: "USD" }
-    const { client } = makeInsertSupabase(
-      { data: newConfig, error: null },
-      { data: { user: { id: "user-1" } } }
-    )
+    const { client } = makeInsertSupabase({ data: newConfig, error: null })
     mockCreateClient.mockReturnValue(client)
 
     const { result } = renderHook(() =>
@@ -456,11 +441,9 @@ describe("useSettingsMutation — saving flag", () => {
     expect(result.current.saving).toBe(false)
   })
 
-  it("saving is false after a failed insert (getUser returns null user)", async () => {
-    const { client } = makeInsertSupabase(
-      { data: null, error: null },
-      { data: { user: null } }
-    )
+  it("saving is false after a failed insert (no user)", async () => {
+    ;(useAuth as jest.Mock).mockReturnValue({ user: null })
+    const { client } = makeInsertSupabase({ data: null, error: null })
     mockCreateClient.mockReturnValue(client)
 
     const { result } = renderHook(() =>

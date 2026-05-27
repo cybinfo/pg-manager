@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { TenantJourneyData } from "@/types/journey.types"
 import type { StatusBadgeProps } from "@/components/ui/status-badge"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatDurationDaysVerbose } from "@/lib/format"
+import { TENANT_STATUS } from "@/lib/status"
 
 // ============================================
 // Journey Header Component
@@ -48,16 +49,14 @@ export function JourneyHeader({
     .toUpperCase()
     .slice(0, 2)
 
-  const stayDuration = calculateStayDuration(journey.check_in_date)
+  const startDate = new Date(journey.check_in_date)
+  const today = new Date()
+  const diffDays = Math.floor(Math.abs(today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+  const stayDuration = formatDurationDaysVerbose(diffDays)
 
-  const statusMap: Record<string, { label: string; variant: string }> = {
-    active: { label: "Active", variant: "active" },
-    notice_period: { label: "Notice Period", variant: "notice_period" },
-    checked_out: { label: "Checked Out", variant: "moved_out" },
-    moved_out: { label: "Moved Out", variant: "moved_out" },
-  }
-
-  const statusInfo = statusMap[journey.tenant_status] || statusMap.active
+  const statusConfig = TENANT_STATUS[journey.tenant_status] || TENANT_STATUS.active
+  const statusVariant = journey.tenant_status === "checked_out" ? "moved_out" : journey.tenant_status
+  const statusInfo = { label: statusConfig.label, variant: statusVariant }
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -198,40 +197,6 @@ export function JourneyHeader({
       </div>
     </div>
   )
-}
-
-// ============================================
-// Helper Functions
-// ============================================
-
-function calculateStayDuration(checkInDate: string): string {
-  const startDate = new Date(checkInDate)
-  const today = new Date()
-  const diffTime = Math.abs(today.getTime() - startDate.getTime())
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-  if (diffDays < 30) {
-    return `${diffDays} days`
-  }
-
-  const months = Math.floor(diffDays / 30)
-  const remainingDays = diffDays % 30
-
-  if (months < 12) {
-    if (remainingDays === 0) {
-      return `${months} month${months > 1 ? "s" : ""}`
-    }
-    return `${months} month${months > 1 ? "s" : ""}`
-  }
-
-  const years = Math.floor(months / 12)
-  const remainingMonths = months % 12
-
-  if (remainingMonths === 0) {
-    return `${years} year${years > 1 ? "s" : ""}`
-  }
-
-  return `${years} year${years > 1 ? "s" : ""} ${remainingMonths} month${remainingMonths > 1 ? "s" : ""}`
 }
 
 // ============================================

@@ -269,6 +269,78 @@ export const WAITLIST_PRIORITY_OPTIONS = [
 ]
 
 // ============================================================================
+// ID DOCUMENTS
+// ============================================================================
+
+/** ID document type strings used in IdDocumentEntry (display-name format, stored as-is) */
+export const ID_DOCUMENT_TYPES = [
+  "Aadhaar Card",
+  "PAN Card",
+  "Passport",
+  "Voter ID",
+  "Driving License",
+  "College ID",
+  "Employee ID",
+  "Other",
+] as const
+
+/** Document types that have a back side (used to show/hide back-side upload) */
+export const DOCUMENTS_WITH_BACK = [
+  "Aadhaar Card",
+  "PAN Card",
+  "Voter ID",
+  "Driving License",
+  "College ID",
+  "Employee ID",
+] as const
+
+// ============================================================================
+// ADDRESS
+// ============================================================================
+
+/** Address type options used in AddressInput when showType=true */
+export const ADDRESS_TYPES = ["Permanent", "Current", "Office", "Native", "Other"] as const
+
+// ============================================================================
+// GUARDIAN / EMERGENCY CONTACT
+// ============================================================================
+
+/** Simplified relation types for guardian/emergency-contact entry */
+export const GUARDIAN_RELATION_TYPES = [
+  "Parent",
+  "Guardian",
+  "Spouse",
+  "Sibling",
+  "Relative",
+  "Friend",
+  "Other",
+] as const
+
+// ============================================================================
+// TENANT DOCUMENTS
+// ============================================================================
+
+/** Tenant document type options for upload dialogs */
+export const TENANT_DOCUMENT_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "id_proof", label: "ID Proof (Aadhaar, PAN, Passport)" },
+  { value: "address_proof", label: "Address Proof" },
+  { value: "income_proof", label: "Income Proof" },
+  { value: "agreement", label: "Agreement / Contract" },
+  { value: "receipt", label: "Receipt / Invoice" },
+  { value: "other", label: "Other Document" },
+]
+
+/** Tenant document type display labels for rendering */
+export const TENANT_DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  id_proof: "ID Proof",
+  address_proof: "Address Proof",
+  income_proof: "Income Proof",
+  agreement: "Agreement",
+  receipt: "Receipt",
+  other: "Other",
+}
+
+// ============================================================================
 // VISITORS
 // ============================================================================
 

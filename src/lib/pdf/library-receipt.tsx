@@ -7,6 +7,8 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer"
 import { formatCurrency, formatDate } from "@/lib/format"
+import { pdfBrand } from "@/lib/pdf/theme"
+import { LIBRARY_PAYMENT_TYPE_LABELS } from "@/lib/status"
 
 // Create styles
 const styles = StyleSheet.create({
@@ -211,24 +213,13 @@ export interface LibraryReceiptData {
 }
 
 export function LibraryReceiptPDF({ data }: { data: LibraryReceiptData }) {
-  const getPaymentTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      subscription: "Subscription",
-      locker_rent: "Locker Rent",
-      locker_deposit: "Locker Deposit",
-      fine: "Fine",
-      other: "Other",
-    }
-    return labels[type] || type
-  }
-
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.brandSection}>
-            <Text style={styles.brandName}>ManageKar</Text>
+            <Text style={styles.brandName}>{pdfBrand.name}</Text>
             <Text style={styles.brandTagline}>Library Management</Text>
           </View>
           <View style={styles.receiptInfo}>
@@ -288,7 +279,7 @@ export function LibraryReceiptPDF({ data }: { data: LibraryReceiptData }) {
           <Text style={styles.sectionTitle}>Payment Details</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Payment Type</Text>
-            <Text style={styles.value}>{getPaymentTypeLabel(data.paymentType)}</Text>
+            <Text style={styles.value}>{LIBRARY_PAYMENT_TYPE_LABELS[data.paymentType] || data.paymentType}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Payment Method</Text>
@@ -376,7 +367,7 @@ export function LibraryReceiptPDF({ data }: { data: LibraryReceiptData }) {
             This is a computer-generated receipt. For queries, contact {data.ownerPhone || data.ownerEmail || "the library owner"}.
           </Text>
           <Text style={styles.footerBrand}>
-            Powered by ManageKar - managekar.com
+            {pdfBrand.poweredBy}
           </Text>
         </View>
       </Page>

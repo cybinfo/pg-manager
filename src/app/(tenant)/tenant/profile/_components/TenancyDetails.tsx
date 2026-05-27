@@ -1,45 +1,26 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, CheckCircle, AlertCircle, Clock, Flag } from "lucide-react"
+import { Calendar, CheckCircle, AlertCircle, Flag } from "lucide-react"
 import { formatDate, formatCurrency } from "@/lib/format"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { POLICE_VERIFICATION_STATUS } from "@/lib/status"
 import type { ApprovalType } from "@/components/tenant/report-issue-dialog"
 import type { TenantPortalTenant } from "@/lib/hooks/useTenantPortalData"
+
+type StatusBadgeVariant = "success" | "warning" | "error" | "info" | "muted" | "primary" | "purple"
+
+const VERIFICATION_VARIANT_MAP: Record<string, StatusBadgeVariant> = {
+  success: "success",
+  warning: "warning",
+  error: "error",
+  info: "info",
+  muted: "muted",
+  default: "info",
+}
 
 interface TenancyDetailsProps {
   tenant: TenantPortalTenant
   onReport: (label: string, value: string, type: ApprovalType) => void
-}
-
-function getVerificationBadge(status: string) {
-  switch (status) {
-    case "verified":
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-success/10 text-success rounded text-xs font-medium">
-          <CheckCircle className="h-3 w-3" />
-          Verified
-        </span>
-      )
-    case "submitted":
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-info/10 text-info rounded text-xs font-medium">
-          <Clock className="h-3 w-3" />
-          Submitted
-        </span>
-      )
-    case "pending":
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-warning/10 text-warning rounded text-xs font-medium">
-          <AlertCircle className="h-3 w-3" />
-          Pending
-        </span>
-      )
-    default:
-      return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 bg-muted text-muted-foreground rounded text-xs font-medium">
-          N/A
-        </span>
-      )
-  }
 }
 
 export function TenancyDetails({ tenant, onReport }: TenancyDetailsProps) {
@@ -86,7 +67,11 @@ export function TenancyDetails({ tenant, onReport }: TenancyDetailsProps) {
           <div className="p-3 bg-muted/50 rounded-lg">
             <p className="text-sm text-muted-foreground">Police Verification</p>
             <div className="mt-1">
-              {getVerificationBadge(tenant.police_verification_status)}
+              {(() => {
+                const cfg = POLICE_VERIFICATION_STATUS[tenant.police_verification_status]
+                const variant = VERIFICATION_VARIANT_MAP[cfg?.variant ?? "muted"] ?? "muted"
+                return <StatusBadge variant={variant} label={cfg?.label ?? "N/A"} />
+              })()}
             </div>
           </div>
           <div className="p-3 bg-muted/50 rounded-lg">

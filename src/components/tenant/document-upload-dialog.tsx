@@ -20,6 +20,7 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { logger } from "@/lib/logger"
 import { useAuth } from "@/lib/auth"
+import { TENANT_DOCUMENT_TYPE_OPTIONS } from "@/lib/constants/form-options"
 
 export type DocumentType = "id_proof" | "address_proof" | "income_proof" | "agreement" | "receipt" | "other"
 
@@ -31,15 +32,6 @@ interface DocumentUploadDialogProps {
   ownerId: string
   onSuccess?: () => void
 }
-
-const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
-  { value: "id_proof", label: "ID Proof (Aadhaar, PAN, Passport)" },
-  { value: "address_proof", label: "Address Proof" },
-  { value: "income_proof", label: "Income Proof" },
-  { value: "agreement", label: "Agreement / Contract" },
-  { value: "receipt", label: "Receipt / Invoice" },
-  { value: "other", label: "Other Document" },
-]
 
 export function DocumentUploadDialog({
   open,
@@ -162,7 +154,7 @@ export function DocumentUploadDialog({
             <Select
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value as DocumentType)}
-              options={DOCUMENT_TYPES}
+              options={TENANT_DOCUMENT_TYPE_OPTIONS}
               disabled={loading}
             />
           </FormField>

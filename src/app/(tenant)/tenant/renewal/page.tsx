@@ -15,6 +15,7 @@ import { withCreatedBy } from "@/lib/audit"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 import { FeatureGuard } from "@/components/auth"
 import { APPROVAL_STATUS } from "@/lib/status"
+import { variantClassMap } from "@/lib/design-tokens"
 
 interface RenewalRequest {
   id: string
@@ -106,12 +107,6 @@ function TenantRenewalContent() {
     )
   }
 
-  const variantClassMap: Record<string, string> = {
-    warning: "bg-warning/10 text-warning border-warning/20",
-    success: "bg-success/10 text-success border-success/20",
-    error: "bg-destructive/10 text-destructive border-destructive/20",
-    muted: "bg-muted text-muted-foreground border-border",
-  }
   const statusColorClass = (status: string) =>
     variantClassMap[APPROVAL_STATUS[status]?.variant ?? "muted"] ?? variantClassMap.muted
 

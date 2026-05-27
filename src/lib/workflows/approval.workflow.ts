@@ -30,6 +30,7 @@ import {
 } from "@/lib/services"
 import { buildApprovalDecisionNotification } from "@/lib/services/notification.service"
 import { createAuditEvent } from "@/lib/services/audit.service"
+import { APPROVAL_TYPE_LABELS } from "@/lib/status"
 import { transferRoom } from "./tenant.workflow"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 
@@ -844,7 +845,7 @@ export const processApprovalWorkflow: WorkflowDefinition<ApprovalDecisionInput, 
           (tenant?.user_id || tenant?.id) as string,
           {
             approval_id: input.approval_id,
-            request_type: getTypeLabel(approval?.type as string),
+            request_type: APPROVAL_TYPE_LABELS[approval?.type as string] ?? (approval?.type as string),
             decision: input.decision === "approved" ? "Approved" : "Rejected",
             notes: input.decision_notes,
           }
@@ -964,7 +965,7 @@ export const createApprovalWorkflow: WorkflowDefinition<CreateApprovalInput, Cre
         recipient_type: "owner" as const,
         channels: ["email" as const, "in_app" as const],
         data: {
-          approval_type: getTypeLabel(input.type),
+          approval_type: APPROVAL_TYPE_LABELS[input.type] ?? input.type,
           title: input.title,
           priority: input.priority,
         },
@@ -985,23 +986,6 @@ export const createApprovalWorkflow: WorkflowDefinition<CreateApprovalInput, Cre
 // ============================================
 // Helper Functions
 // ============================================
-
-function getTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    name_change: "Name Change",
-    address_change: "Address Change",
-    phone_change: "Phone Change",
-    email_change: "Email Change",
-    room_change: "Room Transfer",
-    complaint: "Complaint Resolution",
-    bill_dispute: "Bill Dispute",
-    payment_dispute: "Payment Dispute",
-    tenancy_issue: "Tenancy Issue",
-    room_issue: "Room Issue",
-    other: "Other Request",
-  }
-  return labels[type] || type
-}
 
 // ============================================
 // Exported Functions

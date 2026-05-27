@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth, useCurrentContext } from "@/lib/auth"
+import { saveUserPreferences } from "@/lib/services/user-preferences"
 import { brandGradient } from "@/lib/design-tokens"
 import { cn } from "@/lib/utils"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -120,20 +121,14 @@ export function UserMenu({ displayName, displayEmail, onLogout }: {
     setSaving(true)
     try {
       const supabase = createClient()
-      const currentPrefs = profile.preferences || {}
-      const { error } = await supabase
-        .from("user_profiles")
-        .update({
-          preferences: {
-            ...currentPrefs,
-            notifications: {
-              ...(currentPrefs.notifications || {}),
-              ...prefs,
-            },
-          },
-        })
-        .eq("user_id", profile.user_id)
-      if (error) throw error
+      const currentPrefs = (profile.preferences as unknown as Record<string, unknown>) || {}
+      await saveUserPreferences(supabase, profile.user_id, {
+        ...currentPrefs,
+        notifications: {
+          ...((currentPrefs.notifications as Record<string, unknown>) || {}),
+          ...prefs,
+        },
+      })
       showSuccess("Notification preferences saved")
       setOpen(false)
     } catch {

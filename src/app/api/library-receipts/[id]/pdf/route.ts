@@ -2,22 +2,10 @@ import { NextRequest } from "next/server"
 import { LibraryReceiptPDF, type LibraryReceiptData } from "@/lib/pdf/library-receipt"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { handlePdfGeneration, type PdfRouteConfig } from "@/lib/pdf/handler"
+import { PAYMENT_METHODS } from "@/lib/status"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRecord = Record<string, any>
-
-function formatPaymentMethod(method: string): string {
-  const methods: Record<string, string> = {
-    cash: "Cash",
-    upi: "UPI",
-    card: "Card",
-    bank_transfer: "Bank Transfer",
-    cheque: "Cheque",
-    paytm: "Paytm",
-    other: "Other",
-  }
-  return methods[method] || method
-}
 
 const LIBRARY_PDF_CONFIG: PdfRouteConfig<LibraryReceiptData> = {
   table: "library_payments",
@@ -68,7 +56,7 @@ const LIBRARY_PDF_CONFIG: PdfRouteConfig<LibraryReceiptData> = {
         ? `${library.address}${library.city ? `, ${library.city}` : ""}`
         : undefined,
       amount: Number(payment.amount),
-      paymentMethod: formatPaymentMethod(payment.payment_method),
+      paymentMethod: PAYMENT_METHODS[payment.payment_method] || payment.payment_method,
       paymentType: payment.payment_type,
       paymentReference: payment.payment_reference || undefined,
       subscription: membership ? {

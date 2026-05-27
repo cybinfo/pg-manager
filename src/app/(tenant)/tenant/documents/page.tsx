@@ -14,6 +14,7 @@ import {
   File
 } from "lucide-react"
 import { DocumentUploadDialog } from "@/components/tenant/document-upload-dialog"
+import { TENANT_DOCUMENT_TYPE_LABELS } from "@/lib/constants/form-options"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -49,15 +50,6 @@ interface TenantDocument {
 }
 
 const docStatusMap = DOCUMENT_STATUS
-
-const documentTypeLabels: Record<string, string> = {
-  id_proof: "ID Proof",
-  address_proof: "Address Proof",
-  income_proof: "Income Proof",
-  agreement: "Agreement",
-  receipt: "Receipt",
-  other: "Other",
-}
 
 export default function TenantDocumentsPage() {
   const [loading, setLoading] = useState(true)
@@ -277,7 +269,7 @@ export default function TenantDocumentsPage() {
                         <StatusBadge variant={statusMapping?.variant as "warning" | "success" | "error"} label={statusMapping?.label} />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {documentTypeLabels[doc.document_type] || doc.document_type}
+                        {TENANT_DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type}
                       </p>
                       {doc.description && (
                         <p className="text-sm text-muted-foreground mt-1">{doc.description}</p>

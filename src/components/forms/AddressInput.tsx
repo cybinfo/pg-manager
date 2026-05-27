@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/form-components"
 import { Trash2 } from "lucide-react"
+import { ADDRESS_TYPES } from "@/lib/constants/form-options"
 
 export interface AddressData {
   type?: string
@@ -15,8 +16,6 @@ export interface AddressData {
   pincode: string
   is_primary?: boolean
 }
-
-export const ADDRESS_TYPES = ["Permanent", "Current", "Office", "Native", "Other"]
 
 interface AddressInputProps {
   value: AddressData

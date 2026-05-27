@@ -11,6 +11,7 @@ import { logger } from "@/lib/logger"
 import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { softDelete, cascadeSoftDelete, isSoftDeletableTable } from "@/lib/audit"
 import type { SoftDeletableTable } from "@/types/audit.types"
@@ -37,6 +38,7 @@ export function useDetailPageMutations<T extends object>(
   const { config, id, data, setData } = options
 
   const router = useRouter()
+  const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -157,8 +159,6 @@ export function useDetailPageMutations<T extends object>(
       try {
         const supabase = createClient()
 
-        // Get current user for audit trail
-        const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
           showError("Session expired. Please log in again.")
           return false

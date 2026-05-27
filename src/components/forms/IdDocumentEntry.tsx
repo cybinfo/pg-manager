@@ -7,36 +7,17 @@ import { Button } from "@/components/ui/button"
 import { FileUpload } from "@/components/ui/file-upload"
 import { Select } from "@/components/ui/form-components"
 import { Trash2, FileText } from "lucide-react"
+import { ID_DOCUMENT_TYPES, DOCUMENTS_WITH_BACK } from "@/lib/constants/form-options"
 
 export interface IdDocumentData {
   type: string
   number: string
   file_urls: string[]
-  // New fields for front/back support
   front_url?: string
   back_url?: string
 }
 
-export const ID_DOCUMENT_TYPES = [
-  "Aadhaar Card",
-  "PAN Card",
-  "Passport",
-  "Voter ID",
-  "Driving License",
-  "College ID",
-  "Employee ID",
-  "Other",
-]
-
-// Documents that typically have front and back sides
-export const DOCUMENTS_WITH_BACK = [
-  "Aadhaar Card",
-  "PAN Card",
-  "Voter ID",
-  "Driving License",
-  "College ID",
-  "Employee ID",
-]
+export { ID_DOCUMENT_TYPES, DOCUMENTS_WITH_BACK }
 
 export const DEFAULT_ID_DOCUMENT: IdDocumentData = {
   type: "Aadhaar Card",
@@ -71,7 +52,7 @@ export function IdDocumentEntry({
   uploadFolder = "id-docs",
 }: IdDocumentEntryProps) {
   const folderPath = `${uploadFolder}/${value.type.toLowerCase().replace(/ /g, "-")}`
-  const hasBackSide = DOCUMENTS_WITH_BACK.includes(value.type)
+  const hasBackSide = (DOCUMENTS_WITH_BACK as readonly string[]).includes(value.type)
 
   return (
     <div className="p-3 border rounded-lg bg-muted/30 space-y-3">

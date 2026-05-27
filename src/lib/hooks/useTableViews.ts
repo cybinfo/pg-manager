@@ -19,6 +19,7 @@
 import { logger } from "@/lib/logger"
 import { useState, useEffect, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import type { SortConfig, TableViewConfig } from "./list-page/types"
 
@@ -85,6 +86,7 @@ export interface UseTableViewsReturn {
 
 export function useTableViews(options: UseTableViewsOptions): UseTableViewsReturn {
   const { tableKey, onViewApplied } = options
+  const { user } = useAuth()
 
   // State
   const [views, setViews] = useState<TableView[]>([])
@@ -171,10 +173,6 @@ export function useTableViews(options: UseTableViewsOptions): UseTableViewsRetur
       try {
         const supabase = createClient()
 
-        // Get current user ID
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
         if (!user) {
           showError("You must be logged in to save views")
           return null

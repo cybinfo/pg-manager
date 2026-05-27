@@ -17,12 +17,12 @@ jest.mock("@/lib/toast-helpers", () => ({
   showError: jest.fn(),
 }))
 
+jest.mock("@/lib/auth", () => ({ useAuth: jest.fn() }))
+
 const mockRpc = jest.fn()
 const mockFrom = jest.fn()
-const mockGetUser = jest.fn()
 const mockSupabase = {
   from: mockFrom,
-  auth: { getUser: mockGetUser },
   rpc: mockRpc,
 }
 
@@ -32,6 +32,7 @@ jest.mock("@/lib/supabase/client", () => ({
 
 import { useTableViews } from "@/lib/hooks/useTableViews"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { useAuth } from "@/lib/auth"
 
 const mockShowSuccess = showSuccess as jest.Mock
 const mockShowError = showError as jest.Mock
@@ -81,6 +82,7 @@ describe("fetchViews — initial load", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockRpc.mockResolvedValue({ data: null, error: null })
+    ;(useAuth as jest.Mock).mockReturnValue({ user: { id: "user-1" } })
   })
 
   it("starts with loading=true then sets views from fetch", async () => {
@@ -139,7 +141,7 @@ describe("createView — success", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockRpc.mockResolvedValue({ data: null, error: null })
-    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+    ;(useAuth as jest.Mock).mockReturnValue({ user: { id: "user-1" } })
   })
 
   function setupCreateFetch(newView: ReturnType<typeof makeView>) {
@@ -237,7 +239,7 @@ describe("createView — insert error", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockRpc.mockResolvedValue({ data: null, error: null })
-    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+    ;(useAuth as jest.Mock).mockReturnValue({ user: { id: "user-1" } })
   })
 
   it("returns null and shows error when insert throws", async () => {
@@ -265,7 +267,7 @@ describe("createView — no user", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockRpc.mockResolvedValue({ data: null, error: null })
-    mockGetUser.mockResolvedValue({ data: { user: null } })
+    ;(useAuth as jest.Mock).mockReturnValue({ user: null })
     mockFrom.mockReturnValue(makeOrderChain({ data: [], error: null }))
   })
 

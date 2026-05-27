@@ -28,6 +28,7 @@ import { renderHook, act, waitFor } from "@testing-library/react"
 import { useDetailPageMutations } from "@/lib/hooks/detail-page/useDetailPageMutations"
 import type { DetailPageConfig } from "@/lib/hooks/detail-page/types"
 import { logger } from "@/lib/logger"
+import { useAuth } from "@/lib/auth"
 
 // ============================================================================
 // Mocks
@@ -60,6 +61,8 @@ jest.mock("@/lib/audit", () => ({
   isSoftDeletableTable: (table: string) => mockIsSoftDeletableTable(table),
 }))
 
+jest.mock("@/lib/auth", () => ({ useAuth: jest.fn() }))
+
 // ============================================================================
 // Supabase mock helpers
 // ============================================================================
@@ -67,10 +70,8 @@ jest.mock("@/lib/audit", () => ({
 function makeSupabaseClient(options: {
   updateResult?: { error: unknown }
   deleteResult?: { error: unknown }
-  user?: { id: string } | null
-}) {
-  const { updateResult = { error: null }, deleteResult = { error: null }, user = { id: "user-1" } } =
-    options
+} = {}) {
+  const { updateResult = { error: null }, deleteResult = { error: null } } = options
 
   // Proxy for update chain: from().update().eq()
   const updateProxy: Record<string, unknown> = {}
@@ -87,11 +88,7 @@ function makeSupabaseClient(options: {
     delete: deleteMock,
   })
 
-  const authMock = {
-    getUser: jest.fn().mockResolvedValue({ data: { user } }),
-  }
-
-  return { from: fromMock, auth: authMock }
+  return { from: fromMock }
 }
 
 // ============================================================================
@@ -134,6 +131,7 @@ beforeEach(() => {
   mockSoftDelete.mockReset()
   mockCascadeSoftDelete.mockReset()
   mockIsSoftDeletableTable.mockReset()
+  ;(useAuth as jest.Mock).mockReturnValue({ user: { id: "user-1" } })
 
   // Default: window.confirm = true
   global.window.confirm = jest.fn().mockReturnValue(true)
@@ -256,7 +254,7 @@ describe("useDetailPageMutations — updateField", () => {
     const eqMock = jest.fn().mockReturnValue(pendingPromise)
     const updateMock = jest.fn().mockReturnValue({ eq: eqMock })
     const fromMock = jest.fn().mockReturnValue({ update: updateMock })
-    mockCreateClient.mockReturnValue({ from: fromMock, auth: { getUser: jest.fn() } })
+    mockCreateClient.mockReturnValue({ from: fromMock })
 
     const { result } = renderMutations({ setData })
 
@@ -424,7 +422,8 @@ describe("useDetailPageMutations — deleteRecord", () => {
 
   it("returns false when no user session", async () => {
     global.window.confirm = jest.fn().mockReturnValue(true)
-    const client = makeSupabaseClient({ user: null })
+    ;(useAuth as jest.Mock).mockReturnValue({ user: null })
+    const client = makeSupabaseClient()
     mockCreateClient.mockReturnValue(client)
     mockIsSoftDeletableTable.mockReturnValue(true)
 
@@ -546,8 +545,7 @@ describe("useDetailPageMutations — deleteRecord", () => {
     const eqMock = jest.fn().mockResolvedValue({ error: { message: "Cannot delete" } })
     const deleteMock = jest.fn().mockReturnValue({ eq: eqMock })
     const fromMock = jest.fn().mockReturnValue({ delete: deleteMock })
-    const getUserMock = jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } })
-    mockCreateClient.mockReturnValue({ from: fromMock, auth: { getUser: getUserMock } })
+    mockCreateClient.mockReturnValue({ from: fromMock })
     mockIsSoftDeletableTable.mockReturnValue(false)
 
     const { result } = renderMutations()
@@ -631,11 +629,10 @@ describe("useDetailPageMutations — deleteRecord", () => {
     let resolveDelete: (v: unknown) => void = () => {}
     const pendingPromise = new Promise((res) => { resolveDelete = res })
 
-    const getUserMock = jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } })
     const eqMock = jest.fn().mockReturnValue(pendingPromise)
     const softMock = jest.fn().mockReturnValue({ eq: eqMock })
     const fromMock = jest.fn().mockReturnValue({ delete: softMock })
-    mockCreateClient.mockReturnValue({ from: fromMock, auth: { getUser: getUserMock } })
+    mockCreateClient.mockReturnValue({ from: fromMock })
     mockIsSoftDeletableTable.mockReturnValue(false)
 
     const { result } = renderMutations()

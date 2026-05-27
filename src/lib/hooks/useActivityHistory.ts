@@ -3,6 +3,7 @@
 import { logger } from "@/lib/logger"
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { formatFieldName, formatAuditValue } from "@/lib/format"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -65,22 +66,8 @@ const EXCLUDED_FIELDS = [
   "deleted_by",
 ]
 
-// ── Formatting helpers (pure functions) ────────────────────────────────────
-
-export function formatFieldName(field: string): string {
-  return field
-    .replace(/_/g, " ")
-    .replace(/([A-Z])/g, " $1")
-    .replace(/^./, (str) => str.toUpperCase())
-    .trim()
-}
-
-export function formatValue(value: unknown): string {
-  if (value === null || value === undefined) return "\u2014"
-  if (typeof value === "boolean") return value ? "Yes" : "No"
-  if (typeof value === "object") return JSON.stringify(value)
-  return String(value)
-}
+export { formatFieldName }
+export const formatValue = formatAuditValue
 
 export function formatChanges(
   changes: AuditEventRecord["changes"]

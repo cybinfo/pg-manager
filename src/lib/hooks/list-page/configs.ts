@@ -6,7 +6,7 @@
  */
 
 import type { ListPageConfig } from "./types"
-import { formatCurrency, formatMonthYear, formatDate } from "@/lib/format"
+import { formatCurrency, formatMonthYear, formatDate, formatTime } from "@/lib/format"
 import {
   NOTICE_TYPE_LABELS,
   REFUND_STATUS_LABELS,
@@ -715,8 +715,8 @@ export const LIBRARY_ATTENDANCE_LIST_CONFIG: ListPageConfig<Record<string, unkno
       attendance_month: formatMonthYear(checkIn),
       attendance_year: checkIn.getFullYear().toString(),
       is_checked_in: !checkOut,
-      check_in_display: checkIn.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-      check_out_display: checkOut?.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) || "-",
+      check_in_display: formatTime(checkIn),
+      check_out_display: checkOut ? formatTime(checkOut) : "-",
       hours_display: item.hours_spent ? `${(item.hours_spent as number).toFixed(1)}h` : "-",
       display_name: (item.member as { person?: { name?: string }; name?: string })?.person?.name
         || (item.member as { name?: string })?.name || "Unknown",

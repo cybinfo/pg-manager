@@ -317,6 +317,55 @@ export const numberToWords = (num: number): string => {
 }
 
 // ============================================
+// DURATION FORMATTING
+// ============================================
+
+/**
+ * Compact duration from a day count: "1y 2m", "5m", "3d"
+ * Used in analytics cards and metric displays.
+ */
+export function formatDurationDaysCompact(days: number): string {
+  if (days >= 365) {
+    const years = Math.floor(days / 365)
+    const months = Math.floor((days % 365) / 30)
+    if (months === 0) return `${years}y`
+    return `${years}y ${months}m`
+  }
+  if (days >= 30) {
+    return `${Math.floor(days / 30)}m`
+  }
+  return `${days}d`
+}
+
+/**
+ * Verbose duration from a day count: "1 year 2 months", "5 months", "3 days"
+ * Used in headers and human-readable stay duration displays.
+ */
+export function formatDurationDaysVerbose(days: number): string {
+  if (days < 30) {
+    return `${days} days`
+  }
+
+  const months = Math.floor(days / 30)
+  const remainingDays = days % 30
+
+  if (months < 12) {
+    const suffix = months > 1 ? "s" : ""
+    if (remainingDays === 0) return `${months} month${suffix}`
+    return `${months} month${suffix}`
+  }
+
+  const years = Math.floor(months / 12)
+  const remainingMonths = months % 12
+
+  if (remainingMonths === 0) {
+    return `${years} year${years > 1 ? "s" : ""}`
+  }
+
+  return `${years} year${years > 1 ? "s" : ""} ${remainingMonths} month${remainingMonths > 1 ? "s" : ""}`
+}
+
+// ============================================
 // DATE CONSTANTS
 // ============================================
 
@@ -385,5 +434,20 @@ export const createContentDisposition = (filename: string, inline = false): stri
 
   // Use simple ASCII filename for Content-Disposition
   return `${disposition}; filename="${safeFilename}"`
+}
+
+export function formatFieldName(field: string): string {
+  return field
+    .replace(/_/g, " ")
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim()
+}
+
+export function formatAuditValue(value: unknown): string {
+  if (value === null || value === undefined) return "—"
+  if (typeof value === "boolean") return value ? "Yes" : "No"
+  if (typeof value === "object") return JSON.stringify(value)
+  return String(value)
 }
 

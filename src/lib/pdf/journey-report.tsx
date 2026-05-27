@@ -12,6 +12,7 @@ import {
 } from "@/types/journey.types"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { getNowISO } from "@/lib/date-helpers"
+import { pdfBrand, getScoreColor, getCategoryColor } from "@/lib/pdf/theme"
 
 // ============================================
 // Styles
@@ -350,32 +351,6 @@ function getStatusColor(status: string): string {
   }
 }
 
-function getScoreColor(score: number): string {
-  if (score >= 80) return "#10B981"
-  if (score >= 60) return "#22C55E"
-  if (score >= 40) return "#F59E0B"
-  if (score >= 20) return "#F97316"
-  return "#EF4444"
-}
-
-function getCategoryColor(category: string): string {
-  switch (category) {
-    case EventCategory.ONBOARDING:
-      return "#10B981"
-    case EventCategory.FINANCIAL:
-      return "#0EA5E9"
-    case EventCategory.ACCOMMODATION:
-      return "#14B8A6"
-    case EventCategory.COMPLAINT:
-      return "#F43F5E"
-    case EventCategory.EXIT:
-      return "#F59E0B"
-    case EventCategory.VISITOR:
-      return "#8B5CF6"
-    default:
-      return "#6B7280"
-  }
-}
 
 // ============================================
 // PDF Component Interfaces
@@ -396,8 +371,8 @@ function PageHeader({ title }: { title: string }) {
   return (
     <View style={styles.header}>
       <View style={styles.brandSection}>
-        <Text style={styles.brandName}>ManageKar</Text>
-        <Text style={styles.brandTagline}>From Chaos to Clarity</Text>
+        <Text style={styles.brandName}>{pdfBrand.name}</Text>
+        <Text style={styles.brandTagline}>{pdfBrand.tagline}</Text>
       </View>
       <View style={styles.reportInfo}>
         <Text style={styles.reportTitle}>{title}</Text>
@@ -413,7 +388,7 @@ function PageFooter({ pageNumber, totalPages }: { pageNumber: number; totalPages
   return (
     <View style={styles.footer}>
       <Text style={styles.footerText}>Confidential - Internal Use Only</Text>
-      <Text style={styles.footerBrand}>Powered by ManageKar</Text>
+      <Text style={styles.footerBrand}>{pdfBrand.poweredBy}</Text>
       <Text style={styles.pageNumber}>
         Page {pageNumber} of {totalPages}
       </Text>

@@ -8,15 +8,7 @@ import { useNotifications } from "@/lib/hooks/useNotifications"
 import { useAuth } from "@/lib/auth"
 import { formatTimeAgo } from "@/lib/format"
 import { cn } from "@/lib/utils"
-
-const NOTIFICATION_TYPE_STYLES: Record<string, string> = {
-  payment: "bg-success/10 text-success",
-  bill: "bg-warning/10 text-warning",
-  complaint: "bg-destructive/10 text-destructive",
-  approval: "bg-primary/10 text-primary",
-  notice: "bg-info/10 text-info",
-  system: "bg-muted text-muted-foreground",
-}
+import { NOTIFICATION_TYPE_STYLES } from "@/lib/status"
 
 function notificationStyle(type: string) {
   return NOTIFICATION_TYPE_STYLES[type] ?? NOTIFICATION_TYPE_STYLES.system
