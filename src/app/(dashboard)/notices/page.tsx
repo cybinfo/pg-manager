@@ -13,8 +13,6 @@ import {
   AlertTriangle,
   Clock,
   Megaphone,
-  Wrench,
-  CreditCard,
   Building2,
   Users,
   CalendarClock,
@@ -30,7 +28,7 @@ import { NOTICE_TYPE_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PropertyLink } from "@/components/ui/entity-link"
 import { formatTimeAgo } from "@/lib/format"
-import { NOTICE_TYPE_CONFIG, NOTICE_AUDIENCES } from "@/lib/status-config"
+import { NOTICE_TYPE_DISPLAY_CONFIG, NOTICE_AUDIENCES } from "@/lib/status"
 import { textFilterColumn, selectFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn, labelMapColumn } from "@/lib/export-columns"
@@ -62,13 +60,6 @@ interface Notice {
 // Type Configuration
 // ============================================
 
-// Use centralized configs from status-config.ts
-const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: typeof Megaphone }> = {
-  general: { ...NOTICE_TYPE_CONFIG.general, icon: Megaphone },
-  maintenance: { ...NOTICE_TYPE_CONFIG.maintenance, icon: Wrench },
-  payment_reminder: { ...NOTICE_TYPE_CONFIG.payment_reminder, icon: CreditCard },
-  emergency: { ...NOTICE_TYPE_CONFIG.emergency, icon: AlertTriangle },
-}
 const audienceLabels = NOTICE_AUDIENCES
 
 // ============================================
@@ -85,17 +76,17 @@ const columns: Column<Notice>[] = [
     editable: true,
     editType: "text",
     render: (notice) => {
-      const TypeIcon = typeConfig[notice.type]?.icon || Megaphone
+      const TypeIcon = (NOTICE_TYPE_DISPLAY_CONFIG[notice.type] || NOTICE_TYPE_DISPLAY_CONFIG.general).icon
       const isActive = notice.is_active && !notice.is_expired
       return (
         <div className={`flex items-start gap-3 ${!isActive ? "opacity-60" : ""}`}>
-          <div className={`p-2 rounded-lg shrink-0 ${typeConfig[notice.type]?.bgColor || "bg-muted"}`}>
-            <TypeIcon className={`h-4 w-4 ${typeConfig[notice.type]?.color || "text-muted-foreground"}`} />
+          <div className={`p-2 rounded-lg shrink-0 ${NOTICE_TYPE_DISPLAY_CONFIG[notice.type]?.bgColor || "bg-muted"}`}>
+            <TypeIcon className={`h-4 w-4 ${NOTICE_TYPE_DISPLAY_CONFIG[notice.type]?.color || "text-muted-foreground"}`} />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
               <TableBadge variant={notice.type === "emergency" ? "error" : "default"}>
-                {typeConfig[notice.type]?.label || notice.type}
+                {NOTICE_TYPE_DISPLAY_CONFIG[notice.type]?.label || notice.type}
               </TableBadge>
               {!isActive && (
                 <TableBadge variant="muted">
@@ -165,7 +156,7 @@ const columns: Column<Notice>[] = [
     defaultVisible: false,
     render: (notice) => (
       <TableBadge variant={notice.type === "emergency" ? "error" : "default"}>
-        {typeConfig[notice.type]?.label || notice.type}
+        {NOTICE_TYPE_DISPLAY_CONFIG[notice.type]?.label || notice.type}
       </TableBadge>
     ),
   },
@@ -285,12 +276,9 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 // Export Columns
 // ============================================
 
-const NOTICE_TYPE_LABELS: Record<string, string> = {
-  general: "General",
-  maintenance: "Maintenance",
-  payment_reminder: "Payment Reminder",
-  emergency: "Emergency",
-}
+const NOTICE_TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(NOTICE_TYPE_DISPLAY_CONFIG).map(([k, v]) => [k, v.label])
+)
 
 const AUDIENCE_LABELS: Record<string, string> = {
   all: "All Residents",
