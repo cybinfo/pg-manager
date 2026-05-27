@@ -62,6 +62,10 @@ export const TIME_SLOTS: { value: LibraryTimeSlot; label: string }[] = [
   { value: "24 Hours", label: "24 Hours" },
 ]
 
+export const TIME_SLOT_OPTIONS: { value: string; label: string }[] = TIME_SLOTS.map(
+  (slot) => ({ value: slot.value, label: slot.label })
+)
+
 // ============================================================================
 // LIBRARY INTERFACE
 // ============================================================================

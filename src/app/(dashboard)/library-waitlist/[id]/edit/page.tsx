@@ -21,7 +21,7 @@ import { requiredField } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import { LIBRARY_WAITLIST_STATUS_CONFIG, labelsToOptions } from "@/lib/status"
-import { TIME_SLOTS } from "@/types/library.types"
+import { TIME_SLOT_OPTIONS } from "@/types/library.types"
 
 const WAITLIST_STATUS_OPTIONS = labelsToOptions(
   Object.fromEntries(Object.entries(LIBRARY_WAITLIST_STATUS_CONFIG).map(([k, v]) => [k, v.label]))
@@ -29,7 +29,7 @@ const WAITLIST_STATUS_OPTIONS = labelsToOptions(
 
 const SLOT_OPTIONS = [
   { value: "", label: "No preference" },
-  ...TIME_SLOTS.map((slot) => ({ value: slot.value, label: slot.label })),
+  ...TIME_SLOT_OPTIONS,
 ]
 
 const PRIORITY_OPTIONS = [

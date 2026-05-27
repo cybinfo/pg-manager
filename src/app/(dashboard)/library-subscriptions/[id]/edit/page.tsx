@@ -22,7 +22,7 @@ import { requiredDate, requiredAmount } from "@/lib/validation"
 import { PageLoading } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import { LIBRARY_MEMBERSHIP_STATUS_CONFIG, labelsToOptions } from "@/lib/status"
-import { TIME_SLOTS } from "@/types/library.types"
+import { TIME_SLOT_OPTIONS } from "@/types/library.types"
 
 const MEMBERSHIP_STATUS_OPTIONS = labelsToOptions(
   Object.fromEntries(Object.entries(LIBRARY_MEMBERSHIP_STATUS_CONFIG).map(([k, v]) => [k, v.label]))
@@ -30,7 +30,7 @@ const MEMBERSHIP_STATUS_OPTIONS = labelsToOptions(
 
 const SLOT_OPTIONS = [
   { value: "", label: "No specific slot" },
-  ...TIME_SLOTS.map((slot) => ({ value: slot.value, label: slot.label })),
+  ...TIME_SLOT_OPTIONS,
 ]
 
 export default function EditSubscriptionPage({
