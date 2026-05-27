@@ -9,7 +9,7 @@
 
 import { MessageSquare, AlertCircle, Clock, CheckCircle, Wrench } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
-import { statusColumn, badgeColumn, timeAgoColumn } from "@/lib/column-builders"
+import { statusColumn, badgeColumn, timeAgoColumn } from "@/lib/columns"
 import { formatTimeAgo } from "@/lib/format"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { COMPLAINT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"

@@ -18,7 +18,7 @@ import {
   Smartphone,
 } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
+import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { REFUND_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"

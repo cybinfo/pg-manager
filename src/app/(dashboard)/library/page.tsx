@@ -330,6 +330,7 @@ export default function LibrariesPage() {
       columns={columns}
       searchPlaceholder="Search by library name, code, city..."
       enableColumnManager={true}
+      enableInlineEdit={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       exportColumns={exportColumns}

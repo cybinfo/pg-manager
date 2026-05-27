@@ -11,7 +11,7 @@ import { LIBRARY_WAITLIST_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useList
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { ListPageTemplate } from "@/components/shared"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, dateColumn } from "@/lib/column-builders"
+import { statusColumn, dateColumn } from "@/lib/columns"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter, TIME_SLOT_FILTER } from "@/lib/filter-presets"
 import { Users, Clock, Check, Phone } from "lucide-react"

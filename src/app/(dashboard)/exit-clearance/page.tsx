@@ -12,7 +12,7 @@
 
 import { LogOut, Clock, CheckCircle, AlertCircle } from "lucide-react"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
-import { dateColumn, currencyColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
+import { dateColumn, currencyColumn, personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { EXIT_CLEARANCE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"

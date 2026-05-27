@@ -8,7 +8,7 @@
 
 import { Armchair, Users, CheckCircle, XCircle } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, dateColumn } from "@/lib/column-builders"
+import { statusColumn, dateColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_SEAT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"

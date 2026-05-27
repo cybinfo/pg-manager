@@ -10,7 +10,7 @@
 import { FileText, CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, currencyColumn, dateColumn } from "@/lib/column-builders"
+import { statusColumn, currencyColumn, dateColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { BILL_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createSumMetric, MetricConfig } from "@/lib/metric-factories"

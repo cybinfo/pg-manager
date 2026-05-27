@@ -14,7 +14,7 @@ import {
   CheckCircle2,
 } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { dateColumn, statusColumn } from "@/lib/column-builders"
+import { dateColumn, statusColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { METER_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"

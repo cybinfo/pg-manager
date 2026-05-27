@@ -9,7 +9,7 @@
 
 import { Home, Bed, CheckCircle, AlertCircle } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, currencyColumn, dateColumn, badgeColumn, booleanColumn } from "@/lib/column-builders"
+import { statusColumn, currencyColumn, dateColumn, badgeColumn, booleanColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { ROOM_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"

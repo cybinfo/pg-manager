@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Column, StatusDot, TableBadge } from "@/components/ui/data-table"
-import { dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
+import { dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PEOPLE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, MetricConfig } from "@/lib/metric-factories"

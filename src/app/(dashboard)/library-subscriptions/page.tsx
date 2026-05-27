@@ -9,7 +9,7 @@
 
 import { CreditCard, Users, AlertTriangle, Clock, Receipt } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, dateColumn, currencyColumn, personNameWithAvatarColumn, countColumn } from "@/lib/column-builders"
+import { statusColumn, dateColumn, currencyColumn, personNameWithAvatarColumn, countColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_MEMBERSHIP_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"

@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Column, TableBadge } from "@/components/ui/data-table"
-import { dateColumn, personNameWithAvatarColumn, booleanColumn, phoneColumn } from "@/lib/column-builders"
+import { dateColumn, personNameWithAvatarColumn, booleanColumn, phoneColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { STAFF_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createBooleanMetric, createNullCheckMetric, MetricConfig } from "@/lib/metric-factories"

@@ -1,20 +1,12 @@
-import { createClient } from "@supabase/supabase-js"
-import { apiSuccess, notFound, internalError } from "@/lib/api-response"
-
-function adminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) return null
-  return createClient(url, key)
-}
+import { apiSuccess, notFound } from "@/lib/api-response"
+import { getAdminSupabaseClient } from "@/lib/api-middleware"
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
-  const supabase = adminClient()
-  if (!supabase) return internalError("Server configuration error")
+  const supabase = getAdminSupabaseClient()
 
   const { data: invitation, error } = await supabase
     .from("invitations")

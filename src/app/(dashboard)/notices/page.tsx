@@ -19,7 +19,7 @@ import {
   Users,
 } from "lucide-react"
 import { Column, TableBadge } from "@/components/ui/data-table"
-import { timeAgoColumn } from "@/lib/column-builders"
+import { timeAgoColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { NOTICE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createCountMetric, createExpiringMetric, MetricConfig } from "@/lib/metric-factories"

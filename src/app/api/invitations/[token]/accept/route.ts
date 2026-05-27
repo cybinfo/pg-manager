@@ -1,13 +1,6 @@
-import { createClient } from "@supabase/supabase-js"
 import { createClient as createServerClient } from "@/lib/supabase/server"
-import { apiSuccess, unauthorized, notFound, internalError, apiError, ErrorCodes } from "@/lib/api-response"
-
-function adminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) return null
-  return createClient(url, key)
-}
+import { apiSuccess, unauthorized, notFound, apiError, ErrorCodes } from "@/lib/api-response"
+import { getAdminSupabaseClient } from "@/lib/api-middleware"
 
 export async function POST(
   _request: Request,
@@ -20,8 +13,7 @@ export async function POST(
   const { data: { user } } = await serverClient.auth.getUser()
   if (!user) return unauthorized()
 
-  const supabase = adminClient()
-  if (!supabase) return internalError("Server configuration error")
+  const supabase = getAdminSupabaseClient()
 
   // Look up invitation by token
   const { data: invitation, error } = await supabase

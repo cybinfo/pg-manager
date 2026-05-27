@@ -16,7 +16,7 @@ import {
   ArrowDownRight,
 } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { dateColumn } from "@/lib/column-builders"
+import { dateColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { METER_READING_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createThisMonthCountMetric, createCountMetric, MetricConfig } from "@/lib/metric-factories"

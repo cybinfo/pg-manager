@@ -9,7 +9,7 @@
 
 import { Building2, Home, Users, MapPin } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { dateColumn, booleanColumn } from "@/lib/column-builders"
+import { dateColumn, booleanColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { PROPERTY_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"

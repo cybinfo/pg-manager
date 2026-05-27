@@ -9,7 +9,7 @@
 
 import { Receipt, TrendingDown, Calendar, BarChart3, Wallet } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { dateColumn, badgeColumn } from "@/lib/column-builders"
+import { dateColumn, badgeColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { EXPENSE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createThisMonthSumMetric, createLastMonthSumMetric, createYearToDateSumMetric, createTopValueByAmountMetric, MetricConfig } from "@/lib/metric-factories"
@@ -224,6 +224,7 @@ export default function ExpensesPage() {
       columns={columns}
       searchPlaceholder="Search vendor, description, reference..."
       enableColumnManager={true}
+      enableInlineEdit={true}
       enableAdvancedFilters={true}
       advancedFilterColumns={advancedFilterColumns}
       exportColumns={exportColumns}

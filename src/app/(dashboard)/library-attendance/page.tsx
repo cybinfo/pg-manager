@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Clock, Users, LogIn, LogOut, RefreshCw, QrCode } from "lucide-react"
 import { Column, StatusDot } from "@/components/ui/data-table"
-import { personNameWithAvatarColumn } from "@/lib/column-builders"
+import { personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { ModuleGuard } from "@/components/auth"
 import { LIBRARY_ATTENDANCE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
@@ -100,6 +100,8 @@ function CurrentlyCheckedIn({ refreshKey, onCheckOut }: { refreshKey: number; on
   }, [])
 
   useEffect(() => {
+    // fetchCheckedIn is async — setState calls happen after an await, not synchronously
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCheckedIn()
   }, [fetchCheckedIn, refreshKey])
 

@@ -8,7 +8,7 @@
 
 import { CreditCard, Users, Calendar, Receipt } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/column-builders"
+import { statusColumn, dateColumn, personNameWithAvatarColumn } from "@/lib/columns"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
 import { LIBRARY_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, createTodayCountMetric, MetricConfig } from "@/lib/metric-factories"

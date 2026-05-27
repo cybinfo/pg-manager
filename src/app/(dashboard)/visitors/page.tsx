@@ -13,7 +13,7 @@
 import Link from "next/link"
 import { Users, UserCheck, CalendarDays, Search, Wrench, User, Star, Ban, BookUser } from "lucide-react"
 import { Column } from "@/components/ui/data-table"
-import { statusColumn, dateColumn } from "@/lib/column-builders"
+import { statusColumn, dateColumn } from "@/lib/columns"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 import { ListPageTemplate } from "@/components/shared/ListPageTemplate"
