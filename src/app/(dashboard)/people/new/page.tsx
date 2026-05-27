@@ -33,6 +33,7 @@ import {
   Camera,
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
+import { withCreatedBy } from "@/lib/audit"
 import { PermissionGuard } from "@/components/auth"
 import { FormField, Select, EmailInput } from "@/components/ui/form-components"
 import {
@@ -206,9 +207,8 @@ export default function NewPersonPage() {
 
     const { data, error } = await supabase
       .from("people")
-      .insert({
+      .insert(withCreatedBy({
         owner_id: user.id,
-        created_by: user.id,
         name: formData.name,
         phone: formData.phone || null,
         email: formData.email || null,
@@ -234,7 +234,7 @@ export default function NewPersonPage() {
         tags: formData.tags || [],
         notes: formData.notes || null,
         source: "manual",
-      })
+      }, user.id))
       .select()
       .single()
 

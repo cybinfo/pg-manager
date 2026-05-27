@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
+import { withCreatedBy } from "@/lib/audit"
 import { PersonSearchResult } from "@/types/people.types"
 import {
   VisitorType,
@@ -367,7 +368,7 @@ export function useVisitorForm() {
 
         const { data: billData, error: billError } = await supabase
           .from("bills")
-          .insert({
+          .insert(withCreatedBy({
             owner_id: user.id,
             tenant_id: formData.tenant_id,
             property_id: formData.property_id,
@@ -384,7 +385,7 @@ export function useVisitorForm() {
               amount: overnightCharge,
             }],
             notes: `Visitor: ${formData.visitor_name}${formData.relation ? ` (${formData.relation})` : ""}`,
-          })
+          }, user.id))
           .select("id")
           .single()
 
@@ -396,9 +397,8 @@ export function useVisitorForm() {
         }
       }
 
-      const visitorData: Record<string, unknown> = {
+      const visitorData: Record<string, unknown> = withCreatedBy({
         owner_id: user.id,
-        created_by: user.id,
         property_id: formData.property_id,
         visitor_contact_id: visitorContactId || null,
         visitor_type: formData.visitor_type,

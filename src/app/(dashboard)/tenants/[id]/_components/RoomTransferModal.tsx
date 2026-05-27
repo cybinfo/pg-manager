@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Currency } from "@/components/ui/currency"
 import { Loader2, ArrowRightLeft } from "lucide-react"
+import { ROOM_TRANSFER_REASON_OPTIONS } from "@/lib/constants/form-options"
 import { showError, showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { createClient } from "@/lib/supabase/client"
+import { withCreatedBy } from "@/lib/audit"
 import type { Tenant, TenantStay } from "@/types/tenants.types"
 import { getTodayISO } from "@/lib/date-helpers"
 
@@ -58,7 +60,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
       const newRent = parseFloat(transferData.new_rent) || selectedRoom.rent_amount
 
       // Create transfer record
-      await supabase.from("room_transfers").insert({
+      await supabase.from("room_transfers").insert(withCreatedBy({
         owner_id: user.id,
         tenant_id: tenant.id,
         from_property_id: tenant.property?.id,
@@ -70,7 +72,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
         notes: transferData.notes || null,
         old_rent: tenant.monthly_rent,
         new_rent: newRent,
-      })
+      }, user.id))
 
       // Update current stay
       await supabase
@@ -158,13 +160,7 @@ export function RoomTransferModal({ tenant, stays, availableRooms, onClose }: Ro
             <Select
               value={transferData.reason}
               onChange={(e) => setTransferData({ ...transferData, reason: e.target.value })}
-              options={[
-                { value: "upgrade", label: "Upgrade" },
-                { value: "downgrade", label: "Downgrade" },
-                { value: "request", label: "Tenant Request" },
-                { value: "maintenance", label: "Maintenance" },
-                { value: "other", label: "Other" },
-              ]}
+              options={ROOM_TRANSFER_REASON_OPTIONS}
               placeholder="Select reason"
             />
           </FormField>

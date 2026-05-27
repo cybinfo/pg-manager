@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/form-components"
 import { DetailSection } from "@/components/ui"
 import { CreditCard, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { withCreatedBy } from "@/lib/audit"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { getTodayISO } from "@/lib/date-helpers"
 import { labelsToOptions, PAYMENT_METHODS } from "@/lib/status"
@@ -64,7 +65,7 @@ export function BillPaymentForm({
 
       const { error } = await (supabase
         .from("payments") as ReturnType<typeof supabase.from>)
-        .insert({
+        .insert(withCreatedBy({
           owner_id: user.id,
           tenant_id: tenantId,
           property_id: propertyId,
@@ -74,7 +75,7 @@ export function BillPaymentForm({
           payment_method: paymentData.payment_method,
           reference_number: paymentData.reference_number || null,
           notes: paymentData.notes || null,
-        } as Record<string, unknown>)
+        }, user.id) as Record<string, unknown>)
 
       if (error) {
         logger.error("Error recording payment:", { detail: error })

@@ -29,6 +29,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { showWarning } from "@/lib/toast-helpers"
+import { withCreatedBy } from "@/lib/audit"
 import { PermissionGuard } from "@/components/auth"
 import {
   MeterType,
@@ -127,9 +128,8 @@ export default function NewMeterPage() {
       // Create the meter
       const { data: meterData, error: meterError } = await supabase
         .from("meters")
-        .insert({
+        .insert(withCreatedBy({
           owner_id: userId,
-          created_by: userId,
           property_id: data.property_id,
           meter_number: (data.meter_number as string).trim(),
           meter_type: data.meter_type,
@@ -139,7 +139,7 @@ export default function NewMeterPage() {
           installation_date: data.installation_date || null,
           notes: (data.notes as string).trim() || null,
           status: "active",
-        })
+        }, userId))
         .select()
         .single()
 
