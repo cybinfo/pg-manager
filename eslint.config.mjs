@@ -21,6 +21,12 @@ const eslintConfig = defineConfig([
   ]),
   // Project-level rule overrides
   {
+    // eslint-plugin-react (bundled in eslint-config-next) calls context.getFilename()
+    // which was removed in ESLint 10. Setting an explicit version bypasses auto-detection
+    // and prevents the crash across all react/* rules.
+    settings: {
+      react: { version: "19" },
+    },
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "warn",

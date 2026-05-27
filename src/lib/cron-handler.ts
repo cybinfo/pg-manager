@@ -136,7 +136,7 @@ export async function logCronAudit(
   const { data: workspace } = await supabase
     .from("workspaces")
     .select("id")
-    .eq("owner_id", ownerId)
+    .eq("owner_user_id", ownerId)
     .single()
 
   if (workspace) {

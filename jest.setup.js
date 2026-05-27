@@ -1,5 +1,11 @@
 require('@testing-library/jest-dom')
 
+// TextEncoder/TextDecoder are required by packages like resend (via postal-mime)
+// but are not available in the jsdom test environment by default
+const { TextEncoder, TextDecoder } = require('util')
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
+
 // Mock global Request for rate-limit tests
 class MockHeaders {
   constructor(init = {}) {

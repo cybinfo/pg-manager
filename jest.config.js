@@ -20,8 +20,12 @@ const customJestConfig = {
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
       tsconfig: {
+        rootDir: '.',
         jsx: 'react-jsx',
         esModuleInterop: true,
+        module: 'CommonJS',
+        moduleResolution: 'node16',
+        ignoreDeprecations: '6.0',
       },
     }],
   },
