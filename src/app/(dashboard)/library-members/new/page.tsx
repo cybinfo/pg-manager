@@ -33,6 +33,7 @@ import { handleClientError } from "@/lib/error-handler"
 import { withCreatedBy } from "@/lib/audit"
 import { useFeatures } from "@/lib/features/use-features"
 import { logger } from "@/lib/logger"
+import { GENDER_OPTIONS, ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
 
 interface Library {
   id: string
@@ -604,12 +605,7 @@ function NewLibraryMemberContent() {
                     name="gender"
                     id="gender"
                     disabled={saving}
-                    options={[
-                      { value: "", label: "Select Gender" },
-                      { value: "male", label: "Male" },
-                      { value: "female", label: "Female" },
-                      { value: "other", label: "Other" },
-                    ]}
+                    options={GENDER_OPTIONS}
                   />
                 </FormField>
                 <FormField label="Date of Birth" htmlFor="date_of_birth">
@@ -645,13 +641,7 @@ function NewLibraryMemberContent() {
                     name="id_proof_type"
                     id="id_proof_type"
                     disabled={saving}
-                    options={[
-                      { value: "aadhar", label: "Aadhaar Card" },
-                      { value: "pan", label: "PAN Card" },
-                      { value: "student_id", label: "Student ID" },
-                      { value: "voter_id", label: "Voter ID" },
-                      { value: "driving_license", label: "Driving License" },
-                    ]}
+                    options={ID_PROOF_TYPE_OPTIONS}
                   />
                 </FormField>
                 <FormField label="ID Number" htmlFor="id_proof_number">

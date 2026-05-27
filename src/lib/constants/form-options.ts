@@ -92,6 +92,15 @@ export const ROOM_TRANSFER_REASON_OPTIONS = [
 // PEOPLE — derived from @/types/people.types
 // ============================================================================
 
+/** ID proof type options for member/tenant forms */
+export const ID_PROOF_TYPE_OPTIONS = [
+  { value: "aadhar", label: "Aadhaar Card" },
+  { value: "pan", label: "PAN Card" },
+  { value: "student_id", label: "Student ID" },
+  { value: "voter_id", label: "Voter ID" },
+  { value: "driving_license", label: "Driving License" },
+]
+
 /** Gender select options with empty sentinel for placeholder */
 export const GENDER_OPTIONS = [
   { value: "", label: "Select gender" },

@@ -24,6 +24,7 @@ import { TIME_SLOTS } from "@/types/library.types"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
+import { ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
 
 export default function EditLibraryMemberPage({
   params,
@@ -241,13 +242,7 @@ function EditLibraryMemberContent({
                   onChange={handleChange}
                   name="id_proof_type"
                   disabled={saving}
-                  options={[
-                    { value: "aadhar", label: "Aadhaar Card" },
-                    { value: "pan", label: "PAN Card" },
-                    { value: "student_id", label: "Student ID" },
-                    { value: "voter_id", label: "Voter ID" },
-                    { value: "driving_license", label: "Driving License" },
-                  ]}
+                  options={ID_PROOF_TYPE_OPTIONS}
                 />
               </FormField>
               <FormField label="ID Number">
