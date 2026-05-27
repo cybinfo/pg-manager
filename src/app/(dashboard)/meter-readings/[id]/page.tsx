@@ -44,6 +44,8 @@ import { PermissionGate, FeatureGuard } from "@/components/auth"
 import { ConfirmDialog } from "@/components/ui/form-dialog"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { startOfMonth, endOfMonth } from "@/lib/date-helpers"
+import { getCurrentUser } from "@/lib/supabase/auth-helpers"
 
 interface MeterReading {
   id: string
@@ -191,7 +193,7 @@ export default function MeterReadingDetailPage() {
     const supabase = createClient()
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (!user) {
         showError("Session expired. Please login again.")
         router.push("/login")
@@ -219,7 +221,7 @@ export default function MeterReadingDetailPage() {
       const amountPerTenant = splitByOccupants ? totalAmount / tenants.length : totalAmount
 
       const readingDate = new Date(reading.reading_date)
-      const dueDate = new Date(readingDate.getFullYear(), readingDate.getMonth() + 1, 0)
+      const dueDate = endOfMonth(readingDate)
       const forPeriod = formatMonthYear(readingDate)
 
       const chargeInserts = tenants.map((tenant: { id: string; name: string }) => ({
@@ -230,7 +232,7 @@ export default function MeterReadingDetailPage() {
         amount: splitByOccupants ? amountPerTenant : totalAmount,
         due_date: dueDate.toISOString().split("T")[0],
         for_period: forPeriod,
-        period_start: new Date(readingDate.getFullYear(), readingDate.getMonth(), 1).toISOString().split("T")[0],
+        period_start: startOfMonth(readingDate).toISOString().split("T")[0],
         period_end: dueDate.toISOString().split("T")[0],
         calculation_details: {
           meter_reading_id: reading.id,

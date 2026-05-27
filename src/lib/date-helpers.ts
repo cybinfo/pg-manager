@@ -344,3 +344,35 @@ export function formatDateIndian(date: Date | string): string {
  * getRelativeTime(new Date(Date.now() - 3600000)) // "1h ago"
  */
 export const getRelativeTime = formatTimeAgo
+
+// ============================================================================
+// DATE ARITHMETIC HELPERS
+// ============================================================================
+
+export function startOfMonth(date: Date | string): Date {
+  const d = new Date(date)
+  return new Date(d.getFullYear(), d.getMonth(), 1)
+}
+
+export function endOfMonth(date: Date | string): Date {
+  const d = new Date(date)
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0)
+}
+
+export function addDays(date: Date | string, days: number): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d
+}
+
+export function subtractDays(date: Date | string, days: number): Date {
+  return addDays(date, -days)
+}
+
+export function parseMonthIndex(monthName: string): number {
+  return new Date(`${monthName} 1, 2000`).getMonth()
+}
+
+export function toDateString(date: Date): string {
+  return date.toISOString().split("T")[0]
+}

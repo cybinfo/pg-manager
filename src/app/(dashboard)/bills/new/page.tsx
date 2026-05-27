@@ -29,7 +29,7 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import { cn } from "@/lib/utils"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { getTodayISO, getNowISO, parseMonthIndex, startOfMonth, endOfMonth } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
 import { calculateProRataAmount, getProRataBreakdown } from "@/lib/billing/pro-rata"
 import { useFeatures } from "@/lib/features/use-features"
@@ -358,7 +358,7 @@ function NewBillContent() {
     if (!tenant?.monthly_rent) return null
     // Convert "Month YYYY" to "YYYY-MM"
     const [monthName, yearStr] = formData.for_month.split(" ")
-    const monthIndex = new Date(`${monthName} 1, ${yearStr}`).getMonth() + 1
+    const monthIndex = parseMonthIndex(monthName) + 1
     const billingMonth = `${yearStr}-${String(monthIndex).padStart(2, "0")}`
     const joinDate = new Date(proRata.joinDate)
     return calculateProRataAmount(tenant.monthly_rent, joinDate, billingMonth)
@@ -424,9 +424,9 @@ function NewBillContent() {
 
       // Parse month for period
       const [monthName, yearStr] = formData.for_month.split(" ")
-      const monthIndex = new Date(`${monthName} 1, ${yearStr}`).getMonth()
-      const periodStart = new Date(parseInt(yearStr), monthIndex, 1)
-      const periodEnd = new Date(parseInt(yearStr), monthIndex + 1, 0)
+      const refDate = new Date(parseInt(yearStr), parseMonthIndex(monthName), 1)
+      const periodStart = startOfMonth(refDate)
+      const periodEnd = endOfMonth(refDate)
 
       // Create bill
       const { data: bill, error: billError } = await (supabase
@@ -721,7 +721,7 @@ function NewBillContent() {
                     <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 text-sm">
                       {(() => {
                         const [monthName, yearStr] = formData.for_month.split(" ")
-                        const monthIndex = new Date(`${monthName} 1, ${yearStr}`).getMonth() + 1
+                        const monthIndex = parseMonthIndex(monthName) + 1
                         const billingMonth = `${yearStr}-${String(monthIndex).padStart(2, "0")}`
                         const { remainingDays, daysInMonth } = getProRataBreakdown(new Date(proRata.joinDate), billingMonth)
                         const tenant = tenants.find((t) => t.id === selectedTenant)

@@ -55,6 +55,7 @@ import { generateWhatsAppLink } from "@/lib/notifications"
 import { validatePhone as validateIndianMobile } from "@/lib/phone"
 import type { PropertyWebsite } from "./page"
 import { logger } from "@/lib/logger"
+import { RATE_LIMIT_WINDOW, MAX_SUBMISSIONS } from "@/lib/constants/business-rules"
 
 // ============================================================================
 // CONSTANTS
@@ -81,10 +82,6 @@ const defaultAmenities = [
   "WiFi", "Parking", "Food", "CCTV", "Power Backup",
   "Water Supply", "Laundry", "Housekeeping", "Security"
 ]
-
-// Rate limiting: max 3 submissions per 5 minutes
-const RATE_LIMIT_WINDOW = 5 * 60 * 1000 // 5 minutes
-const MAX_SUBMISSIONS = 3
 
 // ============================================================================
 // TYPES

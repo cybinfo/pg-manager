@@ -2,21 +2,18 @@ import { baseCronHandler } from "@/lib/cron-handler"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
-import { getNowISO } from "@/lib/date-helpers"
+import { getNowISO, subtractDays } from "@/lib/date-helpers"
 import { isFeatureEnabled } from "@/lib/features/checks"
 import type { WorkspaceModuleConfig } from "@/lib/features"
 import { sendComplaintEscalationAlert } from "@/lib/email"
 import { CONTACT } from "@/lib/constants/contact"
-
-const ESCALATION_THRESHOLD_DAYS = 3
+import { ESCALATION_THRESHOLD_DAYS } from "@/lib/constants/business-rules"
 
 export const GET = (request: Request) =>
   baseCronHandler(request, {
     name: "complaint-escalation",
     execute: async (supabaseAdmin, today) => {
-      const thresholdDate = new Date(today)
-      thresholdDate.setDate(thresholdDate.getDate() - ESCALATION_THRESHOLD_DAYS)
-      const thresholdDateStr = thresholdDate.toISOString()
+      const thresholdDateStr = subtractDays(today, ESCALATION_THRESHOLD_DAYS).toISOString()
 
       const results = {
         processed: 0,

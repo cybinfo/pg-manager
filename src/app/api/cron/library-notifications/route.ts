@@ -14,7 +14,7 @@ import { baseCronHandler } from "@/lib/cron-handler"
 import { cronLogger, extractErrorMeta } from "@/lib/logger"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { SYSTEM_ACTOR_ID } from "@/lib/constants"
-import { getNowISO, formatDateIndian } from "@/lib/date-helpers"
+import { getNowISO, formatDateIndian, addDays } from "@/lib/date-helpers"
 import { isFeatureEnabled } from "@/lib/features/checks"
 import type { WorkspaceModuleConfig } from "@/lib/features"
 import {
@@ -25,34 +25,25 @@ import {
   sendMonthlyAttendanceSummary,
   sendLockerRenewalReminder,
 } from "@/lib/email"
-
-// Configuration
-// Note: Low hours threshold is no longer meaningful in per-day model.
-// hours_balance resets daily to the plan's daily allowance.
-// We keep the low-hours check but it now only catches members whose
-// daily allowance itself is very low (e.g., 2h plans) — unlikely to trigger
-// for most members. The primary notifications are now subscription-expiry based.
-const LOW_HOURS_DAILY_ALLOWANCE_THRESHOLD = 2 // Warn if daily allowance <= 2h
-const RENEWAL_REMINDER_DAYS = 3 // Send renewal reminder 3 days before
-const EXPIRING_DAYS_BEFORE = 7 // Send expiring notification 7 days before
+import {
+  LOW_HOURS_DAILY_ALLOWANCE_THRESHOLD,
+  RENEWAL_REMINDER_DAYS,
+  EXPIRING_DAYS_BEFORE,
+} from "@/lib/constants/business-rules"
 
 export const GET = (request: Request) =>
   baseCronHandler(request, {
     name: "library-notifications",
     execute: async (supabaseAdmin, today) => {
       const _todayStr = today.toISOString().split("T")[0]
-      const expiringDate = new Date(today)
-      expiringDate.setDate(expiringDate.getDate() + EXPIRING_DAYS_BEFORE)
-      const expiringDateStr = expiringDate.toISOString().split("T")[0]
+      const expiringDateStr = addDays(today, EXPIRING_DAYS_BEFORE).toISOString().split("T")[0]
 
       cronLogger.info("Library notifications config", {
         expiringCheckDate: expiringDateStr,
         lowHoursDailyAllowanceThreshold: LOW_HOURS_DAILY_ALLOWANCE_THRESHOLD,
       })
 
-      const renewalReminderDate = new Date(today)
-      renewalReminderDate.setDate(renewalReminderDate.getDate() + RENEWAL_REMINDER_DAYS)
-      const renewalReminderDateStr = renewalReminderDate.toISOString().split("T")[0]
+      const renewalReminderDateStr = addDays(today, RENEWAL_REMINDER_DAYS).toISOString().split("T")[0]
 
       const results = {
         lowHoursWarnings: 0,
@@ -437,9 +428,7 @@ export const GET = (request: Request) =>
       }
 
       // 6. Locker Renewal Reminders (expiring within 7 days)
-      const lockerRenewalDate = new Date(today)
-      lockerRenewalDate.setDate(lockerRenewalDate.getDate() + 7)
-      const lockerRenewalDateStr = lockerRenewalDate.toISOString().split("T")[0]
+      const lockerRenewalDateStr = addDays(today, 7).toISOString().split("T")[0]
       const todayStr = today.toISOString().split("T")[0]
 
       const { data: expiringLockers, error: lockersError } = await supabaseAdmin
