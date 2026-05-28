@@ -20,14 +20,13 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
 import { showDetailedError, debugLog } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
-import { sendInvitationEmail, sendTenantWelcomeEmail } from "@/lib/email"
-import { withCreatedBy } from "@/lib/audit"
+import { onboardTenantUser } from "@/lib/services/tenant-onboarding"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useFeatures } from "@/lib/features/use-features"
 import { createTenant as createTenantWorkflow, TenantCreateInput } from "@/lib/workflows/tenant.workflow"
 import { PersonSelector } from "@/components/people"
 import { PersonSearchResult } from "@/types/people.types"
-import { getTodayISO, getNowISO } from "@/lib/date-helpers"
+import { getTodayISO } from "@/lib/date-helpers"
 import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
 import { logger } from "@/lib/logger"
 import { Textarea } from "@/components/ui/textarea"
@@ -365,131 +364,20 @@ export default function NewTenantPage() {
       // Create a reference object for the rest of the code
       const newTenant = { id: newTenantId }
 
-      // Step: Auto-link to existing user or create invitation for tenant portal access
-      if (newTenant.id) {
-        // Check if email exists as a user
-        let existingUserId: string | null = null
-        const primaryEmail = selectedPerson.email
-
-        if (primaryEmail) {
-          const { data: existingProfile } = await supabase
-            .from("user_profiles")
-            .select("user_id, name")
-            .eq("email", primaryEmail.toLowerCase())
-            .single()
-
-          if (existingProfile?.user_id) {
-            existingUserId = existingProfile.user_id
-          }
-        }
-
-        // Get owner's workspace
-        const { data: workspace } = await supabase
-          .from("workspaces")
-          .select("id, name")
-          .eq("owner_user_id", user.id)
-          .single()
-
-        if (existingUserId && workspace) {
-          // User exists - link tenant and create context
-          await supabase
-            .from("tenants")
-            .update({ user_id: existingUserId })
-            .eq("id", newTenant.id)
-
-          const { error: contextError } = await supabase
-            .from("user_contexts")
-            .insert(
-              withCreatedBy({
-                user_id: existingUserId,
-                workspace_id: workspace.id,
-                context_type: "tenant",
-                entity_id: newTenant.id,
-                is_active: true,
-                is_default: false,
-                invited_by: user.id,
-                invited_at: getNowISO(),
-                accepted_at: getNowISO(),
-              }, user.id)
-            )
-
-          if (!contextError) {
-            debugLog("Tenant linked to existing user", { existingUserId })
-          }
-        } else if (workspace && primaryEmail) {
-          // User doesn't exist - create invitation for tenant portal
-          const { data: invitation, error: inviteError } = await supabase
-            .from("invitations")
-            .insert(
-              withCreatedBy({
-                workspace_id: workspace.id,
-                invited_by: user.id,
-                email: primaryEmail,
-                phone: selectedPerson.phone || null,
-                name: selectedPerson.name,
-                context_type: "tenant",
-                entity_id: newTenant.id,
-                status: "pending",
-                message: `You've been added as a tenant at ${workspace.name}. Sign up to access your tenant portal.`,
-              }, user.id)
-            )
-            .select("id, token")
-            .single()
-
-          if (!inviteError && invitation) {
-            debugLog("Invitation created for tenant", { email: primaryEmail, invitationId: invitation.id })
-
-            // Get inviter's name for the email
-            const { data: inviterProfile } = await supabase
-              .from("user_profiles")
-              .select("name")
-              .eq("user_id", user.id)
-              .single()
-
-            const inviterName = inviterProfile?.name || "Property Owner"
-
-            // Send invitation email
-            const signupUrl = `${window.location.origin}/register?invite=${invitation.token}&email=${encodeURIComponent(primaryEmail)}`
-            const emailResult = await sendInvitationEmail({
-              to: primaryEmail,
-              inviteeName: selectedPerson.name,
-              inviterName: inviterName,
-              workspaceName: workspace.name,
-              contextType: "tenant",
-              signupUrl: signupUrl,
-              message: `You've been added as a tenant at ${workspace.name}. Sign up to access your tenant portal where you can view bills, payments, submit complaints, and more.`,
-            })
-
-            if (emailResult.success) {
-              debugLog("Invitation email sent", { email: primaryEmail })
-            } else {
-              logger.warn("Failed to send invitation email", { error: String(emailResult.error) })
-            }
-          }
-        }
-      }
-
-      // Send welcome email (non-blocking - don't fail creation if email fails)
-      if (selectedPerson.email && isFeatureEnabled("tenants", "welcomeEmail")) {
-        const { data: inviterProfile } = await supabase
-          .from("user_profiles")
-          .select("name, phone")
-          .eq("user_id", user.id)
-          .single()
-
-        sendTenantWelcomeEmail({
-          to: selectedPerson.email,
-          tenantName: selectedPerson.name,
-          propertyName: propertyCheck.name,
-          roomNumber: roomCheck.room_number,
-          moveInDate: new Date(formData.check_in_date),
-          monthlyRent: parseFloat(formData.monthly_rent),
-          ownerName: inviterProfile?.name || "Property Owner",
-          ownerPhone: inviterProfile?.phone || undefined,
-        }).catch((err: unknown) => {
-          logger.warn("Failed to send welcome email", { error: err instanceof Error ? err.message : String(err) })
-        })
-      }
+      // Link tenant to existing user / create invitation / send welcome email
+      await onboardTenantUser({
+        tenantId: newTenant.id,
+        tenantName: selectedPerson.name,
+        tenantEmail: selectedPerson.email || null,
+        tenantPhone: selectedPerson.phone || null,
+        workspaceOwnerId: user.id,
+        welcomeEmailEnabled: isFeatureEnabled("tenants", "welcomeEmail"),
+        propertyName: propertyCheck.name,
+        roomNumber: roomCheck.room_number,
+        moveInDate: new Date(formData.check_in_date),
+        monthlyRent: parseFloat(formData.monthly_rent),
+        origin: window.location.origin,
+      })
 
       showSuccess("Tenant added successfully!", `${selectedPerson.name} has been added to Room ${roomCheck.room_number}`)
       router.push("/tenants")

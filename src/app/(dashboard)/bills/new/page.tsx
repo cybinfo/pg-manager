@@ -25,13 +25,13 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { formatCurrency, formatMonthYear, formatDate} from "@/lib/format"
-import { withCreatedBy } from "@/lib/audit"
+import { createBillWithCharges } from "@/lib/services/bills"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import { cn } from "@/lib/utils"
 import { Textarea } from "@/components/ui/textarea"
 import { transformJoin } from "@/lib/supabase/transforms"
-import { getTodayISO, getNowISO, parseMonthIndex, startOfMonth, endOfMonth } from "@/lib/date-helpers"
+import { getTodayISO, parseMonthIndex } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
 import { calculateProRataAmount, getProRataBreakdown } from "@/lib/billing/pro-rata"
 import { useFeatures } from "@/lib/features/use-features"
@@ -400,11 +400,10 @@ function NewBillContent() {
         return
       }
 
-      const supabase = createClient()
       const tenant = tenants.find((t) => t.id === selectedTenant)
       const { subtotal, total, proRataAmount } = calculateTotals()
 
-      // Apply pro-rata amounts to line items before saving
+      // Apply pro-rata to rent line items before saving
       const effectiveLineItems = lineItems.map((item) => {
         if (proRata.enabled && proRataAmount !== null && item.type.toLowerCase().includes("rent")) {
           return { ...item, amount: proRataAmount }
@@ -412,70 +411,25 @@ function NewBillContent() {
         return item
       })
 
-      // Generate bill number
-      const year = new Date(formData.bill_date).getFullYear()
-      const { count } = await supabase
-        .from("bills")
-        .select("*", { count: "exact", head: true })
-        .eq("owner_id", user.id)
-
-      const billNumber = `INV-${year}-${String((count || 0) + 1).padStart(4, "0")}`
-
-      // Parse month for period
-      const [monthName, yearStr] = formData.for_month.split(" ")
-      const refDate = new Date(parseInt(yearStr), parseMonthIndex(monthName), 1)
-      const periodStart = startOfMonth(refDate)
-      const periodEnd = endOfMonth(refDate)
-
-      // Create bill
-      const { data: bill, error: billError } = await (supabase
-        .from("bills") as ReturnType<typeof supabase.from>)
-        .insert(
-          withCreatedBy({
-            owner_id: user.id,
-            tenant_id: selectedTenant,
-            property_id: tenant?.property_id,
-            bill_number: billNumber,
-            bill_date: formData.bill_date,
-            due_date: formData.due_date,
-            period_start: periodStart.toISOString().split("T")[0],
-            period_end: periodEnd.toISOString().split("T")[0],
-            for_month: formData.for_month,
-            subtotal,
-            discount_amount: Number(formData.discount_amount),
-            previous_balance: Number(formData.previous_balance),
-            total_amount: total,
-            balance_due: total,
-            status: "pending",
-            line_items: effectiveLineItems.map((item) => ({
-              type: item.type,
-              description: item.description,
-              amount: item.amount,
-            })),
-            notes: formData.notes || null,
-            generated_at: getNowISO(),
-          }, user.id)
-        )
-        .select()
-        .single()
-
-      if (billError) {
-        logger.error("Error creating bill:", { detail: billError })
-        throw billError
-      }
-
-      // Link pending charges to this bill
-      const chargeIds = pendingCharges.map((c) => c.id)
-      const billData = bill as { id: string }
-      if (chargeIds.length > 0) {
-        await (supabase
-          .from("charges") as ReturnType<typeof supabase.from>)
-          .update({ bill_id: billData.id } as Record<string, unknown>)
-          .in("id", chargeIds)
-      }
+      const { billId } = await createBillWithCharges({
+        ownerId: user.id,
+        tenantId: selectedTenant,
+        propertyId: tenant?.property_id,
+        forMonth: formData.for_month,
+        billDate: formData.bill_date,
+        dueDate: formData.due_date,
+        subtotal,
+        discountAmount: Number(formData.discount_amount),
+        previousBalance: Number(formData.previous_balance),
+        totalAmount: total,
+        lineItems: effectiveLineItems,
+        notes: formData.notes || null,
+        pendingChargeIds: pendingCharges.map((c) => c.id),
+        userId: user.id,
+      })
 
       showSuccess("Bill generated successfully!")
-      router.push(`/bills/${billData.id}`)
+      router.push(`/bills/${billId}`)
     } catch (error) {
       handleClientError(error, "Generating bill")
     } finally {
