@@ -163,12 +163,7 @@ const columns: Column<Inquiry>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  createStatusFilter([
-    { value: "new", label: "New" },
-    { value: "contacted", label: "Contacted" },
-    { value: "converted", label: "Converted" },
-    { value: "closed", label: "Closed" },
-  ]),
+  createStatusFilter(INQUIRY_STATUS_OPTIONS),
   {
     id: "source",
     label: "Source",
@@ -208,12 +203,7 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Status",
     filterType: "select",
     filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "new", label: "New" },
-      { value: "contacted", label: "Contacted" },
-      { value: "converted", label: "Converted" },
-      { value: "closed", label: "Closed" },
-    ],
+    filterOptions: INQUIRY_STATUS_OPTIONS,
   },
   {
     key: "source",

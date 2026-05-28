@@ -17,6 +17,7 @@ import { LIBRARY_PAYMENT_METHOD_FILTER, LIBRARY_PAYMENT_TYPE_FILTER, createStatu
 import { formatDate } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { LIBRARY_PAYMENT_TYPE_CONFIG, LIBRARY_PAYMENT_METHOD_CONFIG, LIBRARY_PAYMENT_STATUS_CONFIG } from "@/types/library.types"
+import { LIBRARY_PAYMENT_STATUS_OPTIONS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -164,11 +165,7 @@ const filters: FilterConfig[] = [
   },
   LIBRARY_PAYMENT_TYPE_FILTER,
   LIBRARY_PAYMENT_METHOD_FILTER,
-  createStatusFilter([
-    { value: "completed", label: "Completed" },
-    { value: "pending", label: "Pending" },
-    { value: "refunded", label: "Refunded" },
-  ]),
+  createStatusFilter(LIBRARY_PAYMENT_STATUS_OPTIONS),
 ]
 
 // ============================================
@@ -193,11 +190,7 @@ const advancedFilterColumns: FilterableColumn[] = [
   numberFilterColumn("amount", "Amount"),
   selectFilterColumn("payment_method", "Payment Method", LIBRARY_PAYMENT_METHOD_FILTER.options!),
   selectFilterColumn("payment_type", "Payment Type", LIBRARY_PAYMENT_TYPE_FILTER.options!),
-  statusFilterColumn([
-    { value: "completed", label: "Completed" },
-    { value: "pending", label: "Pending" },
-    { value: "refunded", label: "Refunded" },
-  ]),
+  statusFilterColumn(LIBRARY_PAYMENT_STATUS_OPTIONS),
   dateFilterColumn("payment_date", "Payment Date"),
   textFilterColumn("receipt_number", "Receipt Number"),
   textFilterColumn("payment_reference", "Reference", ["contains", "eq", "is_null", "is_not_null"]),

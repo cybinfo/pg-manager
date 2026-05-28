@@ -17,7 +17,7 @@ import { createStatusFilter, TIME_SLOT_FILTER } from "@/lib/filter-presets"
 import { Users, Clock, Check, Phone } from "lucide-react"
 import { LIBRARY_WAITLIST_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryWaitlist } from "@/types/library.types"
-import { LIBRARY_WAITLIST_STATUS_LABELS } from "@/lib/status"
+import { LIBRARY_WAITLIST_STATUS_LABELS, LIBRARY_WAITLIST_STATUS_OPTIONS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { useFeatures } from "@/lib/features/use-features"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
@@ -34,13 +34,7 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
 
 // Filter configurations
 const filters: FilterConfig[] = [
-  createStatusFilter([
-    { value: "all", label: "All Status" },
-    { value: "waiting", label: "Waiting" },
-    { value: "contacted", label: "Contacted" },
-    { value: "converted", label: "Converted" },
-    { value: "cancelled", label: "Cancelled" },
-  ]),
+  createStatusFilter(LIBRARY_WAITLIST_STATUS_OPTIONS),
   TIME_SLOT_FILTER,
 ]
 
@@ -52,12 +46,7 @@ const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("name", "Name", ["contains", "eq", "neq", "starts", "ends"]),
   textFilterColumn("phone", "Phone"),
   textFilterColumn("email", "Email", ["contains", "eq", "is_null", "is_not_null"]),
-  statusFilterColumn([
-    { value: "waiting", label: "Waiting" },
-    { value: "contacted", label: "Contacted" },
-    { value: "converted", label: "Converted" },
-    { value: "cancelled", label: "Cancelled" },
-  ]),
+  statusFilterColumn(LIBRARY_WAITLIST_STATUS_OPTIONS),
   selectFilterColumn("preferred_slot", "Preferred Slot", TIME_SLOT_FILTER.options!),
   dateFilterColumn("created_at", "Joined On"),
 ]

@@ -127,3 +127,6 @@ export const LIBRARY_PAYMENT_TYPE_OPTIONS = labelsToOptions(LIBRARY_PAYMENT_TYPE
 
 /** Library payment status options for forms */
 export const LIBRARY_PAYMENT_STATUS_OPTIONS = labelsToOptions(LIBRARY_PAYMENT_STATUS_LABELS)
+
+/** Library waitlist status options for forms */
+export const LIBRARY_WAITLIST_STATUS_OPTIONS = labelsToOptions(LIBRARY_WAITLIST_STATUS_LABELS)

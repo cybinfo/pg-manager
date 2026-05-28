@@ -191,12 +191,7 @@ const filters: FilterConfig[] = [
     type: "select",
     placeholder: "All Vendors",
   },
-  createStatusFilter([
-    { value: "pending", label: "Pending" },
-    { value: "partial", label: "Partial" },
-    { value: "paid", label: "Paid" },
-    { value: "overdue", label: "Overdue" },
-  ]),
+  createStatusFilter(EXPENSE_BILL_STATUS_OPTIONS),
 ]
 
 // ============================================
@@ -232,12 +227,7 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Status",
     filterType: "select",
     filterOperators: ["eq", "neq", "in"],
-    filterOptions: [
-      { value: "pending", label: "Pending" },
-      { value: "partial", label: "Partial" },
-      { value: "paid", label: "Paid" },
-      { value: "overdue", label: "Overdue" },
-    ],
+    filterOptions: EXPENSE_BILL_STATUS_OPTIONS,
   },
   {
     key: "due_date",
