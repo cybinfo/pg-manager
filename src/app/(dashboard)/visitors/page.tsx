@@ -22,6 +22,7 @@ import { VISITOR_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createNullCheckMetric, createCountMetric, createTodayCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { PROPERTY_FILTER, VISITOR_TYPE_FILTER, createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
+import { VISITOR_STATUS_OPTIONS, VISITOR_TYPE_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { TenantLink, PropertyLink } from "@/components/ui/entity-link"
 import {
@@ -270,22 +271,14 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Visitor Type",
     filterType: "select",
     filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "tenant_visitor", label: "Tenant Visitor" },
-      { value: "enquiry", label: "Enquiry" },
-      { value: "service_provider", label: "Service Provider" },
-      { value: "general", label: "General" },
-    ],
+    filterOptions: VISITOR_TYPE_OPTIONS,
   },
   {
     key: "status",
     header: "Status",
     filterType: "select",
     filterOperators: ["eq", "neq"],
-    filterOptions: [
-      { value: "checked_in", label: "Inside" },
-      { value: "checked_out", label: "Left" },
-    ],
+    filterOptions: VISITOR_STATUS_OPTIONS,
   },
   {
     key: "check_in_date",

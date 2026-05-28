@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth, useCurrentContext } from "@/lib/auth"
@@ -12,15 +12,16 @@ import { Label } from "@/components/ui/label"
 import { FormField } from "@/components/ui/form-components"
 import { Badge } from "@/components/ui/badge"
 import { Avatar } from "@/components/ui/avatar"
-import { withCreatedBy } from "@/lib/audit"
-import { getNowISO } from "@/lib/date-helpers"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { Textarea } from "@/components/ui/textarea"
+import { useAdminsData, type AdminRow } from "@/lib/hooks/useAdminsData"
+import { grantPlatformAdmin } from "@/lib/services/admin.service"
 import { formatDate } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
 import { logger } from "@/lib/logger"
+import { getNowISO } from "@/lib/date-helpers"
 import {
   Shield,
   AlertTriangle,
@@ -30,17 +31,6 @@ import {
   Search,
   ArrowLeft,
 } from "lucide-react"
-
-interface AdminRow {
-  user_id: string
-  created_at: string
-  created_by: string | null
-  notes: string | null
-  profile: {
-    name: string
-    email: string | null
-  } | null
-}
 
 interface FoundUser {
   user_id: string
@@ -54,8 +44,7 @@ export default function PlatformAdminsPage() {
   const { backHref } = useBackNavigation({ defaultHref: "/admin" })
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
 
-  const [admins, setAdmins] = useState<AdminRow[]>([])
-  const [loadingAdmins, setLoadingAdmins] = useState(true)
+  const { admins, loading: loadingAdmins, refetch: refetchAdmins } = useAdminsData()
 
   // Add admin form state
   const [searchEmail, setSearchEmail] = useState("")
@@ -66,58 +55,6 @@ export default function PlatformAdminsPage() {
 
   // Revoke state — track which user_id is being revoked
   const [revokingId, setRevokingId] = useState<string | null>(null)
-
-  // ─── Fetch admins ──────────────────────────────────────────────────
-  const fetchAdmins = useCallback(async () => {
-    setLoadingAdmins(true)
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-      .from("platform_admins")
-      .select("user_id, created_at, created_by, notes")
-      .order("created_at", { ascending: true })
-
-    if (error) {
-      showError("Failed to load platform admins")
-      setLoadingAdmins(false)
-      return
-    }
-
-    if (!data || data.length === 0) {
-      setAdmins([])
-      setLoadingAdmins(false)
-      return
-    }
-
-    // Fetch profiles for each admin
-    type AdminRecord = { user_id: string; created_at: string; created_by: string | null; notes: string | null }
-    type ProfileRecord = { user_id: string; name: string; email: string | null }
-
-    const userIds = (data as AdminRecord[]).map((row: AdminRecord) => row.user_id)
-    const { data: profiles } = await supabase
-      .from("user_profiles")
-      .select("user_id, name, email")
-      .in("user_id", userIds)
-
-    const profileMap = new Map(
-      ((profiles ?? []) as ProfileRecord[]).map((p: ProfileRecord) => [p.user_id, p])
-    )
-
-    const enriched: AdminRow[] = (data as AdminRecord[]).map((row: AdminRecord) => ({
-      ...row,
-      profile: profileMap.get(row.user_id) ?? null,
-    }))
-
-    setAdmins(enriched)
-    setLoadingAdmins(false)
-  }, [])
-
-  useEffect(() => {
-    if (isPlatformAdmin) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchAdmins()
-    }
-  }, [isPlatformAdmin, fetchAdmins])
 
   // ─── Search user by email ──────────────────────────────────────────
   const handleSearch = async () => {
@@ -156,70 +93,26 @@ export default function PlatformAdminsPage() {
   const handleGrant = async () => {
     if (!foundUser || !user) return
 
-    // Prevent adding yourself (you're already admin)
-    if (foundUser.user_id === user.id) {
-      showError("You are already a platform admin")
-      return
-    }
-
-    // Prevent adding someone already an admin
-    const alreadyAdmin = admins.some((a) => a.user_id === foundUser.user_id)
-    if (alreadyAdmin) {
-      showError(`${foundUser.name} is already a platform admin`)
-      return
-    }
-
     setGranting(true)
-    const supabase = createClient()
-
-    const { error } = await supabase
-      .from("platform_admins")
-      .insert(
-        withCreatedBy(
-          {
-            user_id: foundUser.user_id,
-            notes: notes.trim() || null,
-          },
-          user.id
-        )
+    try {
+      await grantPlatformAdmin(
+        createClient(),
+        foundUser.user_id,
+        user.id,
+        foundUser.email,
+        foundUser.name,
+        notes.trim() || null
       )
-
-    setGranting(false)
-
-    if (error) {
-      showError("Failed to grant admin access", error.message)
-      return
+      showSuccess(`${foundUser.name} has been granted platform admin access`)
+      setSearchEmail("")
+      setFoundUser(null)
+      setNotes("")
+      await refetchAdmins()
+    } catch (err) {
+      showError(String(err instanceof Error ? err.message : err))
+    } finally {
+      setGranting(false)
     }
-
-    // Audit log: platform_admin.granted
-    await supabase.from("audit_events").insert({
-      entity_type: "platform_admin",
-      entity_id: foundUser.user_id,
-      action: "create",
-      actor_id: user.id,
-      actor_type: "owner",
-      workspace_id: null,
-      changes: {
-        after: {
-          user_id: foundUser.user_id,
-          name: foundUser.name,
-          email: foundUser.email,
-          notes: notes.trim() || null,
-        },
-      },
-      metadata: {
-        event: "platform_admin.granted",
-        granted_to_name: foundUser.name,
-        granted_to_email: foundUser.email,
-      },
-      created_at: getNowISO(),
-    })
-
-    showSuccess(`${foundUser.name} has been granted platform admin access`)
-    setSearchEmail("")
-    setFoundUser(null)
-    setNotes("")
-    await fetchAdmins()
   }
 
   // ─── Revoke admin access ───────────────────────────────────────────
@@ -277,7 +170,7 @@ export default function PlatformAdminsPage() {
         }
 
         showSuccess(`${name} has been removed as platform admin`)
-        await fetchAdmins()
+        await refetchAdmins()
       },
     })
   }
