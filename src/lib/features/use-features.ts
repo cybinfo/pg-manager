@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { useCurrentContext } from "@/lib/auth"
+import { useCurrentContext, useAuth } from "@/lib/auth"
 import type { ModuleKey, WorkspaceModuleConfig } from './types'
 import { isModuleEnabled as checkModule, isFeatureEnabled as checkFeature, isOldFlatFormat, migrateOldFlagsToModuleConfig } from './checks'
 import { logger, extractErrorMeta } from "@/lib/logger"
@@ -152,6 +152,7 @@ export interface WorkspaceInfo {
 
 export function useFeatureManagement() {
   const { context } = useCurrentContext()
+  const { user } = useAuth()
   const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([])
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null)
   const [configs, setConfigs] = useState<Map<string, WorkspaceModuleConfig>>(new Map())
@@ -161,10 +162,9 @@ export function useFeatureManagement() {
   useEffect(() => {
     const load = async () => {
       try {
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
+        const supabase = createClient()
         const { data, error } = await supabase
           .from("workspaces")
           .select("id, name, business_type, module_config")
@@ -202,7 +202,7 @@ export function useFeatureManagement() {
       }
     }
     load()
-  }, [context?.workspace_id])
+  }, [context?.workspace_id, user])
 
   const selectedConfig = selectedWorkspaceId
     ? (configs.get(selectedWorkspaceId) ?? {})

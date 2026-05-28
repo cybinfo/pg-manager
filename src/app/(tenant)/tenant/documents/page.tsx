@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -52,6 +53,7 @@ interface TenantDocument {
 const docStatusMap = DOCUMENT_STATUS
 
 export default function TenantDocumentsPage() {
+  const { user } = useTenantPortalData()
   const [loading, setLoading] = useState(true)
   const [featureEnabled, setFeatureEnabled] = useState(true)
   const [documents, setDocuments] = useState<TenantDocument[]>([])
@@ -62,10 +64,9 @@ export default function TenantDocumentsPage() {
   const [deleting, setDeleting] = useState(false)
 
   const fetchDocuments = async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
     if (!user) return
+
+    const supabase = createClient()
 
     // Get tenant info including owner_id
     const { data: tenant } = await supabase
@@ -119,16 +120,18 @@ export default function TenantDocumentsPage() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void fetchDocuments()
-  }, [])
+    if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void fetchDocuments()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const handleDelete = async () => {
     if (!documentToDelete) return
 
     setDeleting(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     // Soft delete — set deleted_at/deleted_by, never hard delete (E4 principle)
     const { error } = await supabase

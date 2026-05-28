@@ -4,6 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { ChevronDown, LucideIcon, Mail, Calendar, Search } from "lucide-react"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 
@@ -253,13 +254,10 @@ export function TextareaWithCount({
 
   return (
     <div className="relative">
-      <textarea
+      <Textarea
         className={cn(
-          "w-full min-h-[100px] px-3 py-2 rounded-lg border border-input bg-card text-sm",
+          "min-h-[100px] rounded-lg bg-card",
           "transition-all duration-200 resize-y",
-          "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
-          "placeholder:text-muted-foreground",
-          "disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         maxLength={maxLength}
@@ -275,8 +273,6 @@ export function TextareaWithCount({
   )
 }
 
-// Backward compatibility alias
-export const Textarea = TextareaWithCount
 
 // ============================================
 // Form Section Wrapper

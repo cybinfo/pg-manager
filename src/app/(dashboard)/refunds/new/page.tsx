@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { FormField, Select } from "@/components/ui/form-components"
+import { Textarea } from "@/components/ui/textarea"
 import { PageSkeleton } from "@/components/ui/loading"
 import { Avatar } from "@/components/ui/avatar"
 import { formatCurrency } from "@/lib/format"
@@ -20,6 +21,7 @@ import { transformJoin } from "@/lib/supabase/transforms"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PermissionGuard } from "@/components/auth"
+import { useAuth } from "@/lib/auth"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { withCreatedBy } from "@/lib/audit"
 import { brandGradient } from "@/lib/design-tokens"
@@ -46,6 +48,7 @@ interface ExitClearance {
 }
 
 export default function NewRefundPage() {
+  const { user } = useAuth()
   const { backHref } = useBackNavigation({ defaultHref: "/refunds" })
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -148,16 +151,15 @@ export default function NewRefundPage() {
     setSubmitting(true)
 
     try {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.user) {
+      if (!user) {
         showError("Session expired. Please login again.")
         return
       }
 
+      const supabase = createClient()
+
       const refundData = withCreatedBy({
-        owner_id: session.user.id,
+        owner_id: user.id,
         tenant_id: formData.tenant_id,
         property_id: selectedTenant?.property_id || null,
         exit_clearance_id: exitClearanceId || null,
@@ -169,9 +171,9 @@ export default function NewRefundPage() {
         status: formData.refund_date ? "completed" : "pending",
         reason: formData.reason || null,
         notes: formData.notes || null,
-        processed_by: formData.refund_date ? session.user.id : null,
+        processed_by: formData.refund_date ? user.id : null,
         processed_at: formData.refund_date ? getNowISO() : null,
-      }, session.user.id)
+      }, user.id)
 
       const { error } = await supabase
         .from("refunds")
@@ -211,7 +213,7 @@ export default function NewRefundPage() {
               const { data: ownerProfile } = await supabase
                 .from("user_profiles")
                 .select("full_name, phone")
-                .eq("user_id", session.user.id)
+                .eq("user_id", user.id)
                 .single()
 
               sendRefundProcessedEmail({
@@ -385,12 +387,12 @@ export default function NewRefundPage() {
                 </FormField>
 
                 <FormField label="Notes">
-                  <textarea
+                  <Textarea
                     id="notes"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="Any additional notes..."
-                    className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="min-h-[80px]"
                   />
                 </FormField>
               </CardContent>

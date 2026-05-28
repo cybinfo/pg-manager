@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   ArrowLeft,
   Loader2,
@@ -336,14 +337,14 @@ export default function EditRolePage() {
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <textarea
+                <Textarea
                   id="description"
                   name="description"
                   placeholder="Brief description of this role's responsibilities"
                   value={formData.description}
                   onChange={handleChange}
                   disabled={saving || isSystemRole}
-                  className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+                  className="min-h-[80px]"
                 />
               </div>
             </div>

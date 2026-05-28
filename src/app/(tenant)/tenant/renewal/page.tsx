@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -26,7 +25,7 @@ interface RenewalRequest {
 }
 
 function TenantRenewalContent() {
-  const { tenant, tenantContext, loading: tenantLoading } = useTenantPortalData()
+  const { tenant, tenantContext, user, loading: tenantLoading } = useTenantPortalData()
   const [requests, setRequests] = useState<RenewalRequest[]>([])
   const [loadingRequests, setLoadingRequests] = useState(false)
   const [requestsLoaded, setRequestsLoaded] = useState(false)
@@ -62,7 +61,6 @@ function TenantRenewalContent() {
 
     setSubmitting(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
 
     const { error } = await supabase.from("approvals").insert(
       withCreatedBy({

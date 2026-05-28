@@ -14,6 +14,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { getNowISO } from "@/lib/date-helpers"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField } from "@/components/ui/form-components"
 import { ArrowLeft, Shield, Check, Loader2 } from "lucide-react"
@@ -214,14 +215,14 @@ function EditRoleContent({
             </FormField>
 
             <FormField label="Description" htmlFor="description">
-              <textarea
+              <Textarea
                 id="description"
                 name="description"
                 placeholder="Brief description of this role's responsibilities"
                 value={formData.description as string}
                 onChange={handleChange}
                 disabled={saving}
-                className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+                className="min-h-[80px]"
               />
             </FormField>
           </CardContent>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { QrCode, Info, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -24,16 +25,16 @@ interface MemberData {
 }
 
 export default function MemberQRPage() {
+  const { user, loading: portalLoading } = useMemberPortalData()
   const [loading, setLoading] = useState(true)
   const [member, setMember] = useState<MemberData | null>(null)
   const [featureAvailable, setFeatureAvailable] = useState(true)
 
   useEffect(() => {
+    if (portalLoading || !user) return
+
     const fetchData = async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
 
       const { data: memberData } = await supabase
         .from("library_members")
@@ -85,9 +86,9 @@ export default function MemberQRPage() {
     }
 
     fetchData()
-  }, [])
+  }, [user, portalLoading])
 
-  if (loading) {
+  if (portalLoading || loading) {
     return <PageSkeleton variant="detail" />
   }
 

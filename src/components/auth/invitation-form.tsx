@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Invitation, Role, CONTEXT_TYPE_CONFIG } from '@/lib/auth/types'
 import { withCreatedBy } from '@/lib/audit'
@@ -206,10 +207,10 @@ export function InvitationForm({
 
           <div className="space-y-2">
             <Label htmlFor="message">Personal Message (optional)</Label>
-            <textarea
+            <Textarea
               id="message"
               placeholder="Add a personal message to the invitation..."
-              className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+              className="min-h-[80px]"
               value={formData.message}
               onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
               disabled={isLoading}
