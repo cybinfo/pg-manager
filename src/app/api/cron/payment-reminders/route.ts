@@ -1,5 +1,5 @@
 import { baseCronHandler } from "@/lib/cron-handler"
-import { sendPaymentReminders } from "@/lib/services/notification.service"
+import { sendPaymentReminders } from "@/lib/services/cron-notifications"
 
 export const GET = (request: Request) =>
   baseCronHandler(request, {

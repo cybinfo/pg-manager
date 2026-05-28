@@ -1,5 +1,5 @@
 import { baseCronHandler } from "@/lib/cron-handler"
-import { sendDailySummaries } from "@/lib/services/notification.service"
+import { sendDailySummaries } from "@/lib/services/cron-notifications"
 
 export const GET = (request: Request) =>
   baseCronHandler(request, {
