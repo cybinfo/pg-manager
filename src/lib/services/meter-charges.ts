@@ -2,6 +2,7 @@ import type { createClient } from "@/lib/supabase/client"
 import { logger } from "@/lib/logger"
 import { startOfMonth, endOfMonth } from "@/lib/date-helpers"
 import { formatMonthYear } from "@/lib/format"
+import { withCreatedBy } from "@/lib/audit"
 
 type SupabaseClient = ReturnType<typeof createClient>
 
@@ -184,4 +185,189 @@ export async function generateChargesOnCreate(
   }
 
   return { success: true }
+}
+
+// ============================================================================
+// Create Meter Reading With Charges (extracted from meter-readings/new page)
+// ============================================================================
+
+interface MeterAssignment {
+  room_id: string
+  room_number: string
+  start_reading: number
+}
+
+interface MeterInfo {
+  id: string
+  meter_number: string
+  meter_type: string
+  property_id: string
+  current_assignment: MeterAssignment
+}
+
+interface ChargeTypeInfo {
+  id: string
+  name: string
+  calculation_config: { rate_per_unit?: number; split_by?: string } | null
+}
+
+interface TenantInfo {
+  id: string
+  name: string
+}
+
+export interface CreateMeterReadingParams {
+  userId: string
+  meter: MeterInfo
+  readingDate: string
+  readingValue: number
+  previousReadingValue: number | null
+  unitsConsumed: number | null
+  notes: string | null
+  matchingChargeType: ChargeTypeInfo | null
+  generateCharge: boolean
+  roomTenants: TenantInfo[]
+  consumptionAlertsEnabled: boolean
+}
+
+export interface CreateMeterReadingResult {
+  readingId: string
+  chargeWarning?: string
+  anomaly?: {
+    isAnomaly: boolean
+    alertType: "high" | "low" | null
+    currentUnits: number
+    averageUnits: number
+  }
+}
+
+/**
+ * Inserts a meter reading, optionally generates tenant charges, and checks for
+ * consumption anomalies. Does NOT send emails — returns anomaly data so the
+ * caller (page or API route) can fire the alert email.
+ */
+export async function createMeterReadingWithCharges(
+  supabase: SupabaseClient,
+  params: CreateMeterReadingParams
+): Promise<CreateMeterReadingResult> {
+  const {
+    userId,
+    meter,
+    readingDate,
+    readingValue,
+    previousReadingValue,
+    unitsConsumed,
+    notes,
+    matchingChargeType,
+    generateCharge,
+    roomTenants,
+    consumptionAlertsEnabled,
+  } = params
+
+  // Duplicate reading check
+  const { data: existingReading } = await supabase
+    .from("meter_readings")
+    .select("id")
+    .eq("meter_id", meter.id)
+    .eq("reading_date", readingDate)
+    .maybeSingle()
+
+  if (existingReading) {
+    throw new Error(
+      "A reading already exists for this meter on the selected date. Please choose a different date."
+    )
+  }
+
+  // Insert meter reading
+  const readingData = withCreatedBy(
+    {
+      owner_id: userId,
+      property_id: meter.property_id,
+      room_id: meter.current_assignment.room_id,
+      charge_type_id: matchingChargeType?.id || null,
+      meter_id: meter.id,
+      reading_date: readingDate,
+      reading_value: readingValue,
+      previous_reading: previousReadingValue,
+      units_consumed: unitsConsumed,
+      notes: notes || null,
+    },
+    userId
+  )
+
+  const { data: meterReadingData, error } = await supabase
+    .from("meter_readings")
+    .insert(readingData)
+    .select("id")
+    .single()
+
+  if (error) throw new Error(error.message)
+
+  const readingId = meterReadingData.id
+  let chargeWarning: string | undefined
+
+  // Generate charges if requested
+  if (generateCharge && unitsConsumed && unitsConsumed > 0 && roomTenants.length > 0 && matchingChargeType) {
+    const ratePerUnit = matchingChargeType.calculation_config?.rate_per_unit || 0
+
+    if (ratePerUnit > 0) {
+      const chargeResult = await generateChargesOnCreate(supabase, {
+        readingId,
+        readingDate,
+        unitsConsumed,
+        propertyId: meter.property_id,
+        chargeTypeId: matchingChargeType.id,
+        ratePerUnit,
+        splitByOccupants: matchingChargeType.calculation_config?.split_by === "occupants",
+        meterId: meter.id,
+        meterNumber: meter.meter_number,
+        tenants: roomTenants,
+        ownerId: userId,
+      })
+
+      if (!chargeResult.success) {
+        chargeWarning = "Meter reading saved, but failed to generate charges"
+      }
+    }
+  }
+
+  // Consumption anomaly detection — returns data; caller sends the email
+  let anomaly: CreateMeterReadingResult["anomaly"]
+  if (consumptionAlertsEnabled && unitsConsumed !== null && unitsConsumed > 0) {
+    try {
+      const { data: recentReadings } = await supabase
+        .from("meter_readings")
+        .select("units_consumed")
+        .eq("meter_id", meter.id)
+        .not("id", "eq", readingId)
+        .not("units_consumed", "is", null)
+        .order("reading_date", { ascending: false })
+        .limit(3)
+
+      if (recentReadings && recentReadings.length >= 2) {
+        const validUnits = recentReadings
+          .map((r: { units_consumed: number | null }) => r.units_consumed)
+          .filter((u: number | null): u is number => u !== null && u > 0)
+
+        if (validUnits.length >= 2) {
+          const avg = validUnits.reduce((sum: number, u: number) => sum + u, 0) / validUnits.length
+          const isHigh = unitsConsumed > avg * 2
+          const isLow = unitsConsumed < avg * 0.5
+
+          if (isHigh || isLow) {
+            anomaly = {
+              isAnomaly: true,
+              alertType: isHigh ? "high" : "low",
+              currentUnits: unitsConsumed,
+              averageUnits: avg,
+            }
+          }
+        }
+      }
+    } catch (err) {
+      logger.error("Consumption anomaly check failed", { error: String(err) })
+    }
+  }
+
+  return { readingId, chargeWarning, anomaly }
 }

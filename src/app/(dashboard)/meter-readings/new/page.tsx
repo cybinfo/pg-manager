@@ -5,7 +5,6 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useFormPage } from "@/lib/hooks/useFormPage"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { withCreatedBy } from "@/lib/audit"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
 import { useFeatures } from "@/lib/features/use-features"
-import { generateChargesOnCreate } from "@/lib/services/meter-charges"
+import { createMeterReadingWithCharges } from "@/lib/services/meter-charges"
 
 interface ChargeType {
   id: string
@@ -119,19 +118,6 @@ function NewMeterReadingContent() {
 
       const readingValue = parseFloat(data.reading_value as string)
 
-      // Check for duplicate reading on the same date for this meter
-      const { data: existingReading } = await supabase
-        .from("meter_readings")
-        .select("id")
-        .eq("meter_id", selectedMeter.id)
-        .eq("reading_date", data.reading_date)
-        .maybeSingle()
-
-      if (existingReading) {
-        throw new Error("A reading already exists for this meter on the selected date. Please choose a different date.")
-      }
-
-      // Find matching charge type for meter type
       const meterTypeToCharge: Record<string, string[]> = {
         electricity: ["Electricity", "electricity"],
         water: ["Water", "water"],
@@ -139,104 +125,46 @@ function NewMeterReadingContent() {
       }
       const matchingChargeType = chargeTypes.find((ct: ChargeType) =>
         meterTypeToCharge[selectedMeter.meter_type]?.includes(ct.name)
-      )
+      ) || null
 
-      // Insert meter reading with audit tracking
-      const readingData = withCreatedBy({
-        owner_id: userId,
-        property_id: selectedMeter.property_id,
-        room_id: selectedMeter.current_assignment.room_id,
-        charge_type_id: matchingChargeType?.id || null,
-        meter_id: selectedMeter.id,
-        reading_date: data.reading_date,
-        reading_value: readingValue,
-        previous_reading: lastReading?.reading_value || null,
-        units_consumed: calculatedUnits,
-        notes: data.notes || null,
-      }, userId)
+      const { chargeWarning, anomaly } = await createMeterReadingWithCharges(supabase, {
+        userId,
+        meter: selectedMeter,
+        readingDate: data.reading_date as string,
+        readingValue,
+        previousReadingValue: lastReading?.reading_value ?? null,
+        unitsConsumed: calculatedUnits,
+        notes: (data.notes as string) || null,
+        matchingChargeType,
+        generateCharge,
+        roomTenants,
+        consumptionAlertsEnabled: isFeatureEnabled("meters", "consumptionAlerts"),
+      })
 
-      const { data: meterReadingData, error } = await supabase
-        .from("meter_readings")
-        .insert(readingData)
-        .select("id")
-        .single()
-
-      if (error) {
-        throw new Error(error.message)
+      if (chargeWarning) {
+        logger.error("Charge generation warning on new reading", { detail: chargeWarning })
+        showWarning(chargeWarning)
       }
 
-      // Generate charges if enabled and there are units consumed
-      if (generateCharge && calculatedUnits && calculatedUnits > 0 && roomTenants.length > 0 && matchingChargeType) {
-        const ratePerUnit = matchingChargeType.calculation_config?.rate_per_unit || 0
+      // Send anomaly alert email (fire-and-forget; service returns the anomaly data)
+      if (anomaly?.isAnomaly && matchingChargeType) {
+        const { data: ownerProfile } = await supabase
+          .from("user_profiles")
+          .select("email, full_name")
+          .eq("id", userId)
+          .single()
 
-        if (ratePerUnit > 0) {
-          const chargeResult = await generateChargesOnCreate(supabase, {
-            readingId: meterReadingData.id,
-            readingDate: data.reading_date as string,
-            unitsConsumed: calculatedUnits,
-            propertyId: selectedMeter.property_id,
-            chargeTypeId: matchingChargeType.id,
-            ratePerUnit,
-            splitByOccupants: matchingChargeType.calculation_config?.split_by === "occupants",
-            meterId: selectedMeter.id,
-            meterNumber: selectedMeter.meter_number,
-            tenants: roomTenants,
-            ownerId: userId,
-          })
-
-          if (!chargeResult.success) {
-            logger.error("Error creating charges on new reading", { detail: chargeResult.error })
-            showWarning("Meter reading saved, but failed to generate charges")
-          }
-        }
-      }
-
-      // Consumption anomaly check — runs after the reading is saved
-      if (isFeatureEnabled("meters", "consumptionAlerts") && calculatedUnits !== null && calculatedUnits > 0) {
-        try {
-          const { data: recentReadings } = await supabase
-            .from("meter_readings")
-            .select("units_consumed")
-            .eq("meter_id", selectedMeter.id)
-            .not("id", "eq", meterReadingData.id)
-            .not("units_consumed", "is", null)
-            .order("reading_date", { ascending: false })
-            .limit(3)
-
-          if (recentReadings && recentReadings.length >= 2) {
-            const validUnits = recentReadings
-              .map((r: { units_consumed: number | null }) => r.units_consumed)
-              .filter((u: number | null): u is number => u !== null && u > 0)
-
-            if (validUnits.length >= 2) {
-              const avg = validUnits.reduce((sum: number, u: number) => sum + u, 0) / validUnits.length
-              const isHigh = calculatedUnits > avg * 2
-              const isLow = calculatedUnits < avg * 0.5
-
-              if ((isHigh || isLow) && matchingChargeType) {
-                const { data: ownerProfile } = await supabase
-                  .from("user_profiles")
-                  .select("email, full_name")
-                  .eq("id", userId)
-                  .single()
-
-                if (ownerProfile?.email) {
-                  const { sendConsumptionAlert } = await import("@/lib/email")
-                  sendConsumptionAlert({
-                    to: ownerProfile.email,
-                    ownerName: ownerProfile.full_name || "Owner",
-                    roomNumber: selectedMeter.current_assignment.room_number || selectedMeter.current_assignment.room_id,
-                    chargeType: matchingChargeType.name,
-                    currentUnits: calculatedUnits,
-                    averageUnits: avg,
-                    alertType: isHigh ? "high" : "low",
-                  }).catch(() => {})
-                }
-              }
-            }
-          }
-        } catch (err) {
-          logger.error("Consumption alert check failed", { error: String(err) })
+        if (ownerProfile?.email) {
+          const { sendConsumptionAlert } = await import("@/lib/email")
+          sendConsumptionAlert({
+            to: ownerProfile.email,
+            ownerName: ownerProfile.full_name || "Owner",
+            roomNumber: selectedMeter.current_assignment.room_number || selectedMeter.current_assignment.room_id,
+            chargeType: matchingChargeType.name,
+            currentUnits: anomaly.currentUnits,
+            averageUnits: anomaly.averageUnits,
+            alertType: anomaly.alertType!,
+          }).catch(() => {})
         }
       }
 

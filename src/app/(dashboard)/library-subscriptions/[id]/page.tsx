@@ -80,6 +80,7 @@ function formatTimeSlotsDisplay(raw: string | null): React.ReactNode {
 }
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
+import { recordLibrarySubscriptionPayment } from "@/lib/services/library-subscriptions"
 import { LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
 import type { LibraryMembership, LibraryPayment } from "@/types/library.types"
 import { LIBRARY_PAYMENT_METHOD_OPTIONS, LIBRARY_PAYMENT_METHOD_LABELS } from "@/lib/status"
@@ -168,43 +169,21 @@ function RecordPaymentForm({
     setSaving(true)
     try {
       const supabase = createClient()
-      const { withCreatedBy } = await import("@/lib/audit")
 
-      // Generate receipt number
-      const { data: lastPayment } = await supabase
-        .from("library_payments")
-        .select("receipt_number")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single()
-
-      let nextNumber = 1
-      if (lastPayment?.receipt_number) {
-        const match = lastPayment.receipt_number.match(/(?:PYMT-)?LIB-(\d+)/)
-        if (match) nextNumber = parseInt(match[1], 10) + 1
-      }
-      const receiptNumber = `PYMT-LIB-${nextNumber.toString().padStart(6, "0")}`
-
-      const paymentData = withCreatedBy({
-        owner_id: subscription.owner_id,
-        workspace_id: subscription.workspace_id,
-        member_id: subscription.member_id,
-        membership_id: subscription.id,
-        receipt_number: receiptNumber,
-        payment_date: formData.payment_date,
+      await recordLibrarySubscriptionPayment(supabase, {
+        userId: user.id,
+        subscription: {
+          id: subscription.id,
+          owner_id: subscription.owner_id,
+          workspace_id: subscription.workspace_id,
+          member_id: subscription.member_id,
+        },
         amount,
-        payment_type: "subscription",
-        payment_method: formData.payment_method,
-        payment_reference: formData.payment_reference || null,
+        paymentMethod: formData.payment_method,
+        paymentDate: formData.payment_date,
+        paymentReference: formData.payment_reference || null,
         notes: formData.notes || null,
-        status: "completed",
-      }, user.id)
-
-      const { error } = await supabase.from("library_payments").insert(paymentData)
-
-      if (error) {
-        throw new Error(error.message)
-      }
+      })
 
       showSuccess(`Payment of Rs. ${amount} recorded successfully`)
       setFormData({
@@ -217,6 +196,7 @@ function RecordPaymentForm({
       setIsOpen(false)
       onSuccess()
     } catch (err) {
+      logger.error("RecordPaymentForm: payment insert failed", { error: String(err) })
       showError(err instanceof Error ? err.message : "Failed to record payment")
     } finally {
       setSaving(false)

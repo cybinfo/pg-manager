@@ -25,16 +25,16 @@ import { ArrowLeft, Loader2, Clock, RefreshCw, Calendar, AlertTriangle, Trash2, 
 import { showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { PageLoading } from "@/components/ui/loading"
-import { withCreatedBy } from "@/lib/audit"
 import { Currency } from "@/components/ui/currency"
 import { formatDate, formatNumber} from "@/lib/format"
-import { getTodayISO, getNowISO, computeEndDate, computeDefaultStartDate } from "@/lib/date-helpers"
-import { TimeSlot, formatTime12h, calcSlotHours, serializeTimeSlots, parseTimeSlots } from "@/lib/time-slots"
+import { getTodayISO, computeEndDate, computeDefaultStartDate } from "@/lib/date-helpers"
+import { TimeSlot, formatTime12h, calcSlotHours, parseTimeSlots } from "@/lib/time-slots"
 import { useFormValidation } from "@/lib/hooks/useFormValidation"
 import { requiredSelect, requiredDate } from "@/lib/validation"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
 import type { LibraryPlanOption } from "@/types/library.types"
+import { renewLibraryMembership } from "@/lib/services/library-members"
 
 interface MemberData {
   id: string
@@ -232,77 +232,25 @@ export default function RenewLibraryMemberPage({
 
     try {
       const supabase = createClient()
-
       const selectedPlan = plans.find((p) => p.id === formData.plan_id)
-      const hoursToAdd = selectedPlan?.hours_included || 0
 
-      const finalAmount = formData.amount - formData.discount
-      const endDate = computeEndDate(formData.start_date, formData.duration_months)
-
-      // Build time_slot string
-      const timeSlot = serializeTimeSlots(formData.time_slots)
-
-      // Create new membership record
-      const membershipData = withCreatedBy({
-        owner_id: member.owner_id,
-        workspace_id: member.workspace_id,
-        member_id: member.id,
-        plan_id: formData.plan_id || null,
-        plan_name: selectedPlan?.name || "Custom Renewal",
-        hours_included: hoursToAdd || null,
+      const { membershipId } = await renewLibraryMembership(supabase, {
+        userId: user.id,
+        member: { id: member.id, owner_id: member.owner_id, workspace_id: member.workspace_id },
+        planId: formData.plan_id,
+        planName: selectedPlan?.name || "Custom Renewal",
+        hoursIncluded: selectedPlan?.hours_included || 0,
+        startDate: formData.start_date,
+        durationMonths: formData.duration_months,
         amount: formData.amount,
-        discount_amount: formData.discount,
-        final_amount: finalAmount,
-        time_slot: timeSlot,
-        start_date: formData.start_date,
-        end_date: endDate,
-        hours_remaining: null,
-        hours_used: 0,
-        status: "active",
-        payment_id: null,
-      }, user.id)
-
-      const { data: membership, error: membershipError } = await supabase
-        .from("library_memberships")
-        .insert(membershipData)
-        .select()
-        .single()
-
-      if (membershipError) {
-        logger.error("Error creating membership:", { detail: membershipError })
-        showError(`Failed to create subscription: ${membershipError.message}`)
-        setLoading(false)
-        return
-      }
-
-      // Update member — hours_balance is the daily allowance (per-day model)
-      const { error: memberUpdateError } = await supabase
-        .from("library_members")
-        .update({
-          hours_balance: hoursToAdd,
-          current_subscription_id: membership.id,
-          expiry_date: endDate,
-          status: "active",
-          left_date: null,
-          updated_at: getNowISO(),
-        })
-        .eq("id", member.id)
-
-      if (memberUpdateError) {
-        logger.error("Error updating member:", { detail: memberUpdateError })
-      }
-
-      // Mark previous active memberships as upgraded
-      await supabase
-        .from("library_memberships")
-        .update({ status: "upgraded" })
-        .eq("member_id", member.id)
-        .eq("status", "active")
-        .neq("id", membership.id)
+        discount: formData.discount,
+        timeSlots: formData.time_slots,
+      })
 
       // Redirect to the new subscription detail page for payment recording
-      router.push(`/library-subscriptions/${membership.id}`)
+      router.push(`/library-subscriptions/${membershipId}`)
     } catch (error) {
+      logger.error("Error renewing subscription", { error: String(error) })
       handleClientError(error, "Renewing subscription")
     } finally {
       setLoading(false)
