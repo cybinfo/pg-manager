@@ -199,9 +199,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const handleLogout = async () => {
     await logout()
     showSuccess("Logged out successfully")
-    router.push("/login")
-    // Note: Don't call router.refresh() here - it causes hydration issues
-    // The auth context handles state clearing internally
+    // Full page navigation ensures cookies cleared by signOut() are seen by middleware.
+    // router.push() uses client-side nav which can race with cookie clearing → redirect loop.
+    window.location.href = "/login"
   }
 
   const handleMobileNavClick = (href: string) => {
