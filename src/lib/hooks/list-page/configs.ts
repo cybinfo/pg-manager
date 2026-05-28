@@ -384,6 +384,7 @@ export const INQUIRY_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   defaultOrderDirection: "desc",
   searchFields: ["name", "phone", "email", "message", "property.name"],
   joinFields: ["property"],
+  includeSoftDeleted: true,
   computedFields: (item) => {
     const date = item.created_at ? new Date(item.created_at as string) : new Date()
     return {

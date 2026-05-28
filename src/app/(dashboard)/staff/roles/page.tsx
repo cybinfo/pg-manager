@@ -42,6 +42,7 @@ const ROLES_LIST_CONFIG: ListPageConfig<Record<string, unknown>> = {
   defaultOrderDirection: "desc",
   searchFields: ["name", "description"],
   joinFields: [],
+  includeSoftDeleted: true,
   computedFields: (item) => ({
     user_count: (item.user_roles as { id: string }[] | null)?.length ?? 0,
   }),
