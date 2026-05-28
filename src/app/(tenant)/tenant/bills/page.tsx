@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
@@ -23,33 +22,8 @@ import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 import { formatDate, formatCurrency, formatMonthYear } from "@/lib/format"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
-
-interface Bill {
-  id: string
-  bill_number: string
-  bill_date: string
-  due_date: string
-  for_month: string
-  total_amount: number
-  paid_amount: number
-  balance_due: number
-  status: string
-  line_items: LineItem[] | null
-  created_at: string
-}
-
-interface LineItem {
-  name: string
-  amount: number
-  type?: string
-}
-
-interface BillStats {
-  totalBilled: number
-  totalPaid: number
-  totalDue: number
-  billsCount: number
-}
+import { useTenantBills } from "@/lib/hooks/useTenantBills"
+import type { TenantBill } from "@/lib/hooks/useTenantBills"
 
 const statusIconConfig: Record<string, { icon: typeof CheckCircle; className: string }> = {
   paid: { icon: CheckCircle, className: "text-success bg-success/10" },
@@ -59,75 +33,15 @@ const statusIconConfig: Record<string, { icon: typeof CheckCircle; className: st
 }
 
 export default function TenantBillsPage() {
-  const { tenant, tenantContext, loading: tenantLoading } = useTenantPortalData()
-  const [loading, setLoading] = useState(true)
-  const [bills, setBills] = useState<Bill[]>([])
-  const [stats, setStats] = useState<BillStats>({
-    totalBilled: 0,
-    totalPaid: 0,
-    totalDue: 0,
-    billsCount: 0,
-  })
+  const { tenantContext } = useTenantPortalData()
+  const { bills, stats, loading } = useTenantBills()
   const [yearFilter, setYearFilter] = useState<string>("all")
 
   // Report Issue Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedBill, setSelectedBill] = useState<Bill | null>(null)
+  const [selectedBill, setSelectedBill] = useState<TenantBill | null>(null)
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (tenantLoading) return
-    if (!tenant) {
-      setLoading(false)
-      return
-    }
-
-    const fetchBills = async () => {
-      const supabase = createClient()
-
-      // Fetch all bills
-      const { data: billsData } = await supabase
-        .from("bills")
-        .select(`
-          id,
-          bill_number,
-          bill_date,
-          due_date,
-          for_month,
-          total_amount,
-          paid_amount,
-          balance_due,
-          status,
-          line_items,
-          created_at
-        `)
-        .eq("tenant_id", tenant.id)
-        .is("deleted_at", null)
-        .order("bill_date", { ascending: false })
-
-      const allBills = billsData || []
-      setBills(allBills)
-
-      // Calculate stats
-      const totalBilled = allBills.reduce((sum: number, b: { total_amount: number }) => sum + Number(b.total_amount), 0)
-      const totalPaid = allBills.reduce((sum: number, b: { paid_amount: number }) => sum + Number(b.paid_amount), 0)
-      const totalDue = allBills.reduce((sum: number, b: { balance_due: number }) => sum + Number(b.balance_due), 0)
-
-      setStats({
-        totalBilled,
-        totalPaid,
-        totalDue,
-        billsCount: allBills.length,
-      })
-
-      setLoading(false)
-    }
-
-    fetchBills()
-  }, [tenant, tenantLoading])
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const openReportDialog = (bill: Bill) => {
+  const openReportDialog = (bill: TenantBill) => {
     setSelectedBill(bill)
     setDialogOpen(true)
   }
@@ -155,9 +69,9 @@ export default function TenantBillsPage() {
     }
     groups[monthYear].push(bill)
     return groups
-  }, {} as Record<string, Bill[]>)
+  }, {} as Record<string, TenantBill[]>)
 
-  if (tenantLoading || loading) {
+  if (loading) {
     return <PageSkeleton variant="list" />
   }
 

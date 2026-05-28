@@ -1,8 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,14 +21,16 @@ import { QuickActionLink, PaymentListItem } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
-import type { TenantFeatures } from "@/types/portal.types"
+import { useTenantHome } from "@/lib/hooks/useTenantHome"
 
-interface RecentPayment {
-  id: string
-  amount: number
-  payment_date: string
-  payment_method: string
-  for_period: string | null
+interface TenantFeatures {
+  view_bills: boolean
+  view_payments: boolean
+  submit_complaints: boolean
+  view_notices: boolean
+  request_visitors: boolean
+  download_receipts: boolean
+  update_profile: boolean
 }
 
 const defaultTenantFeatures: TenantFeatures = {
@@ -44,70 +44,8 @@ const defaultTenantFeatures: TenantFeatures = {
 }
 
 export default function TenantHomePage() {
-  const { tenant, loading: tenantLoading } = useTenantPortalData()
-  const [loading, setLoading] = useState(true)
-  const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([])
-  const [openComplaints, setOpenComplaints] = useState(0)
-  const [unreadNotices, setUnreadNotices] = useState(0)
-  const [totalPaid, setTotalPaid] = useState(0)
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (tenantLoading) return
-    if (!tenant) {
-      setLoading(false)
-      return
-    }
-
-    const fetchDashboardData = async () => {
-      const supabase = createClient()
-
-      // Fetch recent payments
-      const { data: payments } = await supabase
-        .from("payments")
-        .select("id, amount, payment_date, payment_method, for_period")
-        .eq("tenant_id", tenant.id)
-        .is("deleted_at", null)
-        .order("payment_date", { ascending: false })
-        .limit(3)
-
-      // Fetch open complaints count
-      const { count: complaintsCount } = await supabase
-        .from("complaints")
-        .select("id", { count: "exact", head: true })
-        .eq("tenant_id", tenant.id)
-        .is("deleted_at", null)
-        .in("status", ["open", "acknowledged", "in_progress"])
-
-      // Fetch notices count
-      const { count: noticesCount } = await supabase
-        .from("notices")
-        .select("id", { count: "exact", head: true })
-        .eq("property_id", tenant.property_id)
-        .is("deleted_at", null)
-        .eq("is_active", true)
-
-      // Calculate total paid this year
-      const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString()
-      const { data: yearPayments } = await supabase
-        .from("payments")
-        .select("amount")
-        .eq("tenant_id", tenant.id)
-        .is("deleted_at", null)
-        .gte("payment_date", yearStart)
-
-      const totalPaidAmount = yearPayments?.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0) || 0
-
-      setRecentPayments(payments || [])
-      setOpenComplaints(complaintsCount || 0)
-      setUnreadNotices(noticesCount || 0)
-      setTotalPaid(totalPaidAmount)
-      setLoading(false)
-    }
-
-    fetchDashboardData()
-  }, [tenant, tenantLoading])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const { tenant } = useTenantPortalData()
+  const { recentPayments, openComplaints, unreadNotices, totalPaid, loading } = useTenantHome()
 
 
   const getDaysStayed = () => {
@@ -117,7 +55,7 @@ export default function TenantHomePage() {
     return Math.floor((now.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24))
   }
 
-  if (tenantLoading || loading) {
+  if (loading) {
     return <PageSkeleton variant="detail" />
   }
 

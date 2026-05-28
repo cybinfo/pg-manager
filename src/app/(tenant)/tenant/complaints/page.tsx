@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,59 +22,22 @@ import { formatDate, formatTimeAgo } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
+import { useTenantComplaints } from "@/lib/hooks/useTenantComplaints"
 import { COMPLAINT_CATEGORIES } from "@/lib/status"
-
-interface Complaint {
-  id: string
-  category: string
-  title: string
-  description: string | null
-  status: string
-  priority: string
-  resolution_notes: string | null
-  created_at: string
-  resolved_at: string | null
-}
 
 const categoryOptions = Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label }))
 const categoryLabels = COMPLAINT_CATEGORIES
 
 export default function TenantComplaintsPage() {
-  const { tenant, tenantContext, user, loading: tenantLoading } = useTenantPortalData()
-  const [loading, setLoading] = useState(true)
+  const { tenant, tenantContext, user } = useTenantPortalData()
+  const { complaints, loading, refetch } = useTenantComplaints()
   const [submitting, setSubmitting] = useState(false)
-  const [complaints, setComplaints] = useState<Complaint[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     category: "other",
     title: "",
     description: "",
   })
-
-  useEffect(() => {
-    if (tenantLoading) return
-    if (!tenant || !tenantContext) {
-      setLoading(false)
-      return
-    }
-
-    const fetchComplaints = async () => {
-      const supabase = createClient()
-
-      // Fetch complaints
-      const { data: complaintsData } = await supabase
-        .from("complaints")
-        .select("*")
-        .eq("tenant_id", tenant.id)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-
-      setComplaints(complaintsData || [])
-      setLoading(false)
-    }
-
-    fetchComplaints()
-  }, [tenant, tenantContext, tenantLoading])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,7 +64,7 @@ export default function TenantComplaintsPage() {
         return
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("complaints")
         .insert(withCreatedBy({
           owner_id: property.owner_id,
@@ -114,14 +77,12 @@ export default function TenantComplaintsPage() {
           status: "open",
           priority: "medium",
         }, user?.id ?? ""))
-        .select()
-        .single()
 
       if (error) throw error
 
-      setComplaints([data, ...complaints])
       setFormData({ category: "other", title: "", description: "" })
       setShowForm(false)
+      refetch()
       showSuccess("Complaint submitted successfully")
     } catch (error: unknown) {
       showError((error as Error).message || "Failed to submit complaint")
@@ -138,7 +99,7 @@ export default function TenantComplaintsPage() {
     c.status === "resolved" || c.status === "closed"
   )
 
-  if (tenantLoading || loading) {
+  if (loading) {
     return <PageSkeleton variant="list" />
   }
 

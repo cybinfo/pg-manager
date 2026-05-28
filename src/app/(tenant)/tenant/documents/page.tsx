@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,7 +14,6 @@ import {
   File
 } from "lucide-react"
 import { DocumentUploadDialog } from "@/components/tenant/document-upload-dialog"
-import { TENANT_DOCUMENT_TYPE_LABELS } from "@/lib/constants/form-options"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatDate } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -31,107 +29,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { TenantWithContext } from "@/types/tenants.types"
-import { isFeatureEnabled } from "@/lib/features/checks"
-import type { WorkspaceModuleConfig } from "@/lib/features"
-
-interface TenantDocument {
-  id: string
-  name: string
-  document_type: string
-  description: string | null
-  file_url: string
-  file_name: string
-  mime_type: string | null
-  status: "pending" | "approved" | "rejected"
-  review_notes: string | null
-  uploaded_at: string
-  reviewed_at: string | null
-}
+import { useTenantDocuments } from "@/lib/hooks/useTenantDocuments"
+import type { TenantDocument } from "@/lib/hooks/useTenantDocuments"
 
 const docStatusMap = DOCUMENT_STATUS
 
+const documentTypeLabels: Record<string, string> = {
+  id_proof: "ID Proof",
+  address_proof: "Address Proof",
+  income_proof: "Income Proof",
+  agreement: "Agreement",
+  receipt: "Receipt",
+  other: "Other",
+}
+
 export default function TenantDocumentsPage() {
-  const { user } = useTenantPortalData()
-  const [loading, setLoading] = useState(true)
-  const [featureEnabled, setFeatureEnabled] = useState(true)
-  const [documents, setDocuments] = useState<TenantDocument[]>([])
-  const [tenantInfo, setTenantInfo] = useState<TenantWithContext | null>(null)
+  const { documents, tenantInfo, featureEnabled, loading, refetch } = useTenantDocuments()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [documentToDelete, setDocumentToDelete] = useState<TenantDocument | null>(null)
   const [deleting, setDeleting] = useState(false)
-
-  const fetchDocuments = async () => {
-    if (!user) return
-
-    const supabase = createClient()
-
-    // Get tenant info including owner_id
-    const { data: tenant } = await supabase
-      .from("tenants")
-      .select("id, owner_id, property:properties(owner_id)")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .single()
-
-    if (!tenant) {
-      setLoading(false)
-      return
-    }
-
-    // Handle Supabase array join
-    const property = transformJoin(tenant.property)
-    const ownerId = property?.owner_id || tenant.owner_id
-
-    // Get workspace_id from workspaces table via owner
-    const { data: workspace } = await supabase
-      .from("workspaces")
-      .select("id, module_config")
-      .eq("owner_user_id", ownerId)
-      .single()
-
-    if (workspace) {
-      const config = workspace.module_config as WorkspaceModuleConfig | null
-      if (!isFeatureEnabled(config, "tenants", "documentsUpload")) {
-        setFeatureEnabled(false)
-        setLoading(false)
-        return
-      }
-    }
-
-    setTenantInfo({
-      id: tenant.id,
-      workspace_id: workspace?.id || "",
-      owner_id: ownerId,
-    })
-
-    // Fetch documents — exclude soft-deleted
-    const { data: docs } = await supabase
-      .from("tenant_documents")
-      .select("*")
-      .eq("tenant_id", tenant.id)
-      .is("deleted_at", null)
-      .order("uploaded_at", { ascending: false })
-
-    setDocuments(docs || [])
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    if (user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      void fetchDocuments()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
 
   const handleDelete = async () => {
     if (!documentToDelete) return
 
     setDeleting(true)
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
     // Soft delete — set deleted_at/deleted_by, never hard delete (E4 principle)
     const { error } = await supabase
@@ -149,7 +73,7 @@ export default function TenantDocumentsPage() {
     }
 
     showSuccess("Document deleted")
-    fetchDocuments()
+    refetch()
   }
 
   const confirmDelete = (doc: TenantDocument) => {
@@ -272,7 +196,7 @@ export default function TenantDocumentsPage() {
                         <StatusBadge variant={statusMapping?.variant as "warning" | "success" | "error"} label={statusMapping?.label} />
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {TENANT_DOCUMENT_TYPE_LABELS[doc.document_type] || doc.document_type}
+                        {documentTypeLabels[doc.document_type] || doc.document_type}
                       </p>
                       {doc.description && (
                         <p className="text-sm text-muted-foreground mt-1">{doc.description}</p>
@@ -323,7 +247,7 @@ export default function TenantDocumentsPage() {
           tenantId={tenantInfo.id}
           workspaceId={tenantInfo.workspace_id}
           ownerId={tenantInfo.owner_id}
-          onSuccess={fetchDocuments}
+          onSuccess={refetch}
         />
       )}
 

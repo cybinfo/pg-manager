@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
@@ -22,120 +21,21 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { ReportIssueDialog } from "@/components/tenant/report-issue-dialog"
 import { formatDate, formatCurrency, formatMonthYear } from "@/lib/format"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
+import { useTenantPayments } from "@/lib/hooks/useTenantPayments"
+import type { TenantPayment } from "@/lib/hooks/useTenantPayments"
 import { PAYMENT_METHODS } from "@/lib/status"
 
-interface Payment {
-  id: string
-  amount: number
-  payment_method: string
-  payment_date: string
-  for_period: string | null
-  receipt_number: string | null
-  reference_number: string | null
-  notes: string | null
-  created_at: string
-  charge_type: {
-    name: string
-  } | null
-}
-
-interface RawPayment {
-  id: string
-  amount: number
-  payment_method: string
-  payment_date: string
-  for_period: string | null
-  receipt_number: string | null
-  reference_number: string | null
-  notes: string | null
-  created_at: string
-  charge_type: {
-    name: string
-  }[] | null
-}
-
-interface PaymentStats {
-  totalPaid: number
-  totalPaidThisYear: number
-  paymentsCount: number
-  monthlyRent: number
-}
-
 export default function TenantPaymentsPage() {
-  const { tenant, tenantContext, loading: tenantLoading } = useTenantPortalData()
-  const [loading, setLoading] = useState(true)
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [stats, setStats] = useState<PaymentStats>({
-    totalPaid: 0,
-    totalPaidThisYear: 0,
-    paymentsCount: 0,
-    monthlyRent: 0,
-  })
+  const { tenantContext, loading: tenantLoading } = useTenantPortalData()
+  const { payments, stats, loading: paymentsLoading } = useTenantPayments()
+  const loading = tenantLoading || paymentsLoading
   const [yearFilter, setYearFilter] = useState<string>("all")
 
   // Report Issue Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
+  const [selectedPayment, setSelectedPayment] = useState<TenantPayment | null>(null)
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (tenantLoading) return
-    if (!tenant) {
-      setLoading(false)
-      return
-    }
-
-    const fetchPayments = async () => {
-      const supabase = createClient()
-
-      // Fetch all payments
-      const { data: paymentsData } = await supabase
-        .from("payments")
-        .select(`
-          id,
-          amount,
-          payment_method,
-          payment_date,
-          for_period,
-          receipt_number,
-          reference_number,
-          notes,
-          created_at,
-          charge_type:charge_types(name)
-        `)
-        .eq("tenant_id", tenant.id)
-        .is("deleted_at", null)
-        .order("payment_date", { ascending: false })
-
-      // Transform the data from arrays to single objects
-      const allPayments: Payment[] = ((paymentsData as RawPayment[]) || []).map((payment) => ({
-        ...payment,
-        charge_type: payment.charge_type && payment.charge_type.length > 0 ? payment.charge_type[0] : null,
-      }))
-      setPayments(allPayments)
-
-      // Calculate stats
-      const totalPaid = allPayments.reduce((sum, p) => sum + Number(p.amount), 0)
-
-      const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString()
-      const thisYearPayments = allPayments.filter((p) => p.payment_date >= yearStart)
-      const totalPaidThisYear = thisYearPayments.reduce((sum, p) => sum + Number(p.amount), 0)
-
-      setStats({
-        totalPaid,
-        totalPaidThisYear,
-        paymentsCount: allPayments.length,
-        monthlyRent: tenant.monthly_rent,
-      })
-
-      setLoading(false)
-    }
-
-    fetchPayments()
-  }, [tenant, tenantLoading])
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const openReportDialog = (payment: Payment) => {
+  const openReportDialog = (payment: TenantPayment) => {
     setSelectedPayment(payment)
     setDialogOpen(true)
   }
@@ -157,9 +57,9 @@ export default function TenantPaymentsPage() {
     }
     groups[monthYear].push(payment)
     return groups
-  }, {} as Record<string, Payment[]>)
+  }, {} as Record<string, TenantPayment[]>)
 
-  if (tenantLoading || loading) {
+  if (loading) {
     return <PageSkeleton variant="list" />
   }
 
