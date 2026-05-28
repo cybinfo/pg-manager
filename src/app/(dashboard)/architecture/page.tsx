@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
@@ -13,83 +12,17 @@ import {
 import { PropertyGrid, RoomGrid, BedView } from "./_components"
 import type { ArchProperty } from "./_components"
 import type { ArchRoom } from "./_components"
-import { logger } from "@/lib/logger"
 import { calculateOccupancyRate } from "@/lib/format"
-
-interface Tenant {
-  id: string
-  name: string
-  phone: string
-  room_id: string
-  check_in_date: string
-}
+import { useArchitectureData } from "@/lib/hooks/useArchitectureData"
 
 type ViewMode = "properties" | "rooms" | "beds"
 
 export default function ArchitecturePage() {
-  const [loading, setLoading] = useState(true)
-  const [properties, setProperties] = useState<ArchProperty[]>([])
-  const [rooms, setRooms] = useState<ArchRoom[]>([])
-  const [tenants, setTenants] = useState<Tenant[]>([])
+  const { loading, properties, rooms, tenants } = useArchitectureData()
   const [selectedProperty, setSelectedProperty] = useState<ArchProperty | null>(null)
   const [selectedRoom, setSelectedRoom] = useState<ArchRoom | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>("properties")
   const [filter, setFilter] = useState<"all" | "available" | "occupied">("all")
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability
-    fetchData()
-  }, [])
-
-  const fetchData = async () => {
-    const supabase = createClient()
-
-    const { data: propertiesData, error: propertiesError } = await supabase
-      .from("properties")
-      .select(`
-        id, name, address,
-        rooms(id, total_beds, occupied_beds)
-      `)
-      .order("name")
-
-    if (propertiesError) {
-      logger.error("Error fetching properties:", { detail: propertiesError })
-    } else {
-      const transformedProperties = (propertiesData || []).map((p: { id: string; name: string; address?: string | null; rooms: unknown }) => {
-        const pRooms = Array.isArray(p.rooms) ? p.rooms : []
-        return {
-          id: p.id,
-          name: p.name,
-          address: p.address || "",
-          total_rooms: pRooms.length,
-          total_beds: pRooms.reduce((sum: number, r: { total_beds: number }) => sum + (r.total_beds || 0), 0),
-          occupied_beds: pRooms.reduce((sum: number, r: { occupied_beds: number }) => sum + (r.occupied_beds || 0), 0),
-        }
-      })
-      setProperties(transformedProperties)
-    }
-
-    const { data: roomsData, error: roomsError } = await supabase
-      .from("rooms")
-      .select("id, room_number, room_type, floor, total_beds, occupied_beds, rent_amount, status, property_id")
-      .order("floor")
-      .order("room_number")
-
-    if (!roomsError) {
-      setRooms(roomsData || [])
-    }
-
-    const { data: tenantsData, error: tenantsError } = await supabase
-      .from("tenants")
-      .select("id, name, phone, room_id, check_in_date")
-      .eq("status", "active")
-
-    if (!tenantsError) {
-      setTenants(tenantsData || [])
-    }
-
-    setLoading(false)
-  }
 
   const handlePropertyClick = (property: ArchProperty) => {
     setSelectedProperty(property)

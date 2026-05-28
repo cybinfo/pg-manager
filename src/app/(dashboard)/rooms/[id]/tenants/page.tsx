@@ -13,7 +13,7 @@ import { TENANT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter, createDateRangeFilter } from "@/lib/filter-presets"
-import { TENANT_STATUS_OPTIONS } from "@/lib/filters/common-filters"
+import { TENANT_STATUS_OPTIONS, TENANT_HISTORY_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { statusColumn, currencyColumn, dateColumn, personNameWithAvatarColumn, phoneColumn, emailColumn } from "@/lib/columns"
 import { getStatusInfo as getTenantStatusInfo } from "@/lib/status-config"
@@ -92,12 +92,7 @@ const columns: Column<Tenant>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  createStatusFilter([
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-    { value: "notice", label: "On Notice" },
-    { value: "exited", label: "Exited" },
-  ]),
+  createStatusFilter(TENANT_HISTORY_STATUS_OPTIONS),
   createDateRangeFilter("check_in_date", "Check-in Date"),
 ]
 

@@ -167,6 +167,37 @@ export const NOTICE_TYPE_OPTIONS: FilterOption[] = [
 ]
 
 // ============================================================================
+// LIBRARY SEAT STATUS OPTIONS
+// ============================================================================
+
+export const LIBRARY_SEAT_STATUS_OPTIONS: FilterOption[] = [
+  { value: "available", label: "Available" },
+  { value: "occupied", label: "Occupied" },
+  { value: "reserved", label: "Reserved" },
+  { value: "maintenance", label: "Maintenance" },
+]
+
+// ============================================================================
+// PEOPLE STATUS OPTIONS
+// ============================================================================
+
+export const PEOPLE_STATUS_OPTIONS: FilterOption[] = [
+  { value: "verified", label: "Verified" },
+  { value: "blocked", label: "Blocked" },
+]
+
+// ============================================================================
+// TENANT HISTORY STATUS OPTIONS (sub-pages showing all historical statuses)
+// ============================================================================
+
+export const TENANT_HISTORY_STATUS_OPTIONS: FilterOption[] = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+  { value: "notice", label: "On Notice" },
+  { value: "exited", label: "Exited" },
+]
+
+// ============================================================================
 // ACTIVE STATUS OPTIONS (for staff, etc.)
 // ============================================================================
 

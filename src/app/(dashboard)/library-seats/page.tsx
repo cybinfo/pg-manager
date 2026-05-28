@@ -14,6 +14,7 @@ import { LIBRARY_SEAT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage
 import { createTotalMetric, createStatusMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter } from "@/lib/filter-presets"
+import { LIBRARY_SEAT_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { LIBRARY_SEAT_STATUS_CONFIG } from "@/types/library.types"
 import { LIBRARY_SEAT_STATUS_LABELS } from "@/lib/status"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -134,12 +135,7 @@ const filters: FilterConfig[] = [
     type: "select",
     placeholder: "All Sections",
   },
-  createStatusFilter([
-    { value: "available", label: "Available" },
-    { value: "occupied", label: "Occupied" },
-    { value: "reserved", label: "Reserved" },
-    { value: "maintenance", label: "Maintenance" },
-  ]),
+  createStatusFilter(LIBRARY_SEAT_STATUS_OPTIONS),
 ]
 
 // ============================================

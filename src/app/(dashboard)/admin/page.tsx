@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth"
+import { useAdminExplorerData } from "@/lib/hooks/useAdminExplorerData"
+import type { AdminWorkspace } from "@/lib/hooks/useAdminExplorerData"
 import { PageHeader } from "@/components/ui/page-header"
 import { DataTable, Column } from "@/components/ui/data-table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,18 +34,7 @@ import { formatDistanceToNow } from "date-fns"
 import { formatCurrency } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
 import { logger } from "@/lib/logger"
-
-interface Workspace {
-  id: string
-  name: string
-  created_at: string
-  owner_user_id: string
-  owner_name?: string
-  owner_email?: string
-  total_properties: number
-  total_tenants: number
-  total_rooms: number
-}
+import { createClient } from "@/lib/supabase/client"
 
 interface WorkspaceDetails {
   properties: { id: string; name: string; address: string; total_rooms: number }[]
@@ -60,80 +50,14 @@ interface WorkspaceDetails {
 
 export default function AdminExplorerPage() {
   const { user } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
-  const [refreshing, setRefreshing] = useState(false)
+  const { loading, isPlatformAdmin, workspaces, refreshing, fetchWorkspaces } = useAdminExplorerData(user)
 
   // Explore dialog state
-  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null)
+  const [selectedWorkspace, setSelectedWorkspace] = useState<AdminWorkspace | null>(null)
   const [workspaceDetails, setWorkspaceDetails] = useState<WorkspaceDetails | null>(null)
   const [loadingDetails, setLoadingDetails] = useState(false)
 
-  useEffect(() => {
-    checkAdminAndFetchData()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
-
-  const checkAdminAndFetchData = async () => {
-    if (!user) return
-
-    const supabase = createClient()
-
-    // Check if user is platform admin
-    const { data: adminCheck } = await supabase
-      .from("platform_admins")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .single()
-
-    if (!adminCheck) {
-      setIsPlatformAdmin(false)
-      setLoading(false)
-      return
-    }
-
-    setIsPlatformAdmin(true)
-    await fetchWorkspaces()
-  }
-
-  const fetchWorkspaces = async () => {
-    setRefreshing(true)
-    const supabase = createClient()
-
-    // Fetch all workspaces using SECURITY DEFINER function (bypasses RLS)
-    const { data: workspacesData, error: wsError } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>)("get_all_workspaces_admin")
-
-    if (wsError) {
-      logger.error("Error fetching workspaces:", { detail: wsError })
-    }
-
-    if (workspacesData) {
-      type WorkspaceData = {
-        id: string
-        name: string
-        created_at: string
-        owner_user_id: string
-        owner_name: string
-        owner_email: string
-        total_properties?: number
-        total_rooms?: number
-        total_tenants?: number
-      }
-      const enrichedWorkspaces = (workspacesData as WorkspaceData[]).map((ws) => ({
-        ...ws,
-        total_properties: ws.total_properties || 0,
-        total_rooms: ws.total_rooms || 0,
-        total_tenants: ws.total_tenants || 0
-      }))
-      setWorkspaces(enrichedWorkspaces)
-    }
-
-    setLoading(false)
-    setRefreshing(false)
-  }
-
-  const handleExplore = async (workspace: Workspace) => {
+  const handleExplore = async (workspace: AdminWorkspace) => {
     setSelectedWorkspace(workspace)
     setLoadingDetails(true)
     setWorkspaceDetails(null)
@@ -192,7 +116,7 @@ export default function AdminExplorerPage() {
     )
   }
 
-  const workspaceColumns: Column<Workspace>[] = [
+  const workspaceColumns: Column<AdminWorkspace>[] = [
     {
       key: "name",
       header: "Workspace",

@@ -30,6 +30,7 @@ import { PEOPLE_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListPage"
 import { createTotalMetric, createCountMetric, createBooleanMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter } from "@/lib/filter-presets"
+import { PEOPLE_STATUS_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { PERSON_TAG_COLORS } from "@/lib/status-config"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -225,10 +226,7 @@ const filters: FilterConfig[] = [
       { value: "vip", label: "VIP" },
     ],
   },
-  createStatusFilter([
-    { value: "verified", label: "Verified" },
-    { value: "blocked", label: "Blocked" },
-  ]),
+  createStatusFilter(PEOPLE_STATUS_OPTIONS),
 ]
 
 // ============================================

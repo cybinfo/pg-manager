@@ -182,12 +182,7 @@ const columns: Column<Meter>[] = [
 const filters: FilterConfig[] = [
   PROPERTY_FILTER,
   METER_TYPE_FILTER,
-  createStatusFilter([
-    { value: "active", label: "Active" },
-    { value: "faulty", label: "Faulty" },
-    { value: "replaced", label: "Replaced" },
-    { value: "retired", label: "Retired" },
-  ], { placeholder: "All Statuses" }),
+  createStatusFilter(METER_STATUS_OPTIONS, { placeholder: "All Statuses" }),
 ]
 
 // ============================================
