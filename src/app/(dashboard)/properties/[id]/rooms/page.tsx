@@ -143,12 +143,7 @@ const columns: Column<Room>[] = [
 // ============================================
 
 const filters: FilterConfig[] = [
-  createStatusFilter([
-    { value: "available", label: "Available" },
-    { value: "occupied", label: "Occupied" },
-    { value: "partially_occupied", label: "Partially Occupied" },
-    { value: "maintenance", label: "Maintenance" },
-  ]),
+  createStatusFilter(ROOM_STATUS_OPTIONS),
   ROOM_TYPE_FILTER,
 ]
 
@@ -171,24 +166,14 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Room Type",
     filterType: "select",
     filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "single", label: "Single" },
-      { value: "double", label: "Double" },
-      { value: "triple", label: "Triple" },
-      { value: "dormitory", label: "Dormitory" },
-    ],
+    filterOptions: ROOM_TYPES.map(({ value, label }) => ({ value, label })),
   },
   {
     key: "status",
     header: "Status",
     filterType: "select",
     filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: [
-      { value: "available", label: "Available" },
-      { value: "occupied", label: "Occupied" },
-      { value: "partially_occupied", label: "Partially Occupied" },
-      { value: "maintenance", label: "Maintenance" },
-    ],
+    filterOptions: ROOM_STATUS_OPTIONS,
   },
   {
     key: "rent_amount",

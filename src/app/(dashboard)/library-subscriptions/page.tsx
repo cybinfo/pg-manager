@@ -16,7 +16,8 @@ import { createTotalMetric, createStatusMetric, createSumMetric, MetricConfig } 
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { createStatusFilter } from "@/lib/filter-presets"
 import { LIBRARY_MEMBERSHIP_STATUS_CONFIG } from "@/types/library.types"
-import { LIBRARY_MEMBERSHIP_STATUS_LABELS } from "@/lib/status"
+import { LIBRARY_MEMBERSHIP_STATUS_LABELS, LIBRARY_MEMBERSHIP_STATUS_OPTIONS } from "@/lib/status"
+import { TIME_SLOT_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -130,28 +131,16 @@ const columns: Column<SubscriptionItem>[] = [
 // Filter Configurations
 // ============================================
 
-const TIME_SLOT_FILTER_OPTIONS = [
-  { value: "Morning", label: "Morning" },
-  { value: "Evening", label: "Evening" },
-  { value: "Night", label: "Night" },
-  { value: "24 Hours", label: "24 Hours" },
-]
-
 const TIME_SLOT_SUBSCRIPTION_FILTER: FilterConfig = {
   id: "time_slot",
   label: "Slot",
   type: "select",
   placeholder: "All Slots",
-  options: TIME_SLOT_FILTER_OPTIONS,
+  options: TIME_SLOT_OPTIONS,
 }
 
 const filters: FilterConfig[] = [
-  createStatusFilter([
-    { value: "active", label: "Active" },
-    { value: "expired", label: "Expired" },
-    { value: "cancelled", label: "Cancelled" },
-    { value: "upgraded", label: "Upgraded" },
-  ]),
+  createStatusFilter(LIBRARY_MEMBERSHIP_STATUS_OPTIONS),
   TIME_SLOT_SUBSCRIPTION_FILTER,
   {
     id: "start_date",
@@ -182,13 +171,8 @@ const advancedFilterColumns: FilterableColumn[] = [
   numberFilterColumn("hours_included", "Hours Included"),
   dateFilterColumn("start_date", "Start Date"),
   dateFilterColumn("end_date", "End Date"),
-  statusFilterColumn([
-    { value: "active", label: "Active" },
-    { value: "expired", label: "Expired" },
-    { value: "cancelled", label: "Cancelled" },
-    { value: "upgraded", label: "Upgraded" },
-  ]),
-  selectFilterColumn("time_slot", "Time Slot", TIME_SLOT_FILTER_OPTIONS),
+  statusFilterColumn(LIBRARY_MEMBERSHIP_STATUS_OPTIONS),
+  selectFilterColumn("time_slot", "Time Slot", TIME_SLOT_OPTIONS),
   numberFilterColumn("hours_used", "Hours Used"),
   numberFilterColumn("hours_remaining", "Hours Remaining"),
   numberFilterColumn("discount_amount", "Discount"),

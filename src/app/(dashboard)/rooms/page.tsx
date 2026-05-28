@@ -31,14 +31,6 @@ const ROOM_TYPE_LABELS: Record<string, string> = Object.fromEntries(
 // Room type options derived from canonical ROOM_TYPES (includes all types incl. quad)
 const ROOM_TYPE_FILTER_OPTIONS = ROOM_TYPES.map(({ value, label }) => ({ value, label }))
 
-// Room status options — single source for both filters and advancedFilterColumns
-const ROOM_STATUS_FILTER_OPTIONS = [
-  { value: "available", label: "Available" },
-  { value: "occupied", label: "Occupied" },
-  { value: "partially_occupied", label: "Partially Occupied" },
-  { value: "maintenance", label: "Maintenance" },
-]
-
 // ============================================
 // Types
 // ============================================
@@ -161,7 +153,7 @@ const columns: Column<Room>[] = [
 
 const filters: FilterConfig[] = [
   PROPERTY_FILTER,
-  createStatusFilter(ROOM_STATUS_FILTER_OPTIONS),
+  createStatusFilter(ROOM_STATUS_OPTIONS),
   ROOM_TYPE_FILTER,
 ]
 
@@ -202,7 +194,7 @@ const advancedFilterColumns: FilterableColumn[] = [
     header: "Status",
     filterType: "select",
     filterOperators: ["eq", "neq", "in", "not_in"],
-    filterOptions: ROOM_STATUS_FILTER_OPTIONS,
+    filterOptions: ROOM_STATUS_OPTIONS,
   },
   {
     key: "rent_amount",

@@ -198,6 +198,17 @@ export const ROOM_STATUS_OPTIONS: FilterOption[] = [
 ]
 
 // ============================================================================
+// TIME SLOT OPTIONS — used by library-members and library-subscriptions
+// ============================================================================
+
+export const TIME_SLOT_OPTIONS: FilterOption[] = [
+  { value: "Morning", label: "Morning" },
+  { value: "Evening", label: "Evening" },
+  { value: "Night", label: "Night" },
+  { value: "24 Hours", label: "24 Hours" },
+]
+
+// ============================================================================
 // INQUIRY STATUS OPTIONS
 // ============================================================================
 

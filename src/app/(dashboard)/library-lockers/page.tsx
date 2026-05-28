@@ -17,6 +17,7 @@ import { LIBRARY_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { Currency } from "@/components/ui/currency"
 import { LIBRARY_LOCKER_STATUS_CONFIG, LIBRARY_LOCKER_SIZE_CONFIG } from "@/types/library.types"
 import { LIBRARY_LOCKER_SIZE_LABELS, LIBRARY_LOCKER_STATUS_LABELS } from "@/lib/status"
+import { LOCKER_STATUS_OPTIONS, LOCKER_SIZE_OPTIONS } from "@/lib/constants/form-options"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, numberFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -164,21 +165,13 @@ const columns: Column<LockerItem>[] = [
 
 const filters: FilterConfig[] = [
   LIBRARY_FILTER,
-  createStatusFilter([
-    { value: "available", label: "Available" },
-    { value: "occupied", label: "Occupied" },
-    { value: "maintenance", label: "Maintenance" },
-  ]),
+  createStatusFilter(LOCKER_STATUS_OPTIONS),
   {
     id: "size",
     label: "Size",
     type: "select",
     placeholder: "All Sizes",
-    options: [
-      { value: "small", label: "Small" },
-      { value: "medium", label: "Medium" },
-      { value: "large", label: "Large" },
-    ],
+    options: LOCKER_SIZE_OPTIONS,
   },
 ]
 
@@ -199,16 +192,8 @@ const groupByOptions: GroupByOption[] = [
 
 const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("locker_number", "Locker Number"),
-  selectFilterColumn("size", "Size", [
-    { value: "small", label: "Small" },
-    { value: "medium", label: "Medium" },
-    { value: "large", label: "Large" },
-  ]),
-  statusFilterColumn([
-    { value: "available", label: "Available" },
-    { value: "occupied", label: "Occupied" },
-    { value: "maintenance", label: "Maintenance" },
-  ]),
+  selectFilterColumn("size", "Size", LOCKER_SIZE_OPTIONS),
+  statusFilterColumn(LOCKER_STATUS_OPTIONS),
   numberFilterColumn("floor", "Floor"),
   numberFilterColumn("monthly_rent", "Monthly Rent"),
   numberFilterColumn("deposit_amount", "Deposit Amount"),

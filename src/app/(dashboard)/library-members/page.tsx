@@ -18,7 +18,8 @@ import { createTotalMetric, createStatusMetric, createCountMetric, MetricConfig 
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_FILTER, TIME_SLOT_FILTER, createStatusFilter } from "@/lib/filter-presets"
 import { LIBRARY_MEMBER_STATUS_CONFIG } from "@/types/library.types"
-import { LIBRARY_MEMBER_STATUS_LABELS } from "@/lib/status"
+import { LIBRARY_MEMBER_STATUS_LABELS, LIBRARY_MEMBER_STATUS_OPTIONS } from "@/lib/status"
+import { TIME_SLOT_OPTIONS } from "@/lib/filters/common-filters"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, statusFilterColumn, selectFilterColumn, dateFilterColumn, numberFilterColumn } from "@/lib/advanced-filter-builders"
 import type { CSVColumn } from "@/lib/download-utils"
@@ -202,12 +203,7 @@ const columns: Column<LibraryMemberItem>[] = [
 
 const filters: FilterConfig[] = [
   LIBRARY_FILTER,
-  createStatusFilter([
-    { value: "active", label: "Active" },
-    { value: "expired", label: "Expired" },
-    { value: "suspended", label: "Suspended" },
-    { value: "cancelled", label: "Cancelled" },
-  ]),
+  createStatusFilter(LIBRARY_MEMBER_STATUS_OPTIONS),
   TIME_SLOT_FILTER,
 ]
 
@@ -232,20 +228,10 @@ const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("phone", "Phone"),
   textFilterColumn("email", "Email", ["contains", "eq", "neq", "starts", "is_null", "is_not_null"]),
   textFilterColumn("member_code", "Member Code"),
-  statusFilterColumn([
-    { value: "active", label: "Active" },
-    { value: "expired", label: "Expired" },
-    { value: "suspended", label: "Suspended" },
-    { value: "cancelled", label: "Cancelled" },
-  ]),
+  statusFilterColumn(LIBRARY_MEMBER_STATUS_OPTIONS),
   numberFilterColumn("hours_balance", "Hours Balance"),
   numberFilterColumn("hours_used", "Hours Used"),
-  selectFilterColumn("preferred_slot", "Preferred Slot", [
-    { value: "Morning", label: "Morning" },
-    { value: "Evening", label: "Evening" },
-    { value: "Night", label: "Night" },
-    { value: "24 Hours", label: "24 Hours" },
-  ]),
+  selectFilterColumn("preferred_slot", "Preferred Slot", TIME_SLOT_OPTIONS),
   dateFilterColumn("join_date", "Join Date"),
   dateFilterColumn("expiry_date", "Expiry Date", ["is_null", "is_not_null"]),
   dateFilterColumn("left_date", "Left Date", ["is_null", "is_not_null"]),

@@ -130,3 +130,6 @@ export const LIBRARY_PAYMENT_STATUS_OPTIONS = labelsToOptions(LIBRARY_PAYMENT_ST
 
 /** Library waitlist status options for forms */
 export const LIBRARY_WAITLIST_STATUS_OPTIONS = labelsToOptions(LIBRARY_WAITLIST_STATUS_LABELS)
+
+/** Library membership (subscription) status options for filters and forms */
+export const LIBRARY_MEMBERSHIP_STATUS_OPTIONS = labelsToOptions(LIBRARY_MEMBERSHIP_STATUS_LABELS)
