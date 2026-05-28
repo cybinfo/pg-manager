@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import {
   BarChart,
   Bar,
@@ -29,8 +27,6 @@ import { PermissionGuard, ModuleGuard, FeatureGate } from "@/components/auth"
 import { useFeatures } from "@/lib/features/use-features"
 import { InfoBanner } from "@/components/ui/info-banner"
 import { useDemoMode } from "@/lib/demo-mode"
-import { transformJoin } from "@/lib/supabase/transforms"
-import { computePGReport, type PGReportData } from "@/lib/reports/pg"
 import {
   RevenueTrendChart,
   DuesAgingCard,
@@ -39,80 +35,26 @@ import {
   PaymentMethodsChart,
   ReportPageHeader,
   StatusBreakdownCard,
-  useReportDateRange,
   formatCurrency,
-  CHART_COLORS,
   exportCSV,
+  CHART_COLORS,
 } from "@/components/reports"
 import { StatCard } from "@/components/ui/stat-card"
 import { SummaryCard } from "@/components/ui/quick-stats-grid"
-import { logger } from "@/lib/logger"
-import { formatCurrencyTick } from "@/lib/format"
-import type { PropertyOption } from "@/types/properties.types"
-
+import { useReportsData } from "@/lib/hooks/useReportsData"
 
 export default function ReportsPage() {
-  const [loading, setLoading] = useState(true)
-  const [properties, setProperties] = useState<PropertyOption[]>([])
-  const [selectedProperty, setSelectedProperty] = useState<string>("all")
-  const [reportData, setReportData] = useState<PGReportData | null>(null)
-  const { dateRange, setDateRange, startDate, endDate, lastMonthStart, lastMonthEnd } = useReportDateRange()
+  const {
+    loading,
+    properties,
+    reportData,
+    dateRange,
+    setDateRange,
+    selectedProperty,
+    setSelectedProperty,
+  } = useReportsData()
   const { canPerformAction, getDemoMessage } = useDemoMode()
   const { isFeatureEnabled } = useFeatures()
-
-  useEffect(() => {
-    fetchReportData()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProperty, dateRange])
-
-  const fetchReportData = async () => {
-    setLoading(true)
-    const supabase = createClient()
-
-    try {
-      // Fetch all required data in parallel
-      const [
-        propertiesRes,
-        roomsRes,
-        tenantsRes,
-        paymentsRes,
-        billsRes,
-        complaintsRes,
-        expensesRes
-      ] = await Promise.all([
-        supabase.from("properties").select("id, name"),
-        supabase.from("rooms").select("id, property_id, status, total_beds"),
-        supabase.from("tenants").select("id, property_id, status, monthly_rent, check_in_date, check_out_date, created_at"),
-        supabase.from("payments").select("id, property_id, amount, payment_method, payment_date, created_at"),
-        supabase.from("bills").select("id, property_id, tenant_id, total_amount, balance_due, status, bill_date, due_date"),
-        supabase.from("complaints").select("id, property_id, status, created_at, resolved_at"),
-        supabase.from("expenses").select("id, property_id, amount, expense_date, expense_type_id, expense_type:expense_types(name)"),
-      ])
-
-      const propertiesData = propertiesRes.data || []
-      const roomsData = roomsRes.data || []
-      const tenantsData = tenantsRes.data || []
-      const paymentsData = paymentsRes.data || []
-      const billsData = billsRes.data || []
-      const complaintsData = complaintsRes.data || []
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const expensesData = (expensesRes.data || []).map((e: any) => ({
-        ...e,
-        expense_type: transformJoin(e.expense_type),
-      }))
-
-      setProperties(propertiesData)
-
-      setReportData(computePGReport({
-        roomsData, tenantsData, paymentsData, billsData, complaintsData, expensesData,
-        propertiesData, selectedProperty, startDate, endDate, lastMonthStart, lastMonthEnd,
-      }))
-    } catch (error) {
-      logger.error("Error fetching report data:", { detail: error })
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleExportCSV = (type: string) => {
     if (!reportData) return
@@ -301,7 +243,12 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={reportData.expensesByCategory} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={formatCurrencyTick} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(value: number) => {
+                  if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`
+                  if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`
+                  if (value >= 1000) return `₹${(value / 1000).toFixed(0)}k`
+                  return `₹${value}`
+                }} />
                 <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                 <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                 <Bar dataKey="value" fill="hsl(var(--chart-5))" radius={[0, 4, 4, 0]}>
@@ -380,7 +327,12 @@ export default function ReportsPage() {
             <BarChart data={reportData.propertyStats} margin={{ bottom: 30 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} angle={-30} textAnchor="end" />
-              <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatCurrencyTick} />
+              <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={(value: number) => {
+                if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`
+                if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`
+                if (value >= 1000) return `₹${(value / 1000).toFixed(0)}k`
+                return `₹${value}`
+              }} />
               <Tooltip formatter={(value) => formatCurrency(Number(value))} />
               <Legend />
               <Bar dataKey="revenue" name="Revenue" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />

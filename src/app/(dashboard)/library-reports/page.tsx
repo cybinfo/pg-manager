@@ -1,8 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
-import { useSortState } from "@/lib/hooks/useSortState"
-import { createClient } from "@/lib/supabase/client"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import {
   LineChart,
   Line,
@@ -35,41 +33,31 @@ import {
 } from "lucide-react"
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { useDemoMode } from "@/lib/demo-mode"
-import { transformJoin } from "@/lib/supabase/transforms"
 import {
   QuickInsights,
   ReportChartCard,
   PaymentMethodsChart,
   ReportPageHeader,
   StatusBreakdownCard,
-  useReportDateRange,
   formatCurrency,
-  CHART_COLORS,
   exportCSV,
+  CHART_COLORS,
+  MONTH_NAMES,
 } from "@/components/reports"
 import { StatCard } from "@/components/ui/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { logger } from "@/lib/logger"
-import { formatCurrencyTick } from "@/lib/format"
-import { type GroupByPeriod, fetchAllRows } from "@/lib/report-utils"
-import {
-  computeLibraryOverviewReport,
-  computePaymentReport,
-  buildLibraryOverviewCSV,
-  buildLibraryPaymentCSV,
-  type LibraryReportResult as LibraryReportData,
-  type PaymentReportResult as PaymentReportData,
-  type RawSeat,
-  type RawMember,
-  type RawPayment,
-  type RawAttendance,
-  type RawMembership,
-} from "@/lib/reports/library"
+import { useLibraryReportsData, type GroupByPeriod } from "@/lib/hooks/useLibraryReportsData"
 
-interface LibraryOption {
-  id: string
-  name: string
+// ============================================================================
+// Tick formatter (kept local — only used in this page's charts)
+// ============================================================================
+
+function formatTickValue(value: number): string {
+  if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`
+  if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`
+  if (value >= 1000) return `₹${(value / 1000).toFixed(0)}k`
+  return `₹${value}`
 }
 
 // ============================================================================
@@ -77,25 +65,23 @@ interface LibraryOption {
 // ============================================================================
 
 export default function LibraryReportsPage() {
-  const [loading, setLoading] = useState(true)
-  const [libraries, setLibraries] = useState<LibraryOption[]>([])
-  const [selectedLibrary, setSelectedLibrary] = useState<string>("all")
-  const [reportData, setReportData] = useState<LibraryReportData | null>(null)
+  const {
+    loading,
+    libraries,
+    reportData,
+    dateRange,
+    setDateRange,
+    selectedLibrary,
+    setSelectedLibrary,
+    paymentGroupBy,
+    setPaymentGroupBy,
+    paymentReportData,
+    paymentReportLoading,
+    fetchPaymentReportData,
+  } = useLibraryReportsData()
+
   const [activeTab, setActiveTab] = useState<"overview" | "payments">("overview")
-  const { dateRange, setDateRange, startDate, endDate, lastMonthStart, lastMonthEnd } = useReportDateRange()
   const { canPerformAction, getDemoMessage } = useDemoMode()
-
-  // Payment report state
-  const [paymentGroupBy, setPaymentGroupBy] = useState<GroupByPeriod>("month")
-  const [paymentReportData, setPaymentReportData] = useState<PaymentReportData | null>(null)
-  const [paymentReportLoading, setPaymentReportLoading] = useState(false)
-  const { sortColumn: paymentSortColumn, sortDirection: paymentSortDirection, toggleSort: togglePaymentSort } = useSortState("period", "asc")
-  const { sortColumn: topMembersSortColumn, sortDirection: topMembersSortDirection, toggleSort: toggleTopMembersSort } = useSortState("totalPaid", "desc")
-
-  useEffect(() => {
-    fetchReportData()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLibrary, dateRange])
 
   // Lazy load payment report data when tab activates
   useEffect(() => {
@@ -109,123 +95,9 @@ export default function LibraryReportsPage() {
   useEffect(() => {
     if (activeTab === "payments") {
       fetchPaymentReportData()
-    } else {
-      // Invalidate so next tab switch refetches
-      setPaymentReportData(null)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLibrary, dateRange, paymentGroupBy])
-
-  const fetchReportData = async () => {
-    setLoading(true)
-    const supabase = createClient()
-
-    try {
-      // Fetch all required data in parallel with pagination
-      const [
-        librariesRes,
-        seatsRes,
-        membersRes,
-        membershipsRes,
-        paymentsRes,
-        attendanceRes,
-      ] = await Promise.all([
-        supabase.from("libraries").select("id, name, total_seats, occupied_seats"),
-        fetchAllRows(supabase.from("library_seats").select("id, section_id, status, section:library_sections!library_seats_section_id_fkey(library_id)")),
-        fetchAllRows(supabase.from("library_members").select("id, library_id, status, hours_balance, hours_used, join_date, expiry_date, preferred_slot, created_at")),
-        fetchAllRows(supabase.from("library_memberships").select("id, member_id, status, start_date, end_date, hours_included, hours_used, created_at, member:library_members!library_memberships_member_id_fkey(library_id)")),
-        fetchAllRows(supabase.from("library_payments").select("id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(library_id)")),
-        fetchAllRows(supabase.from("library_attendance").select("id, member_id, check_in_time, check_out_time, hours_spent, attendance_date, member:library_members!library_attendance_member_id_fkey(library_id)")),
-      ])
-
-      const librariesData = librariesRes.data || []
-      const seatsData = (seatsRes.data || []).map((s: Record<string, unknown>) => ({
-        ...s,
-        section: transformJoin(s.section),
-      }))
-      const membersData = membersRes.data || []
-      const paymentsData = (paymentsRes.data || []).map((p: Record<string, unknown>) => ({
-        ...p,
-        member: transformJoin(p.member),
-      }))
-      const attendanceData = (attendanceRes.data || []).map((a: Record<string, unknown>) => ({
-        ...a,
-        member: transformJoin(a.member),
-      }))
-
-      setLibraries(librariesData.map((l: { id: string; name: string }) => ({ id: l.id, name: l.name })))
-
-      const result = computeLibraryOverviewReport(
-        {
-          seats: seatsData as unknown as RawSeat[],
-          members: membersData as unknown as RawMember[],
-          payments: paymentsData as unknown as RawPayment[],
-          attendance: attendanceData as unknown as RawAttendance[],
-          libraries: librariesData as unknown as { id: string; name: string; total_seats: number }[],
-          startDate,
-          endDate,
-          lastMonthStart,
-          lastMonthEnd,
-        },
-        selectedLibrary
-      )
-
-      setReportData(result)
-    } catch (error) {
-      logger.error("Error fetching library report data:", { detail: error })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // ============================================================================
-  // Payment Report Data Fetching
-  // ============================================================================
-
-  const fetchPaymentReportData = async () => {
-    setPaymentReportLoading(true)
-    const supabase = createClient()
-
-    try {
-      const [paymentsRes, membersRes, membershipsRes] = await Promise.all([
-        fetchAllRows(supabase.from("library_payments").select(
-          "id, member_id, amount, payment_type, payment_method, payment_date, member:library_members!library_payments_member_id_fkey(id, library_id, name, member_code)"
-        )),
-        fetchAllRows(supabase.from("library_members").select("id, library_id, status")),
-        fetchAllRows(supabase.from("library_memberships").select(
-          "id, member_id, final_amount, status, member:library_members!library_memberships_member_id_fkey(library_id)"
-        )),
-      ])
-
-      const paymentsData = (paymentsRes.data || []).map((p: Record<string, unknown>) => ({
-        ...p,
-        member: transformJoin(p.member),
-      }))
-      const membersData = membersRes.data || []
-      const membershipsData = (membershipsRes.data || []).map((m: Record<string, unknown>) => ({
-        ...m,
-        member: transformJoin(m.member),
-      }))
-
-      const result = computePaymentReport(
-        {
-          payments: paymentsData as unknown as RawPayment[],
-          members: membersData as unknown as RawMember[],
-          memberships: membershipsData as unknown as RawMembership[],
-          startDate,
-          endDate,
-          groupBy: paymentGroupBy,
-        },
-        selectedLibrary
-      )
-
-      setPaymentReportData(result)
-    } catch (error) {
-      logger.error("Error fetching payment report data:", { detail: error })
-    } finally {
-      setPaymentReportLoading(false)
-    }
-  }
 
   // ============================================================================
   // CSV Export
@@ -233,21 +105,109 @@ export default function LibraryReportsPage() {
 
   const handleExportCSV = (type: string) => {
     if (!reportData) return
-    const result = buildLibraryOverviewCSV(type, reportData, formatCurrency)
-    if (!result) return
-    exportCSV(result.rows, result.filename, canPerformAction, getDemoMessage)
+
+    const rows: (string | number)[][] = []
+    let filename = ""
+
+    switch (type) {
+      case "summary":
+        filename = "library-summary-report.csv"
+        rows.push(
+          ["Metric", "Value"],
+          ["Total Seats", reportData.totalSeats],
+          ["Occupied Seats", reportData.occupiedSeats],
+          ["Available Seats", reportData.availableSeats],
+          ["Utilization Rate", `${reportData.utilizationRate.toFixed(1)}%`],
+          ["Active Members", reportData.activeMembers],
+          ["New Members (Period)", reportData.newMembersThisMonth],
+          ["Revenue (Period)", formatCurrency(reportData.totalRevenueThisMonth)],
+          ["Total Hours Used", reportData.totalHoursUsed.toFixed(1)],
+          ["Total Check-ins (Period)", reportData.totalCheckInsThisMonth],
+        )
+        break
+      case "libraries":
+        filename = "library-performance-report.csv"
+        rows.push(
+          ["Library", "Total Seats", "Active Members", "Revenue", "Check-ins"],
+          ...reportData.libraryStats.map((l) => [
+            l.name, l.totalSeats, l.activeMembers,
+            formatCurrency(l.revenue), l.checkIns,
+          ]),
+        )
+        break
+      case "revenue":
+        filename = "library-revenue-report.csv"
+        rows.push(
+          ["Month", "Revenue", "New Members"],
+          ...reportData.monthlyRevenue.map((m) => [
+            m.month, formatCurrency(m.revenue), m.members,
+          ]),
+        )
+        break
+      default:
+        return
+    }
+
+    exportCSV(rows, filename, canPerformAction, getDemoMessage)
   }
 
   const handlePaymentExportCSV = (type: string) => {
     if (!paymentReportData) return
-    const result = buildLibraryPaymentCSV(type, paymentReportData, formatCurrency)
-    if (!result) return
-    exportCSV(result.rows, result.filename, canPerformAction, getDemoMessage)
+
+    const rows: (string | number)[][] = []
+    let filename = ""
+
+    switch (type) {
+      case "collections":
+        filename = "library-collections-report.csv"
+        rows.push(
+          ["Period", "Subscription", "Locker", "Other", "Total", "Count"],
+          ...paymentReportData.revenueByPeriod.map((r) => [
+            r.period,
+            formatCurrency(r.subscriptionAmount),
+            formatCurrency(r.lockerAmount),
+            formatCurrency(r.otherAmount),
+            formatCurrency(r.total),
+            r.count,
+          ]),
+          [
+            "TOTAL",
+            formatCurrency(paymentReportData.revenueByPeriod.reduce((s: number, r) => s + r.subscriptionAmount, 0)),
+            formatCurrency(paymentReportData.revenueByPeriod.reduce((s: number, r) => s + r.lockerAmount, 0)),
+            formatCurrency(paymentReportData.revenueByPeriod.reduce((s: number, r) => s + r.otherAmount, 0)),
+            formatCurrency(paymentReportData.totalCollections),
+            paymentReportData.paymentCount,
+          ],
+        )
+        break
+      case "top-members":
+        filename = "library-top-members-report.csv"
+        rows.push(
+          ["Member Name", "Member Code", "Total Paid", "Payment Count", "Avg Amount"],
+          ...paymentReportData.topMembers.map((m) => [
+            m.memberName,
+            m.memberCode,
+            formatCurrency(m.totalPaid),
+            m.paymentCount,
+            formatCurrency(m.avgAmount),
+          ]),
+        )
+        break
+      default:
+        return
+    }
+
+    exportCSV(rows, filename, canPerformAction, getDemoMessage)
   }
 
   // ============================================================================
   // Sorting for Collection Table
   // ============================================================================
+
+  const [paymentSortColumn, setPaymentSortColumn] = useState<string>("period")
+  const [paymentSortDirection, setPaymentSortDirection] = useState<"asc" | "desc">("asc")
+  const [topMembersSortColumn, setTopMembersSortColumn] = useState<string>("totalPaid")
+  const [topMembersSortDirection, setTopMembersSortDirection] = useState<"asc" | "desc">("desc")
 
   const sortedRevenueByPeriod = useMemo(() => {
     if (!paymentReportData) return []
@@ -285,6 +245,15 @@ export default function LibraryReportsPage() {
     })
     return data
   }, [paymentReportData, topMembersSortColumn, topMembersSortDirection])
+
+  const toggleSort = useCallback((column: string, currentCol: string, currentDir: "asc" | "desc", setCol: (c: string) => void, setDir: (d: "asc" | "desc") => void) => {
+    if (currentCol === column) {
+      setDir(currentDir === "asc" ? "desc" : "asc")
+    } else {
+      setCol(column)
+      setDir("desc")
+    }
+  }, [])
 
   // ============================================================================
   // Render
@@ -346,7 +315,7 @@ export default function LibraryReportsPage() {
           </div>
 
           {/* ============================================================ */}
-          {/* TAB 1: OVERVIEW (existing content, unchanged) */}
+          {/* TAB 1: OVERVIEW */}
           {/* ============================================================ */}
           {activeTab === "overview" && (
             <>
@@ -431,7 +400,7 @@ export default function LibraryReportsPage() {
                           yAxisId="left"
                           tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                           width={55}
-                          tickFormatter={formatCurrencyTick}
+                          tickFormatter={formatTickValue}
                         />
                         <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                         <Tooltip
@@ -567,7 +536,7 @@ export default function LibraryReportsPage() {
                       <BarChart data={reportData.libraryStats} margin={{ bottom: 30 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} angle={-30} textAnchor="end" />
-                        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatCurrencyTick} />
+                        <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatTickValue} />
                         <Tooltip formatter={(value, name) => [
                           name === "revenue" ? formatCurrency(Number(value)) : value,
                           name === "revenue" ? "Revenue" : name === "activeMembers" ? "Active Members" : "Check-ins"
@@ -757,7 +726,7 @@ export default function LibraryReportsPage() {
                           <BarChart data={paymentReportData.revenueByPeriod}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                             <XAxis dataKey="period" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                            <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatCurrencyTick} />
+                            <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={55} tickFormatter={formatTickValue} />
                             <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                             <Legend />
                             <Bar dataKey="subscriptionAmount" name="Subscription" fill="hsl(var(--chart-3))" stackId="revenue" radius={[0, 0, 0, 0]} />
@@ -802,7 +771,7 @@ export default function LibraryReportsPage() {
                                   "py-2 px-3 font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors",
                                   col.align === "right" ? "text-right" : "text-left"
                                 )}
-                                onClick={() => togglePaymentSort(col.key)}
+                                onClick={() => toggleSort(col.key, paymentSortColumn, paymentSortDirection, setPaymentSortColumn, setPaymentSortDirection)}
                               >
                                 <span className="inline-flex items-center gap-1">
                                   {col.label}
@@ -877,7 +846,7 @@ export default function LibraryReportsPage() {
                                   "py-2 px-3 font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors",
                                   col.align === "right" ? "text-right" : "text-left"
                                 )}
-                                onClick={() => toggleTopMembersSort(col.key)}
+                                onClick={() => toggleSort(col.key, topMembersSortColumn, topMembersSortDirection, setTopMembersSortColumn, setTopMembersSortDirection)}
                               >
                                 <span className="inline-flex items-center gap-1">
                                   {col.label}
