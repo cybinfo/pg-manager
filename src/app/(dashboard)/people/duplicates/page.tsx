@@ -1,17 +1,9 @@
-/**
- * Duplicate People Detection Page
- *
- * Shows automatically detected duplicate person records
- * Allows quick merging of duplicates
- */
-
 "use client"
 
-import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
-import { createClient } from "@/lib/supabase/client"
+import { usePeopleDuplicates, DuplicatePerson, DuplicateGroup } from "@/lib/hooks/usePeopleDuplicates"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar } from "@/components/ui/avatar"
@@ -32,36 +24,13 @@ import {
   RefreshCw,
   CheckCircle2,
 } from "lucide-react"
-import { showError } from "@/lib/toast-helpers"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
 import { formatDate } from "@/lib/format"
-import { logger } from "@/lib/logger"
-import { MATCH_TYPE_LABELS, MATCH_TYPE_COLORS } from "@/lib/status"
 
-interface DuplicateGroup {
-  match_type: string
-  match_value: string
-  duplicate_count: number
-  person_ids: string[]
-  person_names: string[]
-}
-
-type PersonBase = {
-  id: string
-  name: string
-  phone: string | null
-  email: string | null
-  photo_url: string | null
-  tags: string[] | null
-  is_verified: boolean
-  is_blocked: boolean
-  created_at: string
-}
-
-interface DuplicatePerson extends PersonBase {
-  tenant_count: number
-  staff_count: number
-  visitor_count: number
+const MATCH_TYPE_LABELS: Record<string, string> = {
+  phone: "Same Phone Number",
+  email: "Same Email Address",
+  aadhaar: "Same Aadhaar Number",
 }
 
 const MATCH_TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -70,99 +39,26 @@ const MATCH_TYPE_ICONS: Record<string, React.ReactNode> = {
   aadhaar: <CreditCard className="h-4 w-4" />,
 }
 
+const MATCH_TYPE_COLORS: Record<string, string> = {
+  phone: "bg-info/10 text-info border-info/30",
+  email: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700",
+  aadhaar: "bg-warning/10 text-warning border-warning/30",
+}
+
 export default function DuplicatesPage() {
   const router = useRouter()
   const { backHref } = useBackNavigation({ defaultHref: "/people" })
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([])
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
-  const [groupPersons, setGroupPersons] = useState<Record<string, DuplicatePerson[]>>({})
-  const [loadingGroup, setLoadingGroup] = useState<string | null>(null)
 
-  // Fetch duplicate groups
-  const fetchDuplicates = async () => {
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-      .from("duplicate_people_summary")
-      .select("*")
-      .order("duplicate_count", { ascending: false })
-
-    if (error) {
-      logger.error("Error fetching duplicates:", { detail: error })
-      showError("Failed to load duplicates")
-    } else {
-      setDuplicateGroups(data || [])
-    }
-
-    setLoading(false)
-    setRefreshing(false)
-  }
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchDuplicates()
-  }, [])
-
-  // Fetch persons for a group
-  const fetchGroupPersons = async (group: DuplicateGroup) => {
-    const groupKey = `${group.match_type}-${group.match_value}`
-
-    if (groupPersons[groupKey]) {
-      setExpandedGroup(expandedGroup === groupKey ? null : groupKey)
-      return
-    }
-
-    setLoadingGroup(groupKey)
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-      .from("people")
-      .select("id, name, phone, email, photo_url, tags, is_verified, is_blocked, created_at")
-      .in("id", group.person_ids)
-      .order("created_at")
-
-    if (error) {
-      logger.error("Error fetching group persons:", { detail: error })
-      showError("Failed to load person details")
-      setLoadingGroup(null)
-      return
-    }
-
-    // Fetch counts for each person
-    const personsWithCounts = await Promise.all(
-      (data || []).map(async (person: PersonBase) => {
-        const [tenantRes, staffRes, visitorRes] = await Promise.all([
-          supabase.from("tenants").select("id", { count: "exact", head: true }).eq("person_id", person.id),
-          supabase.from("staff_members").select("id", { count: "exact", head: true }).eq("person_id", person.id),
-          supabase.from("visitor_contacts").select("id", { count: "exact", head: true }).eq("person_id", person.id),
-        ])
-
-        return {
-          ...person,
-          tenant_count: tenantRes.count || 0,
-          staff_count: staffRes.count || 0,
-          visitor_count: visitorRes.count || 0,
-        }
-      })
-    )
-
-    setGroupPersons((prev) => ({
-      ...prev,
-      [groupKey]: personsWithCounts,
-    }))
-    setExpandedGroup(groupKey)
-    setLoadingGroup(null)
-  }
-
-  // Handle refresh
-  const handleRefresh = () => {
-    setRefreshing(true)
-    setGroupPersons({})
-    setExpandedGroup(null)
-    fetchDuplicates()
-  }
+  const {
+    loading,
+    refreshing,
+    duplicateGroups,
+    expandedGroup,
+    groupPersons,
+    loadingGroup,
+    fetchGroupPersons,
+    handleRefresh,
+  } = usePeopleDuplicates()
 
   // Navigate to merge with preselected persons
   const handleMerge = (persons: DuplicatePerson[]) => {
@@ -177,7 +73,6 @@ export default function DuplicatesPage() {
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     })
 
-    // Navigate to merge page with primary preselected
     router.push(`/people/merge?id=${sorted[0].id}`)
   }
 
@@ -236,7 +131,7 @@ export default function DuplicatesPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">
-                      {duplicateGroups.filter((g) => g.match_type === "phone").length}
+                      {duplicateGroups.filter((g: DuplicateGroup) => g.match_type === "phone").length}
                     </p>
                     <p className="text-xs text-muted-foreground">Phone Matches</p>
                   </div>
@@ -251,7 +146,7 @@ export default function DuplicatesPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">
-                      {duplicateGroups.filter((g) => g.match_type === "email").length}
+                      {duplicateGroups.filter((g: DuplicateGroup) => g.match_type === "email").length}
                     </p>
                     <p className="text-xs text-muted-foreground">Email Matches</p>
                   </div>
@@ -266,7 +161,7 @@ export default function DuplicatesPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">
-                      {duplicateGroups.filter((g) => g.match_type === "aadhaar").length}
+                      {duplicateGroups.filter((g: DuplicateGroup) => g.match_type === "aadhaar").length}
                     </p>
                     <p className="text-xs text-muted-foreground">Aadhaar Matches</p>
                   </div>
@@ -285,7 +180,7 @@ export default function DuplicatesPage() {
           />
         ) : (
           <div className="space-y-4">
-            {duplicateGroups.map((group) => {
+            {duplicateGroups.map((group: DuplicateGroup) => {
               const groupKey = `${group.match_type}-${group.match_value}`
               const isExpanded = expandedGroup === groupKey
               const persons = groupPersons[groupKey]
@@ -330,7 +225,7 @@ export default function DuplicatesPage() {
                       <div className="space-y-4">
                         {/* Person cards */}
                         <div className="grid gap-3">
-                          {persons.map((person, index) => (
+                          {persons.map((person: DuplicatePerson, index: number) => (
                             <div
                               key={person.id}
                               className={`p-3 border rounded-lg ${index === 0 ? "border-success/30 bg-success/5" : ""}`}
