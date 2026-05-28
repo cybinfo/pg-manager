@@ -52,6 +52,7 @@ import {
 import { getTodayISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PermissionGate, FeatureGate, FeatureGuard } from "@/components/auth"
+import { Textarea } from "@/components/ui/textarea"
 import { applyExitClearanceCompletion } from "@/lib/workflows/exit.workflow"
 import { FileWarning, Calculator } from "lucide-react"
 
@@ -475,13 +476,13 @@ export default function ExitClearanceDetailPage() {
 
             <div className="space-y-2">
               <Label>Room Condition Notes</Label>
-              <textarea
+              <Textarea
                 value={formData.room_condition_notes}
                 onChange={(e) => setFormData({ ...formData, room_condition_notes: e.target.value })}
                 placeholder="Any damages or issues..."
                 rows={3}
                 disabled={isCleared}
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+                className="resize-none"
               />
             </div>
           </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
 import type { OnWebsiteChange } from "./WebsiteTypes"
 
 interface Props {
@@ -15,8 +16,8 @@ export function WebsiteHouseRulesSection({ houseRules, onWebsiteChange }: Props)
         <CardTitle className="text-lg">House Rules</CardTitle>
       </CardHeader>
       <CardContent>
-        <textarea
-          className="w-full min-h-[100px] px-3 py-2 rounded-md border bg-background resize-none"
+        <Textarea
+          className="min-h-[100px] resize-none"
           placeholder="1. No smoking inside premises&#10;2. Visitors allowed till 8 PM&#10;3. Maintain silence after 10 PM"
           value={houseRules}
           onChange={(e) => onWebsiteChange("house_rules", e.target.value)}

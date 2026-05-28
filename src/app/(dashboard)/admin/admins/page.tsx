@@ -17,6 +17,7 @@ import { getNowISO } from "@/lib/date-helpers"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { Textarea } from "@/components/ui/textarea"
 import { formatDate } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
 import { logger } from "@/lib/logger"
@@ -480,9 +481,9 @@ export default function PlatformAdminsPage() {
 
           {/* Notes */}
           <FormField label="Notes (optional)" htmlFor="admin-notes">
-            <textarea
+            <Textarea
               id="admin-notes"
-              className="w-full min-h-[80px] px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+              className="min-h-[80px] resize-none"
               placeholder="Reason for granting access, role, etc."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

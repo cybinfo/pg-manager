@@ -24,6 +24,7 @@ import {
 import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { Textarea } from "@/components/ui/textarea"
 import type { PropertyOption } from "@/types/properties.types"
 
 interface LibraryItem {
@@ -488,7 +489,7 @@ function NewNoticeContent() {
             </FormField>
 
             <FormField label="Content" htmlFor="content" required error={errors.content}>
-              <textarea
+              <Textarea
                 id="content"
                 name="content"
                 placeholder="Write your notice content here..."
@@ -497,7 +498,7 @@ function NewNoticeContent() {
                 onBlur={() => validateField("content")}
                 disabled={saving}
                 rows={6}
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+                className="resize-none"
               />
             </FormField>
 

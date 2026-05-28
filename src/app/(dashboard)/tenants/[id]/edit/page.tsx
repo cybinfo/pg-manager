@@ -32,6 +32,7 @@ import {
 import { transformJoin } from "@/lib/supabase/transforms"
 import { PermissionGuard } from "@/components/auth"
 import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
+import { Textarea } from "@/components/ui/textarea"
 import { TENANT_STATUS_OPTIONS } from "@/lib/constants/form-options"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import type { PropertyOption } from "@/types/properties.types"
@@ -360,14 +361,14 @@ function EditTenantContent() {
           icon={FileText}
         >
           <FormField label="Notes">
-            <textarea
+            <Textarea
               id="notes"
               name="notes"
               placeholder="Any additional notes about this tenancy..."
               value={formData.notes as string}
               onChange={handleChange}
               disabled={saving}
-              className="w-full min-h-[100px] px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+              className="min-h-[100px] resize-none"
             />
           </FormField>
         </DetailSection>

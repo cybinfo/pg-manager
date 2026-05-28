@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, FormField } from "@/components/ui/form-components"
@@ -28,6 +29,7 @@ import { formatCurrency, formatDate} from "@/lib/format"
 import { handleClientError } from "@/lib/error-handler"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
+import { Textarea } from "@/components/ui/textarea"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { initiateExitClearance, ExitClearanceInput } from "@/lib/workflows/exit.workflow"
 import { getTodayISO } from "@/lib/date-helpers"
@@ -77,6 +79,7 @@ interface Deduction {
 }
 
 function InitiateCheckoutForm() {
+  const { user } = useAuth()
   const { backHref } = useBackNavigation({ defaultHref: "/exit-clearance" })
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -300,15 +303,16 @@ function InitiateCheckoutForm() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      // Get session with access token for RLS context
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.user || !session?.access_token || !selectedTenant) {
+      if (!user || !selectedTenant) {
         showError("Session expired. Please login again.")
         setLoading(false)
         return
       }
+
+      const supabase = createClient()
+      // Need access token for RLS context in workflow
+      const { data: { session } } = await supabase.auth.getSession()
+      const accessToken = session?.access_token
 
       // Build workflow input
       const workflowInput: ExitClearanceInput = {
@@ -328,10 +332,10 @@ function InitiateCheckoutForm() {
       // Execute the workflow with access token for RLS
       const result = await initiateExitClearance(
         workflowInput,
-        session.user.id,
+        user.id,
         "owner",
-        session.user.id, // workspace_id is same as owner_id
-        session.access_token
+        user.id, // workspace_id is same as owner_id
+        accessToken
       )
 
       if (!result.success) {
@@ -520,7 +524,7 @@ function InitiateCheckoutForm() {
             )}
 
             <FormField label="Room Condition Notes">
-              <textarea
+              <Textarea
                 id="room_condition_notes"
                 name="room_condition_notes"
                 placeholder="Note any damages or issues with the room..."
@@ -528,7 +532,7 @@ function InitiateCheckoutForm() {
                 onChange={handleChange}
                 disabled={loading}
                 rows={3}
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+                className="resize-none"
               />
             </FormField>
           </CardContent>

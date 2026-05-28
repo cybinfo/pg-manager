@@ -30,6 +30,7 @@ import { PersonSearchResult } from "@/types/people.types"
 import { getTodayISO, getNowISO } from "@/lib/date-helpers"
 import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
 import { logger } from "@/lib/logger"
+import { Textarea } from "@/components/ui/textarea"
 import type { PropertyOption } from "@/types/properties.types"
 
 interface Room {
@@ -802,14 +803,14 @@ export default function NewTenantPage() {
           </CardHeader>
           <CardContent>
             <FormField label="Notes">
-              <textarea
+              <Textarea
                 id="notes"
                 name="notes"
                 placeholder="Any additional notes about the tenant..."
                 value={formData.notes}
                 onChange={handleChange}
                 disabled={loading}
-                className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+                className="min-h-[80px]"
               />
             </FormField>
           </CardContent>

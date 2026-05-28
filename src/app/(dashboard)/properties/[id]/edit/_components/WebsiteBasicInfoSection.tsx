@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input"
 import { FormField, Select } from "@/components/ui/form-components"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PROPERTY_TYPE_OPTIONS } from "@/lib/constants/form-options"
 import type { WebsiteConfig, OnWebsiteChange } from "./WebsiteTypes"
@@ -48,8 +49,8 @@ export function WebsiteBasicInfoSection({ config, onWebsiteChange }: Props) {
         </FormField>
 
         <FormField label="Description">
-          <textarea
-            className="w-full min-h-[120px] px-3 py-2 rounded-md border bg-background resize-none"
+          <Textarea
+            className="min-h-[120px] resize-none"
             placeholder="Tell potential tenants about your PG - facilities, environment, what makes it special..."
             value={config.description}
             onChange={(e) => onWebsiteChange("description", e.target.value)}

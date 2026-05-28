@@ -35,6 +35,7 @@ import { getNowISO } from "@/lib/date-helpers"
 import { formatDateTime } from "@/lib/format"
 import { PermissionGate } from "@/components/auth"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { Textarea } from "@/components/ui/textarea"
 import { Notice, NoticeType } from "@/types/notices.types"
 import { NOTICE_AUDIENCE_OPTIONS, NOTICE_TYPE_DISPLAY_CONFIG } from "@/lib/status"
 import type { PropertyOption } from "@/types/properties.types"
@@ -437,7 +438,7 @@ export default function NoticeDetailPage() {
           </FormField>
 
           <FormField label="Content" htmlFor="content" required>
-            <textarea
+            <Textarea
               id="content"
               name="content"
               placeholder="Write your notice content here..."
@@ -446,7 +447,7 @@ export default function NoticeDetailPage() {
               required
               disabled={saving}
               rows={6}
-              className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+              className="resize-none"
             />
           </FormField>
 

@@ -29,6 +29,7 @@ import { withCreatedBy } from "@/lib/audit"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import { cn } from "@/lib/utils"
+import { Textarea } from "@/components/ui/textarea"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO, getNowISO, parseMonthIndex, startOfMonth, endOfMonth } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
@@ -850,8 +851,8 @@ function NewBillContent() {
             <CardTitle className="text-lg">Notes (Optional)</CardTitle>
           </CardHeader>
           <CardContent>
-            <textarea
-              className="w-full min-h-[80px] px-3 py-2 rounded-md border bg-background resize-none"
+            <Textarea
+              className="min-h-[80px] resize-none"
               placeholder="Add any notes for this bill..."
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
