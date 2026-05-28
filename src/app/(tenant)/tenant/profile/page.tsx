@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useState } from "react"
 import { AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { ReportIssueDialog, ApprovalType } from "@/components/tenant/report-issue-dialog"
 import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
+import { useTenantProfile } from "@/lib/hooks/useTenantProfile"
 import {
   ProfileHeader,
   ContactInfo,
@@ -14,19 +14,9 @@ import {
   RequestsSection,
 } from "./_components"
 
-interface ApprovalRequest {
-  id: string
-  type: string
-  status: string
-  description: string | null
-  payload: Record<string, unknown>
-  created_at: string
-  decided_at: string | null
-}
-
 export default function TenantProfilePage() {
   const { tenant, tenantContext, user, loading: tenantLoading } = useTenantPortalData()
-  const [requests, setRequests] = useState<ApprovalRequest[]>([])
+  const { requests, refetch: refetchRequests } = useTenantProfile()
   const [showRequests, setShowRequests] = useState(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -36,27 +26,6 @@ export default function TenantProfilePage() {
     type: ApprovalType
   } | null>(null)
 
-  const fetchRequests = async (tenantId: string) => {
-    const supabase = createClient()
-    const { data } = await supabase
-      .from("approvals")
-      .select("id, type, status, description, payload, created_at, decided_at")
-      .eq("requester_tenant_id", tenantId)
-      .order("created_at", { ascending: false })
-      .limit(10)
-
-    if (data) {
-      setRequests(data)
-    }
-  }
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (tenantLoading || !tenant) return
-    fetchRequests(tenant.id)
-  }, [tenant, tenantLoading])
-  /* eslint-enable react-hooks/set-state-in-effect */
-
   const openReportDialog = (label: string, value: string, type: ApprovalType) => {
     setSelectedField({ label, value, type })
     setDialogOpen(true)
@@ -64,7 +33,7 @@ export default function TenantProfilePage() {
 
   const handleRequestSuccess = () => {
     if (tenant) {
-      fetchRequests(tenant.id)
+      refetchRequests(tenant.id)
     }
   }
 

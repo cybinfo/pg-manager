@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Bell,
@@ -14,35 +12,8 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
-import { getNowISO } from "@/lib/date-helpers"
 import { formatDate, formatTimeAgo } from "@/lib/format"
-import { useTenantPortalData } from "@/lib/hooks/useTenantPortalData"
-
-interface Notice {
-  id: string
-  title: string
-  content: string
-  type: string
-  created_at: string
-  expires_at: string | null
-  property: {
-    name: string
-  } | null
-}
-
-interface RawNotice {
-  id: string
-  title: string
-  content: string
-  type: string
-  created_at: string
-  expires_at: string | null
-  target_audience: string
-  target_rooms: string[] | null
-  property: {
-    name: string
-  }[] | null
-}
+import { useTenantNotices } from "@/lib/hooks/useTenantNotices"
 
 const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: LucideIcon }> = {
   general: { label: "General", color: "text-info", bgColor: "bg-info/10", icon: Megaphone },
@@ -52,68 +23,7 @@ const typeConfig: Record<string, { label: string; color: string; bgColor: string
 }
 
 export default function TenantNoticesPage() {
-  const { tenant, loading: tenantLoading } = useTenantPortalData()
-  const [loading, setLoading] = useState(true)
-  const [notices, setNotices] = useState<Notice[]>([])
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (tenantLoading) return
-    if (!tenant) {
-      setLoading(false)
-      return
-    }
-
-    const fetchNotices = async () => {
-      const supabase = createClient()
-
-      // Fetch active notices for tenant's property
-      const now = getNowISO()
-      const { data: noticesData } = await supabase
-        .from("notices")
-        .select(`
-          id,
-          title,
-          content,
-          type,
-          created_at,
-          expires_at,
-          target_audience,
-          target_rooms,
-          property:properties(name)
-        `)
-        .eq("is_active", true)
-        .or(`property_id.is.null,property_id.eq.${tenant.property_id}`)
-        .or(`expires_at.is.null,expires_at.gt.${now}`)
-        .order("created_at", { ascending: false })
-
-      // Filter notices based on target audience
-      const filteredNotices = ((noticesData as RawNotice[]) || []).filter((notice) => {
-        if (notice.target_audience === "all") return true
-        if (notice.target_audience === "tenants_only") return true
-        if (notice.target_audience === "specific_rooms") {
-          return notice.target_rooms?.includes(tenant.room_id as string)
-        }
-        return true
-      })
-
-      // Transform the data from arrays to single objects
-      const transformedNotices: Notice[] = filteredNotices.map((notice) => ({
-        id: notice.id,
-        title: notice.title,
-        content: notice.content,
-        type: notice.type,
-        created_at: notice.created_at,
-        expires_at: notice.expires_at,
-        property: notice.property && notice.property.length > 0 ? notice.property[0] : null,
-      }))
-      setNotices(transformedNotices)
-      setLoading(false)
-    }
-
-    fetchNotices()
-  }, [tenant, tenantLoading])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const { notices, loading } = useTenantNotices()
 
 
   const isNew = (dateString: string) => {
@@ -123,7 +33,7 @@ export default function TenantNoticesPage() {
     return diffHours < 24
   }
 
-  if (tenantLoading || loading) {
+  if (loading) {
     return <PageSkeleton variant="list" />
   }
 
