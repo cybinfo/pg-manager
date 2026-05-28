@@ -196,11 +196,7 @@ const columns: ExtendedColumn<Tenant>[] = [
 
 const filters: FilterConfig[] = [
   PROPERTY_FILTER,
-  createStatusFilter([
-    { value: "active", label: "Active" },
-    { value: "notice_period", label: "Notice Period" },
-    { value: "checked_out", label: "Moved Out" },
-  ]),
+  createStatusFilter(TENANT_STATUS_OPTIONS),
   createDateRangeFilter("check_in_date", "Check-in Date"),
 ]
 
@@ -224,23 +220,13 @@ const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("name", "Tenant Name", ["contains", "eq", "neq", "starts", "ends"]),
   textFilterColumn("email", "Email", ["contains", "eq", "neq", "starts", "is_null", "is_not_null"]),
   textFilterColumn("phone", "Phone"),
-  statusFilterColumn([
-    { value: "active", label: "Active" },
-    { value: "notice_period", label: "Notice Period" },
-    { value: "checked_out", label: "Moved Out" },
-  ]),
+  statusFilterColumn(TENANT_STATUS_OPTIONS),
   numberFilterColumn("monthly_rent", "Monthly Rent"),
   numberFilterColumn("security_deposit", "Security Deposit"),
   dateFilterColumn("check_in_date", "Check-in Date"),
   dateFilterColumn("check_out_date", "Check-out Date", ["is_null", "is_not_null"]),
   dateFilterColumn("notice_date", "Notice Date", ["is_null", "is_not_null"]),
-  selectFilterColumn("police_verification_status", "Police Verification", [
-    { value: "pending", label: "Pending" },
-    { value: "submitted", label: "Submitted" },
-    { value: "verified", label: "Verified" },
-    { value: "rejected", label: "Rejected" },
-    { value: "not_required", label: "Not Required" },
-  ]),
+  selectFilterColumn("police_verification_status", "Police Verification", POLICE_VERIFICATION_STATUS_OPTIONS),
   booleanFilterColumn("agreement_signed", "Agreement Signed"),
   dateFilterColumn("created_at", "Added On"),
 ]

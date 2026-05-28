@@ -125,12 +125,7 @@ const columns: Column<Bill>[] = [
 ]
 
 const filters: FilterConfig[] = [
-  createStatusFilter([
-    { value: "pending", label: "Pending" },
-    { value: "partial", label: "Partial" },
-    { value: "paid", label: "Paid" },
-    { value: "overdue", label: "Overdue" },
-  ]),
+  createStatusFilter(BILL_STATUS_OPTIONS),
   createDateRangeFilter("bill_date", "Bill Date"),
 ]
 
@@ -142,12 +137,7 @@ const groupByOptions: GroupByOption[] = [
 
 const advancedFilterColumns: FilterableColumn[] = [
   textFilterColumn("bill_number", "Bill Number"),
-  statusFilterColumn([
-    { value: "pending", label: "Pending" },
-    { value: "partial", label: "Partial" },
-    { value: "paid", label: "Paid" },
-    { value: "overdue", label: "Overdue" },
-  ]),
+  statusFilterColumn(BILL_STATUS_OPTIONS),
   numberFilterColumn("total_amount", "Total Amount"),
   numberFilterColumn("balance_due", "Balance Due"),
   dateFilterColumn("bill_date", "Bill Date"),
