@@ -8,7 +8,7 @@ import { getSession } from "@/lib/auth/session"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CardContent, CardFooter } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { ContextPicker } from "@/components/auth/context-picker"
 import { AuthCardLayout } from "@/components/auth/auth-card-layout"
@@ -29,6 +29,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState<LoginStep>('credentials')
   const [contexts, setContexts] = useState<ContextWithDetails[]>([])
@@ -362,15 +363,27 @@ function LoginForm() {
                 Forgot password?
               </Link>
             </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
+                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
