@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getSession } from "@/lib/auth/session"
+import { isDeviceTrusted, trustDevice } from "@/lib/auth/device-trust"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CardContent, CardFooter } from "@/components/ui/card"
@@ -18,7 +19,7 @@ import { ContextWithDetails } from "@/lib/auth/types"
 import { brandGradient } from "@/lib/design-tokens"
 import { logger } from "@/lib/logger"
 
-type LoginStep = 'credentials' | 'email-sent' | 'context-picker'
+type LoginStep = 'credentials' | 'enter-code' | 'email-sent' | 'context-picker'
 
 function LoginForm() {
   const router = useRouter()
@@ -37,32 +38,26 @@ function LoginForm() {
   const [resendLoading, setResendLoading] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
   const [emailActuallySent, setEmailActuallySent] = useState(false)
+  const [otpCode, setOtpCode] = useState("")
+  const [verifyLoading, setVerifyLoading] = useState(false)
+  const [trustDevice7Days, setTrustDevice7Days] = useState(false)
   const cooldownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const supabase = createClient()
   const mountedRef = useRef(true)
 
-  // Check for existing session on mount using centralized session handling
   useEffect(() => {
     mountedRef.current = true
 
     const checkSession = async () => {
-      // Use centralized session check
       const sessionResult = await getSession()
 
-      if (sessionResult.error) {
-        return
-      }
-
-      if (!sessionResult.session?.user) {
-        return
-      }
-
+      if (sessionResult.error) return
+      if (!sessionResult.session?.user) return
       if (!mountedRef.current) return
 
       const user = sessionResult.session.user
 
-      // User already logged in, fetch contexts
       // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       const { data: userContexts, error: contextError } = await (supabase.rpc as Function)('get_user_contexts', {
         p_user_id: user.id
@@ -70,7 +65,6 @@ function LoginForm() {
 
       if (contextError) {
         logger.error('[Login] Error fetching contexts', { error: String(contextError) })
-        // Redirect to dashboard anyway - it will handle setup
         router.push('/dashboard')
         return
       }
@@ -79,16 +73,13 @@ function LoginForm() {
 
       if (userContexts && userContexts.length > 0) {
         if (userContexts.length === 1) {
-          // Single context - redirect directly
           handleContextSelect(userContexts[0].context_id, false)
         } else {
-          // Multiple contexts - show picker
           setContexts(userContexts)
           setUserName(user.user_metadata?.name || user.email?.split('@')[0] || '')
           setStep('context-picker')
         }
       } else {
-        // No contexts - redirect to dashboard (will handle setup)
         router.push('/dashboard')
       }
     }
@@ -103,6 +94,47 @@ function LoginForm() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const startResendCooldown = () => {
+    if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current)
+    setResendCooldown(60)
+    cooldownIntervalRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current)
+          cooldownIntervalRef.current = null
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  const handlePostAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      showError("Authentication failed")
+      return
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    const { data: userContexts, error: contextError } = await (supabase.rpc as Function)('get_user_contexts', {
+      p_user_id: user.id
+    })
+
+    if (contextError || !userContexts || userContexts.length === 0) {
+      router.push('/dashboard')
+      return
+    }
+
+    if (userContexts.length === 1) {
+      handleContextSelect(userContexts[0].context_id, false)
+    } else {
+      setContexts(userContexts)
+      setUserName(user.user_metadata?.name || user.email?.split('@')[0] || '')
+      setStep('context-picker')
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -124,39 +156,67 @@ function LoginForm() {
         return
       }
 
-      // Sign out the password session — user must verify via email link (E1 principle)
+      // Sign out the password session — user must verify via OTP (E1 principle)
       await supabase.auth.signOut()
 
-      // Send magic link to the user's email, routing back through our callback
-      // If invite token present, pass next=/invite/TOKEN so post-auth auto-accepts
-      const callbackNext = inviteToken ? `/invite/${inviteToken}` : null
-      const callbackUrl = callbackNext
-        ? `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(callbackNext)}`
-        : `${window.location.origin}/api/auth/callback`
+      // If device is trusted, skip OTP and send magic link instead
+      if (isDeviceTrusted(email)) {
+        const callbackNext = inviteToken ? `/invite/${inviteToken}` : null
+        const callbackUrl = callbackNext
+          ? `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(callbackNext)}`
+          : `${window.location.origin}/api/auth/callback`
+        const { error: otpError } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            shouldCreateUser: false,
+            emailRedirectTo: callbackUrl,
+          },
+        })
+
+        if (otpError) {
+          if (otpError.status === 429) {
+            showError("A sign-in link was recently sent — check your inbox (or spam).")
+            setEmailActuallySent(false)
+            startResendCooldown()
+            setStep('email-sent')
+          } else {
+            showError("Failed to send verification email. Please try again.")
+          }
+          return
+        }
+
+        showSuccess("Trusted device — magic link sent to your email")
+        setEmailActuallySent(true)
+        startResendCooldown()
+        setStep('email-sent')
+        return
+      }
+
+      // Send OTP code (no emailRedirectTo = code mode)
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: false,
-          emailRedirectTo: callbackUrl,
         },
       })
 
       if (otpError) {
         if (otpError.status === 429) {
-          showError("A sign-in link was recently sent — check your inbox (or spam).")
+          showError("A verification code was recently sent — check your inbox (or spam).")
           setEmailActuallySent(false)
           startResendCooldown()
-          setStep('email-sent')
+          setStep('enter-code')
         } else {
-          showError("Failed to send verification email. Please try again.")
+          showError("Failed to send verification code. Please try again.")
         }
         return
       }
 
-      showSuccess("Verification email sent")
+      showSuccess("Verification code sent to your email")
       setEmailActuallySent(true)
       startResendCooldown()
-      setStep('email-sent')
+      setOtpCode("")
+      setStep('enter-code')
     } catch {
       showError("An unexpected error occurred")
     } finally {
@@ -164,19 +224,63 @@ function LoginForm() {
     }
   }
 
-  const startResendCooldown = () => {
-    if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current)
-    setResendCooldown(60)
-    cooldownIntervalRef.current = setInterval(() => {
-      setResendCooldown((prev) => {
-        if (prev <= 1) {
-          if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current)
-          cooldownIntervalRef.current = null
-          return 0
-        }
-        return prev - 1
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!otpCode || otpCode.length !== 6) {
+      showError("Please enter the 6-digit code from your email")
+      return
+    }
+    setVerifyLoading(true)
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: otpCode,
+        type: 'email',
       })
-    }, 1000)
+
+      if (error) {
+        showError(error.message || "Invalid or expired code. Please try again.")
+        return
+      }
+
+      if (trustDevice7Days) {
+        trustDevice(email)
+      }
+
+      showSuccess("Signed in successfully")
+      await handlePostAuth()
+    } catch {
+      showError("An unexpected error occurred")
+    } finally {
+      setVerifyLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return
+    setResendLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false,
+        },
+      })
+      if (error) {
+        if (error.status === 429) {
+          showError("Too many attempts — please wait 60 seconds before trying again.")
+          startResendCooldown()
+        } else {
+          showError("Failed to resend. Please try again.")
+        }
+      } else {
+        showSuccess("New code sent to your email")
+        setOtpCode("")
+        startResendCooldown()
+      }
+    } finally {
+      setResendLoading(false)
+    }
   }
 
   const handleResendLink = async () => {
@@ -211,7 +315,6 @@ function LoginForm() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Log the context switch
       // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       await (supabase.rpc as Function)('switch_context', {
         p_user_id: user.id,
@@ -219,11 +322,9 @@ function LoginForm() {
         p_from_context_id: null,
       })
 
-      // Store in localStorage
       localStorage.setItem('currentContextId', contextId)
 
       if (remember) {
-        // Set as default context
         // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         await (supabase.rpc as Function)('set_default_context', {
           p_user_id: user.id,
@@ -231,7 +332,6 @@ function LoginForm() {
         })
       }
 
-      // Determine redirect based on context type
       const selectedContext = contexts.find(c => c.context_id === contextId)
 
       if (selectedContext?.context_type === 'tenant') {
@@ -241,14 +341,80 @@ function LoginForm() {
       } else {
         router.push('/dashboard')
       }
-      // Don't use router.refresh() - it causes full page reload and remount issues
     } catch (error) {
       logger.error('Error selecting context', { error: String(error) })
       showError('Failed to select account')
     }
   }
 
-  // Show email sent step
+  // OTP entry step
+  if (step === 'enter-code') {
+    return (
+      <AuthCardLayout
+        title="Enter verification code"
+        description={`We sent a 6-digit code to ${email}`}
+      >
+        <form onSubmit={handleVerifyOtp}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="otp">Verification code</Label>
+              <Input
+                id="otp"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                placeholder="000000"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="text-center text-2xl tracking-widest font-mono"
+                required
+                autoFocus
+                disabled={verifyLoading}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="trust-device"
+                type="checkbox"
+                className="h-4 w-4 rounded border-border accent-primary"
+                checked={trustDevice7Days}
+                onChange={(e) => setTrustDevice7Days(e.target.checked)}
+              />
+              <Label htmlFor="trust-device" className="text-sm font-normal cursor-pointer">
+                Trust this device for 7 days
+              </Label>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Didn&apos;t receive it?{" "}
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                className="text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+                disabled={resendLoading || resendCooldown > 0}
+              >
+                {resendLoading ? "Sending..." : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend code"}
+              </button>
+            </p>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-3">
+            <SubmitButton loading={verifyLoading} className="w-full" loadingText="Verifying...">
+              Verify
+            </SubmitButton>
+            <button
+              type="button"
+              onClick={() => { setStep('credentials'); setOtpCode("") }}
+              className="w-full text-sm text-muted-foreground hover:text-primary"
+            >
+              Back to sign in
+            </button>
+          </CardFooter>
+        </form>
+      </AuthCardLayout>
+    )
+  }
+
+  // Email sent (magic link for trusted devices)
   if (step === 'email-sent') {
     return (
       <AuthCardLayout
@@ -290,7 +456,7 @@ function LoginForm() {
     )
   }
 
-  // Show context picker
+  // Context picker
   if (step === 'context-picker') {
     return (
       <div className={`min-h-screen flex items-center justify-center ${brandGradient.pageBg} px-4`}>
@@ -322,7 +488,7 @@ function LoginForm() {
     )
   }
 
-  // Show login form
+  // Credentials form
   return (
     <AuthCardLayout
       title="Welcome back"
