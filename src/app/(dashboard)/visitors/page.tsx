@@ -236,10 +236,7 @@ const columns: Column<Visitor>[] = [
 const filters: FilterConfig[] = [
   VISITOR_TYPE_FILTER,
   PROPERTY_FILTER,
-  createStatusFilter([
-    { value: "checked_in", label: "Inside" },
-    { value: "checked_out", label: "Left" },
-  ]),
+  createStatusFilter(VISITOR_STATUS_OPTIONS),
   createDateRangeFilter("check_in_date", "Check In Date"),
 ]
 
