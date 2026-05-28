@@ -1,5 +1,5 @@
 import { baseCronHandler } from "@/lib/cron-handler"
-import { generateAutoBills } from "@/lib/services/bills"
+import { generateAutoBills } from "@/lib/services/cron-notifications"
 
 export const GET = (request: Request) =>
   baseCronHandler(request, {
