@@ -20,6 +20,7 @@ import {
   InfoRow,
   DetailPageTemplate,
 } from "@/components/ui"
+import { Textarea } from "@/components/ui/textarea"
 import { PageLoading } from "@/components/ui/loading"
 import {
   Loader2,
@@ -367,12 +368,12 @@ export default function ComplaintDetailPage() {
             icon={FileText}
           >
             {editing ? (
-              <textarea
+              <Textarea
                 value={editData.resolution_notes}
                 onChange={(e) => setEditData((prev) => ({ ...prev, resolution_notes: e.target.value }))}
                 placeholder="Add resolution notes..."
                 rows={4}
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+                className="resize-none"
               />
             ) : complaint.resolution_notes ? (
               <p className="text-muted-foreground whitespace-pre-wrap">{complaint.resolution_notes}</p>

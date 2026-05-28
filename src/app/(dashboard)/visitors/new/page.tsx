@@ -11,6 +11,7 @@ import {
   Building2,
   MessageSquare,
 } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { PageSkeleton } from "@/components/ui/loading"
 
@@ -188,14 +189,14 @@ function NewVisitorContent() {
             </div>
           </CardHeader>
           <CardContent>
-            <textarea
+            <Textarea
               id="notes"
               name="notes"
               placeholder="Any additional notes about the visitor..."
               value={formData.notes}
               onChange={handleChange}
               disabled={loading}
-              className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+              className="min-h-[80px]"
             />
           </CardContent>
         </Card>

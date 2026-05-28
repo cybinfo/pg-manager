@@ -19,6 +19,7 @@ import { formatCurrency, formatDate, formatNumber} from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
 import { getTodayISO } from "@/lib/date-helpers"
+import { Textarea } from "@/components/ui/textarea"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
 import { useFeatures } from "@/lib/features/use-features"
@@ -664,14 +665,14 @@ function NewMeterReadingContent() {
               )}
 
               <FormField label="Notes">
-                <textarea
+                <Textarea
                   id="notes"
                   name="notes"
                   placeholder="Any additional notes..."
                   value={formData.notes as string}
                   onChange={handleChange}
                   disabled={saving}
-                  className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+                  className="min-h-[80px]"
                 />
               </FormField>
             </CardContent>

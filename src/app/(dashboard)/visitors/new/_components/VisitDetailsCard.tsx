@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { FormField } from "@/components/ui/form-components"
+import { Textarea } from "@/components/ui/textarea"
 import { UserPlus } from "lucide-react"
 import { PersonSearchResult } from "@/types/people.types"
 
@@ -49,14 +50,14 @@ export function VisitDetailsCard({
         </FormField>
 
         <FormField label="Purpose of Visit" htmlFor="purpose">
-          <textarea
+          <Textarea
             id="purpose"
             name="purpose"
             placeholder="e.g., Meeting, Delivery, etc."
             value={purpose}
             onChange={onChange}
             disabled={loading}
-            className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+            className="min-h-[80px]"
           />
         </FormField>
 

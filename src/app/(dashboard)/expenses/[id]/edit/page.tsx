@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import { Textarea } from "@/components/ui/textarea"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
 import type { PropertyOption } from "@/types/properties.types"
@@ -350,14 +351,14 @@ function EditExpenseContent() {
             </div>
           </CardHeader>
           <CardContent>
-            <textarea
+            <Textarea
               id="notes"
               name="notes"
               placeholder="Add any additional notes here..."
               value={formData.notes}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 rounded-md border border-input bg-background resize-none"
+              className="resize-none"
             />
           </CardContent>
         </Card>

@@ -15,6 +15,7 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { requiredField } from "@/lib/validation"
 import type { ValidatorResult } from "@/lib/hooks/useFormValidation"
 import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITY } from "@/lib/status"
+import { Textarea } from "@/components/ui/textarea"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
 import type { PropertyOption } from "@/types/properties.types"
@@ -492,7 +493,7 @@ function NewComplaintForm() {
             </FormField>
 
             <FormField label="Detailed Description" htmlFor="description">
-              <textarea
+              <Textarea
                 id="description"
                 name="description"
                 placeholder="Provide more details about the issue..."
@@ -500,7 +501,7 @@ function NewComplaintForm() {
                 onChange={handleChange}
                 disabled={saving}
                 rows={4}
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none"
+                className="resize-none"
               />
             </FormField>
 

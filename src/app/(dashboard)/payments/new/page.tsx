@@ -21,6 +21,7 @@ import { getTodayISO } from "@/lib/date-helpers"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { recordPayment, PaymentRecordInput } from "@/lib/workflows/payment.workflow"
 import { PAYMENT_METHOD_OPTIONS } from "@/lib/status"
+import { Textarea } from "@/components/ui/textarea"
 import { logger } from "@/lib/logger"
 import { useFeatures } from "@/lib/features/use-features"
 
@@ -544,14 +545,14 @@ function NewPaymentForm() {
             </div>
 
             <FormField label="Notes">
-              <textarea
+              <Textarea
                 id="notes"
                 name="notes"
                 placeholder="Any additional notes about this payment"
                 value={formData.notes}
                 onChange={handleChange}
                 disabled={loading}
-                className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+                className="min-h-[80px]"
               />
             </FormField>
           </CardContent>

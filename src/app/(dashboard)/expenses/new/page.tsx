@@ -22,6 +22,7 @@ import { showError } from "@/lib/toast-helpers"
 import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS } from "@/lib/status"
+import { Textarea } from "@/components/ui/textarea"
 import { PermissionGuard } from "@/components/auth"
 import { logger } from "@/lib/logger"
 import type { PropertyOption } from "@/types/properties.types"
@@ -314,14 +315,14 @@ function NewExpenseContent() {
             </div>
           </CardHeader>
           <CardContent>
-            <textarea
+            <Textarea
               id="notes"
               name="notes"
               placeholder="Add any additional notes here..."
               value={formData.notes as string}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 rounded-md border border-input bg-background resize-none"
+              className="resize-none"
             />
           </CardContent>
         </Card>

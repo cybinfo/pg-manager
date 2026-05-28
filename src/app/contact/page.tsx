@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
 import { showSuccess } from "@/lib/toast-helpers"
 import { CONTACT } from "@/lib/constants/contact"
 
@@ -181,9 +182,9 @@ export default function ContactPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="message">Message *</Label>
-                    <textarea
+                    <Textarea
                       id="message"
-                      className="w-full min-h-[150px] px-3 py-2 border border-input rounded-md bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
+                      className="min-h-[150px]"
                       placeholder="Tell us more about your question or feedback..."
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}

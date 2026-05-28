@@ -13,6 +13,7 @@ import { FormField } from "@/components/ui/form-components"
 import { ArrowLeft, Gauge, Loader2, Calculator, Zap, Droplets, Building2, Home } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { transformJoin } from "@/lib/supabase/transforms"
+import { Textarea } from "@/components/ui/textarea"
 import { PermissionGuard } from "@/components/auth"
 import type { ValidatorResult } from "@/lib/validation"
 
@@ -245,14 +246,14 @@ function EditMeterReadingContent() {
             )}
 
             <FormField label="Notes">
-              <textarea
+              <Textarea
                 id="notes"
                 name="notes"
                 placeholder="Any additional notes..."
                 value={formData.notes as string}
                 onChange={handleChange}
                 disabled={saving}
-                className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm"
+                className="min-h-[80px]"
               />
             </FormField>
           </CardContent>
