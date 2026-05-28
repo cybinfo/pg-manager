@@ -1,8 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -21,110 +19,15 @@ import {
 import { PageSkeleton } from "@/components/ui/loading"
 import { QuickActionLink } from "@/components/portal"
 import { StatsGrid } from "@/components/ui/stat-card"
-import { formatDate, formatCurrency, formatTime } from "@/lib/format"
+import { formatDate, formatCurrency } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
+import { useMemberHome } from "@/lib/hooks/useMemberHome"
 import { FeatureGuard } from "@/components/auth"
 
-interface DashboardExtra {
-  recentAttendance: Array<{
-    id: string
-    attendance_date: string
-    check_in_time: string
-    check_out_time: string | null
-    hours_spent: number | null
-  }>
-  recentPayments: Array<{
-    id: string
-    amount: number
-    payment_date: string
-    payment_type: string
-    payment_method: string
-  }>
-  totalPaid: number
-  totalHoursThisMonth: number
-  visitsThisMonth: number
-}
-
 export default function MemberHomePage() {
-  const supabase = createClient()
   const { member, loading: memberLoading } = useMemberPortalData()
-  const [loading, setLoading] = useState(true)
-  const [extra, setExtra] = useState<DashboardExtra>({
-    recentAttendance: [],
-    recentPayments: [],
-    totalPaid: 0,
-    totalHoursThisMonth: 0,
-    visitsThisMonth: 0,
-  })
-
-  useEffect(() => {
-    if (memberLoading) return
-    if (!member) {
-      setLoading(false)
-      return
-    }
-
-    const fetchDashboardData = async () => {
-
-      // Fetch recent attendance
-      const { data: attendance } = await supabase
-        .from("library_attendance")
-        .select("id, attendance_date, check_in_time, check_out_time, hours_spent")
-        .eq("member_id", member.id)
-        .is("deleted_at", null)
-        .order("check_in_time", { ascending: false })
-        .limit(5)
-
-      // Fetch recent payments
-      const { data: payments } = await supabase
-        .from("library_payments")
-        .select("id, amount, payment_date, payment_type, payment_method")
-        .eq("member_id", member.id)
-        .is("deleted_at", null)
-        .order("payment_date", { ascending: false })
-        .limit(3)
-
-      // Calculate total paid
-      const { data: allPayments } = await supabase
-        .from("library_payments")
-        .select("amount")
-        .eq("member_id", member.id)
-        .is("deleted_at", null)
-
-      const totalPaid = allPayments?.reduce((sum: number, p: { amount: number }) => sum + Number(p.amount), 0) || 0
-
-      // Calculate this month stats
-      const monthStart = new Date()
-      monthStart.setDate(1)
-      monthStart.setHours(0, 0, 0, 0)
-      const monthStartStr = monthStart.toISOString()
-
-      const { data: monthAttendance } = await supabase
-        .from("library_attendance")
-        .select("hours_spent")
-        .eq("member_id", member.id)
-        .is("deleted_at", null)
-        .gte("attendance_date", monthStartStr.split("T")[0])
-
-      const totalHoursThisMonth = monthAttendance?.reduce(
-        (sum: number, a: { hours_spent: number | null }) => sum + (a.hours_spent || 0),
-        0
-      ) || 0
-      const visitsThisMonth = monthAttendance?.length || 0
-
-      setExtra({
-        recentAttendance: attendance || [],
-        recentPayments: payments || [],
-        totalPaid,
-        totalHoursThisMonth,
-        visitsThisMonth,
-      })
-      setLoading(false)
-    }
-
-    fetchDashboardData()
-  }, [member, memberLoading])
+  const { extra, loading } = useMemberHome(member, memberLoading)
 
   if (memberLoading || loading) {
     return <PageSkeleton variant="detail" />
@@ -349,11 +252,17 @@ export default function MemberHomePage() {
                     <div>
                       <p className="font-medium">{formatDate(att.attendance_date)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatTime(att.check_in_time)}
+                        {new Date(att.check_in_time).toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                         {att.check_out_time && (
                           <>
                             {" - "}
-                            {formatTime(att.check_out_time)}
+                            {new Date(att.check_out_time).toLocaleTimeString("en-US", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </>
                         )}
                       </p>
