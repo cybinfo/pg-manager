@@ -1,15 +1,10 @@
-/**
- * Person Merge Page
- *
- * Allows merging duplicate person records into one
- */
-
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { usePeopleMerge, PersonWithStats } from "@/lib/hooks/usePeopleMerge"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -41,12 +36,6 @@ import { formatDate } from "@/lib/format"
 import { Person } from "@/types/people.types"
 import { logger } from "@/lib/logger"
 
-interface PersonWithStats extends Person {
-  tenant_count?: number
-  staff_count?: number
-  visitor_count?: number
-}
-
 export default function PersonMergePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -54,90 +43,24 @@ export default function PersonMergePage() {
   const preselectedId = searchParams.get("id")
 
   const { confirm, ConfirmDialogElement } = useConfirmDialog()
-  const [loading, setLoading] = useState(true)
   const [merging, setMerging] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<PersonWithStats[]>([])
-  const [searching, setSearching] = useState(false)
-
-  const [primaryPerson, setPrimaryPerson] = useState<PersonWithStats | null>(null)
-  const [secondaryPerson, setSecondaryPerson] = useState<PersonWithStats | null>(null)
   const [selectingFor, setSelectingFor] = useState<"primary" | "secondary" | null>(null)
 
-  // Load preselected person
-  useEffect(() => {
-    const loadPreselected = async () => {
-      if (preselectedId) {
-        // eslint-disable-next-line react-hooks/immutability
-        const person = await fetchPersonWithStats(preselectedId)
-        if (person) {
-          setPrimaryPerson(person)
-        }
-      }
-      setLoading(false)
-    }
-    loadPreselected()
-  }, [preselectedId])
+  const {
+    loading,
+    searching,
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    primaryPerson,
+    setPrimaryPerson,
+    secondaryPerson,
+    setSecondaryPerson,
+    fetchPersonWithStats,
+    handleSearch,
+  } = usePeopleMerge(preselectedId)
 
-  // Fetch person with stats
-  const fetchPersonWithStats = async (id: string): Promise<PersonWithStats | null> => {
-    const supabase = createClient()
-
-    const { data: person } = await supabase
-      .from("people")
-      .select("*")
-      .eq("id", id)
-      .single()
-
-    if (!person) return null
-
-    // Get counts
-    const [tenantRes, staffRes, visitorRes] = await Promise.all([
-      supabase.from("tenants").select("id", { count: "exact", head: true }).eq("person_id", id),
-      supabase.from("staff_members").select("id", { count: "exact", head: true }).eq("person_id", id),
-      supabase.from("visitor_contacts").select("id", { count: "exact", head: true }).eq("person_id", id),
-    ])
-
-    return {
-      ...person,
-      tenant_count: tenantRes.count || 0,
-      staff_count: staffRes.count || 0,
-      visitor_count: visitorRes.count || 0,
-    }
-  }
-
-  // Search for people
-  const handleSearch = async () => {
-    if (searchQuery.length < 2) {
-      setSearchResults([])
-      return
-    }
-
-    setSearching(true)
-    const supabase = createClient()
-
-    const { data, error } = await supabase
-      .from("people")
-      .select("*")
-      .or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`)
-      .order("name")
-      .limit(20)
-
-    if (error) {
-      logger.error("Search error:", { detail: error })
-      showError("Search failed")
-    } else {
-      // Exclude already selected persons
-      const filtered = (data || []).filter(
-        (p: Person) => p.id !== primaryPerson?.id && p.id !== secondaryPerson?.id
-      )
-      setSearchResults(filtered)
-    }
-
-    setSearching(false)
-  }
-
-  // Select a person
+  // Select a person from search results
   const handleSelectPerson = async (person: Person) => {
     const personWithStats = await fetchPersonWithStats(person.id)
     if (!personWithStats) return
@@ -149,8 +72,6 @@ export default function PersonMergePage() {
     }
 
     setSelectingFor(null)
-    setSearchResults([])
-    setSearchQuery("")
   }
 
   // Swap primary and secondary
