@@ -52,6 +52,7 @@ import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
 import { ListPageFilters, FilterConfig } from "@/components/ui/list-page-filters"
 import { PermissionGuard, ModuleGuard, FeatureGuard } from "@/components/auth"
 import type { ModuleKey } from "@/lib/features"
+import { useFeatures } from "@/lib/features/use-features"
 import { PageSkeleton } from "@/components/ui/loading"
 import { ErrorState } from "@/components/ui/empty-state"
 import { Pagination } from "@/components/ui/pagination"
@@ -494,6 +495,9 @@ export function ListPageTemplate({
   }, [viewConfig, applyViewConfig])
 
   // ============================================
+  // Feature check (must be before any conditional returns to respect hooks rules)
+  const { isFeatureEnabled } = useFeatures()
+
   // Inline Edit Setup
   // ============================================
   const { hasPermission, workspaceId } = useAuthContext()
@@ -641,6 +645,11 @@ export function ListPageTemplate({
       setInitialLoadComplete(true)
     }
   }, [loading, initialLoadComplete])
+
+  // Feature gate takes priority — prevents loading/error states leaking through when feature is disabled
+  if (module && feature && !isFeatureEnabled(module, feature)) {
+    return <FeatureGuard module={module} feature={feature}>{null}</FeatureGuard>
+  }
 
   // Only show full-page loader for initial load
   // After that, keep DataTable mounted to preserve search focus

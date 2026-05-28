@@ -553,8 +553,8 @@ function LoginForm() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <SubmitButton loading={loading} disabled={loading || resendCooldown > 0} className="w-full" loadingText="Signing in...">
-            {resendCooldown > 0 ? `Please wait ${resendCooldown}s…` : "Sign in"}
+          <SubmitButton loading={loading} className="w-full" loadingText="Signing in...">
+            Sign in
           </SubmitButton>
           <p className="text-sm text-center text-muted-foreground">
             Don&apos;t have an account?{" "}

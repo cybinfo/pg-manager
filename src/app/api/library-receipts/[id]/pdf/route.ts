@@ -24,7 +24,7 @@ const LIBRARY_PDF_CONFIG: PdfRouteConfig<LibraryReceiptData> = {
         city
       )
     ),
-    membership:library_memberships(
+    membership:library_memberships!library_payments_membership_id_fkey(
       id,
       plan_name,
       hours_included,

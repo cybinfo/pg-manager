@@ -24,6 +24,7 @@ import {
 import { PageSkeleton } from "@/components/ui/loading"
 import { getTodayISO } from "@/lib/date-helpers"
 import { PermissionGuard, FeatureGuard } from "@/components/auth"
+import { useFeatures } from "@/lib/features/use-features"
 import { Textarea } from "@/components/ui/textarea"
 import type { PropertyOption } from "@/types/properties.types"
 
@@ -65,6 +66,7 @@ const audiences = NOTICE_AUDIENCE_OPTIONS.map((opt) => ({
 }))
 
 function NewNoticeContent() {
+  const { isFeatureEnabled } = useFeatures()
   const [loadingData, setLoadingData] = useState(true)
   const [properties, setProperties] = useState<PropertyOption[]>([])
   const [libraries, setLibraries] = useState<LibraryItem[]>([])
@@ -377,7 +379,9 @@ function NewNoticeContent() {
               <Label>Audience</Label>
               <div className="space-y-2">
                 {audiences.map((audience) => {
-                  const button = (
+                  const featureKey = audience.value === "specific_rooms" ? "targetedNotices" : "broadcastNotices"
+                  if (!isFeatureEnabled("notices", featureKey)) return null
+                  return (
                     <button
                       key={audience.value}
                       type="button"
@@ -391,18 +395,6 @@ function NewNoticeContent() {
                       <span className="font-medium text-sm">{audience.label}</span>
                       <p className="text-xs text-muted-foreground">{audience.description}</p>
                     </button>
-                  )
-                  if (audience.value === "specific_rooms") {
-                    return (
-                      <FeatureGuard key={audience.value} module="notices" feature="targetedNotices">
-                        {button}
-                      </FeatureGuard>
-                    )
-                  }
-                  return (
-                    <FeatureGuard key={audience.value} module="notices" feature="broadcastNotices">
-                      {button}
-                    </FeatureGuard>
                   )
                 })}
               </div>
