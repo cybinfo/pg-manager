@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Save, ClipboardCheck } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
-import { useCurrentContext } from "@/lib/auth"
 import { APPROVAL_TYPE_LABELS } from "@/lib/status"
+import { useApprovalSettings } from "@/lib/hooks/useApprovalSettings"
 
 const AUTO_APPROVABLE_TYPES = Object.entries(APPROVAL_TYPE_LABELS).filter(([key]) =>
   ["name_change", "address_change", "phone_change", "email_change", "lease_renewal"].includes(key)
@@ -18,33 +18,8 @@ interface ApprovalSettingsProps {
 }
 
 export function ApprovalSettings({ workspaceId: propWorkspaceId }: ApprovalSettingsProps) {
-  const { context } = useCurrentContext()
-  const workspaceId = propWorkspaceId || context?.workspace_id
-
-  const [autoTypes, setAutoTypes] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
+  const { workspaceId, autoTypes, setAutoTypes, loading } = useApprovalSettings({ workspaceId: propWorkspaceId })
   const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    if (!workspaceId) return
-    const fetchConfig = async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from("workspaces")
-        .select("module_config")
-        .eq("id", workspaceId)
-        .single()
-      if (data?.module_config) {
-        const config = data.module_config as Record<string, unknown>
-        const approvals = config.approvals as Record<string, unknown> | undefined
-        if (approvals?.auto_approval_types) {
-          setAutoTypes(approvals.auto_approval_types as string[])
-        }
-      }
-      setLoading(false)
-    }
-    fetchConfig()
-  }, [workspaceId])
 
   const toggleType = (type: string) => {
     setAutoTypes((prev) =>

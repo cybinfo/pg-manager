@@ -12,11 +12,11 @@
 
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { transformArrayJoins } from "@/lib/supabase/transforms"
+import { usePaymentReconcile } from "@/lib/hooks/usePaymentReconcile"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -46,7 +46,6 @@ import { PageSkeleton } from "@/components/ui/loading"
 import { PageHeader } from "@/components/ui/page-header"
 import { TableBadge } from "@/components/ui/data-table"
 import { cn } from "@/lib/utils"
-import { logger } from "@/lib/logger"
 
 // ============================================
 // Types
@@ -64,71 +63,11 @@ interface AppliedMatch {
 function ReconciliationView() {
   const router = useRouter()
 
-  const [loading, setLoading] = useState(true)
+  const { loading, payments, bills } = usePaymentReconcile()
   const [applying, setApplying] = useState(false)
-  const [payments, setPayments] = useState<UnreconciledPayment[]>([])
-  const [bills, setBills] = useState<OutstandingBill[]>([])
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
   const [matches, setMatches] = useState<AppliedMatch[]>([])
   const [proposals, setProposals] = useState<MatchProposal[]>([])
-
-  // Fetch unreconciled payments and outstanding bills
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient()
-
-      const [paymentsResult, billsResult] = await Promise.all([
-        supabase
-          .from("payments")
-          .select(`
-            id, amount, payment_method, payment_date, receipt_number, notes,
-            tenant:tenants(id, name),
-            property:properties(id, name)
-          `)
-          .is("bill_id", null)
-          .is("deleted_at", null)
-          .order("payment_date", { ascending: false }),
-        supabase
-          .from("bills")
-          .select(`
-            id, bill_number, bill_date, due_date, for_month,
-            total_amount, paid_amount, balance_due, status,
-            tenant:tenants(id, name),
-            property:properties(id, name)
-          `)
-          .gt("balance_due", 0)
-          .in("status", ["pending", "partial", "overdue"])
-          .is("deleted_at", null)
-          .order("bill_date", { ascending: false }),
-      ])
-
-      if (paymentsResult.error) {
-        showError("Failed to load unreconciled payments")
-        logger.error("Failed to load unreconciled payments", { error: String(paymentsResult.error) })
-      }
-
-      if (billsResult.error) {
-        showError("Failed to load outstanding bills")
-        logger.error("Failed to load outstanding bills", { error: String(billsResult.error) })
-      }
-
-      const transformedPayments = transformArrayJoins(
-        (paymentsResult.data || []) as Record<string, unknown>[],
-        ["tenant", "property"]
-      ) as unknown as UnreconciledPayment[]
-
-      const transformedBills = transformArrayJoins(
-        (billsResult.data || []) as Record<string, unknown>[],
-        ["tenant", "property"]
-      ) as unknown as OutstandingBill[]
-
-      setPayments(transformedPayments)
-      setBills(transformedBills)
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [])
 
   // Computed: which payments/bills are already matched in pending matches
   const matchedPaymentIds = useMemo(
