@@ -1,79 +1,19 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreditCard, CheckCircle, IndianRupee, Calendar, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { StatsGrid } from "@/components/ui/stat-card"
 import { formatDate, formatCurrency } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
+import { useMemberPayments } from "@/lib/hooks/useMemberPayments"
 import { PAYMENT_METHODS, LIBRARY_PAYMENT_TYPE_LABELS } from "@/lib/status"
-
-interface PaymentRecord {
-  id: string
-  receipt_number: string | null
-  payment_date: string
-  amount: number
-  payment_type: string
-  payment_method: string
-  notes: string | null
-}
 
 const paymentTypeLabels = LIBRARY_PAYMENT_TYPE_LABELS
 
 export default function MemberPaymentsPage() {
   const { member, loading: memberLoading } = useMemberPortalData()
-  const [loading, setLoading] = useState(true)
-  const [payments, setPayments] = useState<PaymentRecord[]>([])
-  const [stats, setStats] = useState({
-    totalPaid: 0,
-    thisYearPaid: 0,
-    lastPaymentDate: null as string | null,
-    paymentCount: 0,
-  })
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (memberLoading) return
-    if (!member) {
-      setLoading(false)
-      return
-    }
-
-    const fetchPayments = async () => {
-      const supabase = createClient()
-
-      // Fetch all payments
-      const { data: paymentsData } = await supabase
-        .from("library_payments")
-        .select("id, receipt_number, payment_date, amount, payment_type, payment_method, notes")
-        .eq("member_id", member.id)
-        .is("deleted_at", null)
-        .order("payment_date", { ascending: false })
-
-      const records: PaymentRecord[] = paymentsData || []
-
-      // Calculate stats
-      const totalPaid = records.reduce((sum: number, p: PaymentRecord) => sum + Number(p.amount), 0)
-      const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().split("T")[0]
-      const thisYearRecords = records.filter((p: PaymentRecord) => p.payment_date >= yearStart)
-      const thisYearPaid = thisYearRecords.reduce((sum: number, p: PaymentRecord) => sum + Number(p.amount), 0)
-      const lastPaymentDate = records.length > 0 ? records[0].payment_date : null
-
-      setPayments(records)
-      setStats({
-        totalPaid,
-        thisYearPaid,
-        lastPaymentDate,
-        paymentCount: records.length,
-      })
-      setLoading(false)
-    }
-
-    fetchPayments()
-  }, [member, memberLoading])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const { payments, stats, loading } = useMemberPayments(member, memberLoading)
 
   if (memberLoading || loading) {
     return <PageSkeleton variant="list" />

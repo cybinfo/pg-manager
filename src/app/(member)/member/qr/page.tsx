@@ -1,91 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { QrCode, Info, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { MemberQRCode } from "@/components/library"
-import { isFeatureEnabled } from "@/lib/features/checks"
-import type { WorkspaceModuleConfig } from "@/lib/features"
-
-interface MemberData {
-  id: string
-  name: string
-  member_code: string | null
-  library_id: string
-  library: {
-    name: string
-    workspace_id: string
-  } | null
-  person: {
-    name: string
-  } | null
-}
+import { useMemberQR } from "@/lib/hooks/useMemberQR"
 
 export default function MemberQRPage() {
-  const [loading, setLoading] = useState(true)
-  const [member, setMember] = useState<MemberData | null>(null)
-  const [featureAvailable, setFeatureAvailable] = useState(true)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) return
-
-      const { data: memberData } = await supabase
-        .from("library_members")
-        .select(`
-          id,
-          name,
-          member_code,
-          library_id,
-          library:libraries(name, workspace_id),
-          person:people(name)
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single()
-
-      if (memberData) {
-        const library = Array.isArray(memberData.library)
-          ? memberData.library[0]
-          : memberData.library
-        const person = Array.isArray(memberData.person)
-          ? memberData.person[0]
-          : memberData.person
-
-        // Check if memberQrCode feature is enabled for this workspace
-        if (library?.workspace_id) {
-          const { data: workspace } = await supabase
-            .from("workspaces")
-            .select("module_config")
-            .eq("id", library.workspace_id)
-            .single()
-
-          if (workspace) {
-            const config = workspace.module_config as WorkspaceModuleConfig | null
-            if (!isFeatureEnabled(config, "members", "memberQrCode")) {
-              setFeatureAvailable(false)
-              setLoading(false)
-              return
-            }
-          }
-        }
-
-        setMember({
-          ...memberData,
-          library,
-          person,
-        })
-      }
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [])
+  const { member, featureAvailable, loading } = useMemberQR()
 
   if (loading) {
     return <PageSkeleton variant="detail" />

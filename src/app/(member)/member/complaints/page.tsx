@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,28 +22,16 @@ import { formatDate, formatTimeAgo } from "@/lib/format"
 import { PageSkeleton } from "@/components/ui/loading"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
+import { useMemberComplaints } from "@/lib/hooks/useMemberComplaints"
 import { COMPLAINT_CATEGORIES } from "@/lib/status"
-
-interface Complaint {
-  id: string
-  category: string
-  title: string
-  description: string | null
-  status: string
-  priority: string
-  resolution_notes: string | null
-  created_at: string
-  resolved_at: string | null
-}
 
 const categoryOptions = Object.entries(COMPLAINT_CATEGORIES).map(([value, label]) => ({ value, label }))
 const categoryLabels = COMPLAINT_CATEGORIES
 
 export default function MemberComplaintsPage() {
   const { member, user, loading: memberLoading } = useMemberPortalData()
-  const [loading, setLoading] = useState(true)
+  const { complaints, loading, setComplaints } = useMemberComplaints(member, user, memberLoading)
   const [submitting, setSubmitting] = useState(false)
-  const [complaints, setComplaints] = useState<Complaint[]>([])
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     category: "other",
@@ -51,31 +39,6 @@ export default function MemberComplaintsPage() {
     description: "",
   })
 
-   
-  useEffect(() => {
-    if (memberLoading) return
-    if (!member || !user) {
-      setLoading(false)
-      return
-    }
-
-    const fetchComplaints = async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from("complaints")
-        .select("id, category, title, description, status, priority, resolution_notes, created_at, resolved_at")
-        .eq("library_id", member.library_id)
-        .eq("created_by", user.id)
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false })
-
-      setComplaints(data || [])
-      setLoading(false)
-    }
-
-    fetchComplaints()
-  }, [member, user, memberLoading])
-   
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   Bell,
@@ -15,18 +13,9 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
-import { getNowISO } from "@/lib/date-helpers"
 import { formatDate, formatTimeAgo } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
-
-interface Notice {
-  id: string
-  title: string
-  content: string
-  type: string
-  created_at: string
-  expires_at: string | null
-}
+import { useMemberNotices } from "@/lib/hooks/useMemberNotices"
 
 const typeConfig: Record<string, { label: string; color: string; bgColor: string; icon: LucideIcon }> = {
   general: { label: "General", color: "text-info", bgColor: "bg-info/10", icon: Megaphone },
@@ -37,36 +26,7 @@ const typeConfig: Record<string, { label: string; color: string; bgColor: string
 
 export default function MemberNoticesPage() {
   const { member, loading: memberLoading } = useMemberPortalData()
-  const [loading, setLoading] = useState(true)
-  const [notices, setNotices] = useState<Notice[]>([])
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (memberLoading) return
-    if (!member) {
-      setLoading(false)
-      return
-    }
-
-    const fetchNotices = async () => {
-      const supabase = createClient()
-      const now = getNowISO()
-
-      const { data } = await supabase
-        .from("notices")
-        .select("id, title, content, type, created_at, expires_at")
-        .eq("is_active", true)
-        .eq("library_id", member.library_id)
-        .or(`expires_at.is.null,expires_at.gt.${now}`)
-        .order("created_at", { ascending: false })
-
-      setNotices(data || [])
-      setLoading(false)
-    }
-
-    fetchNotices()
-  }, [member, memberLoading])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const { notices, loading } = useMemberNotices(member, memberLoading)
 
   const isNew = (dateString: string) => {
     const diffHours = (new Date().getTime() - new Date(dateString).getTime()) / (1000 * 60 * 60)

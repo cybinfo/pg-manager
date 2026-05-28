@@ -1,90 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock, CheckCircle, Calendar, Timer, AlertCircle } from "lucide-react"
 import { PageSkeleton } from "@/components/ui/loading"
 import { ExportButton } from "@/components/ui/export-button"
 import { formatDate } from "@/lib/format"
 import { useMemberPortalData } from "@/lib/hooks/useMemberPortalData"
-
-interface AttendanceRecord {
-  id: string
-  attendance_date: string
-  check_in_time: string
-  check_out_time: string | null
-  hours_spent: number | null
-  notes: string | null
-}
+import { useMemberAttendance } from "@/lib/hooks/useMemberAttendance"
 
 export default function MemberAttendancePage() {
   const { member, loading: memberLoading } = useMemberPortalData()
-  const [loading, setLoading] = useState(true)
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([])
-  const [stats, setStats] = useState({
-    totalVisits: 0,
-    totalHours: 0,
-    avgHoursPerVisit: 0,
-    thisMonthVisits: 0,
-    thisMonthHours: 0,
-  })
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (memberLoading) return
-    if (!member) {
-      setLoading(false)
-      return
-    }
-
-    const fetchAttendance = async () => {
-      const supabase = createClient()
-
-      // Fetch all attendance
-      const { data: attendanceData } = await supabase
-        .from("library_attendance")
-        .select("id, attendance_date, check_in_time, check_out_time, hours_spent, notes")
-        .eq("member_id", member.id)
-        .is("deleted_at", null)
-        .order("check_in_time", { ascending: false })
-
-      // Calculate stats
-      const records: AttendanceRecord[] = attendanceData || []
-      const totalVisits = records.length
-      const totalHours = records.reduce((sum: number, r: AttendanceRecord) => sum + (r.hours_spent || 0), 0)
-      const completedRecords = records.filter((r: AttendanceRecord) => r.hours_spent)
-      const avgHoursPerVisit = completedRecords.length > 0
-        ? totalHours / completedRecords.length
-        : 0
-
-      // This month stats
-      const monthStart = new Date()
-      monthStart.setDate(1)
-      monthStart.setHours(0, 0, 0, 0)
-      const thisMonthRecords = records.filter(
-        (r: AttendanceRecord) => new Date(r.attendance_date) >= monthStart
-      )
-      const thisMonthVisits = thisMonthRecords.length
-      const thisMonthHours = thisMonthRecords.reduce(
-        (sum: number, r: AttendanceRecord) => sum + (r.hours_spent || 0),
-        0
-      )
-
-      setAttendance(records)
-      setStats({
-        totalVisits,
-        totalHours,
-        avgHoursPerVisit,
-        thisMonthVisits,
-        thisMonthHours,
-      })
-      setLoading(false)
-    }
-
-    fetchAttendance()
-  }, [member, memberLoading])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const { attendance, stats, loading } = useMemberAttendance(member, memberLoading)
 
   if (memberLoading || loading) {
     return <PageSkeleton variant="list" />
