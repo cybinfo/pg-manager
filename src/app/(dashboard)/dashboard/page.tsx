@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MetricsBar, MetricItem } from "@/components/ui/metrics-bar"
@@ -48,44 +46,8 @@ import { ModuleGuard } from "@/components/auth/module-guard"
 import { InfoBanner } from "@/components/ui/info-banner"
 import { formatCurrency, formatCurrencyTick, calculateOccupancyRate, getGreeting } from "@/lib/format"
 import { brandGradient } from "@/lib/design-tokens"
-import { computeDashboardStats } from "@/lib/reports/dashboard"
-
-interface DashboardStats {
-  properties: number
-  rooms: number
-  totalBeds: number
-  occupiedBeds: number
-  tenants: number
-  pendingDues: number
-  totalRevenue: number
-  totalExpenses: number
-  overdueCount: number
-  openComplaints: number
-  expiringLeases: number
-  // Library stats
-  libraries: number
-  libraryMembers: number
-  libraryActiveMembers: number
-  libraryCheckedIn: number
-}
-
-interface GettingStartedItem {
-  task: string
-  href: string
-  done: boolean
-}
-
-interface MonthlyRevenue {
-  month: string
-  amount: number
-}
-
-interface PaymentStatus {
-  name: string
-  value: number
-  color: string
-  [key: string]: string | number // Index signature for recharts compatibility
-}
+import { useDashboardData } from "@/lib/hooks/useDashboardData"
+import type { PaymentStatus } from "@/lib/hooks/useDashboardData"
 
 const quickActionsConfig = [
   { name: "Add Property", href: "/properties/new", icon: Building2, permission: "properties.create" },
@@ -106,137 +68,12 @@ function getGreetingIcon(): typeof Sun {
 export default function DashboardPage() {
   const { hasPermission, user } = useAuth()
   const { isOwner } = useCurrentContext()
-  const [userName, setUserName] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState<DashboardStats>({
-    properties: 0,
-    rooms: 0,
-    totalBeds: 0,
-    occupiedBeds: 0,
-    tenants: 0,
-    pendingDues: 0,
-    totalRevenue: 0,
-    totalExpenses: 0,
-    overdueCount: 0,
-    openComplaints: 0,
-    expiringLeases: 0,
-    // Library stats
-    libraries: 0,
-    libraryMembers: 0,
-    libraryActiveMembers: 0,
-    libraryCheckedIn: 0,
-  })
-  const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([])
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus[]>([])
-  const [gettingStarted, setGettingStarted] = useState<GettingStartedItem[]>([
-    { task: "Add your first property", href: "/properties/new", done: false },
-    { task: "Create rooms in your property", href: "/rooms/new", done: false },
-    { task: "Add your first tenant", href: "/tenants/new", done: false },
-    { task: "Configure charge types", href: "/settings", done: false },
-  ])
+  const { loading, userName, stats, monthlyRevenue, paymentStatus, gettingStarted } = useDashboardData()
 
   const greetingText = getGreeting()
   const GreetingIcon = getGreetingIcon()
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user) return
-
-      // Set user name
-      if (user.user_metadata?.full_name) {
-        setUserName(user.user_metadata.full_name.split(" ")[0])
-      }
-
-      const supabase = createClient()
-      // Calculate date ranges
-      const now = new Date()
-      const _thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      const _nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-      const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-
-      const today = now.toISOString().split("T")[0]
-
-      // Fetch counts in parallel
-      const [
-        propertiesRes,
-        roomsRes,
-        tenantsRes,
-        chargesRes,
-        chargeTypesRes,
-        paymentsRes,
-        expensesRes,
-        complaintsRes,
-        expiringLeasesRes,
-        monthlyPaymentsRes,
-        // Library stats
-        librariesRes,
-        libraryMembersRes,
-        libraryActiveMembersRes,
-        libraryCheckedInRes,
-      ] = await Promise.all([
-        supabase.from("properties").select("id", { count: "exact", head: true }),
-        supabase.from("rooms").select("total_beds, occupied_beds"),
-        supabase.from("tenants").select("id", { count: "exact", head: true }).eq("status", "active"),
-        supabase.from("charges").select("amount, paid_amount, status").in("status", ["pending", "partial", "overdue"]),
-        supabase.from("charge_types").select("id", { count: "exact", head: true }),
-        supabase.from("payments").select("amount"),
-        supabase.from("expenses").select("amount"),
-        supabase.from("complaints").select("id", { count: "exact", head: true }).eq("status", "open"),
-        supabase.from("tenants").select("id", { count: "exact", head: true })
-          .eq("status", "active")
-          .not("expected_exit_date", "is", null)
-          .lte("expected_exit_date", thirtyDaysFromNow.toISOString()),
-        // Get payments for last 6 months for chart
-        supabase.from("payments")
-          .select("amount, payment_date")
-          .gte("payment_date", new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString())
-          .order("payment_date"),
-        // Library stats
-        supabase.from("libraries").select("id", { count: "exact", head: true }).is("deleted_at", null),
-        supabase.from("library_members").select("id", { count: "exact", head: true }).is("deleted_at", null),
-        supabase.from("library_members").select("id", { count: "exact", head: true }).eq("status", "active").is("deleted_at", null),
-        supabase.from("library_attendance").select("id", { count: "exact", head: true })
-          .eq("attendance_date", today)
-          .is("check_out_time", null)
-          .is("deleted_at", null),
-      ])
-
-      const computed = computeDashboardStats({
-        rooms: roomsRes.data || [],
-        charges: chargesRes.data || [],
-        payments: paymentsRes.data || [],
-        allPayments: monthlyPaymentsRes.data || [],
-        expenses: expensesRes.data || [],
-        propertiesCount: propertiesRes.count || 0,
-        tenantsCount: tenantsRes.count || 0,
-        complaintsCount: complaintsRes.count || 0,
-        expiringLeasesCount: expiringLeasesRes.count || 0,
-        librariesCount: librariesRes.count || 0,
-        libraryMembersCount: libraryMembersRes.count || 0,
-        libraryActiveMembersCount: libraryActiveMembersRes.count || 0,
-        libraryCheckedInCount: libraryCheckedInRes.count || 0,
-        chargeTypesCount: chargeTypesRes.count || 0,
-        roomsCount: roomsRes.data?.length || 0,
-      }, now)
-
-      setStats(computed.stats)
-      setMonthlyRevenue(computed.monthlyRevenue)
-      setPaymentStatus(computed.paymentStatus)
-
-      setGettingStarted([
-        { task: "Add your first property", href: "/properties/new", done: computed.gettingStartedDone.property },
-        { task: "Create rooms in your property", href: "/rooms/new", done: computed.gettingStartedDone.room },
-        { task: "Add your first tenant", href: "/tenants/new", done: computed.gettingStartedDone.tenant },
-        { task: "Configure charge types", href: "/settings", done: computed.gettingStartedDone.chargeType },
-      ])
-
-      setLoading(false)
-    }
-
-    fetchDashboardData()
-  }, [user])
-
-  const occupancyRate = calculateOccupancyRate(stats.occupiedBeds, stats.totalBeds)
+  const occupancyRate = stats.totalBeds > 0 ? Math.round((stats.occupiedBeds / stats.totalBeds) * 100) : 0
 
   // Check if user has permission (owners always have access)
   const canView = (permission: string) => isOwner || hasPermission(permission)
