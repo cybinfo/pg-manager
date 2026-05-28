@@ -25,12 +25,18 @@ export const pdfColors = {
   primaryLight: "#D1FAE5", // Light emerald
   primaryDark: "#059669", // Dark emerald
 
+  // Library brand (indigo)
+  library: "#6366F1",
+  libraryLight: "#EEF2FF", // Light indigo background
+
   // Backgrounds
   white: "#ffffff",
   background: "#F9FAFB",
   backgroundLight: "#F3F4F6",
+  backgroundMuted: "#FAFAFA", // Very light gray (alternate table rows)
   backgroundSuccess: "#F0FDF4",
   backgroundWarning: "#FFFBEB",
+  backgroundWarningAlt: "#FEF3C7", // Light amber (subscription boxes, recommendations)
   backgroundError: "#FEF2F2",
   backgroundInfo: "#EFF6FF",
 
@@ -39,6 +45,7 @@ export const pdfColors = {
   textSecondary: "#374151",
   textMuted: "#6B7280",
   textLight: "#9CA3AF",
+  textBody: "#4B5563", // gray-600 (table cell text)
 
   // Borders
   border: "#E5E7EB",
@@ -49,8 +56,10 @@ export const pdfColors = {
   successText: "#065F46",
   warning: "#F59E0B",
   warningText: "#92400E",
+  warningDeep: "#78350F", // amber-900 (recommendation description text)
   error: "#EF4444",
   errorText: "#991B1B",
+  errorDeep: "#7F1D1D", // red-900 (alert description text)
   info: "#3B82F6",
   infoText: "#1E40AF",
 

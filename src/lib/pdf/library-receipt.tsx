@@ -7,92 +7,92 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer"
 import { formatCurrency, formatDate } from "@/lib/format"
-import { pdfBrand } from "@/lib/pdf/theme"
+import { pdfBrand, pdfColors, pdfFonts, pdfSpacing } from "@/lib/pdf/theme"
 import { LIBRARY_PAYMENT_TYPE_LABELS } from "@/lib/status"
 
 // Create styles
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
-    backgroundColor: "#ffffff",
-    padding: 40,
-    fontFamily: "Helvetica",
+    backgroundColor: pdfColors.white,
+    padding: pdfSpacing.page,
+    fontFamily: pdfFonts.family,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 30,
-    paddingBottom: 20,
+    marginBottom: pdfSpacing.sectionLarge,
+    paddingBottom: pdfSpacing.section,
     borderBottomWidth: 2,
-    borderBottomColor: "#6366F1", // Indigo for library
+    borderBottomColor: pdfColors.library,
   },
   brandSection: {
     flexDirection: "column",
   },
   brandName: {
-    fontSize: 24,
+    fontSize: pdfFonts.title,
     fontWeight: "bold",
-    color: "#6366F1",
+    color: pdfColors.library,
     marginBottom: 4,
   },
   brandTagline: {
-    fontSize: 10,
-    color: "#6B7280",
+    fontSize: pdfFonts.small,
+    color: pdfColors.textMuted,
   },
   receiptInfo: {
     alignItems: "flex-end",
   },
   receiptTitle: {
-    fontSize: 20,
+    fontSize: pdfFonts.heading,
     fontWeight: "bold",
-    color: "#111827",
+    color: pdfColors.textPrimary,
     marginBottom: 8,
   },
   receiptNumber: {
-    fontSize: 10,
-    color: "#6B7280",
+    fontSize: pdfFonts.small,
+    color: pdfColors.textMuted,
     marginBottom: 4,
   },
   receiptDate: {
-    fontSize: 10,
-    color: "#6B7280",
+    fontSize: pdfFonts.small,
+    color: pdfColors.textMuted,
   },
   section: {
     marginBottom: 25,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: pdfFonts.sectionTitle,
     fontWeight: "bold",
-    color: "#374151",
-    marginBottom: 10,
+    color: pdfColors.textSecondary,
+    marginBottom: pdfSpacing.elementSmall,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 6,
+    marginBottom: pdfSpacing.elementTiny,
   },
   label: {
-    fontSize: 11,
-    color: "#6B7280",
+    fontSize: pdfFonts.body,
+    color: pdfColors.textMuted,
   },
   value: {
-    fontSize: 11,
-    color: "#111827",
+    fontSize: pdfFonts.body,
+    color: pdfColors.textPrimary,
     fontWeight: "bold",
   },
   divider: {
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    marginVertical: 15,
+    borderBottomColor: pdfColors.border,
+    marginVertical: pdfSpacing.element,
   },
   amountBox: {
-    backgroundColor: "#EEF2FF", // Light indigo
-    padding: 20,
-    borderRadius: 8,
-    marginTop: 10,
+    backgroundColor: pdfColors.libraryLight,
+    padding: pdfSpacing.section,
+    borderRadius: pdfSpacing.radiusLarge,
+    marginTop: pdfSpacing.elementSmall,
   },
   amountRow: {
     flexDirection: "row",
@@ -101,73 +101,73 @@ const styles = StyleSheet.create({
   },
   amountLabel: {
     fontSize: 14,
-    color: "#374151",
+    color: pdfColors.textSecondary,
     fontWeight: "bold",
   },
   amountValue: {
-    fontSize: 24,
-    color: "#6366F1",
+    fontSize: pdfFonts.title,
+    color: pdfColors.library,
     fontWeight: "bold",
   },
   footer: {
     position: "absolute",
-    bottom: 40,
-    left: 40,
-    right: 40,
+    bottom: pdfSpacing.page,
+    left: pdfSpacing.page,
+    right: pdfSpacing.page,
     borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    paddingTop: 15,
+    borderTopColor: pdfColors.border,
+    paddingTop: pdfSpacing.element,
   },
   footerText: {
-    fontSize: 9,
-    color: "#9CA3AF",
+    fontSize: pdfFonts.tiny,
+    color: pdfColors.textLight,
     textAlign: "center",
     marginBottom: 4,
   },
   footerBrand: {
-    fontSize: 10,
-    color: "#6366F1",
+    fontSize: pdfFonts.small,
+    color: pdfColors.library,
     textAlign: "center",
     fontWeight: "bold",
   },
   statusBadge: {
-    backgroundColor: "#6366F1",
+    backgroundColor: pdfColors.library,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: pdfSpacing.radiusBadge,
     alignSelf: "flex-start",
   },
   statusText: {
-    fontSize: 10,
-    color: "#ffffff",
+    fontSize: pdfFonts.small,
+    color: pdfColors.white,
     fontWeight: "bold",
   },
   libraryBox: {
-    backgroundColor: "#F9FAFB",
-    padding: 15,
-    borderRadius: 6,
+    backgroundColor: pdfColors.background,
+    padding: pdfSpacing.element,
+    borderRadius: pdfSpacing.radius,
   },
   libraryName: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#111827",
+    color: pdfColors.textPrimary,
     marginBottom: 4,
   },
   libraryAddress: {
-    fontSize: 10,
-    color: "#6B7280",
+    fontSize: pdfFonts.small,
+    color: pdfColors.textMuted,
   },
   subscriptionBox: {
-    backgroundColor: "#FEF3C7", // Light amber
-    padding: 12,
-    borderRadius: 6,
-    marginTop: 10,
+    backgroundColor: pdfColors.backgroundWarningAlt,
+    padding: pdfSpacing.cardSmall,
+    borderRadius: pdfSpacing.radius,
+    marginTop: pdfSpacing.elementSmall,
   },
   subscriptionTitle: {
-    fontSize: 11,
+    fontSize: pdfFonts.body,
     fontWeight: "bold",
-    color: "#92400E",
-    marginBottom: 6,
+    color: pdfColors.warningText,
+    marginBottom: pdfSpacing.elementTiny,
   },
   subscriptionRow: {
     flexDirection: "row",
@@ -175,12 +175,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   subscriptionLabel: {
-    fontSize: 10,
-    color: "#92400E",
+    fontSize: pdfFonts.small,
+    color: pdfColors.warningText,
   },
   subscriptionValue: {
-    fontSize: 10,
-    color: "#92400E",
+    fontSize: pdfFonts.small,
+    color: pdfColors.warningText,
     fontWeight: "bold",
   },
 })
@@ -353,7 +353,7 @@ export function LibraryReceiptPDF({ data }: { data: LibraryReceiptData }) {
                   width: 150,
                   height: 40,
                   borderBottomWidth: 1,
-                  borderBottomColor: "#374151",
+                  borderBottomColor: pdfColors.textSecondary,
                   marginTop: 30,
                 }}
               />

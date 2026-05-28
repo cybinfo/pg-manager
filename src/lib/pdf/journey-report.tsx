@@ -12,7 +12,7 @@ import {
 } from "@/types/journey.types"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { getNowISO } from "@/lib/date-helpers"
-import { pdfBrand, getScoreColor, getCategoryColor } from "@/lib/pdf/theme"
+import { pdfBrand, pdfColors, pdfFonts, pdfSpacing, getScoreColor, getCategoryColor } from "@/lib/pdf/theme"
 
 // ============================================
 // Styles
@@ -22,9 +22,9 @@ const styles = StyleSheet.create({
   // Page styles
   page: {
     flexDirection: "column",
-    backgroundColor: "#ffffff",
-    padding: 40,
-    fontFamily: "Helvetica",
+    backgroundColor: pdfColors.white,
+    padding: pdfSpacing.page,
+    fontFamily: pdfFonts.family,
   },
 
   // Header
@@ -32,114 +32,114 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 20,
-    paddingBottom: 15,
+    marginBottom: pdfSpacing.section,
+    paddingBottom: pdfSpacing.sectionSmall,
     borderBottomWidth: 2,
-    borderBottomColor: "#10B981",
+    borderBottomColor: pdfColors.primary,
   },
   brandSection: {
     flexDirection: "column",
   },
   brandName: {
-    fontSize: 20,
+    fontSize: pdfFonts.heading,
     fontWeight: "bold",
-    color: "#10B981",
+    color: pdfColors.primary,
     marginBottom: 2,
   },
   brandTagline: {
-    fontSize: 8,
-    color: "#6B7280",
+    fontSize: pdfFonts.micro,
+    color: pdfColors.textMuted,
   },
   reportInfo: {
     alignItems: "flex-end",
   },
   reportTitle: {
-    fontSize: 16,
+    fontSize: pdfFonts.subheading,
     fontWeight: "bold",
-    color: "#111827",
+    color: pdfColors.textPrimary,
     marginBottom: 4,
   },
   reportSubtitle: {
-    fontSize: 9,
-    color: "#6B7280",
+    fontSize: pdfFonts.tiny,
+    color: pdfColors.textMuted,
   },
 
   // Section styles
   section: {
-    marginBottom: 20,
+    marginBottom: pdfSpacing.section,
   },
   sectionTitle: {
-    fontSize: 11,
+    fontSize: pdfFonts.body,
     fontWeight: "bold",
-    color: "#374151",
-    marginBottom: 8,
+    color: pdfColors.textSecondary,
+    marginBottom: pdfSpacing.cardTiny,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     paddingBottom: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: pdfColors.border,
   },
 
   // Profile box
   profileBox: {
-    backgroundColor: "#F9FAFB",
-    padding: 15,
-    borderRadius: 6,
+    backgroundColor: pdfColors.background,
+    padding: pdfSpacing.element,
+    borderRadius: pdfSpacing.radius,
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 15,
+    marginBottom: pdfSpacing.element,
   },
   profileMain: {
     flex: 1,
   },
   tenantName: {
-    fontSize: 16,
+    fontSize: pdfFonts.subheading,
     fontWeight: "bold",
-    color: "#111827",
+    color: pdfColors.textPrimary,
     marginBottom: 4,
   },
   profileDetail: {
-    fontSize: 9,
-    color: "#6B7280",
+    fontSize: pdfFonts.tiny,
+    color: pdfColors.textMuted,
     marginBottom: 2,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: pdfSpacing.radiusPill,
     alignSelf: "flex-start",
   },
   statusText: {
-    fontSize: 8,
+    fontSize: pdfFonts.micro,
     fontWeight: "bold",
-    color: "#ffffff",
+    color: pdfColors.white,
   },
 
   // Score cards
   scoreCardsRow: {
     flexDirection: "row",
-    marginBottom: 15,
-    gap: 10,
+    marginBottom: pdfSpacing.element,
+    gap: pdfSpacing.elementSmall,
   },
   scoreCard: {
     flex: 1,
-    padding: 12,
-    borderRadius: 6,
+    padding: pdfSpacing.cardSmall,
+    borderRadius: pdfSpacing.radius,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: pdfColors.border,
   },
   scoreLabel: {
-    fontSize: 8,
-    color: "#6B7280",
+    fontSize: pdfFonts.micro,
+    color: pdfColors.textMuted,
     marginBottom: 4,
   },
   scoreValue: {
-    fontSize: 20,
+    fontSize: pdfFonts.heading,
     fontWeight: "bold",
     marginBottom: 2,
   },
   scoreLevel: {
-    fontSize: 8,
+    fontSize: pdfFonts.micro,
     fontWeight: "bold",
   },
 
@@ -147,184 +147,184 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginBottom: 15,
+    marginBottom: pdfSpacing.element,
   },
   statItem: {
     width: "25%",
-    padding: 8,
+    padding: pdfSpacing.cardTiny,
   },
   statLabel: {
-    fontSize: 8,
-    color: "#6B7280",
+    fontSize: pdfFonts.micro,
+    color: pdfColors.textMuted,
     marginBottom: 2,
   },
   statValue: {
-    fontSize: 12,
+    fontSize: pdfFonts.sectionTitle,
     fontWeight: "bold",
-    color: "#111827",
+    color: pdfColors.textPrimary,
   },
 
   // Financial box
   financialBox: {
-    backgroundColor: "#F0FDF4",
-    padding: 15,
-    borderRadius: 6,
-    marginBottom: 15,
+    backgroundColor: pdfColors.backgroundSuccess,
+    padding: pdfSpacing.element,
+    borderRadius: pdfSpacing.radius,
+    marginBottom: pdfSpacing.element,
   },
   financialRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 6,
+    marginBottom: pdfSpacing.elementTiny,
   },
   financialLabel: {
-    fontSize: 9,
-    color: "#374151",
+    fontSize: pdfFonts.tiny,
+    color: pdfColors.textSecondary,
   },
   financialValue: {
-    fontSize: 9,
+    fontSize: pdfFonts.tiny,
     fontWeight: "bold",
-    color: "#111827",
+    color: pdfColors.textPrimary,
   },
   financialHighlight: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#10B981",
+    color: pdfColors.primary,
   },
   financialDanger: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#EF4444",
+    color: pdfColors.error,
   },
 
   // Alert box
   alertBox: {
-    backgroundColor: "#FEF2F2",
-    padding: 10,
-    borderRadius: 6,
-    marginBottom: 8,
+    backgroundColor: pdfColors.backgroundError,
+    padding: pdfSpacing.elementSmall,
+    borderRadius: pdfSpacing.radius,
+    marginBottom: pdfSpacing.cardTiny,
     borderLeftWidth: 3,
-    borderLeftColor: "#EF4444",
+    borderLeftColor: pdfColors.error,
   },
   alertTitle: {
-    fontSize: 9,
+    fontSize: pdfFonts.tiny,
     fontWeight: "bold",
-    color: "#991B1B",
+    color: pdfColors.errorText,
     marginBottom: 2,
   },
   alertDescription: {
-    fontSize: 8,
-    color: "#7F1D1D",
+    fontSize: pdfFonts.micro,
+    color: pdfColors.errorDeep,
   },
 
   // Table styles
   table: {
-    marginBottom: 15,
+    marginBottom: pdfSpacing.element,
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#F3F4F6",
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
+    backgroundColor: pdfColors.backgroundLight,
+    paddingVertical: pdfSpacing.cardTiny,
+    paddingHorizontal: pdfSpacing.elementTiny,
+    borderTopLeftRadius: pdfSpacing.radiusSmall,
+    borderTopRightRadius: pdfSpacing.radiusSmall,
   },
   tableHeaderCell: {
-    fontSize: 8,
+    fontSize: pdfFonts.micro,
     fontWeight: "bold",
-    color: "#374151",
+    color: pdfColors.textSecondary,
   },
   tableRow: {
     flexDirection: "row",
-    paddingVertical: 8,
-    paddingHorizontal: 6,
+    paddingVertical: pdfSpacing.cardTiny,
+    paddingHorizontal: pdfSpacing.elementTiny,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    borderBottomColor: pdfColors.border,
   },
   tableRowAlt: {
-    backgroundColor: "#FAFAFA",
+    backgroundColor: pdfColors.backgroundMuted,
   },
   tableCell: {
-    fontSize: 8,
-    color: "#4B5563",
+    fontSize: pdfFonts.micro,
+    color: pdfColors.textBody,
   },
   tableCellBold: {
-    fontSize: 8,
+    fontSize: pdfFonts.micro,
     fontWeight: "bold",
-    color: "#111827",
+    color: pdfColors.textPrimary,
   },
 
   // Timeline styles
   timelineItem: {
     flexDirection: "row",
-    marginBottom: 10,
+    marginBottom: pdfSpacing.elementSmall,
   },
   timelineDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 10,
+    marginRight: pdfSpacing.elementSmall,
     marginTop: 2,
   },
   timelineContent: {
     flex: 1,
   },
   timelineTitle: {
-    fontSize: 9,
+    fontSize: pdfFonts.tiny,
     fontWeight: "bold",
-    color: "#111827",
+    color: pdfColors.textPrimary,
     marginBottom: 2,
   },
   timelineDescription: {
-    fontSize: 8,
-    color: "#6B7280",
+    fontSize: pdfFonts.micro,
+    color: pdfColors.textMuted,
     marginBottom: 2,
   },
   timelineDate: {
     fontSize: 7,
-    color: "#9CA3AF",
+    color: pdfColors.textLight,
   },
 
   // Footer
   footer: {
     position: "absolute",
-    bottom: 30,
-    left: 40,
-    right: 40,
+    bottom: pdfSpacing.pageSmall,
+    left: pdfSpacing.page,
+    right: pdfSpacing.page,
     borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    paddingTop: 10,
+    borderTopColor: pdfColors.border,
+    paddingTop: pdfSpacing.elementSmall,
     flexDirection: "row",
     justifyContent: "space-between",
   },
   footerText: {
-    fontSize: 8,
-    color: "#9CA3AF",
+    fontSize: pdfFonts.micro,
+    color: pdfColors.textLight,
   },
   footerBrand: {
-    fontSize: 8,
-    color: "#10B981",
+    fontSize: pdfFonts.micro,
+    color: pdfColors.primary,
     fontWeight: "bold",
   },
   pageNumber: {
-    fontSize: 8,
-    color: "#9CA3AF",
+    fontSize: pdfFonts.micro,
+    color: pdfColors.textLight,
   },
 
   // Divider
   divider: {
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-    marginVertical: 10,
+    borderBottomColor: pdfColors.border,
+    marginVertical: pdfSpacing.elementSmall,
   },
 
   // Empty state
   emptyState: {
-    padding: 20,
+    padding: pdfSpacing.section,
     alignItems: "center",
   },
   emptyText: {
-    fontSize: 10,
-    color: "#9CA3AF",
+    fontSize: pdfFonts.small,
+    color: pdfColors.textLight,
   },
 })
 
@@ -338,16 +338,16 @@ function getStatusColor(status: string): string {
     case "paid":
     case "resolved":
     case "completed":
-      return "#10B981"
+      return pdfColors.primary
     case "pending":
     case "partial":
-      return "#F59E0B"
+      return pdfColors.warning
     case "overdue":
     case "inactive":
     case "critical":
-      return "#EF4444"
+      return pdfColors.error
     default:
-      return "#6B7280"
+      return pdfColors.textMuted
   }
 }
 
@@ -460,10 +460,10 @@ function SummaryPage({ data }: { data: JourneyReportData }) {
           </View>
           <View style={styles.scoreCard}>
             <Text style={styles.scoreLabel}>Satisfaction</Text>
-            <Text style={[styles.scoreValue, { color: insights.satisfaction_level === "high" ? "#10B981" : insights.satisfaction_level === "medium" ? "#F59E0B" : "#EF4444" }]}>
+            <Text style={[styles.scoreValue, { color: insights.satisfaction_level === "high" ? pdfColors.primary : insights.satisfaction_level === "medium" ? pdfColors.warning : pdfColors.error }]}>
               {insights.satisfaction_level === "high" ? "85+" : insights.satisfaction_level === "medium" ? "50-84" : "<50"}
             </Text>
-            <Text style={[styles.scoreLevel, { color: insights.satisfaction_level === "high" ? "#10B981" : insights.satisfaction_level === "medium" ? "#F59E0B" : "#EF4444" }]}>
+            <Text style={[styles.scoreLevel, { color: insights.satisfaction_level === "high" ? pdfColors.primary : insights.satisfaction_level === "medium" ? pdfColors.warning : pdfColors.error }]}>
               {insights.satisfaction_level?.toUpperCase()}
             </Text>
           </View>
@@ -600,7 +600,7 @@ function FinancialHistoryPage({ data }: { data: JourneyReportData }) {
                 <Text style={[styles.tableCell, { width: "35%" }]}>
                   {event.title}
                 </Text>
-                <Text style={[styles.tableCellBold, { width: "20%", color: event.amount_type === "credit" ? "#10B981" : "#EF4444" }]}>
+                <Text style={[styles.tableCellBold, { width: "20%", color: event.amount_type === "credit" ? pdfColors.primary : pdfColors.error }]}>
                   {event.amount ? formatCurrency(event.amount) : "-"}
                 </Text>
                 <Text style={[styles.tableCell, { width: "25%" }]}>
@@ -679,7 +679,7 @@ function FinancialHistoryPage({ data }: { data: JourneyReportData }) {
                 <Text style={[styles.tableCell, { width: "20%" }]}>
                   {formatCurrency(item.total_paid)}
                 </Text>
-                <Text style={[styles.tableCell, { width: "20%", color: item.balance > 0 ? "#EF4444" : "#10B981" }]}>
+                <Text style={[styles.tableCell, { width: "20%", color: item.balance > 0 ? pdfColors.error : pdfColors.primary }]}>
                   {formatCurrency(item.balance)}
                 </Text>
               </View>
@@ -937,15 +937,15 @@ function TimelinePage({ data }: { data: JourneyReportData }) {
               style={[
                 styles.alertBox,
                 {
-                  backgroundColor: rec.priority === "high" ? "#FEF2F2" : "#FEF3C7",
-                  borderLeftColor: rec.priority === "high" ? "#EF4444" : "#F59E0B",
+                  backgroundColor: rec.priority === "high" ? pdfColors.backgroundError : pdfColors.backgroundWarningAlt,
+                  borderLeftColor: rec.priority === "high" ? pdfColors.error : pdfColors.warning,
                 },
               ]}
             >
               <Text
                 style={[
                   styles.alertTitle,
-                  { color: rec.priority === "high" ? "#991B1B" : "#92400E" },
+                  { color: rec.priority === "high" ? pdfColors.errorText : pdfColors.warningText },
                 ]}
               >
                 {rec.type.toUpperCase()}
@@ -953,7 +953,7 @@ function TimelinePage({ data }: { data: JourneyReportData }) {
               <Text
                 style={[
                   styles.alertDescription,
-                  { color: rec.priority === "high" ? "#7F1D1D" : "#78350F" },
+                  { color: rec.priority === "high" ? pdfColors.errorDeep : pdfColors.warningDeep },
                 ]}
               >
                 {rec.message}
