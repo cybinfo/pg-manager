@@ -276,7 +276,7 @@ export function PersonSelector({
     select: PERSON_SELECT_FIELDS,
     searchColumns: ["name", "phone", "email"],
     orderBy: "name",
-    limit: 10,
+    limit: 50,
     minSearchLength: 2,
     scopeColumn: "owner_id",
     staticFilters: [

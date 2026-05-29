@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useState, useEffect, useRef, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useEntitySelector } from "@/lib/hooks/useEntitySelector"
 import { Button } from "@/components/ui/button"
@@ -173,6 +173,19 @@ export function EntitySelector<T extends { id: string }>({
     config.quickCreateDefaults ? { ...config.quickCreateDefaults } : {}
   )
   const [creating, setCreating] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside — no overlay needed
+  useEffect(() => {
+    if (!isOpen) return
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [isOpen])
 
   const { selectedItem, setSelectedItem, results, loading } = useEntitySelector({
     config,
@@ -249,7 +262,7 @@ export function EntitySelector<T extends { id: string }>({
   // Render: search + dropdown + quick create
   // --------------------------------------------------
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" ref={containerRef}>
       <div className="relative">
         {/* Search Input */}
         <div className="relative">
@@ -280,14 +293,14 @@ export function EntitySelector<T extends { id: string }>({
 
         {/* Dropdown Results */}
         {isOpen && (
-          <Card className="absolute z-[var(--z-dropdown)] w-full mt-1 shadow-lg max-h-64 overflow-hidden">
+          <Card className="absolute z-[var(--z-dropdown)] w-full mt-1 shadow-lg max-h-[400px] overflow-hidden">
             <CardContent className="p-0">
               {loading && minSearchLength === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   Loading...
                 </div>
               ) : results.length > 0 ? (
-                <div className="max-h-56 overflow-y-auto">
+                <div className="max-h-[340px] overflow-y-auto">
                   {results.map((item) => (
                     <button
                       key={item.id}
@@ -426,14 +439,6 @@ export function EntitySelector<T extends { id: string }>({
         <p className="text-xs text-muted-foreground">
           {config.searchHint}
         </p>
-      )}
-
-      {/* Click outside handler */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-[var(--z-dropdown)]"
-          onClick={() => setIsOpen(false)}
-        />
       )}
     </div>
   )
