@@ -1,13 +1,12 @@
 /**
- * New Service Payment Page
+ * New Service Payment Page — 3-step guided workflow
  */
 
 "use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Hammer, ArrowLeft } from "lucide-react"
+import { Hammer, Building2, CreditCard, ClipboardCheck } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
@@ -17,21 +16,41 @@ import { showSuccess, showError } from "@/lib/toast-helpers"
 import { PermissionGuard, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import { Currency } from "@/components/ui/currency"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Input, Select, FormField, Textarea } from "@/components/ui"
 import { PageLoading } from "@/components/ui/loading"
+import {
+  WorkflowStepper,
+  WorkflowStepCard,
+  WorkflowHeader,
+  WorkflowStepDef,
+} from "@/components/ui/workflow"
 
 import { getTodayISO } from "@/lib/date-helpers"
 import { EXPENSE_PAYMENT_MODE_OPTIONS as PAYMENT_MODE_OPTIONS } from "@/lib/status"
-import type { ServiceProvider, ServiceCategory, ServicePaymentFormData, TdsSection, PaymentMode } from "@/types/expense-enhanced.types"
+import type {
+  ServiceProvider,
+  ServiceCategory,
+  ServicePaymentFormData,
+  TdsSection,
+  PaymentMode,
+} from "@/types/expense-enhanced.types"
 import { TDS_SECTION_SERVICE_OPTIONS as TDS_SECTION_OPTIONS, TDS_RATES } from "@/lib/constants/form-options"
 import { logger } from "@/lib/logger"
+
+// ─── Step definitions ─────────────────────────────────────────────────────────
+
+const STEPS: WorkflowStepDef[] = [
+  { id: 1, label: "Provider & Category", icon: Building2 },
+  { id: 2, label: "Service & Payment", icon: CreditCard },
+  { id: 3, label: "Confirm & Save", icon: ClipboardCheck },
+]
 
 export default function NewServicePaymentPage() {
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/services" })
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
 
+  const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [providers, setProviders] = useState<ServiceProvider[]>([])
@@ -64,7 +83,6 @@ export default function NewServicePaymentPage() {
 
       const supabase = createClient()
 
-      // Load providers
       const { data: providersData } = await supabase
         .from("service_providers")
         .select("*")
@@ -75,7 +93,6 @@ export default function NewServicePaymentPage() {
 
       setProviders(providersData || [])
 
-      // Load categories
       const { data: categoriesData } = await supabase
         .from("service_categories")
         .select("*")
@@ -149,9 +166,19 @@ export default function NewServicePaymentPage() {
     return null
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Step completion guards
+  const step1Complete = !!formData.service_date
+  const step2Complete = formData.description.trim().length > 0 && formData.gross_amount > 0
 
+  // Derived display helpers
+  const selectedCategory = categories.find((c) => c.id === formData.category_id)
+  const categoryLabel = selectedCategory
+    ? selectedCategory.name_hi
+      ? `${selectedCategory.name} (${selectedCategory.name_hi})`
+      : selectedCategory.name
+    : null
+
+  const doSubmit = async () => {
     if (!formData.provider_name.trim()) {
       showError("Provider name is required")
       return
@@ -233,283 +260,350 @@ export default function NewServicePaymentPage() {
   return (
     <ModuleGuard module="expenses">
       <PermissionGuard permission="expenses.create">
-        <div className="max-w-2xl mx-auto py-6">
-          {/* Back Link */}
-          <Link
-            href={backHref}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
+        <div className="max-w-2xl mx-auto py-6 space-y-6">
+          {/* Header */}
+          <WorkflowHeader
+            title="New Service Payment"
+            subtitle="Record a maintenance, repair, or service expense"
+            icon={Hammer}
+            iconClassName="bg-success/10"
+            onBack={() => router.push(backHref)}
+            backLabel="Back to Services"
+          />
+
+          {/* Step indicator */}
+          <WorkflowStepper steps={STEPS} currentStep={currentStep} />
+
+          {/* ── Step 1: Provider & Category ──────────────────────────────── */}
+          <WorkflowStepCard
+            stepNum={1}
+            title="Provider & Category"
+            description="Who did the work, and what type of service?"
+            icon={Building2}
+            currentStep={currentStep}
+            onEdit={() => setCurrentStep(1)}
+            completedSummary={
+              (formData.provider_name || "No provider") +
+              (categoryLabel ? ` · ${categoryLabel}` : "") +
+              ` · ${formData.service_date}`
+            }
           >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Services
-          </Link>
-
-          <form onSubmit={handleSubmit}>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
-                    <Hammer className="h-5 w-5 text-success" />
-                  </div>
-                  <div>
-                    <CardTitle>New Service Payment</CardTitle>
-                    <CardDescription>
-                      Record a maintenance, repair, or service expense
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-6">
-                {/* Provider & Category */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Provider Details</h3>
-
-                  <FormField label="Service Provider">
-                    <Select
-                      value={formData.provider_id || ""}
-                      onChange={(e) => handleProviderSelect(e.target.value)}
-                      options={[
-                        { value: "", label: "Select provider or enter name below" },
-                        ...providers.map((p) => ({
-                          value: p.id,
-                          label: p.name,
-                        })),
-                      ]}
-                    />
-                    {!formData.provider_id && (
-                      <Input
-                        value={formData.provider_name}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, provider_name: e.target.value }))
-                        }
-                        placeholder="Or enter provider name"
-                        className="mt-2"
-                      />
-                    )}
-                  </FormField>
-
-                  <FormField label="Category">
-                    <Select
-                      value={formData.category_id || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, category_id: e.target.value }))
-                      }
-                      options={[
-                        { value: "", label: "Select category" },
-                        ...categories.map((c) => ({
-                          value: c.id,
-                          label: c.name_hi ? `${c.name} (${c.name_hi})` : c.name,
-                        })),
-                      ]}
-                    />
-                  </FormField>
-                </div>
-
-                {/* Service Details */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Service Details</h3>
-
-                  <FormField label="Service Date" required>
-                    <Input
-                      type="date"
-                      value={formData.service_date}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, service_date: e.target.value }))
-                      }
-                    />
-                  </FormField>
-
-                  <FormField label="Description" required hint="What work was done?">
-                    <Textarea
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, description: e.target.value }))
-                      }
-                      placeholder="e.g., Fixed leaking tap in Room 101, replaced washer"
-                      rows={2}
-                    />
-                  </FormField>
-
-                  <FormField label="Warranty (months)" hint="0 if no warranty">
-                    <Input
-                      type="number"
-                      min="0"
-                      value={formData.warranty_months || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          warranty_months: parseInt(e.target.value) || 0,
-                        }))
-                      }
-                      placeholder="0"
-                    />
-                  </FormField>
-                </div>
-
-                {/* Amount & TDS */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Amount & TDS</h3>
-
-                  <FormField label="Gross Amount" required>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.gross_amount || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          gross_amount: parseFloat(e.target.value) || 0,
-                        }))
-                      }
-                      placeholder="0.00"
-                    />
-                  </FormField>
-
-                  {/* TDS Settings */}
-                  <div className="p-4 bg-muted/50 rounded-lg space-y-4">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="tds_applicable"
-                        checked={formData.tds_applicable}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            tds_applicable: e.target.checked,
-                          }))
-                        }
-                        className="h-4 w-4 rounded border-border"
-                      />
-                      <label htmlFor="tds_applicable" className="text-sm font-medium">
-                        TDS Applicable
-                      </label>
-                    </div>
-
-                    {formData.tds_applicable && (
-                      <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField label="TDS Section">
-                            <Select
-                              value={formData.tds_section || ""}
-                              onChange={(e) => handleTdsSectionChange(e.target.value)}
-                              options={[
-                                { value: "", label: "Select section" },
-                                ...TDS_SECTION_OPTIONS,
-                              ]}
-                            />
-                          </FormField>
-
-                          <FormField label="TDS Rate (%)">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="0.1"
-                              value={formData.tds_rate || ""}
-                              onChange={(e) =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  tds_rate: parseFloat(e.target.value) || undefined,
-                                }))
-                              }
-                              placeholder="0.0"
-                            />
-                          </FormField>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
-                          <div>
-                            <div className="text-xs text-muted-foreground">TDS Deducted</div>
-                            <div className="font-medium">
-                              <Currency amount={formData.tds_amount || 0} />
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground">Net Payable</div>
-                            <div className="font-bold text-success">
-                              <Currency amount={formData.net_amount || formData.gross_amount} />
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Payment Details */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Payment Details</h3>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField label="Payment Mode">
-                      <Select
-                        value={formData.payment_mode || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            payment_mode: e.target.value as PaymentMode,
-                          }))
-                        }
-                        options={[
-                          { value: "", label: "Select mode" },
-                          ...PAYMENT_MODE_OPTIONS,
-                        ]}
-                      />
-                    </FormField>
-
-                    <FormField label="Payment Date">
-                      <Input
-                        type="date"
-                        value={formData.payment_date || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, payment_date: e.target.value }))
-                        }
-                      />
-                    </FormField>
-                  </div>
-
-                  <FormField label="Reference Number">
-                    <Input
-                      value={formData.payment_reference || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, payment_reference: e.target.value }))
-                      }
-                      placeholder="Transaction ID"
-                    />
-                  </FormField>
-                </div>
-
-                {/* Notes */}
-                <FormField label="Notes">
-                  <Textarea
-                    value={formData.notes || ""}
+            <div className="space-y-4">
+              <FormField label="Service Provider">
+                <Select
+                  value={formData.provider_id || ""}
+                  onChange={(e) => handleProviderSelect(e.target.value)}
+                  options={[
+                    { value: "", label: "Select provider or enter name below" },
+                    ...providers.map((p) => ({ value: p.id, label: p.name })),
+                  ]}
+                />
+                {!formData.provider_id && (
+                  <Input
+                    value={formData.provider_name}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                      setFormData((prev) => ({ ...prev, provider_name: e.target.value }))
                     }
-                    placeholder="Any additional notes..."
-                    rows={2}
+                    placeholder="Or enter provider name"
+                    className="mt-2"
                   />
-                </FormField>
-              </CardContent>
-            </Card>
+                )}
+              </FormField>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 mt-6">
+              <FormField label="Category">
+                <Select
+                  value={formData.category_id || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, category_id: e.target.value }))
+                  }
+                  options={[
+                    { value: "", label: "Select category" },
+                    ...categories.map((c) => ({
+                      value: c.id,
+                      label: c.name_hi ? `${c.name} (${c.name_hi})` : c.name,
+                    })),
+                  ]}
+                />
+              </FormField>
+
+              <FormField label="Service Date" required>
+                <Input
+                  type="date"
+                  value={formData.service_date}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, service_date: e.target.value }))
+                  }
+                />
+              </FormField>
+
               <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/expenses/services")}
+                className="w-full"
+                onClick={() => setCurrentStep(2)}
+                disabled={!step1Complete}
               >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : "Save Payment"}
+                Continue
               </Button>
             </div>
-          </form>
+          </WorkflowStepCard>
+
+          {/* ── Step 2: Service & Payment ─────────────────────────────────── */}
+          <WorkflowStepCard
+            stepNum={2}
+            title="Service & Payment"
+            description="Describe the work done and record the payment."
+            icon={CreditCard}
+            currentStep={currentStep}
+            onEdit={() => setCurrentStep(2)}
+            completedSummary={
+              formData.description
+                ? `${formData.description.slice(0, 40)}${formData.description.length > 40 ? "…" : ""} · ₹${formData.gross_amount}`
+                : undefined
+            }
+          >
+            <div className="space-y-4">
+              <FormField label="Description" required hint="What work was done?">
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                  placeholder="e.g., Fixed leaking tap in Room 101, replaced washer"
+                  rows={2}
+                />
+              </FormField>
+
+              <FormField label="Gross Amount" required>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.gross_amount || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      gross_amount: parseFloat(e.target.value) || 0,
+                    }))
+                  }
+                  placeholder="0.00"
+                />
+              </FormField>
+
+              {/* TDS */}
+              <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="tds_applicable"
+                    checked={formData.tds_applicable}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        tds_applicable: e.target.checked,
+                      }))
+                    }
+                    className="h-4 w-4 rounded border-border"
+                  />
+                  <label htmlFor="tds_applicable" className="text-sm font-medium">
+                    TDS Applicable
+                  </label>
+                </div>
+
+                {formData.tds_applicable && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField label="TDS Section">
+                        <Select
+                          value={formData.tds_section || ""}
+                          onChange={(e) => handleTdsSectionChange(e.target.value)}
+                          options={[
+                            { value: "", label: "Select section" },
+                            ...TDS_SECTION_OPTIONS,
+                          ]}
+                        />
+                      </FormField>
+
+                      <FormField label="TDS Rate (%)">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          value={formData.tds_rate || ""}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              tds_rate: parseFloat(e.target.value) || undefined,
+                            }))
+                          }
+                          placeholder="0.0"
+                        />
+                      </FormField>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
+                      <div>
+                        <div className="text-xs text-muted-foreground">TDS Deducted</div>
+                        <div className="font-medium">
+                          <Currency amount={formData.tds_amount || 0} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Net Payable</div>
+                        <div className="font-bold text-success">
+                          <Currency amount={formData.net_amount || formData.gross_amount} />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Payment mode + reference */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField label="Payment Mode">
+                  <Select
+                    value={formData.payment_mode || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        payment_mode: e.target.value as PaymentMode,
+                      }))
+                    }
+                    options={[
+                      { value: "", label: "Select mode" },
+                      ...PAYMENT_MODE_OPTIONS,
+                    ]}
+                  />
+                </FormField>
+
+                <FormField label="Reference Number">
+                  <Input
+                    value={formData.payment_reference || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        payment_reference: e.target.value,
+                      }))
+                    }
+                    placeholder="Transaction ID"
+                  />
+                </FormField>
+              </div>
+
+              <FormField label="Warranty (months)" hint="0 if no warranty">
+                <Input
+                  type="number"
+                  min="0"
+                  value={formData.warranty_months || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      warranty_months: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  placeholder="0"
+                />
+              </FormField>
+
+              <Button
+                className="w-full"
+                onClick={() => setCurrentStep(3)}
+                disabled={!step2Complete}
+              >
+                Continue
+              </Button>
+            </div>
+          </WorkflowStepCard>
+
+          {/* ── Step 3: Confirm & Save ────────────────────────────────────── */}
+          <WorkflowStepCard
+            stepNum={3}
+            title="Confirm & Save"
+            description="Review the details and record the service payment."
+            icon={ClipboardCheck}
+            currentStep={currentStep}
+          >
+            <div className="space-y-4">
+              {/* Summary table */}
+              <div className="rounded-lg border divide-y text-sm">
+                <SummaryRow label="Provider" value={formData.provider_name || "—"} />
+                <SummaryRow label="Category" value={categoryLabel || "—"} />
+                <SummaryRow label="Service Date" value={formData.service_date} />
+                <SummaryRow label="Description" value={formData.description || "—"} />
+                <SummaryRow
+                  label="Gross Amount"
+                  value={<Currency amount={formData.gross_amount} />}
+                />
+                {formData.tds_applicable && (
+                  <>
+                    <SummaryRow
+                      label="TDS"
+                      value={
+                        <span className="text-destructive">
+                          − <Currency amount={formData.tds_amount || 0} />
+                          {formData.tds_section && (
+                            <span className="text-muted-foreground ml-1">
+                              ({formData.tds_section} @ {formData.tds_rate}%)
+                            </span>
+                          )}
+                        </span>
+                      }
+                    />
+                    <SummaryRow
+                      label="Net Payable"
+                      value={
+                        <span className="font-bold text-success">
+                          <Currency amount={formData.net_amount || formData.gross_amount} />
+                        </span>
+                      }
+                    />
+                  </>
+                )}
+                {(formData.warranty_months ?? 0) > 0 && (
+                  <SummaryRow label="Warranty" value={`${formData.warranty_months} months`} />
+                )}
+                {formData.payment_mode && (
+                  <SummaryRow label="Payment Mode" value={formData.payment_mode} />
+                )}
+                {formData.payment_reference && (
+                  <SummaryRow label="Reference" value={formData.payment_reference} />
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setCurrentStep(2)}
+                  disabled={loading}
+                >
+                  Back
+                </Button>
+                <Button className="flex-1" onClick={doSubmit} disabled={loading}>
+                  {loading ? "Saving..." : "Record Service Payment"}
+                </Button>
+              </div>
+            </div>
+          </WorkflowStepCard>
         </div>
       </PermissionGuard>
     </ModuleGuard>
+  )
+}
+
+// ─── Summary row helper ───────────────────────────────────────────────────────
+
+function SummaryRow({
+  label,
+  value,
+}: {
+  label: string
+  value: React.ReactNode
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 px-4 py-2.5">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="text-right font-medium">{value}</span>
+    </div>
   )
 }
