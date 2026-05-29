@@ -85,36 +85,66 @@ export function useListPageMetrics<T extends object>(
 
       const counts: Record<string, number> = {}
 
-      // Query each metric separately
+      // Group metrics by the column they filter on to batch queries.
+      // We fetch that column for all rows (base filters only, no per-metric serverFilter)
+      // then apply each metric's filter client-side. This mirrors fetchServerSums exactly
+      // and avoids a PostgREST issue where server-side filter chaining after .range()
+      // silently returns 0 rows when applyServerFilter is applied server-side.
+      const columnGroups = new Map<string, typeof metricsWithServerFilter>()
       for (const metric of metricsWithServerFilter) {
         if (!metric.serverFilter) continue
+        const col = metric.serverFilter.column
+        if (!columnGroups.has(col)) columnGroups.set(col, [])
+        columnGroups.get(col)!.push(metric)
+      }
 
-        // Fetch matching row IDs and count them client-side — mirrors fetchServerSums pattern which is proven to work.
-        // count:"exact" + head:true and count:"exact" + limit(1) both returned 0 regardless of JWT state; this approach avoids the count header entirely.
+      for (const [column, groupMetrics] of columnGroups) {
         let query = supabase
           .from(currentConfig.table)
-          .select("id")
-          .range(0, 49999)
+          .select(column)
 
-        // Apply standard filters
+        // Apply standard filters (base filters only — no per-metric serverFilter)
         query = applyBaseFiltersToQuery(
           query, currentConfig, currentFilterConfigs,
           currentFilters, currentSearchQuery
         )
 
-        // Apply the metric's specific serverFilter using centralized helper
-        query = applyServerFilter(query, metric.serverFilter)
+        query = query.range(0, 99999)
 
         const { data: rows, error } = await query
 
         if (error) {
           logger.warn("[useListPage] fetchServerCounts: query error", {
-            metricId: metric.id, table: currentConfig.table, error: error.message,
+            column, table: currentConfig.table, error: error.message,
           })
+          continue
         }
 
-        if (!error && rows) {
-          counts[metric.id] = rows.length
+        if (!rows) continue
+
+        const typedRows = rows as Record<string, unknown>[]
+
+        // Apply each metric's serverFilter client-side against the fetched rows
+        for (const metric of groupMetrics) {
+          if (!metric.serverFilter) continue
+          const { operator, value } = metric.serverFilter
+
+          let count: number
+          switch (operator) {
+            case "eq":       count = typedRows.filter(r => r[column] === value).length; break
+            case "neq":      count = typedRows.filter(r => r[column] !== value).length; break
+            case "in":       count = typedRows.filter(r => (value as unknown[]).includes(r[column])).length; break
+            case "not_in":   count = typedRows.filter(r => !(value as unknown[]).includes(r[column])).length; break
+            case "gt":       count = typedRows.filter(r => (r[column] as number) > (value as number)).length; break
+            case "gte":      count = typedRows.filter(r => (r[column] as number) >= (value as number)).length; break
+            case "lt":       count = typedRows.filter(r => (r[column] as number) < (value as number)).length; break
+            case "lte":      count = typedRows.filter(r => (r[column] as number) <= (value as number)).length; break
+            case "is_null":  count = typedRows.filter(r => r[column] == null).length; break
+            case "is_not_null": count = typedRows.filter(r => r[column] != null).length; break
+            default:         count = typedRows.length
+          }
+
+          counts[metric.id] = count
         }
       }
 
