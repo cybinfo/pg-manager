@@ -19,7 +19,7 @@ import { ContextWithDetails } from "@/lib/auth/types"
 import { brandGradient } from "@/lib/design-tokens"
 import { logger } from "@/lib/logger"
 
-type LoginStep = 'credentials' | 'enter-code' | 'email-sent' | 'context-picker'
+type LoginStep = 'credentials' | 'enter-code' | 'context-picker'
 
 function LoginForm() {
   const router = useRouter()
@@ -37,7 +37,6 @@ function LoginForm() {
   const [userName, setUserName] = useState<string>('')
   const [resendLoading, setResendLoading] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
-  const [emailActuallySent, setEmailActuallySent] = useState(false)
   const [otpCode, setOtpCode] = useState("")
   const [verifyLoading, setVerifyLoading] = useState(false)
   const [trustDevice7Days, setTrustDevice7Days] = useState(false)
@@ -156,43 +155,16 @@ function LoginForm() {
         return
       }
 
-      // Sign out the password session — user must verify via OTP (E1 principle)
-      await supabase.auth.signOut()
-
-      // If device is trusted, skip OTP and send magic link instead
+      // Trusted device — password alone is sufficient, go straight to dashboard
       if (isDeviceTrusted(email)) {
-        const callbackNext = inviteToken ? `/invite/${inviteToken}` : null
-        const callbackUrl = callbackNext
-          ? `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(callbackNext)}`
-          : `${window.location.origin}/api/auth/callback`
-        const { error: otpError } = await supabase.auth.signInWithOtp({
-          email,
-          options: {
-            shouldCreateUser: false,
-            emailRedirectTo: callbackUrl,
-          },
-        })
-
-        if (otpError) {
-          if (otpError.status === 429) {
-            showError("A sign-in link was recently sent — check your inbox (or spam).")
-            setEmailActuallySent(false)
-            startResendCooldown()
-            setStep('email-sent')
-          } else {
-            showError("Failed to send verification email. Please try again.")
-          }
-          return
-        }
-
-        showSuccess("Trusted device — magic link sent to your email")
-        setEmailActuallySent(true)
-        startResendCooldown()
-        setStep('email-sent')
+        showSuccess("Signed in successfully")
+        await handlePostAuth()
         return
       }
 
-      // Send OTP code (no emailRedirectTo = code mode)
+      // Untrusted device — sign out password session, require OTP verification
+      await supabase.auth.signOut()
+
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -203,7 +175,6 @@ function LoginForm() {
       if (otpError) {
         if (otpError.status === 429) {
           showError("A verification code was recently sent — check your inbox (or spam).")
-          setEmailActuallySent(false)
           startResendCooldown()
           setStep('enter-code')
         } else {
@@ -213,7 +184,6 @@ function LoginForm() {
       }
 
       showSuccess("Verification code sent to your email")
-      setEmailActuallySent(true)
       startResendCooldown()
       setOtpCode("")
       setStep('enter-code')
@@ -276,33 +246,6 @@ function LoginForm() {
       } else {
         showSuccess("New code sent to your email")
         setOtpCode("")
-        startResendCooldown()
-      }
-    } finally {
-      setResendLoading(false)
-    }
-  }
-
-  const handleResendLink = async () => {
-    if (resendCooldown > 0) return
-    setResendLoading(true)
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: window.location.origin + '/api/auth/callback',
-        },
-      })
-      if (error) {
-        if (error.status === 429) {
-          showError("Too many attempts — please wait 60 seconds before trying again.")
-          startResendCooldown()
-        } else {
-          showError("Failed to resend. Please try again.")
-        }
-      } else {
-        showSuccess("New link sent to your email")
         startResendCooldown()
       }
     } finally {
@@ -410,48 +353,6 @@ function LoginForm() {
             </button>
           </CardFooter>
         </form>
-      </AuthCardLayout>
-    )
-  }
-
-  // Email sent (magic link for trusted devices)
-  if (step === 'email-sent') {
-    return (
-      <AuthCardLayout
-        title="Check your email"
-        description={
-          emailActuallySent
-            ? `We sent a login link to ${email}`
-            : `A sign-in link was recently sent to ${email}`
-        }
-      >
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground text-center">
-            {emailActuallySent
-              ? "Click the link in the email to complete sign in. Check your spam folder if you don't see it."
-              : "Check your inbox (and spam folder) for a recent sign-in link. If you don't find one, wait a moment and resend."}
-          </p>
-          <p className="text-sm text-muted-foreground text-center">
-            Didn&apos;t receive it?{" "}
-            <button
-              type="button"
-              onClick={handleResendLink}
-              className="text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
-              disabled={resendLoading || resendCooldown > 0}
-            >
-              {resendLoading ? "Sending..." : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend link"}
-            </button>
-          </p>
-        </CardContent>
-        <CardFooter>
-          <button
-            type="button"
-            onClick={() => setStep('credentials')}
-            className="w-full text-sm text-muted-foreground hover:text-primary"
-          >
-            Back to sign in
-          </button>
-        </CardFooter>
       </AuthCardLayout>
     )
   }
