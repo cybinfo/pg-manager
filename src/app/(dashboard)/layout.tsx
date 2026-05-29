@@ -601,10 +601,6 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium">{displayName}</p>
-              <p className="text-xs text-muted-foreground">{displayEmail}</p>
-            </div>
             <UserMenu
               displayName={displayName}
               displayEmail={displayEmail}
