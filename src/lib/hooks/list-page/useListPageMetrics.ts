@@ -93,10 +93,10 @@ export function useListPageMetrics<T extends object>(
       for (const metric of metricsWithServerFilter) {
         if (!metric.serverFilter) continue
 
-        // Build base query with all current filters applied
+        // GET + select("id") + limit(1): HEAD requests don't reliably attach JWT in @supabase/ssr; count comes from Content-Range.
         let query = supabase
           .from(currentConfig.table)
-          .select("*", { count: "exact", head: true })
+          .select("id", { count: "exact" })
 
         // Apply standard filters
         query = applyBaseFiltersToQuery(
@@ -106,6 +106,8 @@ export function useListPageMetrics<T extends object>(
 
         // Apply the metric's specific serverFilter using centralized helper
         query = applyServerFilter(query, metric.serverFilter)
+        // Limit to 1 row — we only need the count from Content-Range, not row data
+        query = query.limit(1)
 
         const { count, error } = await query
 
