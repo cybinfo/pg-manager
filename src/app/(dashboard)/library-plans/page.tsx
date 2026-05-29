@@ -66,6 +66,7 @@ function useEnrollmentStats() {
       .select("plan_id, status, end_date, member:library_members!library_memberships_member_id_fkey(status)")
       .not("plan_id", "is", null)
       .is("deleted_at", null)
+      .range(0, 9999)
 
     if (!memberships) return
 
@@ -85,7 +86,8 @@ function useEnrollmentStats() {
       const entry = statsMap.get(planId)!
       entry.total++
 
-      const memberData = ms.member as { status?: string } | null
+      const raw = ms.member
+      const memberData = Array.isArray(raw) ? (raw as { status?: string }[])[0] : raw as { status?: string } | null
       if (ms.status === "active" && memberData?.status === "active") {
         entry.active++
         if (ms.end_date) {

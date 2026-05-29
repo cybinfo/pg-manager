@@ -124,14 +124,16 @@ export default function QRScannerPage() {
         return
       }
 
-      // Check if already checked in
+      // Check if already checked in today (not historical records)
+      const todayDate = new Date().toISOString().split("T")[0]
       const { data: activeCheckIn } = await supabase
         .from("library_attendance")
         .select("id")
         .eq("member_id", member.id)
+        .eq("attendance_date", todayDate)
         .is("check_out_time", null)
         .is("deleted_at", null)
-        .single()
+        .maybeSingle()
 
       if (activeCheckIn) {
         const result: CheckInResult = {
