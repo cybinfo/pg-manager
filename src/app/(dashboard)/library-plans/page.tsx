@@ -17,6 +17,7 @@ import { FilterConfig } from "@/components/ui/list-page-filters"
 import { ACTIVE_STATUS_FILTER } from "@/lib/filter-presets"
 import { Currency } from "@/components/ui/currency"
 import { createClient } from "@/lib/supabase/client"
+import { fetchAllRows } from "@/lib/report-utils"
 import { useFeatures } from "@/lib/features/use-features"
 import { GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
@@ -61,14 +62,15 @@ function useEnrollmentStats() {
   const fetchStats = useCallback(async () => {
     const supabase = createClient()
 
-    const { data: memberships } = await supabase
+    const query = supabase
       .from("library_memberships")
       .select("plan_id, status, end_date, member:library_members!library_memberships_member_id_fkey(status)")
       .not("plan_id", "is", null)
       .is("deleted_at", null)
-      .range(0, 9999)
 
-    if (!memberships) return
+    const { data: memberships } = await fetchAllRows(query)
+
+    if (!memberships?.length) return
 
     const statsMap = new Map<string, EnrollmentStats>()
     const now = new Date()
