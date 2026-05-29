@@ -277,7 +277,7 @@ export function PersonSelector({
     searchColumns: ["name", "phone", "email"],
     orderBy: "name",
     limit: 50,
-    minSearchLength: 2,
+    minSearchLength: 0,
     scopeColumn: "owner_id",
     staticFilters: [
       { column: "is_active", op: "eq" as const, value: true },
@@ -392,7 +392,7 @@ export function PersonSelector({
     },
 
     noResultsMessage: (search: string) => `No people found matching "${search}"`,
-    emptyMessage: "Type at least 2 characters to search",
+    emptyMessage: "No people found. Add a new one below.",
   }), [showEditLink, showDetailedInfo, onCreate])
 
   const extraFilterData = useMemo(
