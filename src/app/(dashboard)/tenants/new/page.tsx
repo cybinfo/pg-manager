@@ -11,10 +11,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { FormField, Select } from "@/components/ui/form-components"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
-  ArrowLeft, Users, Loader2, Building2, Home, RefreshCw,
-  Shield, ChevronRight, FileText, Wrench
+  Users, Loader2, Building2, Home, RefreshCw,
+  Shield, ChevronRight, FileText, Wrench, CheckCircle2
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { formatCurrency } from "@/lib/format"
@@ -31,6 +31,12 @@ import { POLICE_VERIFICATION_STATUS_OPTIONS } from "@/lib/status"
 import { logger } from "@/lib/logger"
 import { Textarea } from "@/components/ui/textarea"
 import type { PropertyOption } from "@/types/properties.types"
+import {
+  WorkflowStepper,
+  WorkflowStepCard,
+  WorkflowHeader,
+  WorkflowStepDef,
+} from "@/components/ui/workflow"
 
 interface Room {
   id: string
@@ -42,6 +48,13 @@ interface Room {
   property_id: string
   is_under_maintenance?: boolean
 }
+
+const STEPS: WorkflowStepDef[] = [
+  { id: 1, label: "Select Person", icon: Users },
+  { id: 2, label: "Room", icon: Home },
+  { id: 3, label: "Verification", icon: Shield },
+  { id: 4, label: "Confirm", icon: CheckCircle2 },
+]
 
 export default function NewTenantPage() {
   const { backHref } = useBackNavigation({ defaultHref: "/tenants" })
@@ -55,6 +68,7 @@ export default function NewTenantPage() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [availableRooms, setAvailableRooms] = useState<Room[]>([])
   const [loadingData, setLoadingData] = useState(true)
+  const [currentStep, setCurrentStep] = useState(1)
 
   // Person-centric: Select person first, then add tenant-specific data
   const [ownerId, setOwnerId] = useState<string>("")
@@ -210,9 +224,7 @@ export default function NewTenantPage() {
   }
 
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleSubmit = async () => {
     // Person selection is required - get data from selected person
     if (!selectedPerson) {
       showError("Please select a person", "Select an existing person or create a new one first")
@@ -391,6 +403,18 @@ export default function NewTenantPage() {
     }
   }
 
+  // ── Step completion ──────────────────────────────────────────────────────────
+  const step1Complete = selectedPerson !== null
+  const step2Complete = !!(formData.property_id && formData.room_id && formData.monthly_rent)
+  // step3 is always optional — accessible once step2 done
+  const step3Complete = step2Complete
+
+  const selectedProperty = properties.find(p => p.id === formData.property_id)
+  const selectedRoom = availableRooms.find(r => r.id === formData.room_id)
+  const verificationLabel = POLICE_VERIFICATION_STATUS_OPTIONS.find(
+    o => o.value === formData.police_verification_status
+  )?.label ?? formData.police_verification_status
+
   if (loadingData) {
     return <PageSkeleton variant="form" />
   }
@@ -399,11 +423,6 @@ export default function NewTenantPage() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href={backHref}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
           <div>
             <h1 className="text-3xl font-bold">Add Tenant</h1>
             <p className="text-muted-foreground">Register a new tenant</p>
@@ -428,52 +447,44 @@ export default function NewTenantPage() {
 
   return (
     <PermissionGuard permission="tenants.create">
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Breadcrumbs */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Link href="/dashboard" className="flex items-center gap-1 hover:text-foreground transition-colors">
-          <Home className="h-3.5 w-3.5" />
-          <span className="sr-only sm:not-sr-only">Dashboard</span>
-        </Link>
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-        <Link href="/tenants" className="hover:text-foreground transition-colors">
-          Tenants
-        </Link>
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-        <span className="text-foreground font-medium">Add New</span>
-      </nav>
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Breadcrumbs */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Link href="/dashboard" className="flex items-center gap-1 hover:text-foreground transition-colors">
+            <Home className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only">Dashboard</span>
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <Link href="/tenants" className="hover:text-foreground transition-colors">
+            Tenants
+          </Link>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <span className="text-foreground font-medium">Add New</span>
+        </nav>
 
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Add Tenant</h1>
-          <p className="text-muted-foreground">Register a new tenant</p>
-        </div>
-      </div>
+        {/* Header */}
+        <WorkflowHeader
+          title="Add Tenant"
+          subtitle="Register a new tenant in 4 guided steps"
+          icon={Users}
+          onBack={() => router.push(backHref)}
+          backLabel="Tenants"
+        />
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Step 1: Select or Create Person */}
-        <Card className="border-2 border-primary/20">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Step 1: Select Person</CardTitle>
-                <CardDescription>
-                  Search for an existing person or add a new one. Identity data is stored centrally in the People directory.
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {/* Stepper */}
+        <WorkflowStepper steps={STEPS} currentStep={currentStep} />
+
+        {/* Step 1 — Select Person */}
+        <WorkflowStepCard
+          stepNum={1}
+          title="Select Person"
+          description="Search for an existing person or add a new one"
+          icon={Users}
+          currentStep={currentStep}
+          onEdit={() => setCurrentStep(1)}
+          completedSummary={selectedPerson ? selectedPerson.name : undefined}
+        >
+          <div className="space-y-4">
             {ownerId ? (
               <PersonSelector
                 ownerId={ownerId}
@@ -493,7 +504,6 @@ export default function NewTenantPage() {
               </div>
             )}
 
-            {/* Person info is now shown in PersonSelector with showDetailedInfo */}
             {selectedPerson && !selectedPerson.id_documents?.length && (
               <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
                 <p className="text-sm text-warning">
@@ -502,23 +512,33 @@ export default function NewTenantPage() {
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
 
-        {/* Room Assignment */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Home className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Room Assignment</CardTitle>
-                <CardDescription>Assign tenant to a room</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            <Button
+              className="w-full"
+              disabled={!step1Complete}
+              onClick={() => setCurrentStep(2)}
+            >
+              Save & Continue
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </WorkflowStepCard>
+
+        {/* Step 2 — Room Assignment */}
+        <WorkflowStepCard
+          stepNum={2}
+          title="Room Assignment"
+          description="Assign tenant to a property and room"
+          icon={Home}
+          currentStep={currentStep}
+          onEdit={() => setCurrentStep(2)}
+          completedSummary={
+            step2Complete && selectedProperty && selectedRoom
+              ? `${selectedProperty.name} · Room ${selectedRoom.room_number} · ${formatCurrency(parseFloat(formData.monthly_rent))}/mo`
+              : undefined
+          }
+        >
+          <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField label="Property" required>
                 <Combobox
@@ -569,8 +589,8 @@ export default function NewTenantPage() {
                   disabled={loading || availableRooms.length === 0}
                 />
                 {isFeatureEnabled("properties", "maintenanceMode") && formData.room_id && (() => {
-                  const selectedRoom = availableRooms.find(r => r.id === formData.room_id)
-                  return selectedRoom?.is_under_maintenance ? (
+                  const room = availableRooms.find(r => r.id === formData.room_id)
+                  return room?.is_under_maintenance ? (
                     <div className="mt-2 flex items-start gap-2 p-3 bg-warning/10 border border-warning/20 rounded-lg">
                       <Wrench className="h-4 w-4 text-warning mt-0.5 shrink-0" />
                       <p className="text-sm text-warning">
@@ -629,25 +649,33 @@ export default function NewTenantPage() {
                 </div>
               </FormField>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* ID Documents are now managed in People module - removed from here to avoid duplication */}
+            <Button
+              className="w-full"
+              disabled={!step2Complete}
+              onClick={() => setCurrentStep(3)}
+            >
+              Save & Continue
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </WorkflowStepCard>
 
-        {/* Status & Verification */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Shield className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Status & Verification</CardTitle>
-                <CardDescription>Tenant status and documents</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        {/* Step 3 — Verification */}
+        <WorkflowStepCard
+          stepNum={3}
+          title="Verification & Notes"
+          description="Police verification status, agreement, and notes"
+          icon={Shield}
+          currentStep={currentStep}
+          onEdit={() => setCurrentStep(3)}
+          completedSummary={
+            step3Complete
+              ? `${verificationLabel}${formData.agreement_signed ? " · Agreement signed" : ""}`
+              : undefined
+          }
+        >
+          <div className="space-y-4">
             <FormField label="Police Verification">
               <Select
                 id="police_verification_status"
@@ -673,23 +701,7 @@ export default function NewTenantPage() {
                 Agreement signed
               </Label>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Notes */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Additional Notes</CardTitle>
-                <CardDescription>Any other important information</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
             <FormField label="Notes">
               <Textarea
                 id="notes"
@@ -701,28 +713,93 @@ export default function NewTenantPage() {
                 className="min-h-[80px]"
               />
             </FormField>
-          </CardContent>
-        </Card>
 
-        <div className="flex justify-end gap-4">
-          <Link href="/tenants">
-            <Button type="button" variant="outline" disabled={loading}>
-              Cancel
+            <Button
+              className="w-full"
+              onClick={() => setCurrentStep(4)}
+            >
+              Save & Continue
+              <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
-          </Link>
-          <Button type="submit" disabled={loading || availableRooms.length === 0}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Adding...
-              </>
-            ) : (
-              "Add Tenant"
-            )}
-          </Button>
-        </div>
-      </form>
-    </div>
+          </div>
+        </WorkflowStepCard>
+
+        {/* Step 4 — Confirm & Submit */}
+        <WorkflowStepCard
+          stepNum={4}
+          title="Confirm & Add Tenant"
+          description="Review details and submit"
+          icon={CheckCircle2}
+          currentStep={currentStep}
+        >
+          <div className="space-y-4">
+            {/* Summary card */}
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-3 text-sm">
+              <div className="flex items-center gap-2 pb-2 border-b">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="font-semibold text-base">Enrollment Summary</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <span className="text-muted-foreground">Person</span>
+                <span className="font-medium">{selectedPerson?.name ?? "—"}</span>
+
+                <span className="text-muted-foreground">Property</span>
+                <span className="font-medium">{selectedProperty?.name ?? "—"}</span>
+
+                <span className="text-muted-foreground">Room</span>
+                <span className="font-medium">
+                  {selectedRoom ? `Room ${selectedRoom.room_number}` : "—"}
+                </span>
+
+                <span className="text-muted-foreground">Check-in</span>
+                <span className="font-medium">{formData.check_in_date || "—"}</span>
+
+                <span className="text-muted-foreground">Monthly Rent</span>
+                <span className="font-medium">
+                  {formData.monthly_rent ? formatCurrency(parseFloat(formData.monthly_rent)) : "—"}
+                </span>
+
+                <span className="text-muted-foreground">Deposit</span>
+                <span className="font-medium">
+                  {formData.security_deposit ? formatCurrency(parseFloat(formData.security_deposit)) : "—"}
+                </span>
+
+                <span className="text-muted-foreground">Police Verification</span>
+                <span className="font-medium">{verificationLabel}</span>
+
+                <span className="text-muted-foreground">Agreement</span>
+                <span className="font-medium">{formData.agreement_signed ? "Signed" : "Not signed"}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => router.push("/tenants")}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={loading || !step1Complete || !step2Complete}
+                onClick={handleSubmit}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add Tenant"
+                )}
+              </Button>
+            </div>
+          </div>
+        </WorkflowStepCard>
+      </div>
     </PermissionGuard>
   )
 }
