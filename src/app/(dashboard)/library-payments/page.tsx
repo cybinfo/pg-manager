@@ -14,7 +14,7 @@ import { LIBRARY_PAYMENT_LIST_CONFIG, GroupByOption } from "@/lib/hooks/useListP
 import { createTotalMetric, createStatusMetric, createSumMetric, createTodayCountMetric, MetricConfig } from "@/lib/metric-factories"
 import { FilterConfig } from "@/components/ui/list-page-filters"
 import { LIBRARY_PAYMENT_METHOD_FILTER, LIBRARY_PAYMENT_TYPE_FILTER, createStatusFilter } from "@/lib/filter-presets"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatCurrency } from "@/lib/format"
 import { Currency } from "@/components/ui/currency"
 import { LIBRARY_PAYMENT_TYPE_CONFIG, LIBRARY_PAYMENT_METHOD_CONFIG, LIBRARY_PAYMENT_STATUS_CONFIG } from "@/types/library.types"
 import { LIBRARY_PAYMENT_STATUS_OPTIONS } from "@/lib/status"
@@ -210,12 +210,12 @@ const metrics: MetricConfig<Record<string, unknown>>[] = [
     id: "today_amount",
     label: "Today's Collection",
     icon: CreditCard,
-    format: "currency",
     compute: (items) => {
       const today = new Date().toISOString().split("T")[0]
-      return items
+      const sum = items
         .filter((p) => p.payment_date === today && p.status === "completed")
         .reduce((sum: number, p) => sum + (Number(p.amount) || 0), 0)
+      return formatCurrency(sum)
     },
   },
 ]
