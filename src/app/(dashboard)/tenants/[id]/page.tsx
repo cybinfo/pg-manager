@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -114,6 +114,7 @@ export default function TenantDetailPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [noticeDialogOpen, setNoticeDialogOpen] = useState(false)
   const [cancelNoticeDialogOpen, setCancelNoticeDialogOpen] = useState(false)
+  const [existingClearanceId, setExistingClearanceId] = useState<string | null>(null)
 
   // Get related data from hook
   const payments = (related.payments || []) as Payment[]
@@ -122,6 +123,19 @@ export default function TenantDetailPage() {
   const stays = (related.stays || []) as TenantStay[]
   const transfers = (related.transfers || []) as RoomTransfer[]
   const bills = (related.bills || []) as Bill[]
+
+  // Check for existing exit clearance when tenant is on notice
+  useEffect(() => {
+    if (tenant?.status !== "notice_period") return
+    const supabase = createClient()
+    supabase
+      .from("exit_clearance")
+      .select("id")
+      .eq("tenant_id", tenant.id)
+      .is("deleted_at", null)
+      .maybeSingle()
+      .then(({ data }: { data: { id: string } | null }) => setExistingClearanceId(data?.id ?? null))
+  }, [tenant?.id, tenant?.status])
 
   // Computed values
   const totalDues = useMemo(() => charges.reduce((sum, c) => sum + c.amount, 0), [charges])
@@ -348,7 +362,7 @@ export default function TenantDetailPage() {
             {tenant.status === "notice_period" && (
               <Button variant="gradient" size="sm" onClick={handleInitiateCheckout} disabled={actionLoading}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Initiate Checkout
+                {existingClearanceId ? "View Clearance" : "Initiate Checkout"}
               </Button>
             )}
             <PermissionGate permission="tenants.delete" hide>
