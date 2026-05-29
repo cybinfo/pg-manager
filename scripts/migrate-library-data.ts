@@ -81,8 +81,8 @@ function parseDate(dateStr: string): string | null {
     return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`
   }
 
-  // Already ISO
-  if (str.match(/^\d{4}-\d{2}-\d{2}/)) return str.split("T")[0]
+  // Already ISO (with or without time component - space or T separator)
+  if (str.match(/^\d{4}-\d{2}-\d{2}/)) return str.split("T")[0].split(" ")[0]
 
   return null
 }
