@@ -49,13 +49,19 @@ export function createTotalMetric(options?: {
   label?: string
   icon?: LucideIcon
   format?: "number" | "currency" | "percentage"
+  serverCount?: boolean
 }): MetricConfig<Record<string, unknown>> {
+  const id = options?.id ?? "total"
   return {
-    id: options?.id ?? "total",
+    id,
     label: options?.label ?? "Total",
     icon: options?.icon ?? Hash,
     compute: (_items, total) => total,
     format: options?.format,
+    // Use an independent server COUNT when fetchServerCounts timing can race fetchData
+    serverFilter: options?.serverCount
+      ? { column: "id", operator: "is_not_null" }
+      : undefined,
   }
 }
 

@@ -322,7 +322,7 @@ const advancedFilterColumns: FilterableColumn[] = [
 // ============================================
 
 const metrics: MetricConfig<Record<string, unknown>>[] = [
-  createTotalMetric({ label: "Total Services", icon: Hammer, format: "number" }),
+  createTotalMetric({ label: "Total Services", icon: Hammer, format: "number", serverCount: true }),
   createSumMetric("net_amount", "total_amount", "Total Amount", IndianRupee),
   createSumMetric("tds_amount", "tds_deducted", "TDS Deducted", FileText),
   {

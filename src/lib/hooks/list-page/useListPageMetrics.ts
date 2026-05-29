@@ -142,10 +142,11 @@ export function useListPageMetrics<T extends object>(
 
         const { column, filter: sumFilter } = metric.serverSum
 
-        // Build query to get sum - select the column and sum client-side
+        // Build query to get sum - fetch all rows (not just first 1000) then sum client-side
         let query = supabase
           .from(currentConfig.table)
           .select(column)
+          .range(0, 99999)
 
         // Apply standard filters
         query = applyBaseFiltersToQuery(
@@ -161,7 +162,7 @@ export function useListPageMetrics<T extends object>(
         const { data, error } = await query
 
         if (!error && data) {
-          // Sum up the column values
+          // Sum up the column values across all rows
           const sum = (data as Record<string, unknown>[]).reduce((acc, row) => {
             const val = row[column]
             return acc + (typeof val === "number" ? val : Number(val) || 0)
