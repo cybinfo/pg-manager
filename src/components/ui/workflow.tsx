@@ -143,8 +143,8 @@ export function WorkflowStepCard({
 
   // Active / expanded state
   return (
-    <div className={cn("border-2 border-primary/30 bg-card rounded-xl overflow-hidden", className)}>
-      <div className="flex items-center gap-3 px-5 py-4 border-b bg-primary/5">
+    <div className={cn("border-2 border-primary/30 bg-card rounded-xl", className)}>
+      <div className="flex items-center gap-3 px-5 py-4 border-b bg-primary/5 rounded-t-xl">
         <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
           <Icon className="h-4 w-4 text-white" />
         </div>
