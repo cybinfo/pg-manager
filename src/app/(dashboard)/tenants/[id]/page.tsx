@@ -176,8 +176,26 @@ export default function TenantDetailPage() {
     setActionLoading(false)
   }
 
-  const handleInitiateCheckout = () => {
-    router.push(`/exit-clearance/new?tenant=${tenant?.id}`)
+  const handleInitiateCheckout = async () => {
+    if (!tenant) return
+    setActionLoading(true)
+    try {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from("exit_clearance")
+        .select("id")
+        .eq("tenant_id", tenant.id)
+        .is("deleted_at", null)
+        .maybeSingle()
+
+      if (data) {
+        router.push(`/exit-clearance/${data.id}`)
+      } else {
+        router.push(`/exit-clearance/new?tenant=${tenant.id}`)
+      }
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   const handleDelete = async () => {
