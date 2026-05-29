@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, FormField } from "@/components/ui/form-components"
 import { requiredField, requiredPhone } from "@/lib/validation"
-import { ArrowLeft, Users, Loader2 } from "lucide-react"
+import { ArrowLeft, Users, Loader2, ExternalLink } from "lucide-react"
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { PageLoading } from "@/components/ui/loading"
 import { TIME_SLOTS } from "@/types/library.types"
@@ -195,6 +195,16 @@ function EditLibraryMemberContent({
                 placeholder="Update Photo"
               />
             </div>
+
+            {!!record?.person_id && (
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm">
+                <span className="text-muted-foreground">For full profile (gender, DOB, ID proof):</span>
+                <Link href={`/people/${record.person_id as string}/edit`} className="text-primary hover:underline font-medium flex items-center gap-1">
+                  Edit in People
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
+            )}
 
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

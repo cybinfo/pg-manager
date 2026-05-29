@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/form-components"
+import { DatePicker } from "@/components/ui/date-picker"
 import {
   Dialog,
   DialogContent,
@@ -42,7 +43,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Calendar,
   Shirt,
   Sparkles,
   ShieldCheck,
@@ -846,17 +846,13 @@ export function PublicPropertyPage({ property }: { property: PropertyWebsite }) 
 
                           <div className="space-y-2">
                             <Label htmlFor="move_in">Expected Move-in Date</Label>
-                            <div className="relative">
-                              <Input
-                                id="move_in"
-                                type="date"
-                                value={inquiryForm.expected_move_in}
-                                onChange={(e) => setInquiryForm(prev => ({ ...prev, expected_move_in: e.target.value }))}
-                                min={getTodayISO()}
-                                className="pl-10"
-                              />
-                              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
-                            </div>
+                            <DatePicker
+                              id="move_in"
+                              value={inquiryForm.expected_move_in}
+                              onChange={(val) => setInquiryForm(prev => ({ ...prev, expected_move_in: val }))}
+                              minDate={getTodayISO()}
+                              placeholder="Pick a date"
+                            />
                           </div>
 
                           <div className="space-y-2">

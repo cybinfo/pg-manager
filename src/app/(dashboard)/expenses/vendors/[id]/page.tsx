@@ -25,7 +25,7 @@ import { createClient } from "@/lib/supabase/client"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog"
 
-import { PermissionGuard, ModuleGuard } from "@/components/auth"
+import { PermissionGuard, PermissionGate, ModuleGuard } from "@/components/auth"
 import { Button } from "@/components/ui/button"
 import {
   DetailPageTemplate,
@@ -181,16 +181,20 @@ export default function VendorDetailPage({
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" asChild>
-                <Link href={`/expenses/vendors/${id}/edit`}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Link>
-              </Button>
-              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
+              <PermissionGate permission="expenses.edit" hide>
+                <Button variant="outline" asChild>
+                  <Link href={`/expenses/vendors/${id}/edit`}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Link>
+                </Button>
+              </PermissionGate>
+              <PermissionGate permission="expenses.delete" hide>
+                <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </PermissionGate>
             </div>
           </div>
 

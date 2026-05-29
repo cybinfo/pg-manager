@@ -19,6 +19,7 @@ import { Currency } from "@/components/ui/currency"
 import { createClient } from "@/lib/supabase/client"
 import { fetchAllRows } from "@/lib/report-utils"
 import { useFeatures } from "@/lib/features/use-features"
+import { ModuleGuard } from "@/components/auth"
 import { GroupByOption } from "@/lib/hooks/useListPage"
 import { FilterableColumn } from "@/components/ui/advanced-filter-builder"
 import { textFilterColumn, numberFilterColumn, booleanFilterColumn, dateFilterColumn } from "@/lib/advanced-filter-builders"
@@ -381,6 +382,7 @@ export default function LibraryPlansPage() {
   ]
 
   return (
+    <ModuleGuard module="plans">
     <ListPageTemplate
       tableKey="library-plans"
       title="Subscription Plans"
@@ -407,5 +409,6 @@ export default function LibraryPlansPage() {
       emptyTitle="No plans found"
       emptyDescription="Create subscription plans for your library"
     />
+    </ModuleGuard>
   )
 }

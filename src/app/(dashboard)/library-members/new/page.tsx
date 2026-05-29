@@ -1,21 +1,13 @@
-/**
- * New Library Member Page
- *
- * 4-step guided workflow: Member Details → Subscription Plan → Schedule → Confirm & Register
- * Payment is recorded separately on the subscription detail page.
- */
-
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Combobox } from "@/components/ui/combobox"
-import { Select, FormField } from "@/components/ui/form-components"
-import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/ui/form-components"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Currency } from "@/components/ui/currency"
 import { PageSkeleton } from "@/components/ui/loading"
@@ -27,8 +19,7 @@ import {
 } from "@/components/ui/workflow"
 import type { WorkflowStepDef } from "@/components/ui/workflow"
 import { Users, CreditCard, Clock, CheckCircle, UserCheck, Trash2, Plus, Loader2 } from "lucide-react"
-import { ProfilePhotoUpload } from "@/components/ui/file-upload"
-import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
+import { Label } from "@/components/ui/label"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { getTodayISO, computeEndDate } from "@/lib/date-helpers"
 import { TimeSlot, formatTime12h, calcSlotHours } from "@/lib/time-slots"
@@ -37,28 +28,24 @@ import { PermissionGuard } from "@/components/auth"
 import { showError, showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
 import { useFeatures } from "@/lib/features/use-features"
-import { GENDER_OPTIONS, ID_PROOF_TYPE_OPTIONS } from "@/lib/constants/form-options"
 import { DatePicker } from "@/components/ui/date-picker"
+import { PersonSelector } from "@/components/people"
+import { PersonSearchResult } from "@/types/people.types"
 import { createLibraryMember } from "@/lib/workflows/library-member.workflow"
 import type { LibraryOption, LibraryPlanOption } from "@/types/library.types"
 
 export default function NewLibraryMemberPage() {
   return (
     <PermissionGuard permission="library_members.create">
-      <NewLibraryMemberContent />
+      <Suspense>
+        <NewLibraryMemberContent />
+      </Suspense>
     </PermissionGuard>
   )
 }
 
-// Validation schema for required fields
-const validationSchema = {
-  library_id: requiredSelect("Library"),
-  name: requiredField("Full name"),
-  phone: requiredPhone("Phone number"),
-} as const
-
 const STEPS: WorkflowStepDef[] = [
-  { id: 1, label: "Member Details", icon: Users },
+  { id: 1, label: "Select Person", icon: Users },
   { id: 2, label: "Subscription", icon: CreditCard },
   { id: 3, label: "Schedule", icon: Clock },
   { id: 4, label: "Confirm", icon: CheckCircle },
@@ -69,26 +56,24 @@ function NewLibraryMemberContent() {
   const { user } = useAuthContext()
   const { backHref } = useBackNavigation({ defaultHref: "/library-members" })
   const { isFeatureEnabled } = useFeatures()
+  const ownerId = user?.id || ""
   const [libraries, setLibraries] = useState<LibraryOption[]>([])
   const [plans, setPlans] = useState<LibraryPlanOption[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
+  const [selectedPerson, setSelectedPerson] = useState<PersonSearchResult | null>(null)
+  const [personError, setPersonError] = useState("")
+
+  // Read pre-filled values from URL (e.g., from waitlist conversion)
+  const searchParams = useSearchParams()
+  const preselectedLibrary = searchParams?.get("library") || ""
+  const prefilledName = searchParams?.get("name") || ""
+  const prefilledPhone = searchParams?.get("phone") || ""
+  const waitlistId = searchParams?.get("waitlist_id") || ""
 
   const [formData, setFormData] = useState({
-    library_id: "",
-    name: "",
-    phone: "",
-    email: "",
-    photo_url: "",
-    gender: "",
-    father_name: "",
-    date_of_birth: "",
-    id_proof_type: "aadhar",
-    id_proof_number: "",
-    preferred_slot: "Morning",
-    notes: "",
-    // Subscription
+    library_id: preselectedLibrary,
     plan_id: "",
     start_date: getTodayISO(),
     duration_months: 1,
@@ -96,40 +81,6 @@ function NewLibraryMemberContent() {
     discount: 0,
     time_slots: [] as TimeSlot[],
   })
-
-  const [errors, setErrors] = useState<Record<string, string>>({})
-
-  // Read pre-filled values from URL (e.g., from waitlist conversion)
-  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null)
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setSearchParams(new URLSearchParams(window.location.search))
-    }
-  }, [])
-
-  const preselectedLibrary = searchParams?.get("library") || ""
-  const prefilledName = searchParams?.get("name") || ""
-  const prefilledPhone = searchParams?.get("phone") || ""
-  const prefilledEmail = searchParams?.get("email") || ""
-  const prefilledSlot = searchParams?.get("slot") || ""
-  const waitlistId = searchParams?.get("waitlist_id") || ""
-
-  // Pre-fill from URL params
-  useEffect(() => {
-    if (!searchParams) return
-    const updates: Record<string, string> = {}
-    if (preselectedLibrary && !formData.library_id) updates.library_id = preselectedLibrary
-    if (prefilledName && !formData.name) updates.name = prefilledName
-    if (prefilledPhone && !formData.phone) updates.phone = prefilledPhone
-    if (prefilledEmail && !formData.email) updates.email = prefilledEmail
-    if (prefilledSlot && formData.preferred_slot === "Morning") {
-      updates.preferred_slot = prefilledSlot
-    }
-    if (Object.keys(updates).length > 0) {
-      setFormData((prev) => ({ ...prev, ...updates }))
-    }
-  }, [searchParams, preselectedLibrary, prefilledName, prefilledPhone, prefilledEmail, prefilledSlot, formData.library_id, formData.name, formData.phone, formData.email, formData.preferred_slot])
 
   useEffect(() => {
     async function fetchData() {
@@ -156,23 +107,7 @@ function NewLibraryMemberContent() {
     }
 
     fetchData()
-  }, [])
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) {
-      setErrors((prev) => {
-        const next = { ...prev }
-        delete next[name]
-        return next
-      })
-    }
-  }
-
-  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, start_date: e.target.value }))
-  }
+  }, [user])
 
   const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const duration = parseFloat(e.target.value) || 0
@@ -183,34 +118,23 @@ function NewLibraryMemberContent() {
 
   const handlePlanChange = (planId: string) => {
     const plan = plans.find((p) => p.id === planId)
-    const duration = 1
-    const newAmount = plan ? plan.base_price * duration : 0
+    const newAmount = plan ? plan.base_price * 1 : 0
     setFormData((prev) => ({
       ...prev,
       plan_id: planId,
-      duration_months: duration,
+      duration_months: 1,
       amount: newAmount,
       discount: 0,
     }))
   }
 
-  const runValidation = (): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    for (const [field, validator] of Object.entries(validationSchema)) {
-      const value = formData[field as keyof typeof formData]
-      const result = (validator as (v: unknown) => { isValid: boolean; error?: string } | null)(value)
-      if (result && !result.isValid && result.error) {
-        newErrors[field] = result.error
-      }
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
   const handleSubmit = async () => {
-    if (!runValidation()) {
+    if (!selectedPerson) {
+      setPersonError("Please select a person")
+      setCurrentStep(1)
+      return
+    }
+    if (!formData.library_id) {
       setCurrentStep(1)
       return
     }
@@ -231,17 +155,10 @@ function NewLibraryMemberContent() {
         supabase,
         {
           library_id: formData.library_id,
-          name: formData.name,
-          phone: formData.phone,
-          email: formData.email,
-          photo_url: formData.photo_url,
-          gender: formData.gender,
-          father_name: formData.father_name,
-          date_of_birth: formData.date_of_birth,
-          id_proof_type: formData.id_proof_type,
-          id_proof_number: formData.id_proof_number,
-          preferred_slot: formData.preferred_slot,
-          notes: formData.notes,
+          person_id: selectedPerson.id,
+          person_name: selectedPerson.name,
+          person_phone: selectedPerson.phone || undefined,
+          person_email: selectedPerson.email || undefined,
           plan_id: formData.plan_id,
           plan_name: selectedPlan?.name,
           plan_hours_included: selectedPlan?.hours_included ?? null,
@@ -252,7 +169,7 @@ function NewLibraryMemberContent() {
           discount: formData.discount,
           time_slots: formData.time_slots,
           waitlist_id: waitlistId || undefined,
-          send_welcome_email: !!(formData.email && isFeatureEnabled("members", "welcomeEmail")),
+          send_welcome_email: !!(selectedPerson.email && isFeatureEnabled("members", "welcomeEmail")),
         },
         user.id
       )
@@ -277,21 +194,13 @@ function NewLibraryMemberContent() {
   }
 
   const selectedPlan = plans.find((p) => p.id === formData.plan_id)
-
-  // Computed end date
   const computedEndDate = formData.start_date
     ? computeEndDate(formData.start_date, formData.duration_months)
     : ""
-
-  // Final amount
   const finalAmount = formData.amount - formData.discount
-
-  // Access time computed values
   const validTimeSlots = formData.time_slots.filter((s: TimeSlot) => s.start && s.end)
   const totalSlotHours = validTimeSlots.reduce((sum: number, s: TimeSlot) => sum + calcSlotHours(s), 0)
   const hoursExceeded = selectedPlan?.hours_included ? totalSlotHours > selectedPlan.hours_included : false
-
-  // Price calculation display
   const priceCalcDisplay = selectedPlan && formData.duration_months
     ? `₹${formatNumber(selectedPlan.base_price)}/month × ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = ₹${formatNumber(selectedPlan.base_price * formData.duration_months)}`
     : null
@@ -301,15 +210,9 @@ function NewLibraryMemberContent() {
     label: lib.code ? `${lib.name} (${lib.code})` : lib.name,
   }))
 
-  const planOptions = plans.map((plan) => ({
-    value: plan.id,
-    label: `${plan.name} - Rs.${plan.base_price} (${plan.hours_included ? `${plan.hours_included}h` : "Unlimited"})`,
-  }))
-
-  // Step completion rules
-  const step1Complete = !!(formData.library_id && formData.name && formData.phone)
+  const step1Complete = !!(selectedPerson && formData.library_id)
   const step2Complete = !!(formData.plan_id && formData.start_date && formData.duration_months)
-  const step3Complete = true // schedule is optional
+  const step3Complete = true
 
   if (loadingData) {
     return <PageSkeleton variant="form" />
@@ -333,43 +236,42 @@ function NewLibraryMemberContent() {
         }
       />
 
-      {/* Waitlist conversion banner */}
       {waitlistId && (
         <div className="flex items-center gap-3 p-4 bg-success/10 border border-success/20 rounded-lg">
           <UserCheck className="h-5 w-5 text-success flex-shrink-0" />
           <div>
             <p className="text-sm font-medium text-success">Converting from Waitlist</p>
             <p className="text-xs text-success/80">
-              Contact details have been pre-filled. Complete the subscription to convert this waitlist entry to a member.
+              Search for the person below or add them if not found. Complete the subscription to convert this waitlist entry.
             </p>
           </div>
         </div>
       )}
 
-      {/* Step progress indicator */}
       <WorkflowStepper steps={STEPS} currentStep={currentStep} />
 
-      {/* Step 1: Member Details */}
+      {/* Step 1: Select Person */}
       <WorkflowStepCard
         stepNum={1}
-        title="Member Details"
-        description="Photo, library, personal info, and ID proof"
+        title="Select Person"
+        description="Choose an existing person or add a new one"
         icon={Users}
         currentStep={currentStep}
         onEdit={() => setCurrentStep(1)}
         completedSummary={
-          <span>
-            {formData.name}
-            {formData.phone ? ` · ${formData.phone}` : ""}
-            {formData.library_id
-              ? ` · ${libraries.find((l) => l.id === formData.library_id)?.name ?? ""}`
-              : ""}
-          </span>
+          selectedPerson ? (
+            <span>
+              {selectedPerson.name}
+              {selectedPerson.phone ? ` · ${selectedPerson.phone}` : ""}
+              {formData.library_id
+                ? ` · ${libraries.find((l) => l.id === formData.library_id)?.name ?? ""}`
+                : ""}
+            </span>
+          ) : undefined
         }
       >
         <div className="space-y-4">
-          {/* Library Selection */}
-          <FormField label="Library" required error={errors.library_id}>
+          <FormField label="Library" required>
             <Combobox
               options={libraryOptions}
               value={formData.library_id}
@@ -381,118 +283,35 @@ function NewLibraryMemberContent() {
             />
           </FormField>
 
-          {/* Photo Upload */}
-          <div className="flex justify-center">
-            <ProfilePhotoUpload
-              bucket="person-photos"
-              folder="profiles"
-              value={formData.photo_url || ""}
-              onChange={(url) => setFormData((prev) => ({ ...prev, photo_url: url }))}
-              size="lg"
-              placeholder="Add Photo"
-            />
-          </div>
-
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Full Name" htmlFor="name" required error={errors.name}>
-              <Input
-                id="name"
-                name="name"
-                placeholder="e.g., Rahul Sharma"
-                value={formData.name}
-                onChange={handleChange}
+          <FormField label="Member" required error={personError}>
+            {ownerId ? (
+              <PersonSelector
+                ownerId={ownerId}
+                selectedPersonId={selectedPerson?.id}
+                onSelect={(person) => {
+                  setSelectedPerson(person)
+                  setPersonError("")
+                }}
+                initialSearch={prefilledPhone || prefilledName}
                 disabled={saving}
+                required
+                error={personError}
+                showEditLink
               />
-            </FormField>
-            <FormField label="Phone Number" htmlFor="phone" required error={errors.phone}>
-              <Input
-                id="phone"
-                name="phone"
-                placeholder="e.g., 9876543210"
-                value={formData.phone}
-                onChange={handleChange}
-                disabled={saving}
-                type="tel"
-                maxLength={10}
-              />
-            </FormField>
-          </div>
-
-          <FormField label="Email" htmlFor="email">
-            <Input
-              id="email"
-              name="email"
-              placeholder="e.g., rahul@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              disabled={saving}
-              type="email"
-            />
+            ) : null}
           </FormField>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Gender" htmlFor="gender">
-              <Select
-                value={formData.gender}
-                onChange={handleChange}
-                name="gender"
-                id="gender"
-                disabled={saving}
-                options={GENDER_OPTIONS}
-              />
-            </FormField>
-            <FormField label="Date of Birth" htmlFor="date_of_birth">
-              <DatePicker
-                id="date_of_birth"
-                value={formData.date_of_birth}
-                onChange={(val) => setFormData((prev) => ({ ...prev, date_of_birth: val }))}
-                disabled={saving}
-              />
-            </FormField>
-          </div>
-
-          <FormField label="Father/Guardian Name" htmlFor="father_name">
-            <Input
-              id="father_name"
-              name="father_name"
-              placeholder="e.g., Mr. Sharma"
-              value={formData.father_name}
-              onChange={handleChange}
-              disabled={saving}
-            />
-          </FormField>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="ID Proof Type" htmlFor="id_proof_type">
-              <Select
-                value={formData.id_proof_type}
-                onChange={handleChange}
-                name="id_proof_type"
-                id="id_proof_type"
-                disabled={saving}
-                options={ID_PROOF_TYPE_OPTIONS}
-              />
-            </FormField>
-            <FormField label="ID Number" htmlFor="id_proof_number">
-              <Input
-                id="id_proof_number"
-                name="id_proof_number"
-                placeholder="e.g., XXXX-XXXX-XXXX"
-                value={formData.id_proof_number}
-                onChange={handleChange}
-                disabled={saving}
-              />
-            </FormField>
-          </div>
 
           <WorkflowContinueButton
             onClick={() => {
-              const valid = runValidation()
-              if (valid) setCurrentStep(2)
+              if (!selectedPerson) {
+                setPersonError("Please select a person")
+                return
+              }
+              setPersonError("")
+              setCurrentStep(2)
             }}
             disabled={!step1Complete}
-            disabledReason="Fill in Library, Name, and Phone to continue"
+            disabledReason="Select a library and a person to continue"
           />
         </div>
       </WorkflowStepCard>
@@ -515,14 +334,15 @@ function NewLibraryMemberContent() {
         }
       >
         <div className="space-y-4">
-          {/* Plan selection */}
           <FormField
             label="Subscription Plan"
-            error={errors.plan_id}
             tooltip="The plan defines the daily hours allowance and base price. You can override the amount below."
           >
             <Combobox
-              options={planOptions}
+              options={plans.map((plan) => ({
+                value: plan.id,
+                label: `${plan.name} - Rs.${plan.base_price} (${plan.hours_included ? `${plan.hours_included}h` : "Unlimited"})`,
+              }))}
               value={formData.plan_id}
               onValueChange={handlePlanChange}
               placeholder="Select a plan..."
@@ -532,7 +352,6 @@ function NewLibraryMemberContent() {
             />
           </FormField>
 
-          {/* Plan highlight card */}
           {selectedPlan && (
             <div className="rounded-lg border bg-primary/5 border-primary/20 p-4">
               <p className="text-sm font-semibold text-primary mb-2">{selectedPlan.name}</p>
@@ -553,7 +372,6 @@ function NewLibraryMemberContent() {
             </div>
           )}
 
-          {/* Start date & duration */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Start Date" htmlFor="start_date" required>
               <DatePicker
@@ -584,7 +402,6 @@ function NewLibraryMemberContent() {
             </FormField>
           </div>
 
-          {/* Amount & Discount */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="Amount" htmlFor="amount" hint={priceCalcDisplay ?? undefined}>
               <Input
@@ -613,9 +430,7 @@ function NewLibraryMemberContent() {
           </div>
 
           <WorkflowContinueButton
-            onClick={() => {
-              if (step2Complete) setCurrentStep(3)
-            }}
+            onClick={() => { if (step2Complete) setCurrentStep(3) }}
             disabled={!step2Complete}
             disabledReason="Select a plan, start date, and duration to continue"
           />
@@ -725,7 +540,6 @@ function NewLibraryMemberContent() {
             )}
           </div>
 
-          {/* Step 3 always completable */}
           <WorkflowContinueButton
             onClick={() => setCurrentStep(4)}
             label={formData.time_slots.length === 0 ? "Continue with Full Day Access" : "Save & Continue"}
@@ -743,20 +557,21 @@ function NewLibraryMemberContent() {
         currentStep={currentStep}
       >
         <div className="space-y-4">
-          {/* Summary */}
           <div className="rounded-lg border bg-muted/50 p-4 space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Member</span>
-              <span className="font-medium">{formData.name}</span>
+              <span className="font-medium">{selectedPerson?.name}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Phone</span>
-              <span className="font-medium">{formData.phone}</span>
-            </div>
-            {formData.email && (
+            {selectedPerson?.phone && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Phone</span>
+                <span className="font-medium">{selectedPerson.phone}</span>
+              </div>
+            )}
+            {selectedPerson?.email && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Email</span>
-                <span className="font-medium">{formData.email}</span>
+                <span className="font-medium">{selectedPerson.email}</span>
               </div>
             )}
             <div className="flex justify-between">

@@ -32,6 +32,20 @@ export default function EditBillPaymentPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  return (
+    <ModuleGuard module="expenses">
+      <PermissionGuard permission="expenses.edit">
+        <EditBillPaymentContent params={params} />
+      </PermissionGuard>
+    </ModuleGuard>
+  )
+}
+
+function EditBillPaymentContent({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = use(params)
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/bills" })
   const router = useRouter()
@@ -264,17 +278,15 @@ export default function EditBillPaymentPage({
   }
 
   return (
-    <ModuleGuard module="expenses">
-      <PermissionGuard permission="expenses.edit">
-        <div className="max-w-2xl mx-auto py-6">
-          {/* Back Link */}
-          <Link
-            href={backHref}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Bill
-          </Link>
+    <div className="max-w-2xl mx-auto py-6">
+      {/* Back Link */}
+      <Link
+        href={backHref}
+        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
+      >
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        Back to Bill
+      </Link>
 
           <form onSubmit={handleSubmit}>
             <Card>
@@ -619,9 +631,7 @@ export default function EditBillPaymentPage({
                 {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
-          </form>
-        </div>
-      </PermissionGuard>
-    </ModuleGuard>
+      </form>
+    </div>
   )
 }

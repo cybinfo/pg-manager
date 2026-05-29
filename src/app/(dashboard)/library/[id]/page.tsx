@@ -39,6 +39,7 @@ import {
 } from "lucide-react"
 import { formatDate } from "@/lib/format"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
+import { PermissionGate } from "@/components/auth"
 import { OCCUPANCY_STATUS_COLORS } from "@/lib/status"
 import type {
   Library as LibraryType,
@@ -119,12 +120,14 @@ export default function LibraryDetailPage() {
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
-            <Link href={`/library/${library.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </Button>
-            </Link>
+            <PermissionGate permission="library.edit" hide>
+              <Link href={`/library/${library.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              </Link>
+            </PermissionGate>
             <Link href={`/library-sections/new?library=${library.id}`}>
               <Button size="sm">
                 <Plus className="mr-2 h-4 w-4" />

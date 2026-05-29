@@ -41,6 +41,14 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import type { PropertyOption } from "@/types/properties.types"
 
 export default function EditMeterPage() {
+  return (
+    <PermissionGuard permission="meters.edit">
+      <EditMeterContent />
+    </PermissionGuard>
+  )
+}
+
+function EditMeterContent() {
   const params = useParams()
   const id = params.id as string
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meters", defaultLabel: "All Meters" })
@@ -156,8 +164,7 @@ export default function EditMeterPage() {
   const TypeIcon = formData.meter_type === "water" ? Droplets : formData.meter_type === "gas" ? Gauge : Zap
 
   return (
-    <PermissionGuard permission="meters.edit">
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
         {/* Hero Header */}
         <DetailHero
           title="Edit Meter"
@@ -299,6 +306,5 @@ export default function EditMeterPage() {
           </Button>
         </div>
       </form>
-    </PermissionGuard>
   )
 }

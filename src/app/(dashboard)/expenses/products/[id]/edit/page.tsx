@@ -31,6 +31,20 @@ export default function EditProductPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  return (
+    <ModuleGuard module="expenses">
+      <PermissionGuard permission="expenses.edit">
+        <EditProductContent params={params} />
+      </PermissionGuard>
+    </ModuleGuard>
+  )
+}
+
+function EditProductContent({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = use(params)
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/products" })
   const router = useRouter()
@@ -169,17 +183,15 @@ export default function EditProductPage({
   }
 
   return (
-    <ModuleGuard module="expenses">
-      <PermissionGuard permission="expenses.edit">
-        <div className="max-w-2xl mx-auto py-6">
-          {/* Back Link */}
-          <Link
-            href={backHref}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Product
-          </Link>
+    <div className="max-w-2xl mx-auto py-6">
+      {/* Back Link */}
+      <Link
+        href={backHref}
+        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
+      >
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        Back to Product
+      </Link>
 
           <form onSubmit={handleSubmit}>
             <Card>
@@ -299,9 +311,7 @@ export default function EditProductPage({
                 {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
-          </form>
-        </div>
-      </PermissionGuard>
-    </ModuleGuard>
+      </form>
+    </div>
   )
 }

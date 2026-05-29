@@ -49,6 +49,14 @@ interface ExitClearance {
 }
 
 export default function NewRefundPage() {
+  return (
+    <PermissionGuard permission="payments.create">
+      <NewRefundContent />
+    </PermissionGuard>
+  )
+}
+
+function NewRefundContent() {
   const { user } = useAuth()
   const { backHref } = useBackNavigation({ defaultHref: "/refunds" })
   const router = useRouter()
@@ -74,8 +82,10 @@ export default function NewRefundPage() {
   })
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
     fetchTenants()
     if (exitClearanceId) {
+      // eslint-disable-next-line react-hooks/immutability
       fetchExitClearance(exitClearanceId)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,6 +94,7 @@ export default function NewRefundPage() {
   useEffect(() => {
     if (formData.tenant_id) {
       const tenant = tenants.find((t) => t.id === formData.tenant_id)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedTenant(tenant || null)
     }
   }, [formData.tenant_id, tenants])
@@ -248,8 +259,7 @@ export default function NewRefundPage() {
   if (loading) return <PageSkeleton variant="form" />
 
   return (
-    <PermissionGuard permission="payments.create">
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link href={backHref}>
@@ -466,6 +476,5 @@ export default function NewRefundPage() {
           </div>
         </form>
       </div>
-    </PermissionGuard>
   )
 }

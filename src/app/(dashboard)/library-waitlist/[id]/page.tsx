@@ -240,6 +240,31 @@ export default function WaitlistDetailPage({
         }
         actions={
           <div className="flex items-center gap-2 flex-wrap">
+            {entry.phone && (
+              <a href={`tel:${entry.phone}`}>
+                <Button variant="outline" size="icon" title="Call">
+                  <Phone className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
+            {entry.phone && (
+              <a
+                href={`https://wa.me/91${entry.phone.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="icon" title="WhatsApp" className="text-success border-success/20 hover:bg-success/10">
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
+            {entry.email && (
+              <a href={`mailto:${entry.email}`}>
+                <Button variant="outline" size="icon" title="Email">
+                  <Mail className="h-4 w-4" />
+                </Button>
+              </a>
+            )}
             {entry.status === "waiting" && (
               <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
                 <DialogTrigger asChild>

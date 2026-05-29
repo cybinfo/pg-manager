@@ -4,13 +4,11 @@
  * Orchestrates the multi-step registration of a new library member:
  * 1. Resolve library + owner context
  * 2. Generate member code
- * 3. Create person record (people table — single source of truth)
- * 4. Create library_members record
- * 5. Create library_memberships record
- * 6. Back-link current_subscription_id on the member
- * 7. Update person with supplemental fields (gender, DOB, father/guardian)
- * 8. Send welcome email (non-blocking, feature-gated by caller)
- * 9. Convert waitlist entry if applicable
+ * 3. Create library_members record (person already exists via PersonSelector)
+ * 4. Create library_memberships record
+ * 5. Back-link current_subscription_id on the member
+ * 6. Send welcome email (non-blocking, feature-gated by caller)
+ * 7. Convert waitlist entry if applicable
  */
 
 import { createClient } from "@/lib/supabase/client"
@@ -22,18 +20,11 @@ import type { TimeSlot } from "@/lib/time-slots"
 
 export interface CreateLibraryMemberInput {
   library_id: string
-  // Personal info
-  name: string
-  phone: string
-  email: string
-  photo_url: string
-  gender: string
-  father_name: string
-  date_of_birth: string
-  id_proof_type: string
-  id_proof_number: string
-  preferred_slot: string
-  notes: string
+  // Person reference — must already exist in people table (created via PersonSelector)
+  person_id: string
+  person_name: string
+  person_phone?: string
+  person_email?: string
   // Subscription
   plan_id: string
   plan_name?: string
@@ -117,49 +108,23 @@ export async function createLibraryMember(
   const endDate = computeEndDate(input.start_date, input.duration_months)
   const finalAmount = input.amount - input.discount
   const timeSlot = serializeTimeSlots(input.time_slots)
-  const memberName = input.name.toUpperCase()
+  const memberName = input.person_name.toUpperCase()
 
-  // Create person record (central registry — non-blocking failure)
-  const personData = withCreatedBy(
-    {
-      owner_id: library.owner_id,
-      name: memberName,
-      phone: input.phone || null,
-      email: input.email || null,
-      photo_url: input.photo_url || null,
-      gender: input.gender || null,
-      date_of_birth: input.date_of_birth || null,
-      tags: ["library_member"],
-    },
-    ownerId
-  )
-
-  const { data: person, error: personError } = await supabase
-    .from("people")
-    .insert(personData)
-    .select("id")
-    .single()
-
-  if (personError) {
-    logger.error("Error creating person record for library member", { detail: personError })
-    // Non-blocking — member creation continues without person_id
-  }
-
-  // Create member record
+  // Create member record — person already exists via PersonSelector
   const memberData = withCreatedBy(
     {
       owner_id: library.owner_id,
       workspace_id: workspaceId,
       library_id: input.library_id,
-      person_id: person?.id || null,
+      person_id: input.person_id,
       name: memberName,
-      phone: input.phone,
-      email: input.email || null,
+      phone: input.person_phone || null,
+      email: input.person_email || null,
       member_code: memberCode,
-      id_proof_type: input.id_proof_type || null,
-      id_proof_number: input.id_proof_number || null,
-      preferred_slot: input.preferred_slot || null,
-      notes: input.notes || null,
+      id_proof_type: null,
+      id_proof_number: null,
+      preferred_slot: null,
+      notes: null,
       status: "active",
       join_date: input.start_date,
       expiry_date: endDate,
@@ -220,33 +185,12 @@ export async function createLibraryMember(
       .eq("id", member.id)
   }
 
-  // Update person with supplemental fields
-  if (person?.id) {
-    const personUpdates: Record<string, unknown> = {}
-    if (input.gender) personUpdates.gender = input.gender
-    if (input.date_of_birth) personUpdates.date_of_birth = input.date_of_birth
-    if (input.father_name) {
-      personUpdates.emergency_contacts = [
-        { name: input.father_name.toUpperCase(), phone: "", relation: "Father/Guardian" },
-      ]
-    }
-    if (Object.keys(personUpdates).length > 0) {
-      const { error: personUpdateError } = await supabase
-        .from("people")
-        .update(personUpdates)
-        .eq("id", person.id)
-      if (personUpdateError) {
-        logger.error("Error updating person supplemental fields", { detail: personUpdateError })
-      }
-    }
-  }
-
   // Send welcome email (non-blocking — caller sets send_welcome_email based on feature flag)
-  if (input.send_welcome_email && input.email) {
+  if (input.send_welcome_email && input.person_email) {
     import("@/lib/email")
       .then(({ sendLibraryMemberWelcomeEmail }) => {
         sendLibraryMemberWelcomeEmail({
-          to: input.email,
+          to: input.person_email!,
           memberName: memberName,
           libraryName: library.name,
           memberCode: memberCode,

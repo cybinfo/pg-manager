@@ -733,6 +733,7 @@ export const completeExitWorkflow: WorkflowDefinition<CompleteExitInput, Complet
           processed_at: input.final_settlement_mode ? getNowISO() : null,
           reason: `Security deposit refund for exit clearance`,
           notes: input.final_notes || null,
+          created_by: context.actor_id,
         }
 
         const { data: refund, error } = await supabase

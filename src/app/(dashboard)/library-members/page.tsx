@@ -26,7 +26,7 @@ import type { CSVColumn } from "@/lib/download-utils"
 import { dateExportColumn, formatDecimalForExport } from "@/lib/export-columns"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/form-components"
-import { PermissionGate } from "@/components/auth"
+import { PermissionGate, ModuleGuard } from "@/components/auth"
 import { LIBRARY_MEMBER_STATUS_UPDATE_OPTIONS } from "@/lib/constants/form-options"
 import { createClient } from "@/lib/supabase/client"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -405,6 +405,7 @@ const bulkActions: BulkActionConfig = {
 
 export default function LibraryMembersPage() {
   return (
+    <ModuleGuard module="members">
     <ListPageTemplate
       tableKey="library-members"
       title="Library Members"
@@ -442,5 +443,6 @@ export default function LibraryMembersPage() {
       emptyDescription="Add your first member to start tracking subscriptions"
       bulkActions={bulkActions}
     />
+    </ModuleGuard>
   )
 }

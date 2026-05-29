@@ -58,6 +58,14 @@ interface Room {
 // ============================================
 
 export default function NewMeterPage() {
+  return (
+    <PermissionGuard permission="meters.create">
+      <NewMeterContent />
+    </PermissionGuard>
+  )
+}
+
+function NewMeterContent() {
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/meters", defaultLabel: "All Meters" })
   const [properties, setProperties] = useState<PropertyOption[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
@@ -238,8 +246,7 @@ export default function NewMeterPage() {
   const TypeIcon = formData.meter_type === "water" ? Droplets : formData.meter_type === "gas" ? Gauge : Zap
 
   return (
-    <PermissionGuard permission="meters.create">
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
         {/* Hero Header */}
         <DetailHero
           title="Add New Meter"
@@ -420,6 +427,5 @@ export default function NewMeterPage() {
           </Button>
         </div>
       </form>
-    </PermissionGuard>
   )
 }

@@ -42,6 +42,16 @@ interface SpendLineItem {
 }
 
 export default function NewDailySpendPage() {
+  return (
+    <ModuleGuard module="expenses">
+      <PermissionGuard permission="expenses.create">
+        <NewDailySpendContent />
+      </PermissionGuard>
+    </ModuleGuard>
+  )
+}
+
+function NewDailySpendContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/daily-spend" })
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
@@ -266,9 +276,7 @@ export default function NewDailySpendPage() {
   }
 
   return (
-    <ModuleGuard module="expenses">
-      <PermissionGuard permission="expenses.create">
-        <div className="max-w-4xl mx-auto py-6">
+    <div className="max-w-4xl mx-auto py-6">
           {/* Back Link */}
           <Link
             href={backHref}
@@ -497,8 +505,6 @@ export default function NewDailySpendPage() {
               </Button>
             </div>
           </form>
-        </div>
-      </PermissionGuard>
-    </ModuleGuard>
+    </div>
   )
 }

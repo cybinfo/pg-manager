@@ -335,12 +335,14 @@ export default function TenantDetailPage() {
                 </Button>
               </Link>
             )}
-            <Link href={`/tenants/${tenant.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Tenancy
-              </Button>
-            </Link>
+            <PermissionGate permission="tenants.edit" hide>
+              <Link href={`/tenants/${tenant.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit Tenancy
+                </Button>
+              </Link>
+            </PermissionGate>
             <Link href={`/tenants/${tenant.id}/journey`}>
               <Button variant="outline" size="sm">
                 <History className="mr-2 h-4 w-4" />

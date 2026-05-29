@@ -58,6 +58,14 @@ const STEPS: WorkflowStepDef[] = [
 ]
 
 export default function NewTenantPage() {
+  return (
+    <PermissionGuard permission="tenants.create">
+      <NewTenantContent />
+    </PermissionGuard>
+  )
+}
+
+function NewTenantContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/tenants" })
   const { isFeatureEnabled } = useFeatures()
   const { user } = useAuth()
@@ -152,6 +160,7 @@ export default function NewTenantPage() {
         .single()
 
       if (data && !data.is_blocked) {
+        // eslint-disable-next-line react-hooks/immutability
         handlePersonSelect(data)
       } else if (data?.is_blocked) {
         showError("This person is blocked and cannot be added as a tenant")
@@ -170,6 +179,7 @@ export default function NewTenantPage() {
           room.property_id === formData.property_id &&
           room.occupied_beds < room.total_beds
       )
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvailableRooms(filtered)
 
       if (filtered.length > 0) {
@@ -195,6 +205,7 @@ export default function NewTenantPage() {
     if (formData.room_id) {
       const selectedRoom = rooms.find((r) => r.id === formData.room_id)
       if (selectedRoom) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFormData((prev) => ({
           ...prev,
           monthly_rent: selectedRoom.rent_amount.toString(),
@@ -447,8 +458,7 @@ export default function NewTenantPage() {
   }
 
   return (
-    <PermissionGuard permission="tenants.create">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
         {/* Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <Link href="/dashboard" className="flex items-center gap-1 hover:text-foreground transition-colors">
@@ -798,6 +808,5 @@ export default function NewTenantPage() {
           </div>
         </WorkflowStepCard>
       </div>
-    </PermissionGuard>
   )
 }

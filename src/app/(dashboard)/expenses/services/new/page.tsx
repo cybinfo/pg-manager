@@ -47,6 +47,16 @@ const STEPS: WorkflowStepDef[] = [
 ]
 
 export default function NewServicePaymentPage() {
+  return (
+    <ModuleGuard module="expenses">
+      <PermissionGuard permission="expenses.create">
+        <NewServicePaymentContent />
+      </PermissionGuard>
+    </ModuleGuard>
+  )
+}
+
+function NewServicePaymentContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/services" })
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
@@ -134,6 +144,7 @@ export default function NewServicePaymentPage() {
     if (formData.tds_applicable && formData.gross_amount > 0 && formData.tds_rate) {
       const tdsAmount = (formData.gross_amount * formData.tds_rate) / 100
       const netAmount = formData.gross_amount - tdsAmount
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData((prev) => ({
         ...prev,
         tds_amount: tdsAmount,
@@ -259,9 +270,7 @@ export default function NewServicePaymentPage() {
   }
 
   return (
-    <ModuleGuard module="expenses">
-      <PermissionGuard permission="expenses.create">
-        <div className="max-w-2xl mx-auto py-6 space-y-6">
+    <div className="max-w-2xl mx-auto py-6 space-y-6">
           {/* Header */}
           <WorkflowHeader
             title="New Service Payment"
@@ -586,9 +595,7 @@ export default function NewServicePaymentPage() {
               </div>
             </div>
           </WorkflowStepCard>
-        </div>
-      </PermissionGuard>
-    </ModuleGuard>
+    </div>
   )
 }
 

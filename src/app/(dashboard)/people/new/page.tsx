@@ -56,6 +56,14 @@ import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { logger } from "@/lib/logger"
 
 export default function NewPersonPage() {
+  return (
+    <PermissionGuard permission="tenants.create">
+      <NewPersonContent />
+    </PermissionGuard>
+  )
+}
+
+function NewPersonContent() {
   const router = useRouter()
   const { user } = useAuth()
   const { backHref, backLabel } = useBackNavigation({ defaultHref: "/people", defaultLabel: "All People" })
@@ -254,8 +262,7 @@ export default function NewPersonPage() {
   }
 
   return (
-    <PermissionGuard permission="tenants.create">
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
         {/* Hero Header */}
         <DetailHero
           title="Add New Person"
@@ -594,6 +601,5 @@ export default function NewPersonPage() {
           </Button>
         </div>
       </form>
-    </PermissionGuard>
   )
 }

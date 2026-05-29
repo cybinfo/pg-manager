@@ -48,6 +48,20 @@ export default function EditDailySpendPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  return (
+    <ModuleGuard module="expenses">
+      <PermissionGuard permission="expenses.edit">
+        <EditDailySpendContent params={params} />
+      </PermissionGuard>
+    </ModuleGuard>
+  )
+}
+
+function EditDailySpendContent({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = use(params)
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/daily-spend" })
   const router = useRouter()
@@ -274,9 +288,7 @@ export default function EditDailySpendPage({
   }
 
   return (
-    <ModuleGuard module="expenses">
-      <PermissionGuard permission="expenses.edit">
-        <div className="max-w-2xl mx-auto py-6">
+    <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
             href={backHref}
@@ -452,8 +464,6 @@ export default function EditDailySpendPage({
               </Button>
             </div>
           </form>
-        </div>
-      </PermissionGuard>
-    </ModuleGuard>
+    </div>
   )
 }

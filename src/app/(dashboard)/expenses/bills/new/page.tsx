@@ -29,6 +29,16 @@ import type { Vendor, BillCategory, BillPaymentFormData } from "@/types/expense-
 import { logger } from "@/lib/logger"
 
 export default function NewBillPaymentPage() {
+  return (
+    <ModuleGuard module="expenses">
+      <PermissionGuard permission="expenses.create">
+        <NewBillPaymentContent />
+      </PermissionGuard>
+    </ModuleGuard>
+  )
+}
+
+function NewBillPaymentContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/bills" })
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
@@ -229,9 +239,7 @@ export default function NewBillPaymentPage() {
   }
 
   return (
-    <ModuleGuard module="expenses">
-      <PermissionGuard permission="expenses.create">
-        <div className="max-w-2xl mx-auto py-6">
+    <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
             href={backHref}
@@ -576,8 +584,6 @@ export default function NewBillPaymentPage() {
               </Button>
             </div>
           </form>
-        </div>
-      </PermissionGuard>
-    </ModuleGuard>
+    </div>
   )
 }

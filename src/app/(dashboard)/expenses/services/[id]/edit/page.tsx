@@ -34,6 +34,20 @@ export default function EditServicePaymentPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  return (
+    <ModuleGuard module="expenses">
+      <PermissionGuard permission="expenses.edit">
+        <EditServicePaymentContent params={params} />
+      </PermissionGuard>
+    </ModuleGuard>
+  )
+}
+
+function EditServicePaymentContent({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = use(params)
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/services" })
   const router = useRouter()
@@ -148,6 +162,7 @@ export default function EditServicePaymentPage({
     if (formData.tds_applicable && formData.gross_amount > 0 && formData.tds_rate) {
       const tdsAmount = (formData.gross_amount * formData.tds_rate) / 100
       const netAmount = formData.gross_amount - tdsAmount
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData((prev) => ({
         ...prev,
         tds_amount: tdsAmount,
@@ -283,17 +298,15 @@ export default function EditServicePaymentPage({
   }
 
   return (
-    <ModuleGuard module="expenses">
-      <PermissionGuard permission="expenses.edit">
-        <div className="max-w-2xl mx-auto py-6">
-          {/* Back Link */}
-          <Link
-            href={backHref}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Payment
-          </Link>
+    <div className="max-w-2xl mx-auto py-6">
+      {/* Back Link */}
+      <Link
+        href={backHref}
+        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
+      >
+        <ArrowLeft className="h-4 w-4 mr-1" />
+        Back to Payment
+      </Link>
 
           <form onSubmit={handleSubmit}>
             <Card>
@@ -557,9 +570,7 @@ export default function EditServicePaymentPage({
                 {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
-          </form>
-        </div>
-      </PermissionGuard>
-    </ModuleGuard>
+      </form>
+    </div>
   )
 }

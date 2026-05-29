@@ -207,7 +207,7 @@ export default function InquiryDetailPage() {
               </a>
             )}
 
-            <PermissionGate permission="tenants.create">
+            <PermissionGate permission="tenants.edit">
               {!editing ? (
                 <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                   <Edit2 className="mr-2 h-4 w-4" />

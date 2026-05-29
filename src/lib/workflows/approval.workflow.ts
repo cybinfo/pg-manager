@@ -918,6 +918,7 @@ export const createApprovalWorkflow: WorkflowDefinition<CreateApprovalInput, Cre
             priority: input.priority || "normal",
             document_ids: input.document_ids || null,
             status: "pending",
+            created_by: context.actor_id,
             created_at: getNowISO(),
           })
           .select()

@@ -516,6 +516,7 @@ export const refundPaymentWorkflow: WorkflowDefinition<RefundPaymentInput, Refun
             refund_method: input.refund_method,
             reference_number: input.refund_reference || null,
             processed_by: context.actor_id,
+            created_by: context.actor_id,
             created_at: getNowISO(),
           })
           .select()

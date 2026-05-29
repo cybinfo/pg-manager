@@ -193,6 +193,10 @@ export default function LibraryLockerDetailPage() {
         }
         backHref={backHref}
         backLabel={backLabel}
+        breadcrumbs={[
+          { label: "Library Lockers", href: "/library-lockers" },
+          { label: `Locker #${locker.locker_number}` },
+        ]}
         status={statusConfig?.variant || "muted"}
         avatar={
           <div className={`p-3 rounded-xl ${

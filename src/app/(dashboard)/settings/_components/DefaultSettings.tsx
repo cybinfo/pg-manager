@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Save, Check } from "lucide-react"
 import { useSettingsMutation } from "@/lib/hooks/useSettingsMutation"
 import { OwnerConfig } from "@/types/settings.types"
-import { NOTICE_PERIOD_OPTIONS, AVAILABLE_AMENITIES } from "@/lib/constants/form-options"
+import { NOTICE_PERIOD_OPTIONS, AVAILABLE_AMENITIES, BILLING_DAY_OPTIONS } from "@/lib/constants/form-options"
 
 interface DefaultSettingsProps {
   configForm: {
@@ -54,10 +54,7 @@ export function DefaultSettings({ configForm, setConfigForm, config, setConfig }
                 id="default_rent_due_day"
                 value={configForm.default_rent_due_day.toString()}
                 onChange={(e) => setConfigForm({ ...configForm, default_rent_due_day: parseInt(e.target.value) })}
-                options={Array.from({ length: 28 }, (_, i) => i + 1).map((day) => ({
-                  value: day.toString(),
-                  label: `${day}${day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month`,
-                }))}
+                options={BILLING_DAY_OPTIONS}
               />
             </FormField>
 

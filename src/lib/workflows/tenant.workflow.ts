@@ -380,6 +380,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
           join_date: input.check_in_date,
           monthly_rent: input.monthly_rent,
           status: "active",
+          created_by: context.actor_id,
           created_at: getNowISO(),
         }
 
@@ -397,7 +398,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
 
         return createSuccessResult(stay)
       },
-      // Rollback: Delete the tenant_stay record
+      // Rollback: Hard delete the tenant_stay record (table has no soft-delete columns)
       rollback: async (context, input, stepResult) => {
         const supabase = createClient()
         const stay = stepResult as Record<string, unknown>
@@ -513,6 +514,7 @@ export const tenantCreateWorkflow: WorkflowDefinition<TenantCreateInput, TenantC
         const documents = input.id_documents.map((doc) => ({
           tenant_id: tenant.id,
           ...doc,
+          created_by: context.actor_id,
           created_at: getNowISO(),
         }))
 

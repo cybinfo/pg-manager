@@ -25,6 +25,16 @@ import { TDS_SECTION_OPTIONS, TDS_RATES } from "@/lib/constants/form-options"
 import { logger } from "@/lib/logger"
 
 export default function NewServiceProviderPage() {
+  return (
+    <ModuleGuard module="expenses">
+      <PermissionGuard permission="expenses.create">
+        <NewServiceProviderContent />
+      </PermissionGuard>
+    </ModuleGuard>
+  )
+}
+
+function NewServiceProviderContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/expenses/services/providers" })
   const router = useRouter()
   const { user, workspaceId } = useAuthContext()
@@ -146,9 +156,7 @@ export default function NewServiceProviderPage() {
   }
 
   return (
-    <ModuleGuard module="expenses">
-      <PermissionGuard permission="expenses.create">
-        <div className="max-w-2xl mx-auto py-6">
+    <div className="max-w-2xl mx-auto py-6">
           {/* Back Link */}
           <Link
             href={backHref}
@@ -397,8 +405,6 @@ export default function NewServiceProviderPage() {
               </Button>
             </div>
           </form>
-        </div>
-      </PermissionGuard>
-    </ModuleGuard>
+    </div>
   )
 }

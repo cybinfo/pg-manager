@@ -222,6 +222,13 @@ export const GRACE_PERIOD_OPTIONS = [0, 3, 5, 7, 10, 15, 30].map((days) => ({
   label: days === 0 ? "No grace period" : `${days} days after due date`,
 }))
 
+/** Billing day options (1–28) with ordinal suffixes for day-of-month selects */
+export const BILLING_DAY_OPTIONS = Array.from({ length: 28 }, (_, i) => {
+  const day = i + 1
+  const suffix = day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"
+  return { value: String(day), label: `${day}${suffix} of month` }
+})
+
 // ============================================================================
 // PROPERTY
 // ============================================================================

@@ -122,6 +122,7 @@ const filters: FilterConfig[] = [
 
 const groupByOptions: GroupByOption[] = [
   { value: "is_system_role", label: "Type (System / Custom)" },
+  { value: "created_at", label: "Created Date" },
 ]
 
 // ============================================
