@@ -2,16 +2,13 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField } from "@/components/ui/form-components"
 import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import {
-  ArrowLeft,
   FileText,
   Loader2,
   Plus,
@@ -19,12 +16,13 @@ import {
   User,
   Calendar,
   IndianRupee,
-  Check
+  Check,
+  ClipboardList,
 } from "lucide-react"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { showSuccess, showError } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
-import { formatCurrency, formatMonthYear, formatDate} from "@/lib/format"
+import { formatCurrency, formatMonthYear, formatDate } from "@/lib/format"
 import { createBillWithCharges } from "@/lib/services/bills"
 import { PageSkeleton } from "@/components/ui/loading"
 import { PermissionGuard } from "@/components/auth"
@@ -35,7 +33,12 @@ import { getTodayISO, parseMonthIndex } from "@/lib/date-helpers"
 import { logger } from "@/lib/logger"
 import { calculateProRataAmount, getProRataBreakdown } from "@/lib/billing/pro-rata"
 import { useFeatures } from "@/lib/features/use-features"
-import { FeatureGuard } from "@/components/auth"
+import {
+  WorkflowStepper,
+  WorkflowStepCard,
+  WorkflowHeader,
+  WorkflowStepDef,
+} from "@/components/ui/workflow"
 
 interface Tenant {
   id: string
@@ -80,6 +83,12 @@ interface PendingCharge {
   } | null
 }
 
+const STEPS: WorkflowStepDef[] = [
+  { id: 1, label: "Select Tenant", icon: User },
+  { id: 2, label: "Bill Details", icon: Calendar },
+  { id: 3, label: "Review & Create", icon: ClipboardList },
+]
+
 function NewBillContent() {
   const { backHref } = useBackNavigation({ defaultHref: "/bills" })
   const { user } = useAuth()
@@ -90,6 +99,7 @@ function NewBillContent() {
   const { isFeatureEnabled } = useFeatures()
   const proRataEnabled = isFeatureEnabled("billing", "proRataBilling")
 
+  const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [loadingTenants, setLoadingTenants] = useState(true)
   const [loadingCharges, setLoadingCharges] = useState(false)
@@ -99,7 +109,7 @@ function NewBillContent() {
   const [selectedChargeTypes, setSelectedChargeTypes] = useState<string[]>([])
   const [selectedTenant, setSelectedTenant] = useState<string>("")
   const [pendingCharges, setPendingCharges] = useState<PendingCharge[]>([])
-  const [billingCycleMode, setBillingCycleMode] = useState<'calendar_month' | 'checkin_anniversary'>('calendar_month')
+  const [billingCycleMode, setBillingCycleMode] = useState<"calendar_month" | "checkin_anniversary">("calendar_month")
 
   const [proRata, setProRata] = useState({
     enabled: false,
@@ -137,7 +147,6 @@ function NewBillContent() {
       }
 
       const supabase = createClient()
-      // Fetch tenants, charge types, and owner config in parallel
       const [tenantsRes, chargeTypesRes, configRes] = await Promise.all([
         supabase
           .from("tenants")
@@ -164,7 +173,7 @@ function NewBillContent() {
           .from("owner_config")
           .select("billing_cycle_mode")
           .eq("owner_id", user.id)
-          .single()
+          .single(),
       ])
 
       if (tenantsRes.error) {
@@ -184,22 +193,19 @@ function NewBillContent() {
       if (chargeTypesRes.data) {
         const chargeTypesData = chargeTypesRes.data as unknown as ChargeType[]
         setChargeTypes(chargeTypesData)
-        // Pre-select "Rent" charge type by default
         const rentType = chargeTypesData.find((ct: ChargeType) => ct.code === "rent")
         if (rentType) {
           setSelectedChargeTypes([rentType.id])
         }
       }
 
-      // Load billing cycle mode from owner config
       const configData = configRes?.data as { billing_cycle_mode?: string } | null
       if (configData?.billing_cycle_mode) {
-        setBillingCycleMode(configData.billing_cycle_mode as 'calendar_month' | 'checkin_anniversary')
+        setBillingCycleMode(configData.billing_cycle_mode as "calendar_month" | "checkin_anniversary")
       }
 
       setLoadingTenants(false)
 
-      // Pre-select tenant if provided
       if (preselectedTenant) {
         setSelectedTenant(preselectedTenant)
       }
@@ -220,7 +226,6 @@ function NewBillContent() {
       setLoadingCharges(true)
       const supabase = createClient()
 
-      // Get pending charges for this tenant
       const { data: charges, error } = await supabase
         .from("charges")
         .select(`
@@ -245,11 +250,9 @@ function NewBillContent() {
 
       setPendingCharges(transformedCharges)
 
-      // Auto-populate line items from selected charge types
       const tenant = tenants.find((t) => t.id === selectedTenant)
       const items: LineItem[] = []
 
-      // Add line items for each selected charge type
       selectedChargeTypes.forEach((chargeTypeId) => {
         const chargeType = chargeTypes.find((ct) => ct.id === chargeTypeId)
         if (!chargeType) return
@@ -257,7 +260,6 @@ function NewBillContent() {
         let amount = 0
         const description = `${chargeType.name} - ${formData.for_month}`
 
-        // Determine amount based on charge type
         if (chargeType.code === "rent" && tenant?.monthly_rent) {
           amount = tenant.monthly_rent
         } else if (chargeType.calculation_config?.default_amount) {
@@ -272,9 +274,7 @@ function NewBillContent() {
         })
       })
 
-      // Add pending charges (not already included via charge types)
       transformedCharges.forEach((charge) => {
-        // Check if this charge type is already in items
         const alreadyAdded = items.some((item) => item.type === charge.charge_type?.name)
         if (!alreadyAdded) {
           items.push({
@@ -300,16 +300,13 @@ function NewBillContent() {
       const now = new Date()
       let billDate: Date
 
-      if (billingCycleMode === 'checkin_anniversary' && tenant?.check_in_date) {
-        // Use the day of check-in but current month/year
+      if (billingCycleMode === "checkin_anniversary" && tenant?.check_in_date) {
         const checkInDay = new Date(tenant.check_in_date).getDate()
         billDate = new Date(now.getFullYear(), now.getMonth(), checkInDay)
-        // If the calculated date is in the future, use previous month
         if (billDate > now) {
           billDate.setMonth(billDate.getMonth() - 1)
         }
       } else {
-        // Calendar month mode - use 1st of current month
         billDate = new Date(now.getFullYear(), now.getMonth(), 1)
       }
 
@@ -320,7 +317,6 @@ function NewBillContent() {
     }
   }, [selectedTenant, tenants, billingCycleMode])
 
-  // Toggle charge type selection
   const toggleChargeType = (chargeTypeId: string) => {
     setSelectedChargeTypes((prev) =>
       prev.includes(chargeTypeId)
@@ -342,11 +338,7 @@ function NewBillContent() {
   }
 
   const updateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
-    setLineItems(
-      lineItems.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      )
-    )
+    setLineItems(lineItems.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
   }
 
   const removeLineItem = (id: string) => {
@@ -357,7 +349,6 @@ function NewBillContent() {
     if (!proRata.enabled || !proRata.joinDate || !formData.for_month) return null
     const tenant = tenants.find((t) => t.id === selectedTenant)
     if (!tenant?.monthly_rent) return null
-    // Convert "Month YYYY" to "YYYY-MM"
     const [monthName, yearStr] = formData.for_month.split(" ")
     const monthIndex = parseMonthIndex(monthName) + 1
     const billingMonth = `${yearStr}-${String(monthIndex).padStart(2, "0")}`
@@ -378,9 +369,7 @@ function NewBillContent() {
     return { subtotal, total, proRataAmount }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const doSubmit = async () => {
     if (!selectedTenant) {
       showError("Please select a tenant")
       return
@@ -403,7 +392,6 @@ function NewBillContent() {
       const tenant = tenants.find((t) => t.id === selectedTenant)
       const { subtotal, total, proRataAmount } = calculateTotals()
 
-      // Apply pro-rata to rent line items before saving
       const effectiveLineItems = lineItems.map((item) => {
         if (proRata.enabled && proRataAmount !== null && item.type.toLowerCase().includes("rent")) {
           return { ...item, amount: proRataAmount }
@@ -439,101 +427,138 @@ function NewBillContent() {
 
   const { subtotal, total, proRataAmount } = calculateTotals()
 
+  const step1Complete = !!selectedTenant
+  const step2Complete = !!formData.for_month && lineItems.length > 0
+
+  const selectedTenantObj = tenants.find((t) => t.id === selectedTenant)
+
   if (loadingTenants) {
     return <PageSkeleton variant="form" />
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
+    <div className="max-w-2xl mx-auto space-y-6">
+      <WorkflowHeader
+        title="Generate Bill"
+        subtitle="Create a new bill for a tenant"
+        icon={FileText}
+        onBack={() => router.push(backHref)}
+        backLabel="Back to Bills"
+      />
+
+      <WorkflowStepper steps={STEPS} currentStep={currentStep} />
+
+      {/* Step 1: Select Tenant */}
+      <WorkflowStepCard
+        stepNum={1}
+        title="Select Tenant"
+        description="Choose the tenant for this bill"
+        icon={User}
+        currentStep={currentStep}
+        onEdit={() => setCurrentStep(1)}
+        completedSummary={
+          selectedTenantObj
+            ? `${selectedTenantObj.name} — ${selectedTenantObj.property?.name}, Room ${selectedTenantObj.room?.room_number}`
+            : undefined
+        }
+      >
+        <div className="space-y-4">
+          <Combobox
+            options={tenants.map((tenant): ComboboxOption => ({
+              value: tenant.id,
+              label: `${tenant.name} - ${tenant.property?.name} (Room ${tenant.room?.room_number})`,
+            }))}
+            value={selectedTenant}
+            onValueChange={setSelectedTenant}
+            placeholder="Search and select a tenant..."
+            searchPlaceholder="Type to search tenants..."
+          />
+
+          {selectedTenantObj && (
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Property:</span>
+                  <span className="ml-2 font-medium">{selectedTenantObj.property?.name}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Room:</span>
+                  <span className="ml-2 font-medium">{selectedTenantObj.room?.room_number}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Monthly Rent:</span>
+                  <span className="ml-2 font-medium">{formatCurrency(selectedTenantObj.monthly_rent)}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Phone:</span>
+                  <span className="ml-2 font-medium">{selectedTenantObj.phone}</span>
+                </div>
+                {selectedTenantObj.check_in_date && (
+                  <div>
+                    <span className="text-muted-foreground">Check-in:</span>
+                    <span className="ml-2 font-medium">{formatDate(selectedTenantObj.check_in_date)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <Button
+            className="w-full"
+            disabled={!step1Complete}
+            onClick={() => setCurrentStep(2)}
+          >
+            Save & Continue
           </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Generate Bill</h1>
-          <p className="text-muted-foreground">Create a new bill for a tenant</p>
         </div>
-      </div>
+      </WorkflowStepCard>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Tenant Selection */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <User className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Select Tenant</CardTitle>
-                <CardDescription>Choose the tenant for this bill</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Combobox
-              options={tenants.map((tenant): ComboboxOption => ({
-                value: tenant.id,
-                label: `${tenant.name} - ${tenant.property?.name} (Room ${tenant.room?.room_number})`,
-              }))}
-              value={selectedTenant}
-              onValueChange={setSelectedTenant}
-              placeholder="Search and select a tenant..."
-              searchPlaceholder="Type to search tenants..."
-            />
+      {/* Step 2: Bill Details */}
+      <WorkflowStepCard
+        stepNum={2}
+        title="Bill Details"
+        description="Set billing period, charges, and amounts"
+        icon={Calendar}
+        currentStep={currentStep}
+        onEdit={() => setCurrentStep(2)}
+        completedSummary={
+          step2Complete
+            ? `${formData.for_month} · ${lineItems.length} charge${lineItems.length !== 1 ? "s" : ""} · ${formatCurrency(subtotal)}`
+            : undefined
+        }
+      >
+        <div className="space-y-6">
+          {/* Billing period */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="For Month" required>
+              <Input
+                value={formData.for_month}
+                onChange={(e) => setFormData({ ...formData, for_month: e.target.value })}
+                placeholder="January 2024"
+                required
+              />
+            </FormField>
+            <FormField
+              label="Bill Date"
+              required
+              hint={
+                billingCycleMode === "checkin_anniversary"
+                  ? "Auto-set from tenant's check-in date"
+                  : "Using calendar month (1st of month)"
+              }
+            >
+              <Input
+                type="date"
+                value={formData.bill_date}
+                onChange={(e) => setFormData({ ...formData, bill_date: e.target.value })}
+                required
+              />
+            </FormField>
+          </div>
 
-            {selectedTenant && (
-              <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-                {(() => {
-                  const tenant = tenants.find((t) => t.id === selectedTenant)
-                  return tenant ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Property:</span>
-                        <span className="ml-2 font-medium">{tenant.property?.name}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Room:</span>
-                        <span className="ml-2 font-medium">{tenant.room?.room_number}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Monthly Rent:</span>
-                        <span className="ml-2 font-medium">{formatCurrency(tenant.monthly_rent)}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Phone:</span>
-                        <span className="ml-2 font-medium">{tenant.phone}</span>
-                      </div>
-                      {tenant.check_in_date && (
-                        <div>
-                          <span className="text-muted-foreground">Check-in:</span>
-                          <span className="ml-2 font-medium">{formatDate(tenant.check_in_date)}</span>
-                        </div>
-                      )}
-                    </div>
-                  ) : null
-                })()}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Charge Types Selection */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <IndianRupee className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Select Charges</CardTitle>
-                <CardDescription>Choose which charges to include in this bill</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
+          {/* Charge type selection */}
+          <div>
+            <p className="text-sm font-medium mb-2">Select Charges</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {chargeTypes.map((chargeType) => {
                 const isSelected = selectedChargeTypes.includes(chargeType.id)
@@ -549,17 +574,19 @@ function NewBillContent() {
                         : "border-muted hover:border-primary/50"
                     )}
                   >
-                    <div className={cn(
-                      "h-5 w-5 rounded flex items-center justify-center border-2 transition-colors",
-                      isSelected
-                        ? "bg-primary border-primary text-white"
-                        : "border-muted-foreground/30"
-                    )}>
+                    <div
+                      className={cn(
+                        "h-5 w-5 rounded flex items-center justify-center border-2 transition-colors",
+                        isSelected ? "bg-primary border-primary text-white" : "border-muted-foreground/30"
+                      )}
+                    >
                       {isSelected && <Check className="h-3 w-3" />}
                     </div>
                     <div>
                       <div className="font-medium text-sm">{chargeType.name}</div>
-                      <div className="text-xs text-muted-foreground capitalize">{chargeType.category.replace("_", " ")}</div>
+                      <div className="text-xs text-muted-foreground capitalize">
+                        {chargeType.category.replace("_", " ")}
+                      </div>
                     </div>
                   </button>
                 )
@@ -570,85 +597,11 @@ function NewBillContent() {
                 Please select at least one charge type to include in the bill.
               </p>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Bill Details */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle>Bill Details</CardTitle>
-                <CardDescription>Set billing period and dates</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="For Month" required>
-                <Input
-                  value={formData.for_month}
-                  onChange={(e) => setFormData({ ...formData, for_month: e.target.value })}
-                  placeholder="January 2024"
-                  required
-                />
-              </FormField>
-              <FormField
-                label="Bill Date"
-                required
-                hint={
-                  billingCycleMode === 'checkin_anniversary'
-                    ? "Auto-set from tenant's check-in date"
-                    : "Using calendar month (1st of month)"
-                }
-              >
-                <Input
-                  type="date"
-                  value={formData.bill_date}
-                  onChange={(e) => setFormData({ ...formData, bill_date: e.target.value })}
-                  required
-                />
-              </FormField>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Due Date" required>
-                <Input
-                  type="date"
-                  value={formData.due_date}
-                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                  required
-                />
-              </FormField>
-              <FormField label="Previous Balance (if any)">
-                <Input
-                  type="number"
-                  value={formData.previous_balance}
-                  onChange={(e) => setFormData({ ...formData, previous_balance: parseFloat(e.target.value) || 0 })}
-                  min="0"
-                />
-              </FormField>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pro-Rata Billing */}
-        {proRataEnabled && selectedTenant && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Calendar className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Pro-Rata Billing</CardTitle>
-                  <CardDescription>Calculate partial-month rent for mid-cycle join</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          {/* Pro-rata */}
+          {proRataEnabled && selectedTenant && (
+            <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <input
                   id="prorata-toggle"
@@ -676,11 +629,15 @@ function NewBillContent() {
                         const [monthName, yearStr] = formData.for_month.split(" ")
                         const monthIndex = parseMonthIndex(monthName) + 1
                         const billingMonth = `${yearStr}-${String(monthIndex).padStart(2, "0")}`
-                        const { remainingDays, daysInMonth } = getProRataBreakdown(new Date(proRata.joinDate), billingMonth)
-                        const tenant = tenants.find((t) => t.id === selectedTenant)
+                        const { remainingDays, daysInMonth } = getProRataBreakdown(
+                          new Date(proRata.joinDate),
+                          billingMonth
+                        )
                         return (
                           <span className="text-muted-foreground">
-                            {remainingDays} days / {daysInMonth} days × {formatCurrency(tenant?.monthly_rent || 0)} = <strong className="text-primary">{formatCurrency(proRataAmount)}</strong>
+                            {remainingDays} days / {daysInMonth} days ×{" "}
+                            {formatCurrency(selectedTenantObj?.monthly_rent || 0)} ={" "}
+                            <strong className="text-primary">{formatCurrency(proRataAmount)}</strong>
                           </span>
                         )
                       })()}
@@ -688,41 +645,30 @@ function NewBillContent() {
                   )}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          )}
 
-        {/* Line Items */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Line Items</CardTitle>
-                  <CardDescription>Add charges to this bill</CardDescription>
-                </div>
-              </div>
+          {/* Line items */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium">Line Items</p>
               <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
                 <Plus className="mr-1 h-4 w-4" />
                 Add Item
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
+
             {loadingCharges ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : lineItems.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No line items yet. Add items or select a tenant to auto-populate.</p>
+              <div className="text-center py-6 text-muted-foreground text-sm">
+                No line items yet. Add items or select a tenant to auto-populate.
               </div>
             ) : (
               <div className="space-y-3">
-                {lineItems.map((item, _index) => (
+                {lineItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-3">
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <Input
@@ -741,7 +687,9 @@ function NewBillContent() {
                           type="number"
                           placeholder="Amount"
                           value={item.amount || ""}
-                          onChange={(e) => updateLineItem(item.id, "amount", parseFloat(e.target.value) || 0)}
+                          onChange={(e) =>
+                            updateLineItem(item.id, "amount", parseFloat(e.target.value) || 0)
+                          }
                           className="pl-7"
                         />
                       </div>
@@ -760,8 +708,8 @@ function NewBillContent() {
               </div>
             )}
 
-            {/* Totals */}
-            <div className="mt-6 pt-4 border-t space-y-2">
+            {/* Preview total */}
+            <div className="mt-4 pt-4 border-t space-y-1.5">
               {proRata.enabled && proRataAmount !== null && (
                 <div className="flex justify-between text-sm text-primary">
                   <span>Pro-Rata Rent Applied</span>
@@ -772,56 +720,153 @@ function NewBillContent() {
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
-              {Number(formData.previous_balance) > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Previous Balance</span>
-                  <span>{formatCurrency(Number(formData.previous_balance))}</span>
-                </div>
-              )}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">Discount</span>
-                  <Input
-                    type="number"
-                    value={formData.discount_amount}
-                    onChange={(e) => setFormData({ ...formData, discount_amount: parseFloat(e.target.value) || 0 })}
-                    className="w-24 h-8"
-                    min="0"
-                  />
-                </div>
-                <span className="text-sm">-{formatCurrency(Number(formData.discount_amount))}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                <span>Total Amount</span>
-                <span className="text-primary">{formatCurrency(total)}</span>
+              <div className="flex justify-between text-lg font-bold pt-1 border-t">
+                <span>Total</span>
+                <span className="text-primary">{formatCurrency(subtotal)}</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Notes */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Notes (Optional)</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <Button
+            className="w-full"
+            disabled={!step2Complete}
+            onClick={() => setCurrentStep(3)}
+          >
+            Save & Continue
+          </Button>
+        </div>
+      </WorkflowStepCard>
+
+      {/* Step 3: Review & Create */}
+      <WorkflowStepCard
+        stepNum={3}
+        title="Review & Create"
+        description="Confirm details and generate the bill"
+        icon={ClipboardList}
+        currentStep={currentStep}
+      >
+        <div className="space-y-5">
+          {/* Tenant summary */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Tenant</p>
+            {selectedTenantObj && (
+              <div className="text-sm space-y-1">
+                <p className="font-medium">{selectedTenantObj.name}</p>
+                <p className="text-muted-foreground">
+                  {selectedTenantObj.property?.name} · Room {selectedTenantObj.room?.room_number}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Period summary */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Period</p>
+            <div className="text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Billing Month</span>
+                <span className="font-medium">{formData.for_month}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Bill Date</span>
+                <span className="font-medium">{formData.bill_date}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Charges summary */}
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Charges</p>
+            <div className="space-y-1.5">
+              {lineItems.map((item) => {
+                const effectiveAmount =
+                  proRata.enabled && proRataAmount !== null && item.type.toLowerCase().includes("rent")
+                    ? proRataAmount
+                    : item.amount
+                return (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {item.type}
+                      {item.description ? ` — ${item.description}` : ""}
+                    </span>
+                    <span>{formatCurrency(effectiveAmount)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Adjustments */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Previous Balance (if any)">
+              <div className="relative">
+                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="number"
+                  value={formData.previous_balance}
+                  onChange={(e) =>
+                    setFormData({ ...formData, previous_balance: parseFloat(e.target.value) || 0 })
+                  }
+                  className="pl-9"
+                  min="0"
+                />
+              </div>
+            </FormField>
+            <FormField label="Discount">
+              <div className="relative">
+                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="number"
+                  value={formData.discount_amount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, discount_amount: parseFloat(e.target.value) || 0 })
+                  }
+                  className="pl-9"
+                  min="0"
+                />
+              </div>
+            </FormField>
+          </div>
+
+          {/* Total */}
+          <div className="pt-3 border-t space-y-1.5 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            {Number(formData.previous_balance) > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Previous Balance</span>
+                <span>{formatCurrency(Number(formData.previous_balance))}</span>
+              </div>
+            )}
+            {Number(formData.discount_amount) > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Discount</span>
+                <span>-{formatCurrency(Number(formData.discount_amount))}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-lg font-bold pt-2 border-t">
+              <span>Total Amount</span>
+              <span className="text-primary">{formatCurrency(total)}</span>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <FormField label="Notes (Optional)">
             <Textarea
               className="min-h-[80px] resize-none"
               placeholder="Add any notes for this bill..."
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             />
-          </CardContent>
-        </Card>
+          </FormField>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-4">
-          <Link href="/bills">
-            <Button type="button" variant="outline" disabled={loading}>
-              Cancel
-            </Button>
-          </Link>
-          <Button type="submit" disabled={loading || !selectedTenant}>
+          <Button
+            className="w-full"
+            disabled={loading || !selectedTenant || lineItems.length === 0}
+            onClick={doSubmit}
+          >
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -835,12 +880,11 @@ function NewBillContent() {
             )}
           </Button>
         </div>
-      </form>
+      </WorkflowStepCard>
     </div>
   )
 }
 
-// Loading fallback
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center h-64">
