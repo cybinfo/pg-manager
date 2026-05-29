@@ -13,7 +13,7 @@ import { Combobox, ComboboxOption } from "@/components/ui/combobox"
 import { FormField, Select } from "@/components/ui/form-components"
 import { Card, CardContent } from "@/components/ui/card"
 import {
-  ArrowLeft, Users, Loader2, Building2, Home, RefreshCw,
+  Users, Loader2, Building2, Home, RefreshCw,
   Shield, ChevronRight, FileText, Wrench, CheckCircle2
 } from "lucide-react"
 import { showSuccess, showError } from "@/lib/toast-helpers"
@@ -423,11 +423,6 @@ export default function NewTenantPage() {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Link href={backHref}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
           <div>
             <h1 className="text-3xl font-bold">Add Tenant</h1>
             <p className="text-muted-foreground">Register a new tenant</p>
