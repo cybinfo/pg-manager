@@ -1,32 +1,38 @@
 /**
  * New Library Member Page
  *
- * Form to register a new library member with subscription.
+ * 4-step guided workflow: Member Details → Subscription Plan → Schedule → Confirm & Register
  * Payment is recorded separately on the subscription detail page.
  */
 
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useAuthContext } from "@/lib/auth/useAuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Combobox } from "@/components/ui/combobox"
 import { Select, FormField } from "@/components/ui/form-components"
 import { Label } from "@/components/ui/label"
 import { HelpTooltip } from "@/components/ui/help-tooltip"
 import { Currency } from "@/components/ui/currency"
-import { ArrowLeft, Users, Loader2, CreditCard, UserCheck, Trash2, Plus } from "lucide-react"
+import { PageSkeleton } from "@/components/ui/loading"
+import {
+  WorkflowStepper,
+  WorkflowStepCard,
+  WorkflowHeader,
+  WorkflowContinueButton,
+} from "@/components/ui/workflow"
+import type { WorkflowStepDef } from "@/components/ui/workflow"
+import { Users, CreditCard, Clock, CheckCircle, UserCheck, Trash2, Plus, Loader2 } from "lucide-react"
 import { ProfilePhotoUpload } from "@/components/ui/file-upload"
 import { requiredField, requiredSelect, requiredPhone } from "@/lib/validation"
 import { useBackNavigation } from "@/lib/hooks/useBackNavigation"
 import { getTodayISO, computeEndDate } from "@/lib/date-helpers"
 import { TimeSlot, formatTime12h, calcSlotHours } from "@/lib/time-slots"
-import { formatDate, formatNumber} from "@/lib/format"
+import { formatDate, formatNumber } from "@/lib/format"
 import { PermissionGuard } from "@/components/auth"
 import { showError, showSuccess } from "@/lib/toast-helpers"
 import { handleClientError } from "@/lib/error-handler"
@@ -50,6 +56,13 @@ const validationSchema = {
   phone: requiredPhone("Phone number"),
 } as const
 
+const STEPS: WorkflowStepDef[] = [
+  { id: 1, label: "Member Details", icon: Users },
+  { id: 2, label: "Subscription", icon: CreditCard },
+  { id: 3, label: "Schedule", icon: Clock },
+  { id: 4, label: "Confirm", icon: CheckCircle },
+]
+
 function NewLibraryMemberContent() {
   const router = useRouter()
   const { user } = useAuthContext()
@@ -59,6 +72,7 @@ function NewLibraryMemberContent() {
   const [plans, setPlans] = useState<LibraryPlanOption[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
 
   const [formData, setFormData] = useState({
     library_id: "",
@@ -120,7 +134,6 @@ function NewLibraryMemberContent() {
     async function fetchData() {
       const supabase = createClient()
 
-      // Fetch libraries
       const { data: librariesData } = await supabase
         .from("libraries")
         .select("id, name, code")
@@ -130,7 +143,6 @@ function NewLibraryMemberContent() {
 
       if (librariesData) setLibraries(librariesData)
 
-      // Fetch plans
       const { data: plansData } = await supabase
         .from("library_plans")
         .select("id, name, hours_included, validity_days, base_price")
@@ -148,7 +160,6 @@ function NewLibraryMemberContent() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    // Clear error on change
     if (errors[name]) {
       setErrors((prev) => {
         const next = { ...prev }
@@ -197,10 +208,11 @@ function NewLibraryMemberContent() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!runValidation()) return
+  const handleSubmit = async () => {
+    if (!runValidation()) {
+      setCurrentStep(1)
+      return
+    }
 
     if (!user) {
       showError("Session expired. Please login again.")
@@ -280,7 +292,7 @@ function NewLibraryMemberContent() {
 
   // Price calculation display
   const priceCalcDisplay = selectedPlan && formData.duration_months
-    ? `\u20B9${formatNumber(selectedPlan.base_price)}/month \u00D7 ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = \u20B9${(formatNumber(selectedPlan.base_price * formData.duration_months))}`
+    ? `₹${formatNumber(selectedPlan.base_price)}/month × ${formData.duration_months} month${formData.duration_months !== 1 ? "s" : ""} = ₹${formatNumber(selectedPlan.base_price * formData.duration_months)}`
     : null
 
   const libraryOptions = libraries.map((lib) => ({
@@ -293,31 +305,39 @@ function NewLibraryMemberContent() {
     label: `${plan.name} - Rs.${plan.base_price} (${plan.hours_included ? `${plan.hours_included}h` : "Unlimited"})`,
   }))
 
+  // Step completion rules
+  const step1Complete = !!(formData.library_id && formData.name && formData.phone)
+  const step2Complete = !!(formData.plan_id && formData.start_date && formData.duration_months)
+  const step3Complete = true // schedule is optional
+
+  if (loadingData) {
+    return <PageSkeleton variant="form" />
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href={backHref}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold">Add Member</h1>
-          <p className="text-muted-foreground">
-            Register a new library member with subscription
-          </p>
-        </div>
-      </div>
+      <WorkflowHeader
+        title="Add Member"
+        subtitle="Register a new library member with subscription"
+        icon={Users}
+        onBack={() => router.push(backHref)}
+        backLabel="Back to Members"
+        badge={
+          waitlistId ? (
+            <div className="flex items-center gap-2 text-xs text-success font-medium">
+              <UserCheck className="h-3.5 w-3.5" />
+              Converting from Waitlist
+            </div>
+          ) : undefined
+        }
+      />
 
-      {/* Waitlist Conversion Banner */}
+      {/* Waitlist conversion banner */}
       {waitlistId && (
         <div className="flex items-center gap-3 p-4 bg-success/10 border border-success/20 rounded-lg">
           <UserCheck className="h-5 w-5 text-success flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium text-success">
-              Converting from Waitlist
-            </p>
+            <p className="text-sm font-medium text-success">Converting from Waitlist</p>
             <p className="text-xs text-success/80">
               Contact details have been pre-filled. Complete the subscription to convert this waitlist entry to a member.
             </p>
@@ -325,387 +345,515 @@ function NewLibraryMemberContent() {
         </div>
       )}
 
-      {/* Form */}
-      <form onSubmit={handleSubmit}>
-        <div className="space-y-6">
-          {/* Member Details Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Member Details</CardTitle>
-                  <CardDescription>
-                    Enter member information
-                  </CardDescription>
-                </div>
+      {/* Step progress indicator */}
+      <WorkflowStepper steps={STEPS} currentStep={currentStep} />
+
+      {/* Step 1: Member Details */}
+      <WorkflowStepCard
+        stepNum={1}
+        title="Member Details"
+        description="Photo, library, personal info, and ID proof"
+        icon={Users}
+        currentStep={currentStep}
+        onEdit={() => setCurrentStep(1)}
+        completedSummary={
+          <span>
+            {formData.name}
+            {formData.phone ? ` · ${formData.phone}` : ""}
+            {formData.library_id
+              ? ` · ${libraries.find((l) => l.id === formData.library_id)?.name ?? ""}`
+              : ""}
+          </span>
+        }
+      >
+        <div className="space-y-4">
+          {/* Library Selection */}
+          <FormField label="Library" required error={errors.library_id}>
+            <Combobox
+              options={libraryOptions}
+              value={formData.library_id}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, library_id: value }))}
+              placeholder="Select a library..."
+              searchPlaceholder="Search libraries..."
+              emptyText="No libraries found"
+              disabled={saving || !!preselectedLibrary}
+            />
+          </FormField>
+
+          {/* Photo Upload */}
+          <div className="flex justify-center">
+            <ProfilePhotoUpload
+              bucket="person-photos"
+              folder="profiles"
+              value={formData.photo_url || ""}
+              onChange={(url) => setFormData((prev) => ({ ...prev, photo_url: url }))}
+              size="lg"
+              placeholder="Add Photo"
+            />
+          </div>
+
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Full Name" htmlFor="name" required error={errors.name}>
+              <Input
+                id="name"
+                name="name"
+                placeholder="e.g., Rahul Sharma"
+                value={formData.name}
+                onChange={handleChange}
+                disabled={saving}
+              />
+            </FormField>
+            <FormField label="Phone Number" htmlFor="phone" required error={errors.phone}>
+              <Input
+                id="phone"
+                name="phone"
+                placeholder="e.g., 9876543210"
+                value={formData.phone}
+                onChange={handleChange}
+                disabled={saving}
+                type="tel"
+                maxLength={10}
+              />
+            </FormField>
+          </div>
+
+          <FormField label="Email" htmlFor="email">
+            <Input
+              id="email"
+              name="email"
+              placeholder="e.g., rahul@example.com"
+              value={formData.email}
+              onChange={handleChange}
+              disabled={saving}
+              type="email"
+            />
+          </FormField>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Gender" htmlFor="gender">
+              <Select
+                value={formData.gender}
+                onChange={handleChange}
+                name="gender"
+                id="gender"
+                disabled={saving}
+                options={GENDER_OPTIONS}
+              />
+            </FormField>
+            <FormField label="Date of Birth" htmlFor="date_of_birth">
+              <Input
+                id="date_of_birth"
+                name="date_of_birth"
+                type="date"
+                value={formData.date_of_birth}
+                onChange={handleChange}
+                disabled={saving}
+              />
+            </FormField>
+          </div>
+
+          <FormField label="Father/Guardian Name" htmlFor="father_name">
+            <Input
+              id="father_name"
+              name="father_name"
+              placeholder="e.g., Mr. Sharma"
+              value={formData.father_name}
+              onChange={handleChange}
+              disabled={saving}
+            />
+          </FormField>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="ID Proof Type" htmlFor="id_proof_type">
+              <Select
+                value={formData.id_proof_type}
+                onChange={handleChange}
+                name="id_proof_type"
+                id="id_proof_type"
+                disabled={saving}
+                options={ID_PROOF_TYPE_OPTIONS}
+              />
+            </FormField>
+            <FormField label="ID Number" htmlFor="id_proof_number">
+              <Input
+                id="id_proof_number"
+                name="id_proof_number"
+                placeholder="e.g., XXXX-XXXX-XXXX"
+                value={formData.id_proof_number}
+                onChange={handleChange}
+                disabled={saving}
+              />
+            </FormField>
+          </div>
+
+          <WorkflowContinueButton
+            onClick={() => {
+              const valid = runValidation()
+              if (valid) setCurrentStep(2)
+            }}
+            disabled={!step1Complete}
+            disabledReason="Fill in Library, Name, and Phone to continue"
+          />
+        </div>
+      </WorkflowStepCard>
+
+      {/* Step 2: Subscription Plan */}
+      <WorkflowStepCard
+        stepNum={2}
+        title="Subscription Plan"
+        description="Plan, start date, duration, and amount"
+        icon={CreditCard}
+        currentStep={currentStep}
+        onEdit={() => setCurrentStep(2)}
+        completedSummary={
+          selectedPlan ? (
+            <span>
+              {selectedPlan.name} · {formData.duration_months} month{formData.duration_months !== 1 ? "s" : ""}
+              {computedEndDate ? ` · ends ${formatDate(computedEndDate)}` : ""}
+            </span>
+          ) : undefined
+        }
+      >
+        <div className="space-y-4">
+          {/* Plan selection */}
+          <FormField
+            label="Subscription Plan"
+            error={errors.plan_id}
+            tooltip="The plan defines the daily hours allowance and base price. You can override the amount below."
+          >
+            <Combobox
+              options={planOptions}
+              value={formData.plan_id}
+              onValueChange={handlePlanChange}
+              placeholder="Select a plan..."
+              searchPlaceholder="Search plans..."
+              emptyText="No plans found"
+              disabled={saving}
+            />
+          </FormField>
+
+          {/* Plan highlight card */}
+          {selectedPlan && (
+            <div className="rounded-lg border bg-primary/5 border-primary/20 p-4">
+              <p className="text-sm font-semibold text-primary mb-2">{selectedPlan.name}</p>
+              <div className="flex gap-6 text-sm text-muted-foreground">
+                <span>
+                  <span className="font-medium text-foreground">
+                    {selectedPlan.hours_included ?? "Unlimited"}h
+                  </span>
+                  /day
+                </span>
+                <span>
+                  Base price:{" "}
+                  <span className="font-medium text-foreground">
+                    <Currency amount={selectedPlan.base_price} />/month
+                  </span>
+                </span>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Library Selection */}
-              <FormField label="Library" required error={errors.library_id}>
-                <Combobox
-                  options={libraryOptions}
-                  value={formData.library_id}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, library_id: value }))}
-                  placeholder="Select a library..."
-                  searchPlaceholder="Search libraries..."
-                  emptyText="No libraries found"
-                  disabled={saving || loadingData || !!preselectedLibrary}
-                />
-              </FormField>
+            </div>
+          )}
 
-              {/* Photo Upload */}
-              <div className="flex justify-center">
-                <ProfilePhotoUpload
-                  bucket="person-photos"
-                  folder="profiles"
-                  value={formData.photo_url || ""}
-                  onChange={(url) => setFormData((prev) => ({ ...prev, photo_url: url }))}
-                  size="lg"
-                  placeholder="Add Photo"
-                />
-              </div>
+          {/* Start date & duration */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Start Date" htmlFor="start_date" required>
+              <Input
+                id="start_date"
+                name="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={handleStartDateChange}
+                required
+                disabled={saving}
+              />
+            </FormField>
+            <FormField
+              label="Duration (Months)"
+              htmlFor="duration_months"
+              required
+              hint={computedEndDate ? `Ends: ${formatDate(computedEndDate)}` : undefined}
+              tooltip="How many months this subscription is valid for. The end date is calculated automatically."
+            >
+              <Input
+                id="duration_months"
+                name="duration_months"
+                type="number"
+                min="0.5"
+                step="0.5"
+                value={formData.duration_months}
+                onChange={handleDurationChange}
+                required
+                disabled={saving}
+              />
+            </FormField>
+          </div>
 
-              {/* Basic Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Full Name" htmlFor="name" required error={errors.name}>
-                  <Input
-                    id="name"
-                    name="name"
-                    placeholder="e.g., Rahul Sharma"
-                    value={formData.name}
-                    onChange={handleChange}
-                    disabled={saving}
-                  />
-                </FormField>
-                <FormField label="Phone Number" htmlFor="phone" required error={errors.phone}>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    placeholder="e.g., 9876543210"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    disabled={saving}
-                    type="tel"
-                    maxLength={10}
-                  />
-                </FormField>
-              </div>
+          {/* Amount & Discount */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Amount" htmlFor="amount" hint={priceCalcDisplay ?? undefined}>
+              <Input
+                id="amount"
+                name="amount"
+                type="number"
+                min="0"
+                step="1"
+                value={formData.amount}
+                onChange={(e) => setFormData((prev) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                disabled={saving}
+              />
+            </FormField>
+            <FormField label="Discount" htmlFor="discount">
+              <Input
+                id="discount"
+                name="discount"
+                type="number"
+                min="0"
+                step="1"
+                value={formData.discount}
+                onChange={(e) => setFormData((prev) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
+                disabled={saving}
+              />
+            </FormField>
+          </div>
 
-              <FormField label="Email" htmlFor="email">
-                <Input
-                  id="email"
-                  name="email"
-                  placeholder="e.g., rahul@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={saving}
-                  type="email"
-                />
-              </FormField>
+          <WorkflowContinueButton
+            onClick={() => {
+              if (step2Complete) setCurrentStep(3)
+            }}
+            disabled={!step2Complete}
+            disabledReason="Select a plan, start date, and duration to continue"
+          />
+        </div>
+      </WorkflowStepCard>
 
-              {/* Gender & Date of Birth */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Gender" htmlFor="gender">
-                  <Select
-                    value={formData.gender}
-                    onChange={handleChange}
-                    name="gender"
-                    id="gender"
-                    disabled={saving}
-                    options={GENDER_OPTIONS}
-                  />
-                </FormField>
-                <FormField label="Date of Birth" htmlFor="date_of_birth">
-                  <Input
-                    id="date_of_birth"
-                    name="date_of_birth"
-                    type="date"
-                    value={formData.date_of_birth}
-                    onChange={handleChange}
-                    disabled={saving}
-                  />
-                </FormField>
-              </div>
+      {/* Step 3: Schedule */}
+      <WorkflowStepCard
+        stepNum={3}
+        title="Access Schedule"
+        description="Define daily time windows (optional — leave empty for full day)"
+        icon={Clock}
+        currentStep={currentStep}
+        onEdit={() => setCurrentStep(3)}
+        completedSummary={
+          validTimeSlots.length > 0 ? (
+            <span>
+              {validTimeSlots.length} slot{validTimeSlots.length !== 1 ? "s" : ""} · {totalSlotHours.toFixed(1)}h/day
+            </span>
+          ) : (
+            <span>Full day access</span>
+          )
+        }
+      >
+        <div className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-1.5">
+              <Label>Time Slots</Label>
+              <HelpTooltip content="Define when this member is allowed to study. Each time slot is a daily window (e.g., 9 AM–12 PM). Members can have multiple non-overlapping slots per day." />
+            </div>
 
-              {/* Father/Guardian Name */}
-              <FormField label="Father/Guardian Name" htmlFor="father_name">
-                <Input
-                  id="father_name"
-                  name="father_name"
-                  placeholder="e.g., Mr. Sharma"
-                  value={formData.father_name}
-                  onChange={handleChange}
-                  disabled={saving}
-                />
-              </FormField>
-
-              {/* ID Proof */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="ID Proof Type" htmlFor="id_proof_type">
-                  <Select
-                    value={formData.id_proof_type}
-                    onChange={handleChange}
-                    name="id_proof_type"
-                    id="id_proof_type"
-                    disabled={saving}
-                    options={ID_PROOF_TYPE_OPTIONS}
-                  />
-                </FormField>
-                <FormField label="ID Number" htmlFor="id_proof_number">
-                  <Input
-                    id="id_proof_number"
-                    name="id_proof_number"
-                    placeholder="e.g., XXXX-XXXX-XXXX"
-                    value={formData.id_proof_number}
-                    onChange={handleChange}
-                    disabled={saving}
-                  />
-                </FormField>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Subscription Card */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-success/10 rounded-lg">
-                  <CreditCard className="h-5 w-5 text-success" />
-                </div>
-                <div>
-                  <CardTitle>Subscription</CardTitle>
-                  <CardDescription>
-                    Select plan and schedule. Payment can be recorded after creation.
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Plan Selection */}
-              <FormField label="Subscription Plan" error={errors.plan_id} tooltip="The plan defines the daily hours allowance and base price. You can override the amount below."  >
-                <Combobox
-                  options={planOptions}
-                  value={formData.plan_id}
-                  onValueChange={handlePlanChange}
-                  placeholder="Select a plan..."
-                  searchPlaceholder="Search plans..."
-                  emptyText="No plans found"
-                  disabled={saving || loadingData}
-                />
-              </FormField>
-
-              {/* Start Date & Duration */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Start Date" htmlFor="start_date" required>
-                  <Input
-                    id="start_date"
-                    name="start_date"
-                    type="date"
-                    value={formData.start_date}
-                    onChange={handleStartDateChange}
-                    required
-                    disabled={saving}
-                  />
-                </FormField>
-                <FormField label="Duration (Months)" htmlFor="duration_months" required hint={computedEndDate ? `Ends: ${formatDate(computedEndDate)}` : undefined} tooltip="How many months this subscription is valid for. The end date is calculated automatically."  >
-                  <Input
-                    id="duration_months"
-                    name="duration_months"
-                    type="number"
-                    min="0.5"
-                    step="0.5"
-                    value={formData.duration_months}
-                    onChange={handleDurationChange}
-                    required
-                    disabled={saving}
-                  />
-                </FormField>
-              </div>
-
-              {/* Access Schedule (Multi-Slot Time Input) */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-1.5">
-                  <Label>Access Schedule (optional)</Label>
-                  <HelpTooltip content="Define when this member is allowed to study. Each time slot is a daily window (e.g., 9 AM–12 PM). Members can have multiple non-overlapping slots per day." />
-                </div>
-                <div className="border rounded-lg p-3 space-y-3">
-                  {formData.time_slots.map((slot: TimeSlot, idx: number) => {
-                    const slotHours = calcSlotHours(slot)
-                    return (
-                      <div key={idx} className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-12 flex-shrink-0">Slot {idx + 1}:</span>
-                        <Input
-                          type="time"
-                          value={slot.start}
-                          onChange={(e) => {
-                            const updated = [...formData.time_slots]
-                            updated[idx] = { ...updated[idx], start: e.target.value }
-                            setFormData((prev) => ({ ...prev, time_slots: updated }))
-                          }}
-                          disabled={saving}
-                          className="w-32"
-                        />
-                        <span className="text-muted-foreground">&mdash;</span>
-                        <Input
-                          type="time"
-                          value={slot.end}
-                          onChange={(e) => {
-                            const updated = [...formData.time_slots]
-                            updated[idx] = { ...updated[idx], end: e.target.value }
-                            setFormData((prev) => ({ ...prev, time_slots: updated }))
-                          }}
-                          disabled={saving}
-                          className="w-32"
-                        />
-                        {slot.start && slot.end && (
-                          <span className="text-xs text-muted-foreground w-10 text-right">{slotHours.toFixed(1)}h</span>
-                        )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 flex-shrink-0"
-                          onClick={() => {
-                            const updated = formData.time_slots.filter((_: TimeSlot, i: number) => i !== idx)
-                            setFormData((prev) => ({ ...prev, time_slots: updated }))
-                          }}
-                          disabled={saving}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    )
-                  })}
-
-                  {validTimeSlots.length > 0 && selectedPlan?.hours_included && (
-                    <div className={`text-xs font-medium ${hoursExceeded ? "text-destructive" : "text-muted-foreground"}`}>
-                      Total: {totalSlotHours.toFixed(1)}h / {selectedPlan.hours_included}h daily {hoursExceeded ? "\u2717" : "\u2713"}
-                    </div>
-                  )}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFormData((prev) => ({ ...prev, time_slots: [...prev.time_slots, { start: "", end: "" }] }))}
-                    disabled={saving}
-                  >
-                    <Plus className="mr-1 h-3 w-3" />
-                    Add Slot
-                  </Button>
-                </div>
-                {formData.time_slots.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Leave empty for full day access (no time restriction).
-                  </p>
-                )}
-              </div>
-
-              {/* Amount & Discount */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Amount" htmlFor="amount" hint={priceCalcDisplay ?? undefined}>
-                  <Input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={formData.amount}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-                    disabled={saving}
-                  />
-                </FormField>
-                <FormField label="Discount" htmlFor="discount">
-                  <Input
-                    id="discount"
-                    name="discount"
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={formData.discount}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
-                    disabled={saving}
-                  />
-                </FormField>
-              </div>
-
-              {/* Summary */}
-              {selectedPlan && (
-                <div className="border-t pt-4 bg-muted/50 rounded-lg p-4 mt-4">
-                  <h3 className="font-medium mb-3">Summary</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Plan</span>
-                      <span className="font-medium">{selectedPlan.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Duration</span>
-                      <span className="font-medium">{formData.duration_months} month{formData.duration_months !== 1 ? "s" : ""}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Period</span>
-                      <span className="font-medium">
-                        {formData.start_date ? formatDate(formData.start_date) : "\u2014"}
-                        {computedEndDate ? ` \u2013 ${formatDate(computedEndDate)}` : ""}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Access Schedule</span>
-                      <span className="font-medium text-right">
-                        {validTimeSlots.length > 0 ? (
-                          <span className="flex flex-col items-end gap-0.5">
-                            {validTimeSlots.map((slot: TimeSlot, idx: number) => (
-                              <span key={idx}>
-                                {formatTime12h(slot.start)} &ndash; {formatTime12h(slot.end)} ({calcSlotHours(slot).toFixed(1)}h)
-                              </span>
-                            ))}
-                            {validTimeSlots.length > 1 && (
-                              <span className="text-xs text-muted-foreground">Total: {totalSlotHours.toFixed(1)}h</span>
-                            )}
-                          </span>
-                        ) : "Full Day"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Daily Hours</span>
-                      <span className="font-medium">{selectedPlan.hours_included || 0}h/day</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Amount</span>
-                      <span className="font-medium">
-                        {formData.duration_months !== 1
-                          ? <><Currency amount={selectedPlan.base_price} /> &times; {formData.duration_months} = <Currency amount={selectedPlan.base_price * formData.duration_months} /></>
-                          : <Currency amount={formData.amount} />
-                        }
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Discount</span>
-                      <span className="font-medium"><Currency amount={formData.discount} /></span>
-                    </div>
-                    <div className="flex justify-between text-base font-semibold border-t pt-2 mt-2">
-                      <span>Total</span>
-                      <span className="text-success"><Currency amount={finalAmount} /></span>
-                    </div>
+            <div className="border rounded-lg p-3 space-y-3">
+              {formData.time_slots.map((slot: TimeSlot, idx: number) => {
+                const slotHours = calcSlotHours(slot)
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-12 flex-shrink-0">Slot {idx + 1}:</span>
+                    <Input
+                      type="time"
+                      value={slot.start}
+                      onChange={(e) => {
+                        const updated = [...formData.time_slots]
+                        updated[idx] = { ...updated[idx], start: e.target.value }
+                        setFormData((prev) => ({ ...prev, time_slots: updated }))
+                      }}
+                      disabled={saving}
+                      className="w-32"
+                    />
+                    <span className="text-muted-foreground">&mdash;</span>
+                    <Input
+                      type="time"
+                      value={slot.end}
+                      onChange={(e) => {
+                        const updated = [...formData.time_slots]
+                        updated[idx] = { ...updated[idx], end: e.target.value }
+                        setFormData((prev) => ({ ...prev, time_slots: updated }))
+                      }}
+                      disabled={saving}
+                      className="w-32"
+                    />
+                    {slot.start && slot.end && (
+                      <span className="text-xs text-muted-foreground w-10 text-right">{slotHours.toFixed(1)}h</span>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 flex-shrink-0"
+                      onClick={() => {
+                        const updated = formData.time_slots.filter((_: TimeSlot, i: number) => i !== idx)
+                        setFormData((prev) => ({ ...prev, time_slots: updated }))
+                      }}
+                      disabled={saving}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
+                )
+              })}
+
+              {validTimeSlots.length > 0 && selectedPlan?.hours_included && (
+                <div className={`text-xs font-medium ${hoursExceeded ? "text-destructive" : "text-muted-foreground"}`}>
+                  Total: {totalSlotHours.toFixed(1)}h / {selectedPlan.hours_included}h daily{" "}
+                  {hoursExceeded ? "✗" : "✓"}
                 </div>
               )}
 
-            </CardContent>
-          </Card>
-        </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    time_slots: [...prev.time_slots, { start: "", end: "" }],
+                  }))
+                }
+                disabled={saving}
+              >
+                <Plus className="mr-1 h-3 w-3" />
+                Add Slot
+              </Button>
+            </div>
 
-        <div className="flex justify-end gap-4 mt-6">
-          <Link href={backHref}>
-            <Button type="button" variant="outline" disabled={saving}>
-              Cancel
-            </Button>
-          </Link>
-          <Button type="submit" disabled={saving}>
+            {formData.time_slots.length === 0 && (
+              <p className="text-xs text-muted-foreground">Leave empty for full day access (no time restriction).</p>
+            )}
+          </div>
+
+          {/* Step 3 always completable */}
+          <WorkflowContinueButton
+            onClick={() => setCurrentStep(4)}
+            label={formData.time_slots.length === 0 ? "Continue with Full Day Access" : "Save & Continue"}
+            disabled={!step3Complete}
+          />
+        </div>
+      </WorkflowStepCard>
+
+      {/* Step 4: Confirm & Register */}
+      <WorkflowStepCard
+        stepNum={4}
+        title="Confirm & Register"
+        description="Review and submit"
+        icon={CheckCircle}
+        currentStep={currentStep}
+      >
+        <div className="space-y-4">
+          {/* Summary */}
+          <div className="rounded-lg border bg-muted/50 p-4 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Member</span>
+              <span className="font-medium">{formData.name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Phone</span>
+              <span className="font-medium">{formData.phone}</span>
+            </div>
+            {formData.email && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Email</span>
+                <span className="font-medium">{formData.email}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Library</span>
+              <span className="font-medium">
+                {libraries.find((l) => l.id === formData.library_id)?.name ?? "—"}
+              </span>
+            </div>
+
+            {selectedPlan && (
+              <>
+                <div className="border-t my-2" />
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Plan</span>
+                  <span className="font-medium">{selectedPlan.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Daily Hours</span>
+                  <span className="font-medium">{selectedPlan.hours_included ?? "Unlimited"}h/day</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Duration</span>
+                  <span className="font-medium">
+                    {formData.duration_months} month{formData.duration_months !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Period</span>
+                  <span className="font-medium">
+                    {formData.start_date ? formatDate(formData.start_date) : "—"}
+                    {computedEndDate ? ` – ${formatDate(computedEndDate)}` : ""}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Access Schedule</span>
+                  <span className="font-medium text-right">
+                    {validTimeSlots.length > 0 ? (
+                      <span className="flex flex-col items-end gap-0.5">
+                        {validTimeSlots.map((slot: TimeSlot, idx: number) => (
+                          <span key={idx}>
+                            {formatTime12h(slot.start)} &ndash; {formatTime12h(slot.end)} ({calcSlotHours(slot).toFixed(1)}h)
+                          </span>
+                        ))}
+                        {validTimeSlots.length > 1 && (
+                          <span className="text-xs text-muted-foreground">Total: {totalSlotHours.toFixed(1)}h</span>
+                        )}
+                      </span>
+                    ) : (
+                      "Full Day"
+                    )}
+                  </span>
+                </div>
+                <div className="border-t my-2" />
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Amount</span>
+                  <span className="font-medium">
+                    {formData.duration_months !== 1 ? (
+                      <>
+                        <Currency amount={selectedPlan.base_price} /> &times; {formData.duration_months} ={" "}
+                        <Currency amount={selectedPlan.base_price * formData.duration_months} />
+                      </>
+                    ) : (
+                      <Currency amount={formData.amount} />
+                    )}
+                  </span>
+                </div>
+                {formData.discount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Discount</span>
+                    <span className="font-medium">
+                      &minus; <Currency amount={formData.discount} />
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base font-semibold border-t pt-2 mt-1">
+                  <span>Total Due</span>
+                  <span className="text-success">
+                    <Currency amount={finalAmount} />
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Payment can be recorded after creation on the subscription detail page.
+          </p>
+
+          <Button
+            className="w-full"
+            onClick={handleSubmit}
+            disabled={saving}
+          >
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -716,7 +864,7 @@ function NewLibraryMemberContent() {
             )}
           </Button>
         </div>
-      </form>
+      </WorkflowStepCard>
     </div>
   )
 }
